@@ -51,7 +51,7 @@
     "title": "Configure external services",
     "paragraphs": [
       "Pinata credentials stay on the backend. Upload limits, quotas, replay protection, and content checks run before a reference is published. No Pinata account is configured in the current local fixture.",
-      "Google requires an OAuth client and exact redirect origin. Validate issuer, audience, nonce, expiry, signature, and the immutable subject identifier. Never merge accounts by matching email.",
+      "Google requires an OAuth client and exact redirect origin. Validate issuer, audience, nonce, expiry, signature, and the immutable subject identifier. Never merge accounts by matching email. Linking requires the current session. A provider session identifies the linked account and does not unwrap a user-controlled vault.",
       "Telegram Mini Apps require a configured bot. The backend validates signed initialization data and freshness. A Telegram identity alone does not decrypt a user-controlled vault.",
       "Configured hosted storage runs a bounded reconciliation worker using PostgreSQL leases. Uncertain or duplicate provider results retain their allocated budget and can require operator review. Automated unpinning, retention guarantees and measured paid allowances are not offered by this development release."
     ]

@@ -1,6 +1,8 @@
 import { Pool } from 'pg';
 import { PrivateKey } from '@wharfkit/antelope';
+import { importJWK } from 'jose';
 import { z } from 'zod';
+import type { ProviderConfiguration } from './auth/linking.js';
 import { NativeChainGateway } from './native-chain.js';
 import { migrate } from './store.js';
 import { createServer } from './server.js';
@@ -25,6 +27,12 @@ const configuration = z
     PINATA_JWT: z.string().min(1).optional(),
     CONTENT_GATEWAY: z.url().optional(),
     CONTENT_FREE_STORAGE_BYTES: Uint64Schema.default('0'),
+    GOOGLE_CLIENT_ID: z.string().min(1).max(256).optional(),
+    GOOGLE_PUBLIC_JWK: z.string().min(1).max(8192).optional(),
+    TELEGRAM_BOT_TOKEN: z
+      .string()
+      .regex(/^\d+:[A-Za-z0-9_-]+$/)
+      .optional(),
   })
   .safeParse(process.env);
 if (!configuration.success) throw new Error('API_CONFIGURATION_INVALID');
@@ -32,6 +40,8 @@ const env = configuration.data;
 if (!!env.BOOTSTRAP_OWNER !== !!env.BOOTSTRAP_PRIVATE_KEY)
   throw new Error('Bootstrap owner and key must be configured together');
 if (!!env.PINATA_JWT !== !!env.CONTENT_GATEWAY) throw new Error('PINATA_CONFIGURATION_INVALID');
+if (!!env.GOOGLE_CLIENT_ID !== !!env.GOOGLE_PUBLIC_JWK)
+  throw new Error('GOOGLE_CONFIGURATION_INVALID');
 function privateKey(value: string): PrivateKey {
   try {
     return PrivateKey.from(value);
@@ -62,7 +72,24 @@ const content =
         BigInt(env.CONTENT_FREE_STORAGE_BYTES),
       )
     : undefined;
-const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, content ? { content } : {});
+const providers: ProviderConfiguration = {};
+if (env.GOOGLE_CLIENT_ID && env.GOOGLE_PUBLIC_JWK) {
+  try {
+    const parsed: unknown = JSON.parse(env.GOOGLE_PUBLIC_JWK);
+    const jwk = z
+      .object({ kty: z.literal('RSA') })
+      .passthrough()
+      .parse(parsed);
+    providers.google = { clientId: env.GOOGLE_CLIENT_ID, key: await importJWK(jwk, 'RS256') };
+  } catch {
+    throw new Error('GOOGLE_CONFIGURATION_INVALID');
+  }
+}
+if (env.TELEGRAM_BOT_TOKEN) providers.telegram = { botToken: env.TELEGRAM_BOT_TOKEN };
+const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
+  ...(content ? { content } : {}),
+  ...(providers.google || providers.telegram ? { providers } : {}),
+});
 await app.listen({ host: '127.0.0.1', port: env.API_PORT });
 const worker = content ? startContentWorker(pool, content) : undefined;
 async function shutdown() {

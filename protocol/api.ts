@@ -30,6 +30,20 @@ export const SessionSchema = z.strictObject({
   account: AccountSchema,
   csrfToken: z.string().min(32).max(128),
 });
+export const ProviderNameSchema = z.enum(['google', 'telegram']);
+export const ProviderProofSchema = z.strictObject({
+  provider: ProviderNameSchema,
+  proof: z.string().min(1).max(16384),
+  nonce: z.string().min(1).max(256).optional(),
+});
+export const ProviderLinkResultSchema = z.strictObject({
+  provider: ProviderNameSchema,
+  subject: z.string().min(1).max(255),
+});
+export const ProviderUnlinkSchema = z.strictObject({
+  provider: ProviderNameSchema,
+  subject: z.string().regex(/^[\x21-\x7e]{1,255}$/),
+});
 export const DaoSummarySchema = z.strictObject({
   reference: DaoRefSchema,
   title: z.string(),

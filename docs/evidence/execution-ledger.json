@@ -88,11 +88,11 @@
     "Verified legacy deployment inventory and authorized migration",
     "Independent security review before mainnet launch"
   ],
-  "lastCheckpoint": "2026-10-05 verify gates, independent-runtime VERT cases, and rotatekey. The local fixture runtime is code hash 93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042. Publication remains refused. Native cleos cases were not rerun after this setcode.",
+  "lastCheckpoint": "2026-10-05 fixture provider session linking. Google and Telegram proofs link to the current account and can open a later session. The session does not read custody ciphertext or unlock a user-controlled vault. Publication remains refused. Native cleos cases were not rerun after setcode to 93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042.",
   "currentCheckout": {
-    "coreBase": "b147489",
-    "modulesBase": "0a3f390",
-    "frontendBase": "8e18367",
+    "coreBase": "ec986f2",
+    "modulesBase": "478c87f",
+    "frontendBase": "be7569b",
     "node": "24.21.0",
     "npm": "11.19.0",
     "runtimeCodeHash": "93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042",
@@ -105,14 +105,16 @@
       "frontend npm run verify: lint, vue-tsc, and vitest 37 passed across 6 files. The production build and browser journeys were not rerun",
       "independent runtime VERT: Hub absent, preserved document/obligation/lock, Hub cannot setmodule",
       "signing-key VERT: direct rotatekey ACTOR_SENDER, previous signature rejected, new key accepted, linknative keeps one member and the same credits",
-      "fixture get_code_hash matches the artifact. One daos row still deserializes"
+      "fixture get_code_hash matches the artifact. One daos row still deserializes",
+      "core integration tests/integration/session-linking.test.ts: 9 passed on local daclify_test. A rejected proof stays consumed. npm run verify does not run the integration config",
+      "frontend tests/unit/provider-session.test.ts: a provider session stores the account and does not unlock a locked user-controlled vault; a different signing key locks an open vault"
     ],
     "notRun": [
       "native module-authority, dispatch, and permission after the rotatekey setcode",
       "native runtime.test.ts, including the OpenBao R1 case",
       "native rotatekey submission",
       "native HTTP/API suite: DATABASE_URL was unset",
-      "PostgreSQL/API integration",
+      "full PostgreSQL/API integration suite was not rerun; session-linking was",
       "OpenBao provider suite",
       "frontend browser journeys, production build, and the module-enable click",
       "GitHub Actions for the new workflows",
@@ -134,7 +136,7 @@
     "Pinata adapter fault fixtures passed within the core suite; live provider integration is unverified"
   ],
   "limits": [
-    "Sponsored factory resource/rate budgets, social login session linking, managed account journeys, independent-runtime product routing, custom module policy, executor/committee extensions, GitHub Actions execution, registry publication, migration tooling, Operations/billing and chain adapters remain incomplete",
+    "Sponsored factory resource/rate budgets, live social provider redirects, managed account journeys, independent-runtime product routing, custom module policy, executor/committee extensions, GitHub Actions execution, registry publication, migration tooling, Operations/billing and chain adapters remain incomplete",
     "User has no configured Pinata/OAuth/Telegram provider credentials; production custody operation remains unverified",
     "Direct module-key callbacks are rejected and module code hashes are pinned in this checkout. Previous module rows do not deserialize. GET_CODE_HASH must be active. Telos mainnet activation is unverified. See implementation-limits.md",
     "No production chain changes, real asset movement, registry publication or legacy cutover",

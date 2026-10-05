@@ -52,7 +52,7 @@ This release supports one configured native treasury asset per DAO. Governance s
 
 Pinata credentials stay on the backend. Upload limits, quotas, replay protection, and content checks run before a reference is published. No Pinata account is configured in the current local fixture.
 
-Google requires an OAuth client and exact redirect origin. Validate issuer, audience, nonce, expiry, signature, and the immutable subject identifier. Never merge accounts by matching email.
+Google requires an OAuth client and exact redirect origin. Validate issuer, audience, nonce, expiry, signature, and the immutable subject identifier. Never merge accounts by matching email. Linking requires the current session. A provider session identifies the linked account and does not unwrap a user-controlled vault.
 
 Telegram Mini Apps require a configured bot. The backend validates signed initialization data and freshness. A Telegram identity alone does not decrypt a user-controlled vault.
 
@@ -2230,6 +2230,225 @@ Request:
   "default": {},
   "type": "object",
   "properties": {},
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "null"
+}
+```
+
+## POST /v1/auth/providers/link
+
+Guide: providers.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "provider": {
+      "type": "string",
+      "enum": [
+        "google",
+        "telegram"
+      ]
+    },
+    "proof": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    },
+    "nonce": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    }
+  },
+  "required": [
+    "provider",
+    "proof"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "provider": {
+      "type": "string",
+      "enum": [
+        "google",
+        "telegram"
+      ]
+    },
+    "subject": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    }
+  },
+  "required": [
+    "provider",
+    "subject"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/auth/providers/login
+
+Guide: providers.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "provider": {
+      "type": "string",
+      "enum": [
+        "google",
+        "telegram"
+      ]
+    },
+    "proof": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    },
+    "nonce": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    }
+  },
+  "required": [
+    "provider",
+    "proof"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "account": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "signingKey": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "custody": {
+          "type": "string",
+          "enum": [
+            "user-controlled",
+            "managed"
+          ]
+        },
+        "encryptionKey": {
+          "type": "object",
+          "properties": {
+            "kty": {
+              "type": "string",
+              "const": "EC"
+            },
+            "crv": {
+              "type": "string",
+              "const": "P-256"
+            },
+            "x": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{43}$"
+            },
+            "y": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{43}$"
+            }
+          },
+          "required": [
+            "kty",
+            "crv",
+            "x",
+            "y"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "id",
+        "signingKey",
+        "custody",
+        "encryptionKey"
+      ],
+      "additionalProperties": false
+    },
+    "csrfToken": {
+      "type": "string",
+      "minLength": 32,
+      "maxLength": 128
+    }
+  },
+  "required": [
+    "account",
+    "csrfToken"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/auth/providers/unlink
+
+Guide: providers.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "provider": {
+      "type": "string",
+      "enum": [
+        "google",
+        "telegram"
+      ]
+    },
+    "subject": {
+      "type": "string",
+      "pattern": "^[\\x21-\\x7e]{1,255}$"
+    }
+  },
+  "required": [
+    "provider",
+    "subject"
+  ],
   "additionalProperties": false
 }
 ```

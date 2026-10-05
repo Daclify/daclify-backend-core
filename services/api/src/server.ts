@@ -1,6 +1,6 @@
 import { ApiRoutes } from '../../../protocol/routes.js';
 import { ModuleApiRoutes } from '@daclify/modules';
-import Fastify from 'fastify';
+import Fastify, { type FastifyReply } from 'fastify';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import { z, ZodError } from 'zod';
@@ -10,9 +10,18 @@ import {
   ChallengeRequestSchema,
   LoginRequestSchema,
   CreateDaoSchema,
+  ProviderProofSchema,
+  ProviderUnlinkSchema,
 } from '../../../protocol/api.js';
 import { RuntimeActionSchemas } from '../../../sdk/index.js';
 import { createChallenge, authenticate, readSession, revokeSession, checkCsrf } from './auth.js';
+import {
+  linkProvider,
+  openLinkedSession,
+  unlinkProvider,
+  type ProviderConfiguration,
+} from './auth/linking.js';
+import { verifyGoogle, verifyTelegram } from './providers/proofs.js';
 import { IdSchema } from '../../../protocol/base.js';
 import { ApiError } from './errors.js';
 import type { ContentService } from './content/service.js';
@@ -21,7 +30,7 @@ export async function createServer(
   pool: Pool,
   chain: ChainGateway,
   origin: string,
-  options: { content?: ContentService } = {},
+  options: { content?: ContentService; providers?: ProviderConfiguration } = {},
 ) {
   const secure = new URL(origin).protocol === 'https:';
   const cookieName = secure ? '__Host-daclify_session' : 'daclify_session';
@@ -137,6 +146,26 @@ export async function createServer(
     const input = ChallengeRequestSchema.parse(request.body);
     return createChallenge(pool, input.signingKey, origin);
   });
+  function sessionCookie(reply: FastifyReply, token: string): void {
+    reply.setCookie(cookieName, token, {
+      path: '/',
+      httpOnly: true,
+      secure,
+      sameSite: 'strict',
+      maxAge: 43200,
+    });
+  }
+  async function providerPrincipal(input: z.infer<typeof ProviderProofSchema>) {
+    if (input.provider === 'google') {
+      const google = options.providers?.google;
+      if (!google) throw new ApiError('PROVIDER_UNCONFIGURED', 503);
+      if (input.nonce === undefined) throw new ApiError('PROVIDER_INVALID', 401);
+      return verifyGoogle(input.proof, google.clientId, input.nonce, google.key);
+    }
+    const telegram = options.providers?.telegram;
+    if (!telegram) throw new ApiError('PROVIDER_UNCONFIGURED', 503);
+    return verifyTelegram(input.proof, telegram.botToken);
+  }
   app.post(ApiRoutes.login.path, async (request, reply) => {
     const input = LoginRequestSchema.parse(request.body);
     const result = await authenticate(
@@ -145,14 +174,31 @@ export async function createServer(
       input.signature,
       input.encryptionKey,
     );
-    reply.setCookie(cookieName, result.token, {
-      path: '/',
-      httpOnly: true,
-      secure,
-      sameSite: 'strict',
-      maxAge: 43200,
-    });
+    sessionCookie(reply, result.token);
     return { account: result.account, csrfToken: result.csrfToken };
+  });
+  app.post(ApiRoutes.providerLink.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    const input = ProviderProofSchema.parse(request.body);
+    return linkProvider(pool, account.id, await providerPrincipal(input));
+  });
+  app.post(ApiRoutes.providerLogin.path, async (request, reply) => {
+    const input = ProviderProofSchema.parse(request.body);
+    const result = await openLinkedSession(pool, await providerPrincipal(input));
+    sessionCookie(reply, result.token);
+    return { account: result.account, csrfToken: result.csrfToken };
+  });
+  app.post(ApiRoutes.providerUnlink.path, async (request, reply) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    const input = ProviderUnlinkSchema.parse(request.body);
+    await unlinkProvider(pool, account.id, input.provider, input.subject);
+    return reply.code(204).send();
   });
   app.get(ApiRoutes.me.path, async (request) => ({
     account: await session(request.cookies[cookieName]),

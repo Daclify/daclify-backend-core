@@ -75,6 +75,11 @@
       "id": "WP05-PROOF-VERIFIERS",
       "suite": "unit",
       "tests": ["tests/provider-proofs.test.ts"]
+    },
+    {
+      "id": "WP05-SESSION-LINKING",
+      "suite": "integration",
+      "tests": ["tests/integration/session-linking.test.ts"]
     }
   ]
 }
