@@ -1,0 +1,1219 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "api.telos.net",
+    "description": "Telos Network APIs",
+    "version": "0.1.0"
+  },
+  "components": {},
+  "tags": [
+    {
+      "name": "stats",
+      "description": "Chain statistics endpoints"
+    },
+    {
+      "name": "testnet",
+      "description": "Testnet endpoints"
+    },
+    {
+      "name": "tokens",
+      "description": "Token endpoints"
+    },
+    {
+      "name": "evm",
+      "description": "EVM endpoints"
+    },
+    {
+      "name": "accounts",
+      "description": "Account creation endpoints"
+    }
+  ],
+  "externalDocs": {
+    "url": "https://docs.telos.net",
+    "description": "Find more info here"
+  },
+  "servers": [
+    {
+      "url": "https://api.telos.net/"
+    },
+    {
+      "url": "http://api.telos.net/"
+    }
+  ],
+  "paths": {
+    "/v1/registrations": {
+      "post": {
+        "responses": {
+          "204": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Registration successful",
+                  "type": "null"
+                }
+              }
+            },
+            "description": "Registration successful"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Registration error",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Registration error"
+          }
+        },
+        "tags": ["accounts"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": ["smsNumber"],
+                "type": "object",
+                "properties": {
+                  "smsNumber": {
+                    "description": "SMS number to send the registration code",
+                    "type": "string",
+                    "example": "800-555-1212"
+                  },
+                  "telosAccount": {
+                    "type": "string",
+                    "description": "12 character account name, only characters a-z and 1-5 can be used",
+                    "example": "myaccount123"
+                  },
+                  "ownerKey": {
+                    "type": "string",
+                    "description": "Owner public key",
+                    "example": "EOS1234..."
+                  },
+                  "activeKey": {
+                    "type": "string",
+                    "description": "Active public key",
+                    "example": "EOS4321..."
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/v1/accounts": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Registration successful",
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Result message"
+                    },
+                    "result": {
+                      "type": "object",
+                      "description": "Transaction result from eosjs"
+                    },
+                    "keyPair": {
+                      "type": "object",
+                      "description": "If generateKeys was Y then this will be the keypair used for the account",
+                      "properties": {
+                        "publicKey": {
+                          "type": "string"
+                        },
+                        "privateKey": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "description": "Registration successful"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Creation error",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Creation error"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "This SMS number already received an account",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "This SMS number already received an account"
+          }
+        },
+        "tags": ["accounts"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": ["smsNumber", "smsOtp"],
+                "type": "object",
+                "properties": {
+                  "smsNumber": {
+                    "description": "SMS number to send the registration code",
+                    "type": "string",
+                    "example": "800-555-1212"
+                  },
+                  "smsOtp": {
+                    "description": "One Time Password code sent via SMS",
+                    "type": "number",
+                    "example": "123456"
+                  },
+                  "sendPrivateKeyViaSms": {
+                    "description": "\"Y\" - yes or \"N\" - no, send the private key via SMS, only valid if generateKeys is also Y",
+                    "type": "string",
+                    "example": "Y"
+                  },
+                  "generateKeys": {
+                    "description": "\"Y\" - yes or \"N\" - no, generate private keys",
+                    "type": "string",
+                    "example": "Y"
+                  },
+                  "telosAccount": {
+                    "type": "string",
+                    "description": "12 character account name, only characters a-z and 1-5 can be used",
+                    "example": "myaccount123"
+                  },
+                  "ownerKey": {
+                    "type": "string",
+                    "description": "Owner public key",
+                    "example": "EOS1234..."
+                  },
+                  "activeKey": {
+                    "type": "string",
+                    "description": "Active public key",
+                    "example": "EOS4321..."
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/v1/recaptchaCreate": {
+      "post": {
+        "responses": {
+          "204": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Registration successful",
+                  "type": "null"
+                }
+              }
+            },
+            "description": "Registration successful"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Registration error",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Registration error"
+          }
+        },
+        "tags": ["accounts"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": ["accountName", "activeKey", "ownerKey", "recaptchaResponse"],
+                "type": "object",
+                "properties": {
+                  "recaptchaResponse": {
+                    "description": "Response code from the recaptcha API",
+                    "type": "string",
+                    "example": ""
+                  },
+                  "accountName": {
+                    "type": "string",
+                    "description": "12 character account name, only characters a-z and 1-5 can be used",
+                    "example": "myaccount123"
+                  },
+                  "ownerKey": {
+                    "type": "string",
+                    "description": "Owner public key",
+                    "example": "EOS1234..."
+                  },
+                  "activeKey": {
+                    "type": "string",
+                    "description": "Active public key",
+                    "example": "EOS4321..."
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/v1/accounts/version": {
+      "get": {
+        "responses": {
+          "204": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Endpoint version",
+                  "type": "null"
+                }
+              }
+            },
+            "description": "Endpoint version"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Error",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "tags": ["accounts"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/v1/keys": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        },
+        "tags": ["accounts"],
+        "parameters": [
+          {
+            "name": "numKeys",
+            "in": "query",
+            "schema": {
+              "default": 2,
+              "type": "number"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/accounts/{telosAccount}": {
+      "get": {
+        "responses": {
+          "204": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Account name valid and not already taken",
+                  "type": "null"
+                }
+              }
+            },
+            "description": "Account name valid and not already taken"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Account check failure",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Account check failure"
+          }
+        },
+        "tags": ["accounts"],
+        "parameters": [
+          {
+            "name": "telosAccount",
+            "in": "path",
+            "required": true,
+            "description": "Account name to check",
+            "schema": {
+              "description": "Account name to check",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/stats/blocktivity": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "last_1h_op": {
+                      "type": "number",
+                      "example": 123456789
+                    },
+                    "last_1h_tx": {
+                      "type": "number",
+                      "example": 123456
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": ["stats"]
+      }
+    },
+    "/v1/supply/staked": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": 123456.789,
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "description": "total staked including resources",
+        "tags": ["stats"]
+      }
+    },
+    "/v1/apy/evm": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": 12.34,
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["stats", "evm"]
+      }
+    },
+    "/v1/apy/native": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": 12.34,
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["stats"]
+      }
+    },
+    "/v1/staked/evm": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": 123456,
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["stats", "evm"]
+      }
+    },
+    "/v1/staked/zero": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": 123456.789,
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["stats"]
+      }
+    },
+    "/v1/staked/total": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": 123456,
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["stats"]
+      }
+    },
+    "/v1/supply/circulating": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": 123456.789,
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["stats"],
+        "parameters": [
+          {
+            "name": "requestor",
+            "in": "query",
+            "schema": {
+              "default": "any",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/supply/circulating/json": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "result": 123456.789
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["stats"],
+        "parameters": [
+          {
+            "name": "requestor",
+            "in": "query",
+            "schema": {
+              "default": "any",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/supply/total": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": 123456,
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["stats"]
+      }
+    },
+    "/v1/supply/total/json": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "result": 123456
+                  },
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["stats"]
+      }
+    },
+    "/v1/rex/staked": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": 123456.789,
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["stats"]
+      }
+    },
+    "/v1/rex/price": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": 0.0123456,
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["stats"]
+      }
+    },
+    "/v1/contracts/status:contractAddress": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        },
+        "summary": "returns current verifcation status of contract",
+        "tags": ["evm"],
+        "parameters": [
+          {
+            "name": "contractAddress",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/contracts/metadata:contractAddress": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        },
+        "summary": "returns source files",
+        "tags": ["evm"],
+        "parameters": [
+          {
+            "name": "contractAddress",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/testnet/rotation_schedule": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "The current rotation schedule",
+                  "example": ["producer1", "producer2", "producer3"],
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "description": "The current rotation schedule"
+          }
+        },
+        "tags": ["testnet"]
+      }
+    },
+    "/v1/testnet/rotate": {
+      "get": {
+        "responses": {
+          "204": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Rotation successful",
+                  "type": "null"
+                }
+              }
+            },
+            "description": "Rotation successful"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Rotation error",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Rotation error"
+          }
+        },
+        "tags": ["testnet"]
+      }
+    },
+    "/v1/testnet/produce/{bpAccount}": {
+      "get": {
+        "responses": {
+          "204": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Rotation successful",
+                  "type": "null"
+                }
+              }
+            },
+            "description": "Rotation successful"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Rotation error",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Rotation error"
+          }
+        },
+        "tags": ["testnet"],
+        "parameters": [
+          {
+            "name": "bpAccount",
+            "in": "path",
+            "required": true,
+            "description": "BP account to add to rotation",
+            "schema": {
+              "description": "BP account to add to rotation",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/testnet/faucet/{accountName}": {
+      "get": {
+        "responses": {
+          "204": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Faucet successful",
+                  "type": "null"
+                }
+              }
+            },
+            "description": "Faucet successful"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Faucet error",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Faucet error"
+          }
+        },
+        "tags": ["testnet"],
+        "parameters": [
+          {
+            "name": "accountName",
+            "in": "path",
+            "required": true,
+            "description": "Account name to receive TLOS",
+            "schema": {
+              "description": "Account name to receive TLOS",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/testnet/evmFaucet/{evmAddress}": {
+      "get": {
+        "responses": {
+          "204": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Faucet successful",
+                  "type": "null"
+                }
+              }
+            },
+            "description": "Faucet successful"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Faucet error",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Faucet error"
+          }
+        },
+        "tags": ["testnet"],
+        "parameters": [
+          {
+            "name": "evmAddress",
+            "in": "path",
+            "required": true,
+            "description": "TelosEVM address to send the EVM TLOS to",
+            "schema": {
+              "description": "TelosEVM address to send the EVM TLOS to",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/testnet/zkEvmFaucet/{evmAddress}": {
+      "get": {
+        "responses": {
+          "204": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Faucet successful",
+                  "type": "null"
+                }
+              }
+            },
+            "description": "Faucet successful"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Faucet error",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Faucet error"
+          }
+        },
+        "tags": ["testnet"],
+        "parameters": [
+          {
+            "name": "evmAddress",
+            "in": "path",
+            "required": true,
+            "description": "zkEVM address to send ETH to",
+            "schema": {
+              "description": "zkEVM address to send ETH to",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/testnet/account": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Transaction id",
+                  "type": "string",
+                  "example": "31940262645f44299d1d5d02fb9b313dc9e6b9904677f1410bb63247c9dec234"
+                }
+              }
+            },
+            "description": "Transaction id"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Faucet error",
+                  "type": "string",
+                  "examples": [{}, {}]
+                }
+              }
+            },
+            "description": "Faucet error"
+          }
+        },
+        "tags": ["testnet"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": ["accountName", "ownerKey", "activeKey"],
+                "type": "object",
+                "properties": {
+                  "accountName": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5]{12}$",
+                    "description": "12 character account name, only characters a-z and 1-5 can be used",
+                    "example": "myaccount123"
+                  },
+                  "ownerKey": {
+                    "type": "string",
+                    "pattern": "^EOS[0-9A-Za-z]{50}$",
+                    "description": "Owner public key",
+                    "example": "EOS1234..."
+                  },
+                  "activeKey": {
+                    "type": "string",
+                    "pattern": "^EOS[0-9A-Za-z]{50}$",
+                    "description": "Active public key",
+                    "example": "EOS4321..."
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/v1/evm/tokens/marketdata/historical": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "symbol": {
+                        "type": "string"
+                      },
+                      "datapoints": {
+                        "type": "object",
+                        "properties": {
+                          "symbol": {
+                            "type": "string"
+                          },
+                          "collected": {
+                            "type": "number"
+                          },
+                          "price": {
+                            "type": "number"
+                          },
+                          "supply": {
+                            "type": "string"
+                          },
+                          "max_supply": {
+                            "type": "string"
+                          },
+                          "market_cap": {
+                            "type": "string"
+                          },
+                          "volume": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["tokens", "evm"],
+        "parameters": [
+          {
+            "name": "symbols",
+            "in": "query",
+            "required": true,
+            "description": "The comma separated token symbol list (i.e. TLOS,BTC,ETH)",
+            "schema": {
+              "description": "The comma separated token symbol list (i.e. TLOS,BTC,ETH)",
+              "type": "string"
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "description": "Collected after millisecond epoch",
+            "schema": {
+              "description": "Collected after millisecond epoch",
+              "type": "number"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "description": "Collected before millisecond epoch",
+            "schema": {
+              "description": "Collected before millisecond epoch",
+              "type": "number"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/evm/tokens/marketdata": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "symbol": {
+                        "type": "string"
+                      },
+                      "collected": {
+                        "type": "number"
+                      },
+                      "price": {
+                        "type": "number"
+                      },
+                      "supply": {
+                        "type": "string"
+                      },
+                      "max_supply": {
+                        "type": "string"
+                      },
+                      "market_cap": {
+                        "type": "string"
+                      },
+                      "volume": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["tokens", "evm"],
+        "parameters": [
+          {
+            "name": "symbols",
+            "in": "query",
+            "required": true,
+            "description": "The comma separated token symbol list (i.e. TLOS,BTC,ETH)",
+            "schema": {
+              "description": "The comma separated token symbol list (i.e. TLOS,BTC,ETH)",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/token/supply/{contract}/{symbol}": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": 123456.789,
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["tokens"],
+        "parameters": [
+          {
+            "name": "exclude",
+            "in": "query",
+            "description": "Comma separated list of accounts to exclude from the total (i.e. thisisnotjoe,thisisnottim).",
+            "schema": {
+              "description": "Comma separated list of accounts to exclude from the total (i.e. thisisnotjoe,thisisnottim).",
+              "type": "string"
+            }
+          },
+          {
+            "name": "numeric",
+            "in": "query",
+            "description": "If the response should be numeric only or should include the symbol, if true the symbol will be left off the response.",
+            "schema": {
+              "description": "If the response should be numeric only or should include the symbol, if true the symbol will be left off the response.",
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "contract",
+            "in": "path",
+            "required": true,
+            "description": "Token contract account name",
+            "schema": {
+              "description": "Token contract account name",
+              "type": "string"
+            }
+          },
+          {
+            "name": "symbol",
+            "in": "path",
+            "required": true,
+            "description": "The token symbol (i.e. TLOS)",
+            "schema": {
+              "description": "The token symbol (i.e. TLOS)",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/v1/token/supply/{contract}/{symbol}/burnt": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": 123456,
+                  "type": "number"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["tokens"],
+        "parameters": [
+          {
+            "name": "contract",
+            "in": "path",
+            "required": true,
+            "description": "Token contract account name",
+            "schema": {
+              "description": "Token contract account name",
+              "type": "string"
+            }
+          },
+          {
+            "name": "symbol",
+            "in": "path",
+            "required": true,
+            "description": "The token symbol (i.e. TLOS)",
+            "schema": {
+              "description": "The token symbol (i.e. TLOS)",
+              "type": "string"
+            }
+          }
+        ]
+      }
+    }
+  }
+}

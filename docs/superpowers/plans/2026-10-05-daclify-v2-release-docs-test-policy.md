@@ -1,6 +1,6 @@
 # Daclify V2 Versioning, Product Documentation, Storage and Test Policy
 
-Date: 2026-10-05. Status: implementation requirements, not an implemented release system. The user selected three private repositories, Pinata for pinning, extensive meaningful tests, and one continuous implementation session followed by their review of the complete code. Application implementation has not started.
+Date: 2026-10-05. Status: implementation requirements; implementation is in progress and the complete release system is not yet verified. The user selected three private repositories, Pinata for pinning, extensive meaningful tests, and one continuous implementation session followed by their review of the complete code. Current evidence and open limitations are tracked in `docs/evidence/`.
 
 This policy applies to all [work packages](2026-10-05-daclify-v2-work-packages.md). WP02 establishes version/release tooling and test infrastructure; WP11 implements Pinata; WP13 delivers documentation in the UI; WP18 verifies and publishes the complete release. Each other package supplies its own compatibility rules, documentation and acceptance evidence.
 

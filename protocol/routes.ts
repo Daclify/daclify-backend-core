@@ -1,0 +1,149 @@
+import { z } from 'zod';
+import {
+  ChallengeRequestSchema,
+  ChallengeSchema,
+  LoginRequestSchema,
+  SessionSchema,
+  AccountSchema,
+  NetworkSchema,
+  DaoSummarySchema,
+  CreateDaoSchema,
+  UserMembershipSchema,
+} from './api.js';
+import { DaoContentSchema } from './content.js';
+import { RuntimeActionSchemas } from '../sdk/generated/schemas.js';
+import {
+  StorageStatusSchema,
+  HostedUploadSchema,
+  HostedDocumentSchema,
+  UploadStatusSchema,
+  HostedBytesSchema,
+} from './storage.js';
+import { TreasurySchema, SettlementRequestSchema, SettlementResultSchema } from './treasury.js';
+export const ApiRoutes = {
+  network: {
+    method: 'GET',
+    path: '/v1/network',
+    response: NetworkSchema,
+    helpTopic: 'deployments',
+  },
+  daos: {
+    method: 'GET',
+    path: '/v1/daos',
+    response: z.strictObject({ daos: z.array(DaoSummarySchema) }),
+    helpTopic: 'deployments',
+  },
+  content: {
+    method: 'GET',
+    path: '/v1/daos/:id/content',
+    response: DaoContentSchema,
+    helpTopic: 'documents',
+  },
+  dao: {
+    method: 'GET',
+    path: '/v1/daos/:id',
+    response: DaoSummarySchema,
+    helpTopic: 'deployments',
+  },
+  treasury: {
+    method: 'GET',
+    path: '/v1/daos/:id/treasury',
+    response: TreasurySchema,
+    helpTopic: 'treasury',
+  },
+  settle: {
+    method: 'POST',
+    path: '/v1/treasury/settle',
+    input: SettlementRequestSchema,
+    response: SettlementResultSchema,
+    helpTopic: 'treasury',
+  },
+  storage: {
+    method: 'GET',
+    path: '/v1/storage',
+    response: StorageStatusSchema,
+    helpTopic: 'providers',
+  },
+  upload: {
+    method: 'POST',
+    path: '/v1/uploads',
+    input: HostedUploadSchema,
+    response: HostedDocumentSchema,
+    helpTopic: 'documents',
+  },
+  uploadStatus: {
+    method: 'GET',
+    path: '/v1/uploads/:requestId',
+    response: UploadStatusSchema,
+    helpTopic: 'documents',
+  },
+  uploadReconcile: {
+    method: 'POST',
+    path: '/v1/uploads/:requestId/reconcile',
+    input: z.strictObject({}).default({}),
+    response: UploadStatusSchema,
+    helpTopic: 'documents',
+  },
+  documentBytes: {
+    method: 'GET',
+    path: '/v1/daos/:id/documents/:documentId/:version/content',
+    response: z.strictObject({ content: HostedBytesSchema }),
+    helpTopic: 'documents',
+  },
+  challenge: {
+    method: 'POST',
+    path: '/v1/auth/challenge',
+    input: ChallengeRequestSchema,
+    response: ChallengeSchema,
+    helpTopic: 'accounts',
+  },
+  login: {
+    method: 'POST',
+    path: '/v1/auth/login',
+    input: LoginRequestSchema,
+    response: SessionSchema,
+    helpTopic: 'accounts',
+  },
+  me: {
+    method: 'GET',
+    path: '/v1/me',
+    response: z.strictObject({ account: AccountSchema }),
+    helpTopic: 'accounts',
+  },
+  memberships: {
+    method: 'GET',
+    path: '/v1/me/memberships',
+    response: z.strictObject({ memberships: z.array(UserMembershipSchema) }),
+    helpTopic: 'members',
+  },
+  logout: {
+    method: 'POST',
+    path: '/v1/auth/logout',
+    input: z.strictObject({}).default({}),
+    response: z.null(),
+    helpTopic: 'accounts',
+  },
+  createDao: {
+    method: 'POST',
+    path: '/v1/daos',
+    input: CreateDaoSchema,
+    response: DaoSummarySchema,
+    helpTopic: 'deployments',
+  },
+  relay: {
+    method: 'POST',
+    path: '/v1/relay',
+    input: RuntimeActionSchemas.submit,
+    response: z.strictObject({ transactionId: z.string().regex(/^[0-9a-f]{64}$/) }),
+    helpTopic: 'modules',
+  },
+} satisfies Record<
+  string,
+  {
+    method: 'GET' | 'POST';
+    path: string;
+    input?: z.ZodType;
+    response: z.ZodType;
+    helpTopic: string;
+  }
+>;

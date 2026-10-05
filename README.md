@@ -2,7 +2,7 @@
 
 Private development repository for Antelope C++ core contracts and strict TypeScript services. Core owns DAO runtime and discovery Hub, identity/roles, governance-credit and staking primitives, treasury/obligations/native settlement, API/custody boundaries, relayer/worker host, database migrations, common schemas, generated public SDK and release/deployment tooling.
 
-Current status: repository setup and planning only. Application contracts/services, dependency manifests, build scripts and CI have not been implemented. The documented legacy experiments are evidence inputs, not V2 test results.
+Current status: incomplete development implementation. Core C++ runtime/Hub, generated protocol/SDK, TypeScript API, PostgreSQL migrations, user-controlled identity, hosted storage/reconciliation and functional test harnesses are implemented. A confirmed native module authorization defect, missing on-chain module code pinning, provider/custody qualification and remaining account/deployment/release work prevent production readiness. See [implementation limits](docs/evidence/implementation-limits.md) and the [execution ledger](docs/evidence/execution-ledger.json).
 
 The comprehensive plan is version controlled here:
 
@@ -19,3 +19,5 @@ Core uses Pinata as its first pinning provider, with backend-only credentials an
 
 The user requests one continuous implementation session and reviews the complete code afterward. Record meaningful test results, migrations, compatibility and documentation with each feature, then deliver a complete review packet across all three repositories. Production deployment, authority changes and asset migration require separate express authorization after that review.
 Daclify V2 — Antelope C++ core contracts, services, identity, and public protocol
+
+For source-only checkout installation, local test setup and the held-check boundaries, read [development instructions](docs/development.md). Use `node tools/bootstrap.ts` before an initial ordinary `npm ci`; use `--contracts` to rebuild the C++ artifacts with the documented local toolchain image.

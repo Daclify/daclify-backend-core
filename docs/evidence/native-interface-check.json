@@ -1,0 +1,44 @@
+[
+  {
+    "endpoint": "https://mainnet.telos.net",
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "endpoint": "https://telos.eu.eosamsterdam.net",
+    "info": {
+      "server_version": "e6a99f68",
+      "chain_id": "4667b205c6838ef70ff7988f6e8257e8be0e1284a2f59699054a018f743b1d11",
+      "head_block_num": 492369045,
+      "last_irreversible_block_num": 492369043,
+      "last_irreversible_block_id": "1d58f4935eb52d9719109122c5c814ba5c80d15ad4182fcbea536a0a78f7e065",
+      "head_block_id": "1d58f4951ddd9e389b0b70b9f7f28e3f47d2b8903d3157002e63de3f7b0d74ba",
+      "head_block_time": "2026-10-05T13:02:30.500",
+      "head_block_producer": "ledgerwisete",
+      "virtual_block_cpu_limit": 200000000,
+      "virtual_block_net_limit": 1048576000,
+      "block_cpu_limit": 200000,
+      "block_net_limit": 1048576,
+      "server_version_string": "v1.3.0",
+      "fork_db_head_block_num": 492369045,
+      "fork_db_head_block_id": "1d58f4951ddd9e389b0b70b9f7f28e3f47d2b8903d3157002e63de3f7b0d74ba",
+      "server_full_version_string": "v1.3.0-e6a99f68b67abc4d89fe716755b2e1394a4991f7-dirty",
+      "total_cpu_weight": "50287216111",
+      "total_net_weight": "40136020374",
+      "earliest_available_block_num": 1,
+      "last_irreversible_block_time": "2026-10-05T13:02:29.500"
+    },
+    "evmActions": [
+      "call",
+      "create",
+      "doresources",
+      "init",
+      "openwallet",
+      "raw",
+      "receipt",
+      "setresources",
+      "setrevision",
+      "withdraw"
+    ],
+    "evmTables": ["account", "accountstate", "config", "resources"]
+  }
+]
