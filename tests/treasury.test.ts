@@ -7,6 +7,8 @@ let chain: Blockchain;
 let runtime: ReturnType<typeof loadContract>;
 let token: ReturnType<typeof loadContract>;
 let rogue: ReturnType<typeof loadContract>;
+let works: ReturnType<typeof loadContract>;
+let payroll: ReturnType<typeof loadContract>;
 const units = z.union([z.string(), z.number().int().safe()]).transform((value) => BigInt(value));
 const ledgerSchema = z.object({ available: units, reserved: units, claims: units, staked: units });
 function ledger(id = 1) {
@@ -14,8 +16,10 @@ function ledger(id = 1) {
 }
 beforeEach(async () => {
   chain = new Blockchain();
-  chain.createAccounts('alice', 'bob', 'works', 'payroll');
+  chain.createAccounts('alice', 'bob');
   runtime = loadContract(chain, 'daclifycore', '.artifacts/contracts/runtime');
+  works = loadContract(chain, 'works', '.artifacts/contracts/modrelay');
+  payroll = loadContract(chain, 'payroll', '.artifacts/contracts/modrelay');
   token = loadContract(chain, 'eosio.token', '.artifacts/contracts/testtoken');
   rogue = loadContract(chain, 'rogue.token', '.artifacts/contracts/testtoken');
   await send(runtime, 'init', ['ab'.repeat(32)], 'daclifycore@active');
@@ -47,8 +51,18 @@ beforeEach(async () => {
 async function deposit(amount = '20.0000 TLOS', memo = 'dao:1', t = token) {
   await send(t, 'transfer', ['alice', 'daclifycore', amount, memo], 'alice@active');
 }
-async function reserve(id = 1, quantity = '5.0000 TLOS', source = 'works', dao = 1) {
-  await send(runtime, 'reserve', [dao, source, id, 1, quantity, 0], `${source}@active`);
+async function reserve(
+  id = 1,
+  quantity = '5.0000 TLOS',
+  source: ReturnType<typeof loadContract> = works,
+  dao = 1,
+) {
+  await send(
+    source,
+    'reserve',
+    [runtime.name.toString(), dao, id, 1, quantity, 0],
+    `${source.name.toString()}@active`,
+  );
 }
 describe('native treasury backing and obligations', () => {
   it('credits only the receiving DAO', async () => {
@@ -80,8 +94,8 @@ describe('native treasury backing and obligations', () => {
     await deposit();
     await expect(
       send(runtime, 'reserve', [1, 'works', 1, 1, '1.0000 TLOS', 0], 'bob@active'),
-    ).rejects.toThrow();
-    await expect(reserve(1, '1.0000 TLOS', 'payroll')).rejects.toThrow('MODULE_DISABLED');
+    ).rejects.toThrow('SOURCE_SENDER');
+    await expect(reserve(1, '1.0000 TLOS', payroll)).rejects.toThrow('MODULE_DISABLED');
   });
   it('rejects duplicate source obligations', async () => {
     await deposit();
@@ -93,7 +107,7 @@ describe('native treasury backing and obligations', () => {
     await deposit('20.0000 TLOS', 'dao:1');
     await deposit('20.0000 TLOS', 'dao:2');
     await reserve();
-    await reserve(1, '5.0000 TLOS', 'works', 2);
+    await reserve(1, '5.0000 TLOS', works, 2);
     expect(ledger(1).reserved).toBe(50000n);
     expect(ledger(2).reserved).toBe(50000n);
   });
@@ -107,7 +121,7 @@ describe('native treasury backing and obligations', () => {
   it('settles a native obligation once and conserves backing', async () => {
     await deposit();
     await reserve();
-    await send(runtime, 'approveob', [1, 'works', 1], 'works@active');
+    await send(works, 'approveob', [runtime.name.toString(), 1, 1], 'works@active');
     await send(runtime, 'payob', [1, 'works', 1], 'bob@active');
     expect(ledger()).toMatchObject({ available: 150000n, reserved: 0n, claims: 0n });
     const balance = z
@@ -128,17 +142,19 @@ describe('native treasury backing and obligations', () => {
   it('cancels only an unapproved reservation', async () => {
     await deposit();
     await reserve();
-    await send(runtime, 'cancelob', [1, 'works', 1], 'works@active');
+    await send(works, 'cancelob', [runtime.name.toString(), 1, 1], 'works@active');
     expect(ledger()).toMatchObject({ available: 200000n, reserved: 0n });
-    await expect(send(runtime, 'cancelob', [1, 'works', 1], 'works@active')).rejects.toThrow();
+    await expect(
+      send(works, 'cancelob', [runtime.name.toString(), 1, 1], 'works@active'),
+    ).rejects.toThrow();
   });
   it('cannot cancel an accepted obligation', async () => {
     await deposit();
     await reserve();
-    await send(runtime, 'approveob', [1, 'works', 1], 'works@active');
-    await expect(send(runtime, 'cancelob', [1, 'works', 1], 'works@active')).rejects.toThrow(
-      'NOT_CANCELLABLE',
-    );
+    await send(works, 'approveob', [runtime.name.toString(), 1, 1], 'works@active');
+    await expect(
+      send(works, 'cancelob', [runtime.name.toString(), 1, 1], 'works@active'),
+    ).rejects.toThrow('NOT_CANCELLABLE');
   });
   it('keeps governance stake separate from treasury funding', async () => {
     await deposit('10.0000 TLOS', 'stake:1:1');

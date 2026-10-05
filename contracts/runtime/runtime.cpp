@@ -146,7 +146,7 @@ public:
   }
   ACTION govunlock(uint64_t dao_id,name source,uint64_t source_id) {
     governance_locks rows(get_self(),dao_id);auto index=rows.get_index<"bysource"_n>();const auto& lock=index.get(source_hash(source,source_id),"LOCK_UNKNOWN");check(lock.source==source&&lock.source_id==source_id,"LOCK_DOMAIN");check(lock.active,"LOCK_INACTIVE");
-    if(lock.expires>current_time_point().sec_since_epoch())require_auth(source);
+    if(lock.expires>current_time_point().sec_since_epoch())require_source(dao_id,source,"govlock"_n);
     rows.modify(rows.get(lock.id),same_payer,[](auto& r){r.active=false;});const auto& d=dao_rows.get(dao_id);check(d.active_ballots>0,"LOCK_COUNTER");dao_rows.modify(d,same_payer,[](auto& r){r.active_ballots--;});
   }
   ACTION withdraw(name runtime,uint64_t dao_id,uint64_t member_id,name destination,asset quantity) {
@@ -209,7 +209,9 @@ private:
     auto unique=[](const auto& list){for(size_t i=0;i<list.size();i++){check(list[i].value>0,"MODULE_ACTION");for(size_t j=i+1;j<list.size();j++)check(list[i]!=list[j],"DUPLICATE_GRANT");}};unique(actions);unique(grants);modules rows(get_self(),dao_id);auto it=rows.find(account.value);
     if(it==rows.end())rows.emplace(get_self(),[&](auto& r){r.account=account;r.version=version;r.actions=actions;r.grants=grants;});else rows.modify(it,same_payer,[&](auto& r){r.version=version;r.actions=actions;r.grants=grants;});
   }
-  void require_source(uint64_t dao_id,name source,name grant){check(!get_sender().value||get_sender()==source,"SOURCE_SENDER");require_auth(source);modules rows(get_self(),dao_id);const auto& installed=rows.get(source.value,"MODULE_DISABLED");check(std::find(installed.grants.begin(),installed.grants.end(),grant)!=installed.grants.end(),"MODULE_GRANT");}
+  // The module account key satisfies require_auth on a direct action. Only that
+  // account's executing contract sets get_sender, so the key cannot skip the module.
+  void require_source(uint64_t dao_id,name source,name grant){check(get_sender()==source,"SOURCE_SENDER");require_auth(source);modules rows(get_self(),dao_id);const auto& installed=rows.get(source.value,"MODULE_DISABLED");check(std::find(installed.grants.begin(),installed.grants.end(),grant)!=installed.grants.end(),"MODULE_GRANT");}
   void validate_instruction(const instruction& r) {
     auto c=configuration();check(r.version==c.interface_version&&r.chain_id==c.chain_id&&r.deployment==get_self(),"INSTRUCTION_DOMAIN");
     const auto& d=dao_rows.get(r.dao_id,"DAO_UNKNOWN");(void)d;

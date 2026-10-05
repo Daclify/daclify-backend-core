@@ -10,9 +10,9 @@ The security checks associated with those interruptions are held rather than rep
 
 ## Known contract issue
 
-The native module-authority regression currently fails: a module account's direct authorization can reach a core obligation callback without the expected module workflow. The source authorization boundary must be corrected and verified on the native runtime before a release can be considered for funds. This is a confirmed open defect, not merely an unrun test.
+Direct module-account authorization no longer reaches `reserve`, `approveob`, module `cancelob`, `govlock`, or an unexpired `govunlock`. `require_source` requires `get_sender()==source`, which an inline action from the module contract sets and a direct key signature does not. DAO-owner cancellation and permissionless settlement of an already approved obligation are unchanged. On 2026-10-05 this checkout's native fixture rejected `works@active` calling `reserve` with `SOURCE_SENDER`, and `works::accept` still reserved funds through its inline action. VERT module suites for works, payroll, and decide passed against that runtime. That does not close the separate code-pinning gap below.
 
-Module build hashes are checked by the API/UI, but reviewed code is not yet pinned and enforced by the runtime for every installed module. This remains an implementation requirement. Client checks alone do not establish on-chain policy enforcement.
+Module build hashes are checked by the API/UI, but reviewed code is not yet pinned and enforced by the runtime for every installed module. Replacing the module account's contract would still satisfy the sender check. This remains an implementation requirement. Client checks alone do not establish on-chain policy enforcement.
 
 Network metadata currently reports the service package version. It does not independently verify the core runtime's deployed code/ABI hashes. The handbook identifies that distinction. Full runtime release verification remains required.
 

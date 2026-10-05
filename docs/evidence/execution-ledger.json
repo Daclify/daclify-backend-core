@@ -88,7 +88,29 @@
     "Verified legacy deployment inventory and authorized migration",
     "Independent security review before mainnet launch"
   ],
-  "lastCheckpoint": "2026-10-05 verified hosted files/reconciliation, Decide/Works/payroll/treasury workflows, generated handbook and source-only bootstrap",
+  "lastCheckpoint": "2026-10-05 module callback sender check verified on VERT and local native cleos. OpenBao and HTTP native cases were not executed. Code-hash pinning, integration, frontend, and browser checks were not rerun.",
+  "currentCheckout": {
+    "coreBase": "27ba179",
+    "modulesBase": "b2d6cba",
+    "frontendBase": "13784ed",
+    "node": "24.21.0",
+    "npm": "11.19.0",
+    "runtimeCodeHash": "3072682ea80ff2ab74bb6c91057e3637822d79c3bfa994d52870f26299bbd050",
+    "ran": [
+      "core vitest: 207 passed, 22 files, including 5 new module-callback-authority cases",
+      "modules vitest: 40 passed against the rebuilt runtime wasm",
+      "native dispatch, permission, runtime except the OpenBao case, and module-authority: 9 passed",
+      "native module-authority: direct works@active reserve rejected SOURCE_SENDER; works::accept inline reserve stored reserved=10000"
+    ],
+    "notRun": [
+      "native OpenBao R1 case: OPENBAO_URL and OPENBAO_TOKEN were unset, so the case did not reach the contract",
+      "native HTTP/API suite: DATABASE_URL was unset",
+      "PostgreSQL/API integration",
+      "OpenBao provider suite",
+      "frontend unit, build, and browser journeys",
+      "package:release, which still refuses"
+    ]
+  },
   "verified": [
     "Checksum-verified CDT 4.1.1 / Spring 1.2.2 toolchain rebuilt core and module contracts in a source-only copy",
     "202 current core unit/property/compiled-WASM cases passed",
@@ -105,7 +127,7 @@
   "limits": [
     "Sponsored factory resource/rate budgets, admission/key rotation, social/native-wallet/managed account journeys, independent-runtime fleet discovery, custom module policy, executor/committee extensions, CI, immutable registry releases, migration tooling, Operations/billing and chain adapters remain incomplete",
     "User has no configured Pinata/OAuth/Telegram provider credentials; production custody operation remains unverified",
-    "Confirmed native module authorization defect and missing runtime module code pinning block production readiness; see implementation-limits.md",
+    "Direct module-key callbacks are rejected in this checkout. Missing runtime module code pinning still blocks production readiness; see implementation-limits.md",
     "No production chain changes, real asset movement, registry publication or legacy cutover",
     "Consumers use local development artifacts; bootstrap refreshes their lock integrities and preserves the exact module core peer version",
     "Hosted file UI and bounded scheduled reconciliation are implemented; automatic cleanup/shared retention/re-pinning and measured allowances remain incomplete; uncertain reservations retain budget"
@@ -113,15 +135,15 @@
   "verification_holds": [
     {
       "check": "native module-authority regression",
-      "lastResult": "failed",
-      "status": "held",
-      "reason": "Confirmed open contract authorization defect. Security checks associated with repeated platform interruptions are not being retried."
+      "lastResult": "passed",
+      "status": "passed",
+      "reason": "2026-10-05 this checkout on daclify-v2-native: direct works@active reserve failed with SOURCE_SENDER, and works::accept reserved funds inline. On-chain code pinning is a separate open gap."
     },
     {
       "check": "complete current native suite",
-      "lastResult": "not_run",
+      "lastResult": "incomplete",
       "status": "held",
-      "reason": "Includes the confirmed failing module-authority case; earlier successful subsets are not a full-suite pass."
+      "reason": "9 cleos cases passed, including module authority. The OpenBao R1 case did not start because its environment variables were unset. The HTTP/API native file was not run because DATABASE_URL was unset."
     }
   ]
 }

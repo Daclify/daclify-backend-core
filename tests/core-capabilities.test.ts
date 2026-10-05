@@ -5,10 +5,12 @@ import { z } from 'zod';
 import { loadContract, send, row } from './helpers/vert.js';
 let runtime: ReturnType<typeof loadContract>;
 let token: ReturnType<typeof loadContract>;
+let works: ReturnType<typeof loadContract>;
 beforeEach(async () => {
   const chain = new Blockchain();
-  chain.createAccounts('alice', 'bob', 'works');
+  chain.createAccounts('alice', 'bob');
   runtime = loadContract(chain, 'daclifycore', '.artifacts/contracts/runtime');
+  works = loadContract(chain, 'works', '.artifacts/contracts/modrelay');
   token = loadContract(chain, 'eosio.token', '.artifacts/contracts/testtoken');
   await send(runtime, 'init', ['ab'.repeat(32)], 'daclifycore@active');
   await send(runtime, 'createdao', [1, 'alice', '{}', 2, 'eosio.token', '4,TLOS'], 'alice@active');
@@ -102,7 +104,7 @@ describe('roles and encrypted epoch grants', () => {
 });
 describe('bounded governance locks and financial exit', () => {
   it('freezes supply under a granted ballot lock', async () => {
-    await send(runtime, 'govlock', [1, 'works', 1, 500], 'works@active');
+    await send(works, 'govlock', [runtime.name.toString(), 1, 1, 500], 'works@active');
     expect(balance().active_ballots).toBe(1);
     await expect(send(runtime, 'grantcredit', [1, 2, 1], 'alice@active')).rejects.toThrow(
       'GOVERNANCE_LOCKED',
@@ -110,24 +112,31 @@ describe('bounded governance locks and financial exit', () => {
   });
   it('rejects ungranted sources', async () => {
     await expect(send(runtime, 'govlock', [1, 'bob', 1, 500], 'bob@active')).rejects.toThrow(
-      'MODULE_DISABLED',
+      'SOURCE_SENDER',
     );
   });
   it('rejects repeated unlock and preserves the counter', async () => {
-    await send(runtime, 'govlock', [1, 'works', 1, 500], 'works@active');
-    await send(runtime, 'govunlock', [1, 'works', 1], 'works@active');
-    await expect(send(runtime, 'govunlock', [1, 'works', 1], 'works@active')).rejects.toThrow(
-      'LOCK_INACTIVE',
-    );
+    await send(works, 'govlock', [runtime.name.toString(), 1, 1, 500], 'works@active');
+    await send(works, 'govunlock', [runtime.name.toString(), 1, 1], 'works@active');
+    await expect(
+      send(works, 'govunlock', [runtime.name.toString(), 1, 1], 'works@active'),
+    ).rejects.toThrow('LOCK_INACTIVE');
     expect(balance().active_ballots).toBe(0);
   });
   it('does not let another source unlock early', async () => {
-    await send(runtime, 'govlock', [1, 'works', 1, 500], 'works@active');
-    await expect(send(runtime, 'govunlock', [1, 'works', 1], 'bob@active')).rejects.toThrow();
+    await send(works, 'govlock', [runtime.name.toString(), 1, 1, 500], 'works@active');
+    await expect(send(runtime, 'govunlock', [1, 'works', 1], 'bob@active')).rejects.toThrow(
+      'SOURCE_SENDER',
+    );
   });
   it('pays an internal claim to the signed recipient account', async () => {
-    await send(runtime, 'reserve', [1, 'works', 1, 2, '1.0000 TLOS', 0], 'works@active');
-    await send(runtime, 'approveob', [1, 'works', 1], 'works@active');
+    await send(
+      works,
+      'reserve',
+      [runtime.name.toString(), 1, 1, 2, '1.0000 TLOS', 0],
+      'works@active',
+    );
+    await send(works, 'approveob', [runtime.name.toString(), 1, 1], 'works@active');
     await send(runtime, 'payob', [1, 'works', 1], 'bob@active');
     await send(
       runtime,
@@ -138,8 +147,13 @@ describe('bounded governance locks and financial exit', () => {
     expect(balance().claims).toBe(0);
   });
   it('allows an offboarded member to withdraw an accepted liability', async () => {
-    await send(runtime, 'reserve', [1, 'works', 1, 2, '1.0000 TLOS', 0], 'works@active');
-    await send(runtime, 'approveob', [1, 'works', 1], 'works@active');
+    await send(
+      works,
+      'reserve',
+      [runtime.name.toString(), 1, 1, 2, '1.0000 TLOS', 0],
+      'works@active',
+    );
+    await send(works, 'approveob', [runtime.name.toString(), 1, 1], 'works@active');
     await send(runtime, 'payob', [1, 'works', 1], 'bob@active');
     await send(runtime, 'setactive', ['daclifycore', 1, 1, 2, false], 'daclifycore@active');
     await send(
