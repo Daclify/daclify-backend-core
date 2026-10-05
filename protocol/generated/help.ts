@@ -49,6 +49,7 @@ export const CoreHelpBundle={
         "Funds move from available to reserved when an obligation is created. Review approves it. Settlement either transfers native tokens or credits a backed internal claim.",
         "Approved liabilities remain payable after module removal or subscription expiry. Offboarded members retain financial exit rights. Internal governance credits are not redeemable treasury balances.",
         "The treasury view shows reserved, approved, settled and cancelled obligations. A signed-in user can request settlement of an already approved, due obligation; the contract chooses its recorded recipient and amount. This does not require reinstalling the source module. Existing internal claims and governance stake can be withdrawn through a signed instruction to an existing native payout account.",
+        "An administrator can record one DAO-confirmed external payment statement with a signed instruction. It names the chain, payer and reference, and it must repeat the approved obligation’s recipient and exact asset amount. Reusing that reference for another obligation is rejected. The record does not move a balance, mark the obligation paid, or block later native settlement. Attested and contract-verified external settlement are separate and are not implemented. A direct runtime key cannot create this record.",
         "This release supports one configured native treasury asset per DAO. Governance stake deposits currently require the member’s linked native account and the stake memo shown in the treasury. Walletless members can use internal governance credits. Claim-to-stake conversion and multi-asset treasury accounting are not implemented."
       ]
     },
@@ -99,7 +100,7 @@ export const CoreHelpBundle={
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "dabfa964fe23a4125ae09b854bc45aa67b9ea1b118ff28bf63701413564fb64a",
+      "sourceAbiHash": "0dc54e3ec8dd514577c4b11d10530c16e0bdc35ce76e0ae0e69d851d12e366b0",
       "actions": [
         {
           "name": "approveob",
@@ -161,6 +162,47 @@ export const CoreHelpBundle={
             {
               "name": "self_grant",
               "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "confirmext",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "obligation_id",
+              "type": "uint64"
+            },
+            {
+              "name": "chain",
+              "type": "string"
+            },
+            {
+              "name": "payer",
+              "type": "string"
+            },
+            {
+              "name": "recipient",
+              "type": "uint64"
+            },
+            {
+              "name": "quantity",
+              "type": "asset"
+            },
+            {
+              "name": "reference",
+              "type": "checksum256"
             }
           ]
         },
@@ -886,6 +928,47 @@ export const CoreHelpBundle={
             {
               "name": "creator",
               "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "evidence",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uint64"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "obligation_id",
+              "type": "uint64"
+            },
+            {
+              "name": "recipient",
+              "type": "uint64"
+            },
+            {
+              "name": "quantity",
+              "type": "asset"
+            },
+            {
+              "name": "chain",
+              "type": "string"
+            },
+            {
+              "name": "payer",
+              "type": "string"
+            },
+            {
+              "name": "reference",
+              "type": "checksum256"
+            },
+            {
+              "name": "mode",
+              "type": "uint8"
             }
           ]
         },

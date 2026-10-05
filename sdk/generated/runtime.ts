@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = 'dabfa964fe23a4125ae09b854bc45aa67b9ea1b118ff28bf63701413564fb64a';
+export const runtimeAbiHash = '0dc54e3ec8dd514577c4b11d10530c16e0bdc35ce76e0ae0e69d851d12e366b0';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -68,6 +68,48 @@ export const runtimeAbi = {
         {
           "name": "self_grant",
           "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "confirmext",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "obligation_id",
+          "type": "uint64"
+        },
+        {
+          "name": "chain",
+          "type": "string"
+        },
+        {
+          "name": "payer",
+          "type": "string"
+        },
+        {
+          "name": "recipient",
+          "type": "uint64"
+        },
+        {
+          "name": "quantity",
+          "type": "asset"
+        },
+        {
+          "name": "reference",
+          "type": "checksum256"
         }
       ]
     },
@@ -274,6 +316,48 @@ export const runtimeAbi = {
         {
           "name": "creator",
           "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "evidence_record",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "obligation_id",
+          "type": "uint64"
+        },
+        {
+          "name": "recipient",
+          "type": "uint64"
+        },
+        {
+          "name": "quantity",
+          "type": "asset"
+        },
+        {
+          "name": "chain",
+          "type": "string"
+        },
+        {
+          "name": "payer",
+          "type": "string"
+        },
+        {
+          "name": "reference",
+          "type": "checksum256"
+        },
+        {
+          "name": "mode",
+          "type": "uint8"
         }
       ]
     },
@@ -1069,6 +1153,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "confirmext",
+      "type": "confirmext",
+      "ricardian_contract": ""
+    },
+    {
       "name": "createdao",
       "type": "createdao",
       "ricardian_contract": ""
@@ -1212,6 +1301,13 @@ export const runtimeAbi = {
       "key_types": []
     },
     {
+      "name": "evidence",
+      "type": "evidence_record",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "govlocks",
       "type": "governance_lock",
       "index_type": "i64",
@@ -1276,6 +1372,17 @@ export interface commitepoch {
   commitment: string;
   self_grant: string;
 }
+export interface confirmext {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  obligation_id: string;
+  chain: string;
+  payer: string;
+  recipient: string;
+  quantity: string;
+  reference: string;
+}
 export interface createdao {
   dao_id: string;
   owner: string;
@@ -1329,6 +1436,17 @@ export interface epoch_record {
   epoch: string;
   commitment: string;
   creator: string;
+}
+export interface evidence_record {
+  id: string;
+  dao_id: string;
+  obligation_id: string;
+  recipient: string;
+  quantity: string;
+  chain: string;
+  payer: string;
+  reference: string;
+  mode: number;
 }
 export interface governance_lock {
   id: string;
@@ -1542,6 +1660,7 @@ export interface RuntimeActions {
   approveob: approveob;
   cancelob: cancelob;
   commitepoch: commitepoch;
+  confirmext: confirmext;
   createdao: createdao;
   enroll: enroll;
   govlock: govlock;

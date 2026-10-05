@@ -194,6 +194,37 @@ describe('hosted upload transactions with a simulated provider', () => {
     );
     expect(rows.rows[0]?.state).toBe('reserved');
   });
+  it('keeps an expired uncertain reservation and does not unpin it', async () => {
+    const fixture = setup(30n);
+    vi.mocked(fixture.provider.upload).mockRejectedValue(new Error('index unavailable'));
+    const request = fixture.request();
+    await expect(fixture.service.upload(account, request)).rejects.toThrow('UPLOAD_PENDING');
+    const reserved = await pool.query<{ id: string; expected_size: string }>(
+      'SELECT id,expected_size::text FROM uploads WHERE account_id=$1 AND request_id=$2',
+      [account.id, request.requestId],
+    );
+    const id = reserved.rows[0]?.id;
+    const expectedSize = reserved.rows[0]?.expected_size;
+    if (!id || !expectedSize) throw new Error('UPLOAD_MISSING');
+    await pool.query("UPDATE uploads SET expires_at=now()-interval '1 second' WHERE id=$1", [id]);
+    expect(await fixture.service.reconcile(id)).toBe('manual');
+    expect(
+      (
+        await pool.query<{ state: string; last_error_code: string; expected_size: string }>(
+          'SELECT state,last_error_code,expected_size::text FROM uploads WHERE id=$1',
+          [id],
+        )
+      ).rows[0],
+    ).toEqual({
+      state: 'reserved',
+      last_error_code: 'UPLOAD_REVIEW_REQUIRED',
+      expected_size: expectedSize,
+    });
+    expect(fixture.provider.remove).not.toHaveBeenCalled();
+    await expect(fixture.service.upload(account, fixture.request())).rejects.toThrow(
+      'STORAGE_QUOTA',
+    );
+  });
   it('requires the active on-chain member and the full deployment reference', async () => {
     const fixture = setup();
     fixture.content.members[0] = { ...member, active: false };

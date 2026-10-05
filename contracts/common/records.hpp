@@ -51,6 +51,13 @@ struct [[eosio::table("obligations"), eosio::contract("runtime")]] obligation_re
   EOSLIB_SERIALIZE(obligation_record,(id)(source)(source_id)(recipient)(quantity)(due)(status))
 };
 using obligations = multi_index<"obligations"_n,obligation_record,indexed_by<"bysource"_n,const_mem_fun<obligation_record,checksum256,&obligation_record::by_source>>>;
+struct [[eosio::table("evidence"), eosio::contract("runtime")]] evidence_record {
+  uint64_t id; uint64_t dao_id; uint64_t obligation_id; uint64_t recipient; asset quantity; std::string chain; std::string payer; checksum256 reference; uint8_t mode;
+  uint64_t primary_key() const { return id; }
+  checksum256 by_reference() const { return reference; }
+  EOSLIB_SERIALIZE(evidence_record,(id)(dao_id)(obligation_id)(recipient)(quantity)(chain)(payer)(reference)(mode))
+};
+using evidence = multi_index<"evidence"_n,evidence_record,indexed_by<"byref"_n,const_mem_fun<evidence_record,checksum256,&evidence_record::by_reference>>>;
 struct [[eosio::table("documents"), eosio::contract("runtime")]] document_record {
   uint64_t id; uint64_t document_id; uint32_t version; uint64_t author; std::string cid; std::string metadata;
   checksum256 commitment; uint32_t bytes; uint16_t envelope_version; uint64_t key_epoch;

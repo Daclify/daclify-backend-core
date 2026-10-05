@@ -18,6 +18,10 @@ This is not a completed module-authority package. Module rows written by the pre
 
 `rotatekey` changes only the member signing key. A direct runtime-key call is rejected. The member's current signature, through `submit` or `submitnat`, can replace it, and the previous key no longer verifies. On 2026-10-05 the local fixture setcode transaction `a39d1994da3400e2d6e0ce53d03ff7c7dbcb556d193ae7940d4af54963e7e295` published runtime code hash `93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042`. A `daos` row still deserialized. The native module-authority cases were not rerun on this wasm. VERT covered rotation, the independent runtime, and the earlier pin.
 
+`payroll::settle` pays one installment only when every earlier installment in that schedule is already paid. Calling it again, in order, can still pay every installment that is already due, including more than one in the same transaction. The treasury `payob` action remains permissionless and does not read that order. The API and payroll screen settle through `payob`. The schedule has no stored catch-up mode. Modules commit `68bee32` records payroll code hash `1e8975a5f045e5953d98007950f952d07b7e9cf2e00ce18cbd15487d1df34e7f`. The fixture payroll account and the core package tarball were not updated, so they still identify the previous payroll wasm.
+
+`confirmext` records a DAO-confirmed external payment statement and nothing else. It requires the member's signed instruction, an administrator, an approved obligation, and the obligation's recipient and exact asset. The same reference cannot be stored twice on that runtime. It does not change balances or obligation status, and it does not stop a later `payob`. Attested and contract-verified adapters are not implemented. Local VERT used runtime wasm `3d716f22468286d26b89d5379e0d571cd348a3c9dd8888ca785056c3f1de95a6`. That wasm was not set on the fixture.
+
 Network metadata currently reports the service package version. It does not independently verify the core runtime's deployed code/ABI hashes. The handbook identifies that distinction. Full runtime release verification remains required.
 
 ## External integrations

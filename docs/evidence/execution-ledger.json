@@ -88,11 +88,11 @@
     "Verified legacy deployment inventory and authorized migration",
     "Independent security review before mainnet launch"
   ],
-  "lastCheckpoint": "2026-10-05 fixture provider session linking. Google and Telegram proofs link to the current account and can open a later session. The session does not read custody ciphertext or unlock a user-controlled vault. Publication remains refused. Native cleos cases were not rerun after setcode to 93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042.",
+  "lastCheckpoint": "2026-10-06 payroll installment order and DAO-confirmed external evidence. payroll::settle rejects a later unpaid installment. confirmext records a statement and does not settle. Publication remains refused. The fixture runtime remains 93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042. The new runtime artifact was not set.",
   "currentCheckout": {
-    "coreBase": "ec986f2",
-    "modulesBase": "478c87f",
-    "frontendBase": "be7569b",
+    "coreBase": "021c4b6",
+    "modulesBase": "68bee32",
+    "frontendBase": "676e267",
     "node": "24.21.0",
     "npm": "11.19.0",
     "runtimeCodeHash": "93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042",
@@ -107,7 +107,11 @@
       "signing-key VERT: direct rotatekey ACTOR_SENDER, previous signature rejected, new key accepted, linknative keeps one member and the same credits",
       "fixture get_code_hash matches the artifact. One daos row still deserializes",
       "core integration tests/integration/session-linking.test.ts: 9 passed on local daclify_test. A rejected proof stays consumed. npm run verify does not run the integration config",
-      "frontend tests/unit/provider-session.test.ts: a provider session stores the account and does not unlock a locked user-controlled vault; a different signing key locks an open vault"
+      "frontend tests/unit/provider-session.test.ts: a provider session stores the account and does not unlock a locked user-controlled vault; a different signing key locks an open vault",
+      "modules npm run verify at 68bee32: lint, tsc, docs:check, and vitest 45 passed across 7 files. payroll wasm 1e8975a5f045e5953d98007950f952d07b7e9cf2e00ce18cbd15487d1df34e7f. The fixture payroll account was not redeployed",
+      "core npm run verify: eslint, tsc, docs:check, and vitest 239 passed across 28 files. publishRelease returned publication refused. Local runtime artifact 3d716f22468286d26b89d5379e0d571cd348a3c9dd8888ca785056c3f1de95a6 was not set on the fixture",
+      "tests/external-evidence.test.ts: 3 passed. A direct key is rejected, a matching statement leaves balances and status unchanged, a reused reference is rejected, and payob can still settle afterward",
+      "tests/integration/content.test.ts: 14 passed on local daclify_test. An expired uncertain reservation stays reserved, records UPLOAD_REVIEW_REQUIRED, does not call provider removal, and still consumes quota. The full integration suite was not rerun"
     ],
     "notRun": [
       "native module-authority, dispatch, and permission after the rotatekey setcode",
@@ -119,7 +123,10 @@
       "frontend browser journeys, production build, and the module-enable click",
       "GitHub Actions for the new workflows",
       "package:release publication, which still refuses",
-      "Telos mainnet GET_CODE_HASH activation"
+      "Telos mainnet GET_CODE_HASH activation",
+      "fixture setcode of runtime 3d716f22468286d26b89d5379e0d571cd348a3c9dd8888ca785056c3f1de95a6",
+      "fixture setcode of payroll 1e8975a5f045e5953d98007950f952d07b7e9cf2e00ce18cbd15487d1df34e7f",
+      "rebuild of the core and modules package tarballs after the payroll hash and confirmext ABI change"
     ]
   },
   "verified": [
@@ -136,7 +143,7 @@
     "Pinata adapter fault fixtures passed within the core suite; live provider integration is unverified"
   ],
   "limits": [
-    "Sponsored factory resource/rate budgets, live social provider redirects, managed account journeys, independent-runtime product routing, custom module policy, executor/committee extensions, GitHub Actions execution, registry publication, migration tooling, Operations/billing and chain adapters remain incomplete",
+    "Sponsored factory resource/rate budgets, live social provider redirects, managed account journeys, independent-runtime product routing, custom module policy, executor/committee extensions, a stored payroll catch-up mode, GitHub Actions execution, registry publication, migration tooling, Operations/billing and chain adapters remain incomplete",
     "User has no configured Pinata/OAuth/Telegram provider credentials; production custody operation remains unverified",
     "Direct module-key callbacks are rejected and module code hashes are pinned in this checkout. Previous module rows do not deserialize. GET_CODE_HASH must be active. Telos mainnet activation is unverified. See implementation-limits.md",
     "No production chain changes, real asset movement, registry publication or legacy cutover",

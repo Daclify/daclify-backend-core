@@ -86,6 +86,16 @@ public:
     dao_rows.modify(d,same_payer,[&](auto& r){r.reserved=add_amount(r.reserved,-o.quantity.amount);r.available=add_amount(r.available,o.quantity.amount);});
     rows.modify(o,same_payer,[](auto& r){r.status=3;});
   }
+  ACTION confirmext(name runtime,uint64_t dao_id,uint64_t member_id,uint64_t obligation_id,std::string chain,std::string payer,uint64_t recipient,asset quantity,checksum256 reference) {
+    check(get_sender()==get_self(),"ACTOR_SENDER");authorized_actor(runtime,dao_id,member_id,true);
+    auto text=[](const std::string& value,size_t max,const char* error){check(value.size()>=1&&value.size()<=max,error);for(unsigned char c:value)check(c>=0x21&&c<=0x7e,error);};
+    text(chain,64,"EVIDENCE_CHAIN");text(payer,128,"EVIDENCE_PAYER");check(reference!=checksum256(),"EVIDENCE_REFERENCE");
+    obligations debts(get_self(),dao_id);const auto& obligation=debts.get(obligation_id,"OBLIGATION_UNKNOWN");
+    check(obligation.status==1,"EVIDENCE_STATE");check(obligation.recipient==recipient,"EVIDENCE_RECIPIENT");check(obligation.quantity==quantity,"EVIDENCE_AMOUNT");
+    evidence rows(get_self(),get_self().value);auto index=rows.get_index<"byref"_n>();check(index.find(reference)==index.end(),"EVIDENCE_REUSED");
+    auto id=rows.available_primary_key();if(!id)id=1;check(id<std::numeric_limits<uint64_t>::max(),"EVIDENCE_LIMIT");
+    rows.emplace(get_self(),[&](auto& r){r.id=id;r.dao_id=dao_id;r.obligation_id=obligation_id;r.recipient=recipient;r.quantity=quantity;r.chain=chain;r.payer=payer;r.reference=reference;r.mode=1;});
+  }
   ACTION payob(uint64_t dao_id,name source,uint64_t source_id) {
     const auto& d=dao_rows.get(dao_id,"DAO_UNKNOWN");obligations rows(get_self(),dao_id);const auto& o=rows.get(obligation_id(rows,source,source_id));
     check(o.status==1&&o.due<=current_time_point().sec_since_epoch(),"NOT_PAYABLE");
@@ -234,7 +244,7 @@ private:
     auto now=current_time_point().sec_since_epoch();check(r.expires>now&&uint64_t(r.expires)<=uint64_t(now)+900,"EXPIRED_OR_TOO_LONG");
     check(r.data.size()>=24&&r.data.size()<=16384,"PAYLOAD_SIZE");auto context=unpack<actor_context>(r.data);
     check(context.runtime==get_self()&&context.dao_id==r.dao_id&&context.member_id==r.member_id,"PAYLOAD_DOMAIN");
-    if(r.target==get_self())check(r.action=="setmeta"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n,"ACTION_UNSUPPORTED");
+    if(r.target==get_self())check(r.action=="setmeta"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n,"ACTION_UNSUPPORTED");
     else { modules rows(get_self(),r.dao_id);const auto& installed=rows.get(r.target.value,"MODULE_DISABLED");check(std::find(installed.actions.begin(),installed.actions.end(),r.action)!=installed.actions.end(),"ACTION_UNSUPPORTED");check_pinned(installed,r.target); }
   }
   void dispatch(const instruction& r) {
@@ -245,6 +255,6 @@ private:
   }
 };
 extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
-  if(code==receiver){switch(action_name){EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))}}
+  if(code==receiver){switch(action_name){EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(confirmext)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))}}
   else if(action_name=="transfer"_n.value) execute_action(name(receiver),name(code),&runtime::deposit);
 }

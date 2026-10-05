@@ -22,6 +22,11 @@
       "tests": ["tests/treasury.test.ts"]
     },
     {
+      "id": "WP07-EXTERNAL-EVIDENCE",
+      "suite": "vert",
+      "tests": ["tests/external-evidence.test.ts"]
+    },
+    {
       "id": "WP02-NATIVE-PERMISSION",
       "suite": "native",
       "tests": ["tests/native/permission.test.ts"]

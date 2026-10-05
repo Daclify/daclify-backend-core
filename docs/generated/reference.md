@@ -46,6 +46,8 @@ Approved liabilities remain payable after module removal or subscription expiry.
 
 The treasury view shows reserved, approved, settled and cancelled obligations. A signed-in user can request settlement of an already approved, due obligation; the contract chooses its recorded recipient and amount. This does not require reinstalling the source module. Existing internal claims and governance stake can be withdrawn through a signed instruction to an existing native payout account.
 
+An administrator can record one DAO-confirmed external payment statement with a signed instruction. It names the chain, payer and reference, and it must repeat the approved obligation’s recipient and exact asset amount. Reusing that reference for another obligation is rejected. The record does not move a balance, mark the obligation paid, or block later native settlement. Attested and contract-verified external settlement are separate and are not implemented. A direct runtime key cannot create this record.
+
 This release supports one configured native treasury asset per DAO. Governance stake deposits currently require the member’s linked native account and the stake memo shown in the treasury. Walletless members can use internal governance credits. Claim-to-stake conversion and multi-asset treasury accounting are not implemented.
 
 ## Configure external services
@@ -92,7 +94,7 @@ Encrypted DAOs rotate the future-content epoch when a member is deactivated. Rem
 
 ## runtime contract
 
-Source ABI JSON SHA-256: `dabfa964fe23a4125ae09b854bc45aa67b9ea1b118ff28bf63701413564fb64a`.
+Source ABI JSON SHA-256: `0dc54e3ec8dd514577c4b11d10530c16e0bdc35ce76e0ae0e69d851d12e366b0`.
 
 ### Action: approveob
 
@@ -120,6 +122,20 @@ Source ABI JSON SHA-256: `dabfa964fe23a4125ae09b854bc45aa67b9ea1b118ff28bf637014
 | epoch | uint64 |
 | commitment | checksum256 |
 | self_grant | string |
+
+### Action: confirmext
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| obligation_id | uint64 |
+| chain | string |
+| payer | string |
+| recipient | uint64 |
+| quantity | asset |
+| reference | checksum256 |
 
 ### Action: createdao
 
@@ -402,6 +418,20 @@ Source ABI JSON SHA-256: `dabfa964fe23a4125ae09b854bc45aa67b9ea1b118ff28bf637014
 | epoch | uint64 |
 | commitment | checksum256 |
 | creator | uint64 |
+
+### Table: evidence
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| dao_id | uint64 |
+| obligation_id | uint64 |
+| recipient | uint64 |
+| quantity | asset |
+| chain | string |
+| payer | string |
+| reference | checksum256 |
+| mode | uint8 |
 
 ### Table: govlocks
 
