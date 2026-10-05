@@ -12,9 +12,10 @@ To build the C++ artifacts, first build the documented checksum-verified Docker 
 
 Ordinary checks:
 
-- Core: `npm run typecheck`, `npm run docs:check`, `npm test`.
-- Modules: `npm run typecheck`, `npm run docs:check`, `npm test`.
-- Frontend: `npm run build`, `npm test`.
+- Core: `npm run lint`, `npm run typecheck`, `npm run docs:check`, `npm test`. `npm run verify` runs those checks and then loads the release manifest. The manifest records commit, version, lockfile, toolchain, and artifact hashes. `publishRelease` and `npm run package:release` still refuse publication. A manifest is not a qualified release.
+- Modules: `npm run lint`, `npm run typecheck`, `npm run docs:check`, `npm test`. `npm run verify` runs those checks. Module CI is `.github/workflows/verify.yml` and exits when `DACLIFY_CHECKOUT_TOKEN` or Docker is absent.
+- Frontend: `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`. `npm run verify` runs lint, `vue-tsc`, and unit tests. Frontend CI is `.github/workflows/verify.yml` and has the same token and Docker refusal. Browser journeys stay on `npm run test:e2e` and are not claimed by `verify`.
+- Core CI is `.github/workflows/verify.yml`. It exits if `DACLIFY_CHECKOUT_TOKEN` is unset or Docker cannot build the pinned toolchain and the gitignored contracts. It does not skip those steps. A green local `npm run verify` does not show that GitHub Actions has run.
 - PostgreSQL/API: set `DATABASE_URL` to an isolated local database whose name ends in `_test`, then run core's `npm run test:integration`. The harness rejects other database locations.
 - Browser: use the disposable native chain and PostgreSQL fixture, run core's `npm run dev:local`, then frontend's `npm run test:e2e`. Native test tooling is local-only and uses synthetic tokens. The browser suite includes two internal accounts with separate contributor/reviewer roles.
 

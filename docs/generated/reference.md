@@ -92,7 +92,7 @@ Encrypted DAOs rotate the future-content epoch when a member is deactivated. Rem
 
 ## runtime contract
 
-Source ABI JSON SHA-256: `6aad2bae95cfa1b63db6e6acb0e08836274d33a3dddb006c15dfd74ae05a1d0d`.
+Source ABI JSON SHA-256: `dabfa964fe23a4125ae09b854bc45aa67b9ea1b118ff28bf63701413564fb64a`.
 
 ### Action: approveob
 
@@ -262,6 +262,15 @@ Source ABI JSON SHA-256: `6aad2bae95cfa1b63db6e6acb0e08836274d33a3dddb006c15dfd7
 | runtime | name |
 | dao_id | uint64 |
 | member_id | uint64 |
+
+### Action: rotatekey
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| signing_key | public_key |
 
 ### Action: setactive
 

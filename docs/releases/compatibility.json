@@ -1,0 +1,7 @@
+{
+  "interfaceVersion": 1,
+  "qualified": false,
+  "publication": "refused",
+  "note": "No frontend, core, and module combination is a qualified release. The manifest records pins and does not authorize publication.",
+  "combinations": []
+}

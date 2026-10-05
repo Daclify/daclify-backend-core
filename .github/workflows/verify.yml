@@ -1,0 +1,45 @@
+name: verify
+on:
+  push:
+  pull_request:
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout this repository
+        uses: actions/checkout@v4
+        with:
+          path: daclify-backend-core
+      - name: Refuse to continue without the private sibling token
+        env:
+          DACLIFY_CHECKOUT_TOKEN: ${{ secrets.DACLIFY_CHECKOUT_TOKEN }}
+        run: |
+          if [ -z "${DACLIFY_CHECKOUT_TOKEN}" ]; then
+            echo "DACLIFY_CHECKOUT_TOKEN is unset. Private sibling checkouts and file tarballs cannot be built."
+            exit 1
+          fi
+      - name: Checkout private sibling repositories
+        env:
+          DACLIFY_CHECKOUT_TOKEN: ${{ secrets.DACLIFY_CHECKOUT_TOKEN }}
+        run: |
+          header="AUTHORIZATION: bearer ${DACLIFY_CHECKOUT_TOKEN}"
+          git -c "http.extraheader=${header}" clone --depth 1 https://github.com/Daclify/daclify-backend-modules.git daclify-backend-modules
+          git -c "http.extraheader=${header}" clone --depth 1 https://github.com/Daclify/daclify-frontend.git daclify-frontend
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+      - name: Require Docker before compiling gitignored contracts
+        run: |
+          if ! command -v docker >/dev/null 2>&1; then
+            echo "Docker is required. Contract wasm is gitignored and is not in this checkout."
+            exit 1
+          fi
+      - name: Build the pinned toolchain image
+        working-directory: daclify-backend-core
+        run: docker build -f tools/build/Dockerfile -t daclify-v2-toolchain:4.1.1-spring1.2.2 .
+      - name: Bootstrap sibling packages and compile contracts
+        working-directory: daclify-backend-core
+        run: node tools/bootstrap.ts --contracts
+      - name: Verify this repository
+        working-directory: daclify-backend-core
+        run: npm run verify

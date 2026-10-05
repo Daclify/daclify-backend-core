@@ -97,7 +97,7 @@
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "6aad2bae95cfa1b63db6e6acb0e08836274d33a3dddb006c15dfd74ae05a1d0d",
+      "sourceAbiHash": "dabfa964fe23a4125ae09b854bc45aa67b9ea1b118ff28bf63701413564fb64a",
       "actions": [
         {
           "name": "approveob",
@@ -517,6 +517,27 @@
             {
               "name": "member_id",
               "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "rotatekey",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "signing_key",
+              "type": "public_key"
             }
           ]
         },

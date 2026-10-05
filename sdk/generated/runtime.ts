@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = '6aad2bae95cfa1b63db6e6acb0e08836274d33a3dddb006c15dfd74ae05a1d0d';
+export const runtimeAbiHash = 'dabfa964fe23a4125ae09b854bc45aa67b9ea1b118ff28bf63701413564fb64a';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -806,6 +806,28 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "rotatekey",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "signing_key",
+          "type": "public_key"
+        }
+      ]
+    },
+    {
       "name": "setactive",
       "base": "",
       "fields": [
@@ -1114,6 +1136,11 @@ export const runtimeAbi = {
     {
       "name": "rotateepoch",
       "type": "rotateepoch",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "rotatekey",
+      "type": "rotatekey",
       "ricardian_contract": ""
     },
     {
@@ -1444,6 +1471,12 @@ export interface rotateepoch {
   dao_id: string;
   member_id: string;
 }
+export interface rotatekey {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  signing_key: string;
+}
 export interface setactive {
   runtime: string;
   dao_id: string;
@@ -1523,6 +1556,7 @@ export interface RuntimeActions {
   putjson: putjson;
   reserve: reserve;
   rotateepoch: rotateepoch;
+  rotatekey: rotatekey;
   setactive: setactive;
   setcredits: setcredits;
   setmeta: setmeta;

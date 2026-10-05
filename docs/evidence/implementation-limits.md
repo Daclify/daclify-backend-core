@@ -16,6 +16,8 @@ A module install that keeps any action or grant must store the hash returned by 
 
 This is not a completed module-authority package. Module rows written by the previous ABI do not deserialize. The runtime wasm does not load on a node where `GET_CODE_HASH` is inactive. Whether Telos mainnet has activated that feature was not checked. The first-party works, decide, and payroll wasm were not rebuilt; the current native works contract still executed `accept` against the extended row. Client hash checks remain a second layer. They do not replace the contract check.
 
+`rotatekey` changes only the member signing key. A direct runtime-key call is rejected. The member's current signature, through `submit` or `submitnat`, can replace it, and the previous key no longer verifies. On 2026-10-05 the local fixture setcode transaction `a39d1994da3400e2d6e0ce53d03ff7c7dbcb556d193ae7940d4af54963e7e295` published runtime code hash `93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042`. A `daos` row still deserialized. The native module-authority cases were not rerun on this wasm. VERT covered rotation, the independent runtime, and the earlier pin.
+
 Network metadata currently reports the service package version. It does not independently verify the core runtime's deployed code/ABI hashes. The handbook identifies that distinction. Full runtime release verification remains required.
 
 ## External integrations
@@ -28,9 +30,9 @@ No production deployment, native authority change, asset movement or legacy cuto
 
 ## Product and release scope
 
-Decide finalization, Works submission/review/revision/cancellation, payroll settlement after removal and signed treasury exits are wired into the UI/API. Fixture enrollment does not establish a production invitation/admission flow. The browser and service still target one configured runtime; independent hub/fleet routing remains incomplete. Each DAO currently has one native treasury asset; claim-to-stake conversion and multiple assets remain future work.
+Decide finalization, Works submission/review/revision/cancellation, payroll settlement after removal and signed treasury exits are wired into the UI/API. Fixture enrollment does not establish a production invitation/admission flow. VERT can run a second runtime while the Hub account is absent. The browser and service still target one configured runtime; independent hub/fleet routing remains incomplete. Each DAO currently has one native treasury asset; claim-to-stake conversion and multiple assets remain future work.
 
-The development bootstrap was exercised from source-only sibling copies and rebuilds actual C++ artifacts with the checksum-verified image. It refreshes unpublished local tarball integrities; it is not immutable registry release management. CI, the complete tested release manifest, production deployment tooling, legacy cutover and remaining master packages are pending.
+The development bootstrap was exercised from source-only sibling copies and rebuilds actual C++ artifacts with the checksum-verified image. It refreshes unpublished local tarball integrities; it is not immutable registry release management. Workflows, lint, requirement registers, and a release manifest now exist. The manifest records pins and still refuses publication. GitHub Actions has not run those workflows. Production deployment tooling, legacy cutover, and the remaining master packages are pending.
 
 Public sponsored factory resource/rate limits remain incomplete. The regular API entry point still needs deployment/module configuration tooling; the local fixture explicitly configures its first-party modules. A passing local journey is not a qualified public service deployment.
 

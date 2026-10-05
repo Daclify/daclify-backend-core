@@ -1,0 +1,80 @@
+{
+  "requiredSuites": ["vert", "native", "integration", "provider", "modules", "browser", "unit"],
+  "requirements": [
+    {
+      "id": "WP03-CALLBACK-SENDER",
+      "suite": "vert",
+      "tests": ["tests/module-callback-authority.test.ts"]
+    },
+    {
+      "id": "WP03-HUB-REGISTRATION",
+      "suite": "vert",
+      "tests": ["tests/hub.test.ts"]
+    },
+    {
+      "id": "WP03-INDEPENDENT-RUNTIME",
+      "suite": "vert",
+      "tests": ["tests/independent-runtime.test.ts"]
+    },
+    {
+      "id": "WP07-TREASURY",
+      "suite": "vert",
+      "tests": ["tests/treasury.test.ts"]
+    },
+    {
+      "id": "WP02-NATIVE-PERMISSION",
+      "suite": "native",
+      "tests": ["tests/native/permission.test.ts"]
+    },
+    {
+      "id": "WP02-INTEGRATION-HTTP",
+      "suite": "integration",
+      "tests": ["tests/integration/http.test.ts"]
+    },
+    {
+      "id": "WP04-OPENBAO-PROBE",
+      "suite": "provider",
+      "tests": ["tests/providers/openbao.test.ts"]
+    },
+    {
+      "id": "WP08-DECIDE",
+      "suite": "modules",
+      "tests": ["../daclify-backend-modules/tests/decide.test.ts"]
+    },
+    {
+      "id": "WP09-WORKS",
+      "suite": "modules",
+      "tests": ["../daclify-backend-modules/tests/works.test.ts"]
+    },
+    {
+      "id": "WP10-PAYROLL",
+      "suite": "modules",
+      "tests": ["../daclify-backend-modules/tests/payroll.test.ts"]
+    },
+    {
+      "id": "WP13-BROWSER-WORKSPACE",
+      "suite": "browser",
+      "tests": ["../daclify-frontend/tests/e2e/workspace.spec.ts"]
+    },
+    {
+      "id": "WP04-SIGNING-KEY",
+      "suite": "vert",
+      "tests": ["tests/signing-key.test.ts"]
+    },
+    {
+      "id": "WP02-REQUIREMENT-REGISTER",
+      "suite": "unit",
+      "tests": ["tests/requirements.test.ts"]
+    },
+    {
+      "id": "WP02-RELEASE-MANIFEST",
+      "suite": "unit",
+      "tests": ["tests/release-manifest.test.ts"]
+    },
+    {
+      "id": "WP05-PROOF-VERIFIERS",
+      "suite": "unit",
+      "tests": ["tests/provider-proofs.test.ts"]
+    }
+  ]
+}

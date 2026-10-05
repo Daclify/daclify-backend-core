@@ -115,6 +115,13 @@ public:
   ACTION rotateepoch(name runtime,uint64_t dao_id,uint64_t member_id) {
     authorized_actor(runtime,dao_id,member_id,true);const auto& d=dao_rows.get(dao_id);check(d.privacy>0,"DAO_PUBLIC");dao_rows.modify(d,same_payer,[](auto& r){r.key_epoch=add64(r.key_epoch,1);});
   }
+  ACTION rotatekey(name runtime,uint64_t dao_id,uint64_t member_id,public_key signing_key) {
+    check(get_sender()==get_self(),"ACTOR_SENDER");authorized_actor(runtime,dao_id,member_id);
+    members rows(get_self(),dao_id);const auto& m=rows.get(member_id,"MEMBER_UNKNOWN");
+    auto packed=pack(signing_key);auto digest=sha256(packed.data(),packed.size());check(digest!=m.by_key(),"SIGNING_KEY");
+    auto index=rows.get_index<"bykey"_n>();check(index.find(digest)==index.end(),"CREDENTIAL_EXISTS");
+    rows.modify(m,same_payer,[&](auto& r){r.signing_key=signing_key;});
+  }
   ACTION linknative(name runtime,uint64_t dao_id,uint64_t member_id,name account) {
     authorized_actor(runtime,dao_id,member_id);require_auth(account);check(is_account(account),"NATIVE_ACCOUNT");members rows(get_self(),dao_id);
     auto index=rows.get_index<"bynative"_n>();auto linked=index.find(account.value);check(linked==index.end()||linked->id==member_id,"CREDENTIAL_EXISTS");
@@ -227,7 +234,7 @@ private:
     auto now=current_time_point().sec_since_epoch();check(r.expires>now&&uint64_t(r.expires)<=uint64_t(now)+900,"EXPIRED_OR_TOO_LONG");
     check(r.data.size()>=24&&r.data.size()<=16384,"PAYLOAD_SIZE");auto context=unpack<actor_context>(r.data);
     check(context.runtime==get_self()&&context.dao_id==r.dao_id&&context.member_id==r.member_id,"PAYLOAD_DOMAIN");
-    if(r.target==get_self())check(r.action=="setmeta"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n,"ACTION_UNSUPPORTED");
+    if(r.target==get_self())check(r.action=="setmeta"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n,"ACTION_UNSUPPORTED");
     else { modules rows(get_self(),r.dao_id);const auto& installed=rows.get(r.target.value,"MODULE_DISABLED");check(std::find(installed.actions.begin(),installed.actions.end(),r.action)!=installed.actions.end(),"ACTION_UNSUPPORTED");check_pinned(installed,r.target); }
   }
   void dispatch(const instruction& r) {
@@ -238,6 +245,6 @@ private:
   }
 };
 extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
-  if(code==receiver){switch(action_name){EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))}}
+  if(code==receiver){switch(action_name){EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))}}
   else if(action_name=="transfer"_n.value) execute_action(name(receiver),name(code),&runtime::deposit);
 }

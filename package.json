@@ -28,8 +28,10 @@
     "docs:generate": "tsx tools/docs/generate.ts",
     "docs:check": "tsx tools/docs/generate.ts --check",
     "bootstrap": "node tools/bootstrap.ts",
-    "format:check": "prettier --check \"**/*.{ts,vue,css,json}\"",
-    "format": "prettier --write \"**/*.{ts,vue,css,json}\""
+    "lint": "eslint . --max-warnings 0",
+    "verify": "tsx tools/verify.ts",
+    "format:check": "prettier --check \"**/*.{ts,vue,css,json,yml}\"",
+    "format": "prettier --write \"**/*.{ts,vue,css,json,yml}\""
   },
   "dependencies": {
     "@daclify/core-protocol": "file:.artifacts/daclify-core-protocol-0.1.0-alpha.1.tgz",

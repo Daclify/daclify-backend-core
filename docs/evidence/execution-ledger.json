@@ -88,29 +88,35 @@
     "Verified legacy deployment inventory and authorized migration",
     "Independent security review before mainnet launch"
   ],
-  "lastCheckpoint": "2026-10-05 runtime pins module code hashes. Local Spring feature GET_CODE_HASH was activated and the runtime wasm was set on daclify-v2-native. OpenBao, native HTTP, integration, and browser checks were not rerun.",
+  "lastCheckpoint": "2026-10-05 verify gates, independent-runtime VERT cases, and rotatekey. The local fixture runtime is code hash 93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042. Publication remains refused. Native cleos cases were not rerun after this setcode.",
   "currentCheckout": {
-    "coreBase": "27ba179",
-    "modulesBase": "b2d6cba",
-    "frontendBase": "13784ed",
+    "coreBase": "b147489",
+    "modulesBase": "0a3f390",
+    "frontendBase": "8e18367",
     "node": "24.21.0",
     "npm": "11.19.0",
-    "runtimeCodeHash": "79878fbe88cf4b2019cac7bed5db3b761caf7d09cd1f1489090402f39632276a",
+    "runtimeCodeHash": "93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042",
+    "previousRuntimeCodeHash": "79878fbe88cf4b2019cac7bed5db3b761caf7d09cd1f1489090402f39632276a",
+    "runtimeSetcode": "a39d1994da3400e2d6e0ce53d03ff7c7dbcb556d193ae7940d4af54963e7e295",
     "getCodeHashFeature": "bcd2a26394b36614fd4894241d3c451ab0f6fd110958c3423073621a70826e99",
     "ran": [
-      "core vitest: 211 passed, 22 files, including module pin, wasm replacement, disable-without-live-hash, and member-instruction rejection",
-      "modules vitest: 40 passed against the new runtime wasm",
-      "native module-authority: 4 passed. Wrong pin MODULE_CODE. Direct works@active reserve SOURCE_SENDER. works::accept reserved=10000. Replaced test-account wasm callback MODULE_CODE",
-      "native dispatch and permission: 4 passed on the pinned runtime",
-      "frontend vitest: 33 passed; vue-tsc and production build passed. Browser journeys were not rerun"
+      "core npm run verify: eslint, tsc, docs:check, and vitest 236 passed across 27 files. publishRelease returned publication refused",
+      "modules npm run verify: lint, tsc, docs:check, and vitest 44 passed across 7 files against runtime wasm 93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042",
+      "frontend npm run verify: lint, vue-tsc, and vitest 37 passed across 6 files. The production build and browser journeys were not rerun",
+      "independent runtime VERT: Hub absent, preserved document/obligation/lock, Hub cannot setmodule",
+      "signing-key VERT: direct rotatekey ACTOR_SENDER, previous signature rejected, new key accepted, linknative keeps one member and the same credits",
+      "fixture get_code_hash matches the artifact. One daos row still deserializes"
     ],
     "notRun": [
+      "native module-authority, dispatch, and permission after the rotatekey setcode",
       "native runtime.test.ts, including the OpenBao R1 case",
+      "native rotatekey submission",
       "native HTTP/API suite: DATABASE_URL was unset",
       "PostgreSQL/API integration",
       "OpenBao provider suite",
-      "frontend browser journeys and the module-enable click",
-      "package:release, which still refuses",
+      "frontend browser journeys, production build, and the module-enable click",
+      "GitHub Actions for the new workflows",
+      "package:release publication, which still refuses",
       "Telos mainnet GET_CODE_HASH activation"
     ]
   },
@@ -128,7 +134,7 @@
     "Pinata adapter fault fixtures passed within the core suite; live provider integration is unverified"
   ],
   "limits": [
-    "Sponsored factory resource/rate budgets, admission/key rotation, social/native-wallet/managed account journeys, independent-runtime fleet discovery, custom module policy, executor/committee extensions, CI, immutable registry releases, migration tooling, Operations/billing and chain adapters remain incomplete",
+    "Sponsored factory resource/rate budgets, social login session linking, managed account journeys, independent-runtime product routing, custom module policy, executor/committee extensions, GitHub Actions execution, registry publication, migration tooling, Operations/billing and chain adapters remain incomplete",
     "User has no configured Pinata/OAuth/Telegram provider credentials; production custody operation remains unverified",
     "Direct module-key callbacks are rejected and module code hashes are pinned in this checkout. Previous module rows do not deserialize. GET_CODE_HASH must be active. Telos mainnet activation is unverified. See implementation-limits.md",
     "No production chain changes, real asset movement, registry publication or legacy cutover",
@@ -138,15 +144,15 @@
   "verification_holds": [
     {
       "check": "native module-authority regression",
-      "lastResult": "passed",
-      "status": "passed",
-      "reason": "2026-10-05 on daclify-v2-native after GET_CODE_HASH activation and runtime setcode 79878fbe88cf4b2019cac7bed5db3b761caf7d09cd1f1489090402f39632276a: wrong pin MODULE_CODE, direct works@active reserve SOURCE_SENDER, works::accept reserved=10000, replaced wasm callback MODULE_CODE."
+      "lastResult": "not rerun",
+      "status": "held",
+      "reason": "Passed on 2026-10-05 against wasm 79878fbe88cf4b2019cac7bed5db3b761caf7d09cd1f1489090402f39632276a. The fixture was later set to 93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042 for rotatekey. Those four cleos cases were not rerun."
     },
     {
       "check": "complete current native suite",
       "lastResult": "incomplete",
       "status": "held",
-      "reason": "8 cleos cases passed on the pinned runtime: module-authority 4, dispatch 1, permission 3. native/runtime.test.ts was not rerun. The HTTP/API native file was not run because DATABASE_URL was unset."
+      "reason": "Earlier 8 cleos cases passed on wasm 79878fbe88cf4b2019cac7bed5db3b761caf7d09cd1f1489090402f39632276a. They were not rerun after setcode to 93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042. native/runtime.test.ts was not rerun. The HTTP/API native file was not run because DATABASE_URL was unset."
     }
   ]
 }
