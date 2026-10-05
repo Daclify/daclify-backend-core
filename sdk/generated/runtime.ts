@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = 'd685af7059f33232ce56bea6630e0314225e63dd13222e58d9fdedee8f4fc323';
+export const runtimeAbiHash = '6aad2bae95cfa1b63db6e6acb0e08836274d33a3dddb006c15dfd74ae05a1d0d';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -584,6 +584,10 @@ export const runtimeAbi = {
         {
           "name": "grants",
           "type": "name[]"
+        },
+        {
+          "name": "code_hash",
+          "type": "checksum256"
         }
       ]
     },
@@ -606,6 +610,10 @@ export const runtimeAbi = {
         {
           "name": "grants",
           "type": "name[]"
+        },
+        {
+          "name": "code_hash",
+          "type": "checksum256"
         }
       ]
     },
@@ -894,6 +902,10 @@ export const runtimeAbi = {
         {
           "name": "grants",
           "type": "name[]"
+        },
+        {
+          "name": "code_hash",
+          "type": "checksum256"
         }
       ]
     },
@@ -1373,12 +1385,14 @@ export interface modconfig {
   version: number;
   actions: string[];
   grants: string[];
+  code_hash: string;
 }
 export interface module_record {
   account: string;
   version: number;
   actions: string[];
   grants: string[];
+  code_hash: string;
 }
 export interface obligation_record {
   id: string;
@@ -1456,6 +1470,7 @@ export interface setmodule {
   version: number;
   actions: string[];
   grants: string[];
+  code_hash: string;
 }
 export interface setroles {
   runtime: string;

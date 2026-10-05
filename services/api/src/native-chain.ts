@@ -439,6 +439,10 @@ export class NativeChainGateway implements ChainGateway {
       const verified =
         hash?.success === true && hash.data.code_hash === ModuleCodeHashes[deployment.id];
       const enabled = installed.find((item) => item.account === deployment.account);
+      const pinned =
+        !enabled ||
+        (enabled.actions.length === 0 && enabled.grants.length === 0) ||
+        (hash?.success === true && enabled.code_hash === hash.data.code_hash);
       states.push({
         deployment: {
           id: deployment.id,
@@ -451,7 +455,7 @@ export class NativeChainGateway implements ChainGateway {
         compatible:
           compatible(VERSION, manifest.coreRange) &&
           (!enabled || enabled.version === manifest.interfaceVersion),
-        codeVerified: verified,
+        codeVerified: verified && pinned,
         actions: enabled?.actions ?? [],
         grants: enabled?.grants ?? [],
       });

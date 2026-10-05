@@ -39,9 +39,9 @@ struct [[eosio::table("members"), eosio::contract("runtime")]] member_record {
 };
 using members = multi_index<"members"_n,member_record,indexed_by<"bynative"_n,const_mem_fun<member_record,uint64_t,&member_record::by_native>>,indexed_by<"bykey"_n,const_mem_fun<member_record,checksum256,&member_record::by_key>>>;
 struct [[eosio::table("modules"), eosio::contract("runtime")]] module_record {
-  name account; uint16_t version; std::vector<name> actions; std::vector<name> grants;
+  name account; uint16_t version; std::vector<name> actions; std::vector<name> grants; checksum256 code_hash;
   uint64_t primary_key() const { return account.value; }
-  EOSLIB_SERIALIZE(module_record,(account)(version)(actions)(grants))
+  EOSLIB_SERIALIZE(module_record,(account)(version)(actions)(grants)(code_hash))
 };
 using modules = multi_index<"modules"_n,module_record>;
 struct [[eosio::table("obligations"), eosio::contract("runtime")]] obligation_record {

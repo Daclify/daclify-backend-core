@@ -46,14 +46,19 @@ export async function activateFixtureFeatures(container: string): Promise<void> 
   }
   const preactivate = features.get('PREACTIVATE_FEATURE');
   const sender = features.get('GET_SENDER');
-  if (!preactivate || !sender) throw new Error('Required native protocol features unavailable');
+  const codeHash = features.get('GET_CODE_HASH');
+  if (!preactivate || !sender || !codeHash)
+    throw new Error('Required native protocol features unavailable');
   if (!(await activated(preactivate))) {
     await rpc('/v1/producer/schedule_protocol_feature_activations', {
       protocol_features_to_activate: [preactivate],
     });
     await wait(preactivate);
   }
-  if (await activated(sender)) return;
+  const pending = [];
+  if (!(await activated(sender))) pending.push(sender);
+  if (!(await activated(codeHash))) pending.push(codeHash);
+  if (pending.length === 0) return;
   function cleos(args: string[]) {
     try {
       execFileSync(
@@ -65,16 +70,21 @@ export async function activateFixtureFeatures(container: string): Promise<void> 
       throw new Error('Local bootstrap action failed');
     }
   }
-  cleos([
-    'set',
-    'contract',
-    'eosio',
-    '/work/.artifacts/contracts',
-    'boot.wasm',
-    'boot.abi',
-    '-p',
-    'eosio@active',
-  ]);
-  cleos(['push', 'action', 'eosio', 'activate', JSON.stringify([sender]), '-p', 'eosio@active']);
-  await wait(sender);
+  // The boot contract is already on eosio once GET_SENDER has been activated.
+  if (pending.includes(sender)) {
+    cleos([
+      'set',
+      'contract',
+      'eosio',
+      '/work/.artifacts/contracts',
+      'boot.wasm',
+      'boot.abi',
+      '-p',
+      'eosio@active',
+    ]);
+  }
+  for (const digest of pending) {
+    cleos(['push', 'action', 'eosio', 'activate', JSON.stringify([digest]), '-p', 'eosio@active']);
+    await wait(digest);
+  }
 }

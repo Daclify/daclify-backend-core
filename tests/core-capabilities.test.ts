@@ -3,6 +3,8 @@ import { Blockchain } from '@proton/vert';
 import { PrivateKey } from '@wharfkit/antelope';
 import { z } from 'zod';
 import { loadContract, send, row } from './helpers/vert.js';
+import { wasmCodeHash } from './helpers/code-hash.js';
+const worksHash = wasmCodeHash('.artifacts/contracts/modrelay.wasm');
 let runtime: ReturnType<typeof loadContract>;
 let token: ReturnType<typeof loadContract>;
 let works: ReturnType<typeof loadContract>;
@@ -30,7 +32,7 @@ beforeEach(async () => {
   await send(
     runtime,
     'setmodule',
-    [1, 'works', 1, [], ['reserve', 'approve', 'cancel', 'govlock']],
+    [1, 'works', 1, [], ['reserve', 'approve', 'cancel', 'govlock'], worksHash],
     'alice@active',
   );
   await send(token, 'create', ['alice', '1000.0000 TLOS'], 'eosio.token@active');

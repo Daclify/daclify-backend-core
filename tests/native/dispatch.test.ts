@@ -38,7 +38,17 @@ function push(account: string, action: string, data: unknown[], actor: string) {
 function balance(): string {
   return cleos(['get', 'currency', 'balance', 'eosio.token', 'daclifycore', 'TLOS']).trim();
 }
-beforeAll(() => {
+async function liveCodeHash(account: string): Promise<string> {
+  const response = await fetch(`${network.url}/v1/chain/get_code_hash`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ account_name: account }),
+  });
+  if (!response.ok) throw new Error('CODE_HASH_UNAVAILABLE');
+  return z.object({ code_hash: z.string().regex(/^[0-9a-f]{64}$/) }).parse(await response.json())
+    .code_hash;
+}
+beforeAll(async () => {
   unlockFixtureWallet(network.container);
   const publicKey = fixtureKey('bob').toPublic().toString();
   cleos(['create', 'account', 'eosio', destination, publicKey, publicKey]);
@@ -56,7 +66,12 @@ beforeAll(() => {
     [daoId, memberId, '', key.toPublic().toString(), 'fixture-encryption-key', 0],
     'bob',
   );
-  push('daclifycore', 'setmodule', [daoId, 'eosio.token', 1, ['transfer'], []], 'bob');
+  push(
+    'daclifycore',
+    'setmodule',
+    [daoId, 'eosio.token', 1, ['transfer'], [], await liveCodeHash('eosio.token')],
+    'bob',
+  );
 });
 describe('native dispatcher permission boundary', () => {
   it('cannot dispatch an ABI-compatible token transfer under runtime spending authority', () => {

@@ -3,11 +3,15 @@ import { Blockchain } from '@proton/vert';
 import { PrivateKey, Name } from '@wharfkit/antelope';
 import { z } from 'zod';
 import { loadContract, send, row } from './helpers/vert.js';
+import { wasmCodeHash } from './helpers/code-hash.js';
+const worksHash = wasmCodeHash('.artifacts/contracts/modrelay.wasm');
 let core: ReturnType<typeof load>;
 function load() {
   const chain = new Blockchain();
-  chain.createAccounts('alice', 'works');
-  return loadContract(chain, 'daclifycore', '.artifacts/contracts/runtime');
+  chain.createAccounts('alice');
+  const core = loadContract(chain, 'daclifycore', '.artifacts/contracts/runtime');
+  loadContract(chain, 'works', '.artifacts/contracts/modrelay');
+  return core;
 }
 beforeEach(async () => {
   core = load();
@@ -26,7 +30,7 @@ describe('walletless DAO administration', () => {
     await send(
       core,
       'modconfig',
-      ['daclifycore', 1, 1, 'works', 1, ['propose'], ['reserve']],
+      ['daclifycore', 1, 1, 'works', 1, ['propose'], ['reserve'], worksHash],
       'daclifycore@active',
     );
     const module = z
@@ -39,7 +43,7 @@ describe('walletless DAO administration', () => {
       send(
         core,
         'modconfig',
-        ['daclifycore', 1, 2, 'works', 1, ['propose'], ['reserve']],
+        ['daclifycore', 1, 2, 'works', 1, ['propose'], ['reserve'], worksHash],
         'daclifycore@active',
       ),
     ).rejects.toThrow('ADMIN_REQUIRED');
@@ -49,7 +53,7 @@ describe('walletless DAO administration', () => {
       send(
         core,
         'modconfig',
-        ['daclifycore', 1, 1, 'works', 1, ['propose'], ['takeall']],
+        ['daclifycore', 1, 1, 'works', 1, ['propose'], ['takeall'], worksHash],
         'daclifycore@active',
       ),
     ).rejects.toThrow('MODULE_GRANT_UNKNOWN');

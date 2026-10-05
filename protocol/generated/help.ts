@@ -99,7 +99,7 @@ export const CoreHelpBundle={
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "d685af7059f33232ce56bea6630e0314225e63dd13222e58d9fdedee8f4fc323",
+      "sourceAbiHash": "6aad2bae95cfa1b63db6e6acb0e08836274d33a3dddb006c15dfd74ae05a1d0d",
       "actions": [
         {
           "name": "approveob",
@@ -366,6 +366,10 @@ export const CoreHelpBundle={
             {
               "name": "grants",
               "type": "name[]"
+            },
+            {
+              "name": "code_hash",
+              "type": "checksum256"
             }
           ]
         },
@@ -611,6 +615,10 @@ export const CoreHelpBundle={
             {
               "name": "grants",
               "type": "name[]"
+            },
+            {
+              "name": "code_hash",
+              "type": "checksum256"
             }
           ]
         },
@@ -985,6 +993,10 @@ export const CoreHelpBundle={
             {
               "name": "grants",
               "type": "name[]"
+            },
+            {
+              "name": "code_hash",
+              "type": "checksum256"
             }
           ]
         },

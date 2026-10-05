@@ -88,27 +88,30 @@
     "Verified legacy deployment inventory and authorized migration",
     "Independent security review before mainnet launch"
   ],
-  "lastCheckpoint": "2026-10-05 module callback sender check verified on VERT and local native cleos. OpenBao and HTTP native cases were not executed. Code-hash pinning, integration, frontend, and browser checks were not rerun.",
+  "lastCheckpoint": "2026-10-05 runtime pins module code hashes. Local Spring feature GET_CODE_HASH was activated and the runtime wasm was set on daclify-v2-native. OpenBao, native HTTP, integration, and browser checks were not rerun.",
   "currentCheckout": {
     "coreBase": "27ba179",
     "modulesBase": "b2d6cba",
     "frontendBase": "13784ed",
     "node": "24.21.0",
     "npm": "11.19.0",
-    "runtimeCodeHash": "3072682ea80ff2ab74bb6c91057e3637822d79c3bfa994d52870f26299bbd050",
+    "runtimeCodeHash": "79878fbe88cf4b2019cac7bed5db3b761caf7d09cd1f1489090402f39632276a",
+    "getCodeHashFeature": "bcd2a26394b36614fd4894241d3c451ab0f6fd110958c3423073621a70826e99",
     "ran": [
-      "core vitest: 207 passed, 22 files, including 5 new module-callback-authority cases",
-      "modules vitest: 40 passed against the rebuilt runtime wasm",
-      "native dispatch, permission, runtime except the OpenBao case, and module-authority: 9 passed",
-      "native module-authority: direct works@active reserve rejected SOURCE_SENDER; works::accept inline reserve stored reserved=10000"
+      "core vitest: 211 passed, 22 files, including module pin, wasm replacement, disable-without-live-hash, and member-instruction rejection",
+      "modules vitest: 40 passed against the new runtime wasm",
+      "native module-authority: 4 passed. Wrong pin MODULE_CODE. Direct works@active reserve SOURCE_SENDER. works::accept reserved=10000. Replaced test-account wasm callback MODULE_CODE",
+      "native dispatch and permission: 4 passed on the pinned runtime",
+      "frontend vitest: 33 passed; vue-tsc and production build passed. Browser journeys were not rerun"
     ],
     "notRun": [
-      "native OpenBao R1 case: OPENBAO_URL and OPENBAO_TOKEN were unset, so the case did not reach the contract",
+      "native runtime.test.ts, including the OpenBao R1 case",
       "native HTTP/API suite: DATABASE_URL was unset",
       "PostgreSQL/API integration",
       "OpenBao provider suite",
-      "frontend unit, build, and browser journeys",
-      "package:release, which still refuses"
+      "frontend browser journeys and the module-enable click",
+      "package:release, which still refuses",
+      "Telos mainnet GET_CODE_HASH activation"
     ]
   },
   "verified": [
@@ -127,7 +130,7 @@
   "limits": [
     "Sponsored factory resource/rate budgets, admission/key rotation, social/native-wallet/managed account journeys, independent-runtime fleet discovery, custom module policy, executor/committee extensions, CI, immutable registry releases, migration tooling, Operations/billing and chain adapters remain incomplete",
     "User has no configured Pinata/OAuth/Telegram provider credentials; production custody operation remains unverified",
-    "Direct module-key callbacks are rejected in this checkout. Missing runtime module code pinning still blocks production readiness; see implementation-limits.md",
+    "Direct module-key callbacks are rejected and module code hashes are pinned in this checkout. Previous module rows do not deserialize. GET_CODE_HASH must be active. Telos mainnet activation is unverified. See implementation-limits.md",
     "No production chain changes, real asset movement, registry publication or legacy cutover",
     "Consumers use local development artifacts; bootstrap refreshes their lock integrities and preserves the exact module core peer version",
     "Hosted file UI and bounded scheduled reconciliation are implemented; automatic cleanup/shared retention/re-pinning and measured allowances remain incomplete; uncertain reservations retain budget"
@@ -137,13 +140,13 @@
       "check": "native module-authority regression",
       "lastResult": "passed",
       "status": "passed",
-      "reason": "2026-10-05 this checkout on daclify-v2-native: direct works@active reserve failed with SOURCE_SENDER, and works::accept reserved funds inline. On-chain code pinning is a separate open gap."
+      "reason": "2026-10-05 on daclify-v2-native after GET_CODE_HASH activation and runtime setcode 79878fbe88cf4b2019cac7bed5db3b761caf7d09cd1f1489090402f39632276a: wrong pin MODULE_CODE, direct works@active reserve SOURCE_SENDER, works::accept reserved=10000, replaced wasm callback MODULE_CODE."
     },
     {
       "check": "complete current native suite",
       "lastResult": "incomplete",
       "status": "held",
-      "reason": "9 cleos cases passed, including module authority. The OpenBao R1 case did not start because its environment variables were unset. The HTTP/API native file was not run because DATABASE_URL was unset."
+      "reason": "8 cleos cases passed on the pinned runtime: module-authority 4, dispatch 1, permission 3. native/runtime.test.ts was not rerun. The HTTP/API native file was not run because DATABASE_URL was unset."
     }
   ]
 }

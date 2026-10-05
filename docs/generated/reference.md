@@ -92,7 +92,7 @@ Encrypted DAOs rotate the future-content epoch when a member is deactivated. Rem
 
 ## runtime contract
 
-Source ABI JSON SHA-256: `d685af7059f33232ce56bea6630e0314225e63dd13222e58d9fdedee8f4fc323`.
+Source ABI JSON SHA-256: `6aad2bae95cfa1b63db6e6acb0e08836274d33a3dddb006c15dfd74ae05a1d0d`.
 
 ### Action: approveob
 
@@ -205,6 +205,7 @@ Source ABI JSON SHA-256: `d685af7059f33232ce56bea6630e0314225e63dd13222e58d9fded
 | version | uint16 |
 | actions | name[] |
 | grants | name[] |
+| code_hash | checksum256 |
 
 ### Action: payob
 
@@ -300,6 +301,7 @@ Source ABI JSON SHA-256: `d685af7059f33232ce56bea6630e0314225e63dd13222e58d9fded
 | version | uint16 |
 | actions | name[] |
 | grants | name[] |
+| code_hash | checksum256 |
 
 ### Action: setroles
 
@@ -438,6 +440,7 @@ Source ABI JSON SHA-256: `d685af7059f33232ce56bea6630e0314225e63dd13222e58d9fded
 | version | uint16 |
 | actions | name[] |
 | grants | name[] |
+| code_hash | checksum256 |
 
 ### Table: obligations
 

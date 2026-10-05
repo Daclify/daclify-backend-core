@@ -16,7 +16,7 @@ import {
   UserMembershipSchema,
 } from '../../protocol/api.js';
 import { ModuleStateSchema } from '@daclify/modules';
-import { encodeDecide } from '@daclify/modules/sdk';
+import { encodeDecide, ModuleCodeHashes } from '@daclify/modules/sdk';
 import { makeInstruction, encodeAction, instructionDigest } from '../../sdk/index.js';
 const url = process.env.DATABASE_URL;
 if (
@@ -162,6 +162,7 @@ describe('API to real native runtime', () => {
         version: 1,
         actions: ['open', 'vote'],
         grants: ['govlock'],
+        code_hash: ModuleCodeHashes.decide,
       }),
     );
     expect(

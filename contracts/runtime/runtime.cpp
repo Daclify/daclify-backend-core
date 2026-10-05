@@ -56,11 +56,11 @@ public:
     rows.modify(m,same_payer,[&](auto& r){r.credits=add64(r.credits,quantity);});
     dao_rows.modify(d,same_payer,[&](auto& r){r.credit_supply=add64(r.credit_supply,quantity);r.eligible_credits=add64(r.eligible_credits,quantity);});
   }
-  ACTION setmodule(uint64_t dao_id,name account,uint16_t version,std::vector<name> actions,std::vector<name> grants) {
-    const auto& d=dao_rows.get(dao_id,"DAO_UNKNOWN");require_auth(d.owner);install_module(dao_id,account,version,actions,grants);
+  ACTION setmodule(uint64_t dao_id,name account,uint16_t version,std::vector<name> actions,std::vector<name> grants,checksum256 code_hash) {
+    const auto& d=dao_rows.get(dao_id,"DAO_UNKNOWN");require_auth(d.owner);install_module(dao_id,account,version,actions,grants,code_hash);
   }
-  ACTION modconfig(name runtime,uint64_t dao_id,uint64_t member_id,name account,uint16_t version,std::vector<name> actions,std::vector<name> grants) {
-    authorized_actor(runtime,dao_id,member_id,true);install_module(dao_id,account,version,actions,grants);
+  ACTION modconfig(name runtime,uint64_t dao_id,uint64_t member_id,name account,uint16_t version,std::vector<name> actions,std::vector<name> grants,checksum256 code_hash) {
+    authorized_actor(runtime,dao_id,member_id,true);install_module(dao_id,account,version,actions,grants,code_hash);
   }
   ACTION setcredits(name runtime,uint64_t dao_id,uint64_t member_id,uint64_t target,uint64_t quantity) {
     authorized_actor(runtime,dao_id,member_id,true);const auto& d=dao_rows.get(dao_id);check(d.active_ballots==0,"GOVERNANCE_LOCKED");members rows(get_self(),dao_id);const auto& m=rows.get(target,"MEMBER_UNKNOWN");
@@ -203,15 +203,22 @@ private:
   uint64_t parse_id(const std::string& value) {check(!value.empty()&&value.size()<=20&&value[0]!='0',"DEPOSIT_REFERENCE");uint64_t out=0;for(auto c:value){check(c>='0'&&c<='9',"DEPOSIT_REFERENCE");check(out<=(std::numeric_limits<uint64_t>::max()-(c-'0'))/10,"DEPOSIT_REFERENCE");out=out*10+(c-'0');}return out;}
   checksum256 source_hash(name source,uint64_t id){auto packed=pack(std::make_tuple(source,id));return sha256(packed.data(),packed.size());}
   uint64_t obligation_id(obligations& rows,name source,uint64_t id){auto index=rows.get_index<"bysource"_n>();const auto& o=index.get(source_hash(source,id),"OBLIGATION_UNKNOWN");check(o.source==source&&o.source_id==id,"OBLIGATION_DOMAIN");return o.id;}
-  void install_module(uint64_t dao_id,name account,uint16_t version,const std::vector<name>& actions,const std::vector<name>& grants) {
+  void install_module(uint64_t dao_id,name account,uint16_t version,const std::vector<name>& actions,const std::vector<name>& grants,checksum256 code_hash) {
     check(is_account(account)&&account!=get_self(),"MODULE_ACCOUNT");check(version==1&&actions.size()<=16&&grants.size()<=16,"MODULE_VERSION_OR_LIMIT");
     for(auto grant:grants)check(grant=="reserve"_n||grant=="approve"_n||grant=="cancel"_n||grant=="govlock"_n,"MODULE_GRANT_UNKNOWN");
-    auto unique=[](const auto& list){for(size_t i=0;i<list.size();i++){check(list[i].value>0,"MODULE_ACTION");for(size_t j=i+1;j<list.size();j++)check(list[i]!=list[j],"DUPLICATE_GRANT");}};unique(actions);unique(grants);modules rows(get_self(),dao_id);auto it=rows.find(account.value);
-    if(it==rows.end())rows.emplace(get_self(),[&](auto& r){r.account=account;r.version=version;r.actions=actions;r.grants=grants;});else rows.modify(it,same_payer,[&](auto& r){r.version=version;r.actions=actions;r.grants=grants;});
+    auto unique=[](const auto& list){for(size_t i=0;i<list.size();i++){check(list[i].value>0,"MODULE_ACTION");for(size_t j=i+1;j<list.size();j++)check(list[i]!=list[j],"DUPLICATE_GRANT");}};unique(actions);unique(grants);
+    // Clearing both lists removes a module after its code has changed. Any remaining
+    // action or grant must pin the hash of the code loaded at that account.
+    checksum256 pinned{};
+    if(!actions.empty()||!grants.empty()){check(code_hash!=checksum256(),"MODULE_CODE");check(get_code_hash(account)==code_hash,"MODULE_CODE");pinned=code_hash;}
+    modules rows(get_self(),dao_id);auto it=rows.find(account.value);
+    if(it==rows.end())rows.emplace(get_self(),[&](auto& r){r.account=account;r.version=version;r.actions=actions;r.grants=grants;r.code_hash=pinned;});else rows.modify(it,same_payer,[&](auto& r){r.version=version;r.actions=actions;r.grants=grants;r.code_hash=pinned;});
   }
+  void check_pinned(const module_record& installed,name account){check(installed.code_hash!=checksum256()&&get_code_hash(account)==installed.code_hash,"MODULE_CODE");}
   // The module account key satisfies require_auth on a direct action. Only that
   // account's executing contract sets get_sender, so the key cannot skip the module.
-  void require_source(uint64_t dao_id,name source,name grant){check(get_sender()==source,"SOURCE_SENDER");require_auth(source);modules rows(get_self(),dao_id);const auto& installed=rows.get(source.value,"MODULE_DISABLED");check(std::find(installed.grants.begin(),installed.grants.end(),grant)!=installed.grants.end(),"MODULE_GRANT");}
+  // The stored hash must still match that contract, so replacing its code drops the grant.
+  void require_source(uint64_t dao_id,name source,name grant){check(get_sender()==source,"SOURCE_SENDER");require_auth(source);modules rows(get_self(),dao_id);const auto& installed=rows.get(source.value,"MODULE_DISABLED");check(std::find(installed.grants.begin(),installed.grants.end(),grant)!=installed.grants.end(),"MODULE_GRANT");check_pinned(installed,source);}
   void validate_instruction(const instruction& r) {
     auto c=configuration();check(r.version==c.interface_version&&r.chain_id==c.chain_id&&r.deployment==get_self(),"INSTRUCTION_DOMAIN");
     const auto& d=dao_rows.get(r.dao_id,"DAO_UNKNOWN");(void)d;
@@ -221,7 +228,7 @@ private:
     check(r.data.size()>=24&&r.data.size()<=16384,"PAYLOAD_SIZE");auto context=unpack<actor_context>(r.data);
     check(context.runtime==get_self()&&context.dao_id==r.dao_id&&context.member_id==r.member_id,"PAYLOAD_DOMAIN");
     if(r.target==get_self())check(r.action=="setmeta"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n,"ACTION_UNSUPPORTED");
-    else { modules rows(get_self(),r.dao_id);const auto& installed=rows.get(r.target.value,"MODULE_DISABLED");check(std::find(installed.actions.begin(),installed.actions.end(),r.action)!=installed.actions.end(),"ACTION_UNSUPPORTED"); }
+    else { modules rows(get_self(),r.dao_id);const auto& installed=rows.get(r.target.value,"MODULE_DISABLED");check(std::find(installed.actions.begin(),installed.actions.end(),r.action)!=installed.actions.end(),"ACTION_UNSUPPORTED");check_pinned(installed,r.target); }
   }
   void dispatch(const instruction& r) {
     members rows(get_self(),r.dao_id);const auto& m=rows.get(r.member_id);rows.modify(m,same_payer,[](auto& row){row.nonce++;});

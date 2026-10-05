@@ -1,6 +1,6 @@
 # Development checkouts and tests
 
-This is an incomplete development release. Direct module-key callbacks are rejected on the current runtime, and that check was rerun on the local native fixture. On-chain module code pinning and the other limits in [implementation limits](evidence/implementation-limits.md) remain open. Do not interpret application or emulator checks as a passing native security suite.
+This is an incomplete development release. The current runtime rejects direct module-key callbacks and pins module code with `get_code_hash`. Loading that runtime requires the Spring `GET_CODE_HASH` protocol feature; the local fixture activates it. The other limits in [implementation limits](evidence/implementation-limits.md) remain open. Do not interpret application or emulator checks as a passing native security suite.
 
 Check out `daclify-backend-core`, `daclify-backend-modules`, and `daclify-frontend` as sibling directories. They remain independent repositories, with separately versioned public core and module packages. Node 24.21 or later in the Node 24 line and npm 11.19 or later in the npm 11 line are required.
 
