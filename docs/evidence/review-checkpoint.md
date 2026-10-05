@@ -1,6 +1,6 @@
 # Daclify V2 development review checkpoint
 
-This checkpoint contains the implementation accumulated across three private repositories on `feat/v2-implementation`. It is not the completed master plan or a release for real funds. Main branches and legacy repositories have not been cut over.
+This checkpoint contains the implementation accumulated across three private repositories on `feat/v2-implementation` and merged into `main` at the user's request. It is not the completed master plan or a release for real funds. Legacy repositories have not been cut over.
 
 ## Implemented product slices
 

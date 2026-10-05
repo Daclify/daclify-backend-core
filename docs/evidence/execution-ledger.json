@@ -1,6 +1,6 @@
 {
   "started": "2026-10-05",
-  "branch": "feat/v2-implementation",
+  "branch": "main",
   "workflow": "Continuous implementation; user review at the end; no production actions.",
   "packages": [
     {
