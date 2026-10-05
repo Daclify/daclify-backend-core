@@ -1,0 +1,39 @@
+{
+  "markdown_files_checked": 13,
+  "local_links_checked": 25,
+  "python_snippets_parsed": 2,
+  "work_packages_checked": 19,
+  "legacy_worktrees": [
+    {
+      "repository": "daclifyfrontend",
+      "head": "b72df96f2c80ef1ad6937134a6b34612a427a773",
+      "worktree_clean": true
+    },
+    {
+      "repository": "daclifycore",
+      "head": "168ddc14538a5251e4931b9624e239292bb92499",
+      "worktree_clean": true
+    },
+    {
+      "repository": "daclifymodules",
+      "head": "7550b62388ae6ecff7b47dc54cae4ac03be75ec4",
+      "worktree_clean": true
+    },
+    {
+      "repository": "daclifyhub",
+      "head": "3887a75bf9ebcf4bdab1b3624700264e8dccd174",
+      "worktree_clean": true
+    },
+    {
+      "repository": "www-landing-page",
+      "head": "edb897bee6d77ce865a1f4e2e264b2ffea1bd38e",
+      "worktree_clean": true
+    },
+    {
+      "repository": "custom-ui-components",
+      "head": "e76757387540806407f803fcfb24a10458c31358",
+      "worktree_clean": true
+    }
+  ],
+  "errors": []
+}
