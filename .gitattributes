@@ -1,0 +1,2 @@
+# Preserve checksum-verified third-party source and its license verbatim.
+contracts/vendor/* -whitespace

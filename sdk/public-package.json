@@ -1,0 +1,46 @@
+{
+  "name": "@daclify/core-protocol",
+  "version": "0.1.0-alpha.1",
+  "type": "module",
+  "description": "Daclify public protocol and generated contract SDK",
+  "engines": {
+    "node": ">=24.21 <25",
+    "npm": ">=11.19 <12"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Daclify/daclify-backend-core.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/protocol/index.d.ts",
+      "import": "./dist/protocol/index.js"
+    },
+    "./sdk": {
+      "types": "./dist/sdk/index.d.ts",
+      "import": "./dist/sdk/index.js"
+    },
+    "./compiler": {
+      "types": "./dist/sdk/compiler.d.ts",
+      "import": "./dist/sdk/compiler.js"
+    },
+    "./documentation": {
+      "types": "./dist/sdk/documentation.d.ts",
+      "import": "./dist/sdk/documentation.js"
+    },
+    "./help": {
+      "types": "./dist/protocol/generated/help.d.ts",
+      "import": "./dist/protocol/generated/help.js"
+    }
+  },
+  "files": ["dist/protocol", "dist/sdk", "docs/generated", "README.md", "contracts/common"],
+  "dependencies": {
+    "@wharfkit/antelope": "4.0.2",
+    "zod": "4.6.5",
+    "multiformats": "14.0.5",
+    "semver": "7.8.5"
+  }
+}

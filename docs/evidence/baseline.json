@@ -1,0 +1,55 @@
+{
+  "root_repository_exists": false,
+  "repositories": [
+    {
+      "repository": "daclifyfrontend",
+      "head": "b72df96f2c80ef1ad6937134a6b34612a427a773",
+      "status": "",
+      "last_commit": "b72df96 2025-08-21 this ui will be archived. this is only to show the old daclify options with dummy data"
+    },
+    {
+      "repository": "daclifycore",
+      "head": "168ddc14538a5251e4931b9624e239292bb92499",
+      "status": "",
+      "last_commit": "168ddc1 2022-11-30 Merge pull request #2 from FreeosDAO/documentation"
+    },
+    {
+      "repository": "daclifymodules",
+      "head": "7550b62388ae6ecff7b47dc54cae4ac03be75ec4",
+      "status": "",
+      "last_commit": "7550b62 2023-02-08 Merge pull request #1 from FreeosDAO/master"
+    },
+    {
+      "repository": "daclifyhub",
+      "head": "3887a75bf9ebcf4bdab1b3624700264e8dccd174",
+      "status": "",
+      "last_commit": "3887a75 2022-08-09 Update README.md"
+    },
+    {
+      "repository": "www-landing-page",
+      "head": "edb897bee6d77ce865a1f4e2e264b2ffea1bd38e",
+      "status": "",
+      "last_commit": "edb897b 2025-08-28 Add Pintastic project card and logo"
+    },
+    {
+      "repository": "custom-ui-components",
+      "head": "e76757387540806407f803fcfb24a10458c31358",
+      "status": "",
+      "last_commit": "e767573 2022-08-09 Update README.md"
+    }
+  ],
+  "tools": {
+    "node": "/Users/seth/.nvm/versions/node/v24.14.1/bin/node",
+    "npm": "/Users/seth/.nvm/versions/node/v24.14.1/bin/npm",
+    "python3": "/opt/homebrew/bin/python3",
+    "cdt-cpp": "/usr/local/bin/cdt-cpp",
+    "nodeos": null,
+    "cleos": null,
+    "docker": "/opt/homebrew/bin/docker"
+  },
+  "limits": [
+    "Source revisions are not proof of deployed code or authority.",
+    "Legacy frontend build used existing dependencies; not a clean-install security pass.",
+    "VERT does not implement every native permission intrinsic."
+  ]
+}

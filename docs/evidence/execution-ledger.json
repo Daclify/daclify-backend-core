@@ -1,0 +1,127 @@
+{
+  "started": "2026-10-05",
+  "branch": "feat/v2-implementation",
+  "workflow": "Continuous implementation; user review at the end; no production actions.",
+  "packages": [
+    {
+      "id": "WP01",
+      "status": "in_progress"
+    },
+    {
+      "id": "WP02",
+      "status": "in_progress"
+    },
+    {
+      "id": "WP03",
+      "status": "in_progress"
+    },
+    {
+      "id": "WP04",
+      "status": "in_progress"
+    },
+    {
+      "id": "WP05",
+      "status": "in_progress"
+    },
+    {
+      "id": "WP06",
+      "status": "in_progress"
+    },
+    {
+      "id": "WP07",
+      "status": "in_progress"
+    },
+    {
+      "id": "WP08",
+      "status": "in_progress"
+    },
+    {
+      "id": "WP09",
+      "status": "in_progress"
+    },
+    {
+      "id": "WP10",
+      "status": "in_progress"
+    },
+    {
+      "id": "WP11",
+      "status": "in_progress"
+    },
+    {
+      "id": "WP12",
+      "status": "in_progress"
+    },
+    {
+      "id": "WP13",
+      "status": "in_progress"
+    },
+    {
+      "id": "WP14",
+      "status": "pending"
+    },
+    {
+      "id": "WP15",
+      "status": "pending"
+    },
+    {
+      "id": "WP16",
+      "status": "pending"
+    },
+    {
+      "id": "WP17",
+      "status": "pending"
+    },
+    {
+      "id": "WP18",
+      "status": "pending"
+    },
+    {
+      "id": "WP19",
+      "status": "pending"
+    }
+  ],
+  "external_gates": [
+    "Production managed-key provider signing/recovery/export-or-rotation/cost evidence",
+    "Live Pinata and social/Telegram provider credentials",
+    "Actual supported Telegram client matrix",
+    "Cross-runtime EVM settlement prototype",
+    "Verified legacy deployment inventory and authorized migration",
+    "Independent security review before mainnet launch"
+  ],
+  "lastCheckpoint": "2026-10-05 verified hosted files/reconciliation, Decide/Works/payroll/treasury workflows, generated handbook and source-only bootstrap",
+  "verified": [
+    "Checksum-verified CDT 4.1.1 / Spring 1.2.2 toolchain rebuilt core and module contracts in a source-only copy",
+    "202 current core unit/property/compiled-WASM cases passed",
+    "41 actual PostgreSQL and HTTP integration cases passed, including content reconciliation, quota/retry and leased worker concurrency",
+    "40 module SDK/documentation/API/Decide/Works/payroll compiled-WASM cases passed",
+    "33 frontend vault/epoch/documentation/workspace/file/treasury unit cases passed",
+    "Core/modules formatting, strict type checks and generated-doc checks passed; frontend formatting, Vue template checks and production build passed",
+    "Source-only bootstrap with no pre-existing dependency, distribution or contract artifacts passed; its core 199-case checkpoint, module 40-case suite and frontend 33-case suite passed",
+    "20 complete desktop/mobile browser journeys passed against the real local API/native chain and labelled disk provider, including public/private files, contributor/reviewer handoff, payroll/Decide removal, finalization, claims and recovery",
+    "Earlier 12 native cases and separate 5 HTTP/native cases passed; the complete current native suite is not passing and remains held",
+    "5 real local OpenBao provider cases passed at the earlier checkpoint; this is not production custody qualification",
+    "Pinata adapter fault fixtures passed within the core suite; live provider integration is unverified"
+  ],
+  "limits": [
+    "Sponsored factory resource/rate budgets, admission/key rotation, social/native-wallet/managed account journeys, independent-runtime fleet discovery, custom module policy, executor/committee extensions, CI, immutable registry releases, migration tooling, Operations/billing and chain adapters remain incomplete",
+    "User has no configured Pinata/OAuth/Telegram provider credentials; production custody operation remains unverified",
+    "Confirmed native module authorization defect and missing runtime module code pinning block production readiness; see implementation-limits.md",
+    "No production chain changes, real asset movement, registry publication or legacy cutover",
+    "Consumers use local development artifacts; bootstrap refreshes their lock integrities and preserves the exact module core peer version",
+    "Hosted file UI and bounded scheduled reconciliation are implemented; automatic cleanup/shared retention/re-pinning and measured allowances remain incomplete; uncertain reservations retain budget"
+  ],
+  "verification_holds": [
+    {
+      "check": "native module-authority regression",
+      "lastResult": "failed",
+      "status": "held",
+      "reason": "Confirmed open contract authorization defect. Security checks associated with repeated platform interruptions are not being retried."
+    },
+    {
+      "check": "complete current native suite",
+      "lastResult": "not_run",
+      "status": "held",
+      "reason": "Includes the confirmed failing module-authority case; earlier successful subsets are not a full-suite pass."
+    }
+  ]
+}

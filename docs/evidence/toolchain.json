@@ -1,0 +1,11 @@
+{
+  "compiler": "Antelope CDT 4.1.1",
+  "nativeRuntime": "Antelope Spring 1.2.2",
+  "platform": "linux/amd64",
+  "image": "daclify-v2-toolchain:4.1.1-spring1.2.2",
+  "ubuntuDigest": "sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401",
+  "cdtDebSha256": "d946e6b64f297442d19e486401aa49f956080b07a1fa6335f29976106175b588",
+  "springDebSha256": "531ed1c965f94dd7732f5e900401f132170769c45b7589819a0ba1336627687a",
+  "source": "Official AntelopeIO GitHub latest stable release API, verified 2026-10-05",
+  "productionCompatibility": "Requires target-network runtime verification before release"
+}

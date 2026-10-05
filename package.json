@@ -1,0 +1,68 @@
+{
+  "name": "@daclify/backend-core",
+  "version": "0.1.0-alpha.1",
+  "type": "module",
+  "description": "Daclify core services and Antelope runtime",
+  "engines": {
+    "node": ">=24.21 <25",
+    "npm": ">=11.19 <12"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Daclify/daclify-backend-core.git"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc",
+    "dev": "tsx watch services/api/src/main.ts",
+    "build:contracts": "tsx tools/build/contracts.ts",
+    "codegen": "tsx tools/codegen/abi.ts",
+    "test:native": "vitest run --config vitest.native.config.ts",
+    "test:providers": "vitest run --config vitest.providers.config.ts",
+    "native:start": "tsx tools/native/start.ts",
+    "package:protocol": "tsx tools/release/package.ts --development",
+    "package:release": "tsx tools/release/package.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "dev:local": "tsx tools/native/api.ts",
+    "docs:generate": "tsx tools/docs/generate.ts",
+    "docs:check": "tsx tools/docs/generate.ts --check",
+    "bootstrap": "node tools/bootstrap.ts",
+    "format:check": "prettier --check \"**/*.{ts,vue,css,json}\"",
+    "format": "prettier --write \"**/*.{ts,vue,css,json}\""
+  },
+  "dependencies": {
+    "@daclify/core-protocol": "file:.artifacts/daclify-core-protocol-0.1.0-alpha.1.tgz",
+    "@daclify/modules": "file:../daclify-backend-modules/.artifacts/daclify-modules-0.1.0-alpha.1.tgz",
+    "@fastify/cookie": "11.1.2",
+    "@fastify/cors": "11.3.0",
+    "@noble/curves": "2.4.0",
+    "@wharfkit/antelope": "4.0.2",
+    "fastify": "5.12.5",
+    "jose": "6.2.12",
+    "multiformats": "14.0.5",
+    "pg": "8.23.1",
+    "pinata": "2.5.6",
+    "semver": "7.8.5",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@proton/vert": "0.3.24",
+    "@types/node": "24.19.1",
+    "@types/pg": "8.23.1",
+    "@types/semver": "7.8.0",
+    "eslint": "10.12.0",
+    "fast-check": "4.10.2",
+    "prettier": "3.9.9",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.0",
+    "vitest": "5.0.3"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "es5-ext": false,
+    "fsevents": false
+  },
+  "private": true
+}
