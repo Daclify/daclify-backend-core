@@ -11,6 +11,8 @@ import { ContentService } from '../../services/api/src/content/service.js';
 import { LocalContentFixture } from './content-fixture.js';
 import { startContentWorker } from '../../services/api/src/content/jobs.js';
 import { readDocsAgent } from '../../services/api/src/docs/config.js';
+import { readStripeConfig } from '../../services/api/src/billing/config.js';
+import { StripeBilling } from '../../services/api/src/billing/service.js';
 loadEnvFile('.env');
 function localTelegram(): { botToken: string; botUsername?: string } | undefined {
   const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -62,12 +64,22 @@ const content = new ContentService(
   'local-fixture',
 );
 const docs = readDocsAgent(process.env);
+let stripeConfig: ReturnType<typeof readStripeConfig>;
+try {
+  stripeConfig = readStripeConfig(process.env);
+} catch {
+  stripeConfig = undefined;
+  console.log('Card payments are not configured.');
+}
 const app = await createServer(pool, chain, 'http://127.0.0.1:5178', {
   content,
   ...(telegram ? { providers: { telegram } } : {}),
   signIn: { environment: 'local' },
   origins: ['http://127.0.0.1:5178', 'http://localhost:5178'],
   ...(docs ? { docs } : {}),
+  ...(stripeConfig
+    ? { billing: new StripeBilling(pool, stripeConfig, 'http://127.0.0.1:5178', chain) }
+    : {}),
 });
 await app.listen({ host: '127.0.0.1', port: 3008 });
 const worker = startContentWorker(pool, content);

@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { Pool } from 'pg';
 import { PrivateKey } from '@wharfkit/antelope';
-import { encodeDecide, encodeWorks } from '@daclify/modules/sdk';
+import { encodeDecide, encodeWorks, ModuleCodeHashes } from '@daclify/modules/sdk';
 import { z } from 'zod';
 import {
   AccountSchema,
@@ -18,7 +18,12 @@ import {
   defaultDaoSetup,
   CreateDaoSchema,
 } from '../../protocol/index.js';
-import { encodeAction, instructionDigest, makeInstruction } from '../../sdk/index.js';
+import {
+  encodeAction,
+  instructionDigest,
+  makeInstruction,
+  governanceSettings,
+} from '../../sdk/index.js';
 import type { instruction } from '../../sdk/index.js';
 import { NativeChainGateway } from '../../services/api/src/native-chain.js';
 import { createServer } from '../../services/api/src/server.js';
@@ -133,6 +138,13 @@ async function instructionFor(
 }
 beforeAll(async () => {
   await migrate(pool);
+  native('setfees', [500, 10000, 'alice', 'eosio.token', '4,TLOS', ''], 'daclifycore');
+  for (const module of ['decide', 'works', 'payroll'] as const)
+    native(
+      'listmod',
+      [module, 'alice', 0, 1, '0.0000 TLOS', ModuleCodeHashes[module], 'First-party fixture'],
+      'daclifycore',
+    );
 });
 afterAll(async () => {
   await app.close();
@@ -140,7 +152,8 @@ afterAll(async () => {
 });
 describe('isolated native preset / API authority', () => {
   it('creates a fully configured NGO through the authenticated API and preserves its snapshot', async () => {
-    const user = await login(PrivateKey.generate('K1'));
+    const signing = PrivateKey.generate('K1');
+    const user = await login(signing);
     const input = CreateDaoSchema.parse({
       metadata: { schemaVersion: 1, title: 'Native grant fixture', description: '' },
       privacy: 'public',
@@ -168,6 +181,47 @@ describe('isolated native preset / API authority', () => {
         (member) => member.dao.daoId === dao.reference.daoId && member.admin,
       ),
     ).toBe(true);
+    if (!input.setup) throw new Error('Fixture setup');
+    const request = await instructionFor(
+      dao.reference.daoId,
+      '1',
+      'daclifycore',
+      'setdaogov',
+      encodeAction('setdaogov', {
+        runtime: 'daclifycore',
+        dao_id: dao.reference.daoId,
+        member_id: '1',
+        settings: governanceSettings(
+          { ...input.setup, governance: { ...input.setup.governance, duration: 60 } },
+          'decide',
+        ),
+      }),
+    );
+    await gateway.relay(
+      user.account,
+      request,
+      signing.signDigest(instructionDigest(request)).toString(),
+    );
+    expect((await gateway.governance(dao.reference.daoId)).policy?.config.duration).toBe(60);
+    expect((await gateway.dao(dao.reference.daoId)).setup).toEqual(input.setup);
+    native('setgov', [dao.reference.daoId], 'daclifycore');
+    const fees = await instructionFor(
+      dao.reference.daoId,
+      '1',
+      'daclifycore',
+      'govfees',
+      encodeAction('govfees', {
+        runtime: 'daclifycore',
+        dao_id: dao.reference.daoId,
+        member_id: '1',
+        third_party_bps: 500,
+        first_party_bps: 10000,
+        bump_bps: 1000,
+        quote_premium_bps: 2500,
+      }),
+    );
+    await gateway.relay(user.account, fees, signing.signDigest(instructionDigest(fees)).toString());
+    expect((await gateway.table('mktcfg', 'daclifycore'))[0]?.bump_bps).toBe(1000);
   });
   it('runs guarded agent funding and scoped API signatures under actual native permissions', async () => {
     const sponsor = await login(PrivateKey.generate('K1'));

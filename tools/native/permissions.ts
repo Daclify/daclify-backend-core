@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { z } from 'zod';
 export const localCoreCallbacks = [
-  'setgov',
+  'setdaogov',
   'addmember',
   'addsession',
   'delsession',
@@ -20,6 +20,8 @@ export const localCoreCallbacks = [
   'unstake',
   'modconfig',
   'setcredits',
+  'confirmext',
+  'govfees',
 ] as const;
 export function configureFixtureContext(container: string, runtime = 'daclifycore'): void {
   z.enum(['daclify-v2-native', 'daclify-dao-presets-native']).parse(container);

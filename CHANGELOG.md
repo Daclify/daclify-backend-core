@@ -7,5 +7,6 @@
 - Agent admission, scoped credentials, revocation and signing recovery.
 - Atomic preset creation, governance read API, scoped relaying and bounded Works execution.
 - Generated references, explanatory guides and a provider-neutral public publishing example.
+- Combined marketplace/name integration, with distinct setdaogov and setgov actions and reviewed module catalogue fixtures.
 
 Development prerelease. Existing production release gates remain in force.

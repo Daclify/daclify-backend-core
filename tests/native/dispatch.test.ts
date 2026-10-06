@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { ABI, Name, PrivateKey, Serializer } from '@wharfkit/antelope';
@@ -7,6 +7,7 @@ import { makeInstruction, instructionDigest } from '../../sdk/index.js';
 import { DaoRefSchema } from '../../protocol/index.js';
 import { fixtureKey } from '../../tools/native/keys.js';
 import { unlockFixtureWallet } from '../../tools/native/wallet.js';
+import { listFirstPartyModule, unlistModule } from './list-module.js';
 const network = z
   .strictObject({ url: z.string(), chainId: z.string(), container: z.string() })
   .parse(JSON.parse(readFileSync('.artifacts/native/network.json', 'utf8')));
@@ -66,12 +67,16 @@ beforeAll(async () => {
     [daoId, memberId, '', key.toPublic().toString(), 'fixture-encryption-key', 0],
     'bob',
   );
-  push(
-    'daclifycore',
-    'setmodule',
-    [daoId, 'eosio.token', 1, ['transfer'], [], await liveCodeHash('eosio.token')],
-    'bob',
-  );
+  const tokenHash = await liveCodeHash('eosio.token');
+  listFirstPartyModule('eosio.token', tokenHash, 'Token');
+  push('daclifycore', 'setmodule', [daoId, 'eosio.token', 1, ['transfer'], [], tokenHash], 'bob');
+});
+afterAll(() => {
+  try {
+    unlistModule('eosio.token');
+  } catch (error) {
+    if (!(error instanceof Error) || !error.message.includes('MODULE_UNLISTED')) throw error;
+  }
 });
 describe('native dispatcher permission boundary', () => {
   it('cannot dispatch an ABI-compatible token transfer under runtime spending authority', () => {

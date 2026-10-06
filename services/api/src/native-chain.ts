@@ -9,8 +9,10 @@ import {
   type SettlementResult,
 } from '../../../protocol/treasury.js';
 import {
+  ABI,
   APIClient,
   Action,
+  Serializer,
   Transaction,
   SignedTransaction,
   PrivateKey,
@@ -75,6 +77,17 @@ import {
 } from '../../../sdk/index.js';
 import type { ChainGateway } from './chain.js';
 import { ApiError } from './errors.js';
+import type { NamePurchase } from './billing/name.js';
+import {
+  MarketRuleError,
+  TelosNameSchema,
+  loadFees,
+  quoteName,
+  readChainRows,
+  type NamePolicy,
+  type NameQuote,
+} from './market/read.js';
+import { readMarketplace, readNameService } from './market/routes.js';
 export interface NativeChainConfig {
   rpcUrl: string;
   chainId: string;
@@ -131,7 +144,7 @@ export class NativeChainGateway implements ChainGateway {
     const { abi } = await this.api.v1.chain.get_abi(this.config.runtime);
     return [
       'initgov',
-      'setgov',
+      'setdaogov',
       'enrollagent',
       'addmember',
       'addsession',
@@ -844,5 +857,151 @@ export class NativeChainGateway implements ChainGateway {
       this.config.relayActor,
       this.config.relayKey,
     );
+  }
+  marketplace() {
+    return readMarketplace(this.config.rpcUrl, this.config.runtime);
+  }
+  nameService() {
+    return readNameService(this.config.rpcUrl, this.config.runtime);
+  }
+  async nameQuote(accountName: string): Promise<NameQuote> {
+    const name = TelosNameSchema.parse(accountName);
+    const service = await this.nameService();
+    if (
+      !service.configured ||
+      !service.treasury ||
+      service.thirdPartyBps === null ||
+      service.firstPartyBps === null ||
+      service.bumpBps === null ||
+      service.quotePremiumBps === null
+    ) {
+      throw new ApiError('NAMES_UNCONFIGURED', 503);
+    }
+    if (await this.nativeAccountExists(name)) throw new ApiError('NAME_TAKEN', 409);
+    const namesAccount = await this.namesAccount();
+    if (await this.saleForName(namesAccount, name)) throw new ApiError('NAME_SOLD', 409);
+    const policy: NamePolicy = {
+      bumpBps: service.bumpBps,
+      quotePremiumBps: service.quotePremiumBps,
+      median: service.oracleMedian ? BigInt(service.oracleMedian) : 0n,
+      quotedPrecision: service.oraclePrecision ?? 4,
+      observedAt: service.oracleObservedAt ?? 0,
+    };
+    try {
+      return quoteName({
+        accountName: name,
+        tiers: service.tiers,
+        listings: service.listings,
+        suffixes: service.suffixes,
+        policy,
+        treasury: service.treasury,
+        thirdPartyBps: service.thirdPartyBps,
+        firstPartyBps: service.firstPartyBps,
+      });
+    } catch (error) {
+      if (error instanceof MarketRuleError) throw new ApiError(error.code, 409);
+      throw error;
+    }
+  }
+  async fulfillName(purchase: NamePurchase): Promise<void> {
+    const namesAccount = await this.namesAccount();
+    if (await this.saleForReference(namesAccount, purchase.reference)) return;
+    const quote = await this.nameQuote(purchase.accountName);
+    if (quote.usdCents !== purchase.usdCents || quote.usdCents < 1) {
+      throw new ApiError('NAME_PRICE', 409);
+    }
+    const response = await fetch(`${this.config.rpcUrl}/v1/chain/get_abi`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ account_name: namesAccount }),
+      signal: AbortSignal.timeout(10000),
+    });
+    const body: unknown = await response.json().catch(() => undefined);
+    const abiValue = z.object({ abi: z.unknown() }).safeParse(body);
+    if (
+      !response.ok ||
+      !abiValue.success ||
+      typeof abiValue.data.abi !== 'object' ||
+      abiValue.data.abi === null
+    ) {
+      throw new ApiError('NAMES_UNCONFIGURED', 503);
+    }
+    const data = Serializer.encode({
+      abi: ABI.from(JSON.stringify(abiValue.data.abi)),
+      type: 'fulfill',
+      object: {
+        settler: this.config.relayActor,
+        account_name: purchase.accountName,
+        owner_key: purchase.ownerKey,
+        active_key: purchase.activeKey,
+        usd_cents: purchase.usdCents,
+        reference: purchase.reference,
+      },
+    }).array;
+    try {
+      await this.pushEncoded(
+        namesAccount,
+        'fulfill',
+        data,
+        this.config.relayActor,
+        this.config.relayKey,
+      );
+    } catch (error) {
+      if (await this.saleForReference(namesAccount, purchase.reference)) return;
+      if (error instanceof ApiError && error.code !== 'CHAIN_ACTION_REJECTED') throw error;
+      throw new ApiError('CHAIN_UNAVAILABLE', 503);
+    }
+  }
+  private async namesAccount(): Promise<string> {
+    const fees = await loadFees(this.config.rpcUrl, this.config.runtime);
+    if (!fees?.names) throw new ApiError('NAMES_UNCONFIGURED', 503);
+    return fees.names;
+  }
+  private async nativeAccountExists(account: string): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.config.rpcUrl}/v1/chain/get_account`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ account_name: account }),
+        signal: AbortSignal.timeout(10000),
+      });
+      return response.ok;
+    } catch {
+      throw new ApiError('CHAIN_UNAVAILABLE', 503);
+    }
+  }
+  private async saleForName(names: string, accountName: string): Promise<boolean> {
+    const table = await readChainRows({
+      rpcUrl: this.config.rpcUrl,
+      code: names,
+      scope: names,
+      table: 'sales',
+      limit: 1,
+      indexPosition: 2,
+      keyType: 'name',
+      lowerBound: accountName,
+      upperBound: accountName,
+    });
+    return table.rows.some((row) => {
+      const parsed = z.object({ account_name: z.string() }).safeParse(row);
+      return parsed.success && parsed.data.account_name === accountName;
+    });
+  }
+  private async saleForReference(names: string, reference: string): Promise<boolean> {
+    const table = await readChainRows({
+      rpcUrl: this.config.rpcUrl,
+      code: names,
+      scope: names,
+      table: 'sales',
+      limit: 1,
+      indexPosition: 3,
+      keyType: 'sha256',
+      lowerBound: reference,
+      upperBound: reference,
+    });
+    return table.rows.some((row) => {
+      const parsed = z.object({ reference: z.string() }).safeParse(row);
+      return parsed.success && parsed.data.reference === reference;
+    });
   }
 }

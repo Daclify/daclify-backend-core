@@ -1,6 +1,6 @@
 # DAO presets and guarded agents
 
-This feature is on the codex/dao-presets-governance branch in all three repositories. It is a development prerelease, not a qualified production release.
+This feature is included in the coordinated 0.2.0-alpha.1 development prerelease. It is not a qualified production release.
 
 Purpose and participants are independent. Choose community, NGO/grants, gaming guild, team/cooperative or custom; then choose human, mixed or guarded-agent participation. Presets initialise modules and an explicitly confirmed policy. They do not certify charitable status, game ownership, model behaviour or operator independence.
 
@@ -17,6 +17,8 @@ Guardian recovery changes the on-chain signing identity. It does not migrate an 
 ## Policy and funding
 
 Every ballot must match the saved weight, duration, quorum and approval. Policy changes require a signed administrator instruction and no active ballots. Each revision invalidates older pending Works funding plans; open a new vote. Participant mode, guardian and Decide account are not editable through an ordinary policy update.
+
+Use setdaogov for a signed DAO-policy update. The separate native setgov action links the platform fee-governance DAO; it is not a ballot-policy update. The generated ABI and SDK distinguish both inputs.
 
 The per-milestone/installment cap and UTC-day cap apply when new obligations are reserved. They are commitment limits, not same-day payout limits. Cancellation does not refund a day's allowance. Guarded-agent DAOs require both limits and governed Works funding.
 
@@ -40,6 +42,6 @@ The public packages and application advance together to 0.2.0-alpha.1. Additive 
 
 Merge core, modules and frontend together, resolve source conflicts first, then regenerate ABI SDKs, code hashes, references and package locks with the development bootstrap. Do not choose one side of generated-file conflicts as the final artifact. Align the prerelease version with other branches before publishing. Existing release gates remain in force.
 
-Likely overlaps with the concurrent marketplace work: runtime actions and common records, native-chain and server, API client and generated docs/SDKs. This branch does not alter the marketplace, billing, naming or legacy repositories.
+Marketplace integration preserves module listing and fee-rule checks. Required preset modules must be present in the runtime catalogue with the reviewed code hash as well as deployed. The test fixtures explicitly list their free first-party modules; production catalogue configuration remains an operator responsibility. The merge retained marketplace, billing and naming behavior and regenerated the shared SDKs and guides from both sets of changes.
 
 The isolated native fixture uses daclify-dao-presets-native on port 19888 and a separate PostgreSQL container on port 16432. Original agents' containers and worktrees are untouched. Core's regular unit suite, module WASM tests, new native/API flows and browser presets have separate evidence; an emulator check is not a native check.

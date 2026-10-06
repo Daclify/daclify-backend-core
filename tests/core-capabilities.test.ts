@@ -4,6 +4,7 @@ import { PrivateKey } from '@wharfkit/antelope';
 import { z } from 'zod';
 import { loadContract, send, row } from './helpers/vert.js';
 import { wasmCodeHash } from './helpers/code-hash.js';
+import { listFirstParty } from './helpers/list-module.js';
 const worksHash = wasmCodeHash('.artifacts/contracts/modrelay.wasm');
 let runtime: ReturnType<typeof loadContract>;
 let token: ReturnType<typeof loadContract>;
@@ -29,6 +30,7 @@ beforeEach(async () => {
     ['daclifycore', 1, 1, 1, 'ab'.repeat(32), '{}'],
     'daclifycore@active',
   );
+  await listFirstParty(runtime, 'works', worksHash);
   await send(
     runtime,
     'setmodule',

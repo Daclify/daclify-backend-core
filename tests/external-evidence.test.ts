@@ -5,6 +5,7 @@ import { ABI, Checksum256, PrivateKey, Serializer } from '@wharfkit/antelope';
 import { z } from 'zod';
 import { loadContract, row, send } from './helpers/vert.js';
 import { wasmCodeHash } from './helpers/code-hash.js';
+import { listFirstParty } from './helpers/list-module.js';
 
 const artifact = '.artifacts/contracts/runtime';
 const chainId = 'ab'.repeat(32);
@@ -49,6 +50,7 @@ beforeEach(async () => {
   await send(runtime, 'init', [chainId], 'daclifycore@active');
   await send(token, 'create', ['alice', '1000.0000 TLOS'], 'eosio.token@active');
   await send(token, 'issue', ['alice', '100.0000 TLOS', ''], 'alice@active');
+  await listFirstParty(runtime, 'works', worksHash);
   for (const dao of [1, 2]) {
     await send(
       runtime,

@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { ZERO_CODE_HASH, wasmCodeHash } from './helpers/code-hash.js';
 import { loadContract, row, send } from './helpers/vert.js';
+import { listFirstParty } from './helpers/list-module.js';
 
 const worksHash = wasmCodeHash('.artifacts/contracts/modrelay.wasm');
 const signer = PrivateKey.generate('K1');
@@ -23,7 +24,10 @@ async function boot(
 ) {
   const runtime = loadContract(chain, runtimeName, '.artifacts/contracts/runtime');
   const module = works ?? loadContract(chain, 'works', '.artifacts/contracts/modrelay');
+  let funded = token;
+  if (fundToken) funded = loadContract(chain, 'eosio.token', '.artifacts/contracts/testtoken');
   await send(runtime, 'init', ['ab'.repeat(32)], `${runtimeName}@active`);
+  await listFirstParty(runtime, 'works', worksHash, runtimeName);
   await send(runtime, 'createdao', [1, 'alice', '{}', 0, 'eosio.token', '4,TLOS'], 'alice@active');
   await send(
     runtime,
@@ -37,9 +41,7 @@ async function boot(
     [1, 'works', 1, ['propose'], ['reserve', 'govlock'], worksHash],
     'alice@active',
   );
-  let funded = token;
-  if (fundToken) {
-    funded = loadContract(chain, 'eosio.token', '.artifacts/contracts/testtoken');
+  if (fundToken && funded) {
     await send(funded, 'create', ['eosio.token', '1000.0000 TLOS'], 'eosio.token@active');
     await send(funded, 'issue', ['alice', '30.0000 TLOS', ''], 'eosio.token@active');
   }

@@ -68,3 +68,13 @@ Two binary fixture tests encode baseline DAO/member values using the new SDK and
 The native fixture is daclify-dao-presets-native at 127.0.0.1:19888; PostgreSQL is daclify-dao-presets-postgres at 127.0.0.1:16432, database daclify_presets_test. Synthetic fixture keys stay in ignored local files. The browser fixture uses 5278 and never reuses a running server. Other agents' main worktrees, native chain and database are untouched.
 
 Not run here: the complete existing native/browser/provider suites, live Google/Telegram/Pinata/OpenBao qualification, production permission deployment or a production migration. Guardian signing is externally prepared rather than wallet-integrated. No LLM runner or game integration was added. Strict 0.1 HTTP clients need a coordinated 0.2 upgrade. See docs/dao-presets.md for authority, limits and merge instructions; resolve source conflicts and regenerate public artifacts before integrating the concurrent branches.
+
+## Integration into main
+
+The user subsequently authorised merging and pushing all three repositories. Main was clean and matched origin/main: core d3c454d, modules 680c319, frontend 3e875e7. The marketplace/name work was combined in the isolated worktrees before advancing main.
+
+Resolved the action-name collision by preserving the native platform setgov action and naming signed DAO policy updates setdaogov. Updated the caller, capability probe, permission links and generated SDK. Kept both action families in the C++ dispatcher. Preserved marketplace catalogue checks, explicitly listed reviewed first-party modules in the WASM/native fixtures, and added native coverage of both policy updates and platform fee governance. Regenerated contracts, SDKs, help bundles and all three package locks with bootstrap --contracts.
+
+Combined-tree verification passed: core verify (330 tests), modules verify (60), frontend verify (53), PostgreSQL integration (62), native/API flows (2), desktop/mobile browser cases (6), and the frontend build. The native flows used only the owned 19888 fixture and included the standalone scoped publishing example. The complete provider/native/browser suites and production deployment remain outside this integration verification.
+
+npm audit --omit=dev reported zero advisories in core production dependencies. The full development audit reported the existing VERT test dependency chain: @proton/vert / @greymass/eosio, elliptic and lodash.set (two low and two high findings, with no automatic fix reported). These test tools are not production custody or API dependencies; the development advisories remain open.

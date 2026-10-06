@@ -6,6 +6,7 @@ import { TimePointSec } from '@greymass/eosio';
 import { z } from 'zod';
 import { loadContract, row, send } from './helpers/vert.js';
 import { wasmCodeHash } from './helpers/code-hash.js';
+import { listFirstParty } from './helpers/list-module.js';
 const artifact = '.artifacts/contracts/runtime';
 const key = PrivateKey.generate('K1'),
   sessionKey = PrivateKey.generate('K1');
@@ -77,6 +78,7 @@ beforeEach(async () => {
   module = loadContract(chain, 'works', '.artifacts/contracts/modrelay');
   const token = loadContract(chain, 'eosio.token', '.artifacts/contracts/testtoken');
   await send(runtime, 'init', ['ab'.repeat(32)], 'daclifycore@active');
+  await listFirstParty(runtime, 'works', wasmCodeHash('.artifacts/contracts/modrelay.wasm'));
   for (const id of [1, 2]) {
     await send(
       runtime,

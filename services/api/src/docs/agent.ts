@@ -6,7 +6,7 @@ const JEV_MODEL = 'typesafe/jev-1.13';
 const JEV_URL = 'https://openrouter.ai/api/alpha/decisions';
 const CHAT_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const OUTSIDE =
-  'That question is outside the handbook. Ask about accounts, recovery, documents, treasury, or modules.';
+  'That question is outside the handbook. Ask about accounts, recovery, documents, treasury, modules, or the marketplace.';
 
 const DecisionSchema = z.object({
   answers: z.object({
