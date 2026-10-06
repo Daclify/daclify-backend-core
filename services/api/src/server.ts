@@ -1,3 +1,7 @@
+import type { CreationService } from './creation.js';
+import { PlatformStatusSchema } from '../../../protocol/platform.js';
+import { VERSION } from '../../../protocol/base.js';
+import { VERSION as MODULE_VERSION } from '@daclify/modules';
 import { ApiRoutes } from '../../../protocol/routes.js';
 import { ModuleApiRoutes } from '@daclify/modules';
 import Fastify, { type FastifyReply, errorCodes } from 'fastify';
@@ -9,7 +13,6 @@ import type { ChainGateway } from './chain.js';
 import {
   ChallengeRequestSchema,
   LoginRequestSchema,
-  CreateDaoSchema,
   ProviderProofSchema,
   ProviderUnlinkSchema,
 } from '../../../protocol/api.js';
@@ -53,6 +56,7 @@ export async function createServer(
     signIn?: SignInConfiguration;
     origins?: string[];
     docs?: DocsAgentConfiguration;
+    creation?: CreationService;
   } = {},
 ) {
   const admitCheckout = createWindowLimiter(8, 3_600_000, 80);
@@ -114,6 +118,132 @@ export async function createServer(
     return account;
   }
   app.get('/health', async () => ({ status: 'ok' }));
+  function creationService() {
+    if (!options.creation) throw new ApiError('DAO_CREATION_UNAVAILABLE', 503);
+    return options.creation;
+  }
+  app.get(ApiRoutes.status.path, async () => {
+    let chainStatus = null;
+    try {
+      chainStatus = (await options.creation?.chain.platform()) ?? null;
+    } catch {
+      /* status reports failure without internal errors */
+    }
+    const database: {
+      state: 'reachable' | 'unavailable';
+      migrations: Array<{ namespace: string; name: string; appliedAt: string }>;
+    } = { state: 'unavailable', migrations: [] };
+    try {
+      const rows = await pool.query<{ namespace: string; name: string; applied_at: Date }>(
+        'SELECT namespace,name,applied_at FROM schema_migrations ORDER BY namespace,name',
+      );
+      database.state = 'reachable';
+      database.migrations = rows.rows.map((r) => ({
+        namespace: r.namespace,
+        name: r.name,
+        appliedAt: r.applied_at.toISOString(),
+      }));
+    } catch {
+      /* no connection strings or raw database failures in public status */
+    }
+    const services = [
+      [
+        'storage',
+        'Pinata / hosted storage',
+        !!options.content,
+        'Configured storage does not prove Pinata credentials or availability.',
+      ],
+      [
+        'card',
+        'Card payments',
+        !!options.billing,
+        'Verified Stripe webhooks attest card settlement; the configured settler is trusted.',
+      ],
+      [
+        'google',
+        'Google sign-in',
+        !!options.providers?.google,
+        'Provider configuration only; live qualification is separate.',
+      ],
+      [
+        'telegram',
+        'Telegram sign-in',
+        !!options.providers?.telegram,
+        'Provider configuration only; live qualification is separate.',
+      ],
+      [
+        'docs',
+        'Documentation assistant',
+        !!options.docs,
+        'Optional assistant; generated documentation is always available.',
+      ],
+      [
+        'managed',
+        'Managed signing and recovery',
+        false,
+        'OpenBao remains a candidate. Production managed custody is not qualified.',
+      ],
+    ] as const;
+    return PlatformStatusSchema.parse({
+      checkedAt: new Date().toISOString(),
+      apiVersion: VERSION,
+      moduleVersion: MODULE_VERSION,
+      chain: chainStatus,
+      rpc: chainStatus ? 'reachable' : options.creation ? 'unavailable' : 'unconfigured',
+      database,
+      limits: {
+        sponsoredWritesPerAccount: SPONSORED_WRITES_PER_WINDOW,
+        sponsoredWritesGlobal: SPONSORED_GLOBAL_PER_WINDOW,
+        windowMs: SPONSORED_WINDOW_MS,
+        uploadBytes: options.content?.configuration().uploadLimit ?? 0,
+      },
+      services: services.map(([id, name, configured, detail]) => ({
+        id,
+        name,
+        configured,
+        detail,
+        qualification:
+          id === 'storage' && options.content?.providerName === 'local-fixture'
+            ? 'local-fixture'
+            : 'not-qualified',
+      })),
+      defaults: { sharedUsdCents: 2000, independentUsdCents: 5000, tlosPremiumBps: 2000 },
+    });
+  });
+  app.post(ApiRoutes.creationOrder.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    spend(account.id);
+    const input = ApiRoutes.creationOrder.input.parse(request.body);
+    if (input.method === 'card' && !options.billing)
+      throw new ApiError('STRIPE_NOT_CONFIGURED', 503);
+    return creationService().prepare(account, input);
+  });
+  app.get<{ Params: { id: string } }>(ApiRoutes.creationOrderStatus.path, async (request) =>
+    creationService().status((await session(request.cookies[cookieName])).id, request.params.id),
+  );
+  app.post<{ Params: { id: string } }>(ApiRoutes.creationCheckout.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    ApiRoutes.creationCheckout.input.parse(request.body);
+    if (!admitCheckout(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    if (!options.billing) throw new ApiError('STRIPE_NOT_CONFIGURED', 503);
+    return creationService().checkout(account.id, request.params.id, options.billing);
+  });
+  app.post<{ Params: { id: string } }>(ApiRoutes.creationFulfill.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    spend(account.id);
+    ApiRoutes.creationFulfill.input.parse(request.body);
+    return creationService().fulfill(account, request.params.id);
+  });
+
   app.get(ApiRoutes.presets.path, async () => ({ presets: DaoPresets }));
   app.get<{ Params: { id: string } }>(ApiRoutes.governance.path, async (request) =>
     chain.governance(IdSchema.parse(request.params.id)),
@@ -290,9 +420,12 @@ export async function createServer(
       request.cookies[cookieName],
       typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
     );
-    const input = CreateDaoSchema.parse(request.body);
     spend(account.id);
-    return reply.code(201).send(await chain.createDao(account, input));
+    ApiRoutes.createDao.input.parse(request.body);
+    return reply.code(409).send({
+      code: 'CREATION_PAYMENT_REQUIRED',
+      message: 'Prepare and pay a DAO creation order first.',
+    });
   });
   app.post(ApiRoutes.relay.path, async (request) => {
     const account = await session(

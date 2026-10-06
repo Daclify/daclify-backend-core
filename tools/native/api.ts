@@ -1,3 +1,4 @@
+import { CreationService } from '../../services/api/src/creation.js';
 import { loadEnvFile } from '../../services/api/src/env-file.js';
 import { fixtureKey } from './keys.js';
 // Disposable local fixture only. No key is printed or placed in process arguments.
@@ -35,10 +36,32 @@ function localTelegram(): { botToken: string; botUsername?: string } | undefined
 }
 const telegram = localTelegram();
 const network = z
-  .object({ url: z.literal('http://127.0.0.1:18888'), chainId: z.string() })
+  .object({ url: z.string().regex(/^http:\/\/127\.0\.0\.1:[0-9]{4,5}$/), chainId: z.string() })
   .parse(JSON.parse(readFileSync('.artifacts/native/network.json', 'utf8')));
+const apiPort = z.coerce
+  .number()
+  .int()
+  .min(1024)
+  .max(65535)
+  .parse(process.env.DACLIFY_TEST_API_PORT ?? 3008);
+const uiPort = z.coerce
+  .number()
+  .int()
+  .min(1024)
+  .max(65535)
+  .parse(process.env.DACLIFY_TEST_UI_PORT ?? 5178);
+const origin = 'http://127.0.0.1:' + uiPort;
+const database =
+  process.env.DACLIFY_TEST_DATABASE_URL ??
+  'postgres://daclify:daclify-test-only@127.0.0.1:15432/daclify';
+if (
+  process.env.DACLIFY_TEST_DATABASE_URL &&
+  (!['localhost', '127.0.0.1'].includes(new URL(database).hostname) ||
+    !new URL(database).pathname.endsWith('_test'))
+)
+  throw new Error('Isolated test database required');
 const pool = new Pool({
-  connectionString: 'postgres://daclify:daclify-test-only@127.0.0.1:15432/daclify',
+  connectionString: database,
 });
 await migrate(pool);
 const chain = new NativeChainGateway({
@@ -71,17 +94,19 @@ try {
   stripeConfig = undefined;
   console.log('Card payments are not configured.');
 }
-const app = await createServer(pool, chain, 'http://127.0.0.1:5178', {
+const creation = new CreationService(pool, chain);
+const app = await createServer(pool, chain, origin, {
   content,
+  creation,
   ...(telegram ? { providers: { telegram } } : {}),
   signIn: { environment: 'local' },
-  origins: ['http://127.0.0.1:5178', 'http://localhost:5178'],
+  origins: [origin, 'http://localhost:' + uiPort],
   ...(docs ? { docs } : {}),
   ...(stripeConfig
-    ? { billing: new StripeBilling(pool, stripeConfig, 'http://127.0.0.1:5178', chain) }
+    ? { billing: new StripeBilling(pool, stripeConfig, origin, chain, creation) }
     : {}),
 });
-await app.listen({ host: '127.0.0.1', port: 3008 });
+await app.listen({ host: '127.0.0.1', port: apiPort });
 const worker = startContentWorker(pool, content);
 for (const signal of ['SIGINT', 'SIGTERM'])
   process.on(signal, () => {
@@ -90,4 +115,4 @@ for (const signal of ['SIGINT', 'SIGTERM'])
       .then(() => worker.stop())
       .then(() => pool.end());
   });
-console.log('Local API fixture ready at http://127.0.0.1:3008');
+console.log('Local API fixture ready at http://127.0.0.1:' + apiPort);

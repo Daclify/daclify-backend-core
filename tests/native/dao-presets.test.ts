@@ -2,7 +2,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { execFile, execFileSync } from 'node:child_process';
-import { generateKeyPairSync } from 'node:crypto';
+import { CreationService } from '../../services/api/src/creation.js';
+import { generateKeyPairSync, randomUUID } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
@@ -23,6 +24,7 @@ import {
   instructionDigest,
   makeInstruction,
   governanceSettings,
+  type RuntimeActions,
 } from '../../sdk/index.js';
 import type { instruction } from '../../sdk/index.js';
 import { NativeChainGateway } from '../../services/api/src/native-chain.js';
@@ -32,13 +34,15 @@ import { fixtureKey } from '../../tools/native/keys.js';
 import { unlockFixtureWallet } from '../../tools/native/wallet.js';
 const network = z
   .object({
-    url: z.literal('http://127.0.0.1:19888'),
+    url: z.enum(['http://127.0.0.1:19888', 'http://127.0.0.1:19988']),
     chainId: z.string(),
-    container: z.literal('daclify-dao-presets-native'),
+    container: z.enum(['daclify-dao-presets-native', 'daclify-platform-native']),
   })
   .parse(JSON.parse(readFileSync('.artifacts/native/network.json', 'utf8')));
 const pool = new Pool({
-  connectionString: 'postgres://daclify:daclify-test-only@127.0.0.1:16432/daclify_presets_test',
+  connectionString:
+    process.env.DATABASE_URL ??
+    'postgres://daclify:daclify-test-only@127.0.0.1:16432/daclify_presets_test',
 });
 const origin = 'http://127.0.0.1:5278';
 const gateway = new NativeChainGateway({
@@ -56,7 +60,8 @@ const gateway = new NativeChainGateway({
     { id: 'payroll', account: 'payroll' },
   ],
 });
-const app = await createServer(pool, gateway, origin);
+const creation = new CreationService(pool, gateway);
+const app = await createServer(pool, gateway, origin, { creation });
 const encryption = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.export({
   format: 'jwk',
 });
@@ -136,9 +141,82 @@ async function instructionFor(
     data,
   );
 }
+async function paidCreate(
+  user: Awaited<ReturnType<typeof login>>,
+  input: z.infer<typeof CreateDaoSchema>,
+) {
+  const free = await app.inject({
+    method: 'POST',
+    url: ApiRoutes.createDao.path,
+    headers: user.headers,
+    payload: input,
+  });
+  expect(free.statusCode).toBe(409);
+  const id = randomUUID();
+  const response = await app.inject({
+    method: 'POST',
+    url: ApiRoutes.creationOrder.path,
+    headers: user.headers,
+    payload: { requestId: id, deployment: 'shared', method: 'tlos', request: input },
+  });
+  expect(response.statusCode, response.body).toBe(200);
+  const order = ApiRoutes.creationOrder.response.parse(response.json());
+  expect(order.usdCents).toBe(2000);
+  expect(order.tlosAmount).toBe('24.0000 TLOS');
+  const unpaid = await app.inject({
+    method: 'POST',
+    url: ApiRoutes.creationFulfill.path.replace(':id', id),
+    headers: user.headers,
+    payload: {},
+  });
+  expect(unpaid.statusCode).toBe(409);
+  execFileSync(
+    'docker',
+    [
+      'exec',
+      network.container,
+      'cleos',
+      '--wallet-url',
+      'http://127.0.0.1:8900',
+      'push',
+      'action',
+      'eosio.token',
+      'transfer',
+      JSON.stringify(['alice', 'daclifycore', order.tlosAmount, order.memo]),
+      '-p',
+      'alice@active',
+    ],
+    { stdio: ['pipe', 'pipe', 'pipe'] },
+  );
+  const created = await app.inject({
+    method: 'POST',
+    url: ApiRoutes.creationFulfill.path.replace(':id', id),
+    headers: user.headers,
+    payload: {},
+  });
+  expect(created.statusCode, created.body).toBe(200);
+  const receipt = ApiRoutes.creationFulfill.response.parse(created.json());
+  expect(receipt.state).toBe('created');
+  if (!receipt.dao) throw new Error('Missing DAO receipt');
+  const retry = await app.inject({
+    method: 'POST',
+    url: ApiRoutes.creationFulfill.path.replace(':id', id),
+    headers: user.headers,
+    payload: {},
+  });
+  expect(ApiRoutes.creationFulfill.response.parse(retry.json()).dao).toEqual(receipt.dao);
+  return gateway.dao(receipt.dao.daoId);
+}
 beforeAll(async () => {
   await migrate(pool);
   native('setfees', [500, 10000, 'alice', 'eosio.token', '4,TLOS', ''], 'daclifycore');
+  native('setcreate', [2000, 5000, 2000, 'relay'], 'daclifycore');
+  const chainInfo = await fetch(network.url + '/v1/chain/get_info', {
+    method: 'POST',
+    body: '{}',
+  }).then((r) => r.json());
+  const head = z.object({ head_block_time: z.string() }).parse(chainInfo).head_block_time;
+  native('setcrrate', [10000, 4, Math.floor(new Date(head + 'Z').getTime() / 1000)], 'daclifycore');
   for (const module of ['decide', 'works', 'payroll'] as const)
     native(
       'listmod',
@@ -160,14 +238,7 @@ describe('isolated native preset / API authority', () => {
       token: { chainId: network.chainId, contract: 'eosio.token', symbol: 'TLOS', precision: 4 },
       setup: defaultDaoSetup('ngo-grants'),
     });
-    const response = await app.inject({
-      method: 'POST',
-      url: ApiRoutes.createDao.path,
-      headers: user.headers,
-      payload: input,
-    });
-    expect(response.statusCode).toBe(201);
-    const dao = ApiRoutes.createDao.response.parse(response.json());
+    const dao = await paidCreate(user, input);
     expect(dao.setup).toEqual(input.setup);
     const state = await gateway.governance(dao.reference.daoId);
     expect(state.policy?.config.approval).toBe(6667);
@@ -222,6 +293,69 @@ describe('isolated native preset / API authority', () => {
     );
     await gateway.relay(user.account, fees, signing.signDigest(instructionDigest(fees)).toString());
     expect((await gateway.table('mktcfg', 'daclifycore'))[0]?.bump_bps).toBe(1000);
+    async function platformAction<K extends keyof RuntimeActions>(
+      action: K,
+      data: RuntimeActions[K],
+    ) {
+      const instruction = await instructionFor(
+        dao.reference.daoId,
+        '1',
+        'daclifycore',
+        action,
+        encodeAction(action, data),
+      );
+      await gateway.relay(
+        user.account,
+        instruction,
+        signing.signDigest(instructionDigest(instruction)).toString(),
+      );
+    }
+    const actor = { runtime: 'daclifycore', dao_id: dao.reference.daoId, member_id: '1' };
+    await platformAction('govcreate', {
+      ...actor,
+      shared_usd: 2000,
+      independent_usd: 5000,
+      premium_bps: 2000,
+      settler: 'relay',
+    });
+    expect((await gateway.table('createcfg', 'daclifycore'))[0]?.independent_usd).toBe(5000);
+    await platformAction('govlist', {
+      ...actor,
+      account: 'works',
+      price: '0.0000 TLOS',
+      code_hash: ModuleCodeHashes.works,
+      title: 'Works governance fixture',
+    });
+    await platformAction('govmodcopy', {
+      ...actor,
+      account: 'works',
+      summary: 'Native platform description.',
+      detail: 'Trusted module metadata only.',
+    });
+    expect(
+      (await gateway.table('modcopy', 'daclifycore')).find((r) => r.account === 'works')?.summary,
+    ).toBe('Native platform description.');
+    await platformAction('govunlist', { ...actor, account: 'works' });
+    expect(
+      (await gateway.table('catalogue', 'daclifycore')).some((r) => r.account === 'works'),
+    ).toBe(false);
+    expect(
+      (await gateway.moduleState(dao.reference.daoId)).modules.find(
+        (m) => m.deployment.id === 'works',
+      )?.enabled,
+    ).toBe(true);
+    await platformAction('govlist', {
+      ...actor,
+      account: 'works',
+      price: '0.0000 TLOS',
+      code_hash: ModuleCodeHashes.works,
+      title: 'Works',
+    });
+    const status = ApiRoutes.status.response.parse(
+      (await app.inject(ApiRoutes.status.path)).json(),
+    );
+    expect(status.chain?.platformDao).toEqual(dao.reference);
+    expect(status.chain?.contracts.every((c) => c.expectedHash === null || c.verified)).toBe(true);
   });
   it('runs guarded agent funding and scoped API signatures under actual native permissions', async () => {
     const sponsor = await login(PrivateKey.generate('K1'));
@@ -239,29 +373,45 @@ describe('isolated native preset / API authority', () => {
       maxCommitment: '10000',
       dailyCommitment: '20000',
     };
-    const response = await app.inject({
-      method: 'POST',
-      url: ApiRoutes.createDao.path,
-      headers: sponsor.headers,
-      payload: {
-        metadata: { schemaVersion: 1, title: 'Native guarded agents', description: '' },
-        privacy: 'public',
-        token: { chainId: network.chainId, contract: 'eosio.token', symbol: 'TLOS', precision: 4 },
-        setup,
-        foundingAgent: {
-          signingKey: root.toPublic().toString(),
-          encryptionKey,
-          operator: 'Synthetic fixture operator',
-        },
+    const input = CreateDaoSchema.parse({
+      metadata: { schemaVersion: 1, title: 'Native guarded agents', description: '' },
+      privacy: 'public',
+      token: { chainId: network.chainId, contract: 'eosio.token', symbol: 'TLOS', precision: 4 },
+      setup,
+      foundingAgent: {
+        signingKey: root.toPublic().toString(),
+        encryptionKey,
+        operator: 'Synthetic fixture operator',
       },
     });
-    expect(response.statusCode).toBe(201);
-    const dao = ApiRoutes.createDao.response.parse(response.json());
+    const dao = await paidCreate(sponsor, input);
     const id = dao.reference.daoId;
     expect(
       (await gateway.memberships(sponsor.account)).some((member) => member.dao.daoId === id),
     ).toBe(false);
     const actor = { runtime: 'daclifycore', dao_id: id, member_id: '1' };
+    const crossDao = await instructionFor(
+      id,
+      '1',
+      'daclifycore',
+      'govcreate',
+      encodeAction('govcreate', {
+        ...actor,
+        shared_usd: 1,
+        independent_usd: 1,
+        premium_bps: 0,
+        settler: 'relay',
+      }),
+    );
+    await expect(
+      gateway.relay(
+        agent.account,
+        crossDao,
+        root.signDigest(instructionDigest(crossDao)).toString(),
+      ),
+    ).rejects.toMatchObject({ code: 'CHAIN_ACTION_REJECTED' });
+    expect((await gateway.table('createcfg', 'daclifycore'))[0]?.shared_usd).toBe(2000);
+
     const credential = await instructionFor(
       id,
       '1',

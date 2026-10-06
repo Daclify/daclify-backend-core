@@ -14,6 +14,8 @@ import {
   SessionSchema,
   DaoSummarySchema,
   UserMembershipSchema,
+  AccountSchema,
+  CreateDaoSchema,
 } from '../../protocol/api.js';
 import { ModuleStateSchema } from '@daclify/modules';
 import { encodeDecide, ModuleCodeHashes } from '@daclify/modules/sdk';
@@ -51,6 +53,7 @@ const app = await createServer(pool, chain, origin);
 let cookie = '';
 let csrf = '';
 let dao: z.infer<typeof DaoSummarySchema>;
+let account: z.infer<typeof AccountSchema>;
 beforeAll(async () => {
   unlockFixtureWallet('daclify-v2-native');
   listFirstPartyModule('decide', ModuleCodeHashes.decide, 'Decide');
@@ -78,7 +81,9 @@ beforeAll(async () => {
       encryptionKey: { kty: 'EC', crv: 'P-256', x: jwk.x, y: jwk.y },
     },
   });
-  csrf = SessionSchema.parse(response.json()).csrfToken;
+  const session = SessionSchema.parse(response.json());
+  account = session.account;
+  csrf = session.csrfToken;
   cookie = response.cookies.map((c) => `${c.name}=${c.value}`).join(';');
 });
 afterAll(async () => {
@@ -86,7 +91,7 @@ afterAll(async () => {
   await pool.end();
 });
 describe('API to real native runtime', () => {
-  it('creates a shared DAO and walletless administrator atomically', async () => {
+  it('rejects unpaid API creation and retains native operator bootstrap', async () => {
     const response = await app.inject({
       method: 'POST',
       url: '/v1/daos',
@@ -97,8 +102,15 @@ describe('API to real native runtime', () => {
         token: { chainId: network.chainId, contract: 'eosio.token', symbol: 'TLOS', precision: 4 },
       },
     });
-    expect(response.statusCode, response.body).toBe(201);
-    dao = DaoSummarySchema.parse(response.json());
+    expect(response.statusCode, response.body).toBe(409);
+    dao = await chain.createDao(
+      account,
+      CreateDaoSchema.parse({
+        metadata: { schemaVersion: 1, title: 'Native operator fixture', description: '' },
+        privacy: 'public',
+        token: { chainId: network.chainId, contract: 'eosio.token', symbol: 'TLOS', precision: 4 },
+      }),
+    );
     expect(dao.members).toBe(1);
     const membership = z
       .object({ memberships: z.array(UserMembershipSchema) })

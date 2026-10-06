@@ -77,6 +77,11 @@ import {
 } from '../../../sdk/index.js';
 import type { ChainGateway } from './chain.js';
 import { ApiError } from './errors.js';
+import {
+  ChainPlatformSchema,
+  ContractStatusSchema,
+  type ChainPlatform,
+} from '../../../protocol/platform.js';
 import type { NamePurchase } from './billing/name.js';
 import {
   MarketRuleError,
@@ -114,6 +119,8 @@ export class NativeChainGateway implements ChainGateway {
     NativeAccountSchema.parse(config.runtime);
     NativeAccountSchema.parse(config.relayActor);
     const url = new URL(config.rpcUrl);
+    if (url.username || url.password || url.search || url.hash)
+      throw new Error('RPC_PUBLIC_ENDPOINT_REQUIRED');
     if (
       url.protocol !== 'https:' &&
       !(url.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(url.hostname))
@@ -139,6 +146,159 @@ export class NativeChainGateway implements ChainGateway {
         ...(presets ? ['dao-presets', 'guarded-agents', 'governance-policy'] : []),
       ],
     });
+  }
+  async platform(): Promise<ChainPlatform> {
+    const [network, info, abi] = await Promise.all([
+      this.network(),
+      this.api.v1.chain.get_info(),
+      this.api.v1.chain.get_abi(this.config.runtime),
+    ]);
+    async function optional<K extends keyof typeof RuntimeTableSchemas>(
+      self: NativeChainGateway,
+      name: K,
+    ) {
+      return abi.abi?.tables.some((t) => t.name === name)
+        ? ((await self.table(name, self.config.runtime))[0] ?? null)
+        : null;
+    }
+    const [fees, market, creation, runtimeSettings, catalogue] = await Promise.all([
+      optional(this, 'feecfg'),
+      optional(this, 'mktcfg'),
+      optional(this, 'createcfg'),
+      optional(this, 'settings'),
+      abi.abi?.tables.some((t) => t.name === 'catalogue')
+        ? this.table('catalogue', this.config.runtime)
+        : [],
+    ]);
+    const contracts = await Promise.all(
+      [
+        ...new Set([
+          this.config.runtime,
+          ...(this.config.hub ? [this.config.hub] : []),
+          ...(this.config.modules ?? []).map((m) => m.account),
+          this.config.relayActor,
+          ...(fees?.treasury ? [fees.treasury] : []),
+          ...(fees?.names ? [fees.names] : []),
+          ...(creation?.settler ? [creation.settler] : []),
+        ]),
+      ].map(async (account) => {
+        const expectedHash = this.config.modules?.find((m) => m.account === account);
+        const response = await fetch(this.config.rpcUrl + '/v1/chain/get_code_hash', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ account_name: account }),
+          signal: AbortSignal.timeout(10000),
+        });
+        if (!response.ok) throw new ApiError('CHAIN_UNAVAILABLE', 503);
+        const hash = z.object({ code_hash: ChainIdSchema }).parse(await response.json()).code_hash;
+        const data = await this.api.v1.chain.get_account(account);
+        return ContractStatusSchema.parse({
+          account,
+          moduleId: expectedHash?.id ?? null,
+          codeHash: hash,
+          expectedHash: expectedHash ? ModuleCodeHashes[expectedHash.id] : null,
+          verified: !!expectedHash && hash === ModuleCodeHashes[expectedHash.id],
+          ramBytes: Number(data.ram_quota),
+          ramUsed: Number(data.ram_usage),
+          permissions: data.permissions.map((p) => ({
+            name: String(p.perm_name),
+            parent: String(p.parent),
+            threshold: Number(p.required_auth.threshold),
+            keys: p.required_auth.keys.map((k) => ({
+              key: String(k.key),
+              weight: Number(k.weight),
+            })),
+            accounts: p.required_auth.accounts.map((a) => ({
+              actor: String(a.permission.actor),
+              permission: String(a.permission.permission),
+              weight: Number(a.weight),
+            })),
+            waits: p.required_auth.waits.map((w) => ({
+              seconds: Number(w.wait_sec),
+              weight: Number(w.weight),
+            })),
+          })),
+        });
+      }),
+    );
+    return ChainPlatformSchema.parse({
+      network,
+      chainId: String(info.chain_id),
+      chainMatches: String(info.chain_id) === this.config.chainId,
+      headBlock: Number(info.head_block_num),
+      irreversibleBlock: Number(info.last_irreversible_block_num),
+      headTime: String(info.head_block_time),
+      contracts,
+      catalogue,
+      fees,
+      market,
+      creation,
+      runtimeSettings,
+      rateFresh:
+        !!creation &&
+        BigInt(creation.median) > 0n &&
+        creation.observed_at <= Date.now() / 1000 &&
+        Date.now() / 1000 - creation.observed_at <= 900,
+      platformDao:
+        market && market.dao_id !== '0'
+          ? {
+              chainId: this.config.chainId,
+              contract: this.config.runtime,
+              daoId: market.dao_id,
+              interfaceVersion: 1,
+            }
+          : null,
+      sharedAvailable:
+        !!this.config.bootstrap &&
+        !!creation &&
+        creation.settler === this.config.relayActor &&
+        !!fees &&
+        contracts.filter((c) => c.expectedHash !== null).every((c) => c.verified) &&
+        abi.abi?.actions.some((a) => a.name === 'createpaid') &&
+        runtimeSettings?.chain_id === this.config.chainId &&
+        String(info.chain_id) === this.config.chainId,
+      independentAvailable: false,
+    });
+  }
+  async creationOrder(reference: string) {
+    ChainIdSchema.parse(reference);
+    const result = await readChainRows({
+      rpcUrl: this.config.rpcUrl,
+      code: this.config.runtime,
+      scope: this.config.runtime,
+      table: 'createords',
+      indexPosition: 2,
+      keyType: 'sha256',
+      lowerBound: reference,
+      upperBound: reference,
+    });
+    return (
+      z
+        .array(RuntimeTableSchemas.createords)
+        .parse(result.rows)
+        .find((row) => row.reference === reference) ?? null
+    );
+  }
+  async orderCreation(reference: string, creator: string, method: 'card' | 'tlos') {
+    const existing = await this.creationOrder(reference);
+    if (existing) return existing;
+    await this.push(
+      'ordercreate',
+      { reference, creator, deployment: 0, method: method === 'tlos' ? 0 : 1 },
+      this.config.relayActor,
+      this.config.relayKey,
+    );
+    const row = await this.creationOrder(reference);
+    if (!row) throw new ApiError('CREATION_ORDER_PENDING', 503);
+    return row;
+  }
+  async attestCreation(reference: string, cardReference: string, usdCents: number, paidAt: number) {
+    await this.push(
+      'cardcreate',
+      { reference, checkout_reference: cardReference, usd_cents: usdCents, paid_at: paidAt },
+      this.config.relayActor,
+      this.config.relayKey,
+    );
   }
   private async supportsPresets(): Promise<boolean> {
     const { abi } = await this.api.v1.chain.get_abi(this.config.runtime);
@@ -488,7 +648,11 @@ export class NativeChainGateway implements ChainGateway {
       throw cause;
     }
   }
-  async createDao(account: Account, input: z.infer<typeof CreateDaoSchema>): Promise<DaoSummary> {
+  async createDao(
+    account: Account,
+    input: z.infer<typeof CreateDaoSchema>,
+    paid?: { reference: string; daoId: string },
+  ): Promise<DaoSummary> {
     const bootstrap = this.config.bootstrap;
     if (!bootstrap) throw new ApiError('DAO_CREATION_UNAVAILABLE', 503);
     if (input.token.chainId !== this.config.chainId) throw new ApiError('ASSET_CHAIN_MISMATCH');
@@ -534,7 +698,9 @@ export class NativeChainGateway implements ChainGateway {
         });
       }
     }
-    const id = BigInt(`0x${randomBytes(8).toString('hex')}`).toString();
+    const id = paid
+      ? IdSchema.parse(paid.daoId)
+      : BigInt(`0x${randomBytes(8).toString('hex')}`).toString();
     if (id === '0') throw new ApiError('DAO_ID_RETRY', 503);
     const info = await this.api.v1.chain.get_info();
     if (info.chain_id.toString() !== this.config.chainId)
@@ -542,9 +708,15 @@ export class NativeChainGateway implements ChainGateway {
     const actions = [
       Action.from({
         account: this.config.runtime,
-        name: 'createdao',
-        authorization: [{ actor: bootstrap.owner, permission: 'active' }],
-        data: encodeAction('createdao', {
+        name: paid ? 'createpaid' : 'createdao',
+        authorization: [
+          { actor: bootstrap.owner, permission: 'active' },
+          ...(paid && this.config.relayActor !== bootstrap.owner
+            ? [{ actor: this.config.relayActor, permission: 'active' }]
+            : []),
+        ],
+        data: encodeAction(paid ? 'createpaid' : 'createdao', {
+          ...(paid ? { reference: paid.reference, creator: account.signingKey } : {}),
           dao_id: id,
           owner: bootstrap.owner,
           metadata: JSON.stringify(
@@ -624,7 +796,12 @@ export class NativeChainGateway implements ChainGateway {
       await this.api.v1.chain.push_transaction(
         SignedTransaction.from({
           ...transaction,
-          signatures: [bootstrap.key.signDigest(transaction.signingDigest(info.chain_id))],
+          signatures: [
+            bootstrap.key.signDigest(transaction.signingDigest(info.chain_id)),
+            ...(paid && this.config.relayActor !== bootstrap.owner
+              ? [this.config.relayKey.signDigest(transaction.signingDigest(info.chain_id))]
+              : []),
+          ],
         }),
       );
     } catch {

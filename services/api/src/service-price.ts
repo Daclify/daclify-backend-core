@@ -99,6 +99,7 @@ export function selectDelphiRate(
   }
   if (!selected) throw new Error('ORACLE_EMPTY');
   const ageSeconds = Math.floor((now.getTime() - selected.observedAt.getTime()) / 1000);
+  if (ageSeconds < 0) throw new Error('ORACLE_FUTURE');
   if (ageSeconds > maxAgeSeconds) throw new Error('ORACLE_STALE');
   return selected;
 }

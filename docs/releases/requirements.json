@@ -1,90 +1,167 @@
 {
-  "requiredSuites": ["vert", "native", "integration", "provider", "modules", "browser", "unit"],
+  "requiredSuites": [
+    "vert",
+    "native",
+    "integration",
+    "provider",
+    "modules",
+    "browser",
+    "unit"
+  ],
   "requirements": [
     {
       "id": "WP03-CALLBACK-SENDER",
       "suite": "vert",
-      "tests": ["tests/module-callback-authority.test.ts"]
+      "tests": [
+        "tests/module-callback-authority.test.ts"
+      ]
     },
     {
       "id": "WP03-HUB-REGISTRATION",
       "suite": "vert",
-      "tests": ["tests/hub.test.ts"]
+      "tests": [
+        "tests/hub.test.ts"
+      ]
     },
     {
       "id": "WP03-INDEPENDENT-RUNTIME",
       "suite": "vert",
-      "tests": ["tests/independent-runtime.test.ts"]
+      "tests": [
+        "tests/independent-runtime.test.ts"
+      ]
     },
     {
       "id": "WP07-TREASURY",
       "suite": "vert",
-      "tests": ["tests/treasury.test.ts"]
+      "tests": [
+        "tests/treasury.test.ts"
+      ]
     },
     {
       "id": "WP07-EXTERNAL-EVIDENCE",
       "suite": "vert",
-      "tests": ["tests/external-evidence.test.ts"]
+      "tests": [
+        "tests/external-evidence.test.ts"
+      ]
     },
     {
       "id": "WP02-NATIVE-PERMISSION",
       "suite": "native",
-      "tests": ["tests/native/permission.test.ts"]
+      "tests": [
+        "tests/native/permission.test.ts"
+      ]
     },
     {
       "id": "WP02-INTEGRATION-HTTP",
       "suite": "integration",
-      "tests": ["tests/integration/http.test.ts"]
+      "tests": [
+        "tests/integration/http.test.ts"
+      ]
     },
     {
       "id": "WP04-OPENBAO-PROBE",
       "suite": "provider",
-      "tests": ["tests/providers/openbao.test.ts"]
+      "tests": [
+        "tests/providers/openbao.test.ts"
+      ]
     },
     {
       "id": "WP08-DECIDE",
       "suite": "modules",
-      "tests": ["../daclify-backend-modules/tests/decide.test.ts"]
+      "tests": [
+        "../daclify-backend-modules/tests/decide.test.ts"
+      ]
     },
     {
       "id": "WP09-WORKS",
       "suite": "modules",
-      "tests": ["../daclify-backend-modules/tests/works.test.ts"]
+      "tests": [
+        "../daclify-backend-modules/tests/works.test.ts"
+      ]
     },
     {
       "id": "WP10-PAYROLL",
       "suite": "modules",
-      "tests": ["../daclify-backend-modules/tests/payroll.test.ts"]
+      "tests": [
+        "../daclify-backend-modules/tests/payroll.test.ts"
+      ]
     },
     {
       "id": "WP13-BROWSER-WORKSPACE",
       "suite": "browser",
-      "tests": ["../daclify-frontend/tests/e2e/workspace.spec.ts"]
+      "tests": [
+        "../daclify-frontend/tests/e2e/workspace.spec.ts"
+      ]
     },
     {
       "id": "WP04-SIGNING-KEY",
       "suite": "vert",
-      "tests": ["tests/signing-key.test.ts"]
+      "tests": [
+        "tests/signing-key.test.ts"
+      ]
     },
     {
       "id": "WP02-REQUIREMENT-REGISTER",
       "suite": "unit",
-      "tests": ["tests/requirements.test.ts"]
+      "tests": [
+        "tests/requirements.test.ts"
+      ]
     },
     {
       "id": "WP02-RELEASE-MANIFEST",
       "suite": "unit",
-      "tests": ["tests/release-manifest.test.ts"]
+      "tests": [
+        "tests/release-manifest.test.ts"
+      ]
     },
     {
       "id": "WP05-PROOF-VERIFIERS",
       "suite": "unit",
-      "tests": ["tests/provider-proofs.test.ts"]
+      "tests": [
+        "tests/provider-proofs.test.ts"
+      ]
     },
     {
       "id": "WP05-SESSION-LINKING",
       "suite": "integration",
-      "tests": ["tests/integration/session-linking.test.ts"]
+      "tests": [
+        "tests/integration/session-linking.test.ts"
+      ]
+    },
+    {
+      "id": "PLATFORM-CREATION-PAYMENT",
+      "suite": "vert",
+      "tests": [
+        "tests/creation-fees.test.ts"
+      ]
+    },
+    {
+      "id": "PLATFORM-CARD-BOUNDARY",
+      "suite": "unit",
+      "tests": [
+        "tests/billing-creation.test.ts"
+      ]
+    },
+    {
+      "id": "PLATFORM-ORDER-IDEMPOTENCY",
+      "suite": "integration",
+      "tests": [
+        "tests/integration/creation.test.ts"
+      ]
+    },
+    {
+      "id": "PLATFORM-NATIVE-GOVERNANCE",
+      "suite": "native",
+      "tests": [
+        "tests/native/dao-presets.test.ts"
+      ]
+    },
+    {
+      "id": "PLATFORM-BROWSER",
+      "suite": "browser",
+      "tests": [
+        "../daclify-frontend/tests/e2e/platform.spec.ts"
+      ]
     }
   ]
 }

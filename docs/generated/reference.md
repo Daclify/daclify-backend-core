@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.2.0-alpha.1 · interface 1.
+Package 0.3.0-alpha.1 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -152,9 +152,37 @@ The Telos nameservice sells new native accounts from its own contract. A 12-char
 
 Card checkout uses the dollar amount stored on chain for that name. The browser creates the new account keys and does not send the private keys to the server. After the card payment is confirmed, the names contract records the sale and creates the account. A card session that never reaches the chain remains with the card processor. Returning from the card page does not by itself create the account. If the on-chain price changes before confirmation, the account is not created.
 
+## DAO creation fees and payment
+
+Shared DAO setup costs $20 USD. Independent setup costs $50 USD plus blockchain RAM, CPU, NET and native account costs charged separately. These are initial defaults; the linked Daclify DAO administrators can change the on-chain policy. Core governance remains free after setup; optional modules and hosted services have their own charges.
+
+TLOS quotes convert the USD setup fee using a fresh on-chain USD-per-TLOS rate and a 20% premium, rounded up to four decimals. Each quote expires in 15 minutes. Send the exact amount to the displayed runtime using the displayed create: memo and token contract. Overpayments and expired quotes are rejected atomically. The operator publishes the conversion observations and is trusted for their accuracy.
+
+Card checkout captures the order price in USD. Only a signed Stripe webhook for the stored checkout, account, currency and amount can attest payment. Returning from checkout is not payment proof. The native settler is trusted for off-chain card settlement. Hosted-service receipts cannot pay a DAO setup fee.
+
+Orders are bound to the signed-in account and immutable setup. Check and resume an existing order after a lost response; paid orders create at most one shared DAO. Creation, initial governance, enrollment and module installation run in one transaction, so a failed setup leaves the paid order available to retry. Keep the order ID for support. Refunds and chargebacks require operator handling.
+
+Independent self-service provisioning is unavailable. The application displays its setup price but refuses checkout until a provisioner and blockchain resource quote exist. Use the reviewed deployment kit; do not send a shared setup payment for an independent deployment.
+
+Before enabling paid creation, a native operator configures setfees and setcreate (2000 shared USD cents, 5000 independent USD cents, 2000 premium basis points, relay settler), verifies the fee treasury and installs callback permission links. Bootstrap the platform DAO before setting creation fees, or create it with a paid order. Link it with setgov. setcrrate requires a fresh positive observation and native runtime authority. npm run price:tlos -- testnet --creation-rate reads Delphi and prints an unsigned update for review; it sends no transaction. Arrange operator updates often enough that observations remain less than 15 minutes old. A stale or future observation refuses new TLOS quotes.
+
+API clients prepare with POST /v1/dao-orders, read GET /v1/dao-orders/:id, start card checkout with POST /v1/dao-orders/:id/checkout and create/reconcile with POST /v1/dao-orders/:id/fulfill. The former POST /v1/daos free-creation endpoint now returns HTTP 409 CREATION_PAYMENT_REQUIRED and never creates a DAO. Update clients to the paid order flow.
+
+## Daclify DAO and platform status
+
+The Daclify DAO page reads the platform DAO reference from the runtime market configuration. A native operator first creates and enrolls that DAO and links it with setgov. Before that link, the page reports that platform governance is unconfigured. It does not guess a DAO by its name.
+
+Active administrators of the linked DAO can sign creation fee and settler changes, commission and names policy changes, first-party module registration, catalogue removal and first-party module descriptions. These are administrator actions, not automatic execution of a member ballot. Use the DAO workspace for proposals, voting, members and treasury. Native upgrade, fee treasury and oracle authorities remain with the operator.
+
+Module registration checks the on-chain code hash, accepted fee rule and asset identity. Removing a catalogue entry prevents new installations but does not erase existing DAO installations, pending work or financial exit rights. Publishers retain control over their third-party listings and prices.
+
+Status displays the selected network, actual chain ID and head blocks, runtime and module hashes, public permission authorities, resources, on-chain fee and governance configuration, database migrations and safe provider configuration flags. Missing services are labelled unconfigured. Module hash checks verify the pinned SDK artifact; unpinned runtime and hub hashes are displayed without claiming they are verified.
+
+Configured providers are not evidence of successful live integration or a qualified production release. Pinata, Stripe, Google, Telegram and managed recovery require their own configuration and acceptance checks. Public status excludes credentials, private keys, DSNs, account records and raw internal errors.
+
 ## runtime contract
 
-Source ABI JSON SHA-256: `5104731916f915cf100ca5a69a702594e257db8b967ed1c098b68f18726b6af1`.
+Source ABI JSON SHA-256: `3a68bd2f500e84f7662487a9e452ef408c60ccef392f33239e5252c4673c4b14`.
 
 ### Action: addmember
 
@@ -197,6 +225,15 @@ Source ABI JSON SHA-256: `5104731916f915cf100ca5a69a702594e257db8b967ed1c098b68f
 | source | name |
 | source_id | uint64 |
 
+### Action: cardcreate
+
+| Field | ABI type |
+| --- | --- |
+| reference | checksum256 |
+| usd_cents | uint32 |
+| checkout_reference | checksum256 |
+| paid_at | uint32 |
+
 ### Action: commitepoch
 
 | Field | ABI type |
@@ -233,6 +270,19 @@ Source ABI JSON SHA-256: `5104731916f915cf100ca5a69a702594e257db8b967ed1c098b68f
 | token_contract | name |
 | token_symbol | symbol |
 
+### Action: createpaid
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| owner | name |
+| metadata | string |
+| privacy | uint8 |
+| token_contract | name |
+| token_symbol | symbol |
+| reference | checksum256 |
+| creator | public_key |
+
 ### Action: delsession
 
 | Field | ABI type |
@@ -265,6 +315,18 @@ Source ABI JSON SHA-256: `5104731916f915cf100ca5a69a702594e257db8b967ed1c098b68f
 | custody | uint8 |
 | operator_label | string |
 
+### Action: govcreate
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| shared_usd | uint32 |
+| independent_usd | uint32 |
+| premium_bps | uint16 |
+| settler | name |
+
 ### Action: govfees
 
 | Field | ABI type |
@@ -277,6 +339,18 @@ Source ABI JSON SHA-256: `5104731916f915cf100ca5a69a702594e257db8b967ed1c098b68f
 | bump_bps | uint16 |
 | quote_premium_bps | uint16 |
 
+### Action: govlist
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| account | name |
+| price | asset |
+| code_hash | checksum256 |
+| title | string |
+
 ### Action: govlock
 
 | Field | ABI type |
@@ -285,6 +359,26 @@ Source ABI JSON SHA-256: `5104731916f915cf100ca5a69a702594e257db8b967ed1c098b68f
 | source | name |
 | source_id | uint64 |
 | expires | uint32 |
+
+### Action: govmodcopy
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| account | name |
+| summary | string |
+| detail | string |
+
+### Action: govunlist
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| account | name |
 
 ### Action: govunlock
 
@@ -383,6 +477,15 @@ Source ABI JSON SHA-256: `5104731916f915cf100ca5a69a702594e257db8b967ed1c098b68f
 | grants | name[] |
 | code_hash | checksum256 |
 
+### Action: ordercreate
+
+| Field | ABI type |
+| --- | --- |
+| reference | checksum256 |
+| creator | public_key |
+| deployment | uint8 |
+| method | uint8 |
+
 ### Action: payob
 
 | Field | ABI type |
@@ -458,6 +561,15 @@ Source ABI JSON SHA-256: `5104731916f915cf100ca5a69a702594e257db8b967ed1c098b68f
 | target | uint64 |
 | active | bool |
 
+### Action: setcreate
+
+| Field | ABI type |
+| --- | --- |
+| shared_usd | uint32 |
+| independent_usd | uint32 |
+| premium_bps | uint16 |
+| settler | name |
+
 ### Action: setcredits
 
 | Field | ABI type |
@@ -467,6 +579,14 @@ Source ABI JSON SHA-256: `5104731916f915cf100ca5a69a702594e257db8b967ed1c098b68f
 | member_id | uint64 |
 | target | uint64 |
 | quantity | uint64 |
+
+### Action: setcrrate
+
+| Field | ABI type |
+| --- | --- |
+| median | uint64 |
+| precision | uint8 |
+| observed_at | uint32 |
 
 ### Action: setdaogov
 
@@ -634,6 +754,36 @@ Source ABI JSON SHA-256: `5104731916f915cf100ca5a69a702594e257db8b967ed1c098b68f
 | price | asset |
 | code_hash | checksum256 |
 | title | string |
+
+### Table: createcfg
+
+| Field | ABI type |
+| --- | --- |
+| shared_usd | uint32 |
+| independent_usd | uint32 |
+| premium_bps | uint16 |
+| settler | name |
+| median | uint64 |
+| precision | uint8 |
+| observed_at | uint32 |
+
+### Table: createords
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| reference | checksum256 |
+| creator | public_key |
+| deployment | uint8 |
+| method | uint8 |
+| usd_cents | uint32 |
+| tlos_due | asset |
+| created_at | uint32 |
+| expires | uint32 |
+| paid | bool |
+| used | bool |
+| dao_id | uint64 |
+| card_reference | checksum256 |
 
 ### Table: daos
 
@@ -871,6 +1021,1704 @@ Source ABI JSON SHA-256: `ae70e5f0f7af1f1a9ded1b8ce193c5e6cab1808799f4e11c7e9ad1
 | abi_hash | checksum256 |
 | metadata | string |
 | listed | bool |
+
+## GET /v1/platform/status
+
+Guide: platform.
+
+No request body.
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "checkedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+    },
+    "apiVersion": {
+      "type": "string"
+    },
+    "moduleVersion": {
+      "type": "string"
+    },
+    "chain": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "network": {
+              "type": "object",
+              "properties": {
+                "chainId": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "rpcUrl": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "runtime": {
+                  "type": "string"
+                },
+                "hub": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "environment": {
+                  "type": "string",
+                  "enum": [
+                    "local",
+                    "testnet",
+                    "mainnet"
+                  ]
+                },
+                "interfaceVersion": {
+                  "type": "number",
+                  "const": 1
+                },
+                "coreVersion": {
+                  "type": "string"
+                },
+                "capabilities": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "chainId",
+                "rpcUrl",
+                "runtime",
+                "hub",
+                "environment",
+                "interfaceVersion",
+                "coreVersion",
+                "capabilities"
+              ],
+              "additionalProperties": false
+            },
+            "chainId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "chainMatches": {
+              "type": "boolean"
+            },
+            "headBlock": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "irreversibleBlock": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "headTime": {
+              "type": "string"
+            },
+            "contracts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "account": {
+                    "type": "string"
+                  },
+                  "moduleId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "codeHash": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "expectedHash": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "verified": {
+                    "type": "boolean"
+                  },
+                  "ramBytes": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": -1,
+                        "maximum": 9007199254740991
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "ramUsed": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "permissions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "parent": {
+                          "type": "string"
+                        },
+                        "threshold": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "keys": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string"
+                              },
+                              "weight": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "weight"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "accounts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "actor": {
+                                "type": "string"
+                              },
+                              "permission": {
+                                "type": "string"
+                              },
+                              "weight": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "required": [
+                              "actor",
+                              "permission",
+                              "weight"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "waits": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "seconds": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "weight": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "required": [
+                              "seconds",
+                              "weight"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "parent",
+                        "threshold",
+                        "keys",
+                        "accounts",
+                        "waits"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "account",
+                  "moduleId",
+                  "codeHash",
+                  "expectedHash",
+                  "verified",
+                  "ramBytes",
+                  "ramUsed",
+                  "permissions"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "catalogue": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "account": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "publisher": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "party": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 255
+                  },
+                  "complies": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 255
+                  },
+                  "price": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)? [A-Z]{1,7}$"
+                  },
+                  "code_hash": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "title": {
+                    "type": "string",
+                    "maxLength": 16384
+                  }
+                },
+                "required": [
+                  "account",
+                  "publisher",
+                  "party",
+                  "complies",
+                  "price",
+                  "code_hash",
+                  "title"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "fees": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "third_party_bps": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 65535
+                    },
+                    "first_party_bps": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 65535
+                    },
+                    "treasury": {
+                      "type": "string",
+                      "maxLength": 13
+                    },
+                    "token_contract": {
+                      "type": "string",
+                      "maxLength": 13
+                    },
+                    "token_symbol": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9][0-9]?),[A-Z]{1,7}$"
+                    },
+                    "names": {
+                      "type": "string",
+                      "maxLength": 13
+                    }
+                  },
+                  "required": [
+                    "third_party_bps",
+                    "first_party_bps",
+                    "treasury",
+                    "token_contract",
+                    "token_symbol",
+                    "names"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "market": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "bump_bps": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 65535
+                    },
+                    "quote_premium_bps": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 65535
+                    },
+                    "dao_id": {
+                      "type": "string",
+                      "maxLength": 20
+                    }
+                  },
+                  "required": [
+                    "bump_bps",
+                    "quote_premium_bps",
+                    "dao_id"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "creation": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "shared_usd": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 4294967295
+                    },
+                    "independent_usd": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 4294967295
+                    },
+                    "premium_bps": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 65535
+                    },
+                    "settler": {
+                      "type": "string",
+                      "maxLength": 13
+                    },
+                    "median": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "precision": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 255
+                    },
+                    "observed_at": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 4294967295
+                    }
+                  },
+                  "required": [
+                    "shared_usd",
+                    "independent_usd",
+                    "premium_bps",
+                    "settler",
+                    "median",
+                    "precision",
+                    "observed_at"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "runtimeSettings": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "chain_id": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "interface_version": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 65535
+                    }
+                  },
+                  "required": [
+                    "chain_id",
+                    "interface_version"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "rateFresh": {
+              "type": "boolean"
+            },
+            "platformDao": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "chainId": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "contract": {
+                      "type": "string",
+                      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                    },
+                    "daoId": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "interfaceVersion": {
+                      "type": "number",
+                      "const": 1
+                    }
+                  },
+                  "required": [
+                    "chainId",
+                    "contract",
+                    "daoId",
+                    "interfaceVersion"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "sharedAvailable": {
+              "type": "boolean"
+            },
+            "independentAvailable": {
+              "type": "boolean",
+              "const": false
+            }
+          },
+          "required": [
+            "network",
+            "chainId",
+            "chainMatches",
+            "headBlock",
+            "irreversibleBlock",
+            "headTime",
+            "contracts",
+            "catalogue",
+            "fees",
+            "market",
+            "creation",
+            "runtimeSettings",
+            "rateFresh",
+            "platformDao",
+            "sharedAvailable",
+            "independentAvailable"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "rpc": {
+      "type": "string",
+      "enum": [
+        "reachable",
+        "unavailable",
+        "unconfigured"
+      ]
+    },
+    "database": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "reachable",
+            "unavailable"
+          ]
+        },
+        "migrations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "namespace": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "appliedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              }
+            },
+            "required": [
+              "namespace",
+              "name",
+              "appliedAt"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "state",
+        "migrations"
+      ],
+      "additionalProperties": false
+    },
+    "limits": {
+      "type": "object",
+      "properties": {
+        "sponsoredWritesPerAccount": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "sponsoredWritesGlobal": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "windowMs": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "uploadBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "sponsoredWritesPerAccount",
+        "sponsoredWritesGlobal",
+        "windowMs",
+        "uploadBytes"
+      ],
+      "additionalProperties": false
+    },
+    "services": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "qualification": {
+            "type": "string",
+            "enum": [
+              "local-fixture",
+              "not-qualified"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "configured",
+          "qualification",
+          "detail"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "properties": {
+        "sharedUsdCents": {
+          "type": "number",
+          "const": 2000
+        },
+        "independentUsdCents": {
+          "type": "number",
+          "const": 5000
+        },
+        "tlosPremiumBps": {
+          "type": "number",
+          "const": 2000
+        }
+      },
+      "required": [
+        "sharedUsdCents",
+        "independentUsdCents",
+        "tlosPremiumBps"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "checkedAt",
+    "apiVersion",
+    "moduleVersion",
+    "chain",
+    "rpc",
+    "database",
+    "limits",
+    "services",
+    "defaults"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/dao-orders
+
+Guide: creation-fees.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "requestId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "deployment": {
+      "type": "string",
+      "enum": [
+        "shared",
+        "independent"
+      ]
+    },
+    "method": {
+      "type": "string",
+      "enum": [
+        "card",
+        "tlos"
+      ]
+    },
+    "request": {
+      "type": "object",
+      "properties": {
+        "metadata": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "schemaVersion": {
+                  "type": "number",
+                  "const": 1
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 160
+                },
+                "description": {
+                  "default": "",
+                  "type": "string",
+                  "maxLength": 4000
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "title"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "schemaVersion": {
+                  "type": "number",
+                  "const": 2
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 160
+                },
+                "description": {
+                  "default": "",
+                  "type": "string",
+                  "maxLength": 4000
+                },
+                "purpose": {
+                  "type": "string",
+                  "enum": [
+                    "community",
+                    "ngo-grants",
+                    "gaming-guild",
+                    "team",
+                    "custom"
+                  ]
+                },
+                "setup": {
+                  "type": "object",
+                  "properties": {
+                    "presetId": {
+                      "type": "string",
+                      "enum": [
+                        "community",
+                        "ngo-grants",
+                        "gaming-guild",
+                        "team",
+                        "custom"
+                      ]
+                    },
+                    "presetVersion": {
+                      "type": "number",
+                      "const": 1
+                    },
+                    "participantMode": {
+                      "type": "string",
+                      "enum": [
+                        "humans",
+                        "mixed",
+                        "agents-guarded"
+                      ]
+                    },
+                    "governance": {
+                      "type": "object",
+                      "properties": {
+                        "weight": {
+                          "type": "string",
+                          "enum": [
+                            "member",
+                            "credit",
+                            "native-stake"
+                          ]
+                        },
+                        "duration": {
+                          "type": "integer",
+                          "minimum": 60,
+                          "maximum": 2592000
+                        },
+                        "quorumBasisPoints": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 10000
+                        },
+                        "approvalBasisPoints": {
+                          "type": "integer",
+                          "minimum": 5001,
+                          "maximum": 10000
+                        },
+                        "governedWorks": {
+                          "type": "boolean"
+                        },
+                        "maxCommitment": {
+                          "type": "string",
+                          "maxLength": 20
+                        },
+                        "dailyCommitment": {
+                          "type": "string",
+                          "maxLength": 20
+                        },
+                        "guardian": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "const": ""
+                            },
+                            {
+                              "type": "string",
+                              "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "weight",
+                        "duration",
+                        "quorumBasisPoints",
+                        "approvalBasisPoints",
+                        "governedWorks",
+                        "maxCommitment",
+                        "dailyCommitment",
+                        "guardian"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "presetId",
+                    "presetVersion",
+                    "participantMode",
+                    "governance"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "title",
+                "purpose",
+                "setup"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "privacy": {
+          "type": "string",
+          "enum": [
+            "public",
+            "encrypted-managed-allowed",
+            "encrypted-user-controlled"
+          ]
+        },
+        "token": {
+          "type": "object",
+          "properties": {
+            "chainId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "contract": {
+              "type": "string",
+              "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+            },
+            "symbol": {
+              "type": "string",
+              "pattern": "^[A-Z]{1,7}$"
+            },
+            "precision": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 18
+            }
+          },
+          "required": [
+            "chainId",
+            "contract",
+            "symbol",
+            "precision"
+          ],
+          "additionalProperties": false
+        },
+        "setup": {
+          "type": "object",
+          "properties": {
+            "presetId": {
+              "type": "string",
+              "enum": [
+                "community",
+                "ngo-grants",
+                "gaming-guild",
+                "team",
+                "custom"
+              ]
+            },
+            "presetVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "participantMode": {
+              "type": "string",
+              "enum": [
+                "humans",
+                "mixed",
+                "agents-guarded"
+              ]
+            },
+            "governance": {
+              "type": "object",
+              "properties": {
+                "weight": {
+                  "type": "string",
+                  "enum": [
+                    "member",
+                    "credit",
+                    "native-stake"
+                  ]
+                },
+                "duration": {
+                  "type": "integer",
+                  "minimum": 60,
+                  "maximum": 2592000
+                },
+                "quorumBasisPoints": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10000
+                },
+                "approvalBasisPoints": {
+                  "type": "integer",
+                  "minimum": 5001,
+                  "maximum": 10000
+                },
+                "governedWorks": {
+                  "type": "boolean"
+                },
+                "maxCommitment": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "dailyCommitment": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "guardian": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "const": ""
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "weight",
+                "duration",
+                "quorumBasisPoints",
+                "approvalBasisPoints",
+                "governedWorks",
+                "maxCommitment",
+                "dailyCommitment",
+                "guardian"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "presetId",
+            "presetVersion",
+            "participantMode",
+            "governance"
+          ],
+          "additionalProperties": false
+        },
+        "foundingAgent": {
+          "type": "object",
+          "properties": {
+            "signingKey": {
+              "type": "string",
+              "maxLength": 128
+            },
+            "encryptionKey": {
+              "type": "object",
+              "properties": {
+                "kty": {
+                  "type": "string",
+                  "const": "EC"
+                },
+                "crv": {
+                  "type": "string",
+                  "const": "P-256"
+                },
+                "x": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                },
+                "y": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                }
+              },
+              "required": [
+                "kty",
+                "crv",
+                "x",
+                "y"
+              ],
+              "additionalProperties": false
+            },
+            "operator": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[\\x20-\\x7e]+$"
+            }
+          },
+          "required": [
+            "signingKey",
+            "encryptionKey",
+            "operator"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "metadata",
+        "privacy",
+        "token"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "requestId",
+    "deployment",
+    "method",
+    "request"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "network": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "rpcUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "runtime": {
+          "type": "string"
+        },
+        "hub": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "environment": {
+          "type": "string",
+          "enum": [
+            "local",
+            "testnet",
+            "mainnet"
+          ]
+        },
+        "interfaceVersion": {
+          "type": "number",
+          "const": 1
+        },
+        "coreVersion": {
+          "type": "string"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "chainId",
+        "rpcUrl",
+        "runtime",
+        "hub",
+        "environment",
+        "interfaceVersion",
+        "coreVersion",
+        "capabilities"
+      ],
+      "additionalProperties": false
+    },
+    "requestId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "deployment": {
+      "type": "string",
+      "enum": [
+        "shared",
+        "independent"
+      ]
+    },
+    "method": {
+      "type": "string",
+      "enum": [
+        "card",
+        "tlos"
+      ]
+    },
+    "usdCents": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "tlosAmount": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "recipient": {
+      "type": "string"
+    },
+    "tokenContract": {
+      "type": "string"
+    },
+    "memo": {
+      "type": "string"
+    },
+    "expires": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "awaiting-payment",
+        "paid",
+        "created"
+      ]
+    },
+    "dao": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "chainId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "contract": {
+              "type": "string",
+              "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+            },
+            "daoId": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "interfaceVersion": {
+              "type": "number",
+              "const": 1
+            }
+          },
+          "required": [
+            "chainId",
+            "contract",
+            "daoId",
+            "interfaceVersion"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "checkoutUrl": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uri"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "network",
+    "requestId",
+    "deployment",
+    "method",
+    "usdCents",
+    "tlosAmount",
+    "recipient",
+    "tokenContract",
+    "memo",
+    "expires",
+    "state",
+    "dao",
+    "checkoutUrl"
+  ],
+  "additionalProperties": false
+}
+```
+
+## GET /v1/dao-orders/:id
+
+Guide: creation-fees.
+
+No request body.
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "network": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "rpcUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "runtime": {
+          "type": "string"
+        },
+        "hub": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "environment": {
+          "type": "string",
+          "enum": [
+            "local",
+            "testnet",
+            "mainnet"
+          ]
+        },
+        "interfaceVersion": {
+          "type": "number",
+          "const": 1
+        },
+        "coreVersion": {
+          "type": "string"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "chainId",
+        "rpcUrl",
+        "runtime",
+        "hub",
+        "environment",
+        "interfaceVersion",
+        "coreVersion",
+        "capabilities"
+      ],
+      "additionalProperties": false
+    },
+    "requestId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "deployment": {
+      "type": "string",
+      "enum": [
+        "shared",
+        "independent"
+      ]
+    },
+    "method": {
+      "type": "string",
+      "enum": [
+        "card",
+        "tlos"
+      ]
+    },
+    "usdCents": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "tlosAmount": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "recipient": {
+      "type": "string"
+    },
+    "tokenContract": {
+      "type": "string"
+    },
+    "memo": {
+      "type": "string"
+    },
+    "expires": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "awaiting-payment",
+        "paid",
+        "created"
+      ]
+    },
+    "dao": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "chainId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "contract": {
+              "type": "string",
+              "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+            },
+            "daoId": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "interfaceVersion": {
+              "type": "number",
+              "const": 1
+            }
+          },
+          "required": [
+            "chainId",
+            "contract",
+            "daoId",
+            "interfaceVersion"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "checkoutUrl": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uri"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "network",
+    "requestId",
+    "deployment",
+    "method",
+    "usdCents",
+    "tlosAmount",
+    "recipient",
+    "tokenContract",
+    "memo",
+    "expires",
+    "state",
+    "dao",
+    "checkoutUrl"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/dao-orders/:id/checkout
+
+Guide: creation-fees.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "url": {
+      "type": "string",
+      "format": "uri"
+    }
+  },
+  "required": [
+    "url"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/dao-orders/:id/fulfill
+
+Guide: creation-fees.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "network": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "rpcUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "runtime": {
+          "type": "string"
+        },
+        "hub": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "environment": {
+          "type": "string",
+          "enum": [
+            "local",
+            "testnet",
+            "mainnet"
+          ]
+        },
+        "interfaceVersion": {
+          "type": "number",
+          "const": 1
+        },
+        "coreVersion": {
+          "type": "string"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "chainId",
+        "rpcUrl",
+        "runtime",
+        "hub",
+        "environment",
+        "interfaceVersion",
+        "coreVersion",
+        "capabilities"
+      ],
+      "additionalProperties": false
+    },
+    "requestId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "deployment": {
+      "type": "string",
+      "enum": [
+        "shared",
+        "independent"
+      ]
+    },
+    "method": {
+      "type": "string",
+      "enum": [
+        "card",
+        "tlos"
+      ]
+    },
+    "usdCents": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "tlosAmount": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "recipient": {
+      "type": "string"
+    },
+    "tokenContract": {
+      "type": "string"
+    },
+    "memo": {
+      "type": "string"
+    },
+    "expires": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "awaiting-payment",
+        "paid",
+        "created"
+      ]
+    },
+    "dao": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "chainId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "contract": {
+              "type": "string",
+              "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+            },
+            "daoId": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "interfaceVersion": {
+              "type": "number",
+              "const": 1
+            }
+          },
+          "required": [
+            "chainId",
+            "contract",
+            "daoId",
+            "interfaceVersion"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "checkoutUrl": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uri"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "network",
+    "requestId",
+    "deployment",
+    "method",
+    "usdCents",
+    "tlosAmount",
+    "recipient",
+    "tokenContract",
+    "memo",
+    "expires",
+    "state",
+    "dao",
+    "checkoutUrl"
+  ],
+  "additionalProperties": false
+}
+```
 
 ## GET /v1/dao-presets
 
@@ -3569,7 +5417,7 @@ Response:
 
 ## POST /v1/daos
 
-Guide: deployments.
+Guide: creation-fees.
 
 Request:
 
@@ -3937,233 +5785,18 @@ Response:
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "properties": {
-    "reference": {
-      "type": "object",
-      "properties": {
-        "chainId": {
-          "type": "string",
-          "pattern": "^[0-9a-f]{64}$"
-        },
-        "contract": {
-          "type": "string",
-          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
-        },
-        "daoId": {
-          "type": "string",
-          "maxLength": 20
-        },
-        "interfaceVersion": {
-          "type": "number",
-          "const": 1
-        }
-      },
-      "required": [
-        "chainId",
-        "contract",
-        "daoId",
-        "interfaceVersion"
-      ],
-      "additionalProperties": false
-    },
-    "title": {
-      "type": "string"
-    },
-    "description": {
-      "type": "string"
-    },
-    "privacy": {
+    "code": {
       "type": "string",
-      "enum": [
-        "public",
-        "encrypted-managed-allowed",
-        "encrypted-user-controlled"
-      ]
+      "const": "CREATION_PAYMENT_REQUIRED"
     },
-    "owner": {
-      "type": "string"
-    },
-    "token": {
-      "type": "object",
-      "properties": {
-        "chainId": {
-          "type": "string",
-          "pattern": "^[0-9a-f]{64}$"
-        },
-        "contract": {
-          "type": "string",
-          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
-        },
-        "symbol": {
-          "type": "string",
-          "pattern": "^[A-Z]{1,7}$"
-        },
-        "precision": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 18
-        }
-      },
-      "required": [
-        "chainId",
-        "contract",
-        "symbol",
-        "precision"
-      ],
-      "additionalProperties": false
-    },
-    "members": {
-      "type": "integer",
-      "minimum": 0,
-      "maximum": 9007199254740991
-    },
-    "available": {
+    "message": {
       "type": "string",
-      "maxLength": 20
-    },
-    "reserved": {
-      "type": "string",
-      "maxLength": 20
-    },
-    "claims": {
-      "type": "string",
-      "maxLength": 20
-    },
-    "keyEpoch": {
-      "type": "string",
-      "maxLength": 20
-    },
-    "purpose": {
-      "type": "string",
-      "enum": [
-        "community",
-        "ngo-grants",
-        "gaming-guild",
-        "team",
-        "custom"
-      ]
-    },
-    "participantMode": {
-      "type": "string",
-      "enum": [
-        "humans",
-        "mixed",
-        "agents-guarded"
-      ]
-    },
-    "setup": {
-      "anyOf": [
-        {
-          "type": "object",
-          "properties": {
-            "presetId": {
-              "type": "string",
-              "enum": [
-                "community",
-                "ngo-grants",
-                "gaming-guild",
-                "team",
-                "custom"
-              ]
-            },
-            "presetVersion": {
-              "type": "number",
-              "const": 1
-            },
-            "participantMode": {
-              "type": "string",
-              "enum": [
-                "humans",
-                "mixed",
-                "agents-guarded"
-              ]
-            },
-            "governance": {
-              "type": "object",
-              "properties": {
-                "weight": {
-                  "type": "string",
-                  "enum": [
-                    "member",
-                    "credit",
-                    "native-stake"
-                  ]
-                },
-                "duration": {
-                  "type": "integer",
-                  "minimum": 60,
-                  "maximum": 2592000
-                },
-                "quorumBasisPoints": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "maximum": 10000
-                },
-                "approvalBasisPoints": {
-                  "type": "integer",
-                  "minimum": 5001,
-                  "maximum": 10000
-                },
-                "governedWorks": {
-                  "type": "boolean"
-                },
-                "maxCommitment": {
-                  "type": "string"
-                },
-                "dailyCommitment": {
-                  "type": "string"
-                },
-                "guardian": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "const": ""
-                    },
-                    {
-                      "type": "string",
-                      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "weight",
-                "duration",
-                "quorumBasisPoints",
-                "approvalBasisPoints",
-                "governedWorks",
-                "maxCommitment",
-                "dailyCommitment",
-                "guardian"
-              ],
-              "additionalProperties": false
-            }
-          },
-          "required": [
-            "presetId",
-            "presetVersion",
-            "participantMode",
-            "governance"
-          ],
-          "additionalProperties": false
-        },
-        {
-          "type": "null"
-        }
-      ]
+      "const": "Prepare and pay a DAO creation order first."
     }
   },
   "required": [
-    "reference",
-    "title",
-    "description",
-    "privacy",
-    "owner",
-    "token",
-    "members",
-    "available",
-    "reserved",
-    "claims",
-    "keyEpoch"
+    "code",
+    "message"
   ],
   "additionalProperties": false
 }

@@ -22,9 +22,15 @@ export const localCoreCallbacks = [
   'setcredits',
   'confirmext',
   'govfees',
+  'govcreate',
+  'govlist',
+  'govunlist',
+  'govmodcopy',
 ] as const;
 export function configureFixtureContext(container: string, runtime = 'daclifycore'): void {
-  z.enum(['daclify-v2-native', 'daclify-dao-presets-native']).parse(container);
+  z.enum(['daclify-v2-native', 'daclify-dao-presets-native', 'daclify-platform-native']).parse(
+    container,
+  );
   z.enum(['daclifycore', 'daclifytwo']).parse(runtime);
   function cleos(args: string[]): string {
     try {

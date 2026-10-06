@@ -1,3 +1,4 @@
+import { CreationService } from './creation.js';
 import './load-local-env.js';
 import { Pool } from 'pg';
 import { PrivateKey } from '@wharfkit/antelope';
@@ -106,11 +107,13 @@ if (env.TELEGRAM_BOT_TOKEN) {
 }
 const stripeConfig = readStripeConfig(process.env);
 const docs = readDocsAgent(process.env);
+const creation = new CreationService(pool, chain);
 const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
+  creation,
   ...(content ? { content } : {}),
   ...(providers.google || providers.telegram ? { providers } : {}),
   ...(stripeConfig
-    ? { billing: new StripeBilling(pool, stripeConfig, env.FRONTEND_ORIGIN, chain) }
+    ? { billing: new StripeBilling(pool, stripeConfig, env.FRONTEND_ORIGIN, chain, creation) }
     : {}),
   signIn: { environment: env.NETWORK_ENVIRONMENT },
   ...(docs ? { docs } : {}),

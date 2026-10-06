@@ -1,5 +1,6 @@
 #include "records.hpp"
 #include "governance.hpp"
+#include "creation.hpp"
 #define JSON_NOEXCEPTION
 #define JSON_HAS_FILESYSTEM 0
 #define JSON_HAS_EXPERIMENTAL_FILESYSTEM 0
@@ -15,10 +16,50 @@ public:
     check(!c.exists(),"ALREADY_INITIALIZED"); c.set(settings{chain_id,1},get_self());
   }
   ACTION createdao(uint64_t dao_id,name owner,std::string metadata,uint8_t privacy,name token_contract,symbol token_symbol) {
+    check(!creation_settings(get_self(),get_self().value).exists(),"CREATION_PAYMENT_REQUIRED");
+    create_dao(dao_id,owner,metadata,privacy,token_contract,token_symbol);
+  }
+  ACTION createpaid(uint64_t dao_id,name owner,std::string metadata,uint8_t privacy,name token_contract,symbol token_symbol,checksum256 reference,public_key creator) {
+    auto cfg=creation_settings(get_self(),get_self().value).get();require_auth(cfg.settler);
+    creation_orders orders(get_self(),get_self().value);auto index=orders.get_index<"byref"_n>();const auto& order=index.get(reference,"CREATION_UNKNOWN");
+    check(order.creator==creator&&order.deployment==0,"CREATION_OWNER");check(order.paid,"CREATION_UNPAID");check(!order.used,"CREATION_USED");
+    create_dao(dao_id,owner,metadata,privacy,token_contract,token_symbol);
+    index.modify(order,same_payer,[&](auto& r){r.used=true;r.dao_id=dao_id;});
+  }
+private:
+  void create_dao(uint64_t dao_id,name owner,const std::string& metadata,uint8_t privacy,name token_contract,symbol token_symbol) {
     require_auth(owner); configuration(); check(dao_id>0,"DAO_ID"); check(privacy<=2,"PRIVACY_POLICY");
     check(is_account(owner),"OWNER_ACCOUNT"); check(token_contract.value>0&&token_symbol.is_valid(),"ASSET_IDENTITY");
     check(dao_rows.find(dao_id)==dao_rows.end(),"DAO_EXISTS"); validate_metadata(metadata);
     dao_rows.emplace(get_self(),[&](auto& d){ d.id=dao_id; d.owner=owner; d.metadata=metadata; d.privacy=privacy; d.token_contract=token_contract; d.token_symbol=token_symbol; });
+  }
+public:
+  ACTION setcreate(uint32_t shared_usd,uint32_t independent_usd,uint16_t premium_bps,name settler) {
+    require_auth(get_self());save_creation(shared_usd,independent_usd,premium_bps,settler);
+  }
+  ACTION govcreate(name runtime,uint64_t dao_id,uint64_t member_id,uint32_t shared_usd,uint32_t independent_usd,uint16_t premium_bps,name settler) {
+    platform_actor(runtime,dao_id,member_id);save_creation(shared_usd,independent_usd,premium_bps,settler);
+  }
+  ACTION setcrrate(uint64_t median,uint8_t precision,uint32_t observed_at) {
+    require_auth(get_self());auto now=current_time_point().sec_since_epoch();check(median>0&&precision<=18&&observed_at<=now&&now-observed_at<=900,"CREATION_RATE");
+    creation_settings saved(get_self(),get_self().value);auto cfg=saved.get();cfg.median=median;cfg.precision=precision;cfg.observed_at=observed_at;saved.set(cfg,get_self());
+  }
+  ACTION ordercreate(checksum256 reference,public_key creator,uint8_t deployment,uint8_t method) {
+    auto cfg=creation_settings(get_self(),get_self().value).get();require_auth(cfg.settler);check(reference!=checksum256()&&deployment<=1&&method<=1,"CREATION_ORDER");
+    const auto fees=fee_configuration();check(fees.token_symbol==symbol("TLOS",4),"CREATION_ASSET");
+    creation_orders orders(get_self(),get_self().value);auto index=orders.get_index<"byref"_n>();check(index.find(reference)==index.end(),"CREATION_EXISTS");
+    uint32_t usd=deployment==0?cfg.shared_usd:cfg.independent_usd;auto now=current_time_point().sec_since_epoch();uint64_t expiry=uint64_t(now)+(method==0?900:3600);check(expiry<=std::numeric_limits<uint32_t>::max(),"TIME_RANGE");
+    int64_t amount=0;if(method==0){check(cfg.median>0&&cfg.observed_at<=now&&now-cfg.observed_at<=900,"CREATION_RATE");__int128 scale=1;for(uint8_t i=0;i<cfg.precision;i++)scale*=10;__int128 numerator=__int128(usd)*scale*(10000+cfg.premium_bps)*10000;__int128 denominator=__int128(100)*cfg.median*10000;auto units=(numerator+denominator-1)/denominator;check(units>0&&units<=asset::max_amount,"CREATION_AMOUNT");amount=int64_t(units);}
+    auto id=orders.available_primary_key();if(!id)id=1;check(id<std::numeric_limits<uint64_t>::max(),"CREATION_LIMIT");
+    orders.emplace(get_self(),[&](auto& r){r.id=id;r.reference=reference;r.creator=creator;r.deployment=deployment;r.method=method;r.usd_cents=usd;r.tlos_due=asset(amount,fees.token_symbol);r.created_at=now;r.expires=expiry;});
+  }
+  ACTION cardcreate(checksum256 reference,uint32_t usd_cents,checksum256 checkout_reference,uint32_t paid_at) {
+    auto cfg=creation_settings(get_self(),get_self().value).get();require_auth(cfg.settler);check(checkout_reference!=checksum256(),"CREATION_CARD");
+    creation_orders orders(get_self(),get_self().value);auto index=orders.get_index<"byref"_n>();const auto& order=index.get(reference,"CREATION_UNKNOWN");
+    check(order.method==1&&order.usd_cents==usd_cents,"CREATION_AMOUNT");check(paid_at>=order.created_at&&paid_at<=order.expires&&paid_at<=current_time_point().sec_since_epoch(),"CREATION_EXPIRED");
+    if(order.paid){check(order.card_reference==checkout_reference,"CREATION_CARD");return;}
+    auto cards=orders.get_index<"bycard"_n>();check(cards.find(checkout_reference)==cards.end(),"CREATION_CARD");
+    index.modify(order,same_payer,[&](auto& r){r.paid=true;r.card_reference=checkout_reference;});
   }
   ACTION enroll(uint64_t dao_id,uint64_t member_id,name native_account,public_key signing_key,std::string encryption_key,uint8_t custody) {
     enroll_member(dao_id,member_id,native_account,signing_key,encryption_key,custody,0,"");
@@ -177,31 +218,17 @@ public:
     check(is_account(publisher),"FEE_ACCOUNT");
     if(party==0){require_auth(get_self());check(publisher==cfg.treasury,"FEE_ACCOUNT");}
     else{require_auth(publisher);check(publisher!=cfg.treasury,"FEE_PARTY");}
-    check(price.is_valid()&&price.amount>=0&&price.symbol==cfg.token_symbol,"MODULE_PRICE");
-    check(code_hash!=checksum256()&&get_code_hash(account)==code_hash,"MODULE_CODE");
-    check(title.size()>=1&&title.size()<=64,"MODULE_TITLE");
-    for(unsigned char c:title)check(c>=0x20&&c<=0x7e,"MODULE_TITLE");
-    catalogue rows(get_self(),get_self().value);auto it=rows.find(account.value);
-    if(it!=rows.end()){check(it->party==party,"FEE_PARTY");if(party==1)check(it->publisher==publisher,"FEE_ACCOUNT");}
-    auto write=[&](auto& r){r.account=account;r.publisher=publisher;r.party=party;r.complies=1;r.price=price;r.code_hash=code_hash;r.title=title;};
-    if(it==rows.end())rows.emplace(get_self(),write);else rows.modify(it,same_payer,write);
+    save_listing(account,publisher,party,accepts_fee_rule,price,code_hash,title);
   }
   ACTION unlistmod(name account) {
     catalogue rows(get_self(),get_self().value);const auto& item=rows.get(account.value,"MODULE_UNLISTED");
     if(has_auth(get_self()))require_auth(get_self());else require_auth(item.publisher);
-    rows.erase(item);
-    modcopy copy(get_self(),get_self().value);auto text=copy.find(account.value);if(text!=copy.end())copy.erase(text);
+    remove_listing(account);
   }
   ACTION setmodcopy(name account,std::string summary,std::string detail) {
     catalogue listed(get_self(),get_self().value);const auto& item=listed.get(account.value,"MODULE_UNLISTED");
     if(item.party==0)require_auth(get_self());else require_auth(item.publisher);
-    check(summary.size()>=1&&summary.size()<=160,"MODULE_SUMMARY");
-    for(unsigned char c:summary)check(c>=0x20&&c<=0x7e,"MODULE_SUMMARY");
-    check(detail.size()<=2000,"MODULE_DETAIL");
-    for(unsigned char c:detail)check(c=='\n'||(c>=0x20&&c<=0x7e),"MODULE_DETAIL");
-    modcopy copy(get_self(),get_self().value);auto it=copy.find(account.value);
-    auto write=[&](auto& r){r.account=account;r.summary=summary;r.detail=detail;};
-    if(it==copy.end())copy.emplace(get_self(),write);else copy.modify(it,same_payer,write);
+    save_copy(account,summary,detail);
   }
   // Contract authority until setgov links a DAO. Admins then use govfees.
   ACTION setpolicy(uint16_t bump_bps,uint16_t quote_premium_bps) {
@@ -233,6 +260,15 @@ public:
     fee_settings(get_self(),get_self().value).set(cfg,get_self());
     if(cfg.names.value)action(permission_level{get_self(),"active"_n},cfg.names,"setrates"_n,std::make_tuple(get_self(),third_party_bps,first_party_bps,cfg.treasury,cfg.token_contract,cfg.token_symbol)).send();
     publish_policy(bump_bps,quote_premium_bps,dao_id);
+  }
+  ACTION govlist(name runtime,uint64_t dao_id,uint64_t member_id,name account,asset price,checksum256 code_hash,std::string title) {
+    platform_actor(runtime,dao_id,member_id);auto cfg=fee_configuration();save_listing(account,cfg.treasury,0,1,price,code_hash,title);
+  }
+  ACTION govunlist(name runtime,uint64_t dao_id,uint64_t member_id,name account) {
+    platform_actor(runtime,dao_id,member_id);remove_listing(account);
+  }
+  ACTION govmodcopy(name runtime,uint64_t dao_id,uint64_t member_id,name account,std::string summary,std::string detail) {
+    platform_actor(runtime,dao_id,member_id);catalogue listed(get_self(),get_self().value);check(listed.get(account.value,"MODULE_UNLISTED").party==0,"FEE_PARTY");save_copy(account,summary,detail);
   }
   ACTION setcredits(name runtime,uint64_t dao_id,uint64_t member_id,uint64_t target,uint64_t quantity) {
     authorized_actor(runtime,dao_id,member_id,true);const auto& d=dao_rows.get(dao_id);check(d.active_ballots==0,"GOVERNANCE_LOCKED");members rows(get_self(),dao_id);const auto& m=rows.get(target,"MEMBER_UNKNOWN");
@@ -355,6 +391,7 @@ public:
   [[eosio::on_notify("*::transfer")]] void deposit(name from,name to,asset quantity,std::string memo) {
     if(to!=get_self()||from==get_self())return;
     check(quantity.is_valid()&&quantity.amount>0,"ASSET_QUANTITY");
+    if(memo.rfind("create:",0)==0){creation_payment(quantity,memo);return;}
     if(memo.rfind("mod:",0)==0){settle_module(from,quantity,memo);return;}
     check(memo.size()<=64,"DEPOSIT_REFERENCE");
     std::vector<std::string> parts;size_t start=0;
@@ -367,6 +404,47 @@ public:
   }
 private:
   daos dao_rows{get_self(),get_self().value};
+  void platform_actor(name runtime,uint64_t dao_id,uint64_t member_id) {
+    check(get_sender()==get_self(),"ACTOR_SENDER");authorized_actor(runtime,dao_id,member_id,true);market_settings saved(get_self(),get_self().value);check(saved.exists()&&saved.get().dao_id==dao_id&&dao_id!=0,"PLATFORM_DAO");
+  }
+  void save_creation(uint32_t shared_usd,uint32_t independent_usd,uint16_t premium_bps,name settler) {
+    check(shared_usd>0&&shared_usd<=100000000&&independent_usd>0&&independent_usd<=100000000&&premium_bps<=10000,"CREATION_PRICE");check(is_account(settler),"CREATION_SETTLER");
+    creation_settings saved(get_self(),get_self().value);auto cfg=saved.exists()?saved.get():creation_policy{};cfg.shared_usd=shared_usd;cfg.independent_usd=independent_usd;cfg.premium_bps=premium_bps;cfg.settler=settler;saved.set(cfg,get_self());
+  }
+  void save_listing(name account,name publisher,uint8_t party,uint8_t accepts_fee_rule,asset price,checksum256 code_hash,const std::string& title) {
+    const auto cfg=fee_configuration();check(accepts_fee_rule==1&&party<=1,"FEE_RULE");check(is_account(account)&&account!=get_self()&&is_account(publisher),"MODULE_ACCOUNT");
+    check(price.is_valid()&&price.amount>=0&&price.symbol==cfg.token_symbol,"MODULE_PRICE");
+    check(code_hash!=checksum256()&&get_code_hash(account)==code_hash,"MODULE_CODE");
+    check(title.size()>=1&&title.size()<=64,"MODULE_TITLE");
+    for(unsigned char c:title)check(c>=0x20&&c<=0x7e,"MODULE_TITLE");
+    catalogue rows(get_self(),get_self().value);auto it=rows.find(account.value);
+    if(it!=rows.end()){check(it->party==party,"FEE_PARTY");if(party==1)check(it->publisher==publisher,"FEE_ACCOUNT");}
+    auto write=[&](auto& r){r.account=account;r.publisher=publisher;r.party=party;r.complies=1;r.price=price;r.code_hash=code_hash;r.title=title;};
+    if(it==rows.end())rows.emplace(get_self(),write);else rows.modify(it,same_payer,write);
+  }
+  void remove_listing(name account) {
+    catalogue rows(get_self(),get_self().value);const auto& item=rows.get(account.value,"MODULE_UNLISTED");
+    rows.erase(item);
+    modcopy copy(get_self(),get_self().value);auto text=copy.find(account.value);if(text!=copy.end())copy.erase(text);
+  }
+  void save_copy(name account,const std::string& summary,const std::string& detail) {
+    check(summary.size()>=1&&summary.size()<=160,"MODULE_SUMMARY");
+    for(unsigned char c:summary)check(c>=0x20&&c<=0x7e,"MODULE_SUMMARY");
+    check(detail.size()<=2000,"MODULE_DETAIL");
+    for(unsigned char c:detail)check(c=='\n'||(c>=0x20&&c<=0x7e),"MODULE_DETAIL");
+    modcopy copy(get_self(),get_self().value);auto it=copy.find(account.value);
+    auto write=[&](auto& r){r.account=account;r.summary=summary;r.detail=detail;};
+    if(it==copy.end())copy.emplace(get_self(),write);else copy.modify(it,same_payer,write);
+  }
+  void creation_payment(asset quantity,const std::string& memo) {
+    check(memo.size()==71,"CREATION_REFERENCE");std::array<uint8_t,32> bytes{};
+    auto nibble=[](char c)->uint8_t{check((c>='0'&&c<='9')||(c>='a'&&c<='f'),"CREATION_REFERENCE");return c<='9'?c-'0':c-'a'+10;};
+    for(size_t i=0;i<32;i++)bytes[i]=(nibble(memo[7+i*2])<<4)|nibble(memo[8+i*2]);
+    creation_orders orders(get_self(),get_self().value);auto index=orders.get_index<"byref"_n>();const auto& order=index.get(checksum256(bytes),"CREATION_UNKNOWN");
+    const auto cfg=fee_configuration();check(get_first_receiver()==cfg.token_contract&&quantity.symbol==cfg.token_symbol,"TOKEN_IDENTITY");check(order.method==0&&quantity==order.tlos_due,"CREATION_AMOUNT");check(!order.paid,"CREATION_PAID");check(order.expires>=current_time_point().sec_since_epoch(),"CREATION_EXPIRED");
+    index.modify(order,same_payer,[](auto& r){r.paid=true;});pay_share(cfg.token_contract,cfg.treasury,quantity,"Daclify DAO creation");
+  }
+
   void validate_policy(const gov_settings& settings){
     check(settings.participant_mode<=2&&settings.kind<=2,"POLICY_KIND");check(is_account(settings.decide)&&settings.decide!=get_self(),"POLICY_DECIDE");
     check(settings.duration>=60&&settings.duration<=2592000,"POLICY_DURATION");check(settings.quorum>0&&settings.quorum<=10000&&settings.approval>=5001&&settings.approval<=10000,"POLICY_THRESHOLD");
@@ -509,7 +587,7 @@ private:
     auto now=current_time_point().sec_since_epoch();check(r.expires>now&&uint64_t(r.expires)<=uint64_t(now)+900,"EXPIRED_OR_TOO_LONG");
     check(r.data.size()>=24&&r.data.size()<=16384,"PAYLOAD_SIZE");auto context=unpack<actor_context>(r.data);
     check(context.runtime==get_self()&&context.dao_id==r.dao_id&&context.member_id==r.member_id,"PAYLOAD_DOMAIN");
-    if(r.target==get_self())check(r.action=="addmember"_n||r.action=="setdaogov"_n||r.action=="addsession"_n||r.action=="delsession"_n||r.action=="setmeta"_n||r.action=="setprofile"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n||r.action=="govfees"_n,"ACTION_UNSUPPORTED");
+    if(r.target==get_self())check(r.action=="govcreate"_n||r.action=="govlist"_n||r.action=="govunlist"_n||r.action=="govmodcopy"_n||r.action=="addmember"_n||r.action=="setdaogov"_n||r.action=="addsession"_n||r.action=="delsession"_n||r.action=="setmeta"_n||r.action=="setprofile"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n||r.action=="govfees"_n,"ACTION_UNSUPPORTED");
     else { modules rows(get_self(),r.dao_id);const auto& installed=rows.get(r.target.value,"MODULE_DISABLED");check(std::find(installed.actions.begin(),installed.actions.end(),r.action)!=installed.actions.end(),"ACTION_UNSUPPORTED");check_pinned(installed,r.target); }
   }
   void dispatch(const instruction& r) {
@@ -522,7 +600,7 @@ private:
 extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
   if(code==receiver){switch(action_name){
     EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(setprofile)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(confirmext)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))
-    EOSIO_DISPATCH_HELPER(runtime,(enrollagent)(addmember)(initgov)(setdaogov)(addsession)(delsession)(guardpause)(guardrevoke)(guardrecover)(submitsess)(setfees)(listmod)(unlistmod)(setmodcopy)(setpolicy)(setgov)(setoracle)(govfees))
+    EOSIO_DISPATCH_HELPER(runtime,(enrollagent)(addmember)(initgov)(setdaogov)(addsession)(delsession)(guardpause)(guardrevoke)(guardrecover)(submitsess)(setfees)(listmod)(unlistmod)(setmodcopy)(setpolicy)(setgov)(setoracle)(govfees)(setcreate)(govcreate)(setcrrate)(ordercreate)(cardcreate)(createpaid)(govlist)(govunlist)(govmodcopy))
   }}
   else if(action_name=="transfer"_n.value) execute_action(name(receiver),name(code),&runtime::deposit);
 }

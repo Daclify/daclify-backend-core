@@ -19,8 +19,12 @@ const input = z
 if (process.argv.length !== 3) throw new Error('Expected one public fixture enrollment object');
 const network = z
   .object({
-    container: z.literal('daclify-v2-native'),
-    url: z.literal('http://127.0.0.1:18888'),
+    container: z.enum([
+      'daclify-v2-native',
+      'daclify-dao-presets-native',
+      'daclify-platform-native',
+    ]),
+    url: z.string().regex(/^http:\/\/127\.0\.0\.1:[0-9]{4,5}$/),
     chainId: z.string().regex(/^[0-9a-f]{64}$/),
   })
   .parse(JSON.parse(await readFile('.artifacts/native/network.json', 'utf8')));

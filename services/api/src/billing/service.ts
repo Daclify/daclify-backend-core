@@ -1,3 +1,5 @@
+import type { CreationService } from '../creation.js';
+import { creationCardEvent } from './creation.js';
 import { createHash } from 'node:crypto';
 import type { Pool } from 'pg';
 import { billingReturnUrls, type StripeConfig } from './config.js';
@@ -27,11 +29,45 @@ export class StripeBilling {
     private readonly config: StripeConfig,
     private readonly origin: string,
     private readonly names?: NameFulfiller,
+    private readonly creation?: CreationService,
   ) {
     this.stripe = createStripeClient(config.secretKey);
     this.payments = new PostgresServicePayments(pool);
   }
 
+  async startCreationCheckout(input: {
+    orderId: string;
+    accountId: string;
+    usdCents: number;
+    expires: number;
+  }): Promise<{ id: string; url: string }> {
+    if (input.expires < Math.floor(Date.now() / 1000) + 1805)
+      throw new Error('CREATION_CHECKOUT_EXPIRED');
+    const path = '/create?order=' + encodeURIComponent(input.orderId);
+    const session = await this.stripe.checkout.sessions.create(
+      {
+        mode: 'payment',
+        payment_method_types: ['card'],
+        client_reference_id: input.accountId,
+        success_url: new URL(path, this.origin).toString(),
+        cancel_url: new URL(path, this.origin).toString(),
+        expires_at: input.expires,
+        line_items: [
+          {
+            quantity: 1,
+            price_data: {
+              currency: 'usd',
+              unit_amount: input.usdCents,
+              product_data: { name: 'Daclify shared DAO setup' },
+            },
+          },
+        ],
+        metadata: { purpose: 'dao-creation', account_id: input.accountId, order_id: input.orderId },
+      },
+      { idempotencyKey: 'dao-creation-' + input.orderId },
+    );
+    return { id: session.id, url: requireCheckoutUrl(session.url) };
+  }
   async startNameCheckout(
     input: Omit<NamePurchase, 'reference'> & { accountId: string },
   ): Promise<{ url: string }> {
@@ -67,6 +103,14 @@ export class StripeBilling {
 
   async receiveWebhook(rawBody: Buffer, signature: string): Promise<void> {
     const event = readStripeEvent(this.stripe, rawBody, signature, this.config.webhookSecret);
+    const creation = creationCardEvent(event);
+    if (creation.kind === 'invalid') throw new Error('SERVICE_EVENT_SHAPE');
+    if (creation.kind === 'ignore') return;
+    if (creation.kind === 'paid') {
+      if (!this.creation) throw new Error('CREATION_UNCONFIGURED');
+      await this.creation.recordCard(creation.input);
+      return;
+    }
     const decision = classifyStripeEvent(event);
     if (decision.kind === 'purchase') {
       if (!this.names) throw new Error('NAMES_UNCONFIGURED');

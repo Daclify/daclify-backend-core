@@ -248,3 +248,13 @@ describe('service price and payment', () => {
     }
   });
 });
+
+it('rejects a future oracle observation instead of accepting a negative age', () => {
+  expect(() =>
+    selectDelphiRate(
+      [{ id: 1, median: 10000, timestamp: '2026-10-07T00:00:01' }],
+      new Date('2026-10-07T00:00:00Z'),
+      900,
+    ),
+  ).toThrow('ORACLE_FUTURE');
+});

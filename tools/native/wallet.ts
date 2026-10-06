@@ -1,7 +1,9 @@
 import { execFileSync } from 'node:child_process';
 import { z } from 'zod';
 export function unlockFixtureWallet(container: string): void {
-  z.enum(['daclify-v2-native', 'daclify-dao-presets-native']).parse(container);
+  z.enum(['daclify-v2-native', 'daclify-dao-presets-native', 'daclify-platform-native']).parse(
+    container,
+  );
   try {
     const base = ['exec', container, 'cleos', '--wallet-url', 'http://127.0.0.1:8900', 'wallet'];
     const wallets = execFileSync('docker', [...base, 'list'], {

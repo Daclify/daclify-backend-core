@@ -24,7 +24,9 @@ import {
   HostedBytesSchema,
 } from './storage.js';
 import { TreasurySchema, SettlementRequestSchema, SettlementResultSchema } from './treasury.js';
+import { PlatformRoutes } from './platform.js';
 export const ApiRoutes = {
+  ...PlatformRoutes,
   presets: {
     method: 'GET',
     path: '/v1/dao-presets',
@@ -164,8 +166,11 @@ export const ApiRoutes = {
     method: 'POST',
     path: '/v1/daos',
     input: CreateDaoSchema,
-    response: DaoSummarySchema,
-    helpTopic: 'deployments',
+    response: z.strictObject({
+      code: z.literal('CREATION_PAYMENT_REQUIRED'),
+      message: z.literal('Prepare and pay a DAO creation order first.'),
+    }),
+    helpTopic: 'creation-fees',
   },
   relay: {
     method: 'POST',

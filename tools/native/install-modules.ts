@@ -8,7 +8,11 @@ import { unlockFixtureWallet } from './wallet.js';
 import { z } from 'zod';
 const network = z
   .object({
-    container: z.enum(['daclify-v2-native', 'daclify-dao-presets-native']),
+    container: z.enum([
+      'daclify-v2-native',
+      'daclify-dao-presets-native',
+      'daclify-platform-native',
+    ]),
     chainId: z.string(),
     url: z.string().regex(/^http:\/\/127\.0\.0\.1:[0-9]{4,5}$/),
   })

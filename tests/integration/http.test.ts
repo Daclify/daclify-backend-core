@@ -258,4 +258,51 @@ describe('HTTP session boundary', () => {
     expect(response.statusCode).toBe(204);
     expect((await app.inject({ url: '/v1/me', headers: { cookie } })).statusCode).toBe(401);
   });
+  it('reports safe unconfigured platform status without secrets or raw errors', async () => {
+    const response = await app.inject(ApiRoutes.status.path);
+    expect(response.statusCode).toBe(200);
+    const status = ApiRoutes.status.response.parse(response.json());
+    expect(status.rpc).toBe('unconfigured');
+    expect(status.chain).toBeNull();
+    expect(status.database.state).toBe('reachable');
+    expect(status.services.every((s) => !s.configured)).toBe(true);
+    expect(response.body).not.toMatch(/postgres:\/\/|PVT_|whsec_|private key provider detail/);
+  });
+  it('rejects unpaid creation and forged order prices through authenticated HTTP', async () => {
+    const { cookie, session } = await login();
+    const headers = { origin, cookie, 'x-csrf-token': session.csrfToken };
+    const input = {
+      metadata: { schemaVersion: 1, title: 'Unpaid DAO', description: '' },
+      privacy: 'public',
+      token: { chainId: 'ab'.repeat(32), contract: 'eosio.token', symbol: 'TLOS', precision: 4 },
+    };
+    const response = await app.inject({
+      method: 'POST',
+      url: ApiRoutes.createDao.path,
+      headers,
+      payload: input,
+    });
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toMatchObject({ code: 'CREATION_PAYMENT_REQUIRED' });
+    const forged = await app.inject({
+      method: 'POST',
+      url: ApiRoutes.creationOrder.path,
+      headers,
+      payload: {
+        requestId: crypto.randomUUID(),
+        deployment: 'shared',
+        method: 'tlos',
+        request: input,
+        usdCents: 1,
+      },
+    });
+    expect(forged.statusCode).toBe(400);
+    const noCsrf = await app.inject({
+      method: 'POST',
+      url: ApiRoutes.creationOrder.path,
+      headers: { origin, cookie },
+      payload: {},
+    });
+    expect(noCsrf.statusCode).toBe(403);
+  });
 });
