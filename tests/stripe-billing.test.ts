@@ -50,6 +50,7 @@ function unusedChain(): ChainGateway {
     moduleState: fail,
     listDaos: fail,
     memberships: fail,
+    memberProfile: fail,
     createDao: fail,
     relay: fail,
   };

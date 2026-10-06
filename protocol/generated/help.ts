@@ -109,7 +109,7 @@ export const CoreHelpBundle={
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "0dc54e3ec8dd514577c4b11d10530c16e0bdc35ce76e0ae0e69d851d12e366b0",
+      "sourceAbiHash": "8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8fdfae6f853",
       "actions": [
         {
           "name": "approveob",
@@ -695,6 +695,31 @@ export const CoreHelpBundle={
           ]
         },
         {
+          "name": "setprofile",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "account_name",
+              "type": "name"
+            },
+            {
+              "name": "profile",
+              "type": "string"
+            }
+          ]
+        },
+        {
           "name": "setroles",
           "fields": [
             {
@@ -1143,6 +1168,31 @@ export const CoreHelpBundle={
             {
               "name": "status",
               "type": "uint8"
+            }
+          ]
+        },
+        {
+          "name": "profiles",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uint64"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "account_name",
+              "type": "name"
+            },
+            {
+              "name": "profile",
+              "type": "string"
             }
           ]
         },

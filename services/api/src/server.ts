@@ -22,6 +22,10 @@ import {
   type ProviderConfiguration,
 } from './auth/linking.js';
 import { verifyGoogle, verifyTelegram } from './providers/proofs.js';
+import { registerSignInRoutes, type SignInConfiguration } from './auth/sign-in-routes.js';
+import { registerEvmRoutes } from './auth/evm-routes.js';
+import { registerDocsRoutes } from './docs/routes.js';
+import type { DocsAgentConfiguration } from './docs/config.js';
 import { IdSchema } from '../../../protocol/base.js';
 import { ApiError } from './errors.js';
 import type { ContentService } from './content/service.js';
@@ -45,6 +49,9 @@ export async function createServer(
     content?: ContentService;
     providers?: ProviderConfiguration;
     billing?: StripeBilling;
+    signIn?: SignInConfiguration;
+    origins?: string[];
+    docs?: DocsAgentConfiguration;
   } = {},
 ) {
   const admitCheckout = createWindowLimiter(8, 3_600_000, 80);
@@ -57,6 +64,7 @@ export async function createServer(
     if (!admitSponsored(accountId, Date.now())) throw new ApiError('RATE_LIMIT', 429);
   }
   const secure = new URL(origin).protocol === 'https:';
+  const origins = options.origins ?? [origin];
   const sameSite = secure ? 'none' : 'strict';
   const cookieName = secure ? '__Host-daclify_session' : 'daclify_session';
   const app = Fastify({ logger: false, bodyLimit: 65536, requestTimeout: 15000 });
@@ -94,7 +102,7 @@ export async function createServer(
   app.addHook('onRequest', async (request) => {
     if (request.method !== 'POST') return;
     if (request.url.split('?')[0] === webhookPath) return;
-    if (request.headers.origin !== origin) throw new ApiError('ORIGIN_REJECTED', 403);
+    if (!origins.includes(request.headers.origin ?? '')) throw new ApiError('ORIGIN_REJECTED', 403);
   });
   async function session(token: string | undefined, csrf?: string) {
     if (!token) throw new ApiError('AUTH_REQUIRED', 401);
@@ -248,6 +256,11 @@ export async function createServer(
   app.get(ApiRoutes.memberships.path, async (request) => ({
     memberships: await chain.memberships(await session(request.cookies[cookieName])),
   }));
+  app.get('/v1/profile', async (request) => {
+    await session(request.cookies[cookieName]);
+    const query = z.strictObject({ daoId: IdSchema, memberId: IdSchema }).parse(request.query);
+    return chain.memberProfile(query.daoId, query.memberId);
+  });
   app.post(ApiRoutes.logout.path, async (request, reply) => {
     ApiRoutes.logout.input.parse(request.body);
     const token = request.cookies[cookieName];
@@ -308,5 +321,17 @@ export async function createServer(
     }
     return { received: true };
   });
+  registerSignInRoutes(
+    app,
+    pool,
+    origin,
+    cookieName,
+    options.providers,
+    options.signIn,
+    session,
+    sessionCookie,
+  );
+  registerEvmRoutes(app, pool, cookieName, session);
+  registerDocsRoutes(app, options.docs);
   return app;
 }

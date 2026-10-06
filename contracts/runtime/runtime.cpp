@@ -50,6 +50,13 @@ public:
     authorized_actor(runtime,dao_id,member_id,true); validate_metadata(metadata);
     const auto& d=dao_rows.get(dao_id); dao_rows.modify(d,same_payer,[&](auto& r){r.metadata=metadata;});
   }
+  ACTION setprofile(name runtime,uint64_t dao_id,uint64_t member_id,name account_name,std::string profile) {
+    authorized_actor(runtime,dao_id,member_id);validate_profile(profile,account_name);
+    profiles rows(get_self(),get_self().value);auto members_index=rows.get_index<"bymember"_n>();auto names=rows.get_index<"byname"_n>();
+    auto mine=members_index.find((uint128_t(dao_id)<<64)|member_id);auto taken=names.find(account_name.value);
+    if(mine==members_index.end()){check(taken==names.end(),"NAME_TAKEN");rows.emplace(get_self(),[&](auto& r){r.id=rows.available_primary_key();r.dao_id=dao_id;r.member_id=member_id;r.account_name=account_name;r.profile=profile;});}
+    else{check(mine->account_name==account_name,"NAME_IMMUTABLE");check(taken==names.end()||taken->id==mine->id,"NAME_TAKEN");members_index.modify(mine,same_payer,[&](auto& r){r.profile=profile;});}
+  }
   ACTION grantcredit(uint64_t dao_id,uint64_t member_id,uint64_t quantity) {
     const auto& d=dao_rows.get(dao_id,"DAO_UNKNOWN"); require_auth(d.owner); check(quantity>0,"QUANTITY"); check(d.active_ballots==0,"GOVERNANCE_LOCKED");
     members rows(get_self(),dao_id); const auto& m=rows.get(member_id,"MEMBER_UNKNOWN"); check(m.active,"MEMBER_INACTIVE");
@@ -207,6 +214,23 @@ private:
     size_t padding=0;for(size_t i=0;i<ciphertext.size();i++){if(ciphertext[i]=='='){padding++;check(i>=ciphertext.size()-2&&padding<=2,"PRIVACY_ENVELOPE");}else check(!padding&&alphabet.find(ciphertext[i])!=std::string::npos,"PRIVACY_ENVELOPE");}
   }
   void validate_metadata(const std::string& metadata) { check(metadata.size()>0&&metadata.size()<=4096,"METADATA_SIZE"); check(nlohmann::json::accept(metadata),"METADATA_JSON"); }
+  void validate_profile(const std::string& profile,name account_name) {
+    const std::string written=account_name.to_string();
+    check(account_name.value&&written.size()<=12&&written.front()!='.'&&written.back()!='.'&&written.find("..")==std::string::npos,"PROFILE_NAME");
+    check(profile.size()>0&&profile.size()<=4096,"METADATA_SIZE");check(nlohmann::json::accept(profile),"METADATA_JSON");
+    const auto value=nlohmann::json::parse(profile);check(value.is_object(),"METADATA_JSON");
+    const std::vector<std::string> keys={"name","fullName","location","email","telegram","introduction","motto","facebook","instagram","youtube","linkedin","website","avatar","background"};
+    for(auto it=value.begin();it!=value.end();++it){bool known=false;for(const auto& key:keys)if(it.key()==key)known=true;check(known&&it.value().is_string(),"PROFILE_FIELD");}
+    check(value.contains("name")&&value["name"].get<std::string>()==written,"PROFILE_NAME");
+    auto limited=[&](const char* key,size_t max){if(value.contains(key))check(value[key].get<std::string>().size()<=max,"PROFILE_FIELD");};
+    limited("fullName",80);limited("location",80);limited("email",254);limited("telegram",32);limited("introduction",2000);limited("motto",140);
+    limited("facebook",300);limited("instagram",300);limited("youtube",300);limited("linkedin",300);limited("website",300);limited("avatar",300);limited("background",300);
+    if(value.contains("email")){const auto email=value["email"].get<std::string>();check(email.empty()||(email.find(' ')==std::string::npos&&email.find('@')!=std::string::npos),"PROFILE_FIELD");}
+    if(value.contains("telegram")){const auto handle=value["telegram"].get<std::string>();if(!handle.empty()){check(handle.size()>=5,"PROFILE_FIELD");for(auto c:handle)check((c>='A'&&c<='Z')||(c>='a'&&c<='z')||(c>='0'&&c<='9')||c=='_',"PROFILE_FIELD");}}
+    auto link=[&](const char* key){if(!value.contains(key))return;const auto ref=value[key].get<std::string>();if(ref.empty())return;check(ref.rfind("https://",0)==0&&ref.find(' ')==std::string::npos,"PROFILE_FIELD");};
+    auto image=[&](const char* key){if(!value.contains(key))return;const auto ref=value[key].get<std::string>();if(!ref.empty())validate_cid(ref);};
+    link("facebook");link("instagram");link("youtube");link("linkedin");link("website");image("avatar");image("background");
+  }
   void validate_cid(const std::string& cid) {
     check(cid.size()==59&&cid[0]=='b',"CID_FORMAT");std::vector<uint8_t> raw;uint32_t bits=0;uint8_t count=0;
     const std::string alphabet="abcdefghijklmnopqrstuvwxyz234567";
@@ -244,7 +268,7 @@ private:
     auto now=current_time_point().sec_since_epoch();check(r.expires>now&&uint64_t(r.expires)<=uint64_t(now)+900,"EXPIRED_OR_TOO_LONG");
     check(r.data.size()>=24&&r.data.size()<=16384,"PAYLOAD_SIZE");auto context=unpack<actor_context>(r.data);
     check(context.runtime==get_self()&&context.dao_id==r.dao_id&&context.member_id==r.member_id,"PAYLOAD_DOMAIN");
-    if(r.target==get_self())check(r.action=="setmeta"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n,"ACTION_UNSUPPORTED");
+    if(r.target==get_self())check(r.action=="setmeta"_n||r.action=="setprofile"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n,"ACTION_UNSUPPORTED");
     else { modules rows(get_self(),r.dao_id);const auto& installed=rows.get(r.target.value,"MODULE_DISABLED");check(std::find(installed.actions.begin(),installed.actions.end(),r.action)!=installed.actions.end(),"ACTION_UNSUPPORTED");check_pinned(installed,r.target); }
   }
   void dispatch(const instruction& r) {
@@ -255,6 +279,6 @@ private:
   }
 };
 extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
-  if(code==receiver){switch(action_name){EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(confirmext)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))}}
+  if(code==receiver){switch(action_name){EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(setprofile)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(confirmext)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))}}
   else if(action_name=="transfer"_n.value) execute_action(name(receiver),name(code),&runtime::deposit);
 }

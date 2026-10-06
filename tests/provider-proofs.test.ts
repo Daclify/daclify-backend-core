@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { generateKeyPair, SignJWT } from 'jose';
-import { createHmac } from 'node:crypto';
+import { createHash, createHmac } from 'node:crypto';
 import { verifyGoogle, verifyTelegram } from '../services/api/src/providers/proofs.js';
 const now = Math.floor(Date.now() / 1000);
 const bot = '12345:local-fixture-token';
@@ -99,6 +99,27 @@ describe('Telegram initialization proof', () => {
     expect(() => verifyTelegram(telegram(), '6789:other-fixture-token', now)).toThrow(
       'PROVIDER_INVALID',
     );
+  });
+  it('accepts a website login widget proof and keeps the numeric id as the subject', () => {
+    const pairs = {
+      auth_date: String(now),
+      first_name: 'Fixture',
+      id: '123456789',
+      username: 'fixture_user',
+    };
+    const check = Object.entries(pairs)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, value]) => `${key}=${value}`)
+      .join('\n');
+    const secret = createHash('sha256').update(bot).digest();
+    const hash = createHmac('sha256', secret).update(check).digest('hex');
+    const proof = new URLSearchParams({ ...pairs, hash }).toString();
+    expect(verifyTelegram(proof, bot, now).subject).toBe('123456789');
+    const webAppSecret = createHmac('sha256', 'WebAppData').update(bot).digest();
+    const wrong = createHmac('sha256', webAppSecret).update(check).digest('hex');
+    expect(() =>
+      verifyTelegram(new URLSearchParams({ ...pairs, hash: wrong }).toString(), bot, now),
+    ).toThrow('PROVIDER_INVALID');
   });
   it('normalizes reordered proof identity for replay protection', () => {
     const original = telegram();

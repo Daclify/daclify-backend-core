@@ -38,6 +38,14 @@ struct [[eosio::table("members"), eosio::contract("runtime")]] member_record {
   EOSLIB_SERIALIZE(member_record,(id)(native_account)(signing_key)(encryption_key)(custody)(nonce)(credits)(active)(admin)(reviewer)(stake)(claim)(join_epoch))
 };
 using members = multi_index<"members"_n,member_record,indexed_by<"bynative"_n,const_mem_fun<member_record,uint64_t,&member_record::by_native>>,indexed_by<"bykey"_n,const_mem_fun<member_record,checksum256,&member_record::by_key>>>;
+struct [[eosio::table("profiles"), eosio::contract("runtime")]] profile_record {
+  uint64_t id; uint64_t dao_id; uint64_t member_id; name account_name; std::string profile;
+  uint64_t primary_key() const { return id; }
+  uint128_t by_member() const { return (uint128_t(dao_id)<<64)|member_id; }
+  uint64_t by_name() const { return account_name.value; }
+  EOSLIB_SERIALIZE(profile_record,(id)(dao_id)(member_id)(account_name)(profile))
+};
+using profiles = multi_index<"profiles"_n,profile_record,indexed_by<"bymember"_n,const_mem_fun<profile_record,uint128_t,&profile_record::by_member>>,indexed_by<"byname"_n,const_mem_fun<profile_record,uint64_t,&profile_record::by_name>>>;
 struct [[eosio::table("modules"), eosio::contract("runtime")]] module_record {
   name account; uint16_t version; std::vector<name> actions; std::vector<name> grants; checksum256 code_hash;
   uint64_t primary_key() const { return account.value; }

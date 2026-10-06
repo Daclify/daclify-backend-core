@@ -55,6 +55,7 @@ const chain: ChainGateway = {
     }),
   listDaos: async () => [],
   memberships: async () => [],
+  memberProfile: async () => ({ accountName: null, profile: null }),
   createDao: async () => {
     throw new Error('not deployed');
   },

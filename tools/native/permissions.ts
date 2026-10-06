@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { z } from 'zod';
 export const localCoreCallbacks = [
   'setmeta',
+  'setprofile',
   'putdoc',
   'putjson',
   'commitepoch',

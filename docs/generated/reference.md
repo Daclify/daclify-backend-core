@@ -102,7 +102,7 @@ A TLOS payment for the same hosted service is quoted from the Delphi tlosusd med
 
 ## runtime contract
 
-Source ABI JSON SHA-256: `0dc54e3ec8dd514577c4b11d10530c16e0bdc35ce76e0ae0e69d851d12e366b0`.
+Source ABI JSON SHA-256: `8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8fdfae6f853`.
 
 ### Action: approveob
 
@@ -336,6 +336,16 @@ Source ABI JSON SHA-256: `0dc54e3ec8dd514577c4b11d10530c16e0bdc35ce76e0ae0e69d85
 | grants | name[] |
 | code_hash | checksum256 |
 
+### Action: setprofile
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| account_name | name |
+| profile | string |
+
 ### Action: setroles
 
 | Field | ABI type |
@@ -500,6 +510,16 @@ Source ABI JSON SHA-256: `0dc54e3ec8dd514577c4b11d10530c16e0bdc35ce76e0ae0e69d85
 | quantity | asset |
 | due | uint32 |
 | status | uint8 |
+
+### Table: profiles
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| dao_id | uint64 |
+| member_id | uint64 |
+| account_name | name |
+| profile | string |
 
 ### Table: settings
 

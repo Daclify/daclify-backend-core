@@ -14,6 +14,7 @@ import { Uint64Schema } from '../../../protocol/base.js';
 import { parseModuleDeployments } from './deployment-config.js';
 import { readStripeConfig } from './billing/config.js';
 import { StripeBilling } from './billing/service.js';
+import { readDocsAgent } from './docs/config.js';
 const configuration = z
   .object({
     DATABASE_URL: z.url(),
@@ -36,6 +37,10 @@ const configuration = z
     TELEGRAM_BOT_TOKEN: z
       .string()
       .regex(/^\d+:[A-Za-z0-9_-]+$/)
+      .optional(),
+    TELEGRAM_BOT_USERNAME: z
+      .string()
+      .regex(/^[A-Za-z0-9_]{5,32}$/)
       .optional(),
     MODULE_DEPLOYMENTS: z.string().min(2).optional(),
   })
@@ -91,12 +96,22 @@ if (env.GOOGLE_CLIENT_ID && env.GOOGLE_PUBLIC_JWK) {
     throw new Error('GOOGLE_CONFIGURATION_INVALID');
   }
 }
-if (env.TELEGRAM_BOT_TOKEN) providers.telegram = { botToken: env.TELEGRAM_BOT_TOKEN };
+if (env.TELEGRAM_BOT_USERNAME && !env.TELEGRAM_BOT_TOKEN)
+  throw new Error('TELEGRAM_CONFIGURATION_INVALID');
+if (env.TELEGRAM_BOT_TOKEN) {
+  providers.telegram = {
+    botToken: env.TELEGRAM_BOT_TOKEN,
+    ...(env.TELEGRAM_BOT_USERNAME ? { botUsername: env.TELEGRAM_BOT_USERNAME } : {}),
+  };
+}
 const stripeConfig = readStripeConfig(process.env);
+const docs = readDocsAgent(process.env);
 const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
   ...(content ? { content } : {}),
   ...(providers.google || providers.telegram ? { providers } : {}),
   ...(stripeConfig ? { billing: new StripeBilling(pool, stripeConfig, env.FRONTEND_ORIGIN) } : {}),
+  signIn: { environment: env.NETWORK_ENVIRONMENT },
+  ...(docs ? { docs } : {}),
 });
 await app.listen({ host: '127.0.0.1', port: env.API_PORT });
 const worker = content ? startContentWorker(pool, content) : undefined;

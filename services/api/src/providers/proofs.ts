@@ -88,21 +88,32 @@ export function verifyTelegram(
       .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
       .map(([key, value]) => `${key}=${value}`)
       .join('\n');
-    const secret = createHmac('sha256', 'WebAppData').update(botToken).digest();
+    const widget = fields.get('user') === null;
+    const secret = widget
+      ? createHash('sha256').update(botToken).digest()
+      : createHmac('sha256', 'WebAppData').update(botToken).digest();
     const expected = createHmac('sha256', secret).update(check).digest();
     if (!timingSafeEqual(Buffer.from(hash, 'hex'), expected)) throw new Error('Invalid signature');
-    const user = z
-      .object({
-        id: z
-          .number()
-          .int()
-          .min(1)
-          .max(2 ** 52 - 1),
-      })
-      .parse(JSON.parse(z.string().parse(fields.get('user'))));
+    const subject = widget
+      ? z
+          .string()
+          .regex(/^[1-9][0-9]{0,15}$/)
+          .parse(fields.get('id'))
+      : String(
+          z
+            .object({
+              id: z
+                .number()
+                .int()
+                .min(1)
+                .max(2 ** 52 - 1),
+            })
+            .parse(JSON.parse(z.string().parse(fields.get('user')))).id,
+        );
+    if (widget && !Number.isSafeInteger(Number(subject))) throw new Error('Invalid id');
     return {
       provider: 'telegram',
-      subject: String(user.id),
+      subject,
       proofHash: createHash('sha256')
         .update(`${botToken.split(':')[0]}:${hash}`)
         .digest(),

@@ -15,6 +15,10 @@ export interface ChainGateway {
   moduleState(daoId: string): Promise<ModuleState>;
   listDaos(): Promise<DaoSummary[]>;
   memberships(account: Account): Promise<UserMembership[]>;
+  memberProfile(
+    daoId: string,
+    memberId: string,
+  ): Promise<{ accountName: string | null; profile: string | null }>;
   createDao(account: Account, input: z.infer<typeof CreateDaoSchema>): Promise<DaoSummary>;
   relay(
     account: Account,

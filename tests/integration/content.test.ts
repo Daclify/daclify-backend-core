@@ -93,6 +93,7 @@ function setup(allowance = 1000n) {
     content: async () => content,
     listDaos: async () => [dao],
     memberships: async () => [],
+    memberProfile: async () => ({ accountName: null, profile: null }),
     moduleState: async () => {
       throw new Error('Not part of this fixture');
     },

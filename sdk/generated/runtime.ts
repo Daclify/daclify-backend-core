@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = '0dc54e3ec8dd514577c4b11d10530c16e0bdc35ce76e0ae0e69d851d12e366b0';
+export const runtimeAbiHash = '8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8fdfae6f853';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -754,6 +754,32 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "profile_record",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "account_name",
+          "type": "name"
+        },
+        {
+          "name": "profile",
+          "type": "string"
+        }
+      ]
+    },
+    {
       "name": "putdoc",
       "base": "",
       "fields": [
@@ -1016,6 +1042,32 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "setprofile",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "account_name",
+          "type": "name"
+        },
+        {
+          "name": "profile",
+          "type": "string"
+        }
+      ]
+    },
+    {
       "name": "setroles",
       "base": "",
       "fields": [
@@ -1253,6 +1305,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "setprofile",
+      "type": "setprofile",
+      "ricardian_contract": ""
+    },
+    {
       "name": "setroles",
       "type": "setroles",
       "ricardian_contract": ""
@@ -1338,6 +1395,13 @@ export const runtimeAbi = {
     {
       "name": "obligations",
       "type": "obligation_record",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "profiles",
+      "type": "profile_record",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -1553,6 +1617,13 @@ export interface payob {
   source: string;
   source_id: string;
 }
+export interface profile_record {
+  id: string;
+  dao_id: string;
+  member_id: string;
+  account_name: string;
+  profile: string;
+}
 export interface putdoc {
   runtime: string;
   dao_id: string;
@@ -1623,6 +1694,13 @@ export interface setmodule {
   grants: string[];
   code_hash: string;
 }
+export interface setprofile {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  account_name: string;
+  profile: string;
+}
 export interface setroles {
   runtime: string;
   dao_id: string;
@@ -1680,6 +1758,7 @@ export interface RuntimeActions {
   setcredits: setcredits;
   setmeta: setmeta;
   setmodule: setmodule;
+  setprofile: setprofile;
   setroles: setroles;
   submit: submit;
   submitnat: submitnat;

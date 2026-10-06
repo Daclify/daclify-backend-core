@@ -6,7 +6,7 @@ import { ApiError } from '../errors.js';
 import type { verifyGoogle, ProviderPrincipal } from '../providers/proofs.js';
 export interface ProviderConfiguration {
   google?: { clientId: string; key: Parameters<typeof verifyGoogle>[3] };
-  telegram?: { botToken: string };
+  telegram?: { botToken: string; botUsername?: string };
 }
 interface AccountRow {
   id: string;

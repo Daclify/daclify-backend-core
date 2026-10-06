@@ -41,6 +41,7 @@
     "@fastify/cookie": "11.1.2",
     "@fastify/cors": "11.3.0",
     "@noble/curves": "2.4.0",
+    "@noble/hashes": "2.4.0",
     "@wharfkit/antelope": "4.0.2",
     "fastify": "5.12.5",
     "jose": "6.2.12",

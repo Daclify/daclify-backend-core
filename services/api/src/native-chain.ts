@@ -53,6 +53,7 @@ import {
   MetadataSchema,
   NativeAccountSchema,
   Uint64Schema,
+  IdSchema,
   ChainIdSchema,
   compatible,
 } from '../../../protocol/base.js';
@@ -324,6 +325,18 @@ export class NativeChainGateway implements ChainGateway {
         );
     }
     return matches;
+  }
+  async memberProfile(
+    daoId: string,
+    memberId: string,
+  ): Promise<{ accountName: string | null; profile: string | null }> {
+    IdSchema.parse(daoId);
+    IdSchema.parse(memberId);
+    const rows = await this.table('profiles', this.config.runtime, '0', 5000);
+    const row = rows.find((item) => item.dao_id === daoId && item.member_id === memberId);
+    return row
+      ? { accountName: row.account_name, profile: row.profile }
+      : { accountName: null, profile: null };
   }
   private async push<K extends keyof RuntimeActions>(
     name: K,

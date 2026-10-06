@@ -1,0 +1,225 @@
+import { generateKeyPairSync, randomUUID } from 'node:crypto';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { Pool } from 'pg';
+import { secp256k1 } from '@noble/curves/secp256k1.js';
+import { keccak_256 } from '@noble/hashes/sha3.js';
+import { PrivateKey } from '@wharfkit/antelope';
+import { migrate } from '../../services/api/src/store.js';
+import { createServer } from '../../services/api/src/server.js';
+import type { ChainGateway } from '../../services/api/src/chain.js';
+import { checksumAddress, personalDigest } from '../../services/api/src/auth/evm-proof.js';
+import { ChallengeSchema, NetworkSchema, SessionSchema } from '../../protocol/api.js';
+
+const url = process.env.DATABASE_URL;
+if (
+  !url ||
+  !new URL(url).pathname.endsWith('_test') ||
+  !['127.0.0.1', 'localhost'].includes(new URL(url).hostname)
+)
+  throw new Error('Local isolated test database required');
+const pool = new Pool({ connectionString: url });
+const origin = 'http://localhost:5178';
+const jwk = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.export({
+  format: 'jwk',
+});
+const encryptionKey = { kty: 'EC' as const, crv: 'P-256' as const, x: jwk.x, y: jwk.y };
+const chain: ChainGateway = {
+  finalize: async () => ({ state: 'already-finalized' }),
+  treasury: async () => {
+    throw new Error('Not part of this fixture');
+  },
+  settle: async () => ({ state: 'already-settled' }),
+  dao: async () => {
+    throw new Error('not deployed');
+  },
+  content: async () => {
+    throw new Error('not deployed');
+  },
+  moduleState: async () => {
+    throw new Error('not deployed');
+  },
+  network: async () =>
+    NetworkSchema.parse({
+      chainId: 'ab'.repeat(32),
+      rpcUrl: 'http://127.0.0.1:18888',
+      runtime: 'daclifycore',
+      hub: null,
+      environment: 'local',
+      interfaceVersion: 1,
+      coreVersion: '0.1.0-alpha.1',
+      capabilities: [],
+    }),
+  listDaos: async () => [],
+  memberships: async () => [],
+  memberProfile: async () => ({ accountName: null, profile: null }),
+  createDao: async () => {
+    throw new Error('not deployed');
+  },
+  relay: async () => {
+    throw new Error('not deployed');
+  },
+};
+const calls: string[] = [];
+const fetchImpl: typeof fetch = async (input) => {
+  calls.push(String(input));
+  if (String(input).endsWith('/decisions')) {
+    return new Response(
+      JSON.stringify({
+        answers: {
+          in_handbook: { noul: 0.88 },
+          topic: { choice: 'accounts', probabilities: { accounts: 0.7, unlisted: 0.1 } },
+        },
+      }),
+      { status: 200 },
+    );
+  }
+  return new Response(
+    JSON.stringify({ choices: [{ message: { content: 'From the accounts guide.' } }] }),
+    {
+      status: 200,
+    },
+  );
+};
+const app = await createServer(pool, chain, origin, {
+  docs: { apiKey: 'sk-or-v1-local-fixture-key', model: 'openai/gpt-4.1-mini', fetch: fetchImpl },
+});
+const closed = await createServer(pool, chain, origin);
+beforeAll(() => migrate(pool));
+afterAll(async () => {
+  await app.close();
+  await closed.close();
+  await pool.end();
+});
+
+function sign(message: string, secret: Uint8Array): string {
+  const signature = secp256k1.sign(personalDigest(message), secret, {
+    prehash: false,
+    format: 'recovered',
+  });
+  const eth = new Uint8Array(65);
+  eth.set(signature.subarray(1), 0);
+  eth[64] = (signature[0] ?? 0) + 27;
+  return `0x${Buffer.from(eth).toString('hex')}`;
+}
+function addressOf(secret: Uint8Array): string {
+  const encoded = secp256k1.getPublicKey(secret, false);
+  return `0x${Buffer.from(keccak_256(encoded.subarray(1)).subarray(12)).toString('hex')}`;
+}
+async function login(server: typeof app) {
+  const key = PrivateKey.generate('K1');
+  const challengeResponse = await server.inject({
+    method: 'POST',
+    url: '/v1/auth/challenge',
+    headers: { origin },
+    payload: { signingKey: key.toPublic().toString() },
+  });
+  const challenge = ChallengeSchema.parse(challengeResponse.json());
+  const response = await server.inject({
+    method: 'POST',
+    url: '/v1/auth/login',
+    headers: { origin },
+    payload: {
+      challengeId: challenge.id,
+      signature: key.signMessage(new TextEncoder().encode(challenge.message)).toString(),
+      encryptionKey,
+    },
+  });
+  const session = SessionSchema.parse(response.json());
+  return {
+    session,
+    cookie: response.cookies.map((item) => `${item.name}=${item.value}`).join('; '),
+  };
+}
+function headers(cookie: string, csrf: string) {
+  return { origin, cookie, 'x-csrf-token': csrf };
+}
+
+describe('Telos EVM account links', () => {
+  it('links an address proved by personal_sign and refuses a second account', async () => {
+    const first = await login(app);
+    const second = await login(app);
+    const secret = secp256k1.utils.randomSecretKey();
+    const claimed = addressOf(secret);
+    const challenge = await app.inject({
+      method: 'POST',
+      url: '/v1/account/evm/challenge',
+      headers: headers(first.cookie, first.session.csrfToken),
+      payload: { chainId: 41 },
+    });
+    expect(challenge.statusCode).toBe(200);
+    const body = challenge.json() as { message: string };
+    const bad = await app.inject({
+      method: 'POST',
+      url: '/v1/account/evm/link',
+      headers: headers(first.cookie, first.session.csrfToken),
+      payload: { chainId: 41, address: claimed, signature: `0x${'ab'.repeat(65)}` },
+    });
+    expect(bad.statusCode).toBe(401);
+    const linked = await app.inject({
+      method: 'POST',
+      url: '/v1/account/evm/link',
+      headers: headers(first.cookie, first.session.csrfToken),
+      payload: { chainId: 41, address: claimed, signature: sign(body.message, secret) },
+    });
+    expect(linked.statusCode).toBe(200);
+    expect(linked.json()).toEqual({ chainId: 41, address: checksumAddress(claimed) });
+    const listed = await app.inject({
+      method: 'GET',
+      url: '/v1/account/evm',
+      headers: { cookie: first.cookie },
+    });
+    expect(listed.json()).toEqual({ links: [{ chainId: 41, address: checksumAddress(claimed) }] });
+    const otherChallenge = await app.inject({
+      method: 'POST',
+      url: '/v1/account/evm/challenge',
+      headers: headers(second.cookie, second.session.csrfToken),
+      payload: { chainId: 41 },
+    });
+    const other = otherChallenge.json() as { message: string };
+    const conflict = await app.inject({
+      method: 'POST',
+      url: '/v1/account/evm/link',
+      headers: headers(second.cookie, second.session.csrfToken),
+      payload: { chainId: 41, address: claimed, signature: sign(other.message, secret) },
+    });
+    expect(conflict.statusCode).toBe(409);
+    const removed = await app.inject({
+      method: 'POST',
+      url: '/v1/account/evm/unlink',
+      headers: headers(first.cookie, first.session.csrfToken),
+      payload: { chainId: 41 },
+    });
+    expect(removed.statusCode).toBe(204);
+    const empty = await app.inject({
+      method: 'GET',
+      url: '/v1/account/evm',
+      headers: { cookie: first.cookie },
+    });
+    expect(empty.json()).toEqual({ links: [] });
+  });
+});
+
+describe('documentation assistant route', () => {
+  it('answers from the mocked model and stays unavailable without a key', async () => {
+    const missing = await closed.inject({ method: 'GET', url: '/v1/docs/agent' });
+    expect(missing.json()).toEqual({ configured: false });
+    const refused = await closed.inject({
+      method: 'POST',
+      url: '/v1/docs/ask',
+      headers: { origin },
+      payload: { question: 'How do accounts work?' },
+    });
+    expect(refused.statusCode).toBe(503);
+    const status = await app.inject({ method: 'GET', url: '/v1/docs/agent' });
+    expect(status.json()).toEqual({ configured: true });
+    const asked = await app.inject({
+      method: 'POST',
+      url: '/v1/docs/ask',
+      headers: { origin },
+      payload: { question: `How do accounts work? ${randomUUID()}` },
+    });
+    expect(asked.statusCode).toBe(200);
+    expect(asked.json()).toMatchObject({ status: 'answered', topicId: 'accounts' });
+    expect(calls.length).toBeGreaterThan(0);
+  });
+});
