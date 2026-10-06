@@ -26,12 +26,26 @@ import { IdSchema } from '../../../protocol/base.js';
 import { ApiError } from './errors.js';
 import type { ContentService } from './content/service.js';
 import { MAX_HOSTED_CONTENT_BYTES } from '../../../protocol/storage.js';
+import {
+  createWindowLimiter,
+  SPONSORED_GLOBAL_PER_WINDOW,
+  SPONSORED_WINDOW_MS,
+  SPONSORED_WRITES_PER_WINDOW,
+} from './limits.js';
 export async function createServer(
   pool: Pool,
   chain: ChainGateway,
   origin: string,
   options: { content?: ContentService; providers?: ProviderConfiguration } = {},
 ) {
+  const admitSponsored = createWindowLimiter(
+    SPONSORED_WRITES_PER_WINDOW,
+    SPONSORED_WINDOW_MS,
+    SPONSORED_GLOBAL_PER_WINDOW,
+  );
+  function spend(accountId: string): void {
+    if (!admitSponsored(accountId, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+  }
   const secure = new URL(origin).protocol === 'https:';
   const cookieName = secure ? '__Host-daclify_session' : 'daclify_session';
   const app = Fastify({ logger: false, bodyLimit: 65536, requestTimeout: 15000 });
@@ -74,10 +88,11 @@ export async function createServer(
     chain.treasury(IdSchema.parse(request.params.id)),
   );
   app.post(ApiRoutes.settle.path, async (request) => {
-    await session(
+    const account = await session(
       request.cookies[cookieName],
       typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
     );
+    spend(account.id);
     return chain.settle(ApiRoutes.settle.input.parse(request.body));
   });
   app.get<{ Params: { id: string } }>(ApiRoutes.content.path, async (request) =>
@@ -87,10 +102,11 @@ export async function createServer(
     chain.moduleState(IdSchema.parse(request.params.id)),
   );
   app.post(ModuleApiRoutes.finalize.path, async (request) => {
-    await session(
+    const account = await session(
       request.cookies[cookieName],
       typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
     );
+    spend(account.id);
     return chain.finalize(ModuleApiRoutes.finalize.input.parse(request.body));
   });
   app.get(
@@ -223,6 +239,7 @@ export async function createServer(
       typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
     );
     const input = CreateDaoSchema.parse(request.body);
+    spend(account.id);
     return reply.code(201).send(await chain.createDao(account, input));
   });
   app.post(ApiRoutes.relay.path, async (request) => {
@@ -231,6 +248,7 @@ export async function createServer(
       typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
     );
     const input = RuntimeActionSchemas.submit.parse(request.body);
+    spend(account.id);
     return chain.relay(account, input.request, input.sig);
   });
   return app;

@@ -1,6 +1,8 @@
 # Development checkouts and tests
 
-This is an incomplete development release. The current runtime rejects direct module-key callbacks and pins module code with `get_code_hash`. Loading that runtime requires the Spring `GET_CODE_HASH` protocol feature; the local fixture activates it. The other limits in [implementation limits](evidence/implementation-limits.md) remain open. Do not interpret application or emulator checks as a passing native security suite.
+This is an incomplete development release. The current runtime rejects direct module-key callbacks and pins module code with `get_code_hash`. Loading that runtime requires the Spring `GET_CODE_HASH` protocol feature. The local fixture activates it, and Telos mainnet has activated the same feature digest. The other limits in [implementation limits](evidence/implementation-limits.md) remain open. Do not interpret application or emulator checks as a passing native security suite.
+
+Set `MODULE_DEPLOYMENTS` to a JSON array of `{id, account}` objects for `decide`, `works`, and `payroll` before the regular API can read those modules or settle payroll through the payroll contract. `npx tsx tools/native/configure-report.ts --rpc <url> --chain-id <id>` checks `GET_CODE_HASH`. From this repository, `--fixture` also compares local code hashes and resource headroom. Run the local verify scripts. A workflow file does not show that GitHub Actions has run.
 
 Check out `daclify-backend-core`, `daclify-backend-modules`, and `daclify-frontend` as sibling directories. They remain independent repositories, with separately versioned public core and module packages. Node 24.21 or later in the Node 24 line and npm 11.19 or later in the npm 11 line are required.
 

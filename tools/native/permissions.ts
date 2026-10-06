@@ -76,7 +76,7 @@ export function configureFixtureContext(container: string, runtime = 'daclifycor
   for (const [account, actions] of [
     ['decide', ['open', 'vote']],
     ['works', ['propose', 'accept', 'submitwork', 'review', 'cancel']],
-    ['payroll', ['commit']],
+    ['payroll', ['commit', 'edit']],
   ] as const)
     for (const action of actions)
       if (!linked.some((link) => link.account === account && link.action === action))

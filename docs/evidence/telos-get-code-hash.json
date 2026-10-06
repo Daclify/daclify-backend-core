@@ -1,0 +1,68 @@
+{
+  "recorded": "2026-10-06",
+  "method": "Read-only chain API. tools/native/configure-report.ts posts get_info and get_activated_protocol_features. It submits no transaction and reads no account when none is named.",
+  "feature": {
+    "codename": "GET_CODE_HASH",
+    "digest": "bcd2a26394b36614fd4894241d3c451ab0f6fd110958c3423073621a70826e99",
+    "specification": "builtin_feature_codename GET_CODE_HASH"
+  },
+  "conclusion": "GET_CODE_HASH is active on Telos mainnet. The digest and activation block agreed on every read below. This does not deploy a Daclify contract and does not prove that a mainnet account can pay for one.",
+  "reads": [
+    {
+      "rpcUrl": "https://mainnet.telos.net",
+      "method": "get_info and get_activated_protocol_features, before the configure-report reads",
+      "serverVersion": "v1.2.2",
+      "chainId": "4667b205c6838ef70ff7988f6e8257e8be0e1284a2f59699054a018f743b1d11",
+      "headBlockNum": 492510866,
+      "lastIrreversibleBlockNum": 492510864,
+      "activatedProtocolFeatureCount": 23,
+      "moreFieldPresent": false,
+      "note": "Earlier same-day read. The feature digest was confirmed by the configure-report reads."
+    },
+    {
+      "ok": true,
+      "rpcUrl": "https://mainnet.telos.net",
+      "chainId": "4667b205c6838ef70ff7988f6e8257e8be0e1284a2f59699054a018f743b1d11",
+      "headBlockNum": 492511476,
+      "lastIrreversibleBlockNum": 492511474,
+      "serverVersion": "v1.2.3-alpha2",
+      "getCodeHash": {
+        "digest": "bcd2a26394b36614fd4894241d3c451ab0f6fd110958c3423073621a70826e99",
+        "active": true,
+        "activationBlockNum": 249642093
+      },
+      "accounts": [],
+      "failures": []
+    },
+    {
+      "ok": true,
+      "rpcUrl": "https://telos.greymass.com",
+      "chainId": "4667b205c6838ef70ff7988f6e8257e8be0e1284a2f59699054a018f743b1d11",
+      "headBlockNum": 492511479,
+      "lastIrreversibleBlockNum": 492511477,
+      "serverVersion": "v1.2.2",
+      "getCodeHash": {
+        "digest": "bcd2a26394b36614fd4894241d3c451ab0f6fd110958c3423073621a70826e99",
+        "active": true,
+        "activationBlockNum": 249642093
+      },
+      "accounts": [],
+      "failures": []
+    }
+  ],
+  "localFixture": {
+    "ok": false,
+    "rpcUrl": "http://127.0.0.1:18888",
+    "chainId": "f9b590aff5f81016cf53735522e7c840b1a25e75357f001fdb83e5dd69866e07",
+    "headBlockNum": 130044,
+    "lastIrreversibleBlockNum": 130043,
+    "serverVersion": "v1.2.2",
+    "getCodeHash": {
+      "digest": "bcd2a26394b36614fd4894241d3c451ab0f6fd110958c3423073621a70826e99",
+      "active": true,
+      "activationBlockNum": 50900
+    },
+    "failures": ["CODE_HASH:daclifycore"],
+    "note": "The same feature digest is active. decide, works, and payroll matched the reviewed hashes and resource headroom was acceptable. The deployed runtime remains 93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042. The local confirmext artifact 3d716f22468286d26b89d5379e0d571cd348a3c9dd8888ca785056c3f1de95a6 was not set."
+  }
+}

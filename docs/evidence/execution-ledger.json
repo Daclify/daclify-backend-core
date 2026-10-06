@@ -85,12 +85,12 @@
     "Live Pinata and social/Telegram provider credentials",
     "Actual supported Telegram client matrix",
     "Cross-runtime EVM settlement prototype",
-    "Verified legacy deployment inventory and authorized migration",
+    "There are no legacy production DAOs. Live cutover is not a launch blocker. Migration tooling against recorded fixtures remains open",
     "Independent security review before mainnet launch"
   ],
-  "lastCheckpoint": "2026-10-06 payroll installment order and DAO-confirmed external evidence. payroll::settle rejects a later unpaid installment. confirmext records a statement and does not settle. Publication remains refused. The fixture runtime remains 93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042. The new runtime artifact was not set.",
+  "lastCheckpoint": "2026-10-06 payroll catch-up, pause, label, Telos GET_CODE_HASH, and sponsored resource limits. payroll::settle pays every already-due installment. Payroll wasm 364d6f0bbb049251c7edc71218fc3d4a2b5fa34356d21a26d8ae61e2ce1f18e6 was set on the fixture in dba5de2a7a39e167c2e04e15d2ea6b9d2a9440064629a5fe3e7a08dd7d1962ed. The fixture runtime remains 93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042. Publication remains refused.",
   "currentCheckout": {
-    "coreBase": "021c4b6",
+    "coreBase": "12771ef",
     "modulesBase": "68bee32",
     "frontendBase": "676e267",
     "node": "24.21.0",
@@ -111,7 +111,14 @@
       "modules npm run verify at 68bee32: lint, tsc, docs:check, and vitest 45 passed across 7 files. payroll wasm 1e8975a5f045e5953d98007950f952d07b7e9cf2e00ce18cbd15487d1df34e7f. The fixture payroll account was not redeployed",
       "core npm run verify: eslint, tsc, docs:check, and vitest 239 passed across 28 files. publishRelease returned publication refused. Local runtime artifact 3d716f22468286d26b89d5379e0d571cd348a3c9dd8888ca785056c3f1de95a6 was not set on the fixture",
       "tests/external-evidence.test.ts: 3 passed. A direct key is rejected, a matching statement leaves balances and status unchanged, a reused reference is rejected, and payob can still settle afterward",
-      "tests/integration/content.test.ts: 14 passed on local daclify_test. An expired uncertain reservation stays reserved, records UPLOAD_REVIEW_REQUIRED, does not call provider removal, and still consumes quota. The full integration suite was not rerun"
+      "tests/integration/content.test.ts: 14 passed on local daclify_test. An expired uncertain reservation stays reserved, records UPLOAD_REVIEW_REQUIRED, does not call provider removal, and still consumes quota. The full integration suite was not rerun",
+      "core npm run verify: eslint, tsc, docs:check, and vitest 245 passed across 29 files. publishRelease returned publication refused",
+      "modules format:check passed and npm test passed 48 tests across 7 files. Payroll wasm 364d6f0bbb049251c7edc71218fc3d4a2b5fa34356d21a26d8ae61e2ce1f18e6. Full modules npm run verify had passed before the final prettier of tests/payroll.test.ts",
+      "frontend vue-tsc --noEmit passed, npm test passed 40 tests across 7 files, and format:check passed. npm run verify was not invoked as one command. The production build was not run",
+      "Telos configure-report: GET_CODE_HASH active, digest bcd2a26394b36614fd4894241d3c451ab0f6fd110958c3423073621a70826e99, activation block 249642093. mainnet.telos.net head 492511476 server v1.2.3-alpha2. telos.greymass.com head 492511479 server v1.2.2. Read-only. See telos-get-code-hash.json",
+      "fixture configure-report failed only CODE_HASH:daclifycore. decide, works, and payroll hashes matched. resourcesAcceptable was true on all four accounts",
+      "fixture payroll set contract transaction dba5de2a7a39e167c2e04e15d2ea6b9d2a9440064629a5fe3e7a08dd7d1962ed. Runtime was not set",
+      "local modules tarball daclify-modules-0.1.0-alpha.1.tgz was rebuilt and installed into core and frontend. It was not published"
     ],
     "notRun": [
       "native module-authority, dispatch, and permission after the rotatekey setcode",
@@ -123,10 +130,8 @@
       "frontend browser journeys, production build, and the module-enable click",
       "GitHub Actions for the new workflows",
       "package:release publication, which still refuses",
-      "Telos mainnet GET_CODE_HASH activation",
       "fixture setcode of runtime 3d716f22468286d26b89d5379e0d571cd348a3c9dd8888ca785056c3f1de95a6",
-      "fixture setcode of payroll 1e8975a5f045e5953d98007950f952d07b7e9cf2e00ce18cbd15487d1df34e7f",
-      "rebuild of the core and modules package tarballs after the payroll hash and confirmext ABI change"
+      "publication of the rebuilt modules tarball"
     ]
   },
   "verified": [
@@ -143,9 +148,9 @@
     "Pinata adapter fault fixtures passed within the core suite; live provider integration is unverified"
   ],
   "limits": [
-    "Sponsored factory resource/rate budgets, live social provider redirects, managed account journeys, independent-runtime product routing, custom module policy, executor/committee extensions, a stored payroll catch-up mode, GitHub Actions execution, registry publication, migration tooling, Operations/billing and chain adapters remain incomplete",
+    "Billing prices, live social provider redirects, managed account journeys, independent-runtime product routing, custom module policy, executor/committee extensions, GitHub Actions execution, registry publication, migration tooling, Operations notifications, and chain adapters remain incomplete. Sponsored writes are limited to 60 per account and 600 per process in each 60 second window, and a sponsored push refuses an account below the resource floors. Payroll pays every already-due installment in one settlement",
     "User has no configured Pinata/OAuth/Telegram provider credentials; production custody operation remains unverified",
-    "Direct module-key callbacks are rejected and module code hashes are pinned in this checkout. Previous module rows do not deserialize. GET_CODE_HASH must be active. Telos mainnet activation is unverified. See implementation-limits.md",
+    "Direct module-key callbacks are rejected and module code hashes are pinned in this checkout. Previous module rows do not deserialize. GET_CODE_HASH must be active. Telos mainnet activation was confirmed on 2026-10-06. See telos-get-code-hash.json and implementation-limits.md",
     "No production chain changes, real asset movement, registry publication or legacy cutover",
     "Consumers use local development artifacts; bootstrap refreshes their lock integrities and preserves the exact module core peer version",
     "Hosted file UI and bounded scheduled reconciliation are implemented; automatic cleanup/shared retention/re-pinning and measured allowances remain incomplete; uncertain reservations retain budget"

@@ -10,6 +10,7 @@ import { PinataStorage } from './content/pinata.js';
 import { ContentService } from './content/service.js';
 import { startContentWorker } from './content/jobs.js';
 import { Uint64Schema } from '../../../protocol/base.js';
+import { parseModuleDeployments } from './deployment-config.js';
 const configuration = z
   .object({
     DATABASE_URL: z.url(),
@@ -33,6 +34,7 @@ const configuration = z
       .string()
       .regex(/^\d+:[A-Za-z0-9_-]+$/)
       .optional(),
+    MODULE_DEPLOYMENTS: z.string().min(2).optional(),
   })
   .safeParse(process.env);
 if (!configuration.success) throw new Error('API_CONFIGURATION_INVALID');
@@ -62,6 +64,7 @@ const chain = new NativeChainGateway({
   ...(env.BOOTSTRAP_OWNER && env.BOOTSTRAP_PRIVATE_KEY
     ? { bootstrap: { owner: env.BOOTSTRAP_OWNER, key: privateKey(env.BOOTSTRAP_PRIVATE_KEY) } }
     : {}),
+  ...(env.MODULE_DEPLOYMENTS ? { modules: parseModuleDeployments(env.MODULE_DEPLOYMENTS) } : {}),
 });
 const content =
   env.PINATA_JWT && env.CONTENT_GATEWAY

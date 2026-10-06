@@ -27,11 +27,13 @@ import {
 } from '@daclify/modules';
 import {
   encodeDecide,
+  encodePayroll,
   ModuleCodeHashes,
   DecideTableSchemas,
   WorksTableSchemas,
   PayrollTableSchemas,
 } from '@daclify/modules/sdk';
+import { AccountResourceSchema, resourcesAcceptable } from './deployment-check.js';
 import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import {
@@ -71,6 +73,14 @@ export interface NativeChainConfig {
   relayKey: PrivateKey;
   bootstrap?: { owner: string; key: PrivateKey };
   modules?: ReadonlyArray<{ id: ModuleDeployment['id']; account: string }>;
+}
+export function payrollSettlementAccount(
+  modules: NativeChainConfig['modules'],
+  source: string,
+): string | undefined {
+  const payroll = modules?.find((item) => item.id === 'payroll');
+  if (!payroll || payroll.account !== source) return undefined;
+  return payroll.account;
 }
 export class NativeChainGateway implements ChainGateway {
   private readonly api: APIClient;
@@ -216,6 +226,33 @@ export class NativeChainGateway implements ChainGateway {
       return obligation;
     };
     const obligation = await read();
+    const payrollAccount = payrollSettlementAccount(this.config.modules, input.source);
+    if (payrollAccount) {
+      if (obligation.status !== 1 && obligation.status !== 2)
+        throw new ApiError('OBLIGATION_NOT_PAYABLE', 409);
+      const state = await this.moduleState(input.dao.daoId);
+      const deployment = state.modules.find(
+        (module) => module.deployment.account === payrollAccount,
+      );
+      if (!deployment?.codeVerified) throw new ApiError('MODULE_UNVERIFIED', 409);
+      try {
+        const result = await this.pushEncoded(
+          payrollAccount,
+          'settle',
+          encodePayroll('settle', {
+            runtime: this.config.runtime,
+            dao_id: input.dao.daoId,
+            entry_id: input.sourceId,
+          }),
+          this.config.relayActor,
+          this.config.relayKey,
+        );
+        return { state: 'settled', transactionId: result.transactionId };
+      } catch (cause) {
+        if ((await read()).status === 2) return { state: 'already-settled' };
+        throw cause;
+      }
+    }
     if (obligation.status === 2) return { state: 'already-settled' };
     if (obligation.status !== 1) throw new ApiError('OBLIGATION_NOT_PAYABLE', 409);
     try {
@@ -272,6 +309,7 @@ export class NativeChainGateway implements ChainGateway {
     actor: string,
     key: PrivateKey,
   ): Promise<{ transactionId: string }> {
+    await this.assertResources(actor);
     const info = await this.api.v1.chain.get_info();
     if (info.chain_id.toString() !== this.config.chainId)
       throw new ApiError('CHAIN_ID_MISMATCH', 503);
@@ -376,6 +414,7 @@ export class NativeChainGateway implements ChainGateway {
       }),
     ];
     const transaction = Transaction.from({ ...info.getTransactionHeader(60), actions });
+    await this.assertResources(bootstrap.owner);
     try {
       await this.api.v1.chain.push_transaction(
         SignedTransaction.from({
@@ -423,6 +462,7 @@ export class NativeChainGateway implements ChainGateway {
     let milestones: ModuleState['milestones'] = [];
     let schedules: ModuleState['schedules'] = [];
     let entries: ModuleState['entries'] = [];
+    let controls: ModuleState['controls'] = [];
     for (const deployment of this.config.modules ?? []) {
       NativeAccountSchema.parse(deployment.account);
       const manifest = Catalog.find((item) => item.id === deployment.id);
@@ -484,6 +524,10 @@ export class NativeChainGateway implements ChainGateway {
         entries = (
           await this.moduleRows(deployment.account, 'entries', PayrollTableSchemas.entries)
         ).filter((row) => row.dao_id === daoId);
+        const scheduleIds = new Set(schedules.map((row) => row.id));
+        controls = (
+          await this.moduleRows(deployment.account, 'controls', PayrollTableSchemas.controls)
+        ).filter((row) => scheduleIds.has(row.schedule_id));
       }
     }
     return ModuleStateSchema.parse({
@@ -500,7 +544,28 @@ export class NativeChainGateway implements ChainGateway {
       milestones,
       schedules,
       entries,
+      controls,
     });
+  }
+  private async assertResources(account: string): Promise<void> {
+    const response = await fetch(`${this.config.rpcUrl}/v1/chain/get_account`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ account_name: account }),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new ApiError('CHAIN_UNAVAILABLE', 503);
+    const parsed = AccountResourceSchema.safeParse(await response.json());
+    if (!parsed.success) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+    if (
+      !resourcesAcceptable({
+        cpuAvailable: parsed.data.cpu_limit.available,
+        netAvailable: parsed.data.net_limit.available,
+        ramQuota: parsed.data.ram_quota,
+        ramUsage: parsed.data.ram_usage,
+      })
+    )
+      throw new ApiError('RELAY_RESOURCES', 503);
   }
   async relay(
     account: Account,

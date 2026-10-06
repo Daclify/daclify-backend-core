@@ -61,6 +61,7 @@ function fixture() {
     milestones: [],
     schedules: [],
     entries: [],
+    controls: [],
   });
   const read = vi.spyOn(gateway, 'moduleState').mockImplementation(async () => state);
   return { gateway, state, read };
