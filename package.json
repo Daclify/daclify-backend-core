@@ -25,6 +25,8 @@
     "package:release": "tsx tools/release/package.ts",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "dev:local": "tsx tools/native/api.ts",
+    "deploy": "tsx tools/deploy/deploy.ts",
+    "price:tlos": "tsx tools/deploy/price.ts",
     "docs:generate": "tsx tools/docs/generate.ts",
     "docs:check": "tsx tools/docs/generate.ts --check",
     "bootstrap": "node tools/bootstrap.ts",
@@ -46,6 +48,7 @@
     "pg": "8.23.1",
     "pinata": "2.5.6",
     "semver": "7.8.5",
+    "stripe": "22.4.0",
     "zod": "4.6.5"
   },
   "devDependencies": {

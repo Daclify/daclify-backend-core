@@ -1,0 +1,76 @@
+{
+  "name": "develop",
+  "resourceModel": "bare",
+  "chainId": null,
+  "chainIdFile": ".artifacts/native/network.json",
+  "rpcUrl": "http://127.0.0.1:18888",
+  "creatorAccount": "eosio",
+  "tokenContract": "eosio.token",
+  "evmContract": "eosio.evm",
+  "billingRole": "billing",
+  "oracle": {
+    "rpcUrl": "https://telos.caleos.io",
+    "contract": "delphioracle",
+    "pair": "tlosusd",
+    "maxAgeSeconds": 900,
+    "premiumBps": 2000
+  },
+  "accounts": [
+    {
+      "name": "daclifycore",
+      "ramBytes": 8388608,
+      "cpuStake": "0.0000 TLOS",
+      "netStake": "0.0000 TLOS",
+      "contract": "runtime",
+      "inlineCode": true
+    },
+    {
+      "name": "daclifyhub",
+      "ramBytes": 1048576,
+      "cpuStake": "0.0000 TLOS",
+      "netStake": "0.0000 TLOS",
+      "contract": "hub",
+      "inlineCode": false
+    },
+    {
+      "name": "decide",
+      "ramBytes": 2097152,
+      "cpuStake": "0.0000 TLOS",
+      "netStake": "0.0000 TLOS",
+      "contract": "decide",
+      "inlineCode": true
+    },
+    {
+      "name": "works",
+      "ramBytes": 1048576,
+      "cpuStake": "0.0000 TLOS",
+      "netStake": "0.0000 TLOS",
+      "contract": "works",
+      "inlineCode": true
+    },
+    {
+      "name": "payroll",
+      "ramBytes": 1048576,
+      "cpuStake": "0.0000 TLOS",
+      "netStake": "0.0000 TLOS",
+      "contract": "payroll",
+      "inlineCode": true
+    },
+    {
+      "name": "relay",
+      "ramBytes": 16384,
+      "cpuStake": "0.0000 TLOS",
+      "netStake": "0.0000 TLOS",
+      "contract": null,
+      "inlineCode": false
+    },
+    {
+      "name": "fees",
+      "ramBytes": 16384,
+      "cpuStake": "0.0000 TLOS",
+      "netStake": "0.0000 TLOS",
+      "contract": null,
+      "inlineCode": false
+    }
+  ]
+}

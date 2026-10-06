@@ -221,6 +221,24 @@ describe('HTTP session boundary', () => {
     });
     expect(response.statusCode).toBe(403);
   });
+  it('reports card checkout as unconfigured when Stripe is absent', async () => {
+    const { cookie, session } = await login();
+    const checkout = await app.inject({
+      method: 'POST',
+      url: '/v1/billing/checkout',
+      headers: { origin, cookie, 'x-csrf-token': session.csrfToken },
+      payload: {},
+    });
+    expect(checkout.statusCode).toBe(503);
+    expect(checkout.json()).toMatchObject({ code: 'STRIPE_NOT_CONFIGURED' });
+    const receipts = await app.inject({
+      method: 'GET',
+      url: '/v1/billing/receipts',
+      headers: { cookie },
+    });
+    expect(receipts.statusCode).toBe(503);
+    expect(receipts.json()).toMatchObject({ code: 'STRIPE_NOT_CONFIGURED' });
+  });
   it('revokes an authenticated session with valid CSRF proof', async () => {
     const { cookie, session } = await login();
     const response = await app.inject({

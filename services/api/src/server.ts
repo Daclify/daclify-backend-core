@@ -1,6 +1,6 @@
 import { ApiRoutes } from '../../../protocol/routes.js';
 import { ModuleApiRoutes } from '@daclify/modules';
-import Fastify, { type FastifyReply } from 'fastify';
+import Fastify, { type FastifyReply, errorCodes } from 'fastify';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import { z, ZodError } from 'zod';
@@ -25,6 +25,7 @@ import { verifyGoogle, verifyTelegram } from './providers/proofs.js';
 import { IdSchema } from '../../../protocol/base.js';
 import { ApiError } from './errors.js';
 import type { ContentService } from './content/service.js';
+import { StripeBilling } from './billing/service.js';
 import { MAX_HOSTED_CONTENT_BYTES } from '../../../protocol/storage.js';
 import {
   createWindowLimiter,
@@ -32,12 +33,21 @@ import {
   SPONSORED_WINDOW_MS,
   SPONSORED_WRITES_PER_WINDOW,
 } from './limits.js';
+
+const webhookPath = '/v1/billing/stripe/webhook';
+const rawJsonBodies = new WeakMap<object, Buffer>();
+
 export async function createServer(
   pool: Pool,
   chain: ChainGateway,
   origin: string,
-  options: { content?: ContentService; providers?: ProviderConfiguration } = {},
+  options: {
+    content?: ContentService;
+    providers?: ProviderConfiguration;
+    billing?: StripeBilling;
+  } = {},
 ) {
+  const admitCheckout = createWindowLimiter(8, 3_600_000, 80);
   const admitSponsored = createWindowLimiter(
     SPONSORED_WRITES_PER_WINDOW,
     SPONSORED_WINDOW_MS,
@@ -47,8 +57,23 @@ export async function createServer(
     if (!admitSponsored(accountId, Date.now())) throw new ApiError('RATE_LIMIT', 429);
   }
   const secure = new URL(origin).protocol === 'https:';
+  const sameSite = secure ? 'none' : 'strict';
   const cookieName = secure ? '__Host-daclify_session' : 'daclify_session';
   const app = Fastify({ logger: false, bodyLimit: 65536, requestTimeout: 15000 });
+  app.addContentTypeParser('application/json', { parseAs: 'buffer' }, (request, body, done) => {
+    const raw = Buffer.isBuffer(body) ? body : Buffer.from(body);
+    rawJsonBodies.set(request, raw);
+    if (raw.length === 0) {
+      done(new errorCodes.FST_ERR_CTP_EMPTY_JSON_BODY(), undefined);
+      return;
+    }
+    try {
+      const parsed: unknown = JSON.parse(raw.toString('utf8'));
+      done(null, parsed);
+    } catch {
+      done(new errorCodes.FST_ERR_CTP_INVALID_JSON_BODY(), undefined);
+    }
+  });
   await app.register(cookie);
   await app.register(cors, {
     origin,
@@ -67,8 +92,9 @@ export async function createServer(
     });
   });
   app.addHook('onRequest', async (request) => {
-    if (request.method === 'POST' && request.headers.origin !== origin)
-      throw new ApiError('ORIGIN_REJECTED', 403);
+    if (request.method !== 'POST') return;
+    if (request.url.split('?')[0] === webhookPath) return;
+    if (request.headers.origin !== origin) throw new ApiError('ORIGIN_REJECTED', 403);
   });
   async function session(token: string | undefined, csrf?: string) {
     if (!token) throw new ApiError('AUTH_REQUIRED', 401);
@@ -167,7 +193,7 @@ export async function createServer(
       path: '/',
       httpOnly: true,
       secure,
-      sameSite: 'strict',
+      sameSite,
       maxAge: 43200,
     });
   }
@@ -230,7 +256,7 @@ export async function createServer(
       typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
     );
     if (token) await revokeSession(pool, token);
-    reply.clearCookie(cookieName, { path: '/', secure, sameSite: 'strict' });
+    reply.clearCookie(cookieName, { path: '/', secure, sameSite });
     return reply.code(204).send();
   });
   app.post(ApiRoutes.createDao.path, async (request, reply) => {
@@ -250,6 +276,37 @@ export async function createServer(
     const input = RuntimeActionSchemas.submit.parse(request.body);
     spend(account.id);
     return chain.relay(account, input.request, input.sig);
+  });
+  function billingService(): StripeBilling {
+    if (!options.billing) throw new ApiError('STRIPE_NOT_CONFIGURED', 503);
+    return options.billing;
+  }
+  app.post('/v1/billing/checkout', async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    if (!admitCheckout(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    return billingService().startCheckout(account.id);
+  });
+  app.get('/v1/billing/receipts', async (request) => ({
+    receipts: await billingService().receipts((await session(request.cookies[cookieName])).id),
+  }));
+  app.post(webhookPath, { bodyLimit: 1024 * 1024 }, async (request) => {
+    const signature = request.headers['stripe-signature'];
+    const rawBody = rawJsonBodies.get(request);
+    if (typeof signature !== 'string' || signature.length === 0 || !rawBody) {
+      throw new ApiError('SIGNATURE_INVALID', 400);
+    }
+    try {
+      await billingService().receiveWebhook(rawBody, signature);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'SIGNATURE_INVALID') {
+        throw new ApiError('SIGNATURE_INVALID', 400);
+      }
+      throw error;
+    }
+    return { received: true };
   });
   return app;
 }

@@ -1,3 +1,4 @@
+import { readdirSync } from 'node:fs';
 import { beforeAll, beforeEach, afterAll, describe, expect, it } from 'vitest';
 import { Pool } from 'pg';
 import { randomUUID } from 'node:crypto';
@@ -23,10 +24,12 @@ afterAll(async () => {
 describe('actual PostgreSQL transactions and constraints', () => {
   it('applies migrations once with unchanged source hashes', async () => {
     await migrate(pool);
+    const files = readdirSync('migrations').filter((name) => /^\d{3}_[a-z_]+\.sql$/.test(name));
     const rows = await pool.query<{ count: string }>(
       'SELECT count(*)::text FROM schema_migrations',
     );
-    expect(rows.rows[0]?.count).toBe('2');
+    expect(files).toContain('003_service_payments.sql');
+    expect(rows.rows[0]?.count).toBe(String(files.length));
   });
   it('consumes an authentication challenge once under concurrent requests', async () => {
     const id = randomUUID();

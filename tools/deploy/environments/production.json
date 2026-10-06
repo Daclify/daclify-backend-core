@@ -1,0 +1,75 @@
+{
+  "name": "production",
+  "resourceModel": "telos",
+  "chainId": "4667b205c6838ef70ff7988f6e8257e8be0e1284a2f59699054a018f743b1d11",
+  "rpcUrl": "https://telos.caleos.io",
+  "creatorAccount": "we",
+  "tokenContract": "eosio.token",
+  "evmContract": "eosio.evm",
+  "billingRole": "billing",
+  "oracle": {
+    "rpcUrl": "https://telos.caleos.io",
+    "contract": "delphioracle",
+    "pair": "tlosusd",
+    "maxAgeSeconds": 900,
+    "premiumBps": 2000
+  },
+  "accounts": [
+    {
+      "name": "core.we",
+      "ramBytes": 8388608,
+      "cpuStake": "20.0000 TLOS",
+      "netStake": "5.0000 TLOS",
+      "contract": "runtime",
+      "inlineCode": true
+    },
+    {
+      "name": "hub.we",
+      "ramBytes": 1048576,
+      "cpuStake": "2.0000 TLOS",
+      "netStake": "1.0000 TLOS",
+      "contract": "hub",
+      "inlineCode": false
+    },
+    {
+      "name": "decide.we",
+      "ramBytes": 2097152,
+      "cpuStake": "2.0000 TLOS",
+      "netStake": "1.0000 TLOS",
+      "contract": "decide",
+      "inlineCode": true
+    },
+    {
+      "name": "works.we",
+      "ramBytes": 1048576,
+      "cpuStake": "2.0000 TLOS",
+      "netStake": "1.0000 TLOS",
+      "contract": "works",
+      "inlineCode": true
+    },
+    {
+      "name": "payroll.we",
+      "ramBytes": 1048576,
+      "cpuStake": "2.0000 TLOS",
+      "netStake": "1.0000 TLOS",
+      "contract": "payroll",
+      "inlineCode": true
+    },
+    {
+      "name": "relay.we",
+      "ramBytes": 16384,
+      "cpuStake": "2.0000 TLOS",
+      "netStake": "1.0000 TLOS",
+      "contract": null,
+      "inlineCode": false
+    },
+    {
+      "name": "fees.we",
+      "ramBytes": 16384,
+      "cpuStake": "2.0000 TLOS",
+      "netStake": "1.0000 TLOS",
+      "contract": null,
+      "inlineCode": false
+    }
+  ]
+}

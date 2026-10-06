@@ -92,6 +92,14 @@ Governance credits are nontransferable units. Their issuance and removal require
 
 Encrypted DAOs rotate the future-content epoch when a member is deactivated. Remaining authorized members need grants for the new committed key. Deactivation cannot revoke earlier keys or erase exported history.
 
+## Pay for a hosted service
+
+A card payment uses Stripe Checkout at the price configured for this service. The application does not ask you to type an amount. Returning from the card page does not by itself record the payment. The service records a receipt only after Stripe reports that the checkout was paid.
+
+That receipt belongs to the signed-in account. It does not change votes, permissions, withdrawals, treasury obligations, or the storage allowance. Basic governance stays free.
+
+A TLOS payment for the same hosted service is quoted from the Delphi tlosusd median plus 20 percent and is paid to the billing account. Extra TLOS is a tip. The chain watcher that would match that transfer to an account is not part of this release, so a TLOS transfer does not create the card receipt and does not change DAO rights.
+
 ## runtime contract
 
 Source ABI JSON SHA-256: `0dc54e3ec8dd514577c4b11d10530c16e0bdc35ce76e0ae0e69d851d12e366b0`.

@@ -1,3 +1,4 @@
+import './load-local-env.js';
 import { Pool } from 'pg';
 import { PrivateKey } from '@wharfkit/antelope';
 import { importJWK } from 'jose';
@@ -11,6 +12,8 @@ import { ContentService } from './content/service.js';
 import { startContentWorker } from './content/jobs.js';
 import { Uint64Schema } from '../../../protocol/base.js';
 import { parseModuleDeployments } from './deployment-config.js';
+import { readStripeConfig } from './billing/config.js';
+import { StripeBilling } from './billing/service.js';
 const configuration = z
   .object({
     DATABASE_URL: z.url(),
@@ -89,9 +92,11 @@ if (env.GOOGLE_CLIENT_ID && env.GOOGLE_PUBLIC_JWK) {
   }
 }
 if (env.TELEGRAM_BOT_TOKEN) providers.telegram = { botToken: env.TELEGRAM_BOT_TOKEN };
+const stripeConfig = readStripeConfig(process.env);
 const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
   ...(content ? { content } : {}),
   ...(providers.google || providers.telegram ? { providers } : {}),
+  ...(stripeConfig ? { billing: new StripeBilling(pool, stripeConfig, env.FRONTEND_ORIGIN) } : {}),
 });
 await app.listen({ host: '127.0.0.1', port: env.API_PORT });
 const worker = content ? startContentWorker(pool, content) : undefined;
