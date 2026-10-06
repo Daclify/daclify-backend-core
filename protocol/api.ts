@@ -2,12 +2,18 @@ import { z } from 'zod';
 import { EncryptionPublicKeySchema, SigningPublicKeySchema } from './crypto.js';
 import {
   DaoRefSchema,
-  MetadataSchema,
   PrivacySchema,
   CustodySchema,
   Uint64Schema,
   AssetRefSchema,
 } from './base.js';
+import {
+  MetadataSchema,
+  DaoSetupSchema,
+  FoundingAgentSchema,
+  DaoPurposeSchema,
+  ParticipantModeSchema,
+} from './dao.js';
 export { SigningPublicKeySchema } from './crypto.js';
 export const AccountSchema = z.strictObject({
   id: z.uuid(),
@@ -56,12 +62,30 @@ export const DaoSummarySchema = z.strictObject({
   reserved: Uint64Schema,
   claims: Uint64Schema,
   keyEpoch: Uint64Schema,
+  purpose: DaoPurposeSchema.optional(),
+  participantMode: ParticipantModeSchema.optional(),
+  setup: DaoSetupSchema.nullable().optional(),
 });
-export const CreateDaoSchema = z.strictObject({
-  metadata: MetadataSchema,
-  privacy: PrivacySchema,
-  token: AssetRefSchema,
-});
+export const CreateDaoSchema = z
+  .strictObject({
+    metadata: MetadataSchema,
+    privacy: PrivacySchema,
+    token: AssetRefSchema,
+    setup: DaoSetupSchema.optional(),
+    foundingAgent: FoundingAgentSchema.optional(),
+  })
+  .refine(
+    (value) =>
+      (value.setup?.participantMode === 'agents-guarded') === (value.foundingAgent !== undefined),
+    'Agent-only creation requires an agent public identity; other modes enrol the creator',
+  )
+  .refine(
+    (value) =>
+      value.metadata.schemaVersion !== 2 ||
+      (value.setup !== undefined &&
+        JSON.stringify(value.metadata.setup) === JSON.stringify(value.setup)),
+    'Metadata and requested setup must match',
+  );
 export const NetworkSchema = z.strictObject({
   chainId: z.string().regex(/^[0-9a-f]{64}$/),
   rpcUrl: z.url(),

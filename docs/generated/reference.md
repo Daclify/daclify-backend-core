@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.1.0-alpha.1 · interface 1.
+Package 0.2.0-alpha.1 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -100,9 +100,76 @@ That receipt belongs to the signed-in account. It does not change votes, permiss
 
 A TLOS payment for the same hosted service is quoted from the Delphi tlosusd median plus 20 percent and is paid to the billing account. Extra TLOS is a tip. The chain watcher that would match that transfer to an account is not part of this release, so a TLOS transfer does not create the card receipt and does not change DAO rights.
 
+## Choose a DAO purpose without changing its identity model
+
+Community, NGO / grants, gaming guild, team / cooperative and custom presets configure initial modules and a resolved governance snapshot. Human, mixed and guarded-agent participation are independent choices. Presets do not establish legal or charitable status, implement a game engine, or verify operator independence.
+
+Creation installs the required reviewed modules and governance policy atomically. It refuses missing deployments or mismatched module code. A new preset version never changes an existing DAO automatically. Existing schema-1 metadata stays readable; schema 2 records purpose, preset version, participant mode and initial settings.
+
+All ballots use the saved weight, duration, quorum and approval. Credit or stake voting needs eligible balances before opening. Governance credits are not money. Treasury token, document privacy and deployment choice remain separate.
+
+Administrators retain admission, role, credit, module and policy powers. Native DAO ownership and contract upgrade authority remain separate and can bypass application rules. Review who controls those native accounts; a guardian that also owns the DAO has additional owner powers. Independent deployment is still prepared through the deployment kit, not one-click provisioning.
+
+Purpose labels and basic presets are free. Hosted service billing does not authorise governance. Private documents can be encrypted, but DAO identity, purpose, memberships, votes, balances and transaction metadata remain public.
+
+## Saved ballot policy, budgets and funding authority
+
+The contract stores a policy revision, participant mode, configured Decide deployment, exact ballot settings, governed Works funding flag, guardian account and commitment limits. These fields enforce rules; descriptive metadata cannot authorise an action.
+
+The maximum applies to each milestone or payroll installment when reserved. The daily maximum counts newly reserved amounts in the UTC chain day. It is a commitment budget, not a limit on payments due that day. Cancelled commitments do not replenish the daily allowance. Zero disables a limit in human or mixed DAOs; guarded-agent DAOs require both limits.
+
+An administrator can edit ballot settings and commitment limits through a signed instruction only when no ballot is active. The revision advances and pending funding plans from an older revision become unexecutable; open a new vote. Participant mode, guardian identity and Decide account cannot be silently replaced through this action.
+
+A guardian pause blocks new reservations, approvals, obligation payments and ordinary agent instructions. Each pause instruction lasts at most 24 hours and can be renewed. Existing obligations remain recorded and settle after expiry. Already assigned claims and stake retain withdrawal paths unless the agent credential itself is revoked. Subscription expiry is separate from an emergency pause.
+
+Legacy DAOs have no policy until an explicit signed administrator adoption. The old DAO, member, ballot, project and milestone table layouts remain unchanged; policies and agent/credential state use additional tables. Supported upgrade paths need old-row serialization checks and real native permission links.
+
+## Registered agents and disclosed human emergency controls
+
+An agent is a declared participant with a signing key and separate encryption public key. The chain verifies credentials, not whether a model or a human chose an action. Operator labels are declarations; multiple keys do not prove multiple independent operators. Admission and voting allocation must address this trust assumption.
+
+Agent-only creation enrolls the supplied agent public identity as first administrator. The human sponsor does not receive a membership. The guardian is a native account outside ordinary voting membership; configuring it does not give it document keys. Native ownership and upgrade powers must still be reviewed.
+
+Root signing credentials retain member and administrator authority. Delegate routine work to action-scoped keys: up to 16 stored credentials per member, up to 16 target/action permissions per credential, and a maximum seven-day expiry. Delete expired or revoked entries to free slots. Module permissions pin the installed module code. Scoped credentials cannot administer policies or members, spend claims, or delegate further authority.
+
+Submit scoped requests through submitsess or the relay API with session_id. Root requests use submit. Both share the member nonce, signed DAO/chain/runtime/action domain and short instruction expiry. Login by a scoped key does not turn it into a root member or grant decryption access.
+
+Scoped voting can authorise funding and a Works review scope can make an already funded obligation payable when the member is an authorised reviewer. The publishing credential offered here grants neither permission. Treat every delegated permission as authority, not merely an API convenience.
+
+Guardians can revoke an agent and recover its signing identity. Recovery can impersonate the recovered agent. It invalidates earlier delegated credentials and clears the native-account binding, while preserving member identity, credits, claims, stake and encryption keys. It cannot recover old encrypted content without the required decryption credentials. Signing-key rotation also invalidates existing scoped credentials.
+
+On-chain signing recovery does not migrate an old HTTP account, social-provider links or a protected signer's configuration. Authenticate the replacement signer separately and retain the existing document decryption credentials.
+
+Keep keys in a protected signer, not model prompts or logs. Encryption before IPFS publication does not protect plaintext later sent to a model provider. This release is provider-neutral and does not include LLM hosting, operator-independence verification or a qualified production custody service. The SDK example publishes a supplied public JSON document, not an autonomous decision engine.
+
 ## runtime contract
 
-Source ABI JSON SHA-256: `8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8fdfae6f853`.
+Source ABI JSON SHA-256: `cf36bac6486b7078e17a0f75a55498509e7e4ac784276756b9b1fd1c80392747`.
+
+### Action: addmember
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| signing_key | public_key |
+| encryption_key | string |
+| custody | uint8 |
+| kind | uint8 |
+| operator_label | string |
+
+### Action: addsession
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| session_id | uint64 |
+| signing_key | public_key |
+| expires | uint32 |
+| permissions | session_permission[] |
 
 ### Action: approveob
 
@@ -156,6 +223,15 @@ Source ABI JSON SHA-256: `8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8
 | token_contract | name |
 | token_symbol | symbol |
 
+### Action: delsession
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| session_id | uint64 |
+
 ### Action: enroll
 
 | Field | ABI type |
@@ -166,6 +242,18 @@ Source ABI JSON SHA-256: `8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8
 | signing_key | public_key |
 | encryption_key | string |
 | custody | uint8 |
+
+### Action: enrollagent
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| member_id | uint64 |
+| native_account | name |
+| signing_key | public_key |
+| encryption_key | string |
+| custody | uint8 |
+| operator_label | string |
 
 ### Action: govlock
 
@@ -203,11 +291,41 @@ Source ABI JSON SHA-256: `8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8
 | epoch | uint64 |
 | envelope | string |
 
+### Action: guardpause
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| until | uint32 |
+| reason | checksum256 |
+
+### Action: guardrecover
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| member_id | uint64 |
+| signing_key | public_key |
+
+### Action: guardrevoke
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| member_id | uint64 |
+
 ### Action: init
 
 | Field | ABI type |
 | --- | --- |
 | chain_id | checksum256 |
+
+### Action: initgov
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| settings | gov_settings |
 
 ### Action: linknative
 
@@ -316,6 +434,15 @@ Source ABI JSON SHA-256: `8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8
 | target | uint64 |
 | quantity | uint64 |
 
+### Action: setgov
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| settings | gov_settings |
+
 ### Action: setmeta
 
 | Field | ABI type |
@@ -370,6 +497,14 @@ Source ABI JSON SHA-256: `8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8
 | --- | --- |
 | request | instruction |
 
+### Action: submitsess
+
+| Field | ABI type |
+| --- | --- |
+| request | instruction |
+| session_id | uint64 |
+| sig | signature |
+
 ### Action: unstake
 
 | Field | ABI type |
@@ -389,6 +524,24 @@ Source ABI JSON SHA-256: `8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8
 | member_id | uint64 |
 | destination | name |
 | quantity | asset |
+
+### Table: actors
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| kind | uint8 |
+| operator_label | string |
+| revoked | bool |
+| credential_epoch | uint64 |
+
+### Table: budgets
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| day | uint32 |
+| committed | int64 |
 
 ### Table: daos
 
@@ -461,6 +614,22 @@ Source ABI JSON SHA-256: `8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8
 | expires | uint32 |
 | active | bool |
 
+### Table: govpolicies
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| revision | uint64 |
+| config | gov_settings |
+
+### Table: guards
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| paused_until | uint32 |
+| reason | checksum256 |
+
 ### Table: keygrants
 
 | Field | ABI type |
@@ -521,6 +690,17 @@ Source ABI JSON SHA-256: `8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8
 | account_name | name |
 | profile | string |
 
+### Table: sessions
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| member_id | uint64 |
+| signing_key | public_key |
+| expires | uint32 |
+| credential_epoch | uint64 |
+| permissions | session_permission[] |
+
 ### Table: settings
 
 | Field | ABI type |
@@ -558,6 +738,442 @@ Source ABI JSON SHA-256: `ae70e5f0f7af1f1a9ded1b8ce193c5e6cab1808799f4e11c7e9ad1
 | abi_hash | checksum256 |
 | metadata | string |
 | listed | bool |
+
+## GET /v1/dao-presets
+
+Guide: dao-presets.
+
+No request body.
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "presets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "community",
+              "ngo-grants",
+              "gaming-guild",
+              "team",
+              "custom"
+            ]
+          },
+          "version": {
+            "type": "number",
+            "const": 1
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "modules": {
+            "maxItems": 16,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]{0,31}$"
+            }
+          },
+          "governance": {
+            "type": "object",
+            "properties": {
+              "weight": {
+                "type": "string",
+                "enum": [
+                  "member",
+                  "credit",
+                  "native-stake"
+                ]
+              },
+              "duration": {
+                "type": "integer",
+                "minimum": 60,
+                "maximum": 2592000
+              },
+              "quorumBasisPoints": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10000
+              },
+              "approvalBasisPoints": {
+                "type": "integer",
+                "minimum": 5001,
+                "maximum": 10000
+              },
+              "governedWorks": {
+                "type": "boolean"
+              },
+              "maxCommitment": {
+                "type": "string"
+              },
+              "dailyCommitment": {
+                "type": "string"
+              },
+              "guardian": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": ""
+                  },
+                  {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "weight",
+              "duration",
+              "quorumBasisPoints",
+              "approvalBasisPoints",
+              "governedWorks",
+              "maxCommitment",
+              "dailyCommitment",
+              "guardian"
+            ],
+            "additionalProperties": false
+          },
+          "helpTopic": {
+            "type": "string",
+            "const": "dao-presets"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "title",
+          "description",
+          "modules",
+          "governance",
+          "helpTopic"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "presets"
+  ],
+  "additionalProperties": false
+}
+```
+
+## GET /v1/daos/:id/governance
+
+Guide: dao-governance.
+
+No request body.
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "dao": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "contract": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "daoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "interfaceVersion": {
+          "type": "number",
+          "const": 1
+        }
+      },
+      "required": [
+        "chainId",
+        "contract",
+        "daoId",
+        "interfaceVersion"
+      ],
+      "additionalProperties": false
+    },
+    "policy": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "dao_id": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "revision": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "config": {
+              "type": "object",
+              "properties": {
+                "participant_mode": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "decide": {
+                  "type": "string",
+                  "maxLength": 13
+                },
+                "guardian": {
+                  "type": "string",
+                  "maxLength": 13
+                },
+                "kind": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "duration": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                },
+                "quorum": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 65535
+                },
+                "approval": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 65535
+                },
+                "governed_works": {
+                  "type": "boolean"
+                },
+                "max_commitment": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "daily_commitment": {
+                  "type": "string",
+                  "maxLength": 20
+                }
+              },
+              "required": [
+                "participant_mode",
+                "decide",
+                "guardian",
+                "kind",
+                "duration",
+                "quorum",
+                "approval",
+                "governed_works",
+                "max_commitment",
+                "daily_commitment"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "dao_id",
+            "revision",
+            "config"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "actors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "kind": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          },
+          "operator_label": {
+            "type": "string",
+            "maxLength": 16384
+          },
+          "revoked": {
+            "type": "boolean"
+          },
+          "credential_epoch": {
+            "type": "string",
+            "maxLength": 20
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "operator_label",
+          "revoked",
+          "credential_epoch"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "sessions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "member_id": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "signing_key": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "expires": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295
+          },
+          "credential_epoch": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "permissions": {
+            "maxItems": 64,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "target": {
+                  "type": "string",
+                  "maxLength": 13
+                },
+                "action": {
+                  "type": "string",
+                  "maxLength": 13
+                },
+                "code_hash": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "target",
+                "action",
+                "code_hash"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "member_id",
+          "signing_key",
+          "expires",
+          "credential_epoch",
+          "permissions"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "guardian": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "dao_id": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "paused_until": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "reason": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "dao_id",
+            "paused_until",
+            "reason"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "budget": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "dao_id": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "day": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "committed": {
+              "type": "string",
+              "maxLength": 20
+            }
+          },
+          "required": [
+            "dao_id",
+            "day",
+            "committed"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "dao",
+    "policy",
+    "actors",
+    "sessions",
+    "guardian",
+    "budget"
+  ],
+  "additionalProperties": false
+}
+```
 
 ## GET /v1/network
 
@@ -737,6 +1353,125 @@ Response:
           "keyEpoch": {
             "type": "string",
             "maxLength": 20
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "community",
+              "ngo-grants",
+              "gaming-guild",
+              "team",
+              "custom"
+            ]
+          },
+          "participantMode": {
+            "type": "string",
+            "enum": [
+              "humans",
+              "mixed",
+              "agents-guarded"
+            ]
+          },
+          "setup": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "presetId": {
+                    "type": "string",
+                    "enum": [
+                      "community",
+                      "ngo-grants",
+                      "gaming-guild",
+                      "team",
+                      "custom"
+                    ]
+                  },
+                  "presetVersion": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "participantMode": {
+                    "type": "string",
+                    "enum": [
+                      "humans",
+                      "mixed",
+                      "agents-guarded"
+                    ]
+                  },
+                  "governance": {
+                    "type": "object",
+                    "properties": {
+                      "weight": {
+                        "type": "string",
+                        "enum": [
+                          "member",
+                          "credit",
+                          "native-stake"
+                        ]
+                      },
+                      "duration": {
+                        "type": "integer",
+                        "minimum": 60,
+                        "maximum": 2592000
+                      },
+                      "quorumBasisPoints": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10000
+                      },
+                      "approvalBasisPoints": {
+                        "type": "integer",
+                        "minimum": 5001,
+                        "maximum": 10000
+                      },
+                      "governedWorks": {
+                        "type": "boolean"
+                      },
+                      "maxCommitment": {
+                        "type": "string"
+                      },
+                      "dailyCommitment": {
+                        "type": "string"
+                      },
+                      "guardian": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "const": ""
+                          },
+                          {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "weight",
+                      "duration",
+                      "quorumBasisPoints",
+                      "approvalBasisPoints",
+                      "governedWorks",
+                      "maxCommitment",
+                      "dailyCommitment",
+                      "guardian"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "presetId",
+                  "presetVersion",
+                  "participantMode",
+                  "governance"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -1127,6 +1862,125 @@ Response:
     "keyEpoch": {
       "type": "string",
       "maxLength": 20
+    },
+    "purpose": {
+      "type": "string",
+      "enum": [
+        "community",
+        "ngo-grants",
+        "gaming-guild",
+        "team",
+        "custom"
+      ]
+    },
+    "participantMode": {
+      "type": "string",
+      "enum": [
+        "humans",
+        "mixed",
+        "agents-guarded"
+      ]
+    },
+    "setup": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "presetId": {
+              "type": "string",
+              "enum": [
+                "community",
+                "ngo-grants",
+                "gaming-guild",
+                "team",
+                "custom"
+              ]
+            },
+            "presetVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "participantMode": {
+              "type": "string",
+              "enum": [
+                "humans",
+                "mixed",
+                "agents-guarded"
+              ]
+            },
+            "governance": {
+              "type": "object",
+              "properties": {
+                "weight": {
+                  "type": "string",
+                  "enum": [
+                    "member",
+                    "credit",
+                    "native-stake"
+                  ]
+                },
+                "duration": {
+                  "type": "integer",
+                  "minimum": 60,
+                  "maximum": 2592000
+                },
+                "quorumBasisPoints": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10000
+                },
+                "approvalBasisPoints": {
+                  "type": "integer",
+                  "minimum": 5001,
+                  "maximum": 10000
+                },
+                "governedWorks": {
+                  "type": "boolean"
+                },
+                "maxCommitment": {
+                  "type": "string"
+                },
+                "dailyCommitment": {
+                  "type": "string"
+                },
+                "guardian": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "const": ""
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "weight",
+                "duration",
+                "quorumBasisPoints",
+                "approvalBasisPoints",
+                "governedWorks",
+                "maxCommitment",
+                "dailyCommitment",
+                "guardian"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "presetId",
+            "presetVersion",
+            "participantMode",
+            "governance"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   },
   "required": [
@@ -2592,28 +3446,164 @@ Request:
   "type": "object",
   "properties": {
     "metadata": {
-      "type": "object",
-      "properties": {
-        "schemaVersion": {
-          "type": "number",
-          "const": 1
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            },
+            "description": {
+              "default": "",
+              "type": "string",
+              "maxLength": 4000
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "title"
+          ],
+          "additionalProperties": false
         },
-        "title": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 160
-        },
-        "description": {
-          "default": "",
-          "type": "string",
-          "maxLength": 4000
+        {
+          "type": "object",
+          "properties": {
+            "schemaVersion": {
+              "type": "number",
+              "const": 2
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            },
+            "description": {
+              "default": "",
+              "type": "string",
+              "maxLength": 4000
+            },
+            "purpose": {
+              "type": "string",
+              "enum": [
+                "community",
+                "ngo-grants",
+                "gaming-guild",
+                "team",
+                "custom"
+              ]
+            },
+            "setup": {
+              "type": "object",
+              "properties": {
+                "presetId": {
+                  "type": "string",
+                  "enum": [
+                    "community",
+                    "ngo-grants",
+                    "gaming-guild",
+                    "team",
+                    "custom"
+                  ]
+                },
+                "presetVersion": {
+                  "type": "number",
+                  "const": 1
+                },
+                "participantMode": {
+                  "type": "string",
+                  "enum": [
+                    "humans",
+                    "mixed",
+                    "agents-guarded"
+                  ]
+                },
+                "governance": {
+                  "type": "object",
+                  "properties": {
+                    "weight": {
+                      "type": "string",
+                      "enum": [
+                        "member",
+                        "credit",
+                        "native-stake"
+                      ]
+                    },
+                    "duration": {
+                      "type": "integer",
+                      "minimum": 60,
+                      "maximum": 2592000
+                    },
+                    "quorumBasisPoints": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 10000
+                    },
+                    "approvalBasisPoints": {
+                      "type": "integer",
+                      "minimum": 5001,
+                      "maximum": 10000
+                    },
+                    "governedWorks": {
+                      "type": "boolean"
+                    },
+                    "maxCommitment": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "dailyCommitment": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "guardian": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "const": ""
+                        },
+                        {
+                          "type": "string",
+                          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "weight",
+                    "duration",
+                    "quorumBasisPoints",
+                    "approvalBasisPoints",
+                    "governedWorks",
+                    "maxCommitment",
+                    "dailyCommitment",
+                    "guardian"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "presetId",
+                "presetVersion",
+                "participantMode",
+                "governance"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "title",
+            "purpose",
+            "setup"
+          ],
+          "additionalProperties": false
         }
-      },
-      "required": [
-        "schemaVersion",
-        "title"
-      ],
-      "additionalProperties": false
+      ]
     },
     "privacy": {
       "type": "string",
@@ -2649,6 +3639,151 @@ Request:
         "contract",
         "symbol",
         "precision"
+      ],
+      "additionalProperties": false
+    },
+    "setup": {
+      "type": "object",
+      "properties": {
+        "presetId": {
+          "type": "string",
+          "enum": [
+            "community",
+            "ngo-grants",
+            "gaming-guild",
+            "team",
+            "custom"
+          ]
+        },
+        "presetVersion": {
+          "type": "number",
+          "const": 1
+        },
+        "participantMode": {
+          "type": "string",
+          "enum": [
+            "humans",
+            "mixed",
+            "agents-guarded"
+          ]
+        },
+        "governance": {
+          "type": "object",
+          "properties": {
+            "weight": {
+              "type": "string",
+              "enum": [
+                "member",
+                "credit",
+                "native-stake"
+              ]
+            },
+            "duration": {
+              "type": "integer",
+              "minimum": 60,
+              "maximum": 2592000
+            },
+            "quorumBasisPoints": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000
+            },
+            "approvalBasisPoints": {
+              "type": "integer",
+              "minimum": 5001,
+              "maximum": 10000
+            },
+            "governedWorks": {
+              "type": "boolean"
+            },
+            "maxCommitment": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "dailyCommitment": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "guardian": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "const": ""
+                },
+                {
+                  "type": "string",
+                  "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                }
+              ]
+            }
+          },
+          "required": [
+            "weight",
+            "duration",
+            "quorumBasisPoints",
+            "approvalBasisPoints",
+            "governedWorks",
+            "maxCommitment",
+            "dailyCommitment",
+            "guardian"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "presetId",
+        "presetVersion",
+        "participantMode",
+        "governance"
+      ],
+      "additionalProperties": false
+    },
+    "foundingAgent": {
+      "type": "object",
+      "properties": {
+        "signingKey": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "encryptionKey": {
+          "type": "object",
+          "properties": {
+            "kty": {
+              "type": "string",
+              "const": "EC"
+            },
+            "crv": {
+              "type": "string",
+              "const": "P-256"
+            },
+            "x": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{43}$"
+            },
+            "y": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{43}$"
+            }
+          },
+          "required": [
+            "kty",
+            "crv",
+            "x",
+            "y"
+          ],
+          "additionalProperties": false
+        },
+        "operator": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[\\x20-\\x7e]+$"
+        }
+      },
+      "required": [
+        "signingKey",
+        "encryptionKey",
+        "operator"
       ],
       "additionalProperties": false
     }
@@ -2763,6 +3898,125 @@ Response:
     "keyEpoch": {
       "type": "string",
       "maxLength": 20
+    },
+    "purpose": {
+      "type": "string",
+      "enum": [
+        "community",
+        "ngo-grants",
+        "gaming-guild",
+        "team",
+        "custom"
+      ]
+    },
+    "participantMode": {
+      "type": "string",
+      "enum": [
+        "humans",
+        "mixed",
+        "agents-guarded"
+      ]
+    },
+    "setup": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "presetId": {
+              "type": "string",
+              "enum": [
+                "community",
+                "ngo-grants",
+                "gaming-guild",
+                "team",
+                "custom"
+              ]
+            },
+            "presetVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "participantMode": {
+              "type": "string",
+              "enum": [
+                "humans",
+                "mixed",
+                "agents-guarded"
+              ]
+            },
+            "governance": {
+              "type": "object",
+              "properties": {
+                "weight": {
+                  "type": "string",
+                  "enum": [
+                    "member",
+                    "credit",
+                    "native-stake"
+                  ]
+                },
+                "duration": {
+                  "type": "integer",
+                  "minimum": 60,
+                  "maximum": 2592000
+                },
+                "quorumBasisPoints": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10000
+                },
+                "approvalBasisPoints": {
+                  "type": "integer",
+                  "minimum": 5001,
+                  "maximum": 10000
+                },
+                "governedWorks": {
+                  "type": "boolean"
+                },
+                "maxCommitment": {
+                  "type": "string"
+                },
+                "dailyCommitment": {
+                  "type": "string"
+                },
+                "guardian": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "const": ""
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "weight",
+                "duration",
+                "quorumBasisPoints",
+                "approvalBasisPoints",
+                "governedWorks",
+                "maxCommitment",
+                "dailyCommitment",
+                "guardian"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "presetId",
+            "presetVersion",
+            "participantMode",
+            "governance"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   },
   "required": [
@@ -2791,79 +4045,163 @@ Request:
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "type": "object",
-  "properties": {
-    "request": {
+  "anyOf": [
+    {
       "type": "object",
       "properties": {
-        "version": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 65535
+        "request": {
+          "type": "object",
+          "properties": {
+            "version": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "chain_id": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "deployment": {
+              "type": "string",
+              "maxLength": 13
+            },
+            "dao_id": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "member_id": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "nonce": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "expires": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "target": {
+              "type": "string",
+              "maxLength": 13
+            },
+            "action": {
+              "type": "string",
+              "maxLength": 13
+            },
+            "data": {
+              "type": "string",
+              "maxLength": 32768,
+              "pattern": "^(?:[0-9a-f]{2})*$"
+            }
+          },
+          "required": [
+            "version",
+            "chain_id",
+            "deployment",
+            "dao_id",
+            "member_id",
+            "nonce",
+            "expires",
+            "target",
+            "action",
+            "data"
+          ],
+          "additionalProperties": false
         },
-        "chain_id": {
+        "sig": {
           "type": "string",
-          "pattern": "^[0-9a-f]{64}$"
-        },
-        "deployment": {
-          "type": "string",
-          "maxLength": 13
-        },
-        "dao_id": {
-          "type": "string",
-          "maxLength": 20
-        },
-        "member_id": {
-          "type": "string",
-          "maxLength": 20
-        },
-        "nonce": {
-          "type": "string",
-          "maxLength": 20
-        },
-        "expires": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 4294967295
-        },
-        "target": {
-          "type": "string",
-          "maxLength": 13
-        },
-        "action": {
-          "type": "string",
-          "maxLength": 13
-        },
-        "data": {
-          "type": "string",
-          "maxLength": 32768,
-          "pattern": "^(?:[0-9a-f]{2})*$"
+          "maxLength": 160
         }
       },
       "required": [
-        "version",
-        "chain_id",
-        "deployment",
-        "dao_id",
-        "member_id",
-        "nonce",
-        "expires",
-        "target",
-        "action",
-        "data"
+        "request",
+        "sig"
       ],
       "additionalProperties": false
     },
-    "sig": {
-      "type": "string",
-      "maxLength": 160
+    {
+      "type": "object",
+      "properties": {
+        "request": {
+          "type": "object",
+          "properties": {
+            "version": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "chain_id": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "deployment": {
+              "type": "string",
+              "maxLength": 13
+            },
+            "dao_id": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "member_id": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "nonce": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "expires": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "target": {
+              "type": "string",
+              "maxLength": 13
+            },
+            "action": {
+              "type": "string",
+              "maxLength": 13
+            },
+            "data": {
+              "type": "string",
+              "maxLength": 32768,
+              "pattern": "^(?:[0-9a-f]{2})*$"
+            }
+          },
+          "required": [
+            "version",
+            "chain_id",
+            "deployment",
+            "dao_id",
+            "member_id",
+            "nonce",
+            "expires",
+            "target",
+            "action",
+            "data"
+          ],
+          "additionalProperties": false
+        },
+        "session_id": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "sig": {
+          "type": "string",
+          "maxLength": 160
+        }
+      },
+      "required": [
+        "request",
+        "session_id",
+        "sig"
+      ],
+      "additionalProperties": false
     }
-  },
-  "required": [
-    "request",
-    "sig"
-  ],
-  "additionalProperties": false
+  ]
 }
 ```
 

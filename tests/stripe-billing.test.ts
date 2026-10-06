@@ -42,6 +42,8 @@ function unusedChain(): ChainGateway {
   };
   return {
     treasury: fail,
+    governance: fail,
+    execute: fail,
     settle: fail,
     finalize: fail,
     content: fail,

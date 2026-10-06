@@ -28,6 +28,12 @@ const bot = '12345:local-fixture-token';
 const now = Math.floor(Date.now() / 1000);
 const keys = await generateKeyPair('RS256');
 const chain: ChainGateway = {
+  governance: async () => {
+    throw new Error('Not part of this fixture');
+  },
+  execute: async () => {
+    throw new Error('Not part of this fixture');
+  },
   finalize: async () => ({ state: 'already-finalized' }),
   treasury: async () => {
     throw new Error('Not part of this fixture');

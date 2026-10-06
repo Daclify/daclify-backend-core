@@ -1,0 +1,46 @@
+[
+  {
+    "type": "dao_record",
+    "data": {
+      "id": "7",
+      "owner": "alice",
+      "metadata": "{\"schemaVersion\":1,\"title\":\"Legacy DAO\",\"description\":\"\"}",
+      "privacy": 0,
+      "token_contract": "eosio.token",
+      "token_symbol": "4,TLOS",
+      "credit_supply": "100",
+      "member_count": "2",
+      "max_member": "2",
+      "active_ballots": 1,
+      "available": "10000",
+      "reserved": "2000",
+      "claims": "3000",
+      "staked": "4000",
+      "eligible_credits": "100",
+      "eligible_stake": "4000",
+      "admin_count": 1,
+      "key_epoch": "1",
+      "history_policy": 0
+    },
+    "hex": "07000000000000000000000000855c34397b22736368656d6156657273696f6e223a312c227469746c65223a224c65676163792044414f222c226465736372697074696f6e223a22227d0000a6823403ea305504544c4f53000000640000000000000002000000000000000200000000000000010000001027000000000000d007000000000000b80b000000000000a00f0000000000006400000000000000a00f00000000000001000000010000000000000000"
+  },
+  {
+    "type": "member_record",
+    "data": {
+      "id": "1",
+      "native_account": "alice",
+      "signing_key": "PUB_K1_67LuGq6GDSFyqgXQGkEz9jwVU759KVHzhczfkKyBmLEK66fotw",
+      "encryption_key": "legacy-public-key",
+      "custody": 0,
+      "nonce": "9007199254740993",
+      "credits": "100",
+      "active": true,
+      "admin": true,
+      "reviewer": false,
+      "stake": "4000",
+      "claim": "3000",
+      "join_epoch": "1"
+    },
+    "hex": "01000000000000000000000000855c340002a0e221236093b2c2a0d528a7ef6495b1694e848bcd027da99b38640bac2313d4116c65676163792d7075626c69632d6b65790001000000000020006400000000000000010100a00f000000000000b80b0000000000000100000000000000"
+  }
+]

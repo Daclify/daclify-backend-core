@@ -1,6 +1,5 @@
 import { execFileSync } from 'node:child_process';
 import { z } from 'zod';
-const url = 'http://127.0.0.1:18888';
 const SupportedSchema = z.array(
   z.object({
     feature_digest: z.string().regex(/^[0-9a-f]{64}$/),
@@ -10,7 +9,7 @@ const SupportedSchema = z.array(
 const ActivatedSchema = z.object({
   activated_protocol_features: z.array(z.object({ feature_digest: z.string() })),
 });
-async function rpc(path: string, body: object): Promise<unknown> {
+async function rpc(url: string, path: string, body: object): Promise<unknown> {
   const response = await fetch(`${url}${path}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -20,10 +19,17 @@ async function rpc(path: string, body: object): Promise<unknown> {
   if (!response.ok) throw new Error('Local protocol feature RPC failed');
   return response.json();
 }
-export async function activateFixtureFeatures(container: string): Promise<void> {
-  z.literal('daclify-v2-native').parse(container);
+export async function activateFixtureFeatures(
+  container: string,
+  endpoint = 'http://127.0.0.1:18888',
+): Promise<void> {
+  z.enum(['daclify-v2-native', 'daclify-dao-presets-native']).parse(container);
+  const url = z
+    .string()
+    .regex(/^http:\/\/127\.0\.0\.1:[0-9]{4,5}$/)
+    .parse(endpoint);
   const supported = SupportedSchema.parse(
-    await rpc('/v1/producer/get_supported_protocol_features', {}),
+    await rpc(url, '/v1/producer/get_supported_protocol_features', {}),
   );
   const features = new Map(
     supported.flatMap((f) =>
@@ -34,7 +40,7 @@ export async function activateFixtureFeatures(container: string): Promise<void> 
   );
   async function activated(digest: string) {
     return ActivatedSchema.parse(
-      await rpc('/v1/chain/get_activated_protocol_features', { limit: 100 }),
+      await rpc(url, '/v1/chain/get_activated_protocol_features', { limit: 100 }),
     ).activated_protocol_features.some((f) => f.feature_digest === digest);
   }
   async function wait(digest: string) {
@@ -50,7 +56,7 @@ export async function activateFixtureFeatures(container: string): Promise<void> 
   if (!preactivate || !sender || !codeHash)
     throw new Error('Required native protocol features unavailable');
   if (!(await activated(preactivate))) {
-    await rpc('/v1/producer/schedule_protocol_feature_activations', {
+    await rpc(url, '/v1/producer/schedule_protocol_feature_activations', {
       protocol_features_to_activate: [preactivate],
     });
     await wait(preactivate);

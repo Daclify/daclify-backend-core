@@ -8,9 +8,9 @@ import { unlockFixtureWallet } from './wallet.js';
 import { z } from 'zod';
 const network = z
   .object({
-    container: z.literal('daclify-v2-native'),
+    container: z.enum(['daclify-v2-native', 'daclify-dao-presets-native']),
     chainId: z.string(),
-    url: z.literal('http://127.0.0.1:18888'),
+    url: z.string().regex(/^http:\/\/127\.0\.0\.1:[0-9]{4,5}$/),
   })
   .parse(JSON.parse(readFileSync('.artifacts/native/network.json', 'utf8')));
 const response = await fetch(`${network.url}/v1/chain/get_info`, { method: 'POST', body: '{}' });
@@ -37,7 +37,7 @@ function cleos(args: string[]) {
   }
 }
 unlockFixtureWallet(network.container);
-await activateFixtureFeatures(network.container);
+await activateFixtureFeatures(network.container, network.url);
 cleos([
   'set',
   'contract',

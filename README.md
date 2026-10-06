@@ -13,6 +13,7 @@ The implementation is not a production release. `npm run package:release` still 
 - [Implementation limits](docs/evidence/implementation-limits.md) records what has been exercised and what is still held.
 - [Documentation index](docs/README.md) points at the plan, the architecture, and the generated reference.
 - [Public protocol package](sdk/README.md) is the boundary other repositories import.
+- [DAO presets and guarded agents](docs/dao-presets.md) covers the 0.2 feature, authority boundaries, compatibility and merge order.
 
 ## What is implemented
 

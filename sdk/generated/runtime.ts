@@ -1,10 +1,82 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = '8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8fdfae6f853';
+export const runtimeAbiHash = 'cf36bac6486b7078e17a0f75a55498509e7e4ac784276756b9b1fd1c80392747';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
   "structs": [
+    {
+      "name": "addmember",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "signing_key",
+          "type": "public_key"
+        },
+        {
+          "name": "encryption_key",
+          "type": "string"
+        },
+        {
+          "name": "custody",
+          "type": "uint8"
+        },
+        {
+          "name": "kind",
+          "type": "uint8"
+        },
+        {
+          "name": "operator_label",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "addsession",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "session_id",
+          "type": "uint64"
+        },
+        {
+          "name": "signing_key",
+          "type": "public_key"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
+        },
+        {
+          "name": "permissions",
+          "type": "session_permission[]"
+        }
+      ]
+    },
     {
       "name": "approveob",
       "base": "",
@@ -20,6 +92,24 @@ export const runtimeAbi = {
         {
           "name": "source_id",
           "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "budget_record",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "day",
+          "type": "uint32"
+        },
+        {
+          "name": "committed",
+          "type": "int64"
         }
       ]
     },
@@ -226,6 +316,28 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "delsession",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "session_id",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
       "name": "document_record",
       "base": "",
       "fields": [
@@ -302,6 +414,40 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "enrollagent",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "native_account",
+          "type": "name"
+        },
+        {
+          "name": "signing_key",
+          "type": "public_key"
+        },
+        {
+          "name": "encryption_key",
+          "type": "string"
+        },
+        {
+          "name": "custody",
+          "type": "uint8"
+        },
+        {
+          "name": "operator_label",
+          "type": "string"
+        }
+      ]
+    },
+    {
       "name": "epoch_record",
       "base": "",
       "fields": [
@@ -358,6 +504,70 @@ export const runtimeAbi = {
         {
           "name": "mode",
           "type": "uint8"
+        }
+      ]
+    },
+    {
+      "name": "gov_policy_record",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "revision",
+          "type": "uint64"
+        },
+        {
+          "name": "config",
+          "type": "gov_settings"
+        }
+      ]
+    },
+    {
+      "name": "gov_settings",
+      "base": "",
+      "fields": [
+        {
+          "name": "participant_mode",
+          "type": "uint8"
+        },
+        {
+          "name": "decide",
+          "type": "name"
+        },
+        {
+          "name": "guardian",
+          "type": "name"
+        },
+        {
+          "name": "kind",
+          "type": "uint8"
+        },
+        {
+          "name": "duration",
+          "type": "uint32"
+        },
+        {
+          "name": "quorum",
+          "type": "uint16"
+        },
+        {
+          "name": "approval",
+          "type": "uint16"
+        },
+        {
+          "name": "governed_works",
+          "type": "bool"
+        },
+        {
+          "name": "max_commitment",
+          "type": "int64"
+        },
+        {
+          "name": "daily_commitment",
+          "type": "int64"
         }
       ]
     },
@@ -476,12 +686,94 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "guardian_record",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "paused_until",
+          "type": "uint32"
+        },
+        {
+          "name": "reason",
+          "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "guardpause",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "until",
+          "type": "uint32"
+        },
+        {
+          "name": "reason",
+          "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "guardrecover",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "signing_key",
+          "type": "public_key"
+        }
+      ]
+    },
+    {
+      "name": "guardrevoke",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
       "name": "init",
       "base": "",
       "fields": [
         {
           "name": "chain_id",
           "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "initgov",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "settings",
+          "type": "gov_settings"
         }
       ]
     },
@@ -736,6 +1028,32 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "participant_record",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "kind",
+          "type": "uint8"
+        },
+        {
+          "name": "operator_label",
+          "type": "string"
+        },
+        {
+          "name": "revoked",
+          "type": "bool"
+        },
+        {
+          "name": "credential_epoch",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
       "name": "payob",
       "base": "",
       "fields": [
@@ -938,6 +1256,54 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "session_permission",
+      "base": "",
+      "fields": [
+        {
+          "name": "target",
+          "type": "name"
+        },
+        {
+          "name": "action",
+          "type": "name"
+        },
+        {
+          "name": "code_hash",
+          "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "session_record",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "signing_key",
+          "type": "public_key"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
+        },
+        {
+          "name": "credential_epoch",
+          "type": "uint64"
+        },
+        {
+          "name": "permissions",
+          "type": "session_permission[]"
+        }
+      ]
+    },
+    {
       "name": "setactive",
       "base": "",
       "fields": [
@@ -986,6 +1352,28 @@ export const runtimeAbi = {
         {
           "name": "quantity",
           "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "setgov",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "settings",
+          "type": "gov_settings"
         }
       ]
     },
@@ -1136,6 +1524,24 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "submitsess",
+      "base": "",
+      "fields": [
+        {
+          "name": "request",
+          "type": "instruction"
+        },
+        {
+          "name": "session_id",
+          "type": "uint64"
+        },
+        {
+          "name": "sig",
+          "type": "signature"
+        }
+      ]
+    },
+    {
       "name": "unstake",
       "base": "",
       "fields": [
@@ -1190,6 +1596,16 @@ export const runtimeAbi = {
   ],
   "actions": [
     {
+      "name": "addmember",
+      "type": "addmember",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "addsession",
+      "type": "addsession",
+      "ricardian_contract": ""
+    },
+    {
       "name": "approveob",
       "type": "approveob",
       "ricardian_contract": ""
@@ -1215,8 +1631,18 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "delsession",
+      "type": "delsession",
+      "ricardian_contract": ""
+    },
+    {
       "name": "enroll",
       "type": "enroll",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "enrollagent",
+      "type": "enrollagent",
       "ricardian_contract": ""
     },
     {
@@ -1240,8 +1666,28 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "guardpause",
+      "type": "guardpause",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "guardrecover",
+      "type": "guardrecover",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "guardrevoke",
+      "type": "guardrevoke",
+      "ricardian_contract": ""
+    },
+    {
       "name": "init",
       "type": "init",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "initgov",
+      "type": "initgov",
       "ricardian_contract": ""
     },
     {
@@ -1295,6 +1741,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "setgov",
+      "type": "setgov",
+      "ricardian_contract": ""
+    },
+    {
       "name": "setmeta",
       "type": "setmeta",
       "ricardian_contract": ""
@@ -1325,6 +1776,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "submitsess",
+      "type": "submitsess",
+      "ricardian_contract": ""
+    },
+    {
       "name": "unstake",
       "type": "unstake",
       "ricardian_contract": ""
@@ -1336,6 +1792,20 @@ export const runtimeAbi = {
     }
   ],
   "tables": [
+    {
+      "name": "actors",
+      "type": "participant_record",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "budgets",
+      "type": "budget_record",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
     {
       "name": "daos",
       "type": "dao_record",
@@ -1367,6 +1837,20 @@ export const runtimeAbi = {
     {
       "name": "govlocks",
       "type": "governance_lock",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "govpolicies",
+      "type": "gov_policy_record",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "guards",
+      "type": "guardian_record",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -1407,6 +1891,13 @@ export const runtimeAbi = {
       "key_types": []
     },
     {
+      "name": "sessions",
+      "type": "session_record",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "settings",
       "type": "settings",
       "index_type": "i64",
@@ -1418,10 +1909,34 @@ export const runtimeAbi = {
   "ricardian_clauses": [],
   "action_results": []
 } satisfies ABI.Def;
+export interface addmember {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  signing_key: string;
+  encryption_key: string;
+  custody: number;
+  kind: number;
+  operator_label: string;
+}
+export interface addsession {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  session_id: string;
+  signing_key: string;
+  expires: number;
+  permissions: session_permission[];
+}
 export interface approveob {
   dao_id: string;
   source: string;
   source_id: string;
+}
+export interface budget_record {
+  dao_id: string;
+  day: number;
+  committed: string;
 }
 export interface cancelob {
   dao_id: string;
@@ -1476,6 +1991,12 @@ export interface dao_record {
   key_epoch: string;
   history_policy: number;
 }
+export interface delsession {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  session_id: string;
+}
 export interface document_record {
   id: string;
   document_id: string;
@@ -1496,6 +2017,15 @@ export interface enroll {
   encryption_key: string;
   custody: number;
 }
+export interface enrollagent {
+  dao_id: string;
+  member_id: string;
+  native_account: string;
+  signing_key: string;
+  encryption_key: string;
+  custody: number;
+  operator_label: string;
+}
 export interface epoch_record {
   epoch: string;
   commitment: string;
@@ -1511,6 +2041,23 @@ export interface evidence_record {
   payer: string;
   reference: string;
   mode: number;
+}
+export interface gov_policy_record {
+  dao_id: string;
+  revision: string;
+  config: gov_settings;
+}
+export interface gov_settings {
+  participant_mode: number;
+  decide: string;
+  guardian: string;
+  kind: number;
+  duration: number;
+  quorum: number;
+  approval: number;
+  governed_works: boolean;
+  max_commitment: string;
+  daily_commitment: string;
 }
 export interface governance_lock {
   id: string;
@@ -1543,8 +2090,31 @@ export interface grantkey {
   epoch: string;
   envelope: string;
 }
+export interface guardian_record {
+  dao_id: string;
+  paused_until: number;
+  reason: string;
+}
+export interface guardpause {
+  dao_id: string;
+  until: number;
+  reason: string;
+}
+export interface guardrecover {
+  dao_id: string;
+  member_id: string;
+  signing_key: string;
+}
+export interface guardrevoke {
+  dao_id: string;
+  member_id: string;
+}
 export interface init {
   chain_id: string;
+}
+export interface initgov {
+  dao_id: string;
+  settings: gov_settings;
 }
 export interface instruction {
   version: number;
@@ -1612,6 +2182,13 @@ export interface obligation_record {
   due: number;
   status: number;
 }
+export interface participant_record {
+  id: string;
+  kind: number;
+  operator_label: string;
+  revoked: boolean;
+  credential_epoch: string;
+}
 export interface payob {
   dao_id: string;
   source: string;
@@ -1666,6 +2243,19 @@ export interface rotatekey {
   member_id: string;
   signing_key: string;
 }
+export interface session_permission {
+  target: string;
+  action: string;
+  code_hash: string;
+}
+export interface session_record {
+  id: string;
+  member_id: string;
+  signing_key: string;
+  expires: number;
+  credential_epoch: string;
+  permissions: session_permission[];
+}
 export interface setactive {
   runtime: string;
   dao_id: string;
@@ -1679,6 +2269,12 @@ export interface setcredits {
   member_id: string;
   target: string;
   quantity: string;
+}
+export interface setgov {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  settings: gov_settings;
 }
 export interface setmeta {
   runtime: string;
@@ -1720,6 +2316,11 @@ export interface submit {
 export interface submitnat {
   request: instruction;
 }
+export interface submitsess {
+  request: instruction;
+  session_id: string;
+  sig: string;
+}
 export interface unstake {
   runtime: string;
   dao_id: string;
@@ -1735,17 +2336,25 @@ export interface withdraw {
   quantity: string;
 }
 export interface RuntimeActions {
+  addmember: addmember;
+  addsession: addsession;
   approveob: approveob;
   cancelob: cancelob;
   commitepoch: commitepoch;
   confirmext: confirmext;
   createdao: createdao;
+  delsession: delsession;
   enroll: enroll;
+  enrollagent: enrollagent;
   govlock: govlock;
   govunlock: govunlock;
   grantcredit: grantcredit;
   grantkey: grantkey;
+  guardpause: guardpause;
+  guardrecover: guardrecover;
+  guardrevoke: guardrevoke;
   init: init;
+  initgov: initgov;
   linknative: linknative;
   modconfig: modconfig;
   payob: payob;
@@ -1756,12 +2365,14 @@ export interface RuntimeActions {
   rotatekey: rotatekey;
   setactive: setactive;
   setcredits: setcredits;
+  setgov: setgov;
   setmeta: setmeta;
   setmodule: setmodule;
   setprofile: setprofile;
   setroles: setroles;
   submit: submit;
   submitnat: submitnat;
+  submitsess: submitsess;
   unstake: unstake;
   withdraw: withdraw;
 }

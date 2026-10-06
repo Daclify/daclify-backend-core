@@ -24,6 +24,7 @@
     "services/**/*.ts",
     "tools/**/*.ts",
     "tests/**/*.ts",
+    "examples/**/*.ts",
     "vitest.config.ts"
   ]
 }

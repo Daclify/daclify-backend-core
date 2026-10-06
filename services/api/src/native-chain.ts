@@ -19,6 +19,7 @@ import {
 } from '@wharfkit/antelope';
 import {
   Catalog,
+  ModulePermissions,
   ModuleApiRoutes,
   ModuleStateSchema,
   VERSION as MODULE_VERSION,
@@ -26,6 +27,8 @@ import {
   type ModuleDeployment,
   type FinalizationRequest,
   type FinalizationResult,
+  type ExecutionRequest,
+  type ExecutionResult,
 } from '@daclify/modules';
 import {
   encodeDecide,
@@ -50,7 +53,6 @@ import {
 } from '../../../protocol/api.js';
 import {
   VERSION,
-  MetadataSchema,
   NativeAccountSchema,
   Uint64Schema,
   IdSchema,
@@ -58,9 +60,16 @@ import {
   compatible,
 } from '../../../protocol/base.js';
 import {
+  MetadataSchema,
+  DaoPresets,
+  GovernanceStateSchema,
+  type GovernanceState,
+} from '../../../protocol/dao.js';
+import {
   RuntimeTableSchemas,
   encodeAction,
   instructionDigest,
+  governanceSettings,
   type RuntimeActions,
   type instruction,
 } from '../../../sdk/index.js';
@@ -100,6 +109,7 @@ export class NativeChainGateway implements ChainGateway {
     this.api = new APIClient({ url: config.rpcUrl });
   }
   async network(): Promise<Network> {
+    const presets = await this.supportsPresets();
     return NetworkSchema.parse({
       chainId: this.config.chainId,
       rpcUrl: this.config.rpcUrl,
@@ -113,8 +123,24 @@ export class NativeChainGateway implements ChainGateway {
         'native-linked',
         'encrypted-documents',
         ...(this.config.bootstrap ? ['shared-dao-create'] : []),
+        ...(presets ? ['dao-presets', 'guarded-agents', 'governance-policy'] : []),
       ],
     });
+  }
+  private async supportsPresets(): Promise<boolean> {
+    const { abi } = await this.api.v1.chain.get_abi(this.config.runtime);
+    return [
+      'initgov',
+      'setgov',
+      'enrollagent',
+      'addmember',
+      'addsession',
+      'delsession',
+      'submitsess',
+      'guardpause',
+      'guardrevoke',
+      'guardrecover',
+    ].every((name) => abi?.actions.some((action) => action.name === name));
   }
   async table<K extends keyof typeof RuntimeTableSchemas>(
     table: K,
@@ -146,8 +172,15 @@ export class NativeChainGateway implements ChainGateway {
     if (!parsed.success) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
     return parsed.data;
   }
-  private summary(row: z.infer<typeof RuntimeTableSchemas.daos>): DaoSummary {
+  private async summary(row: z.infer<typeof RuntimeTableSchemas.daos>): Promise<DaoSummary> {
     const metadata = MetadataSchema.safeParse(JSON.parse(row.metadata));
+    const setup =
+      metadata.success && metadata.data.schemaVersion === 2 ? metadata.data.setup : null;
+    const policy = setup
+      ? (await this.table('govpolicies', this.config.runtime, row.id, 1))[0]
+      : undefined;
+    if (setup && (!policy || policy.dao_id !== row.id))
+      throw new ApiError('DAO_POLICY_UNAVAILABLE', 503);
     const [precision, symbol] = row.token_symbol.split(',');
     return DaoSummarySchema.parse({
       reference: {
@@ -171,6 +204,12 @@ export class NativeChainGateway implements ChainGateway {
       reserved: row.reserved,
       claims: row.claims,
       keyEpoch: row.key_epoch,
+      purpose:
+        metadata.success && metadata.data.schemaVersion === 2 ? metadata.data.purpose : 'custom',
+      participantMode: policy
+        ? ['humans', 'mixed', 'agents-guarded'][policy.config.participant_mode]
+        : undefined,
+      setup,
     });
   }
   async content(daoId: string): Promise<DaoContent> {
@@ -196,9 +235,28 @@ export class NativeChainGateway implements ChainGateway {
     });
   }
   async listDaos(): Promise<DaoSummary[]> {
-    return (await this.table('daos', this.config.runtime, '0', 500)).map((row) =>
-      this.summary(row),
+    return Promise.all(
+      (await this.table('daos', this.config.runtime, '0', 500)).map((row) => this.summary(row)),
     );
+  }
+  async governance(daoId: string): Promise<GovernanceState> {
+    const dao = await this.dao(daoId);
+    // ponytail: 5,000 credentials per snapshot; add pagination before supporting larger DAO credential sets.
+    const [policies, actors, sessions, guardians, budgets] = await Promise.all([
+      this.table('govpolicies', this.config.runtime, daoId, 1),
+      this.table('actors', daoId, '0', 5000),
+      this.table('sessions', daoId, '0', 5000),
+      this.table('guards', this.config.runtime, daoId, 1),
+      this.table('budgets', this.config.runtime, daoId, 1),
+    ]);
+    return GovernanceStateSchema.parse({
+      dao: dao.reference,
+      policy: policies.find((row) => row.dao_id === daoId) ?? null,
+      actors,
+      sessions,
+      guardian: guardians.find((row) => row.dao_id === daoId) ?? null,
+      budget: budgets.find((row) => row.dao_id === daoId) ?? null,
+    });
   }
   async dao(daoId: string): Promise<DaoSummary> {
     const row = (await this.table('daos', this.config.runtime, daoId, 1))[0];
@@ -421,8 +479,48 @@ export class NativeChainGateway implements ChainGateway {
     const bootstrap = this.config.bootstrap;
     if (!bootstrap) throw new ApiError('DAO_CREATION_UNAVAILABLE', 503);
     if (input.token.chainId !== this.config.chainId) throw new ApiError('ASSET_CHAIN_MISMATCH');
-    if (input.privacy === 'encrypted-user-controlled' && account.custody === 'managed')
+    if (
+      !input.foundingAgent &&
+      input.privacy === 'encrypted-user-controlled' &&
+      account.custody === 'managed'
+    )
       throw new ApiError('CUSTODY_POLICY', 403);
+    const setup = input.setup;
+    const preset = setup
+      ? DaoPresets.find(
+          (preset) => preset.id === setup.presetId && preset.version === setup.presetVersion,
+        )
+      : undefined;
+    const installations: RuntimeActions['setmodule'][] = [];
+    const decide = this.config.modules?.find((module) => module.id === 'decide');
+    if (setup) {
+      if (!preset || !decide) throw new ApiError('PRESET_MODULE_UNAVAILABLE', 503);
+      if (!(await this.supportsPresets())) throw new ApiError('DAO_POLICY_UNAVAILABLE', 503);
+      for (const id of preset.modules) {
+        const deployment = this.config.modules?.find((module) => module.id === id);
+        if (!deployment) throw new ApiError('PRESET_MODULE_UNAVAILABLE', 503);
+        const response = await fetch(this.config.rpcUrl + '/v1/chain/get_code_hash', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ account_name: deployment.account }),
+          signal: AbortSignal.timeout(10000),
+        });
+        const hash = response.ok
+          ? z.object({ code_hash: ChainIdSchema }).safeParse(await response.json())
+          : undefined;
+        if (!hash?.success || hash.data.code_hash !== ModuleCodeHashes[deployment.id])
+          throw new ApiError('MODULE_UNVERIFIED', 409);
+        const permissions = ModulePermissions[deployment.id];
+        installations.push({
+          dao_id: '0',
+          account: deployment.account,
+          version: 1,
+          actions: [...permissions.actions],
+          grants: [...permissions.grants],
+          code_hash: hash.data.code_hash,
+        });
+      }
+    }
     const id = BigInt(`0x${randomBytes(8).toString('hex')}`).toString();
     if (id === '0') throw new ApiError('DAO_ID_RETRY', 503);
     const info = await this.api.v1.chain.get_info();
@@ -436,7 +534,17 @@ export class NativeChainGateway implements ChainGateway {
         data: encodeAction('createdao', {
           dao_id: id,
           owner: bootstrap.owner,
-          metadata: JSON.stringify(input.metadata),
+          metadata: JSON.stringify(
+            setup
+              ? {
+                  schemaVersion: 2,
+                  title: input.metadata.title,
+                  description: input.metadata.description,
+                  purpose: setup.presetId,
+                  setup,
+                }
+              : input.metadata,
+          ),
           privacy:
             input.privacy === 'public' ? 0 : input.privacy === 'encrypted-managed-allowed' ? 1 : 2,
           token_contract: input.token.contract,
@@ -457,6 +565,46 @@ export class NativeChainGateway implements ChainGateway {
         }),
       }),
     ];
+    if (setup && decide) {
+      actions.splice(
+        1,
+        0,
+        Action.from({
+          account: this.config.runtime,
+          name: 'initgov',
+          authorization: [{ actor: bootstrap.owner, permission: 'active' }],
+          data: encodeAction('initgov', {
+            dao_id: id,
+            settings: governanceSettings(setup, decide.account),
+          }),
+        }),
+      );
+      if (input.foundingAgent) {
+        actions[2] = Action.from({
+          account: this.config.runtime,
+          name: 'enrollagent',
+          authorization: [{ actor: bootstrap.owner, permission: 'active' }],
+          data: encodeAction('enrollagent', {
+            dao_id: id,
+            member_id: '1',
+            native_account: '',
+            signing_key: input.foundingAgent.signingKey,
+            encryption_key: JSON.stringify(input.foundingAgent.encryptionKey),
+            custody: 0,
+            operator_label: input.foundingAgent.operator,
+          }),
+        });
+      }
+      for (const installation of installations)
+        actions.push(
+          Action.from({
+            account: this.config.runtime,
+            name: 'setmodule',
+            authorization: [{ actor: bootstrap.owner, permission: 'active' }],
+            data: encodeAction('setmodule', { ...installation, dao_id: id }),
+          }),
+        );
+    }
     const transaction = Transaction.from({ ...info.getTransactionHeader(60), actions });
     await this.assertResources(bootstrap.owner);
     try {
@@ -472,6 +620,42 @@ export class NativeChainGateway implements ChainGateway {
     const row = (await this.table('daos', this.config.runtime, id, 1))[0];
     if (!row || row.id !== id) throw new ApiError('CHAIN_UNAVAILABLE', 503);
     return this.summary(row);
+  }
+  async execute(input: ExecutionRequest): Promise<ExecutionResult> {
+    if (
+      input.dao.chainId !== this.config.chainId ||
+      input.dao.contract !== this.config.runtime ||
+      input.dao.interfaceVersion !== 1
+    )
+      throw new ApiError('DAO_REFERENCE');
+    const state = await this.moduleState(input.dao.daoId);
+    const deployment = state.modules.find((module) => module.deployment.id === 'decide');
+    if (!deployment?.compatible || !deployment.codeVerified)
+      throw new ApiError('MODULE_UNVERIFIED', 409);
+    const plan = state.executions.find((plan) => plan.ballot_id === input.ballotId);
+    if (!plan) throw new ApiError('EXECUTION_UNKNOWN', 404);
+    if (plan.executed) return { state: 'already-executed' };
+    const ballot = state.ballots.find((ballot) => ballot.id === input.ballotId);
+    if (ballot?.status !== 1) throw new ApiError('BALLOT_NOT_PASSED', 409);
+    try {
+      const result = await this.pushEncoded(
+        deployment.deployment.account,
+        'execute',
+        encodeDecide('execute', {
+          runtime: input.dao.contract,
+          dao_id: input.dao.daoId,
+          ballot_id: input.ballotId,
+        }),
+        this.config.relayActor,
+        this.config.relayKey,
+      );
+      return { state: 'executed', transactionId: result.transactionId };
+    } catch (cause) {
+      const current = await this.moduleState(input.dao.daoId);
+      if (current.executions.some((plan) => plan.ballot_id === input.ballotId && plan.executed))
+        return { state: 'already-executed' };
+      throw cause;
+    }
   }
   private async moduleRows<T>(account: string, table: string, schema: z.ZodType<T>): Promise<T[]> {
     const response = await fetch(`${this.config.rpcUrl}/v1/chain/get_table_rows`, {
@@ -507,6 +691,7 @@ export class NativeChainGateway implements ChainGateway {
     let schedules: ModuleState['schedules'] = [];
     let entries: ModuleState['entries'] = [];
     let controls: ModuleState['controls'] = [];
+    let executions: ModuleState['executions'] = [];
     for (const deployment of this.config.modules ?? []) {
       NativeAccountSchema.parse(deployment.account);
       const manifest = Catalog.find((item) => item.id === deployment.id);
@@ -545,6 +730,9 @@ export class NativeChainGateway implements ChainGateway {
       });
       if (!verified) continue;
       if (deployment.id === 'decide') {
+        executions = (
+          await this.moduleRows(deployment.account, 'executions', DecideTableSchemas.executions)
+        ).filter((row) => row.dao_id === daoId);
         ballots = (
           await this.moduleRows(deployment.account, 'ballots', DecideTableSchemas.ballots)
         ).filter((row) => row.dao_id === daoId);
@@ -589,6 +777,7 @@ export class NativeChainGateway implements ChainGateway {
       schedules,
       entries,
       controls,
+      executions,
     });
   }
   private async assertResources(account: string): Promise<void> {
@@ -615,6 +804,7 @@ export class NativeChainGateway implements ChainGateway {
     account: Account,
     request: instruction,
     signature: string,
+    sessionId?: string,
   ): Promise<{ transactionId: string }> {
     if (request.chain_id !== this.config.chainId || request.deployment !== this.config.runtime)
       throw new ApiError('INSTRUCTION_DOMAIN');
@@ -629,8 +819,25 @@ export class NativeChainGateway implements ChainGateway {
     }
     if (!valid) throw new ApiError('SIGNATURE_INVALID', 403);
     const member = (await this.table('members', request.dao_id, request.member_id, 1))[0];
-    if (!member || member.id !== request.member_id || member.signing_key !== account.signingKey)
-      throw new ApiError('MEMBERSHIP_REQUIRED', 403);
+    if (!member || member.id !== request.member_id) throw new ApiError('MEMBERSHIP_REQUIRED', 403);
+    if (sessionId !== undefined) {
+      IdSchema.parse(sessionId);
+      const credential = (await this.table('sessions', request.dao_id, sessionId, 1))[0];
+      if (
+        !credential ||
+        credential.id !== sessionId ||
+        credential.member_id !== request.member_id ||
+        credential.signing_key !== account.signingKey
+      )
+        throw new ApiError('MEMBERSHIP_REQUIRED', 403);
+      return this.push(
+        'submitsess',
+        { request, session_id: sessionId, sig: signature },
+        this.config.relayActor,
+        this.config.relayKey,
+      );
+    }
+    if (member.signing_key !== account.signingKey) throw new ApiError('MEMBERSHIP_REQUIRED', 403);
     return this.push(
       'submit',
       { request, sig: signature },

@@ -31,6 +31,12 @@ const pool = new Pool({ connectionString: url });
 const origin = 'http://localhost:5178';
 const stripe = createStripeClient(stripeConfig.secretKey);
 const chain: ChainGateway = {
+  governance: async () => {
+    throw new Error('Not part of this fixture');
+  },
+  execute: async () => {
+    throw new Error('Not part of this fixture');
+  },
   finalize: async () => ({ state: 'already-finalized' }),
   treasury: async () => {
     throw new Error('Not part of this fixture');

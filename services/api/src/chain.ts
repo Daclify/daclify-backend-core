@@ -5,7 +5,11 @@ import type { DaoSummary, Network, Account, UserMembership } from '../../../prot
 import type { instruction } from '../../../sdk/index.js';
 import type { CreateDaoSchema } from '../../../protocol/api.js';
 import type { z } from 'zod';
+import type { GovernanceState } from '../../../protocol/dao.js';
+import type { ExecutionRequest, ExecutionResult } from '@daclify/modules';
 export interface ChainGateway {
+  governance(daoId: string): Promise<GovernanceState>;
+  execute(input: ExecutionRequest): Promise<ExecutionResult>;
   treasury(daoId: string): Promise<Treasury>;
   settle(input: SettlementRequest): Promise<SettlementResult>;
   finalize(input: FinalizationRequest): Promise<FinalizationResult>;
@@ -24,5 +28,6 @@ export interface ChainGateway {
     account: Account,
     request: instruction,
     signature: string,
+    sessionId?: string,
   ): Promise<{ transactionId: string }>;
 }

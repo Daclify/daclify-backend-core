@@ -1,6 +1,11 @@
 import { execFileSync } from 'node:child_process';
 import { z } from 'zod';
 export const localCoreCallbacks = [
+  'setgov',
+  'addmember',
+  'addsession',
+  'delsession',
+  'rotatekey',
   'setmeta',
   'setprofile',
   'putdoc',
@@ -17,7 +22,7 @@ export const localCoreCallbacks = [
   'setcredits',
 ] as const;
 export function configureFixtureContext(container: string, runtime = 'daclifycore'): void {
-  z.literal('daclify-v2-native').parse(container);
+  z.enum(['daclify-v2-native', 'daclify-dao-presets-native']).parse(container);
   z.enum(['daclifycore', 'daclifytwo']).parse(runtime);
   function cleos(args: string[]): string {
     try {
@@ -75,7 +80,7 @@ export function configureFixtureContext(container: string, runtime = 'daclifycor
         `${runtime}@active`,
       ]);
   for (const [account, actions] of [
-    ['decide', ['open', 'vote']],
+    ['decide', ['open', 'vote', 'openwork']],
     ['works', ['propose', 'accept', 'submitwork', 'review', 'cancel']],
     ['payroll', ['commit', 'edit']],
   ] as const)

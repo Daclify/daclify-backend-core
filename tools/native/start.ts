@@ -6,7 +6,16 @@ import { resolve } from 'node:path';
 import { PrivateKey } from '@wharfkit/antelope';
 import { z } from 'zod';
 const root = resolve(process.cwd());
-const name = 'daclify-v2-native';
+const name = z
+  .enum(['daclify-v2-native', 'daclify-dao-presets-native'])
+  .parse(process.env.DACLIFY_NATIVE_CONTAINER ?? 'daclify-v2-native');
+const port = z.coerce
+  .number()
+  .int()
+  .min(1024)
+  .max(65535)
+  .parse(process.env.DACLIFY_NATIVE_PORT ?? 18888);
+const url = 'http://127.0.0.1:' + port;
 function docker(args: string[]): string {
   try {
     return execFileSync('docker', args, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
@@ -63,7 +72,7 @@ docker([
   '--name',
   name,
   '-p',
-  '127.0.0.1:18888:8888',
+  '127.0.0.1:' + port + ':8888',
   '-v',
   `${root}:/work`,
   'daclify-v2-toolchain:4.1.1-spring1.2.2',
@@ -100,7 +109,7 @@ const InfoSchema = z.object({ chain_id: z.string(), head_block_num: z.number() }
 let info: z.infer<typeof InfoSchema> | undefined;
 for (let i = 0; i < 100; i++) {
   try {
-    const response = await fetch('http://127.0.0.1:18888/v1/chain/get_info', {
+    const response = await fetch(url + '/v1/chain/get_info', {
       method: 'POST',
       body: '{}',
     });
@@ -146,7 +155,7 @@ for (const account of accountNames) {
   cleos(['wallet', 'import', '--private-key', signer.privateKey]);
   cleos(['create', 'account', 'eosio', account, signer.publicKey, signer.publicKey]);
 }
-await activateFixtureFeatures(name);
+await activateFixtureFeatures(name, url);
 cleos([
   'set',
   'contract',
@@ -213,10 +222,6 @@ cleos([
 ]);
 writeFileSync(
   '.artifacts/native/network.json',
-  JSON.stringify(
-    { url: 'http://127.0.0.1:18888', chainId: info.chain_id, container: name },
-    null,
-    2,
-  ),
+  JSON.stringify({ url, chainId: info.chain_id, container: name }, null, 2),
 );
 console.log('Local native runtime ready; core artifact deployed only to the isolated test chain.');

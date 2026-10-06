@@ -15,6 +15,7 @@ import {
 } from './api.js';
 import { DaoContentSchema } from './content.js';
 import { RuntimeActionSchemas } from '../sdk/generated/schemas.js';
+import { DaoPresetSchema, GovernanceStateSchema } from './dao.js';
 import {
   StorageStatusSchema,
   HostedUploadSchema,
@@ -24,6 +25,18 @@ import {
 } from './storage.js';
 import { TreasurySchema, SettlementRequestSchema, SettlementResultSchema } from './treasury.js';
 export const ApiRoutes = {
+  presets: {
+    method: 'GET',
+    path: '/v1/dao-presets',
+    response: z.strictObject({ presets: z.array(DaoPresetSchema) }),
+    helpTopic: 'dao-presets',
+  },
+  governance: {
+    method: 'GET',
+    path: '/v1/daos/:id/governance',
+    response: GovernanceStateSchema,
+    helpTopic: 'dao-governance',
+  },
   network: {
     method: 'GET',
     path: '/v1/network',
@@ -157,7 +170,7 @@ export const ApiRoutes = {
   relay: {
     method: 'POST',
     path: '/v1/relay',
-    input: RuntimeActionSchemas.submit,
+    input: z.union([RuntimeActionSchemas.submit, RuntimeActionSchemas.submitsess]),
     response: z.strictObject({ transactionId: z.string().regex(/^[0-9a-f]{64}$/) }),
     helpTopic: 'modules',
   },

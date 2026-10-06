@@ -24,6 +24,12 @@ const jwk = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.ex
 });
 const encryptionKey = { kty: 'EC' as const, crv: 'P-256' as const, x: jwk.x, y: jwk.y };
 const chain: ChainGateway = {
+  governance: async () => {
+    throw new Error('Not part of this fixture');
+  },
+  execute: async () => {
+    throw new Error('Not part of this fixture');
+  },
   finalize: async () => ({ state: 'already-finalized' }),
   treasury: async () => {
     throw new Error('Not part of this fixture');

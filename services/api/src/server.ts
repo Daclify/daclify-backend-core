@@ -13,7 +13,6 @@ import {
   ProviderProofSchema,
   ProviderUnlinkSchema,
 } from '../../../protocol/api.js';
-import { RuntimeActionSchemas } from '../../../sdk/index.js';
 import { createChallenge, authenticate, readSession, revokeSession, checkCsrf } from './auth.js';
 import {
   linkProvider,
@@ -28,6 +27,7 @@ import { registerDocsRoutes } from './docs/routes.js';
 import type { DocsAgentConfiguration } from './docs/config.js';
 import { IdSchema } from '../../../protocol/base.js';
 import { ApiError } from './errors.js';
+import { DaoPresets } from '../../../protocol/dao.js';
 import type { ContentService } from './content/service.js';
 import { StripeBilling } from './billing/service.js';
 import { MAX_HOSTED_CONTENT_BYTES } from '../../../protocol/storage.js';
@@ -113,6 +113,10 @@ export async function createServer(
     return account;
   }
   app.get('/health', async () => ({ status: 'ok' }));
+  app.get(ApiRoutes.presets.path, async () => ({ presets: DaoPresets }));
+  app.get<{ Params: { id: string } }>(ApiRoutes.governance.path, async (request) =>
+    chain.governance(IdSchema.parse(request.params.id)),
+  );
   app.get(ApiRoutes.network.path, async () => chain.network());
   app.get(ApiRoutes.daos.path, async () => ({ daos: await chain.listDaos() }));
   app.get<{ Params: { id: string } }>(ApiRoutes.dao.path, async (request) =>
@@ -142,6 +146,14 @@ export async function createServer(
     );
     spend(account.id);
     return chain.finalize(ModuleApiRoutes.finalize.input.parse(request.body));
+  });
+  app.post(ModuleApiRoutes.execute.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    spend(account.id);
+    return chain.execute(ModuleApiRoutes.execute.input.parse(request.body));
   });
   app.get(
     ApiRoutes.storage.path,
@@ -286,9 +298,14 @@ export async function createServer(
       request.cookies[cookieName],
       typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
     );
-    const input = RuntimeActionSchemas.submit.parse(request.body);
+    const input = ApiRoutes.relay.input.parse(request.body);
     spend(account.id);
-    return chain.relay(account, input.request, input.sig);
+    return chain.relay(
+      account,
+      input.request,
+      input.sig,
+      'session_id' in input ? input.session_id : undefined,
+    );
   });
   function billingService(): StripeBilling {
     if (!options.billing) throw new ApiError('STRIPE_NOT_CONFIGURED', 503);

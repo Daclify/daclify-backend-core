@@ -79,6 +79,12 @@ function setup(allowance = 1000n) {
     epochs: [],
   });
   const chain: ChainGateway = {
+    governance: async () => {
+      throw new Error('Not part of this fixture');
+    },
+    execute: async () => {
+      throw new Error('Not part of this fixture');
+    },
     finalize: async () => {
       throw new Error('Not part of this fixture');
     },

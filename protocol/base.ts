@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { CID } from 'multiformats/cid';
 import { satisfies, valid, validRange } from 'semver';
 
-export const VERSION = '0.1.0-alpha.1';
+export const VERSION = '0.2.0-alpha.1';
 export const INTERFACE_VERSION = 1;
 export const MAX_ASSET_UNITS = (1n << 62n) - 1n;
 export const Uint64Schema = z
@@ -42,6 +42,7 @@ export const PrivacySchema = z.enum([
 export const CapabilitySchema = z.enum([
   'ballot.create',
   'ballot.finalize',
+  'ballot.execute',
   'obligation.create',
   'obligation.execute',
   'member.manage',
@@ -61,16 +62,6 @@ export const ModuleManifestSchema = z.strictObject({
     .refine((values) => new Set(values).size === values.length),
   helpTopic: z.string().regex(/^[a-z][a-z0-9.-]{1,63}$/),
 });
-export const MetadataSchema = z
-  .strictObject({
-    schemaVersion: z.literal(1),
-    title: z.string().min(1).max(160),
-    description: z.string().max(4000).default(''),
-  })
-  .refine(
-    (value) => new TextEncoder().encode(JSON.stringify(value)).byteLength <= 4096,
-    'Metadata exceeds 4096 bytes',
-  );
 export const CidSchema = z
   .string()
   .max(128)
