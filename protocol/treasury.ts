@@ -4,7 +4,31 @@ import { RuntimeTableSchemas } from '../sdk/generated/schemas.js';
 export const TreasurySchema = z.strictObject({
   dao: DaoRefSchema,
   obligations: z.array(RuntimeTableSchemas.obligations).max(5000),
+  evidence: z.array(RuntimeTableSchemas.evidence).max(5000),
 });
+export function evidenceForDao<Row extends { dao_id: string }>(
+  rows: readonly Row[],
+  daoId: string,
+): Row[] {
+  return rows.filter((row) => row.dao_id === daoId);
+}
+export function evidenceTableMissing(body: unknown): boolean {
+  const parsed = z
+    .object({
+      error: z
+        .object({
+          details: z.array(z.object({ message: z.string() })).optional(),
+        })
+        .optional(),
+    })
+    .safeParse(body);
+  return (
+    parsed.success &&
+    parsed.data.error?.details?.some(
+      (detail) => detail.message === 'Table evidence is not specified in the ABI',
+    ) === true
+  );
+}
 export const SettlementRequestSchema = z.strictObject({
   dao: DaoRefSchema,
   source: NativeAccountSchema,

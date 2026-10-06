@@ -33,6 +33,7 @@ function fixture(status: number) {
           status,
         },
       ],
+      evidence: [],
     }),
   );
   return { gateway, read };

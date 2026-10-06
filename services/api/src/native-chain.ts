@@ -2,6 +2,8 @@ import { DaoContentSchema, type DaoContent } from '../../../protocol/content.js'
 import {
   TreasurySchema,
   SettlementRequestSchema,
+  evidenceForDao,
+  evidenceTableMissing,
   type Treasury,
   type SettlementRequest,
   type SettlementResult,
@@ -207,7 +209,36 @@ export class NativeChainGateway implements ChainGateway {
     return TreasurySchema.parse({
       dao: dao.reference,
       obligations: await this.table('obligations', daoId, '0', 5000),
+      evidence: evidenceForDao(await this.evidenceRows(), daoId),
     });
+  }
+  private async evidenceRows(): Promise<z.infer<typeof RuntimeTableSchemas.evidence>[]> {
+    const response = await fetch(`${this.config.rpcUrl}/v1/chain/get_table_rows`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        code: this.config.runtime,
+        table: 'evidence',
+        scope: this.config.runtime,
+        json: true,
+        key_type: 'i64',
+        lower_bound: '0',
+        limit: 5000,
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) {
+      const body: unknown = await response.json().catch(() => undefined);
+      if (evidenceTableMissing(body)) return [];
+      throw new ApiError('CHAIN_UNAVAILABLE', 503);
+    }
+    const body = z
+      .object({ rows: z.array(z.unknown()), more: z.boolean() })
+      .parse(await response.json());
+    if (body.more) throw new ApiError('RESULT_LIMIT', 413);
+    const parsed = z.array(RuntimeTableSchemas.evidence).safeParse(body.rows);
+    if (!parsed.success) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+    return parsed.data;
   }
   async settle(input: SettlementRequest): Promise<SettlementResult> {
     input = SettlementRequestSchema.parse(input);

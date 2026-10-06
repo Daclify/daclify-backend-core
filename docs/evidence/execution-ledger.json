@@ -88,16 +88,16 @@
     "There are no legacy production DAOs. Live cutover is not a launch blocker. Migration tooling against recorded fixtures remains open",
     "Independent security review before mainnet launch"
   ],
-  "lastCheckpoint": "2026-10-06 payroll catch-up, pause, label, Telos GET_CODE_HASH, and sponsored resource limits. payroll::settle pays every already-due installment. Payroll wasm 364d6f0bbb049251c7edc71218fc3d4a2b5fa34356d21a26d8ae61e2ce1f18e6 was set on the fixture in dba5de2a7a39e167c2e04e15d2ea6b9d2a9440064629a5fe3e7a08dd7d1962ed. The fixture runtime remains 93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042. Publication remains refused.",
+  "lastCheckpoint": "2026-10-06 payroll catch-up and confirmext runtime. payroll::settle pays every already-due installment. Payroll wasm 364d6f0bbb049251c7edc71218fc3d4a2b5fa34356d21a26d8ae61e2ce1f18e6 is on the fixture. Runtime wasm 3d716f22468286d26b89d5379e0d571cd348a3c9dd8888ca785056c3f1de95a6 was set in ce3db1f0c82859fb3c83efbc8e4762928e1672698f1789dc27e32bc6c855348a after an ABI comparison. The treasury API returns that DAO's evidence rows. Publication remains refused.",
   "currentCheckout": {
     "coreBase": "12771ef",
     "modulesBase": "68bee32",
     "frontendBase": "676e267",
     "node": "24.21.0",
     "npm": "11.19.0",
-    "runtimeCodeHash": "93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042",
-    "previousRuntimeCodeHash": "79878fbe88cf4b2019cac7bed5db3b761caf7d09cd1f1489090402f39632276a",
-    "runtimeSetcode": "a39d1994da3400e2d6e0ce53d03ff7c7dbcb556d193ae7940d4af54963e7e295",
+    "runtimeCodeHash": "3d716f22468286d26b89d5379e0d571cd348a3c9dd8888ca785056c3f1de95a6",
+    "previousRuntimeCodeHash": "93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042",
+    "runtimeSetcode": "ce3db1f0c82859fb3c83efbc8e4762928e1672698f1789dc27e32bc6c855348a",
     "getCodeHashFeature": "bcd2a26394b36614fd4894241d3c451ab0f6fd110958c3423073621a70826e99",
     "ran": [
       "core npm run verify: eslint, tsc, docs:check, and vitest 236 passed across 27 files. publishRelease returned publication refused",
@@ -118,7 +118,13 @@
       "Telos configure-report: GET_CODE_HASH active, digest bcd2a26394b36614fd4894241d3c451ab0f6fd110958c3423073621a70826e99, activation block 249642093. mainnet.telos.net head 492511476 server v1.2.3-alpha2. telos.greymass.com head 492511479 server v1.2.2. Read-only. See telos-get-code-hash.json",
       "fixture configure-report failed only CODE_HASH:daclifycore. decide, works, and payroll hashes matched. resourcesAcceptable was true on all four accounts",
       "fixture payroll set contract transaction dba5de2a7a39e167c2e04e15d2ea6b9d2a9440064629a5fe3e7a08dd7d1962ed. Runtime was not set",
-      "local modules tarball daclify-modules-0.1.0-alpha.1.tgz was rebuilt and installed into core and frontend. It was not published"
+      "local modules tarball daclify-modules-0.1.0-alpha.1.tgz was rebuilt and installed into core and frontend. It was not published",
+      "fixture runtime set contract transaction ce3db1f0c82859fb3c83efbc8e4762928e1672698f1789dc27e32bc6c855348a after the ABI comparison. Existing table and action fields were unchanged. code hash 3d716f22468286d26b89d5379e0d571cd348a3c9dd8888ca785056c3f1de95a6. The first 100 DAO rows and the next page still deserialized",
+      "fixture configure-report after that setcode: ok, no failures, resourcesAcceptable true for daclifycore, decide, works, and payroll",
+      "core npm run verify: eslint, tsc, docs:check, and vitest 246 passed across 29 files. publishRelease returned publication refused",
+      "modules npm test passed 48 tests across 7 files after the core protocol tarball refresh",
+      "frontend vue-tsc, npm test 41 passed across 7 files, and npm run build passed. Browser journeys were not run",
+      "fixture treasury read for DAO 1791212784 returned 0 obligations and 0 evidence rows from runtime 3d716f22468286d26b89d5379e0d571cd348a3c9dd8888ca785056c3f1de95a6"
     ],
     "notRun": [
       "native module-authority, dispatch, and permission after the rotatekey setcode",
@@ -130,8 +136,8 @@
       "frontend browser journeys and the module-enable click",
       "GitHub Actions for the new workflows",
       "package:release publication, which still refuses",
-      "fixture setcode of runtime 3d716f22468286d26b89d5379e0d571cd348a3c9dd8888ca785056c3f1de95a6",
-      "publication of the rebuilt modules tarball"
+      "publication of the rebuilt modules tarball",
+      "native suite after runtime 3d716f22468286d26b89d5379e0d571cd348a3c9dd8888ca785056c3f1de95a6"
     ]
   },
   "verified": [
@@ -160,13 +166,13 @@
       "check": "native module-authority regression",
       "lastResult": "not rerun",
       "status": "held",
-      "reason": "Passed on 2026-10-05 against wasm 79878fbe88cf4b2019cac7bed5db3b761caf7d09cd1f1489090402f39632276a. The fixture was later set to 93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042 for rotatekey. Those four cleos cases were not rerun."
+      "reason": "Passed on 2026-10-05 against wasm 79878fbe88cf4b2019cac7bed5db3b761caf7d09cd1f1489090402f39632276a. The fixture was later set to 93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042 for rotatekey, then to 3d716f22468286d26b89d5379e0d571cd348a3c9dd8888ca785056c3f1de95a6 for confirmext. Those four cleos cases were not rerun."
     },
     {
       "check": "complete current native suite",
       "lastResult": "incomplete",
       "status": "held",
-      "reason": "Earlier 8 cleos cases passed on wasm 79878fbe88cf4b2019cac7bed5db3b761caf7d09cd1f1489090402f39632276a. They were not rerun after setcode to 93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042. native/runtime.test.ts was not rerun. The HTTP/API native file was not run because DATABASE_URL was unset."
+      "reason": "Earlier 8 cleos cases passed on wasm 79878fbe88cf4b2019cac7bed5db3b761caf7d09cd1f1489090402f39632276a. They were not rerun after setcode to 93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042 or after setcode to 3d716f22468286d26b89d5379e0d571cd348a3c9dd8888ca785056c3f1de95a6. native/runtime.test.ts was not rerun. The HTTP/API native file was not run because DATABASE_URL was unset."
     }
   ]
 }

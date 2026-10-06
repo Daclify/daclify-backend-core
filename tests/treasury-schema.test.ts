@@ -3,6 +3,8 @@ import {
   SettlementRequestSchema,
   SettlementResultSchema,
   TreasurySchema,
+  evidenceForDao,
+  evidenceTableMissing,
 } from '../protocol/treasury.js';
 const dao = { chainId: 'ab'.repeat(32), contract: 'daclifycore', daoId: '1', interfaceVersion: 1 };
 describe('core treasury public protocol', () => {
@@ -40,7 +42,36 @@ describe('core treasury public protocol', () => {
           status: 1,
         },
       ],
+      evidence: [
+        {
+          id: '4',
+          dao_id: '1',
+          obligation_id: '1',
+          recipient: '2',
+          quantity: '1.0000 TLOS',
+          chain: 'telos',
+          payer: 'alice',
+          reference: 'cd'.repeat(32),
+          mode: 1,
+        },
+      ],
     });
     expect(treasury.obligations[0]?.recipient).toBe('2');
+    expect(treasury.evidence[0]?.reference).toBe('cd'.repeat(32));
+    expect(TreasurySchema.safeParse({ ...treasury, evidence: [{ mode: 1 }] }).success).toBe(false);
+  });
+  it('keeps another DAO’s statement off this treasury and recognizes a runtime without the table', () => {
+    const rows = [
+      { dao_id: '1', id: '4' },
+      { dao_id: '2', id: '5' },
+    ];
+    expect(evidenceForDao(rows, '1')).toEqual([{ dao_id: '1', id: '4' }]);
+    expect(
+      evidenceTableMissing({
+        error: { details: [{ message: 'Table evidence is not specified in the ABI' }] },
+      }),
+    ).toBe(true);
+    expect(evidenceTableMissing({ error: { details: [{ message: 'OTHER' }] } })).toBe(false);
+    expect(evidenceTableMissing(null)).toBe(false);
   });
 });

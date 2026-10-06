@@ -1886,11 +1886,71 @@
               ],
               "additionalProperties": false
             }
+          },
+          "evidence": {
+            "maxItems": 5000,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "dao_id": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "obligation_id": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "recipient": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "quantity": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)? [A-Z]{1,7}$"
+                },
+                "chain": {
+                  "type": "string",
+                  "maxLength": 16384
+                },
+                "payer": {
+                  "type": "string",
+                  "maxLength": 16384
+                },
+                "reference": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "mode": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                }
+              },
+              "required": [
+                "id",
+                "dao_id",
+                "obligation_id",
+                "recipient",
+                "quantity",
+                "chain",
+                "payer",
+                "reference",
+                "mode"
+              ],
+              "additionalProperties": false
+            }
           }
         },
         "required": [
           "dao",
-          "obligations"
+          "obligations",
+          "evidence"
         ],
         "additionalProperties": false
       },
