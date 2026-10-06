@@ -4,6 +4,7 @@ import { PrivateKey, Asset } from '@wharfkit/antelope';
 import { z } from 'zod';
 import { send, row, loadContract } from './helpers/vert.js';
 import { wasmCodeHash } from './helpers/code-hash.js';
+import { listFirstParty } from './helpers/list-module.js';
 const worksHash = wasmCodeHash('.artifacts/contracts/modrelay.wasm');
 let chain: Blockchain;
 let runtime: ReturnType<typeof loadContract>;
@@ -29,6 +30,7 @@ beforeEach(async () => {
     await send(t, 'create', [t.name.toString(), '1000000.0000 TLOS'], `${t.name}@active`);
     await send(t, 'issue', ['alice', '1000.0000 TLOS', ''], `${t.name}@active`);
   }
+  await listFirstParty(runtime, 'works', worksHash);
   for (const id of [1, 2]) {
     await send(
       runtime,

@@ -4,6 +4,7 @@ import { Blockchain } from '@proton/vert';
 import { ABI, Checksum256, PrivateKey, Serializer } from '@wharfkit/antelope';
 import { loadContract, row, send } from './helpers/vert.js';
 import { ZERO_CODE_HASH, wasmCodeHash } from './helpers/code-hash.js';
+import { listFirstParty } from './helpers/list-module.js';
 import { z } from 'zod';
 
 const worksWasm = '.artifacts/contracts/modrelay.wasm';
@@ -46,6 +47,7 @@ beforeEach(async () => {
     [1, 1, 'alice', signer.toPublic().toString(), 'key', 0],
     'alice@active',
   );
+  await listFirstParty(runtime, 'works', worksHash);
   await send(
     runtime,
     'setmodule',

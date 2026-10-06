@@ -4,11 +4,12 @@ import { PrivateKey, Name } from '@wharfkit/antelope';
 import { z } from 'zod';
 import { loadContract, send, row } from './helpers/vert.js';
 import { wasmCodeHash } from './helpers/code-hash.js';
+import { listFirstParty } from './helpers/list-module.js';
 const worksHash = wasmCodeHash('.artifacts/contracts/modrelay.wasm');
 let core: ReturnType<typeof load>;
 function load() {
   const chain = new Blockchain();
-  chain.createAccounts('alice');
+  chain.createAccounts('alice', 'eosio.token');
   const core = loadContract(chain, 'daclifycore', '.artifacts/contracts/runtime');
   loadContract(chain, 'works', '.artifacts/contracts/modrelay');
   return core;
@@ -27,6 +28,7 @@ beforeEach(async () => {
 });
 describe('walletless DAO administration', () => {
   it('installs a bounded module through an internal administrator', async () => {
+    await listFirstParty(core, 'works', worksHash);
     await send(
       core,
       'modconfig',

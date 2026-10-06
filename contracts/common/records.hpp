@@ -92,6 +92,36 @@ struct [[eosio::table("govlocks"), eosio::contract("runtime")]] governance_lock 
  EOSLIB_SERIALIZE(governance_lock,(id)(source)(source_id)(expires)(active))
 };
 using governance_locks=multi_index<"govlocks"_n,governance_lock,indexed_by<"bysource"_n,const_mem_fun<governance_lock,checksum256,&governance_lock::by_source>>>;
+struct [[eosio::table("feecfg"), eosio::contract("runtime")]] fee_config {
+  uint16_t third_party_bps; uint16_t first_party_bps; name treasury; name token_contract; symbol token_symbol; name names;
+  EOSLIB_SERIALIZE(fee_config,(third_party_bps)(first_party_bps)(treasury)(token_contract)(token_symbol)(names))
+};
+using fee_settings=singleton<"feecfg"_n,fee_config>;
+struct [[eosio::table("catalogue"), eosio::contract("runtime")]] catalogue_record {
+  name account; name publisher; uint8_t party; uint8_t complies; asset price; checksum256 code_hash; std::string title;
+  uint64_t primary_key() const { return account.value; }
+  EOSLIB_SERIALIZE(catalogue_record,(account)(publisher)(party)(complies)(price)(code_hash)(title))
+};
+using catalogue=multi_index<"catalogue"_n,catalogue_record>;
+struct [[eosio::table("modpays"), eosio::contract("runtime")]] modpay_record {
+  uint64_t id; name modaccount; name payer; name publisher; asset gross; asset platform_fee; asset publisher_share; uint8_t party; uint16_t bps;
+  uint64_t primary_key() const { return id; }
+  EOSLIB_SERIALIZE(modpay_record,(id)(modaccount)(payer)(publisher)(gross)(platform_fee)(publisher_share)(party)(bps))
+};
+using modpays=multi_index<"modpays"_n,modpay_record>;
+// Copy lives beside the catalogue so an existing catalogue row stays readable.
+struct [[eosio::table("modcopy"), eosio::contract("runtime")]] modcopy_record {
+  name account; std::string summary; std::string detail;
+  uint64_t primary_key() const { return account.value; }
+  EOSLIB_SERIALIZE(modcopy_record,(account)(summary)(detail))
+};
+using modcopy=multi_index<"modcopy"_n,modcopy_record>;
+// Rates the governing DAO can change without rewriting feecfg.
+struct [[eosio::table("mktcfg"), eosio::contract("runtime")]] market_policy {
+  uint16_t bump_bps; uint16_t quote_premium_bps; uint64_t dao_id;
+  EOSLIB_SERIALIZE(market_policy,(bump_bps)(quote_premium_bps)(dao_id))
+};
+using market_settings=singleton<"mktcfg"_n,market_policy>;
 struct actor_context { name runtime; uint64_t dao_id; uint64_t member_id; EOSLIB_SERIALIZE(actor_context,(runtime)(dao_id)(member_id)) };
 inline uint64_t add64(uint64_t a,uint64_t b) { check(b<=std::numeric_limits<uint64_t>::max()-a,"OVERFLOW"); return a+b; }
 inline int64_t add_amount(int64_t a,int64_t b) { auto sum=(__int128)a+b; check(sum>=0&&sum<=asset::max_amount,"AMOUNT_RANGE"); return (int64_t)sum; }

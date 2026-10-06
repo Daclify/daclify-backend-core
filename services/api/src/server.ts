@@ -30,6 +30,7 @@ import { IdSchema } from '../../../protocol/base.js';
 import { ApiError } from './errors.js';
 import type { ContentService } from './content/service.js';
 import { StripeBilling } from './billing/service.js';
+import { registerMarketRoutes } from './market/routes.js';
 import { MAX_HOSTED_CONTENT_BYTES } from '../../../protocol/storage.js';
 import {
   createWindowLimiter,
@@ -321,6 +322,7 @@ export async function createServer(
     }
     return { received: true };
   });
+  registerMarketRoutes(app, chain, options.billing, session, admitCheckout, cookieName);
   registerSignInRoutes(
     app,
     pool,

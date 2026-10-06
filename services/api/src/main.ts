@@ -109,7 +109,9 @@ const docs = readDocsAgent(process.env);
 const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
   ...(content ? { content } : {}),
   ...(providers.google || providers.telegram ? { providers } : {}),
-  ...(stripeConfig ? { billing: new StripeBilling(pool, stripeConfig, env.FRONTEND_ORIGIN) } : {}),
+  ...(stripeConfig
+    ? { billing: new StripeBilling(pool, stripeConfig, env.FRONTEND_ORIGIN, chain) }
+    : {}),
   signIn: { environment: env.NETWORK_ENVIRONMENT },
   ...(docs ? { docs } : {}),
 });

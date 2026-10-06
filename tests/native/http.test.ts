@@ -17,6 +17,7 @@ import {
 } from '../../protocol/api.js';
 import { ModuleStateSchema } from '@daclify/modules';
 import { encodeDecide, ModuleCodeHashes } from '@daclify/modules/sdk';
+import { listFirstPartyModule } from './list-module.js';
 import { makeInstruction, encodeAction, instructionDigest } from '../../sdk/index.js';
 const url = process.env.DATABASE_URL;
 if (
@@ -52,6 +53,7 @@ let csrf = '';
 let dao: z.infer<typeof DaoSummarySchema>;
 beforeAll(async () => {
   unlockFixtureWallet('daclify-v2-native');
+  listFirstPartyModule('decide', ModuleCodeHashes.decide, 'Decide');
   await migrate(pool);
   const c = ChallengeSchema.parse(
     (

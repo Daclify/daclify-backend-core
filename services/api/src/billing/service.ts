@@ -7,7 +7,14 @@ import {
   randomIntegrationSuffix,
   requireCheckoutUrl,
 } from './checkout.js';
-import { decideStripeEvent } from './decision.js';
+import {
+  classifyStripeEvent,
+  nameCheckoutIdentifier,
+  nameCheckoutParams,
+  nameReturnUrls,
+  type NameFulfiller,
+  type NamePurchase,
+} from './name.js';
 import { PostgresServicePayments, type ServiceReceipt } from './settle.js';
 import { createStripeClient, readStripeEvent } from './stripe.js';
 
@@ -19,9 +26,29 @@ export class StripeBilling {
     pool: Pool,
     private readonly config: StripeConfig,
     private readonly origin: string,
+    private readonly names?: NameFulfiller,
   ) {
     this.stripe = createStripeClient(config.secretKey);
     this.payments = new PostgresServicePayments(pool);
+  }
+
+  async startNameCheckout(
+    input: Omit<NamePurchase, 'reference'> & { accountId: string },
+  ): Promise<{ url: string }> {
+    const urls = nameReturnUrls(this.origin);
+    const session = await this.stripe.checkout.sessions.create(
+      nameCheckoutParams({
+        accountId: input.accountId,
+        accountName: input.accountName,
+        ownerKey: input.ownerKey,
+        activeKey: input.activeKey,
+        usdCents: input.usdCents,
+        successUrl: urls.successUrl,
+        cancelUrl: urls.cancelUrl,
+        integrationIdentifier: nameCheckoutIdentifier(),
+      }),
+    );
+    return { url: requireCheckoutUrl(session.url) };
   }
 
   async startCheckout(accountId: string): Promise<{ url: string }> {
@@ -40,7 +67,13 @@ export class StripeBilling {
 
   async receiveWebhook(rawBody: Buffer, signature: string): Promise<void> {
     const event = readStripeEvent(this.stripe, rawBody, signature, this.config.webhookSecret);
-    const decision = decideStripeEvent(event);
+    const decision = classifyStripeEvent(event);
+    if (decision.kind === 'purchase') {
+      if (!this.names) throw new Error('NAMES_UNCONFIGURED');
+      await this.names.fulfillName(decision.purchase);
+      return;
+    }
+    if (decision.kind === 'invalid') throw new Error('SERVICE_EVENT_SHAPE');
     if (decision.kind === 'ignore' && decision.reason === 'SESSION_SHAPE') {
       throw new Error('SERVICE_EVENT_SHAPE');
     }

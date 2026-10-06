@@ -100,9 +100,19 @@ That receipt belongs to the signed-in account. It does not change votes, permiss
 
 A TLOS payment for the same hosted service is quoted from the Delphi tlosusd median plus 20 percent and is paid to the billing account. Extra TLOS is a tip. The chain watcher that would match that transfer to an account is not part of this release, so a TLOS transfer does not create the card receipt and does not change DAO rights.
 
+## Module catalogue and Telos names
+
+Modules that a DAO can turn on are listed in the runtime catalogue. A listing is stored only when it accepts the platform fee rule. A DAO cannot enable a module that is missing from that catalogue or whose code no longer matches the listing.
+
+A first-party module is published by the platform treasury. Its usage charge, when one is set, is kept at the first-party rate stored in the runtime fee configuration. A third-party module is published by someone else. Its usage charge pays the platform the third-party rate in that same configuration, and the rest goes to the publisher. The rate can be changed later. The next payment uses the rate that is current, not the rate from the day the module was listed.
+
+The Telos nameservice sells new native accounts from its own contract. A 12-character name without a dot uses the basic tier. Its dollar price is stored on chain. When a TLOS conversion rate is stored beside it, the TLOS price is that dollar amount converted at the rate plus the quote premium. The account is created with the CPU, NET, and RAM stored on that tier. A name that contains a dot can be sold only when the longest suffix is connected. The suffix owner sets the price in TLOS or dollars with regsuffix. Each sale raises that price by the bump rate, and the platform keeps the third-party rate. A shorter name without a dot uses the premium tier. Someone can still list one exact name with regname. Prices, suffixes, fee rates, and completed sales stay on chain, so a new server can read them after the application database is gone. A Daclify DAO admin changes the platform cut, the bump, and the quote premium with govfees after the runtime links that DAO. Until then the runtime account can change them.
+
+Card checkout uses the dollar amount stored on chain for that name. The browser creates the new account keys and does not send the private keys to the server. After the card payment is confirmed, the names contract records the sale and creates the account. A card session that never reaches the chain remains with the card processor. Returning from the card page does not by itself create the account. If the on-chain price changes before confirmation, the account is not created.
+
 ## runtime contract
 
-Source ABI JSON SHA-256: `8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8fdfae6f853`.
+Source ABI JSON SHA-256: `e62449e340c2a0dbec46c0a9fc43a366bf84efec902c95a58f749d8abae2c40f`.
 
 ### Action: approveob
 
@@ -167,6 +177,18 @@ Source ABI JSON SHA-256: `8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8
 | encryption_key | string |
 | custody | uint8 |
 
+### Action: govfees
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| third_party_bps | uint16 |
+| first_party_bps | uint16 |
+| bump_bps | uint16 |
+| quote_premium_bps | uint16 |
+
 ### Action: govlock
 
 | Field | ABI type |
@@ -217,6 +239,18 @@ Source ABI JSON SHA-256: `8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8
 | dao_id | uint64 |
 | member_id | uint64 |
 | account | name |
+
+### Action: listmod
+
+| Field | ABI type |
+| --- | --- |
+| account | name |
+| publisher | name |
+| party | uint8 |
+| accepts_fee_rule | uint8 |
+| price | asset |
+| code_hash | checksum256 |
+| title | string |
 
 ### Action: modconfig
 
@@ -316,6 +350,23 @@ Source ABI JSON SHA-256: `8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8
 | target | uint64 |
 | quantity | uint64 |
 
+### Action: setfees
+
+| Field | ABI type |
+| --- | --- |
+| third_party_bps | uint16 |
+| first_party_bps | uint16 |
+| treasury | name |
+| token_contract | name |
+| token_symbol | symbol |
+| names | name |
+
+### Action: setgov
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+
 ### Action: setmeta
 
 | Field | ABI type |
@@ -324,6 +375,14 @@ Source ABI JSON SHA-256: `8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8
 | dao_id | uint64 |
 | member_id | uint64 |
 | metadata | string |
+
+### Action: setmodcopy
+
+| Field | ABI type |
+| --- | --- |
+| account | name |
+| summary | string |
+| detail | string |
 
 ### Action: setmodule
 
@@ -335,6 +394,21 @@ Source ABI JSON SHA-256: `8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8
 | actions | name[] |
 | grants | name[] |
 | code_hash | checksum256 |
+
+### Action: setoracle
+
+| Field | ABI type |
+| --- | --- |
+| median | uint64 |
+| quoted_precision | uint8 |
+| observed_at | uint32 |
+
+### Action: setpolicy
+
+| Field | ABI type |
+| --- | --- |
+| bump_bps | uint16 |
+| quote_premium_bps | uint16 |
 
 ### Action: setprofile
 
@@ -370,6 +444,12 @@ Source ABI JSON SHA-256: `8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8
 | --- | --- |
 | request | instruction |
 
+### Action: unlistmod
+
+| Field | ABI type |
+| --- | --- |
+| account | name |
+
 ### Action: unstake
 
 | Field | ABI type |
@@ -389,6 +469,18 @@ Source ABI JSON SHA-256: `8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8
 | member_id | uint64 |
 | destination | name |
 | quantity | asset |
+
+### Table: catalogue
+
+| Field | ABI type |
+| --- | --- |
+| account | name |
+| publisher | name |
+| party | uint8 |
+| complies | uint8 |
+| price | asset |
+| code_hash | checksum256 |
+| title | string |
 
 ### Table: daos
 
@@ -451,6 +543,17 @@ Source ABI JSON SHA-256: `8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8
 | reference | checksum256 |
 | mode | uint8 |
 
+### Table: feecfg
+
+| Field | ABI type |
+| --- | --- |
+| third_party_bps | uint16 |
+| first_party_bps | uint16 |
+| treasury | name |
+| token_contract | name |
+| token_symbol | symbol |
+| names | name |
+
 ### Table: govlocks
 
 | Field | ABI type |
@@ -488,6 +591,36 @@ Source ABI JSON SHA-256: `8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8
 | stake | int64 |
 | claim | int64 |
 | join_epoch | uint64 |
+
+### Table: mktcfg
+
+| Field | ABI type |
+| --- | --- |
+| bump_bps | uint16 |
+| quote_premium_bps | uint16 |
+| dao_id | uint64 |
+
+### Table: modcopy
+
+| Field | ABI type |
+| --- | --- |
+| account | name |
+| summary | string |
+| detail | string |
+
+### Table: modpays
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| modaccount | name |
+| payer | name |
+| publisher | name |
+| gross | asset |
+| platform_fee | asset |
+| publisher_share | asset |
+| party | uint8 |
+| bps | uint16 |
 
 ### Table: modules
 

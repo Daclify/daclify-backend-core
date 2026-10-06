@@ -8,6 +8,7 @@ import { CID } from 'multiformats/cid';
 import { sha256 } from 'multiformats/hashes/sha2';
 import { unlockFixtureWallet } from '../../tools/native/wallet.js';
 import { ZERO_CODE_HASH, wasmCodeHash } from '../helpers/code-hash.js';
+import { listFirstPartyModule, unlistModule } from './list-module.js';
 import { z } from 'zod';
 const dao = String(Date.now());
 const rpc = 'http://127.0.0.1:18888';
@@ -65,6 +66,7 @@ beforeAll(async () => {
     [dao, 1, '', PrivateKey.generate('K1').toPublic().toString(), 'fixture', 0],
     'alice',
   );
+  listFirstPartyModule('works', worksHash, 'Works');
   push(
     'daclifycore',
     'setmodule',
@@ -195,13 +197,18 @@ describe('native module owner and contract authority are distinct', () => {
     ]);
     const hash = await liveCodeHash(account);
     expect(hash).toBe(wasmCodeHash('.artifacts/contracts/modrelay.wasm'));
-    push('daclifycore', 'setmodule', [dao, account, 1, [], ['reserve'], hash], 'alice');
-    push(account, 'reserve', ['daclifycore', dao, 77, 1, '1.0000 TLOS', 0], account);
-    deployRelay(account, wasmWithMarker(wasm));
-    expect(await liveCodeHash(account)).not.toBe(hash);
-    expect(() =>
-      push(account, 'reserve', ['daclifycore', dao, 78, 1, '1.0000 TLOS', 0], account),
-    ).toThrow('MODULE_CODE');
-    push('daclifycore', 'setmodule', [dao, account, 1, [], [], ZERO_CODE_HASH], 'alice');
+    listFirstPartyModule(account, hash, 'Pin probe');
+    try {
+      push('daclifycore', 'setmodule', [dao, account, 1, [], ['reserve'], hash], 'alice');
+      push(account, 'reserve', ['daclifycore', dao, 77, 1, '1.0000 TLOS', 0], account);
+      deployRelay(account, wasmWithMarker(wasm));
+      expect(await liveCodeHash(account)).not.toBe(hash);
+      expect(() =>
+        push(account, 'reserve', ['daclifycore', dao, 78, 1, '1.0000 TLOS', 0], account),
+      ).toThrow('MODULE_CODE');
+      push('daclifycore', 'setmodule', [dao, account, 1, [], [], ZERO_CODE_HASH], 'alice');
+    } finally {
+      unlistModule(account);
+    }
   });
 });

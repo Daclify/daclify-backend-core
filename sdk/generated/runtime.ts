@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = '8d03e1fddbe502949807b1e060fd138bd2c964d27ce8054e1654e8fdfae6f853';
+export const runtimeAbiHash = 'e62449e340c2a0dbec46c0a9fc43a366bf84efec902c95a58f749d8abae2c40f';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -38,6 +38,40 @@ export const runtimeAbi = {
         {
           "name": "source_id",
           "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "catalogue_record",
+      "base": "",
+      "fields": [
+        {
+          "name": "account",
+          "type": "name"
+        },
+        {
+          "name": "publisher",
+          "type": "name"
+        },
+        {
+          "name": "party",
+          "type": "uint8"
+        },
+        {
+          "name": "complies",
+          "type": "uint8"
+        },
+        {
+          "name": "price",
+          "type": "asset"
+        },
+        {
+          "name": "code_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "title",
+          "type": "string"
         }
       ]
     },
@@ -362,6 +396,36 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "fee_config",
+      "base": "",
+      "fields": [
+        {
+          "name": "third_party_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "first_party_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "treasury",
+          "type": "name"
+        },
+        {
+          "name": "token_contract",
+          "type": "name"
+        },
+        {
+          "name": "token_symbol",
+          "type": "symbol"
+        },
+        {
+          "name": "names",
+          "type": "name"
+        }
+      ]
+    },
+    {
       "name": "governance_lock",
       "base": "",
       "fields": [
@@ -384,6 +448,40 @@ export const runtimeAbi = {
         {
           "name": "active",
           "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "govfees",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "third_party_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "first_party_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "bump_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "quote_premium_bps",
+          "type": "uint16"
         }
       ]
     },
@@ -580,6 +678,58 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "listmod",
+      "base": "",
+      "fields": [
+        {
+          "name": "account",
+          "type": "name"
+        },
+        {
+          "name": "publisher",
+          "type": "name"
+        },
+        {
+          "name": "party",
+          "type": "uint8"
+        },
+        {
+          "name": "accepts_fee_rule",
+          "type": "uint8"
+        },
+        {
+          "name": "price",
+          "type": "asset"
+        },
+        {
+          "name": "code_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "title",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "market_policy",
+      "base": "",
+      "fields": [
+        {
+          "name": "bump_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "quote_premium_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
       "name": "member_record",
       "base": "",
       "fields": [
@@ -672,6 +822,66 @@ export const runtimeAbi = {
         {
           "name": "code_hash",
           "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "modcopy_record",
+      "base": "",
+      "fields": [
+        {
+          "name": "account",
+          "type": "name"
+        },
+        {
+          "name": "summary",
+          "type": "string"
+        },
+        {
+          "name": "detail",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "modpay_record",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "modaccount",
+          "type": "name"
+        },
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "publisher",
+          "type": "name"
+        },
+        {
+          "name": "gross",
+          "type": "asset"
+        },
+        {
+          "name": "platform_fee",
+          "type": "asset"
+        },
+        {
+          "name": "publisher_share",
+          "type": "asset"
+        },
+        {
+          "name": "party",
+          "type": "uint8"
+        },
+        {
+          "name": "bps",
+          "type": "uint16"
         }
       ]
     },
@@ -990,6 +1200,46 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "setfees",
+      "base": "",
+      "fields": [
+        {
+          "name": "third_party_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "first_party_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "treasury",
+          "type": "name"
+        },
+        {
+          "name": "token_contract",
+          "type": "name"
+        },
+        {
+          "name": "token_symbol",
+          "type": "symbol"
+        },
+        {
+          "name": "names",
+          "type": "name"
+        }
+      ]
+    },
+    {
+      "name": "setgov",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
       "name": "setmeta",
       "base": "",
       "fields": [
@@ -1007,6 +1257,24 @@ export const runtimeAbi = {
         },
         {
           "name": "metadata",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "setmodcopy",
+      "base": "",
+      "fields": [
+        {
+          "name": "account",
+          "type": "name"
+        },
+        {
+          "name": "summary",
+          "type": "string"
+        },
+        {
+          "name": "detail",
           "type": "string"
         }
       ]
@@ -1038,6 +1306,38 @@ export const runtimeAbi = {
         {
           "name": "code_hash",
           "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "setoracle",
+      "base": "",
+      "fields": [
+        {
+          "name": "median",
+          "type": "uint64"
+        },
+        {
+          "name": "quoted_precision",
+          "type": "uint8"
+        },
+        {
+          "name": "observed_at",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "setpolicy",
+      "base": "",
+      "fields": [
+        {
+          "name": "bump_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "quote_premium_bps",
+          "type": "uint16"
         }
       ]
     },
@@ -1136,6 +1436,16 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "unlistmod",
+      "base": "",
+      "fields": [
+        {
+          "name": "account",
+          "type": "name"
+        }
+      ]
+    },
+    {
       "name": "unstake",
       "base": "",
       "fields": [
@@ -1220,6 +1530,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "govfees",
+      "type": "govfees",
+      "ricardian_contract": ""
+    },
+    {
       "name": "govlock",
       "type": "govlock",
       "ricardian_contract": ""
@@ -1247,6 +1562,11 @@ export const runtimeAbi = {
     {
       "name": "linknative",
       "type": "linknative",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "listmod",
+      "type": "listmod",
       "ricardian_contract": ""
     },
     {
@@ -1295,13 +1615,38 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "setfees",
+      "type": "setfees",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "setgov",
+      "type": "setgov",
+      "ricardian_contract": ""
+    },
+    {
       "name": "setmeta",
       "type": "setmeta",
       "ricardian_contract": ""
     },
     {
+      "name": "setmodcopy",
+      "type": "setmodcopy",
+      "ricardian_contract": ""
+    },
+    {
       "name": "setmodule",
       "type": "setmodule",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "setoracle",
+      "type": "setoracle",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "setpolicy",
+      "type": "setpolicy",
       "ricardian_contract": ""
     },
     {
@@ -1325,6 +1670,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "unlistmod",
+      "type": "unlistmod",
+      "ricardian_contract": ""
+    },
+    {
       "name": "unstake",
       "type": "unstake",
       "ricardian_contract": ""
@@ -1336,6 +1686,13 @@ export const runtimeAbi = {
     }
   ],
   "tables": [
+    {
+      "name": "catalogue",
+      "type": "catalogue_record",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
     {
       "name": "daos",
       "type": "dao_record",
@@ -1365,6 +1722,13 @@ export const runtimeAbi = {
       "key_types": []
     },
     {
+      "name": "feecfg",
+      "type": "fee_config",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "govlocks",
       "type": "governance_lock",
       "index_type": "i64",
@@ -1381,6 +1745,27 @@ export const runtimeAbi = {
     {
       "name": "members",
       "type": "member_record",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "mktcfg",
+      "type": "market_policy",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "modcopy",
+      "type": "modcopy_record",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "modpays",
+      "type": "modpay_record",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -1427,6 +1812,15 @@ export interface cancelob {
   dao_id: string;
   source: string;
   source_id: string;
+}
+export interface catalogue_record {
+  account: string;
+  publisher: string;
+  party: number;
+  complies: number;
+  price: string;
+  code_hash: string;
+  title: string;
 }
 export interface commitepoch {
   runtime: string;
@@ -1512,12 +1906,29 @@ export interface evidence_record {
   reference: string;
   mode: number;
 }
+export interface fee_config {
+  third_party_bps: number;
+  first_party_bps: number;
+  treasury: string;
+  token_contract: string;
+  token_symbol: string;
+  names: string;
+}
 export interface governance_lock {
   id: string;
   source: string;
   source_id: string;
   expires: number;
   active: boolean;
+}
+export interface govfees {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  third_party_bps: number;
+  first_party_bps: number;
+  bump_bps: number;
+  quote_premium_bps: number;
 }
 export interface govlock {
   dao_id: string;
@@ -1571,6 +1982,20 @@ export interface linknative {
   member_id: string;
   account: string;
 }
+export interface listmod {
+  account: string;
+  publisher: string;
+  party: number;
+  accepts_fee_rule: number;
+  price: string;
+  code_hash: string;
+  title: string;
+}
+export interface market_policy {
+  bump_bps: number;
+  quote_premium_bps: number;
+  dao_id: string;
+}
 export interface member_record {
   id: string;
   native_account: string;
@@ -1595,6 +2020,22 @@ export interface modconfig {
   actions: string[];
   grants: string[];
   code_hash: string;
+}
+export interface modcopy_record {
+  account: string;
+  summary: string;
+  detail: string;
+}
+export interface modpay_record {
+  id: string;
+  modaccount: string;
+  payer: string;
+  publisher: string;
+  gross: string;
+  platform_fee: string;
+  publisher_share: string;
+  party: number;
+  bps: number;
 }
 export interface module_record {
   account: string;
@@ -1680,11 +2121,27 @@ export interface setcredits {
   target: string;
   quantity: string;
 }
+export interface setfees {
+  third_party_bps: number;
+  first_party_bps: number;
+  treasury: string;
+  token_contract: string;
+  token_symbol: string;
+  names: string;
+}
+export interface setgov {
+  dao_id: string;
+}
 export interface setmeta {
   runtime: string;
   dao_id: string;
   member_id: string;
   metadata: string;
+}
+export interface setmodcopy {
+  account: string;
+  summary: string;
+  detail: string;
 }
 export interface setmodule {
   dao_id: string;
@@ -1693,6 +2150,15 @@ export interface setmodule {
   actions: string[];
   grants: string[];
   code_hash: string;
+}
+export interface setoracle {
+  median: string;
+  quoted_precision: number;
+  observed_at: number;
+}
+export interface setpolicy {
+  bump_bps: number;
+  quote_premium_bps: number;
 }
 export interface setprofile {
   runtime: string;
@@ -1720,6 +2186,9 @@ export interface submit {
 export interface submitnat {
   request: instruction;
 }
+export interface unlistmod {
+  account: string;
+}
 export interface unstake {
   runtime: string;
   dao_id: string;
@@ -1741,12 +2210,14 @@ export interface RuntimeActions {
   confirmext: confirmext;
   createdao: createdao;
   enroll: enroll;
+  govfees: govfees;
   govlock: govlock;
   govunlock: govunlock;
   grantcredit: grantcredit;
   grantkey: grantkey;
   init: init;
   linknative: linknative;
+  listmod: listmod;
   modconfig: modconfig;
   payob: payob;
   putdoc: putdoc;
@@ -1756,12 +2227,18 @@ export interface RuntimeActions {
   rotatekey: rotatekey;
   setactive: setactive;
   setcredits: setcredits;
+  setfees: setfees;
+  setgov: setgov;
   setmeta: setmeta;
+  setmodcopy: setmodcopy;
   setmodule: setmodule;
+  setoracle: setoracle;
+  setpolicy: setpolicy;
   setprofile: setprofile;
   setroles: setroles;
   submit: submit;
   submitnat: submitnat;
+  unlistmod: unlistmod;
   unstake: unstake;
   withdraw: withdraw;
 }
