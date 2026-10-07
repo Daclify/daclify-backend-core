@@ -2,7 +2,7 @@ import { readdirSync } from 'node:fs';
 import { beforeAll, beforeEach, afterAll, describe, expect, it } from 'vitest';
 import { Pool } from 'pg';
 import { randomUUID } from 'node:crypto';
-import { migrate, consumeChallenge, leaseJob } from '../../services/api/src/store.js';
+import { migrate, leaseJob } from '../../services/api/src/store.js';
 const url = process.env.DATABASE_URL;
 if (!url) throw new Error('DATABASE_URL required; integration tests cannot silently skip');
 const parsedUrl = new URL(url);
@@ -30,23 +30,6 @@ describe('actual PostgreSQL transactions and constraints', () => {
     );
     expect(files).toContain('003_service_payments.sql');
     expect(rows.rows[0]?.count).toBe(String(files.length));
-  });
-  it('consumes an authentication challenge once under concurrent requests', async () => {
-    const id = randomUUID();
-    await pool.query(
-      "INSERT INTO challenges(id,signing_key,message,expires_at) VALUES($1,$2,$3,now()+interval '5 minutes')",
-      [id, 'public-key', 'message'],
-    );
-    const results = await Promise.all([consumeChallenge(pool, id), consumeChallenge(pool, id)]);
-    expect(results.filter(Boolean)).toHaveLength(1);
-  });
-  it('rejects expired challenges', async () => {
-    const id = randomUUID();
-    await pool.query(
-      "INSERT INTO challenges(id,signing_key,message,expires_at) VALUES($1,$2,$3,now()-interval '1 second')",
-      [id, 'public-key', 'expired'],
-    );
-    expect(await consumeChallenge(pool, id)).toBeUndefined();
   });
   it('leases a due job to one worker despite concurrency', async () => {
     const key = randomUUID();

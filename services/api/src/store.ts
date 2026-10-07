@@ -53,13 +53,6 @@ export async function migrate(pool: Pool): Promise<void> {
     client.release();
   }
 }
-export async function consumeChallenge(pool: Pool, id: string): Promise<Challenge | undefined> {
-  const result = await pool.query<Challenge>(
-    'UPDATE challenges SET consumed_at=now() WHERE id=$1 AND consumed_at IS NULL AND expires_at>now() RETURNING id,signing_key,message,expires_at',
-    [id],
-  );
-  return result.rows[0];
-}
 export async function leaseJob(
   pool: Pool,
   owner: string,

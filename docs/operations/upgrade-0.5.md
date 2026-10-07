@@ -45,3 +45,5 @@ DATABASE_URL=postgres://daclify:daclify-test-only@127.0.0.1:17432/daclify_resear
 ```
 
 These values are synthetic local fixture credentials. Production configuration is separate. The paid phase uses the same owned test database and `npm run test:native:paid`. Never use these dev-mode credentials for production custody.
+
+Frontend browser checks also have two disjoint phases: `npm run test:e2e:paid` (the default `test:e2e`) and `npm run test:e2e:research`. Stop the local API before replacing `.artifacts/native` with the matching owned fixture bundle, then restart it with matching keys/network/database. Do not replace bundles while tests are running. The Playwright phase preflight rejects a mismatched fixture container or API chain. Configure both `DACLIFY_TEST_API_PORT` and `DACLIFY_TEST_UI_PORT` when using isolated ports. Each phase writes into its own browser artifact directory. Run both before recording a complete browser qualification; the raw Playwright glob is only for explicit diagnostics and cannot combine these fixture phases.

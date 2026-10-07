@@ -114,7 +114,7 @@ export function registerNativeRoutes(
       path: '/',
       httpOnly: true,
       secure,
-      sameSite: 'strict',
+      sameSite: secure ? 'none' : 'strict',
       maxAge: 300,
     });
     return { id, message, expires: expires.toISOString(), identity, runtime: info.runtime };

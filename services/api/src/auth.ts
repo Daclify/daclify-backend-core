@@ -142,4 +142,3 @@ export async function checkCsrf(pool: Pool, token: string, csrf: string): Promis
 export async function revokeSession(pool: Pool, token: string): Promise<void> {
   await pool.query('UPDATE sessions SET revoked_at=now() WHERE token_hash=$1', [hash(token)]);
 }
-export type AuthChallenge = Challenge;

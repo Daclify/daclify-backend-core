@@ -832,6 +832,59 @@ it('pairs OIDC Telegram only after identity consent and binds callbacks to the i
 function cookieOf(response: { cookies: { name: string; value: string }[] }): string {
   return response.cookies.map((item) => `${item.name}=${item.value}`).join('; ');
 }
+
+it.each(['http://localhost:5178', 'https://app.daclify.example'])(
+  'keeps browser-bound login cookies usable for the %s topology',
+  async (site) => {
+    const server = await createServer(pool, chain, site, {
+      signIn: { environment: 'testnet', deliverEmail: async () => {} },
+    });
+    try {
+      for (const [path, payload] of [
+        ['/v1/sign-in/email/login/start', { email: `cookie-${randomUUID()}@example.com` }],
+        ['/v1/sign-in/passkey/login/options', {}],
+        [
+          '/v1/account/native/challenge',
+          { purpose: 'login', account: 'alice', permission: 'active' },
+        ],
+        [
+          '/v1/account/evm/sign-in/challenge',
+          { purpose: 'login', chainId: 41, address: '0x' + '12'.repeat(20) },
+        ],
+      ] as const) {
+        const response = await server.inject({
+          method: 'POST',
+          url: path,
+          headers: { origin: site },
+          payload,
+        });
+        expect(response.statusCode).toBe(200);
+        const cookie = response.headers['set-cookie'];
+        expect(cookie).toContain('HttpOnly');
+        expect(cookie).toContain('Path=/');
+        expect(cookie).toContain(site.startsWith('https:') ? 'SameSite=None' : 'SameSite=Strict');
+        if (site.startsWith('https:')) expect(cookie).toContain('Secure');
+        const rejected = await server.inject({
+          method: 'POST',
+          url: path,
+          headers: { origin: 'https://untrusted.example' },
+          payload,
+        });
+        expect(rejected.statusCode).toBe(403);
+        expect(rejected.cookies).toHaveLength(0);
+      }
+      const missingAttempt = await server.inject({
+        method: 'POST',
+        url: '/v1/sign-in/email/login',
+        headers: { origin: site },
+        payload: { email: 'absent@example.com', code: '12345678' },
+      });
+      expect(missingAttempt.statusCode).toBe(401);
+    } finally {
+      await server.close();
+    }
+  },
+);
 function zChallenge(value: unknown): string {
   if (typeof value !== 'object' || value === null || !('challenge' in value))
     throw new Error('Missing challenge');

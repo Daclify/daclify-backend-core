@@ -75,7 +75,7 @@ export function registerEvmSignInRoutes(
       path: '/',
       httpOnly: true,
       secure,
-      sameSite: 'strict',
+      sameSite: secure ? 'none' : 'strict',
       maxAge: 300,
     });
     return {

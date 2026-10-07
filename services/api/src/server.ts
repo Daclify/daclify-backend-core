@@ -124,6 +124,18 @@ export async function createServer(
       return reply.code(error.statusCode).send({ code: error.code, message: error.code });
     if (error instanceof ZodError)
       return reply.code(400).send({ code: 'INPUT_INVALID', message: 'Check the supplied fields.' });
+    if (error instanceof errorCodes.FST_ERR_CTP_BODY_TOO_LARGE)
+      return reply
+        .code(413)
+        .send({ code: 'CONTENT_SIZE', message: 'The request body is too large.' });
+    if (
+      error instanceof errorCodes.FST_ERR_CTP_EMPTY_JSON_BODY ||
+      error instanceof errorCodes.FST_ERR_CTP_INVALID_JSON_BODY ||
+      error instanceof errorCodes.FST_ERR_CTP_INVALID_MEDIA_TYPE
+    )
+      return reply
+        .code(error instanceof errorCodes.FST_ERR_CTP_INVALID_MEDIA_TYPE ? 415 : 400)
+        .send({ code: 'INPUT_INVALID', message: 'Check the supplied fields.' });
     return reply.code(500).send({
       code: 'SERVICE_UNAVAILABLE',
       message: 'The service could not complete the request.',

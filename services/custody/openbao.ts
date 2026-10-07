@@ -56,6 +56,7 @@ export class OpenBaoCustody {
       const response = await fetch(`${this.address}/v1/transit/${path}`, {
         method: data ? 'POST' : 'GET',
         headers: { 'X-Vault-Token': this.token, 'content-type': 'application/json' },
+        redirect: 'error',
         ...(data ? { body: JSON.stringify(data) } : {}),
         signal: AbortSignal.timeout(10000),
       });

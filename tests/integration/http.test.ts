@@ -103,6 +103,29 @@ async function login() {
   };
 }
 describe('HTTP session boundary', () => {
+  it.each([
+    ['{', 'application/json', 400, 'INPUT_INVALID'],
+    ['', 'application/json', 400, 'INPUT_INVALID'],
+    ['x'.repeat(65537), 'application/json', 413, 'CONTENT_SIZE'],
+    ['payload', 'application/x-unsupported', 415, 'INPUT_INVALID'],
+  ])(
+    'classifies rejected request bodies without exposing parser details',
+    async (body, mediaType, status, code) => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/v1/auth/challenge',
+        headers: { origin, 'content-type': mediaType },
+        payload: body,
+      });
+      expect(response.statusCode).toBe(status);
+      expect(response.json()).toEqual({
+        code,
+        message:
+          code === 'CONTENT_SIZE' ? 'The request body is too large.' : 'Check the supplied fields.',
+      });
+      expect(response.body).not.toMatch(/SyntaxError|FST_ERR|stack/);
+    },
+  );
   it('routes typed settlement and finalization requests through the authenticated service', async () => {
     const { cookie, session } = await login();
     const headers = { origin, cookie, 'x-csrf-token': session.csrfToken };

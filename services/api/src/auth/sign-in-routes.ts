@@ -80,7 +80,7 @@ export function registerSignInRoutes(
         path: '/',
         httpOnly: true,
         secure,
-        sameSite: 'strict',
+        sameSite: secure ? 'none' : 'strict',
         maxAge: 600,
       });
     }

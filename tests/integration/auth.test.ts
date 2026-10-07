@@ -26,6 +26,44 @@ const publicKey = { kty: 'EC', crv: 'P-256', x: jwk.x, y: jwk.y };
 beforeAll(() => migrate(pool));
 afterAll(() => pool.end());
 describe('real key-based walletless sessions', () => {
+  it('creates only one session when the same signed challenge is submitted concurrently', async () => {
+    const key = PrivateKey.generate('K1');
+    const challenge = await createChallenge(pool, key.toPublic().toString(), origin);
+    const signature = key.signMessage(new TextEncoder().encode(challenge.message)).toString();
+    const outcomes = await Promise.allSettled([
+      authenticate(pool, challenge.id, signature, publicKey),
+      authenticate(pool, challenge.id, signature, publicKey),
+    ]);
+    expect(outcomes.filter((outcome) => outcome.status === 'fulfilled')).toHaveLength(1);
+    expect(outcomes.filter((outcome) => outcome.status === 'rejected')).toHaveLength(1);
+    const count = await pool.query<{ count: string }>(
+      'SELECT count(*)::text FROM sessions s JOIN accounts a ON a.id=s.account_id WHERE a.signing_key=$1',
+      [key.toPublic().toString()],
+    );
+    expect(count.rows[0]?.count).toBe('1');
+  });
+  it('rejects an expired challenge even with the correct signature and creates no account', async () => {
+    const key = PrivateKey.generate('K1');
+    const challenge = await createChallenge(pool, key.toPublic().toString(), origin);
+    await pool.query("UPDATE challenges SET expires_at=now()-interval '1 second' WHERE id=$1", [
+      challenge.id,
+    ]);
+    await expect(
+      authenticate(
+        pool,
+        challenge.id,
+        key.signMessage(new TextEncoder().encode(challenge.message)).toString(),
+        publicKey,
+      ),
+    ).rejects.toThrow('AUTH_INVALID');
+    expect(
+      (
+        await pool.query('SELECT id FROM accounts WHERE signing_key=$1', [
+          key.toPublic().toString(),
+        ])
+      ).rowCount,
+    ).toBe(0);
+  });
   it('rejects an encryption key that is not on the curve', async () => {
     const key = PrivateKey.generate('K1');
     const challenge = await createChallenge(pool, key.toPublic().toString(), origin);
