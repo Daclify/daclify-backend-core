@@ -40,3 +40,9 @@ export function loadEnvFile(path: string, target: NodeJS.ProcessEnv = process.en
     throw error;
   }
 }
+
+export function loadApiEnvFile(path: string, target: NodeJS.ProcessEnv = process.env): boolean {
+  const loaded = loadEnvFile(path, target);
+  if (target.DEPLOYER_PRIVATE_KEY !== undefined) throw new Error('DEPLOYER_KEY_IN_API_ENVIRONMENT');
+  return loaded;
+}

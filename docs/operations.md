@@ -6,11 +6,11 @@ The account names and resource numbers below are the ones in `tools/deploy/envir
 
 ## Three profiles
 
-| Profile      | Chain                                              | API environment value | Environment file  | Send flag   |
-| ------------ | -------------------------------------------------- | --------------------- | ----------------- | ----------- |
-| `develop`    | Local fixture at `http://127.0.0.1:18888`          | `local`               | `.env`            | `--commit`  |
-| `testnet`    | Telos testnet at `https://testnet.telos.caleos.io` | `testnet`             | `.env.testnet`    | `--commit`  |
-| `production` | Telos mainnet at `https://telos.caleos.io`         | `mainnet`             | `.env.production` | `--confirm` |
+| Profile | Chain | API environment | API file | Deployment-only file | Send flag |
+| --- | --- | --- | --- | --- | --- |
+| `develop` | Owned local fixture | `local` | `.env` | `.env.deploy.develop` | `--commit` |
+| `testnet` | Telos testnet | `testnet` | `.env.testnet` | `.env.deploy.testnet` | `--commit` |
+| `production` | Telos mainnet | `mainnet` | `.env.production` | `.env.deploy.production` | `--confirm` |
 
 Deploy profile names and the API's `NETWORK_ENVIRONMENT` are different enums. The API accepts `local`, `testnet`, or `mainnet`. The deploy command accepts `develop`, `production`, or `testnet`.
 
@@ -22,13 +22,19 @@ Chain ids recorded in the profiles:
 
 `npm run deploy -- <profile>` is a dry run. The command refuses to start unless the RPC `get_info` chain id matches the profile. `--confirm` is accepted only for `production`. `--commit` is accepted only for `develop` and `testnet`. Using the wrong flag throws `CONFIRM_IS_PRODUCTION_ONLY` or `PRODUCTION_REQUIRES_CONFIRM`.
 
-Copy the matching example before filling secrets:
+Each API example is complete and standalone: required database/chain/module settings plus commented SMTP, Telegram OIDC/Mini App, Pinata, Stripe, Google proof verification and optional docs assistant settings. Optional groups stay commented until credentials are available. Copy the matching example for a **new** setup; do not overwrite an existing configured file:
 
-- `cp .env.develop.example .env`
-- `cp .env.testnet.example .env.testnet`
-- `cp .env.production.example .env.production`
+```sh
+cp .env.testnet.example .env.testnet
+cp .env.deploy.testnet.example .env.deploy.testnet
+chmod 600 .env.testnet .env.deploy.testnet
+```
 
-Those copies are gitignored. Do not commit them. The examples contain placeholders, not keys.
+For local development use `.env.example` or `.env.develop.example` as `.env`; the deployment key uses `.env.deploy.develop.example`. Production uses `.env.production.example` and `.env.deploy.production.example`. Every actual env file is ignored; only examples are tracked.
+
+There is one API configuration per network. `.env.testnet-api` is obsolete. `.env.deploy.testnet` contains **only** `DEPLOYER_PRIVATE_KEY`, not a second copy of the API settings. `npm run deploy -- testnet` reads it automatically; the creator/account/resource/RPC configuration comes from the committed deployment profile. The API loads `.env.testnet` and refuses to start if a deployer credential is present in its file or exported environment. Do not fall back to the API file to locate a missing deployment key.
+
+`DACLIFY_ENV_FILE` is a shell selector, not a value inside the selected file. Existing shell variables take precedence. After changing runtime settings, restart the API; changing an env file alone does not reliably reload providers or keys.
 
 ## Account names
 
@@ -54,7 +60,7 @@ The local fixture can create the short develop names because its `eosio` account
 
 On 2026-10-07 the user authorized a Telos testnet deployment from their funded `3boidanimus3` account. All seven base accounts, Grants (`daclifygrant`), Endorsement (`daclifyendor`) and Names (`daclifynames`) were created, with eight contracts installed. The user's funded account permissions were preserved. See [testnet evidence](evidence/2026-10-07-telos-testnet.md).
 
-`DEPLOYER_PRIVATE_KEY` belongs in Git-ignored `.env.testnet`, mode `0600`. Keep it out of chat, frontend configuration and the running API environment. This workstation uses `.env.testnet-api`, copied without `DEPLOYER_PRIVATE_KEY`, for the API. The script never creates the creator account. Missing creators fail before generating keys.
+`DEPLOYER_PRIVATE_KEY` belongs in Git-ignored `.env.deploy.testnet`, mode `0600`. Keep it out of chat, frontend configuration and the running API environment. This workstation uses `.env.testnet` as its single API configuration. The script never creates the creator account. Missing creators fail before generating keys.
 
 ## Resources
 
@@ -96,13 +102,13 @@ Start the API with the file you mean to load:
 
 ```sh
 npm run dev
-DACLIFY_ENV_FILE=.env.testnet-api npm run dev
+DACLIFY_ENV_FILE=.env.testnet npm run dev
 DACLIFY_ENV_FILE=.env.production npm run dev
 ```
 
 `npm run dev` loads `.env`. Set `MODULE_DEPLOYMENTS` to the deployed accounts for `decide`, `works`, `payroll`, `grants-rounds` and `endorsement-admission`. The testnet profile includes all five; production still requires explicitly reviewed extra accounts. Without configured module deployments, module reads stay empty and payroll settlement stays on `payob`.
 
-`FRONTEND_ORIGIN` is one https origin for a deployed API, or `http://127.0.0.1:5178` for local development. Both the testnet API and the production API must use the same origin when one deployed frontend talks to both. The browser sends that origin on ordinary requests. The API rejects a foreign origin.
+`FRONTEND_ORIGIN` is the exact browser origin: an HTTPS origin for hosting, `http://127.0.0.1:5178` for the local fixture, or `http://testnet.localhost:5198` for this workstation's testnet app. Prefer an HTTPS proxy serving `/v1` under the frontend origin. When one frontend talks to two separate API hosts, both APIs must allow that frontend origin. The API rejects a foreign origin.
 
 Session cookies on an https API are `SameSite=None` and `Secure`, so the deployed frontend can call the API on another host. Local http cookies stay `SameSite=Strict`. This applies to every https deployment, including production login.
 
@@ -172,6 +178,28 @@ Each value must be an https origin with no userinfo, no path other than `/`, and
 The committed `networks.json` must stay in the repository. Vite's SPA fallback would otherwise serve `index.html` for a missing file. `VITE_API_PRODUCTION` and `VITE_API_TESTNET` are used only when `/networks.json` returns 404.
 
 The account screen can start a card checkout when the API has Stripe configured. It redirects only to `https://checkout.stripe.com`. Refreshing the receipt reads `GET /v1/billing/receipts`. The screen copy states that the receipt does not change votes, permissions, withdrawals, or a DAO treasury.
+
+## Provider settings and limits
+
+Pinata requires `PINATA_JWT` and an HTTPS root `CONTENT_GATEWAY` together. Set `CONTENT_FREE_STORAGE_BYTES` to a positive allowance before expecting uploads; `0` allows no new hosted bytes. Keys stay on the backend, and private documents are encrypted before public-IPFS upload. Configuration alone does not verify uploading, retrieval or decryption.
+
+SMTP requires `SMTP_HOST` and `SMTP_FROM`, with `SMTP_USERNAME`/`SMTP_PASSWORD` together when authentication is used. `SMTP_PORT` defaults to 587 and `SMTP_TLS_MODE` to `starttls`; `tls` commonly uses 465. `local-plain` is limited to loopback under `NETWORK_ENVIRONMENT=local`, so a public-testnet profile cannot use a plaintext Mailpit fixture as real email delivery.
+
+Telegram OIDC requires `TELEGRAM_OIDC_CLIENT_ID`, `TELEGRAM_OIDC_CLIENT_SECRET` and the exact `TELEGRAM_OIDC_REDIRECT_URI` ending `/v1/sign-in/telegram/oidc/callback`. The callback must use HTTPS for testnet/mainnet. Mini Apps require `TELEGRAM_BOT_TOKEN`; the legacy widget additionally needs `TELEGRAM_BOT_USERNAME` without `@`. OIDC does not require these separate bot-token fields in this adapter.
+
+Google uses `GOOGLE_CLIENT_ID` plus `GOOGLE_PUBLIC_JWK` (a public RSA JWK, not an OAuth client secret). Complete browser login and provider-key rotation remain unqualified. The optional documentation assistant uses `OPENROUTER_API_KEY` and optional `OPENROUTER_MODEL`; generated documentation needs neither. `OPENBAO_URL`/`OPENBAO_TOKEN` are custody/provider-test inputs, not a switch that enables managed accounts in the regular API.
+
+## Frontend development configuration
+
+Frontend `.env.example` contains only public settings. The Vite dev server loads `DACLIFY_TEST_UI_PORT` and `DACLIFY_TEST_API_PORT` from the selected mode file, with shell values overriding it. For this testnet workspace:
+
+```sh
+# From daclify-frontend, for a new checkout only:
+cp .env.testnet.example .env.testnet
+npm run dev -- --mode testnet
+```
+
+This sets UI port 5198 and `/v1` proxy port 3028. It does not set the backend network or blockchain credentials. Keep the API's `FRONTEND_ORIGIN` aligned with the URL you open. Public `VITE_API_PRODUCTION` and `VITE_API_TESTNET` remain fallback origins only when `/networks.json` returns 404; the committed local-mode file keeps `/v1` proxy behavior. Never place private keys or provider credentials in frontend env files.
 
 ## What is still open
 

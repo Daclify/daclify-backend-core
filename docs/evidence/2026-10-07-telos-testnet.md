@@ -37,6 +37,8 @@ Fee configuration transaction: `1e97b98ecddee6d6d4019780860535b7eeb87d4a0277457e
 
 ## Local app connected to public testnet
 
+The filenames/commands below record the initial rehearsal. The later [environment cleanup](../operations.md#three-profiles) replaces `.env.testnet-api` with one API `.env.testnet` and a key-only `.env.deploy.testnet`. Use that guide for current startup commands.
+
 - UI: `http://testnet.localhost:5198/`; Status: `/status`; Account: `/account`.
 - API: loopback port 3028, PostgreSQL database `daclify_telos_testnet` on the owned port-17432 server.
 - API starts with `DACLIFY_ENV_FILE=.env.testnet-api npm run dev`. This separate ignored file excludes the funded deployer key. It contains the test runtime operator/relay credentials, so this remains a trusted local test process, not production permission isolation.

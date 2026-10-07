@@ -24,7 +24,7 @@ develop dry-run reads the local fixture. --commit creates missing local accounts
 testnet dry-run reads Telos testnet. --commit spends testnet TLOS from the creator account.
 Testnet names are ordinary 12-character accounts. The script does not create the creator.
 production dry-run reads Telos mainnet. --confirm spends TLOS from the creator account.
-The creator private key is DEPLOYER_PRIVATE_KEY. It is never printed.
+The creator private key is DEPLOYER_PRIVATE_KEY in .env.deploy.<profile>. It is never printed.
 Active keys are written to .artifacts/deploy/<environment>-keys.json.`;
 
 const environmentName = process.argv[2];
@@ -36,7 +36,7 @@ if (
   console.log(usage);
   process.exitCode = 1;
 } else {
-  loadEnvFile(environmentName === 'develop' ? '.env' : `.env.${environmentName}`);
+  loadEnvFile(`.env.deploy.${environmentName}`);
   const setContract = process.argv.includes('--set-contract');
   const commit = process.argv.includes('--commit');
   const confirm = process.argv.includes('--confirm');

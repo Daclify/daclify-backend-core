@@ -1,5 +1,5 @@
 import { CreationService } from '../../services/api/src/creation.js';
-import { loadEnvFile } from '../../services/api/src/env-file.js';
+import { loadApiEnvFile } from '../../services/api/src/env-file.js';
 import { fixtureKey } from './keys.js';
 // Disposable local fixture only. No key is printed or placed in process arguments.
 import { readFileSync } from 'node:fs';
@@ -14,7 +14,7 @@ import { startContentWorker } from '../../services/api/src/content/jobs.js';
 import { readDocsAgent } from '../../services/api/src/docs/config.js';
 import { readStripeConfig } from '../../services/api/src/billing/config.js';
 import { StripeBilling } from '../../services/api/src/billing/service.js';
-loadEnvFile('.env');
+loadApiEnvFile('.env');
 function localTelegram(): { botToken: string; botUsername?: string } | undefined {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const username = process.env.TELEGRAM_BOT_USERNAME;

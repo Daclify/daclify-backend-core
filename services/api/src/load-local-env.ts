@@ -1,3 +1,3 @@
-import { loadEnvFile } from './env-file.js';
+import { loadApiEnvFile } from './env-file.js';
 
-loadEnvFile(process.env.DACLIFY_ENV_FILE ?? '.env');
+loadApiEnvFile(process.env.DACLIFY_ENV_FILE ?? '.env');
