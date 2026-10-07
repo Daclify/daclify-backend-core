@@ -3,7 +3,7 @@
   "resourceModel": "telos",
   "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
   "rpcUrl": "https://testnet.telos.caleos.io",
-  "creatorAccount": "daclifyadmin",
+  "creatorAccount": "3boidanimus3",
   "tokenContract": "eosio.token",
   "evmContract": "eosio.evm",
   "billingRole": "billing",
@@ -71,5 +71,31 @@
       "contract": null,
       "inlineCode": false
     }
-  ]
+  ],
+  "extraModules": [
+    {
+      "name": "daclifygrant",
+      "ramBytes": 1048576,
+      "cpuStake": "2.0000 TLOS",
+      "netStake": "1.0000 TLOS",
+      "contract": "grants",
+      "inlineCode": true
+    },
+    {
+      "name": "daclifyendor",
+      "ramBytes": 1048576,
+      "cpuStake": "2.0000 TLOS",
+      "netStake": "1.0000 TLOS",
+      "contract": "endorse",
+      "inlineCode": true
+    }
+  ],
+  "namesAccount": {
+    "name": "daclifynames",
+    "ramBytes": 1048576,
+    "cpuStake": "2.0000 TLOS",
+    "netStake": "1.0000 TLOS",
+    "contract": "names",
+    "inlineCode": true
+  }
 }

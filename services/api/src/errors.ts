@@ -12,6 +12,7 @@ export class ApiError extends Error {
 }
 
 export function contractError(cause: unknown): ApiError {
+  if (cause instanceof ApiError) return cause;
   const body = z
     .object({ error: z.object({ details: z.array(z.object({ message: z.string() })) }) })
     .safeParse(cause instanceof APIError ? cause.response.json : undefined);

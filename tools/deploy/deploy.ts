@@ -16,6 +16,7 @@ import { deployerKey, keyFilePath, loadOrCreateActiveKeys, type ActiveKey } from
 import { contextPermissionPlan } from './permissions.js';
 import { planDeployment, type AccountView } from './plan.js';
 import { deploymentSend } from './send.js';
+import { waitForIrreversibleBlock } from '../../services/api/src/chain-confirmation.js';
 
 const usage = `Usage: npm run deploy -- <develop|production|testnet> [--set-contract] [--commit|--confirm]
 
@@ -233,7 +234,7 @@ function artifactPath(
   extension: 'wasm' | 'abi',
 ): string {
   const root =
-    contract === 'runtime' || contract === 'hub'
+    contract === 'runtime' || contract === 'hub' || contract === 'names'
       ? path.join(CORE_ROOT, '.artifacts', 'contracts')
       : path.join(CORE_ROOT, '..', 'daclify-backend-modules', '.artifacts', 'contracts');
   return path.join(root, `${contract}.${extension}`);
@@ -314,6 +315,13 @@ async function pushActions(
       ...transaction,
       signatures: [key.signDigest(transaction.signingDigest(info.chain_id))],
     }),
+  );
+  console.log(
+    `Accepted ${result.transaction_id}; waiting for block ${result.processed.block_num} to be irreversible.`,
+  );
+  await waitForIrreversibleBlock(
+    async () => Number((await api.v1.chain.get_info()).last_irreversible_block_num),
+    result.processed.block_num,
   );
   return z.string().parse(String(result.transaction_id));
 }

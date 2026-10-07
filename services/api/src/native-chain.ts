@@ -4,6 +4,7 @@ import {
   type ContentPageQuery,
   type DaoContent,
 } from '../../../protocol/content.js';
+import { waitForIrreversibleBlock } from './chain-confirmation.js';
 import {
   TreasurySchema,
   SettlementRequestSchema,
@@ -724,6 +725,7 @@ export class NativeChainGateway implements ChainGateway {
     });
     try {
       const result = await this.api.v1.chain.push_transaction(signed);
+      await this.confirmBlock(result.processed.block_num);
       return {
         transactionId: z
           .string()
@@ -732,6 +734,24 @@ export class NativeChainGateway implements ChainGateway {
       };
     } catch (cause) {
       throw contractError(cause);
+    }
+  }
+  private async confirmBlock(block: number): Promise<void> {
+    if (this.config.environment === 'local') return;
+    try {
+      await waitForIrreversibleBlock(
+        async () => {
+          const info = await this.api.v1.chain.get_info();
+          if (String(info.chain_id) !== this.config.chainId)
+            throw new ApiError('CHAIN_ID_MISMATCH', 503);
+          return Number(info.last_irreversible_block_num);
+        },
+        block,
+        8,
+      );
+    } catch (cause) {
+      if (cause instanceof ApiError) throw cause;
+      throw new ApiError('CHAIN_UNAVAILABLE', 503);
     }
   }
   async finalize(input: FinalizationRequest): Promise<FinalizationResult> {
@@ -967,7 +987,7 @@ export class NativeChainGateway implements ChainGateway {
     const transaction = Transaction.from({ ...info.getTransactionHeader(60), actions });
     await this.assertResources(bootstrap.owner);
     try {
-      await this.api.v1.chain.push_transaction(
+      const result = await this.api.v1.chain.push_transaction(
         SignedTransaction.from({
           ...transaction,
           signatures: [
@@ -978,6 +998,7 @@ export class NativeChainGateway implements ChainGateway {
           ],
         }),
       );
+      await this.confirmBlock(result.processed.block_num);
     } catch (cause) {
       throw contractError(cause);
     }

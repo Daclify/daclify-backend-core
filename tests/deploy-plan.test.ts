@@ -48,7 +48,7 @@ describe('deployment environments', () => {
     const testnet = await loadEnvironment('testnet');
     const production = await loadEnvironment('production');
     expect(testnet.resourceModel).toBe('telos');
-    expect(testnet.creatorAccount).toBe('daclifyadmin');
+    expect(testnet.creatorAccount).toBe('3boidanimus3');
     expect(testnet.chainId).toBe(
       '1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f',
     );
@@ -88,7 +88,7 @@ describe('deployment environments', () => {
       new URL('../tools/deploy/environments/testnet.json', import.meta.url),
       'utf8',
     );
-    expect(() => parseEnvironment(JSON.parse(text.replace('"daclifyadmin"', '"we"')))).toThrow(
+    expect(() => parseEnvironment(JSON.parse(text.replace('"3boidanimus3"', '"we"')))).toThrow(
       'DEPLOY_ENVIRONMENT_INVALID',
     );
     expect(() => parseEnvironment(JSON.parse(text.replace('"daclifycore1"', '"core.we"')))).toThrow(

@@ -8,6 +8,42 @@ import {
 } from '../tools/deploy/environment.js';
 import { planDeployment } from '../tools/deploy/plan.js';
 import { encodeContractAbi } from '../tools/deploy/actions.js';
+it('deploys the optional names contract without accepting a duplicate or module alias', async () => {
+  const original = await loadEnvironment('production');
+  const namesAccount = {
+    name: 'namesreview',
+    ramBytes: 1048576,
+    cpuStake: '2.0000 TLOS',
+    netStake: '1.0000 TLOS',
+    contract: 'names',
+    inlineCode: true,
+  };
+  const parsed = parseEnvironment({ ...original, namesAccount });
+  if (!parsed.chainId) throw new Error('FIXTURE_CHAIN');
+  const environment = { ...parsed, chainId: parsed.chainId };
+  const accounts = deploymentAccounts(environment);
+  expect(accounts.at(-1)).toEqual(namesAccount);
+  const views = new Map(
+    accounts.map((account) => [
+      account.name,
+      { exists: false, ramQuota: 0, ramUsage: 0, hasCode: false },
+    ]),
+  );
+  expect(
+    planDeployment(environment, views, true)
+      .filter((change) => change.role === 'names')
+      .map((change) => change.action),
+  ).toEqual(['create', 'set-contract']);
+  expect(() =>
+    parseEnvironment({
+      ...original,
+      namesAccount: { ...namesAccount, name: original.accounts[0]?.name },
+    }),
+  ).toThrow('DEPLOY_ENVIRONMENT_INVALID');
+  expect(() =>
+    parseEnvironment({ ...original, namesAccount: { ...namesAccount, contract: 'grants' } }),
+  ).toThrow('DEPLOY_ENVIRONMENT_INVALID');
+});
 it('includes only explicitly configured grant/admission accounts without changing the existing production names', async () => {
   const original = await loadEnvironment('production');
   const schema = {

@@ -17,7 +17,7 @@ const AccountSchema = z.strictObject({
   cpuStake: StakeSchema,
   netStake: StakeSchema,
   contract: z
-    .enum(['runtime', 'hub', 'decide', 'works', 'payroll', 'grants', 'endorse'])
+    .enum(['runtime', 'hub', 'decide', 'works', 'payroll', 'grants', 'endorse', 'names'])
     .nullable(),
   inlineCode: z.boolean(),
 });
@@ -42,6 +42,10 @@ const EnvironmentSchema = z
       premiumBps: z.literal(2000),
     }),
     accounts: z.array(AccountSchema).length(7),
+    namesAccount: AccountSchema.extend({
+      contract: z.literal('names'),
+      inlineCode: z.literal(true),
+    }).optional(),
     extraModules: z
       .array(
         AccountSchema.extend({
@@ -63,9 +67,16 @@ const EnvironmentSchema = z
   }, 'ACCOUNT_ORDER')
   .refine(
     (environment) =>
-      new Set([...environment.accounts, ...environment.extraModules].map((account) => account.name))
-        .size ===
-        environment.accounts.length + environment.extraModules.length &&
+      new Set(
+        [
+          ...environment.accounts,
+          ...environment.extraModules,
+          ...(environment.namesAccount ? [environment.namesAccount] : []),
+        ].map((account) => account.name),
+      ).size ===
+        environment.accounts.length +
+          environment.extraModules.length +
+          (environment.namesAccount ? 1 : 0) &&
       new Set(environment.extraModules.map((account) => account.contract)).size ===
         environment.extraModules.length,
     'DUPLICATE_MODULE_ACCOUNT',
@@ -74,7 +85,11 @@ const EnvironmentSchema = z
     if (environment.name !== 'testnet') return true;
     const names = [
       environment.creatorAccount,
-      ...[...environment.accounts, ...environment.extraModules].map((account) => account.name),
+      ...[
+        ...environment.accounts,
+        ...environment.extraModules,
+        ...(environment.namesAccount ? [environment.namesAccount] : []),
+      ].map((account) => account.name),
     ];
     return names.every((name) => /^[a-z1-5]{12}$/.test(name));
   }, 'TESTNET_NAME');
@@ -82,8 +97,14 @@ const EnvironmentSchema = z
 export type DeployEnvironment = z.infer<typeof EnvironmentSchema> & { chainId: string };
 export type DeployAccount = DeployEnvironment['accounts'][number];
 export const DEPLOY_ROLES = RoleSchema.options;
-export function deploymentAccounts(environment: DeployEnvironment): readonly DeployAccount[] {
-  return [...environment.accounts, ...environment.extraModules];
+export function deploymentAccounts(
+  environment: z.infer<typeof EnvironmentSchema>,
+): readonly DeployAccount[] {
+  return [
+    ...environment.accounts,
+    ...environment.extraModules,
+    ...(environment.namesAccount ? [environment.namesAccount] : []),
+  ];
 }
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
