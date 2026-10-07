@@ -18,6 +18,12 @@ import { parseFrontendOrigins, parseModuleDeployments } from './deployment-confi
 import { readStripeConfig } from './billing/config.js';
 import { StripeBilling } from './billing/service.js';
 import { readDocsAgent } from './docs/config.js';
+import { readConnectConfig } from './payments/config.js';
+import { ConnectedPayments } from './payments/service.js';
+import { readOperatorPayments, OperatorPayments } from './payments/operator.js';
+import { readHostingConfig } from './billing/hosting-config.js';
+import { HostedSubscriptions } from './billing/hosting.js';
+import { startHostingWorker } from './billing/hosting-jobs.js';
 const configuration = z
   .object({
     DATABASE_URL: z.url(),
@@ -114,13 +120,28 @@ if (env.TELEGRAM_BOT_TOKEN || telegramOidc) {
     ...(env.TELEGRAM_BOT_USERNAME ? { botUsername: env.TELEGRAM_BOT_USERNAME } : {}),
   };
 }
-const stripeConfig = readStripeConfig(process.env, env.NETWORK_ENVIRONMENT);
+const stripeConfig =
+  process.env.STRIPE_PRICE_ID || process.env.STRIPE_WEBHOOK_SECRET
+    ? readStripeConfig(process.env, env.NETWORK_ENVIRONMENT)
+    : undefined;
+const connectConfig = readConnectConfig(process.env, env.NETWORK_ENVIRONMENT, env.FRONTEND_ORIGIN);
+const hostingConfig = readHostingConfig(process.env, env.NETWORK_ENVIRONMENT, env.FRONTEND_ORIGIN);
+const hosting = hostingConfig ? new HostedSubscriptions(pool, chain, hostingConfig) : undefined;
+const operatorConfig = readOperatorPayments(process.env.DACLIFY_CONNECT_OPERATOR);
+if (operatorConfig && (connectConfig || hostingConfig))
+  throw new Error('PAYMENT_OPERATOR_CONFIGURATION_INVALID');
 const docs = readDocsAgent(process.env);
 const creation = new CreationService(pool, chain);
 const deliverEmail = readMailDelivery(process.env);
 const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
   origins,
   creation,
+  ...(process.env.API_PUBLIC_ORIGIN ? { apiOrigin: process.env.API_PUBLIC_ORIGIN } : {}),
+  ...(hosting ? { hosting } : {}),
+  ...(operatorConfig
+    ? { operatorPayments: new OperatorPayments(pool, chain, operatorConfig) }
+    : {}),
+  ...(connectConfig ? { payments: new ConnectedPayments(pool, chain, connectConfig) } : {}),
   ...(content ? { content } : {}),
   ...(providers.google || providers.telegram ? { providers } : {}),
   ...(stripeConfig
@@ -131,9 +152,11 @@ const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
 });
 await app.listen({ host: '127.0.0.1', port: env.API_PORT });
 const worker = content ? startContentWorker(pool, content) : undefined;
+const hostingWorker = hosting ? startHostingWorker(pool, hosting) : undefined;
 async function shutdown() {
   await app.close();
   await worker?.stop();
+  await hostingWorker?.stop();
   await pool.end();
 }
 process.on('SIGTERM', () => {

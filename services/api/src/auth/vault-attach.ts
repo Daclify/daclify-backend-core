@@ -15,6 +15,7 @@ export function registerVaultAttachRoutes(
   cookieName: string,
   session: (token: string | undefined, csrf?: string) => Promise<Account>,
   sessionCookie: (reply: FastifyReply, token: string) => void,
+  audience: string = origin,
 ): void {
   const limit = createWindowLimiter(20, 600000, 2000);
   const hash = (value: string) => createHash('sha256').update(value).digest();
@@ -37,7 +38,8 @@ export function registerVaultAttachRoutes(
       expires = new Date(Date.now() + 300000).toISOString();
     const message = JSON.stringify(
       VaultAttachMessageSchema.parse({
-        domain: 'daclify.vault-attach.v1',
+        domain: 'daclify.vault-attach.v2',
+        audience,
         origin: request.headers.origin ?? origin,
         accountId: current.id,
         signingKey: input.signingKey,
@@ -69,6 +71,7 @@ export function registerVaultAttachRoutes(
     if (intent) {
       try {
         valid =
+          VaultAttachMessageSchema.parse(JSON.parse(intent.message)).audience === audience &&
           VaultAttachMessageSchema.parse(JSON.parse(intent.message)).origin ===
             (request.headers.origin ?? origin) &&
           Signature.from(input.signature).verifyMessage(

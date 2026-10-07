@@ -110,6 +110,12 @@ struct [[eosio::table("feecfg"), eosio::contract("runtime")]] fee_config {
   EOSLIB_SERIALIZE(fee_config,(third_party_bps)(first_party_bps)(treasury)(token_contract)(token_symbol)(names))
 };
 using fee_settings=singleton<"feecfg"_n,fee_config>;
+// Connect commission is separate from native module purchase revenue.
+struct [[eosio::table("paycfg"), eosio::contract("runtime")]] payment_policy {
+  uint16_t bps=500; uint64_t revision=0;
+  EOSLIB_SERIALIZE(payment_policy,(bps)(revision))
+};
+using payment_settings=singleton<"paycfg"_n,payment_policy>;
 struct [[eosio::table("catalogue"), eosio::contract("runtime")]] catalogue_record {
   name account; name publisher; uint8_t party; uint8_t complies; asset price; checksum256 code_hash; std::string title;
   uint64_t primary_key() const { return account.value; }

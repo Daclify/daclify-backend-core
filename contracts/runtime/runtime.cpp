@@ -53,10 +53,41 @@ public:
     auto cfg=creation_settings(get_self(),get_self().value).get();require_auth(cfg.settler);check(reference!=checksum256()&&deployment<=1&&method<=1,"CREATION_ORDER");
     const auto fees=fee_configuration();check(fees.token_symbol==symbol("TLOS",4),"CREATION_ASSET");
     creation_orders orders(get_self(),get_self().value);auto index=orders.get_index<"byref"_n>();check(index.find(reference)==index.end(),"CREATION_EXISTS");
-    uint32_t usd=deployment==0?cfg.shared_usd:cfg.independent_usd;auto now=current_time_point().sec_since_epoch();uint64_t expiry=uint64_t(now)+(method==0?900:3600);check(expiry<=std::numeric_limits<uint32_t>::max(),"TIME_RANGE");
+    uint32_t usd=deployment==0?cfg.shared_usd:cfg.independent_usd;check(usd>0,"CREATION_FREE_PATH");auto now=current_time_point().sec_since_epoch();uint64_t expiry=uint64_t(now)+(method==0?900:3600);check(expiry<=std::numeric_limits<uint32_t>::max(),"TIME_RANGE");
     int64_t amount=0;if(method==0){check(cfg.median>0&&cfg.observed_at<=now&&now-cfg.observed_at<=900,"CREATION_RATE");__int128 scale=1;for(uint8_t i=0;i<cfg.precision;i++)scale*=10;__int128 numerator=__int128(usd)*scale*(10000+cfg.premium_bps)*10000;__int128 denominator=__int128(100)*cfg.median*10000;auto units=(numerator+denominator-1)/denominator;check(units>0&&units<=asset::max_amount,"CREATION_AMOUNT");amount=int64_t(units);}
     auto id=orders.available_primary_key();if(!id)id=1;check(id<std::numeric_limits<uint64_t>::max(),"CREATION_LIMIT");
     orders.emplace(get_self(),[&](auto& r){r.id=id;r.reference=reference;r.creator=creator;r.deployment=deployment;r.method=method;r.usd_cents=usd;r.tlos_due=asset(amount,fees.token_symbol);r.created_at=now;r.expires=expiry;});
+  }
+  ACTION sethosted(uint32_t free_members,name settler) {require_auth(get_self());save_hosted(free_members,settler);}
+  ACTION govhosted(name runtime,uint64_t dao_id,uint64_t member_id,uint32_t free_members,name settler) {platform_actor(runtime,dao_id,member_id);save_hosted(free_members,settler);}
+  ACTION govseatfee(name runtime,uint64_t dao_id,uint64_t member_id,uint32_t first_usd,uint32_t next_usd,uint32_t rest_usd) {
+    platform_actor(runtime,dao_id,member_id);check(first_usd>=50&&first_usd<=99999&&next_usd>0&&next_usd<=first_usd&&rest_usd>0&&rest_usd<=next_usd,"HOSTED_PRICE");
+    seat_settings saved(get_self(),get_self().value);auto cfg=saved.exists()?saved.get():seat_policy{};cfg.first_usd=first_usd;cfg.next_usd=next_usd;cfg.rest_usd=rest_usd;cfg.revision=add64(cfg.revision,1);saved.set(cfg,get_self());
+  }
+  ACTION orderfree(checksum256 reference,public_key creator) {
+    auto cfg=creation_settings(get_self(),get_self().value).get();auto hosted=hosted_settings(get_self(),get_self().value).get();require_auth(cfg.settler);check(hosted.settler==cfg.settler&&cfg.shared_usd==0&&reference!=checksum256(),"CREATION_FREE_PATH");
+    creation_orders orders(get_self(),get_self().value);auto index=orders.get_index<"byref"_n>();check(index.find(reference)==index.end(),"CREATION_EXISTS");const auto fees=fee_configuration();
+    auto id=orders.available_primary_key();if(!id)id=1;check(id<std::numeric_limits<uint64_t>::max(),"CREATION_LIMIT");auto now=current_time_point().sec_since_epoch();check(uint64_t(now)+3600<=std::numeric_limits<uint32_t>::max(),"TIME_RANGE");
+    orders.emplace(get_self(),[&](auto& r){r.id=id;r.reference=reference;r.creator=creator;r.deployment=0;r.method=2;r.usd_cents=0;r.tlos_due=asset(0,fees.token_symbol);r.created_at=now;r.expires=now+3600;r.paid=true;});
+  }
+  ACTION setcapacity(uint64_t dao_id,uint32_t member_limit,uint32_t expires,checksum256 receipt) {
+    auto cfg=hosted_settings(get_self(),get_self().value).get();require_auth(cfg.settler);dao_rows.get(dao_id,"DAO_UNKNOWN");check(receipt!=checksum256(),"CAPACITY_RECEIPT");
+    capacity_receipts receipts(get_self(),get_self().value);auto index=receipts.get_index<"byreceipt"_n>();auto seen=index.find(receipt);
+    if(seen!=index.end()){check(seen->dao_id==dao_id&&seen->members==member_limit&&seen->expires==expires&&!seen->revoked,"CAPACITY_RECEIPT");}
+    auto now=current_time_point().sec_since_epoch();if(seen!=index.end()&&expires<=now)return;
+    check(member_limit>0&&member_limit<=5000&&expires>now&&uint64_t(expires)<=uint64_t(now)+31622400,"CAPACITY_RANGE");
+    if(seen==index.end()){auto id=receipts.available_primary_key();if(!id)id=1;check(id<std::numeric_limits<uint64_t>::max(),"CAPACITY_LIMIT");receipts.emplace(get_self(),[&](auto& r){r.id=id;r.receipt=receipt;r.dao_id=dao_id;r.members=member_limit;r.expires=expires;});}
+    dao_capacities rows(get_self(),get_self().value);auto it=rows.find(dao_id);
+    if(it==rows.end())rows.emplace(get_self(),[&](auto& r){r.dao_id=dao_id;r.members=member_limit;r.expires=expires;r.receipt=receipt;});
+    else if(expires>it->expires||(expires==it->expires&&member_limit>it->members))rows.modify(it,same_payer,[&](auto& r){r.members=member_limit;r.expires=expires;r.receipt=receipt;});
+  }
+  ACTION revokecap(uint64_t dao_id,checksum256 receipt) {
+    auto cfg=hosted_settings(get_self(),get_self().value).get();require_auth(cfg.settler);capacity_receipts receipts(get_self(),get_self().value);auto index=receipts.get_index<"byreceipt"_n>();const auto& issued=index.get(receipt,"CAPACITY_RECEIPT");check(issued.dao_id==dao_id,"CAPACITY_RECEIPT");index.modify(issued,same_payer,[](auto& r){r.revoked=true;});dao_capacities rows(get_self(),get_self().value);auto cap=rows.find(dao_id);if(cap!=rows.end()&&cap->receipt==receipt)rows.modify(cap,same_payer,[](auto& r){r.expires=current_time_point().sec_since_epoch();});
+  }
+  ACTION resumecap(uint64_t dao_id,checksum256 receipt) {
+    auto cfg=hosted_settings(get_self(),get_self().value).get();require_auth(cfg.settler);
+    capacity_receipts receipts(get_self(),get_self().value);auto index=receipts.get_index<"byreceipt"_n>();const auto issued=index.get(receipt,"CAPACITY_RECEIPT");check(issued.dao_id==dao_id&&issued.expires>current_time_point().sec_since_epoch(),"CAPACITY_RECEIPT");
+    index.modify(index.find(receipt),same_payer,[](auto& r){r.revoked=false;});setcapacity(dao_id,issued.members,issued.expires,receipt);
   }
   ACTION cardcreate(checksum256 reference,uint32_t usd_cents,checksum256 checkout_reference,uint32_t paid_at) {
     auto cfg=creation_settings(get_self(),get_self().value).get();require_auth(cfg.settler);check(checkout_reference!=checksum256(),"CREATION_CARD");
@@ -136,6 +167,7 @@ public:
 private:
   void enroll_member(uint64_t dao_id,uint64_t member_id,name native_account,public_key signing_key,const std::string& encryption_key,uint8_t custody,uint8_t kind,const std::string& operator_label,bool owner_auth=true,bool endorsed=false) {
     const auto& d=dao_rows.get(dao_id,"DAO_UNKNOWN"); if(owner_auth)require_auth(d.owner);
+    check_member_capacity(d);
     admission_policies admission(get_self(),get_self().value);auto rule=admission.find(dao_id);check(endorsed||rule==admission.end()||rule->mode==0||rule->admin_override,"ADMISSION_REQUIRED");
     gov_policies policies(get_self(),get_self().value);auto policy=policies.find(dao_id);
     check(kind==0||(policy!=policies.end()&&policy->config.participant_mode>0),"PARTICIPANT_MODE");
@@ -290,6 +322,11 @@ public:
   ACTION govlist(name runtime,uint64_t dao_id,uint64_t member_id,name account,asset price,checksum256 code_hash,std::string title) {
     platform_actor(runtime,dao_id,member_id);auto cfg=fee_configuration();save_listing(account,cfg.treasury,0,1,price,code_hash,title);
   }
+  ACTION govpayfees(name runtime,uint64_t dao_id,uint64_t member_id,uint16_t bps) {
+    platform_actor(runtime,dao_id,member_id);check(bps<10000,"FEE_BPS");
+    payment_settings saved(get_self(),get_self().value);auto cfg=saved.exists()?saved.get():payment_policy{};
+    cfg.bps=bps;cfg.revision=add64(cfg.revision,1);saved.set(cfg,get_self());
+  }
   ACTION govunlist(name runtime,uint64_t dao_id,uint64_t member_id,name account) {
     platform_actor(runtime,dao_id,member_id);remove_listing(account);
   }
@@ -398,6 +435,7 @@ public:
   }
   ACTION setactive(name runtime,uint64_t dao_id,uint64_t member_id,uint64_t target,bool active) {
     authorized_actor(runtime,dao_id,member_id,true);const auto& d=dao_rows.get(dao_id);members rows(get_self(),dao_id);const auto& m=rows.get(target,"MEMBER_UNKNOWN");check(m.active!=active,"ALREADY_IN_STATE");
+    if(active)check_member_capacity(d);
     if(active)check(d.active_ballots==0,"GOVERNANCE_LOCKED");if(!active&&m.admin)check(d.admin_count>1,"LAST_ADMIN");
     dao_rows.modify(d,same_payer,[&](auto& r){if(active){r.member_count++;if(m.admin)r.admin_count++;r.eligible_credits=add64(r.eligible_credits,m.credits);r.eligible_stake=add_amount(r.eligible_stake,m.stake);}else{r.member_count--;if(m.admin)r.admin_count--;r.eligible_credits-=m.credits;r.eligible_stake=add_amount(r.eligible_stake,-m.stake);if(r.privacy)r.key_epoch=add64(r.key_epoch,1);}});
     rows.modify(m,same_payer,[&](auto& r){r.active=active;});
@@ -452,11 +490,21 @@ public:
   }
 private:
   daos dao_rows{get_self(),get_self().value};
+  void save_hosted(uint32_t free_members,name settler) {
+    check(free_members>=1&&free_members<=5000&&is_account(settler),"HOSTED_POLICY");hosted_settings(get_self(),get_self().value).set(hosted_policy{free_members,settler},get_self());
+    creation_settings saved(get_self(),get_self().value);auto cfg=saved.exists()?saved.get():creation_policy{};save_creation(0,cfg.independent_usd,cfg.premium_bps,settler);
+  }
+  void check_member_capacity(const dao_record& dao) {
+    hosted_settings saved(get_self(),get_self().value);if(!saved.exists())return;
+    market_settings platform(get_self(),get_self().value);if(platform.exists()&&platform.get().dao_id==dao.id)return;
+    uint32_t limit=saved.get().free_members;dao_capacities caps(get_self(),get_self().value);auto cap=caps.find(dao.id);if(cap!=caps.end()&&cap->expires>current_time_point().sec_since_epoch())limit=std::max(limit,cap->members);
+    check(dao.member_count<limit,"MEMBERSHIP_CAPACITY");
+  }
   void platform_actor(name runtime,uint64_t dao_id,uint64_t member_id) {
     check(get_sender()==get_self(),"ACTOR_SENDER");authorized_actor(runtime,dao_id,member_id,true);market_settings saved(get_self(),get_self().value);check(saved.exists()&&saved.get().dao_id==dao_id&&dao_id!=0,"PLATFORM_DAO");
   }
   void save_creation(uint32_t shared_usd,uint32_t independent_usd,uint16_t premium_bps,name settler) {
-    check(shared_usd>0&&shared_usd<=100000000&&independent_usd>0&&independent_usd<=100000000&&premium_bps<=10000,"CREATION_PRICE");check(is_account(settler),"CREATION_SETTLER");
+    check(shared_usd<=100000000&&independent_usd>0&&independent_usd<=100000000&&premium_bps<=10000,"CREATION_PRICE");check(is_account(settler),"CREATION_SETTLER");
     creation_settings saved(get_self(),get_self().value);auto cfg=saved.exists()?saved.get():creation_policy{};cfg.shared_usd=shared_usd;cfg.independent_usd=independent_usd;cfg.premium_bps=premium_bps;cfg.settler=settler;saved.set(cfg,get_self());
   }
   void save_listing(name account,name publisher,uint8_t party,uint8_t accepts_fee_rule,asset price,checksum256 code_hash,const std::string& title) {
@@ -653,7 +701,7 @@ private:
     auto now=current_time_point().sec_since_epoch();check(r.expires>now&&uint64_t(r.expires)<=uint64_t(now)+900,"EXPIRED_OR_TOO_LONG");
     check(r.data.size()>=24&&r.data.size()<=16384,"PAYLOAD_SIZE");auto context=unpack<actor_context>(r.data);
     check(context.runtime==get_self()&&context.dao_id==r.dao_id&&context.member_id==r.member_id,"PAYLOAD_DOMAIN");
-    if(r.target==get_self())check(r.action=="govcreate"_n||r.action=="govlist"_n||r.action=="govunlist"_n||r.action=="govmodcopy"_n||r.action=="addmember"_n||r.action=="setadmit"_n||r.action=="setdaogov"_n||r.action=="addsession"_n||r.action=="delsession"_n||r.action=="setmeta"_n||r.action=="setprofile"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="unlinknat"_n||r.action=="linkevm"_n||r.action=="unlinkevm"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n||r.action=="govfees"_n,"ACTION_UNSUPPORTED");
+    if(r.target==get_self())check(r.action=="govhosted"_n||r.action=="govseatfee"_n||r.action=="govpayfees"_n||r.action=="govcreate"_n||r.action=="govlist"_n||r.action=="govunlist"_n||r.action=="govmodcopy"_n||r.action=="addmember"_n||r.action=="setadmit"_n||r.action=="setdaogov"_n||r.action=="addsession"_n||r.action=="delsession"_n||r.action=="setmeta"_n||r.action=="setprofile"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="unlinknat"_n||r.action=="linkevm"_n||r.action=="unlinkevm"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n||r.action=="govfees"_n,"ACTION_UNSUPPORTED");
     else { modules rows(get_self(),r.dao_id);const auto& installed=rows.get(r.target.value,"MODULE_DISABLED");check(std::find(installed.actions.begin(),installed.actions.end(),r.action)!=installed.actions.end(),"ACTION_UNSUPPORTED");check_pinned(installed,r.target); }
   }
   void dispatch(const instruction& r) {
@@ -667,7 +715,8 @@ extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
   if(code==receiver){switch(action_name){
     EOSIO_DISPATCH_HELPER(runtime,(authproof)(unlinknat)(linkevm)(unlinkevm)(submitevm)(setadmit)(admitfrom))
     EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(setprofile)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(confirmext)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))
-    EOSIO_DISPATCH_HELPER(runtime,(enrollagent)(addmember)(initgov)(setdaogov)(addsession)(delsession)(guardpause)(guardrevoke)(guardrecover)(submitsess)(setfees)(listmod)(unlistmod)(setmodcopy)(setpolicy)(setgov)(setoracle)(govfees)(setcreate)(govcreate)(setcrrate)(ordercreate)(cardcreate)(createpaid)(govlist)(govunlist)(govmodcopy))
+    EOSIO_DISPATCH_HELPER(runtime,(sethosted)(govhosted)(govseatfee)(orderfree)(setcapacity)(revokecap)(resumecap))
+    EOSIO_DISPATCH_HELPER(runtime,(enrollagent)(addmember)(initgov)(setdaogov)(addsession)(delsession)(guardpause)(guardrevoke)(guardrecover)(submitsess)(setfees)(listmod)(unlistmod)(setmodcopy)(setpolicy)(setgov)(setoracle)(govfees)(govpayfees)(setcreate)(govcreate)(setcrrate)(ordercreate)(cardcreate)(createpaid)(govlist)(govunlist)(govmodcopy))
   }}
   else if(action_name=="transfer"_n.value) execute_action(name(receiver),name(code),&runtime::deposit);
 }

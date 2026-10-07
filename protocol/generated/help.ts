@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle={
   "producer": "core",
-  "packageVersion": "0.6.0-alpha.1",
+  "packageVersion": "0.7.0-alpha.1",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -28,12 +28,13 @@ export const CoreHelpBundle={
     },
     {
       "id": "deployments",
-      "title": "Shared or independent deployment",
+      "title": "Choose how to operate your DAO",
       "paragraphs": [
-        "Shared DAOs have separate scopes in a common runtime. The operator controls contract upgrades and on-chain authority; member permissions do not remove this operator trust.",
-        "Independent DAOs deploy and administer their own Antelope C++ runtime and compatible modules. Their owner controls upgrade keys, resource funding, and deployment permissions.",
-        "The hub lists deployments and advertised interface versions. A listing is not a security audit, code endorsement, or transfer of governance authority.",
-        "The hub currently reads the configured runtime only. Independent contracts can be prepared and connected on chain with the deployment kit, but automatic multi-runtime discovery and routing are not implemented by this frontend. An independent DAO is not available here merely because a hub record exists."
+        "Shared contracts and hosting: create a DAO free with 10 active member slots. Daclify runs the contracts and server; the operator retains contract upgrade authority. Additional capacity needs an administrator-approved monthly subscription. Storage, AI and blockchain resources are separate.",
+        "Your contracts and server: operate your Antelope C++ deployment and backend, and use the Daclify frontend with an explicitly approved operator connection. Contact Daclify for pricing. You own deployment keys, server configuration, backups and blockchain resources.",
+        "Your complete DAO portal: operate contracts, backend and frontend. Publish public DAO metadata and an HTTPS portal URL in the Hub; its card links to your portal. Contact Daclify for pricing. The Hub does not receive your private keys, database or Stripe credentials.",
+        "Owner-authorized Hub registrations advertise the chain, runtime, reviewed code and raw ABI hashes, interface version, operator and per-DAO portal mode. Registration is discovery, not a security audit or endorsement. Service accounts and social-login pairings belong to each operator; an advertised API is not automatic single sign-on.",
+        "Daclify Connect lets either hosted or independent operators use their own merchant account through the central payment service. Fully standalone Stripe requires an independently operated backend and frontend; those payments do not automatically remit Daclify commission."
       ]
     },
     {
@@ -166,17 +167,13 @@ export const CoreHelpBundle={
     },
     {
       "id": "creation-fees",
-      "title": "DAO creation fees and payment",
+      "title": "Free creation and approved hosting capacity",
       "paragraphs": [
-        "Shared DAO setup costs $20 USD. Independent setup costs $50 USD plus blockchain RAM, CPU, NET and native account costs charged separately. These are initial defaults; the linked Daclify DAO administrators can change the on-chain policy. Core governance remains free after setup; optional modules and hosted services have their own charges.",
-        "TLOS quotes convert the USD setup fee using a fresh on-chain USD-per-TLOS rate and a 20% premium, rounded up to four decimals. Each quote expires in 15 minutes. Send the exact amount to the displayed runtime using the displayed create: memo and token contract. Overpayments and expired quotes are rejected atomically. The operator publishes the conversion observations and is trusted for their accuracy.",
-        "Card checkout captures the order price in USD. Only a signed Stripe webhook for the stored checkout, account, currency and amount can attest payment. Returning from checkout is not payment proof. The native settler is trusted for off-chain card settlement. Hosted-service receipts cannot pay a DAO setup fee.",
-        "Orders are bound to the signed-in account and immutable setup. Check and resume an existing order after a lost response; paid orders create at most one shared DAO. Creation, initial governance, enrollment and module installation run in one transaction, so a failed setup leaves the paid order available to retry. Keep the order ID for support. Refunds and chargebacks require operator handling.",
-        "Independent self-service provisioning is unavailable. The application displays its setup price but refuses checkout until a provisioner and blockchain resource quote exist. Use the reviewed deployment kit; do not send a shared setup payment for an independent deployment.",
-        "Before enabling paid creation, a native operator configures setfees and setcreate (2000 shared USD cents, 5000 independent USD cents, 2000 premium basis points, relay settler), verifies the fee treasury and installs callback permission links. Bootstrap the platform DAO before setting creation fees, or create it with a paid order. Link it with setgov. setcrrate requires a fresh positive observation and native runtime authority. npm run price:tlos -- testnet --creation-rate reads Delphi and prints an unsigned update for review; it sends no transaction. Arrange operator updates often enough that observations remain less than 15 minutes old. A stale or future observation refuses new TLOS quotes.",
-        "API clients prepare with POST /v1/dao-orders, read GET /v1/dao-orders/:id, start card checkout with POST /v1/dao-orders/:id/checkout and create/reconcile with POST /v1/dao-orders/:id/fulfill. The former POST /v1/daos free-creation endpoint now returns HTTP 409 CREATION_PAYMENT_REQUIRED and never creates a DAO. Update clients to the paid order flow.",
-        "The service checks the treasury token’s actual symbol and precision and any native guardian before preparing a payable order. The saved order review displays the complete immutable setup and founding public identity. An expired unpaid order cannot be paid; a paid order remains available for execution after quote expiry. Check payment status, review the original terms, then explicitly select Create this paid DAO. Starting another order does not cancel the previous quote: retain its order link until it expires or is resolved.",
-        "A failed paid fulfillment retains the paid order and can be retried after its unchanged deployment dependencies are restored. Operators must reconcile the stored account, immutable request, native order and transaction or card evidence before handling a support refund. This release has no automatic on-chain refund action or refund state; a manual transfer must not be represented as cancelling the still-paid order. Follow the paid-creation incident guide before any production refund. The creation asset is immutable once creation pricing is configured, protecting existing token quotes."
+        "Shared creation is free and includes 10 active governance member slots. Human and agent governance identities each use one slot; pairing Telegram, email or wallets does not add another member or slot.",
+        "Monthly paid slots use graduated rates: the first 40 additional slots cost $1 each, the next 200 cost $0.50 each, and remaining additional slots cost $0.20 each. Total capacity 11 costs $1/month; 50 costs $40; 250 costs $140; 1,000 costs $290. Administrators choose capacity and explicitly approve the price. The service never automatically bills a DAO for joining members.",
+        "Existing subscriptions retain the accepted price schedule and included allowance. Daclify DAO can govern rates for new agreements. Accepting current pricing is a separate explicit administrator action. Blockchain, storage and AI allowances remain separate.",
+        "Independent deployment options show Contact for pricing; they have no public setup price or self-service deployment checkout. Shared setup promo codes were superseded by free creation.",
+        "Previously captured card or TLOS creation orders retain their immutable quoted price and once-only fulfillment. Their original TLOS quote may include the agreed 20% conversion premium. Creating a new free DAO does not refund or cancel an earlier paid order."
       ]
     },
     {
@@ -215,10 +212,47 @@ export const CoreHelpBundle={
       "id": "release-0.5",
       "title": "Use the matching release and enabled modules",
       "paragraphs": [
-        "Core, module and frontend packages are versioned together at 0.6.0-alpha.1. Documentation displays its package version and warns when the selected DAO deployment does not match. Module actions remain unavailable when the installed frontend SDK differs from the deployed module version or code hash.",
+        "Core, module and frontend packages are versioned together at 0.7.0-alpha.1. Documentation displays its package version and warns when the selected DAO deployment does not match. Module actions remain unavailable when the installed frontend SDK differs from the deployed module version or code hash.",
         "A DAO administrator enables optional modules in Workspace → Modules. Grants rounds requires Works and Decide; funded awards continue through Works delivery, independent review and Treasury settlement. Enable Endorsement admission before configuring an opt-in member endorsement rule in Members. Representative elections are available in Decide and confer term labels, without administrator or spending powers.",
         "Contract upgrades preserve balances, approved liabilities, old documents and existing identities. Changed module code invalidates old execution pins; review a new proposal rather than changing the terms of an existing vote. Complete spending exports remain available and mark missing historical receipts or document references as incomplete.",
-        "Version 0.6 adds service migration 015, wallet-only access and vault attachment while retaining the 0.5 contract code/layouts. Operators should follow the repository upgrade-0.6 runbook for this service update; the earlier upgrade-0.5 procedure applies to older contracts. Use matching API/frontend/protocol/help artifacts, review permissions and immutable hashes, and qualify live providers, wallet clients, backups and proxy trust before enabling a hosted service. Local fixture passes do not qualify production managed custody."
+        "Version 0.7 adds free shared creation, graduated capacity subscriptions, optional Connect merchant receipts and independent portal routing. It requires the matching runtime WASM/ABI, execctx permission links and migrations 016–021. Earlier table layouts and module WASM are retained. Follow the repository upgrade-0.7 and connected-payments runbooks; older recovery behavior still applies. Use matching API/frontend/protocol/help artifacts, review permissions and immutable hashes, and qualify live providers, wallet clients, backups and proxy trust before enabling a hosted service. Local fixture passes do not qualify production managed custody."
+      ]
+    },
+    {
+      "id": "shared-hosting",
+      "title": "Shared hosting and graduated member capacity",
+      "paragraphs": [
+        "Create free with 10 active member slots. Administrators approve additional paid capacity. Paid slot ranges are 1–40 at 100 USD cents each, 41–240 at 50 cents each, and 241 onward at 20 cents each per month. The lower price applies only to slots in its band. A shared runtime currently supports at most 5,000 active members per DAO.",
+        "An agreement captures the complete on-chain price policy, included slots and approved quantity. Existing subscriptions retain that schedule, including when capacity changes, until an administrator explicitly accepts current pricing. The UI displays included slots, approved paid slots, total capacity, monthly charge and pending changes.",
+        "A checkout redirect is not payment proof. Signed webhooks trigger current Stripe invoice/payment verification; a durable PostgreSQL job then attests a once-only capacity receipt to the runtime. The configured settler is trusted to attest off-chain payments. A lost chain response is retried with the same receipt.",
+        "Upgrades use payment-dependent subscription updates with immediate prorated invoices. Capacity is granted only after verified payment. Decreases take effect for future bills without unused-period credits; already-paid capacity remains through its period. Cancellation stops renewal and keeps paid capacity until expiry.",
+        "Payment failure or expiry prevents admissions and reactivations above the effective allowance. Existing memberships, votes, withdrawals, liabilities, keys and documents remain usable. Fully refunded or unresolved disputed hosting payments stop future admissions supported by that receipt after reconciliation; older receipts cannot revoke a newer period.",
+        "Monthly hosting uses card billing on Daclify’s Stripe account, separately from DAO Connect module payments. TLOS recurring hosting is not implemented. Stripe processing, tax obligations, provider availability and real-network settlement require separate qualification. Provider mocks are not live certification.",
+        "Back up PostgreSQL billing agreements and provider mappings along with sign-in pairings. On-chain receipts preserve the current member allowance but do not reconstruct Stripe customer or subscription records. See Disaster recovery."
+      ]
+    },
+    {
+      "id": "payments",
+      "title": "DAO merchant payments and Daclify Connect",
+      "paragraphs": [
+        "Each DAO accepting card payments needs its own Stripe merchant account. An active administrator can connect an eligible existing account through OAuth or create a new full-dashboard account through Stripe-hosted onboarding. Stripe collects identity, business and payout details; the DAO completes those steps itself. Creating a DAO does not create a verified merchant automatically.",
+        "Daclify Connect processes approved module products as direct charges on the DAO merchant account. Stripe processing fees are separate. The default Daclify application commission is 5%; Daclify DAO governs the rate. Zero commission is supported. Orders capture their price and fee policy, so subsequent changes do not alter them.",
+        "Commission applies only to eligible module checkouts created through this integration. It does not apply automatically to native treasury transfers, outside payments, DAO setup or shared-hosting subscriptions. A module-labelled product is a payment receipt; it does not install a contract, mint native credit or automatically grant membership or module entitlements.",
+        "Only current administrators with a fresh signing proof can manage merchant setup, products, refunds and operator credentials. Buyers can see their own orders; current administrators can see DAO orders. Public catalogues disclose only active product information.",
+        "Payment status is reconciled from Stripe’s current checkout, PaymentIntent and charge on the captured merchant account. Signed notifications are mode-checked, replay-checked and serialized per event. Browser returns and pasted transaction IDs grant nothing. Refunds are bounded and repeat safely using their original request ID. Failed or uncertain provider operations require reconciliation rather than a new charge or refund request.",
+        "Onboarding links expire and may be used once; resume from DAO payment settings. Returning to Daclify does not prove onboarding is complete. Charges and payouts must both be enabled. Disconnecting blocks new checkouts and revokes broker credentials. Existing receipts remain on their original merchant account.",
+        "Connect needs separate test/live client IDs and webhook secrets, the platform’s Stripe credentials and a registered API callback URL. Live charges stay disabled unless explicitly enabled. Accounts v2/full-dashboard eligibility, regional availability, fees, refunds and payout responsibility must be checked in a real Stripe sandbox before production."
+      ]
+    },
+    {
+      "id": "independent-operators",
+      "title": "Independent operators and Hub registration",
+      "paragraphs": [
+        "Independent DAOs own their contracts and server. They can either use the reviewed Daclify app with an explicitly approved compatible operator API, or use their own frontend and publish an external HTTPS portal link in the Hub. Each listing states its operator; a Hub record is not endorsement.",
+        "Register public version-1 metadata with the owning native account. It lists operator, DAO IDs, titles, descriptions, purposes, privacy labels, portal modes and optional module deployment names. The Hub reader uses the configured chain RPC and never fetches an advertised API server-side. No private documents, keys, provider tokens or invented membership statistics belong in the registry.",
+        "To use Daclify Connect, the independent DAO still owns its Stripe merchant account. Its server receives a DAO-scoped broker credential, returned once and stored only on that server. The central service retains platform Stripe credentials and applies the governed fee. A changed administrator role or revoked credential removes broker access.",
+        "Fully standalone Stripe is for operators running both their own backend and frontend. Those credentials remain outside Daclify. The Hub presents public information and links to the portal; it cannot automatically take commission from payments it does not process.",
+        "Do not transfer Daclify session cookies, social provider credentials, recovery kits or decrypted vault keys to another operator. Signing in to a different service is a separate audience-bound authentication step; current on-chain membership determines governance rights. Pairing records are local to that operator’s database and need its own backups."
       ]
     }
   ],
@@ -227,7 +261,7 @@ export const CoreHelpBundle={
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "e786287e4241c6f5923150ba6e571f5005e71d6fff1864ab0b6642e6f3f34e6b",
+      "sourceAbiHash": "1e574fd67ef49834f47df21f59025862eeb5c69e20dd7c11ff0b10cd14a7d08c",
       "actions": [
         {
           "name": "addmember",
@@ -674,6 +708,31 @@ export const CoreHelpBundle={
           ]
         },
         {
+          "name": "govhosted",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "free_members",
+              "type": "uint32"
+            },
+            {
+              "name": "settler",
+              "type": "name"
+            }
+          ]
+        },
+        {
           "name": "govlist",
           "fields": [
             {
@@ -753,6 +812,56 @@ export const CoreHelpBundle={
             {
               "name": "detail",
               "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "govpayfees",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "bps",
+              "type": "uint16"
+            }
+          ]
+        },
+        {
+          "name": "govseatfee",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "first_usd",
+              "type": "uint32"
+            },
+            {
+              "name": "next_usd",
+              "type": "uint32"
+            },
+            {
+              "name": "rest_usd",
+              "type": "uint32"
             }
           ]
         },
@@ -1063,6 +1172,19 @@ export const CoreHelpBundle={
           ]
         },
         {
+          "name": "orderfree",
+          "fields": [
+            {
+              "name": "reference",
+              "type": "checksum256"
+            },
+            {
+              "name": "creator",
+              "type": "public_key"
+            }
+          ]
+        },
+        {
           "name": "payob",
           "fields": [
             {
@@ -1195,6 +1317,32 @@ export const CoreHelpBundle={
           ]
         },
         {
+          "name": "resumecap",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "receipt",
+              "type": "checksum256"
+            }
+          ]
+        },
+        {
+          "name": "revokecap",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "receipt",
+              "type": "checksum256"
+            }
+          ]
+        },
+        {
           "name": "rotateepoch",
           "fields": [
             {
@@ -1291,6 +1439,27 @@ export const CoreHelpBundle={
             {
               "name": "admin_override",
               "type": "bool"
+            }
+          ]
+        },
+        {
+          "name": "setcapacity",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_limit",
+              "type": "uint32"
+            },
+            {
+              "name": "expires",
+              "type": "uint32"
+            },
+            {
+              "name": "receipt",
+              "type": "checksum256"
             }
           ]
         },
@@ -1413,6 +1582,19 @@ export const CoreHelpBundle={
             {
               "name": "dao_id",
               "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "sethosted",
+          "fields": [
+            {
+              "name": "free_members",
+              "type": "uint32"
+            },
+            {
+              "name": "settler",
+              "type": "name"
             }
           ]
         },
@@ -1802,6 +1984,48 @@ export const CoreHelpBundle={
           ]
         },
         {
+          "name": "capcfg",
+          "fields": [
+            {
+              "name": "free_members",
+              "type": "uint32"
+            },
+            {
+              "name": "settler",
+              "type": "name"
+            }
+          ]
+        },
+        {
+          "name": "capreceipts",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uint64"
+            },
+            {
+              "name": "receipt",
+              "type": "checksum256"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "members",
+              "type": "uint32"
+            },
+            {
+              "name": "expires",
+              "type": "uint32"
+            },
+            {
+              "name": "revoked",
+              "type": "bool"
+            }
+          ]
+        },
+        {
           "name": "catalogue",
           "fields": [
             {
@@ -1920,6 +2144,27 @@ export const CoreHelpBundle={
             },
             {
               "name": "card_reference",
+              "type": "checksum256"
+            }
+          ]
+        },
+        {
+          "name": "daocaps",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "members",
+              "type": "uint32"
+            },
+            {
+              "name": "expires",
+              "type": "uint32"
+            },
+            {
+              "name": "receipt",
               "type": "checksum256"
             }
           ]
@@ -2437,6 +2682,19 @@ export const CoreHelpBundle={
           ]
         },
         {
+          "name": "paycfg",
+          "fields": [
+            {
+              "name": "bps",
+              "type": "uint16"
+            },
+            {
+              "name": "revision",
+              "type": "uint64"
+            }
+          ]
+        },
+        {
           "name": "profiles",
           "fields": [
             {
@@ -2499,6 +2757,27 @@ export const CoreHelpBundle={
             {
               "name": "transaction_id",
               "type": "checksum256"
+            }
+          ]
+        },
+        {
+          "name": "seatcfg",
+          "fields": [
+            {
+              "name": "first_usd",
+              "type": "uint32"
+            },
+            {
+              "name": "next_usd",
+              "type": "uint32"
+            },
+            {
+              "name": "rest_usd",
+              "type": "uint32"
+            },
+            {
+              "name": "revision",
+              "type": "uint64"
             }
           ]
         },
@@ -3291,6 +3570,99 @@ export const CoreHelpBundle={
                       }
                     ]
                   },
+                  "hosting": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "free_members": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                          },
+                          "settler": {
+                            "type": "string",
+                            "maxLength": 13
+                          }
+                        },
+                        "required": [
+                          "free_members",
+                          "settler"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "seatPricing": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "first_usd": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                          },
+                          "next_usd": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                          },
+                          "rest_usd": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                          },
+                          "revision": {
+                            "type": "string",
+                            "maxLength": 20
+                          }
+                        },
+                        "required": [
+                          "first_usd",
+                          "next_usd",
+                          "rest_usd",
+                          "revision"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "paymentPolicy": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "bps": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 65535
+                          },
+                          "revision": {
+                            "type": "string",
+                            "maxLength": 20
+                          }
+                        },
+                        "required": [
+                          "bps",
+                          "revision"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "runtimeSettings": {
                     "anyOf": [
                       {
@@ -3375,6 +3747,9 @@ export const CoreHelpBundle={
                   "fees",
                   "market",
                   "creation",
+                  "hosting",
+                  "seatPricing",
+                  "paymentPolicy",
                   "runtimeSettings",
                   "rateFresh",
                   "platformDao",
@@ -3510,7 +3885,7 @@ export const CoreHelpBundle={
             "properties": {
               "sharedUsdCents": {
                 "type": "number",
-                "const": 2000
+                "const": 0
               },
               "independentUsdCents": {
                 "type": "number",
@@ -3567,7 +3942,8 @@ export const CoreHelpBundle={
             "type": "string",
             "enum": [
               "card",
-              "tlos"
+              "tlos",
+              "free"
             ]
           },
           "request": {
@@ -4838,12 +5214,13 @@ export const CoreHelpBundle={
             "type": "string",
             "enum": [
               "card",
-              "tlos"
+              "tlos",
+              "free"
             ]
           },
           "usdCents": {
             "type": "integer",
-            "exclusiveMinimum": 0,
+            "minimum": 0,
             "maximum": 9007199254740991
           },
           "tlosAmount": {
@@ -5636,12 +6013,13 @@ export const CoreHelpBundle={
             "type": "string",
             "enum": [
               "card",
-              "tlos"
+              "tlos",
+              "free"
             ]
           },
           "usdCents": {
             "type": "integer",
-            "exclusiveMinimum": 0,
+            "minimum": 0,
             "maximum": 9007199254740991
           },
           "tlosAmount": {
@@ -6465,12 +6843,13 @@ export const CoreHelpBundle={
             "type": "string",
             "enum": [
               "card",
-              "tlos"
+              "tlos",
+              "free"
             ]
           },
           "usdCents": {
             "type": "integer",
-            "exclusiveMinimum": 0,
+            "minimum": 0,
             "maximum": 9007199254740991
           },
           "tlosAmount": {
@@ -10910,6 +11289,2801 @@ export const CoreHelpBundle={
       "helpTopic": "modules"
     },
     {
+      "method": "GET",
+      "path": "/v1/hosting/status",
+      "query": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        },
+        "required": [
+          "dao"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "pricing": {
+            "type": "object",
+            "properties": {
+              "freeSlots": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5000
+              },
+              "rates": {
+                "type": "object",
+                "properties": {
+                  "first_usd": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4294967295
+                  },
+                  "next_usd": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4294967295
+                  },
+                  "rest_usd": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4294967295
+                  },
+                  "revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  }
+                },
+                "required": [
+                  "first_usd",
+                  "next_usd",
+                  "rest_usd",
+                  "revision"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "freeSlots",
+              "rates"
+            ],
+            "additionalProperties": false
+          },
+          "activeMembers": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 5000
+          },
+          "effectiveCapacity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5000
+          },
+          "expires": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "receipt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "exempt": {
+            "type": "boolean"
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "subscription": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "requestId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "state": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "active",
+                      "past-due",
+                      "canceling",
+                      "ended",
+                      "review"
+                    ]
+                  },
+                  "extraSlots": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4999
+                  },
+                  "pricing": {
+                    "type": "object",
+                    "properties": {
+                      "freeSlots": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5000
+                      },
+                      "rates": {
+                        "type": "object",
+                        "properties": {
+                          "first_usd": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                          },
+                          "next_usd": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                          },
+                          "rest_usd": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                          },
+                          "revision": {
+                            "type": "string",
+                            "maxLength": 20
+                          }
+                        },
+                        "required": [
+                          "first_usd",
+                          "next_usd",
+                          "rest_usd",
+                          "revision"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "freeSlots",
+                      "rates"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "monthlyUsdCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "checkoutUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "invoiceUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "pendingChange": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "requestId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "extraSlots": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4999
+                          },
+                          "pricing": {
+                            "type": "object",
+                            "properties": {
+                              "freeSlots": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 5000
+                              },
+                              "rates": {
+                                "type": "object",
+                                "properties": {
+                                  "first_usd": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 4294967295
+                                  },
+                                  "next_usd": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 4294967295
+                                  },
+                                  "rest_usd": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 4294967295
+                                  },
+                                  "revision": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  }
+                                },
+                                "required": [
+                                  "first_usd",
+                                  "next_usd",
+                                  "rest_usd",
+                                  "revision"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "freeSlots",
+                              "rates"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "monthlyUsdCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "requestId",
+                          "extraSlots",
+                          "pricing",
+                          "monthlyUsdCents"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "requestId",
+                  "state",
+                  "extraSlots",
+                  "pricing",
+                  "monthlyUsdCents",
+                  "checkoutUrl",
+                  "invoiceUrl",
+                  "pendingChange"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "dao",
+          "pricing",
+          "activeMembers",
+          "effectiveCapacity",
+          "expires",
+          "receipt",
+          "exempt",
+          "configured",
+          "subscription"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/hosting/change",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "extraSlots": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4999
+          },
+          "pricingHash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "monthlyUsdCents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 499900000
+          },
+          "acceptCurrentPricing": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "dao",
+          "requestId",
+          "extraSlots",
+          "pricingHash",
+          "monthlyUsdCents"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "pricing": {
+            "type": "object",
+            "properties": {
+              "freeSlots": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5000
+              },
+              "rates": {
+                "type": "object",
+                "properties": {
+                  "first_usd": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4294967295
+                  },
+                  "next_usd": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4294967295
+                  },
+                  "rest_usd": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4294967295
+                  },
+                  "revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  }
+                },
+                "required": [
+                  "first_usd",
+                  "next_usd",
+                  "rest_usd",
+                  "revision"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "freeSlots",
+              "rates"
+            ],
+            "additionalProperties": false
+          },
+          "activeMembers": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 5000
+          },
+          "effectiveCapacity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5000
+          },
+          "expires": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "receipt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "exempt": {
+            "type": "boolean"
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "subscription": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "requestId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "state": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "active",
+                      "past-due",
+                      "canceling",
+                      "ended",
+                      "review"
+                    ]
+                  },
+                  "extraSlots": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4999
+                  },
+                  "pricing": {
+                    "type": "object",
+                    "properties": {
+                      "freeSlots": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 5000
+                      },
+                      "rates": {
+                        "type": "object",
+                        "properties": {
+                          "first_usd": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                          },
+                          "next_usd": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                          },
+                          "rest_usd": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                          },
+                          "revision": {
+                            "type": "string",
+                            "maxLength": 20
+                          }
+                        },
+                        "required": [
+                          "first_usd",
+                          "next_usd",
+                          "rest_usd",
+                          "revision"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "freeSlots",
+                      "rates"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "monthlyUsdCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "checkoutUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "invoiceUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "pendingChange": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "requestId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "extraSlots": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4999
+                          },
+                          "pricing": {
+                            "type": "object",
+                            "properties": {
+                              "freeSlots": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 5000
+                              },
+                              "rates": {
+                                "type": "object",
+                                "properties": {
+                                  "first_usd": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 4294967295
+                                  },
+                                  "next_usd": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 4294967295
+                                  },
+                                  "rest_usd": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 4294967295
+                                  },
+                                  "revision": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  }
+                                },
+                                "required": [
+                                  "first_usd",
+                                  "next_usd",
+                                  "rest_usd",
+                                  "revision"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "freeSlots",
+                              "rates"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "monthlyUsdCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "requestId",
+                          "extraSlots",
+                          "pricing",
+                          "monthlyUsdCents"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "requestId",
+                  "state",
+                  "extraSlots",
+                  "pricing",
+                  "monthlyUsdCents",
+                  "checkoutUrl",
+                  "invoiceUrl",
+                  "pendingChange"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "dao",
+          "pricing",
+          "activeMembers",
+          "effectiveCapacity",
+          "expires",
+          "receipt",
+          "exempt",
+          "configured",
+          "subscription"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/payments/status",
+      "query": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        },
+        "required": [
+          "dao"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "accountId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^acct_[A-Za-z0-9]+$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "accountKind": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "oauth",
+                  "v2"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "not-connected",
+              "pending",
+              "ready",
+              "restricted",
+              "disconnected"
+            ]
+          },
+          "chargesEnabled": {
+            "type": "boolean"
+          },
+          "payoutsEnabled": {
+            "type": "boolean"
+          },
+          "policy": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "basisPoints": {
+                    "default": 500,
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9999
+                  },
+                  "revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  }
+                },
+                "required": [
+                  "basisPoints",
+                  "revision"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "dao": {
+                  "type": "object",
+                  "properties": {
+                    "chainId": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "contract": {
+                      "type": "string",
+                      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                    },
+                    "daoId": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "interfaceVersion": {
+                      "type": "number",
+                      "const": 1
+                    }
+                  },
+                  "required": [
+                    "chainId",
+                    "contract",
+                    "daoId",
+                    "interfaceVersion"
+                  ],
+                  "additionalProperties": false
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "moduleId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]{0,63}$"
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "amountMinor": {
+                  "type": "integer",
+                  "minimum": 50,
+                  "maximum": 99999999
+                },
+                "active": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "currency": {
+                  "type": "string",
+                  "const": "usd"
+                }
+              },
+              "required": [
+                "dao",
+                "id",
+                "moduleId",
+                "title",
+                "amountMinor",
+                "active",
+                "currency"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "brokerConfigured": {
+            "type": "boolean"
+          },
+          "merchantSetupUrl": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "dao",
+          "configured",
+          "accountId",
+          "accountKind",
+          "state",
+          "chargesEnabled",
+          "payoutsEnabled",
+          "policy",
+          "products",
+          "brokerConfigured",
+          "merchantSetupUrl"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/payments/catalogue",
+      "query": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        },
+        "required": [
+          "dao"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "policy": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "basisPoints": {
+                    "default": 500,
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9999
+                  },
+                  "revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  }
+                },
+                "required": [
+                  "basisPoints",
+                  "revision"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "dao": {
+                  "type": "object",
+                  "properties": {
+                    "chainId": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "contract": {
+                      "type": "string",
+                      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                    },
+                    "daoId": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "interfaceVersion": {
+                      "type": "number",
+                      "const": 1
+                    }
+                  },
+                  "required": [
+                    "chainId",
+                    "contract",
+                    "daoId",
+                    "interfaceVersion"
+                  ],
+                  "additionalProperties": false
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "moduleId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]{0,63}$"
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "amountMinor": {
+                  "type": "integer",
+                  "minimum": 50,
+                  "maximum": 99999999
+                },
+                "active": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "currency": {
+                  "type": "string",
+                  "const": "usd"
+                }
+              },
+              "required": [
+                "dao",
+                "id",
+                "moduleId",
+                "title",
+                "amountMinor",
+                "active",
+                "currency"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "dao",
+          "enabled",
+          "policy",
+          "products"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/payments/onboard",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "existing",
+              "new",
+              "resume"
+            ]
+          }
+        },
+        "required": [
+          "dao",
+          "mode"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/payments/product",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "moduleId": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{0,63}$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "amountMinor": {
+            "type": "integer",
+            "minimum": 50,
+            "maximum": 99999999
+          },
+          "active": {
+            "default": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "dao",
+          "id",
+          "moduleId",
+          "title",
+          "amountMinor"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "moduleId": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{0,63}$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "amountMinor": {
+            "type": "integer",
+            "minimum": 50,
+            "maximum": 99999999
+          },
+          "active": {
+            "default": true,
+            "type": "boolean"
+          },
+          "currency": {
+            "type": "string",
+            "const": "usd"
+          }
+        },
+        "required": [
+          "dao",
+          "id",
+          "moduleId",
+          "title",
+          "amountMinor",
+          "active",
+          "currency"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/payments/checkout",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "dao",
+          "productId",
+          "requestId"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "title": {
+            "type": "string"
+          },
+          "moduleId": {
+            "type": "string"
+          },
+          "amountMinor": {
+            "type": "integer",
+            "minimum": 50,
+            "maximum": 99999999
+          },
+          "currency": {
+            "type": "string",
+            "const": "usd"
+          },
+          "applicationFeeMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "policy": {
+            "type": "object",
+            "properties": {
+              "basisPoints": {
+                "default": 500,
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9999
+              },
+              "revision": {
+                "type": "string",
+                "maxLength": 20
+              }
+            },
+            "required": [
+              "basisPoints",
+              "revision"
+            ],
+            "additionalProperties": false
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "open",
+              "paid",
+              "failed",
+              "expired"
+            ]
+          },
+          "checkoutUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "refundedMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "dispute": {
+            "type": "string",
+            "enum": [
+              "none",
+              "open",
+              "won",
+              "lost"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "dao",
+          "productId",
+          "title",
+          "moduleId",
+          "amountMinor",
+          "currency",
+          "applicationFeeMinor",
+          "policy",
+          "state",
+          "checkoutUrl",
+          "refundedMinor",
+          "dispute"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/payments/orders/:id",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "title": {
+            "type": "string"
+          },
+          "moduleId": {
+            "type": "string"
+          },
+          "amountMinor": {
+            "type": "integer",
+            "minimum": 50,
+            "maximum": 99999999
+          },
+          "currency": {
+            "type": "string",
+            "const": "usd"
+          },
+          "applicationFeeMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "policy": {
+            "type": "object",
+            "properties": {
+              "basisPoints": {
+                "default": 500,
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9999
+              },
+              "revision": {
+                "type": "string",
+                "maxLength": 20
+              }
+            },
+            "required": [
+              "basisPoints",
+              "revision"
+            ],
+            "additionalProperties": false
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "open",
+              "paid",
+              "failed",
+              "expired"
+            ]
+          },
+          "checkoutUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "refundedMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "dispute": {
+            "type": "string",
+            "enum": [
+              "none",
+              "open",
+              "won",
+              "lost"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "dao",
+          "productId",
+          "title",
+          "moduleId",
+          "amountMinor",
+          "currency",
+          "applicationFeeMinor",
+          "policy",
+          "state",
+          "checkoutUrl",
+          "refundedMinor",
+          "dispute"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/payments/refund",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "orderId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "amountMinor": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 99999999
+          }
+        },
+        "required": [
+          "dao",
+          "orderId",
+          "requestId",
+          "amountMinor"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "title": {
+            "type": "string"
+          },
+          "moduleId": {
+            "type": "string"
+          },
+          "amountMinor": {
+            "type": "integer",
+            "minimum": 50,
+            "maximum": 99999999
+          },
+          "currency": {
+            "type": "string",
+            "const": "usd"
+          },
+          "applicationFeeMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "policy": {
+            "type": "object",
+            "properties": {
+              "basisPoints": {
+                "default": 500,
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9999
+              },
+              "revision": {
+                "type": "string",
+                "maxLength": 20
+              }
+            },
+            "required": [
+              "basisPoints",
+              "revision"
+            ],
+            "additionalProperties": false
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "open",
+              "paid",
+              "failed",
+              "expired"
+            ]
+          },
+          "checkoutUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "refundedMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "dispute": {
+            "type": "string",
+            "enum": [
+              "none",
+              "open",
+              "won",
+              "lost"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "dao",
+          "productId",
+          "title",
+          "moduleId",
+          "amountMinor",
+          "currency",
+          "applicationFeeMinor",
+          "policy",
+          "state",
+          "checkoutUrl",
+          "refundedMinor",
+          "dispute"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/payments/operator",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "dao"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "pattern": "^dcp_[A-Za-z0-9_-]{43}$"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/payments/operator/revoke",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "dao"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "null"
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/payments/broker/checkout",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "customerReference": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,128}$"
+          }
+        },
+        "required": [
+          "dao",
+          "productId",
+          "requestId",
+          "customerReference"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "title": {
+            "type": "string"
+          },
+          "moduleId": {
+            "type": "string"
+          },
+          "amountMinor": {
+            "type": "integer",
+            "minimum": 50,
+            "maximum": 99999999
+          },
+          "currency": {
+            "type": "string",
+            "const": "usd"
+          },
+          "applicationFeeMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "policy": {
+            "type": "object",
+            "properties": {
+              "basisPoints": {
+                "default": 500,
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9999
+              },
+              "revision": {
+                "type": "string",
+                "maxLength": 20
+              }
+            },
+            "required": [
+              "basisPoints",
+              "revision"
+            ],
+            "additionalProperties": false
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "open",
+              "paid",
+              "failed",
+              "expired"
+            ]
+          },
+          "checkoutUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "refundedMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "dispute": {
+            "type": "string",
+            "enum": [
+              "none",
+              "open",
+              "won",
+              "lost"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "dao",
+          "productId",
+          "title",
+          "moduleId",
+          "amountMinor",
+          "currency",
+          "applicationFeeMinor",
+          "policy",
+          "state",
+          "checkoutUrl",
+          "refundedMinor",
+          "dispute"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/payments/broker/order",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "orderId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "dao",
+          "orderId"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "title": {
+            "type": "string"
+          },
+          "moduleId": {
+            "type": "string"
+          },
+          "amountMinor": {
+            "type": "integer",
+            "minimum": 50,
+            "maximum": 99999999
+          },
+          "currency": {
+            "type": "string",
+            "const": "usd"
+          },
+          "applicationFeeMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "policy": {
+            "type": "object",
+            "properties": {
+              "basisPoints": {
+                "default": 500,
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9999
+              },
+              "revision": {
+                "type": "string",
+                "maxLength": 20
+              }
+            },
+            "required": [
+              "basisPoints",
+              "revision"
+            ],
+            "additionalProperties": false
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "open",
+              "paid",
+              "failed",
+              "expired"
+            ]
+          },
+          "checkoutUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "refundedMinor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "dispute": {
+            "type": "string",
+            "enum": [
+              "none",
+              "open",
+              "won",
+              "lost"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "dao",
+          "productId",
+          "title",
+          "moduleId",
+          "amountMinor",
+          "currency",
+          "applicationFeeMinor",
+          "policy",
+          "state",
+          "checkoutUrl",
+          "refundedMinor",
+          "dispute"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/payments/broker/status",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "dao"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "accountId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^acct_[A-Za-z0-9]+$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "accountKind": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "oauth",
+                  "v2"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "not-connected",
+              "pending",
+              "ready",
+              "restricted",
+              "disconnected"
+            ]
+          },
+          "chargesEnabled": {
+            "type": "boolean"
+          },
+          "payoutsEnabled": {
+            "type": "boolean"
+          },
+          "policy": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "basisPoints": {
+                    "default": 500,
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9999
+                  },
+                  "revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  }
+                },
+                "required": [
+                  "basisPoints",
+                  "revision"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "dao": {
+                  "type": "object",
+                  "properties": {
+                    "chainId": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "contract": {
+                      "type": "string",
+                      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                    },
+                    "daoId": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "interfaceVersion": {
+                      "type": "number",
+                      "const": 1
+                    }
+                  },
+                  "required": [
+                    "chainId",
+                    "contract",
+                    "daoId",
+                    "interfaceVersion"
+                  ],
+                  "additionalProperties": false
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "moduleId": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]{0,63}$"
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "amountMinor": {
+                  "type": "integer",
+                  "minimum": 50,
+                  "maximum": 99999999
+                },
+                "active": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "currency": {
+                  "type": "string",
+                  "const": "usd"
+                }
+              },
+              "required": [
+                "dao",
+                "id",
+                "moduleId",
+                "title",
+                "amountMinor",
+                "active",
+                "currency"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "brokerConfigured": {
+            "type": "boolean"
+          },
+          "merchantSetupUrl": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "dao",
+          "configured",
+          "accountId",
+          "accountKind",
+          "state",
+          "chargesEnabled",
+          "payoutsEnabled",
+          "policy",
+          "products",
+          "brokerConfigured",
+          "merchantSetupUrl"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/hub/directory",
+      "query": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "after": {
+            "type": "string",
+            "maxLength": 20
+          }
+        },
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "reference": {
+                  "type": "object",
+                  "properties": {
+                    "chainId": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "contract": {
+                      "type": "string",
+                      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                    },
+                    "daoId": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "interfaceVersion": {
+                      "type": "number",
+                      "const": 1
+                    }
+                  },
+                  "required": [
+                    "chainId",
+                    "contract",
+                    "daoId",
+                    "interfaceVersion"
+                  ],
+                  "additionalProperties": false
+                },
+                "title": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "purpose": {
+                  "type": "string",
+                  "enum": [
+                    "community",
+                    "ngo-grants",
+                    "gaming-guild",
+                    "team",
+                    "custom"
+                  ]
+                },
+                "privacy": {
+                  "type": "string",
+                  "enum": [
+                    "public",
+                    "encrypted-managed-allowed",
+                    "encrypted-user-controlled"
+                  ]
+                },
+                "operator": {
+                  "type": "string"
+                },
+                "codeHash": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "abiHash": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "portal": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "mode": {
+                          "type": "string",
+                          "const": "daclify"
+                        },
+                        "apiOrigin": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "required": [
+                        "mode",
+                        "apiOrigin"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "mode": {
+                          "type": "string",
+                          "const": "external"
+                        },
+                        "url": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "required": [
+                        "mode",
+                        "url"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "source": {
+                  "type": "string",
+                  "const": "hub-registry"
+                },
+                "verification": {
+                  "type": "string",
+                  "const": "owner-registered"
+                }
+              },
+              "required": [
+                "reference",
+                "title",
+                "description",
+                "purpose",
+                "privacy",
+                "operator",
+                "codeHash",
+                "abiHash",
+                "portal",
+                "source",
+                "verification"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "skipped": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "next": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "entries",
+          "skipped",
+          "next"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
       "method": "POST",
       "path": "/v1/sign-in/email/login/start",
       "input": {
@@ -11911,6 +15085,12 @@ export const CoreHelpBundle={
           "path": {
             "type": "string",
             "enum": [
+              "/v1/hosting/change",
+              "/v1/payments/onboard",
+              "/v1/payments/product",
+              "/v1/payments/refund",
+              "/v1/payments/operator",
+              "/v1/payments/operator/revoke",
               "/v1/account/vault",
               "/v1/auth/providers/link",
               "/v1/auth/providers/unlink",

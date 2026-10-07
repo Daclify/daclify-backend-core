@@ -3,7 +3,7 @@ import { NetworkSchema, CreateDaoSchema, VaultAccountSchema } from './api.js';
 import { DaoRefSchema, ChainIdSchema } from './base.js';
 import { RuntimeTableSchemas } from '../sdk/generated/schemas.js';
 export const DeploymentKindSchema = z.enum(['shared', 'independent']);
-export const CreationMethodSchema = z.enum(['card', 'tlos']);
+export const CreationMethodSchema = z.enum(['card', 'tlos', 'free']);
 export const CreationRequestSchema = z.strictObject({
   requestId: z.uuid(),
   deployment: DeploymentKindSchema,
@@ -17,7 +17,7 @@ export const CreationOrderViewSchema = z.strictObject({
   requestId: z.uuid(),
   deployment: DeploymentKindSchema,
   method: CreationMethodSchema,
-  usdCents: z.int().positive(),
+  usdCents: z.int().nonnegative(),
   tlosAmount: z.string().nullable(),
   recipient: z.string(),
   tokenContract: z.string(),
@@ -60,6 +60,9 @@ export const ChainPlatformSchema = z.strictObject({
   fees: RuntimeTableSchemas.feecfg.nullable(),
   market: RuntimeTableSchemas.mktcfg.nullable(),
   creation: RuntimeTableSchemas.createcfg.nullable(),
+  hosting: RuntimeTableSchemas.capcfg.nullable().default(null),
+  seatPricing: RuntimeTableSchemas.seatcfg.nullable().default(null),
+  paymentPolicy: RuntimeTableSchemas.paycfg.nullable().default(null),
   runtimeSettings: RuntimeTableSchemas.settings.nullable(),
   rateFresh: z.boolean(),
   platformDao: DaoRefSchema.nullable(),
@@ -94,7 +97,7 @@ export const PlatformStatusSchema = z.strictObject({
     }),
   ),
   defaults: z.strictObject({
-    sharedUsdCents: z.literal(2000),
+    sharedUsdCents: z.literal(0),
     independentUsdCents: z.literal(5000),
     tlosPremiumBps: z.literal(2000),
   }),

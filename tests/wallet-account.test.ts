@@ -20,7 +20,8 @@ it('rejects partial key identities and managed accounts without custody keys', (
 it('binds wallet account-control challenges to the service identity without a fake signing key', () => {
   expect(
     AccountControlMessageSchema.safeParse({
-      domain: 'daclify.account-control.v1',
+      domain: 'daclify.account-control.v2',
+      audience: 'https://app.example',
       origin: 'https://app.example',
       accountId: wallet.id,
       signingKey: null,

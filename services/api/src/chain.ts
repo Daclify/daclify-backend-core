@@ -20,7 +20,18 @@ import type { CreateDaoSchema } from '../../../protocol/api.js';
 import type { z } from 'zod';
 import type { GovernanceState } from '../../../protocol/dao.js';
 import type { ExecutionRequest, ExecutionResult } from '@daclify/modules';
+import type { DaoRef } from '../../../protocol/base.js';
+import type { PaymentPolicy } from '../../../protocol/payments.js';
+import type { HostingChain } from '../../../protocol/hosting.js';
+import type { HubDirectorySchema } from '../../../protocol/directory.js';
 export interface ChainGateway {
+  hosting?(dao: DaoRef): Promise<HostingChain>;
+  attestCapacity?(dao: DaoRef, members: number, expires: number, receipt: string): Promise<void>;
+  restoreCapacity?(dao: DaoRef, receipt: string): Promise<void>;
+  revokeCapacity?(dao: DaoRef, receipt: string): Promise<void>;
+  paymentPolicy?(): Promise<PaymentPolicy>;
+  paymentMemberships?(account: Account, dao: DaoRef): Promise<UserMembership[]>;
+  hubDirectory?(after?: string): Promise<z.infer<typeof HubDirectorySchema>>;
   walletMemberships?(wallet: WalletIdentity): Promise<UserMembership[]>;
   evmBinding?(
     daoId: string,

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.0-alpha.1 — Shared hosting and connected payments
+
+Free shared creation and 10 included members; explicit monthly graduated capacity, governed future rates and grandfathered agreements. Optional DAO merchant onboarding,5% governed Connect commission, receipt/refund controls and server-only broker integration. Public Hub portal discovery, isolated independent API selection and issuer-bound account-control challenges. Coordinated protocol/help/SDK upgrade and local regression checks; live provider qualification remains held.
+
 ## 0.6.0-alpha.1 — Wallet disaster recovery
 
 Wallet recovery after service database loss; per-DAO live native/EVM bindings and explicit wallet-only accounts. Dual-proof vault attachment preserves the recovered service ID. SQL migration 015 preserves existing accounts and rejects last-control removal. Includes restore-session invalidation, generated recovery help and failure/concurrency tests.

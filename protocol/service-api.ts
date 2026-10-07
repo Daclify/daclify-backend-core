@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { PaymentRoutes, BrokerRoutes } from './payments.js';
+import { HostingRoutes } from './hosting.js';
+import { DirectoryRoutes } from './directory.js';
 import { SessionSchema, ProviderLinkResultSchema } from './api.js';
 import {
   AccountControlChallengeSchema,
@@ -195,6 +198,10 @@ export const DocsAnswerSchema = z.strictObject({
 });
 
 export const ServiceResponseRoutes = [
+  ...Object.values(HostingRoutes),
+  ...Object.values(PaymentRoutes),
+  ...Object.values(BrokerRoutes),
+  ...Object.values(DirectoryRoutes),
   {
     method: 'POST',
     path: '/v1/sign-in/email/login/start',
@@ -390,6 +397,37 @@ export const ServiceResponseRoutes = [
 }[];
 
 export const ContractFailureMessages = {
+  MEMBERSHIP_CAPACITY:
+    'This DAO has reached its member allowance. Ask an administrator to approve more capacity; existing members retain their rights.',
+  HOSTED_PRICE:
+    'Choose positive graduated rates, with each later band no more expensive than the previous one.',
+  PAYMENTS_UNCONFIGURED:
+    'Merchant payments are not configured on this operator. Free DAO governance remains available.',
+  HOSTING_CAPACITY_RANGE:
+    'Choose a capacity within the shared runtime limit of 5,000 active members.',
+  HOSTING_UNCONFIGURED: 'Card subscriptions are not configured on this operator.',
+  HOSTING_UNAVAILABLE:
+    'Shared hosting is unavailable on this deployment. The operator must verify its runtime and hosting configuration.',
+  HOSTING_APPROVAL_CHANGED:
+    'The quote changed. Refresh the capacity screen and approve the displayed pricing.',
+  HOSTING_CHANGE_PENDING:
+    'A subscription change is pending. Complete or reconcile its Stripe invoice before another change.',
+  HOSTING_REQUEST_CONFLICT:
+    'An earlier subscription request is pending. Refresh and resume the saved checkout.',
+  PAYMENT_PLATFORM_SETUP_REQUIRED:
+    'Manage merchant configuration through the central Daclify payment service.',
+  PAYMENT_ONBOARDING_REQUIRED:
+    'Complete Stripe merchant verification with both charges and payouts enabled before accepting payments.',
+  PAYMENT_ADMIN_REQUIRED: 'A current administrator of this DAO is required.',
+  HOSTING_ADMIN_REQUIRED: 'A current administrator of this DAO is required.',
+  PAYMENT_REFUND_AMOUNT:
+    'This refund exceeds the amount remaining after completed and pending refunds.',
+  PAYMENT_RECONCILIATION_REQUIRED:
+    'A previous provider operation needs reconciliation. Keep its request ID and contact the operator before starting another.',
+  HOSTING_RECONCILIATION_REQUIRED:
+    'A previous billing operation needs reconciliation. Keep its saved request and contact the operator.',
+  PAYMENT_LIVE_DISABLED: 'Live module payments are disabled on this operator.',
+  HOSTING_LIVE_DISABLED: 'Live hosting payments are disabled on this operator.',
   INSUFFICIENT_AVAILABLE:
     'The DAO does not have enough available Treasury funds to reserve every milestone.',
   ROUND_CAP: 'This award would exceed the round’s lifetime cap.',

@@ -82,6 +82,10 @@ export class CreationService {
       )
         throw new ApiError('DAO_REFERENCE', 409);
       if (!(await this.chain.creationOrder(row.reference))) {
+        if (input.method === 'free' && (!status.hosting || status.creation?.shared_usd !== 0))
+          throw new ApiError('HOSTING_UNAVAILABLE', 503);
+        if (input.method !== 'free' && status.creation?.shared_usd === 0)
+          throw new ApiError('CREATION_FREE_PATH', 409);
         await this.chain.validateCreation(input.request);
         if (!status.sharedAvailable) throw new ApiError('DAO_CREATION_UNAVAILABLE', 503);
         if (input.request.setup) {

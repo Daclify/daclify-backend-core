@@ -13,3 +13,6 @@ export * from './treasury.js';
 export * from './reporting.js';
 export * from './platform.js';
 export * from './service-api.js';
+export * from './payments.js';
+export * from './hosting.js';
+export * from './directory.js';

@@ -63,7 +63,7 @@ it('upgrades the actual seven-migration schema, preserving identities and forcin
     expect(
       (await pool.query<{ count: string }>('SELECT count(*)::text AS count FROM schema_migrations'))
         .rows[0]?.count,
-    ).toBe('15');
+    ).toBe('21');
     expect(
       (
         await pool.query<{ signing_key: string }>('SELECT signing_key FROM accounts WHERE id=$1', [

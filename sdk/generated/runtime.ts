@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = 'e786287e4241c6f5923150ba6e571f5005e71d6fff1864ab0b6642e6f3f34e6b';
+export const runtimeAbiHash = '1e574fd67ef49834f47df21f59025862eeb5c69e20dd7c11ff0b10cd14a7d08c';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -198,6 +198,36 @@ export const runtimeAbi = {
         {
           "name": "source_id",
           "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "capacity_receipt",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "receipt",
+          "type": "checksum256"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "members",
+          "type": "uint32"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
+        },
+        {
+          "name": "revoked",
+          "type": "bool"
         }
       ]
     },
@@ -486,6 +516,28 @@ export const runtimeAbi = {
         {
           "name": "observed_at",
           "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "dao_capacity",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "members",
+          "type": "uint32"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
+        },
+        {
+          "name": "receipt",
+          "type": "checksum256"
         }
       ]
     },
@@ -1020,6 +1072,32 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "govhosted",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "free_members",
+          "type": "uint32"
+        },
+        {
+          "name": "settler",
+          "type": "name"
+        }
+      ]
+    },
+    {
       "name": "govlist",
       "base": "",
       "fields": [
@@ -1102,6 +1180,58 @@ export const runtimeAbi = {
         {
           "name": "detail",
           "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "govpayfees",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "bps",
+          "type": "uint16"
+        }
+      ]
+    },
+    {
+      "name": "govseatfee",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "first_usd",
+          "type": "uint32"
+        },
+        {
+          "name": "next_usd",
+          "type": "uint32"
+        },
+        {
+          "name": "rest_usd",
+          "type": "uint32"
         }
       ]
     },
@@ -1258,6 +1388,20 @@ export const runtimeAbi = {
         {
           "name": "member_id",
           "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "hosted_policy",
+      "base": "",
+      "fields": [
+        {
+          "name": "free_members",
+          "type": "uint32"
+        },
+        {
+          "name": "settler",
+          "type": "name"
         }
       ]
     },
@@ -1712,6 +1856,20 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "orderfree",
+      "base": "",
+      "fields": [
+        {
+          "name": "reference",
+          "type": "checksum256"
+        },
+        {
+          "name": "creator",
+          "type": "public_key"
+        }
+      ]
+    },
+    {
       "name": "participant_record",
       "base": "",
       "fields": [
@@ -1733,6 +1891,20 @@ export const runtimeAbi = {
         },
         {
           "name": "credential_epoch",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "payment_policy",
+      "base": "",
+      "fields": [
+        {
+          "name": "bps",
+          "type": "uint16"
+        },
+        {
+          "name": "revision",
           "type": "uint64"
         }
       ]
@@ -1900,6 +2072,34 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "resumecap",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "receipt",
+          "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "revokecap",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "receipt",
+          "type": "checksum256"
+        }
+      ]
+    },
+    {
       "name": "rotateepoch",
       "base": "",
       "fields": [
@@ -1936,6 +2136,28 @@ export const runtimeAbi = {
         {
           "name": "signing_key",
           "type": "public_key"
+        }
+      ]
+    },
+    {
+      "name": "seat_policy",
+      "base": "",
+      "fields": [
+        {
+          "name": "first_usd",
+          "type": "uint32"
+        },
+        {
+          "name": "next_usd",
+          "type": "uint32"
+        },
+        {
+          "name": "rest_usd",
+          "type": "uint32"
+        },
+        {
+          "name": "revision",
+          "type": "uint64"
         }
       ]
     },
@@ -2048,6 +2270,28 @@ export const runtimeAbi = {
         {
           "name": "admin_override",
           "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "setcapacity",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_limit",
+          "type": "uint32"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
+        },
+        {
+          "name": "receipt",
+          "type": "checksum256"
         }
       ]
     },
@@ -2176,6 +2420,20 @@ export const runtimeAbi = {
         {
           "name": "dao_id",
           "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "sethosted",
+      "base": "",
+      "fields": [
+        {
+          "name": "free_members",
+          "type": "uint32"
+        },
+        {
+          "name": "settler",
+          "type": "name"
         }
       ]
     },
@@ -2600,6 +2858,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "govhosted",
+      "type": "govhosted",
+      "ricardian_contract": ""
+    },
+    {
       "name": "govlist",
       "type": "govlist",
       "ricardian_contract": ""
@@ -2612,6 +2875,16 @@ export const runtimeAbi = {
     {
       "name": "govmodcopy",
       "type": "govmodcopy",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "govpayfees",
+      "type": "govpayfees",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "govseatfee",
+      "type": "govseatfee",
       "ricardian_contract": ""
     },
     {
@@ -2685,6 +2958,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "orderfree",
+      "type": "orderfree",
+      "ricardian_contract": ""
+    },
+    {
       "name": "payob",
       "type": "payob",
       "ricardian_contract": ""
@@ -2705,6 +2983,16 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "resumecap",
+      "type": "resumecap",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "revokecap",
+      "type": "revokecap",
+      "ricardian_contract": ""
+    },
+    {
       "name": "rotateepoch",
       "type": "rotateepoch",
       "ricardian_contract": ""
@@ -2722,6 +3010,11 @@ export const runtimeAbi = {
     {
       "name": "setadmit",
       "type": "setadmit",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "setcapacity",
+      "type": "setcapacity",
       "ricardian_contract": ""
     },
     {
@@ -2752,6 +3045,11 @@ export const runtimeAbi = {
     {
       "name": "setgov",
       "type": "setgov",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "sethosted",
+      "type": "sethosted",
       "ricardian_contract": ""
     },
     {
@@ -2858,6 +3156,20 @@ export const runtimeAbi = {
       "key_types": []
     },
     {
+      "name": "capcfg",
+      "type": "hosted_policy",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "capreceipts",
+      "type": "capacity_receipt",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "catalogue",
       "type": "catalogue_record",
       "index_type": "i64",
@@ -2874,6 +3186,13 @@ export const runtimeAbi = {
     {
       "name": "createords",
       "type": "creation_order",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "daocaps",
+      "type": "dao_capacity",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -2991,6 +3310,13 @@ export const runtimeAbi = {
       "key_types": []
     },
     {
+      "name": "paycfg",
+      "type": "payment_policy",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "profiles",
       "type": "profile_record",
       "index_type": "i64",
@@ -3000,6 +3326,13 @@ export const runtimeAbi = {
     {
       "name": "receipts",
       "type": "finance_receipt",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "seatcfg",
+      "type": "seat_policy",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -3076,6 +3409,14 @@ export interface cancelob {
   source: string;
   source_id: string;
 }
+export interface capacity_receipt {
+  id: string;
+  receipt: string;
+  dao_id: string;
+  members: number;
+  expires: number;
+  revoked: boolean;
+}
 export interface cardcreate {
   reference: string;
   usd_cents: number;
@@ -3151,6 +3492,12 @@ export interface creation_policy {
   median: string;
   precision: number;
   observed_at: number;
+}
+export interface dao_capacity {
+  dao_id: string;
+  members: number;
+  expires: number;
+  receipt: string;
 }
 export interface dao_record {
   id: string;
@@ -3292,6 +3639,13 @@ export interface govfees {
   bump_bps: number;
   quote_premium_bps: number;
 }
+export interface govhosted {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  free_members: number;
+  settler: string;
+}
 export interface govlist {
   runtime: string;
   dao_id: string;
@@ -3314,6 +3668,20 @@ export interface govmodcopy {
   account: string;
   summary: string;
   detail: string;
+}
+export interface govpayfees {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  bps: number;
+}
+export interface govseatfee {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  first_usd: number;
+  next_usd: number;
+  rest_usd: number;
 }
 export interface govunlist {
   runtime: string;
@@ -3357,6 +3725,10 @@ export interface guardrecover {
 export interface guardrevoke {
   dao_id: string;
   member_id: string;
+}
+export interface hosted_policy {
+  free_members: number;
+  settler: string;
 }
 export interface init {
   chain_id: string;
@@ -3478,12 +3850,20 @@ export interface ordercreate {
   deployment: number;
   method: number;
 }
+export interface orderfree {
+  reference: string;
+  creator: string;
+}
 export interface participant_record {
   id: string;
   kind: number;
   operator_label: string;
   revoked: boolean;
   credential_epoch: string;
+}
+export interface payment_policy {
+  bps: number;
+  revision: string;
 }
 export interface payob {
   dao_id: string;
@@ -3528,6 +3908,14 @@ export interface reserve {
   quantity: string;
   due: number;
 }
+export interface resumecap {
+  dao_id: string;
+  receipt: string;
+}
+export interface revokecap {
+  dao_id: string;
+  receipt: string;
+}
 export interface rotateepoch {
   runtime: string;
   dao_id: string;
@@ -3538,6 +3926,12 @@ export interface rotatekey {
   dao_id: string;
   member_id: string;
   signing_key: string;
+}
+export interface seat_policy {
+  first_usd: number;
+  next_usd: number;
+  rest_usd: number;
+  revision: string;
 }
 export interface session_permission {
   target: string;
@@ -3568,6 +3962,12 @@ export interface setadmit {
   threshold: number;
   allow_agents: boolean;
   admin_override: boolean;
+}
+export interface setcapacity {
+  dao_id: string;
+  member_limit: number;
+  expires: number;
+  receipt: string;
 }
 export interface setcreate {
   shared_usd: number;
@@ -3603,6 +4003,10 @@ export interface setfees {
 }
 export interface setgov {
   dao_id: string;
+}
+export interface sethosted {
+  free_members: number;
+  settler: string;
 }
 export interface setmeta {
   runtime: string;
@@ -3714,9 +4118,12 @@ export interface RuntimeActions {
   enrollagent: enrollagent;
   govcreate: govcreate;
   govfees: govfees;
+  govhosted: govhosted;
   govlist: govlist;
   govlock: govlock;
   govmodcopy: govmodcopy;
+  govpayfees: govpayfees;
+  govseatfee: govseatfee;
   govunlist: govunlist;
   govunlock: govunlock;
   grantcredit: grantcredit;
@@ -3731,20 +4138,25 @@ export interface RuntimeActions {
   listmod: listmod;
   modconfig: modconfig;
   ordercreate: ordercreate;
+  orderfree: orderfree;
   payob: payob;
   putdoc: putdoc;
   putjson: putjson;
   reserve: reserve;
+  resumecap: resumecap;
+  revokecap: revokecap;
   rotateepoch: rotateepoch;
   rotatekey: rotatekey;
   setactive: setactive;
   setadmit: setadmit;
+  setcapacity: setcapacity;
   setcreate: setcreate;
   setcredits: setcredits;
   setcrrate: setcrrate;
   setdaogov: setdaogov;
   setfees: setfees;
   setgov: setgov;
+  sethosted: sethosted;
   setmeta: setmeta;
   setmodcopy: setmodcopy;
   setmodule: setmodule;

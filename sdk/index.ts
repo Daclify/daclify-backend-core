@@ -7,6 +7,7 @@ import {
   NativeAccountSchema,
 } from '../protocol/index.js';
 import { runtimeAbi, type RuntimeActions, type instruction } from './generated/runtime.js';
+export { RuntimeCodeHash, RuntimeRawAbiHash } from './generated/releases.js';
 export { runtimeAbi, runtimeAbiHash } from './generated/runtime.js';
 export type { RuntimeActions, instruction } from './generated/runtime.js';
 export { RuntimeActionSchemas, RuntimeTableSchemas } from './generated/schemas.js';

@@ -19,6 +19,7 @@ export async function beginAccountControl(
   token: string,
   origin: string,
   input: unknown,
+  audience: string = origin,
 ): Promise<{ id: string; message: string; expires: string }> {
   const request = AccountControlRequestSchema.parse(input);
   const recent = await pool.query<{ count: string }>(
@@ -31,8 +32,9 @@ export async function beginAccountControl(
   const message = JSON.stringify(
     AccountControlMessageSchema.parse({
       ...request,
-      domain: 'daclify.account-control.v1',
+      domain: 'daclify.account-control.v2',
       origin,
+      audience,
       accountId: account.id,
       signingKey: account.signingKey,
       challengeId: id,
@@ -64,6 +66,7 @@ export async function consumeAccountControl(
   input: unknown,
   network: () => Promise<Network>,
   origin: string,
+  audience: string = origin,
 ): Promise<void> {
   const checked = AccountControlProofSchema.safeParse(input);
   if (!AccountControlChallengeSchema.shape.id.safeParse(id).success || !checked.success)
@@ -85,7 +88,11 @@ export async function consumeAccountControl(
   if (row) {
     try {
       const context = AccountControlMessageSchema.parse(JSON.parse(row.message));
-      if (context.origin !== origin || context.signingKey !== account.signingKey)
+      if (
+        context.origin !== origin ||
+        context.audience !== audience ||
+        context.signingKey !== account.signingKey
+      )
         throw new Error('Changed proof context');
       const proof = checked.data;
       if (proof.kind === 'root')

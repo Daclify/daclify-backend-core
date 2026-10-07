@@ -1,3 +1,4 @@
+import { FixtureContainerSchema } from './network.js';
 import { activateFixtureFeatures } from './features.js';
 import { configureFixtureContext } from './permissions.js';
 import { readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'node:fs';
@@ -8,14 +9,7 @@ import { unlockFixtureWallet } from './wallet.js';
 import { z } from 'zod';
 const network = z
   .object({
-    container: z.enum([
-      'daclify-v2-native',
-      'daclify-dao-presets-native',
-      'daclify-platform-native',
-      'daclify-access-native',
-      'daclify-research-native',
-      'daclify-research-paid-native',
-    ]),
+    container: FixtureContainerSchema,
     chainId: z.string(),
     url: z.string().regex(/^http:\/\/127\.0\.0\.1:[0-9]{4,5}$/),
   })

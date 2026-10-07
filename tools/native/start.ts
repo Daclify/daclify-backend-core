@@ -5,17 +5,11 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { PrivateKey } from '@wharfkit/antelope';
 import { z } from 'zod';
+import { FixtureContainerSchema } from './network.js';
 const root = resolve(process.cwd());
-const name = z
-  .enum([
-    'daclify-v2-native',
-    'daclify-dao-presets-native',
-    'daclify-platform-native',
-    'daclify-access-native',
-    'daclify-research-native',
-    'daclify-research-paid-native',
-  ])
-  .parse(process.env.DACLIFY_NATIVE_CONTAINER ?? 'daclify-v2-native');
+const name = FixtureContainerSchema.parse(
+  process.env.DACLIFY_NATIVE_CONTAINER ?? 'daclify-v2-native',
+);
 const port = z.coerce
   .number()
   .int()

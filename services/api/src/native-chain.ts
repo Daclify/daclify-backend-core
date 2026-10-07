@@ -53,6 +53,15 @@ import {
 } from '@daclify/modules/sdk';
 import { AccountResourceSchema, resourcesAcceptable } from './deployment-check.js';
 import { randomBytes } from 'node:crypto';
+import {
+  HubDeploymentRowSchema,
+  HubMetadataSchema,
+  registryDirectory,
+} from '../../../protocol/directory.js';
+import { PaymentPolicySchema } from '../../../protocol/payments.js';
+import type { DaoRef } from '../../../protocol/base.js';
+import { RuntimeCodeHash, RuntimeRawAbiHash } from '../../../sdk/generated/releases.js';
+import { parseModuleDeployments } from './deployment-config.js';
 import { z } from 'zod';
 import {
   DaoSummarySchema,
@@ -99,6 +108,7 @@ import {
   type ChainPlatform,
 } from '../../../protocol/platform.js';
 import type { NamePurchase } from './billing/name.js';
+import { HostingChainSchema, HostedPricingSchema } from '../../../protocol/hosting.js';
 import {
   MarketRuleError,
   TelosNameSchema,
@@ -147,6 +157,159 @@ export class NativeChainGateway implements ChainGateway {
       throw new Error('Chain RPC requires TLS outside local tests');
     this.api = new APIClient({ url: config.rpcUrl });
   }
+  private async reviewedRuntime(runtime: string) {
+    const response = await fetch(this.config.rpcUrl + '/v1/chain/get_info', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{}',
+      signal: AbortSignal.timeout(10000),
+    });
+    if (
+      !response.ok ||
+      z.object({ chain_id: ChainIdSchema }).parse(await response.json()).chain_id !==
+        this.config.chainId
+    )
+      throw new ApiError('PAYMENT_POLICY_UNAVAILABLE', 503);
+    const value = await this.api.v1.chain.get_raw_abi(runtime).catch(() => {
+      throw new ApiError('CHAIN_UNAVAILABLE', 503);
+    });
+    if (String(value.code_hash) !== RuntimeCodeHash || String(value.abi_hash) !== RuntimeRawAbiHash)
+      throw new ApiError('PAYMENT_POLICY_UNAVAILABLE', 503);
+    return value;
+  }
+  async paymentPolicy() {
+    await this.reviewedRuntime(this.config.runtime);
+    const market = (await this.table('mktcfg', this.config.runtime))[0];
+    if (!market || market.dao_id === '0') throw new ApiError('PAYMENT_POLICY_UNAVAILABLE', 503);
+    const row = (await this.table('paycfg', this.config.runtime))[0];
+    return PaymentPolicySchema.parse({
+      basisPoints: row?.bps ?? 500,
+      revision: row?.revision ?? '0',
+    });
+  }
+  async hosting(dao: DaoRef) {
+    if (dao.chainId !== this.config.chainId || dao.contract !== this.config.runtime)
+      throw new ApiError('HOSTING_DAO', 403);
+    await this.reviewedRuntime(dao.contract);
+    const [config, creation, pricing, market, people, caps] = await Promise.all([
+      this.table('capcfg', dao.contract),
+      this.table('createcfg', dao.contract),
+      this.table('seatcfg', dao.contract),
+      this.table('mktcfg', dao.contract),
+      this.table('daos', dao.contract, dao.daoId, 1),
+      this.table('daocaps', dao.contract, dao.daoId, 1),
+    ]);
+    const policy = config[0],
+      record = people[0];
+    if (!policy || policy.settler !== this.config.relayActor || creation[0]?.shared_usd !== 0)
+      throw new ApiError('HOSTING_UNAVAILABLE', 503);
+    if (record?.id !== dao.daoId) throw new ApiError('DAO_UNKNOWN', 404);
+    const cap = caps[0]?.dao_id === dao.daoId ? caps[0] : undefined;
+    const exempt = market[0]?.dao_id === dao.daoId;
+    return HostingChainSchema.parse({
+      dao,
+      pricing: HostedPricingSchema.parse({
+        freeSlots: policy.free_members,
+        rates: pricing[0] ?? { first_usd: 100, next_usd: 50, rest_usd: 20, revision: '0' },
+      }),
+      activeMembers: record.member_count,
+      effectiveCapacity: exempt
+        ? 5000
+        : cap && cap.expires > Date.now() / 1000
+          ? Math.max(policy.free_members, cap.members)
+          : policy.free_members,
+      expires: cap?.expires ?? null,
+      receipt: cap?.receipt ?? null,
+      exempt,
+    });
+  }
+  async attestCapacity(dao: DaoRef, members: number, expires: number, receipt: string) {
+    await this.hosting(dao);
+    ChainIdSchema.parse(receipt);
+    await this.push(
+      'setcapacity',
+      { dao_id: dao.daoId, member_limit: members, expires, receipt },
+      this.config.relayActor,
+      this.config.relayKey,
+    );
+  }
+  async revokeCapacity(dao: DaoRef, receipt: string) {
+    await this.hosting(dao);
+    await this.push(
+      'revokecap',
+      { dao_id: dao.daoId, receipt },
+      this.config.relayActor,
+      this.config.relayKey,
+    );
+  }
+  async restoreCapacity(dao: DaoRef, receipt: string) {
+    await this.hosting(dao);
+    await this.push(
+      'resumecap',
+      { dao_id: dao.daoId, receipt },
+      this.config.relayActor,
+      this.config.relayKey,
+    );
+  }
+  private async hubRows(runtime?: string) {
+    if (!this.config.hub) return [];
+    const key = runtime ? BigInt(Name.from(runtime).value.toString()) : null;
+    const result = await readChainRows({
+      rpcUrl: this.config.rpcUrl,
+      code: this.config.hub,
+      scope: this.config.hub,
+      table: 'deployments',
+      ...(key === null
+        ? {}
+        : {
+            indexPosition: 2,
+            keyType: 'i64',
+            lowerBound: String(key),
+            upperBound: String(key + 1n),
+            limit: 2,
+          }),
+    });
+    return z.array(HubDeploymentRowSchema).parse(result.rows);
+  }
+  async hubDirectory(after = '0') {
+    Uint64Schema.parse(after);
+    if (!this.config.hub) return { entries: [], skipped: 0, next: null };
+    const result = await readChainRows({
+      rpcUrl: this.config.rpcUrl,
+      code: this.config.hub,
+      scope: this.config.hub,
+      table: 'deployments',
+      paginate: true,
+      lowerBound: after,
+      limit: 100,
+    });
+    return { ...registryDirectory(result.rows, this.config.chainId), next: result.next ?? null };
+  }
+  async paymentMemberships(account: Account, dao: DaoRef) {
+    if (dao.chainId !== this.config.chainId) throw new ApiError('PAYMENT_DAO', 403);
+    if (dao.contract === this.config.runtime) return this.memberships(account);
+    const listing = (await this.hubRows(dao.contract)).find(
+      (row) => row.runtime === dao.contract && row.chain_id === dao.chainId && row.listed,
+    );
+    if (!listing) throw new ApiError('PAYMENT_DAO', 403);
+    const metadata = HubMetadataSchema.parse(JSON.parse(listing.metadata));
+    if (!metadata.daos.some((row) => row.daoId === dao.daoId))
+      throw new ApiError('PAYMENT_DAO', 403);
+    const raw = await this.reviewedRuntime(dao.contract);
+    if (listing.code_hash !== String(raw.code_hash) || listing.abi_hash !== String(raw.abi_hash))
+      throw new ApiError('PAYMENT_DAO', 403);
+    const gateway = new NativeChainGateway(
+      {
+        ...this.config,
+        runtime: dao.contract,
+        modules: parseModuleDeployments(JSON.stringify(metadata.modules)),
+      },
+      this.pool,
+    );
+    const settings = (await gateway.table('settings', dao.contract))[0];
+    if (settings?.chain_id !== dao.chainId) throw new ApiError('PAYMENT_DAO', 403);
+    return (await gateway.memberships(account)).filter((m) => m.dao.daoId === dao.daoId);
+  }
   async network(): Promise<Network> {
     const { abi } = await this.api.v1.chain.get_abi(this.config.runtime).catch(() => {
       throw new ApiError('CHAIN_UNAVAILABLE', 503);
@@ -188,7 +351,16 @@ export class NativeChainGateway implements ChainGateway {
         ? ((await self.table(name, self.config.runtime))[0] ?? null)
         : null;
     }
-    const [fees, market, creation, runtimeSettings, catalogue] = await Promise.all([
+    const [
+      fees,
+      market,
+      creation,
+      runtimeSettings,
+      catalogue,
+      hosting,
+      seatPricing,
+      paymentPolicy,
+    ] = await Promise.all([
       optional(this, 'feecfg'),
       optional(this, 'mktcfg'),
       optional(this, 'createcfg'),
@@ -196,6 +368,9 @@ export class NativeChainGateway implements ChainGateway {
       abi.abi?.tables.some((t) => t.name === 'catalogue')
         ? this.table('catalogue', this.config.runtime)
         : [],
+      optional(this, 'capcfg'),
+      optional(this, 'seatcfg'),
+      optional(this, 'paycfg'),
     ]);
     const contracts = await Promise.all(
       [
@@ -218,13 +393,19 @@ export class NativeChainGateway implements ChainGateway {
         });
         if (!response.ok) throw new ApiError('CHAIN_UNAVAILABLE', 503);
         const hash = z.object({ code_hash: ChainIdSchema }).parse(await response.json()).code_hash;
+        const expectedCode =
+          account === this.config.runtime
+            ? RuntimeCodeHash
+            : expectedHash
+              ? ModuleCodeHashes[expectedHash.id]
+              : null;
         const data = await this.api.v1.chain.get_account(account);
         return ContractStatusSchema.parse({
           account,
           moduleId: expectedHash?.id ?? null,
           codeHash: hash,
-          expectedHash: expectedHash ? ModuleCodeHashes[expectedHash.id] : null,
-          verified: !!expectedHash && hash === ModuleCodeHashes[expectedHash.id],
+          expectedHash: expectedCode,
+          verified: expectedCode !== null && hash === expectedCode,
           ramBytes: Number(data.ram_quota),
           ramUsed: Number(data.ram_usage),
           permissions: data.permissions.map((p) => ({
@@ -260,6 +441,9 @@ export class NativeChainGateway implements ChainGateway {
       fees,
       market,
       creation,
+      hosting,
+      seatPricing,
+      paymentPolicy,
       runtimeSettings,
       rateFresh:
         !!creation &&
@@ -306,12 +490,14 @@ export class NativeChainGateway implements ChainGateway {
         .find((row) => row.reference === reference) ?? null
     );
   }
-  async orderCreation(reference: string, creator: string, method: 'card' | 'tlos') {
+  async orderCreation(reference: string, creator: string, method: 'card' | 'tlos' | 'free') {
     const existing = await this.creationOrder(reference);
     if (existing) return existing;
     await this.push(
-      'ordercreate',
-      { reference, creator, deployment: 0, method: method === 'tlos' ? 0 : 1 },
+      method === 'free' ? 'orderfree' : 'ordercreate',
+      method === 'free'
+        ? { reference, creator }
+        : { reference, creator, deployment: 0, method: method === 'tlos' ? 0 : 1 },
       this.config.relayActor,
       this.config.relayKey,
     );

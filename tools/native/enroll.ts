@@ -1,3 +1,4 @@
+import { FixtureContainerSchema } from './network.js';
 // Admit a synthetic browser member to a DAO owned by the local fixture account.
 import { readFile } from 'node:fs/promises';
 import { z } from 'zod';
@@ -19,14 +20,7 @@ const input = z
 if (process.argv.length !== 3) throw new Error('Expected one public fixture enrollment object');
 const network = z
   .object({
-    container: z.enum([
-      'daclify-v2-native',
-      'daclify-dao-presets-native',
-      'daclify-platform-native',
-      'daclify-access-native',
-      'daclify-research-native',
-      'daclify-research-paid-native',
-    ]),
+    container: FixtureContainerSchema,
     url: z.string().regex(/^http:\/\/127\.0\.0\.1:[0-9]{4,5}$/),
     chainId: z.string().regex(/^[0-9a-f]{64}$/),
   })

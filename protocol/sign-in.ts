@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { SigningPublicKeySchema } from './crypto.js';
+import { ApiOriginSchema } from './base.js';
 import { TelosEvmChainSchema, EvmAddressSchema, EvmSignatureSchema, Uint64Schema } from './base.js';
 export const SignInProofSchema = z.strictObject({ proof: z.string().min(1).max(16384) });
 export const SignInEmailSchema = z.strictObject({ email: z.string().min(3).max(254) });
@@ -44,6 +45,12 @@ export const AccountControlProofSchema = z.discriminatedUnion('kind', [
 export type AccountControlProof = z.infer<typeof AccountControlProofSchema>;
 
 export const AccountControlPaths = Object.freeze([
+  '/v1/hosting/change',
+  '/v1/payments/onboard',
+  '/v1/payments/product',
+  '/v1/payments/refund',
+  '/v1/payments/operator',
+  '/v1/payments/operator/revoke',
   '/v1/account/vault',
   '/v1/auth/providers/link',
   '/v1/auth/providers/unlink',
@@ -64,7 +71,8 @@ export const AccountControlRequestSchema = z.strictObject({
   bodyHash: z.string().regex(/^[0-9a-f]{64}$/),
 });
 export const AccountControlMessageSchema = AccountControlRequestSchema.extend({
-  domain: z.literal('daclify.account-control.v1'),
+  domain: z.literal('daclify.account-control.v2'),
+  audience: ApiOriginSchema,
   origin: z.url(),
   accountId: z.uuid(),
   signingKey: SigningPublicKeySchema.nullable(),

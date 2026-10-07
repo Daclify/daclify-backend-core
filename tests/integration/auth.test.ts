@@ -153,3 +153,18 @@ describe('real key-based walletless sessions', () => {
     expect(z.string().parse(account.rows[0]?.id)).toBe(result.account.id);
   });
 });
+
+it('rejects a valid login signature at a different API issuer without consuming the original challenge', async () => {
+  const key = PrivateKey.generate('K1'),
+    audience = 'https://api.example';
+  const challenge = await createChallenge(pool, key.toPublic().toString(), origin, audience);
+  const signature = key.signMessage(new TextEncoder().encode(challenge.message)).toString();
+  await expect(
+    authenticate(pool, challenge.id, signature, publicKey, {
+      origin,
+      audience: 'https://operator.example',
+    }),
+  ).rejects.toThrow('AUTH_INVALID');
+  const result = await authenticate(pool, challenge.id, signature, publicKey, { origin, audience });
+  expect(result.account.signingKey).toBe(key.toPublic().toString());
+});

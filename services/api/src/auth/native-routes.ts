@@ -1,6 +1,5 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { APIClient } from '@wharfkit/antelope';
-import { z } from 'zod';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Pool } from 'pg';
 import type { Account, Network, WalletIdentity, UserMembership } from '../../../../protocol/api.js';
@@ -9,6 +8,7 @@ import {
   NativeUnlinkSchema,
   NativeIdentitySchema,
   NativeIntentSchema,
+  NativeSignInMessageSchema,
 } from '../../../../protocol/native-wallet.js';
 import { verifyNativeProof } from './native-proof.js';
 import { insertAccountSession, uniqueViolation, withTransaction } from './account-session.js';
@@ -39,6 +39,7 @@ export function registerNativeRoutes(
   session: (token: string | undefined, csrf?: string) => Promise<Account>,
   sessionCookie: (reply: FastifyReply, token: string) => void,
   discover?: (wallet: WalletIdentity) => Promise<UserMembership[]>,
+  audience: string = origin,
 ): void {
   const secure = new URL(origin).protocol === 'https:',
     attemptCookie = secure ? '__Host-daclify_native_attempt' : 'daclify_native_attempt';
@@ -86,16 +87,19 @@ export function registerNativeRoutes(
       account: input.account,
       permission: input.permission,
     });
-    const message = JSON.stringify({
-      domain: 'daclify.native-sign-in.v1',
-      purpose: input.purpose,
-      origin: site,
-      accountId: current?.id ?? null,
-      identity,
-      runtime: info.runtime,
-      id,
-      expires: expires.toISOString(),
-    });
+    const message = JSON.stringify(
+      NativeSignInMessageSchema.parse({
+        domain: 'daclify.native-sign-in.v2',
+        audience,
+        purpose: input.purpose,
+        origin: site,
+        accountId: current?.id ?? null,
+        identity,
+        runtime: info.runtime,
+        id,
+        expires: expires.toISOString(),
+      }),
+    );
     await pool.query("DELETE FROM native_login_intents WHERE expires_at<now()-interval '1 day'");
     await pool.query(
       'INSERT INTO native_login_intents(id,purpose,account_id,session_hash,browser_hash,chain_id,native_account,permission,runtime,message,expires_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)',
@@ -133,8 +137,8 @@ export function registerNativeRoutes(
       )
     ).rows[0];
     if (!row) throw new ApiError('NATIVE_PROOF_INVALID', 401);
-    const site = z.object({ origin: z.string() }).parse(JSON.parse(row.message)).origin;
-    if (site !== (request.headers.origin ?? origin))
+    const context = NativeSignInMessageSchema.parse(JSON.parse(row.message));
+    if (context.origin !== (request.headers.origin ?? origin) || context.audience !== audience)
       throw new ApiError('NATIVE_PROOF_INVALID', 401);
     const info = await network();
     if (info.chainId !== row.chain_id || info.runtime !== row.runtime)

@@ -217,6 +217,36 @@
       "id": "WP03-WALLET-RECOVERY-NATIVE",
       "suite": "native",
       "tests": ["tests/native/paired-wallets.test.ts"]
+    },
+    {
+      "id": "HOSTING-GRADUATED",
+      "suite": "unit",
+      "tests": ["tests/hosting-pricing.test.ts"]
+    },
+    {
+      "id": "HOSTING-RUNTIME",
+      "suite": "vert",
+      "tests": ["tests/connected-payment-fees.test.ts"]
+    },
+    {
+      "id": "PAYMENT-NATIVE",
+      "suite": "native",
+      "tests": ["tests/native/connected-payments.test.ts"]
+    },
+    {
+      "id": "HOSTING-PERSISTENCE",
+      "suite": "integration",
+      "tests": ["tests/integration/hosting.test.ts"]
+    },
+    {
+      "id": "CONNECT-PROOFS",
+      "suite": "integration",
+      "tests": ["tests/integration/connected-payment-flows.test.ts"]
+    },
+    {
+      "id": "OPERATOR-OWNERSHIP",
+      "suite": "integration",
+      "tests": ["tests/integration/operator-payments.test.ts"]
     }
   ]
 }

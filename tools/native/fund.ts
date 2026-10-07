@@ -1,3 +1,4 @@
+import { FixtureContainerSchema } from './network.js';
 // Fund a test DAO using synthetic tokens on the fixed, disposable local chain.
 import { readFile } from 'node:fs/promises';
 import { z } from 'zod';
@@ -15,14 +16,7 @@ const daoId = IdSchema.parse(process.argv[2]);
 if (process.argv.length !== 3) throw new Error('Expected one local fixture DAO ID');
 const network = z
   .object({
-    container: z.enum([
-      'daclify-v2-native',
-      'daclify-dao-presets-native',
-      'daclify-platform-native',
-      'daclify-access-native',
-      'daclify-research-native',
-      'daclify-research-paid-native',
-    ]),
+    container: FixtureContainerSchema,
     url: z.string().regex(/^http:\/\/127\.0\.0\.1:[0-9]{4,5}$/),
     chainId: z.string().regex(/^[0-9a-f]{64}$/),
   })

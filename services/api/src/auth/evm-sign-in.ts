@@ -32,6 +32,7 @@ export function registerEvmSignInRoutes(
   session: (token: string | undefined, csrf?: string) => Promise<Account>,
   sessionCookie: (reply: FastifyReply, token: string) => void,
   discover?: (wallet: WalletIdentity) => Promise<UserMembership[]>,
+  audience: string = origin,
 ): void {
   const secure = new URL(origin).protocol === 'https:',
     attemptCookie = secure ? '__Host-daclify_evm_attempt' : 'daclify_evm_attempt',
@@ -52,6 +53,7 @@ export function registerEvmSignInRoutes(
       issued = new Date().toISOString(),
       expires = new Date(Date.now() + 300000).toISOString();
     const message = siweMessage({
+      audience,
       origin: request.headers.origin ?? origin,
       address: input.address,
       chainId: input.chainId,
@@ -106,6 +108,8 @@ export function registerEvmSignInRoutes(
       )
     ).rows[0];
     if (!row) throw new ApiError('EVM_CHALLENGE_INVALID', 401);
+    if (!row.message.endsWith('\n- urn:daclify:api:' + audience))
+      throw new ApiError('EVM_CHALLENGE_INVALID', 401);
     if (
       !row.message.startsWith(
         `${request.headers.origin ?? origin} wants you to sign in with your Ethereum account:\n`,

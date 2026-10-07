@@ -1,6 +1,14 @@
 import type { CreationService } from './creation.js';
+import type { ConnectedPayments } from './payments/service.js';
+import type { OperatorPayments } from './payments/operator.js';
+import type { HostedSubscriptions } from './billing/hosting.js';
+import { HostingRoutes, HostingStatusSchema } from '../../../protocol/hosting.js';
+import { daoPaymentKey } from '../../../protocol/payments.js';
+import { registerPaymentRoutes, CONNECT_WEBHOOK, BROKER_PATHS } from './payments/routes.js';
+import { DirectoryRoutes } from '../../../protocol/directory.js';
 import { PlatformStatusSchema } from '../../../protocol/platform.js';
 import { VERSION } from '../../../protocol/base.js';
+import { ApiOriginSchema } from '../../../protocol/base.js';
 import { VERSION as MODULE_VERSION } from '@daclify/modules';
 import { ServiceResponseRoutes } from '../../../protocol/service-api.js';
 import { ApiRoutes } from '../../../protocol/routes.js';
@@ -53,6 +61,7 @@ import {
 } from './limits.js';
 
 const webhookPath = '/v1/billing/stripe/webhook';
+const hostingWebhookPath = '/v1/hosting/stripe/webhook';
 const rawJsonBodies = new WeakMap<object, Buffer>();
 
 export async function createServer(
@@ -63,14 +72,20 @@ export async function createServer(
     content?: ContentService;
     providers?: ProviderConfiguration;
     billing?: StripeBilling;
+    hosting?: HostedSubscriptions;
     signIn?: SignInConfiguration;
     origins?: string[];
     docs?: DocsAgentConfiguration;
     creation?: CreationService;
+    payments?: ConnectedPayments;
+    apiOrigin?: string;
+    operatorPayments?: OperatorPayments;
   } = {},
 ) {
+  const audience = ApiOriginSchema.parse(options.apiOrigin ?? origin);
   const admitCheckout = createWindowLimiter(8, 3_600_000, 80);
   const admitAccountControl = createWindowLimiter(40, 600_000, 4000);
+  const admitPayment = createWindowLimiter(30, 60_000, 3000);
   const admitSponsored = createWindowLimiter(
     SPONSORED_WRITES_PER_WINDOW,
     SPONSORED_WINDOW_MS,
@@ -145,7 +160,14 @@ export async function createServer(
   });
   app.addHook('onRequest', async (request) => {
     if (request.method !== 'POST') return;
-    if (request.url.split('?')[0] === webhookPath) return;
+    const path = request.url.split('?')[0];
+    if (
+      path === webhookPath ||
+      path === hostingWebhookPath ||
+      path === CONNECT_WEBHOOK ||
+      BROKER_PATHS.some((route) => route === path)
+    )
+      return;
     if (!origins.includes(request.headers.origin ?? '')) throw new ApiError('ORIGIN_REJECTED', 403);
   });
   async function session(token: string | undefined, csrf?: string) {
@@ -170,6 +192,7 @@ export async function createServer(
       token,
       request.headers.origin ?? origin,
       request.body,
+      audience,
     );
   });
   app.addHook('preHandler', async (request) => {
@@ -210,9 +233,28 @@ export async function createServer(
       proof,
       () => chain.network(),
       request.headers.origin ?? origin,
+      audience,
     );
   });
   app.get('/health', async () => ({ status: 'ok' }));
+  app.get(
+    DirectoryRoutes.hubDirectory.path,
+    async (request) =>
+      chain.hubDirectory?.(DirectoryRoutes.hubDirectory.query.parse(request.query).after) ?? {
+        entries: [],
+        skipped: 0,
+        next: null,
+      },
+  );
+  registerPaymentRoutes(
+    app,
+    options.payments,
+    cookieName,
+    session,
+    (request) => rawJsonBodies.get(request),
+    createWindowLimiter(30, 60_000, 3000),
+    options.operatorPayments,
+  );
   registerTelegramOidcRoutes(
     app,
     pool,
@@ -251,6 +293,18 @@ export async function createServer(
       /* no connection strings or raw database failures in public status */
     }
     const services = [
+      [
+        'hosting',
+        'Shared hosting subscriptions',
+        !!options.hosting,
+        'Paid capacity activates only after verified invoice settlement and an on-chain receipt. Live qualification is separate.',
+      ],
+      [
+        'connect',
+        'DAO merchant payments',
+        !!options.payments || !!options.operatorPayments,
+        'Each DAO owns its merchant account. Daclify Connect fees apply only to eligible card checkouts through this service.',
+      ],
       [
         'storage',
         'Pinata / hosted storage',
@@ -311,8 +365,42 @@ export async function createServer(
             ? 'local-fixture'
             : 'not-qualified',
       })),
-      defaults: { sharedUsdCents: 2000, independentUsdCents: 5000, tlosPremiumBps: 2000 },
+      defaults: { sharedUsdCents: 0, independentUsdCents: 5000, tlosPremiumBps: 2000 },
     });
+  });
+  app.get(HostingRoutes.hostingStatus.path, async (request) => {
+    const account = await session(request.cookies[cookieName]);
+    const { dao } = HostingRoutes.hostingStatus.query.parse(request.query);
+    if (options.hosting) return options.hosting.status(account, dao);
+    if (
+      !(await chain.memberships(account)).some(
+        (m) => daoPaymentKey(m.dao) === daoPaymentKey(dao) && m.admin && m.active,
+      )
+    )
+      throw new ApiError('HOSTING_ADMIN_REQUIRED', 403);
+    if (!chain.hosting) throw new ApiError('HOSTING_UNAVAILABLE', 503);
+    return HostingStatusSchema.parse({
+      ...(await chain.hosting(dao)),
+      configured: false,
+      subscription: null,
+    });
+  });
+  app.post(HostingRoutes.hostingChange.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    if (!options.hosting) throw new ApiError('HOSTING_UNCONFIGURED', 503);
+    if (!admitPayment(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    return options.hosting.change(account, HostingRoutes.hostingChange.input.parse(request.body));
+  });
+  app.post(hostingWebhookPath, { bodyLimit: 1024 * 1024 }, async (request) => {
+    const signature = request.headers['stripe-signature'],
+      raw = rawJsonBodies.get(request);
+    if (typeof signature !== 'string' || !raw) throw new ApiError('SIGNATURE_INVALID', 400);
+    if (!options.hosting) throw new ApiError('HOSTING_UNCONFIGURED', 503);
+    await options.hosting.webhook(raw, signature);
+    return { received: true };
   });
   app.post(ApiRoutes.creationOrder.path, async (request) => {
     const account = await session(
@@ -469,7 +557,7 @@ export async function createServer(
   );
   app.post(ApiRoutes.challenge.path, async (request) => {
     const input = ChallengeRequestSchema.parse(request.body);
-    return createChallenge(pool, input.signingKey, origin);
+    return createChallenge(pool, input.signingKey, request.headers.origin ?? origin, audience);
   });
   function sessionCookie(reply: FastifyReply, token: string): void {
     reply.setCookie(cookieName, token, {
@@ -498,6 +586,7 @@ export async function createServer(
       input.challengeId,
       input.signature,
       input.encryptionKey,
+      { origin: request.headers.origin ?? origin, audience },
     );
     sessionCookie(reply, result.token);
     return { account: result.account, csrfToken: result.csrfToken };
@@ -637,7 +726,7 @@ export async function createServer(
     sessionCookie,
   );
   registerEvmRoutes(app, pool, cookieName, session);
-  registerVaultAttachRoutes(app, pool, origin, cookieName, session, sessionCookie);
+  registerVaultAttachRoutes(app, pool, origin, cookieName, session, sessionCookie, audience);
   registerEvmSignInRoutes(
     app,
     pool,
@@ -646,6 +735,7 @@ export async function createServer(
     session,
     sessionCookie,
     chain.walletMemberships?.bind(chain),
+    audience,
   );
   registerNativeRoutes(
     app,
@@ -656,6 +746,7 @@ export async function createServer(
     session,
     sessionCookie,
     chain.walletMemberships?.bind(chain),
+    audience,
   );
   registerDocsRoutes(app, options.docs);
   return app;

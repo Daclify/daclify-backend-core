@@ -30,6 +30,7 @@ const repositories = [
 const artifacts = {
   runtimeCodeHash: '1'.repeat(64),
   runtimeAbiSha256: '2'.repeat(64),
+  runtimeRawAbiSha256: '4'.repeat(64),
   documentationSha256: '3'.repeat(64),
 };
 

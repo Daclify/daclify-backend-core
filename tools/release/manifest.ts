@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { ABI, Serializer } from '@wharfkit/antelope';
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
@@ -16,6 +17,9 @@ const HELD_CHECKS = [
   'real Anchor and EOA wallet-client qualification',
   'OpenBao durable production signing, audit, recovery and isolation qualification',
   'selected production chain protocol-feature and authority verification',
+  'Stripe sandbox Connect OAuth/v2 onboarding, direct charge, refund and dispute qualification',
+  'Stripe sandbox graduated subscriptions, invoice lifecycle and native capacity qualification',
+  'independent operator browser cookie/CORS and wallet-client qualification',
   'immutable published artifact verification',
 ] as const;
 
@@ -41,6 +45,7 @@ const ManifestSchema = z.object({
   artifacts: z.object({
     runtimeCodeHash: HashSchema,
     runtimeAbiSha256: HashSchema,
+    runtimeRawAbiSha256: HashSchema,
     documentationSha256: HashSchema,
   }),
   moduleCapabilities: z.array(z.string().min(1)).min(1),
@@ -188,6 +193,15 @@ export function loadCheckoutManifest(coreRoot: string): ReleaseManifest {
     artifacts: {
       runtimeCodeHash: sha256(path.join(coreRoot, '.artifacts', 'contracts', 'runtime.wasm')),
       runtimeAbiSha256: sha256(path.join(coreRoot, '.artifacts', 'contracts', 'runtime.abi')),
+      runtimeRawAbiSha256: createHash('sha256')
+        .update(
+          Serializer.encode({
+            object: ABI.from(
+              readFileSync(path.join(coreRoot, '.artifacts', 'contracts', 'runtime.abi'), 'utf8'),
+            ),
+          }).array,
+        )
+        .digest('hex'),
       documentationSha256: sha256(path.join(coreRoot, 'docs', 'generated', 'reference.json')),
     },
     moduleCapabilities: modules.capabilities,

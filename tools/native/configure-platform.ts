@@ -87,7 +87,7 @@ for (const [id, title, summary] of [
   ]);
   action('daclifycore', 'setmodcopy', [id, summary, '']);
 }
-action('daclifycore', 'setcreate', [2000, 5000, 2000, 'relay']);
+action('daclifycore', 'sethosted', [10, 'relay']);
 const head = String((await api.v1.chain.get_info()).head_block_time);
 action('daclifycore', 'setcrrate', [10000, 4, Math.floor(new Date(head + 'Z').getTime() / 1000)]);
 console.log(

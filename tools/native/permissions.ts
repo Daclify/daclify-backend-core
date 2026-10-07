@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { z } from 'zod';
+import { FixtureContainerSchema } from './network.js';
 import { contextPermissionPlan } from '../deploy/permissions.js';
 export function configureFixtureContext(
   container: string,
@@ -8,14 +9,7 @@ export function configureFixtureContext(
     Record<'decide' | 'works' | 'payroll' | 'grants' | 'endorse', string>
   > = {},
 ): void {
-  z.enum([
-    'daclify-v2-native',
-    'daclify-dao-presets-native',
-    'daclify-platform-native',
-    'daclify-access-native',
-    'daclify-research-native',
-    'daclify-research-paid-native',
-  ]).parse(container);
+  FixtureContainerSchema.parse(container);
   z.enum(['daclifycore', 'daclifytwo', 'upgcore']).parse(runtime);
   function cleos(args: string[]): string {
     try {

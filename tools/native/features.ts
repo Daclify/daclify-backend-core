@@ -1,3 +1,4 @@
+import { FixtureContainerSchema } from './network.js';
 import { execFileSync } from 'node:child_process';
 import { z } from 'zod';
 const SupportedSchema = z.array(
@@ -23,14 +24,7 @@ export async function activateFixtureFeatures(
   container: string,
   endpoint = 'http://127.0.0.1:18888',
 ): Promise<void> {
-  z.enum([
-    'daclify-v2-native',
-    'daclify-dao-presets-native',
-    'daclify-platform-native',
-    'daclify-access-native',
-    'daclify-research-native',
-    'daclify-research-paid-native',
-  ]).parse(container);
+  FixtureContainerSchema.parse(container);
   const url = z
     .string()
     .regex(/^http:\/\/127\.0\.0\.1:[0-9]{4,5}$/)

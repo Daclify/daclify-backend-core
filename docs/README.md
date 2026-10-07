@@ -1,6 +1,6 @@
 # Daclify documentation
 
-Current development version: **0.6.0-alpha.1**, contract interface 1. This is a tested development checkpoint; immutable publication, live provider/client qualification and hosted operations remain separate gates.
+Current development version: **0.7.0-alpha.1**, contract interface 1. This is a development checkpoint; immutable publication, live provider/client qualification and hosted operations remain separate gates.
 
 ## Start with the task
 
@@ -11,6 +11,7 @@ Current development version: **0.6.0-alpha.1**, contract interface 1. This is a 
 | Configure networks, providers, payments and hosted services | [Operations](operations.md)                                                                                                                                                                               |
 | Pair login credentials or activate wallet governance        | [Paired login](operations/paired-login.md)                                                                                                                                                                |
 | Recover a member, vault or service after loss               | [Disaster recovery](disaster-recovery.md)                                                                                                                                                                 |
+| Configure DAO payments or shared subscriptions              | [Connected payments](operations/connected-payments.md), [Upgrade0.7](operations/upgrade-0.7.md)                                                                                                           |
 | Upgrade an existing 0.5 service                             | [Upgrade to 0.6](operations/upgrade-0.6.md)                                                                                                                                                               |
 | Review the earlier contract/module upgrade                  | [Upgrade to 0.5](operations/upgrade-0.5.md)                                                                                                                                                               |
 | Resolve paid creation incidents                             | [Paid creation incidents](operations/paid-creation-incidents.md)                                                                                                                                          |
@@ -54,3 +55,9 @@ These record design decisions and acceptance criteria. They are not a substitute
 - [Module/login implementation plan](superpowers/plans/2026-10-07-modules-and-paired-login.md)
 - [Wallet recovery plan](superpowers/plans/2026-10-07-wallet-disaster-recovery.md)
 - [Execution ledger](evidence/execution-ledger.json)
+
+## Connected payments and hosting
+
+See core [payment operations](../docs/operations/connected-payments.md) and app `/docs/shared-hosting`, `/docs/payments`, `/docs/independent-operators`. Independent API discovery now has issuer/code/ABI and current-registration checks; actual operator browser cookies and external providers still need qualification.
+
+[Connected payment verification](evidence/2026-10-08-connected-payments.md) records the current 0.7 local/native/PostgreSQL/browser checks and actual outstanding provider/deployment qualification.

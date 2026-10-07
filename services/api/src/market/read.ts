@@ -324,6 +324,7 @@ export function quoteName(input: {
 interface RowResult {
   status: 'rows' | 'missing';
   rows: unknown[];
+  next?: string | null;
 }
 
 export async function readChainRows(input: {
@@ -336,6 +337,7 @@ export async function readChainRows(input: {
   keyType?: string;
   lowerBound?: string;
   upperBound?: string;
+  paginate?: boolean;
 }): Promise<RowResult> {
   let response: Response;
   try {
@@ -365,9 +367,23 @@ export async function readChainRows(input: {
     throw new ApiError('CHAIN_UNAVAILABLE', 503);
   }
   const parsed = z
-    .object({ rows: z.array(z.unknown()), more: z.boolean().optional() })
+    .object({
+      rows: z.array(z.unknown()),
+      more: z.boolean().optional(),
+      next_key: z.string().optional(),
+    })
     .safeParse(body);
   if (!parsed.success) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+  if (input.paginate) {
+    const next = parsed.data.more ? parsed.data.next_key : null;
+    if (
+      next === undefined ||
+      (next !== null &&
+        (!/^(0|[1-9][0-9]{0,19})$/.test(next) || BigInt(next) <= BigInt(input.lowerBound ?? '0')))
+    )
+      throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+    return { status: 'rows', rows: parsed.data.rows, next };
+  }
   if (parsed.data.more) throw new ApiError('RESULT_LIMIT', 413);
   return { status: 'rows', rows: parsed.data.rows };
 }

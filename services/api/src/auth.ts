@@ -5,6 +5,7 @@ import {
   AccountSchema,
   VaultAccountSchema,
   SigningPublicKeySchema,
+  LoginMessageSchema,
   type Account,
   type VaultAccount,
 } from '../../../protocol/api.js';
@@ -48,17 +49,21 @@ export async function createChallenge(
   pool: Pool,
   key: string,
   origin: string,
+  audience: string = origin,
 ): Promise<{ id: string; message: string; expires: string }> {
   SigningPublicKeySchema.parse(key);
   const id = randomUUID();
   const expires = new Date(Date.now() + 300_000).toISOString();
-  const message = JSON.stringify({
-    domain: 'daclify.login.v1',
-    origin,
-    challenge: id,
-    signingKey: key,
-    expires,
-  });
+  const message = JSON.stringify(
+    LoginMessageSchema.parse({
+      domain: 'daclify.login.v2',
+      origin,
+      audience,
+      challenge: id,
+      signingKey: key,
+      expires,
+    }),
+  );
   await pool.query(
     'INSERT INTO challenges(id,signing_key,message,expires_at) VALUES($1,$2,$3,$4)',
     [id, key, message, expires],
@@ -70,6 +75,7 @@ export async function authenticate(
   id: string,
   signature: string,
   encryptionKey: unknown,
+  context?: { origin: string; audience: string },
 ): Promise<{ account: VaultAccount; token: string; csrfToken: string }> {
   const encryption = validEncryptionKey(encryptionKey);
   const client = await pool.connect();
@@ -84,6 +90,11 @@ export async function authenticate(
     let valid = false;
     if (challenge) {
       try {
+        if (context) {
+          const message = LoginMessageSchema.parse(JSON.parse(challenge.message));
+          if (message.origin !== context.origin || message.audience !== context.audience)
+            throw new Error('Wrong audience');
+        }
         valid = Signature.from(signature).verifyMessage(
           new TextEncoder().encode(challenge.message),
           PublicKey.from(challenge.signing_key),

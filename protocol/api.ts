@@ -8,6 +8,7 @@ import {
   CustodySchema,
   Uint64Schema,
   AssetRefSchema,
+  ApiOriginSchema,
 } from './base.js';
 import {
   MetadataSchema,
@@ -35,6 +36,13 @@ export const JoinIdentitySchema = VaultAccountSchema.omit({ id: true }).extend({
   version: z.literal(1),
 });
 export const ChallengeRequestSchema = z.strictObject({ signingKey: SigningPublicKeySchema });
+export const LoginMessageSchema = ChallengeRequestSchema.extend({
+  domain: z.literal('daclify.login.v2'),
+  origin: z.url(),
+  audience: ApiOriginSchema,
+  challenge: z.uuid(),
+  expires: z.iso.datetime(),
+});
 export const ChallengeSchema = z.strictObject({
   id: z.uuid(),
   message: z.string().max(2048),
@@ -46,7 +54,8 @@ export const VaultAttachFinishSchema = z.strictObject({
   signature: z.string().min(1).max(160),
 });
 export const VaultAttachMessageSchema = VaultAttachRequestSchema.extend({
-  domain: z.literal('daclify.vault-attach.v1'),
+  domain: z.literal('daclify.vault-attach.v2'),
+  audience: ApiOriginSchema,
   origin: z.url(),
   accountId: z.uuid(),
   id: z.uuid(),

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Pool } from 'pg';
 import type { ContentService } from './service.js';
 import { leaseJob } from '../store.js';
+import { startPollingWorker } from '../jobs.js';
 const PayloadSchema = z.strictObject({ uploadId: z.uuid() });
 export type ContentJobResult = 'idle' | 'completed' | 'retry' | 'manual' | 'lost';
 export async function processContentJob(
@@ -43,34 +44,8 @@ export function startContentWorker(
   service: Pick<ContentService, 'reconcile'>,
 ): { stop: () => Promise<void> } {
   const owner = randomUUID();
-  let stopped = false;
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  let running: Promise<ContentJobResult> | undefined;
-  async function tick() {
-    if (stopped) return;
-    let result: ContentJobResult = 'idle';
-    running = processContentJob(pool, service, owner);
-    try {
-      result = await running;
-    } catch {
-      console.error('CONTENT_JOB_STORE_UNAVAILABLE');
-    } finally {
-      running = undefined;
-    }
-    if (!stopped)
-      timer = setTimeout(
-        () => {
-          void tick();
-        },
-        result === 'idle' ? 5000 : 250,
-      );
-  }
-  void tick();
-  return {
-    async stop() {
-      stopped = true;
-      if (timer) clearTimeout(timer);
-      await running?.catch(() => undefined);
-    },
-  };
+  return startPollingWorker(
+    () => processContentJob(pool, service, owner),
+    'CONTENT_JOB_STORE_UNAVAILABLE',
+  );
 }
