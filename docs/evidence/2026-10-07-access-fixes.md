@@ -45,7 +45,7 @@ Red-before-green evidence includes original private/stale-state reproductions, t
 
 The first full browser pass attempt was **56 passed / 4 failed**, revealing hidden pending-upload recovery, duplicate accessibility landmarks and disabled-module navigation. All were corrected before the final **62 / 62** result. An earlier native preflight failure came from unnecessarily requiring `max_supply` in a test-token stat row; symbol/precision verification uses the actual supply and issuer instead. No initial failing run is represented as passing evidence.
 
-Logs are retained outside Git at `/tmp/daclify-access-*.log`; local contract/package/browser artifacts are under each worktree's ignored `.artifacts` and `dist`. A coordinated development manifest records committed sources, lockfile/artifact hashes and local passes while refusing production qualification/publication.
+Logs are retained outside Git at `/tmp/daclify-access-*.log`; local contract/package/browser artifacts are under each worktree's ignored `.artifacts` and `dist`. The [coordinated development manifest](../releases/development-2026-10-07-0.4.0-alpha.1.json) records committed sources, lockfile/artifact hashes and local passes while refusing production qualification/publication. The manifest generator retains its conservative qualification holds; recorded local passes do not automatically remove production/full-suite requirements. Its pinned core commit precedes the documentation-only manifest/ledger commit.
 
 ## Isolation and one fixture configuration mistake
 

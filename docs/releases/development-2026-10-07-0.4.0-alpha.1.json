@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "publication": "refused",
+  "qualified": false,
+  "reason": "Publication is refused. Held checks and pinned artifact verification are not a qualified release.",
+  "repositories": [
+    {
+      "name": "daclify-backend-core",
+      "commit": "07fd140c347512e0da05f38227816b6cbf4967cd",
+      "version": "0.4.0-alpha.1",
+      "lockfileSha256": "7972f9f3c335a8c20c2b3cd7d54e28056df7a08d5984c076fe8a4babed56e605"
+    },
+    {
+      "name": "daclify-backend-modules",
+      "commit": "3a06bea4bc852871cbc5fafcce2e0db7ebbfb1ea",
+      "version": "0.4.0-alpha.1",
+      "lockfileSha256": "3392799121144ef1de8f0200a18d35ed2fe3721c6c9f43a393f6edd50cec80ff"
+    },
+    {
+      "name": "daclify-frontend",
+      "commit": "92e81452c6f6562a7630bffd5a57a8d0e2847b4a",
+      "version": "0.4.0-alpha.1",
+      "lockfileSha256": "8d09982879608bcde880b2821e33494cdc1d596a8dff202623f6f7ef1819ba70"
+    }
+  ],
+  "toolchain": {
+    "cdt": "4.1.1",
+    "spring": "1.2.2",
+    "node": "24.21.0"
+  },
+  "interfaceVersion": 1,
+  "artifacts": {
+    "runtimeCodeHash": "886a2057c1765be8c7139ae0eddcdfc645c7bb7c98663fc266615215a70c524a",
+    "runtimeAbiSha256": "3a68bd2f500e84f7662487a9e452ef408c60ccef392f33239e5252c4673c4b14",
+    "documentationSha256": "0510253a422f16dd129332ef6fbfc9438d3a52c1511365db0690e8e76ec722d3"
+  },
+  "moduleCapabilities": ["decide", "payroll", "works"],
+  "moduleCodeHashes": {
+    "decide": "18e5c491604c1c7f130c44d6f702379b855f99d4464e753bd152ad9b705e7fe2",
+    "payroll": "efdceb30d194fbf7ed06f921e94cafe0de9fb7f9d6c11792507f2c2388108ffc",
+    "works": "cc5fa10c49eac3ed1b7cdf0e930f7f492f8c0f26d4f72aa5608f1d3643682e0f"
+  },
+  "checks": {
+    "held": [
+      "native runtime suite on the pinned runtime wasm",
+      "native HTTP and API suite",
+      "PostgreSQL and API integration on this checkout",
+      "OpenBao production qualification",
+      "frontend browser journeys",
+      "Telos mainnet GET_CODE_HASH activation",
+      "immutable published artifact verification"
+    ],
+    "recordedPasses": [
+      "Pinned CDT 4.1.1 build of all eight core/helper contracts and ABI code generation",
+      "Core verify: lint, strict types, generated documentation, 359 tests across 49 files",
+      "Modules verify: lint, strict types, generated documentation, 60 tests across 8 files",
+      "Frontend verify: lint, strict types, 58 tests across 16 files",
+      "TypeScript builds in all three repositories and Vue/Vite production build",
+      "PostgreSQL integration: 71 tests across 10 files on isolated daclify_access_integration_test",
+      "Desktop and mobile Chromium: 62 complete browser journeys; two targeted sign-in and two Works journeys after final corrections",
+      "Isolated Spring native/API DAO-purpose and guarded-agent scenarios: 2 passed (not the full native suite)",
+      "Changed-source format checks, git diff --check and final source review"
+    ]
+  }
+}

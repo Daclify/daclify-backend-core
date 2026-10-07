@@ -11,9 +11,11 @@ User approved all findings in the 2026-10-07 access review and requested continu
 - [x] Align effective action permissions with active membership, admin-or-reviewer and installed action grants; preserve inactive exits. Correct payroll pause wording without changing approved payment rights.
 - [x] Move admission to Members; export only public join identity; clarify admission, roles and document access. Preserve destination through account sign-in/unlock. Simplify visitor/locked views, member/document selection and relevant module navigation.
 - [x] Consume producer-owned response schemas, map safe chain errors, and make Status capabilities and independent-deployment limitations accurate.
-- [ ] Publish coordinated development artifacts, update generated documentation and compatibility/release records; run applicable unit, compiled-WASM, PostgreSQL, native and browser checks, review diffs and commit verified changes.
+- [x] Package coordinated development artifacts, update generated documentation and compatibility/release records; run applicable unit, compiled-WASM, PostgreSQL, native and browser checks, review diffs and commit verified changes.
 - [x] Research Pomelo, EOS Market, Eden and Hypha from primary documentation/source at recorded commits. Inspect Hypha cards. Deliver proposals with identity/accounting/privacy/maintenance/licensing constraints and prioritized acceptance criteria; do not implement speculative new modules.
 
 ## Verification approach
 
 Use existing Vitest, VERT, PostgreSQL and Playwright facilities. Each substantive bug has a red-before-green regression. Use synthetic accounts/tokens and a dedicated database ending `_test`; existing preview and other agents' fixtures stay intact. Store a final evidence report with actual command results, skipped/unrun checks and remaining release gates. External code is read only, never executed. Provider mocks do not establish live qualification.
+
+Verified completion is recorded in [access-fixes evidence](../../evidence/2026-10-07-access-fixes.md) and the [development manifest](../../releases/development-2026-10-07-0.4.0-alpha.1.json). Packages are local, unpublished and unqualified for production. The source commits are pinned before this documentation-only manifest commit.
