@@ -4,6 +4,8 @@ Research date: 2026-10-07. This is a proposal, not a claim that these modules ha
 
 ## Recommendation
 
+The accepted follow-on scope is organized in the [implementation plan](../superpowers/plans/2026-10-07-modules-and-paired-login.md), including the [paired-login and direct wallet-governance design](../superpowers/specs/2026-10-07-paired-login-and-wallet-governance.md). Those documents describe future work, not delivered modules.
+
 Prioritize **grants rounds**, **contribution agreements** and **clearer DAO discovery**. They extend the existing Decide → Works → Treasury flow. Add **member endorsements and term-limited delegates** when a real community wants those policies. Leave quadratic matching, NFT trading and cross-chain custody behind explicit feasibility and security gates.
 
 Daclify already has milestones, reviewer checks, backed obligations, governance credits, ballots and bounded recurring payments. Renaming those features into five new contracts would create maintenance work, not new value. Use presets and better screens where the underlying rules already exist; create a module only where it adds a distinct contract state machine or policy.
