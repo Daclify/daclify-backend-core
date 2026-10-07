@@ -63,6 +63,7 @@ export async function consumeAccountControl(
   id: string,
   input: unknown,
   network: () => Promise<Network>,
+  origin: string,
 ): Promise<void> {
   const checked = AccountControlProofSchema.safeParse(input);
   if (!AccountControlChallengeSchema.shape.id.safeParse(id).success || !checked.success)
@@ -83,12 +84,17 @@ export async function consumeAccountControl(
   let valid = false;
   if (row) {
     try {
+      const context = AccountControlMessageSchema.parse(JSON.parse(row.message));
+      if (context.origin !== origin || context.signingKey !== account.signingKey)
+        throw new Error('Changed proof context');
       const proof = checked.data;
       if (proof.kind === 'root')
-        valid = Signature.from(proof.signature).verifyMessage(
-          new TextEncoder().encode(row.message),
-          PublicKey.from(account.signingKey),
-        );
+        valid =
+          account.signingKey !== null &&
+          Signature.from(proof.signature).verifyMessage(
+            new TextEncoder().encode(row.message),
+            PublicKey.from(account.signingKey),
+          );
       else if (proof.kind === 'native') {
         const linked = (
           await pool.query<{ permission: string }>(

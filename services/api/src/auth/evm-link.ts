@@ -137,6 +137,7 @@ export async function unlinkEvm(
   chainId: TelosEvmChainId,
 ): Promise<void> {
   await withTransaction(pool, async (client) => {
+    await client.query('SELECT id FROM accounts WHERE id=$1 FOR UPDATE', [accountId]);
     const row = (
       await client.query<{ address: string }>(
         'DELETE FROM evm_links WHERE account_id=$1 AND chain_id=$2 RETURNING address',

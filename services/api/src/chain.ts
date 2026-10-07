@@ -6,7 +6,13 @@ import type {
   FinalizationRequest,
   FinalizationResult,
 } from '@daclify/modules';
-import type { DaoSummary, Network, Account, UserMembership } from '../../../protocol/api.js';
+import type {
+  DaoSummary,
+  Network,
+  Account,
+  UserMembership,
+  WalletIdentity,
+} from '../../../protocol/api.js';
 import type { instruction } from '../../../sdk/index.js';
 import type { EvmRelay } from '../../../protocol/evm-wallet.js';
 import type { RuntimeTableSchemas } from '../../../sdk/generated/schemas.js';
@@ -15,6 +21,7 @@ import type { z } from 'zod';
 import type { GovernanceState } from '../../../protocol/dao.js';
 import type { ExecutionRequest, ExecutionResult } from '@daclify/modules';
 export interface ChainGateway {
+  walletMemberships?(wallet: WalletIdentity): Promise<UserMembership[]>;
   evmBinding?(
     daoId: string,
     memberId: string,

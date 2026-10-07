@@ -202,6 +202,21 @@
         "../daclify-frontend/tests/e2e/route-recovery.spec.ts",
         "../daclify-frontend/tests/e2e/module-authoring.spec.ts"
       ]
+    },
+    {
+      "id": "WP03-WALLET-DISASTER-RECOVERY",
+      "suite": "integration",
+      "tests": ["tests/integration/wallet-recovery.test.ts"]
+    },
+    {
+      "id": "WP03-WALLET-ACCOUNT-SCHEMA",
+      "suite": "unit",
+      "tests": ["tests/wallet-account.test.ts"]
+    },
+    {
+      "id": "WP03-WALLET-RECOVERY-NATIVE",
+      "suite": "native",
+      "tests": ["tests/native/paired-wallets.test.ts"]
     }
   ]
 }

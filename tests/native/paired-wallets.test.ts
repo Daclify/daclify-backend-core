@@ -65,6 +65,11 @@ let rootCookie = '',
 let pairedCookie = '';
 let pairedCsrf = '';
 let accountId = '';
+const coldDatabase = 'daclify_cold_' + Date.now() + '_test';
+let coldPool: Pool | undefined;
+let coldApp: Awaited<ReturnType<typeof createServer>> | undefined;
+let coldCreated = false;
+let coldCookie = '';
 function cookies(response: { cookies: { name: string; value: string }[] }) {
   return response.cookies.map((item) => `${item.name}=${item.value}`).join('; ');
 }
@@ -88,7 +93,7 @@ async function proof(challenge: z.infer<typeof NativeChallengeSchema>) {
     signatures: [native.signDigest(transaction.signingDigest(network.chainId)).toString()],
   };
 }
-async function push(name: string, data: Uint8Array, signer = native, actor = 'alice') {
+async function push(name: string, data: Uint8Array, signer = native, actor = walletAccount) {
   const info = await rpc.v1.chain.get_info();
   const transaction = Transaction.from({
     ...info.getTransactionHeader(60),
@@ -171,7 +176,7 @@ beforeAll(async () => {
     'createdao',
     encodeAction('createdao', {
       dao_id: dao,
-      owner: 'alice',
+      owner: walletAccount,
       metadata: '{}',
       privacy: 0,
       token_contract: 'eosio.token',
@@ -191,6 +196,9 @@ beforeAll(async () => {
   );
 });
 afterAll(async () => {
+  await coldApp?.close();
+  await coldPool?.end();
+  if (coldCreated) await pool.query(`DROP DATABASE ${coldDatabase}`);
   await app.close();
   await pool.end();
 });
@@ -291,6 +299,57 @@ it('executes native governance without the member signing key, and revokes both 
     native,
     walletAccount,
   );
+  // Recover from a genuinely empty service database while the deployed chain survives.
+  await pool.query(`CREATE DATABASE ${coldDatabase}`);
+  coldCreated = true;
+  const coldUrl = new URL(database);
+  coldUrl.pathname = '/' + coldDatabase;
+  coldPool = new Pool({ connectionString: coldUrl.toString() });
+  await migrate(coldPool);
+  expect((await coldPool.query('SELECT id FROM accounts')).rowCount).toBe(0);
+  const coldChain = new NativeChainGateway(
+    {
+      rpcUrl: network.url,
+      chainId: network.chainId,
+      runtime: 'daclifycore',
+      hub: null,
+      environment: 'local',
+      relayActor: 'relay',
+      relayKey: fixtureKey('relay'),
+    },
+    coldPool,
+  );
+  coldApp = await createServer(coldPool, coldChain, origin);
+  const started = await coldApp.inject({
+    method: 'POST',
+    url: '/v1/account/native/challenge',
+    headers: { origin },
+    payload: { purpose: 'login', account: walletAccount, permission: 'active' },
+  });
+  const challenge = NativeChallengeSchema.parse(started.json());
+  const recovered = await coldApp.inject({
+    method: 'POST',
+    url: '/v1/sign-in/native',
+    headers: { origin, cookie: cookies(started) },
+    payload: { id: challenge.id, proof: await proof(challenge) },
+  });
+  expect(recovered.statusCode, recovered.body).toBe(200);
+  expect(SessionSchema.parse(recovered.json()).account).toMatchObject({
+    signingKey: null,
+    encryptionKey: null,
+  });
+  expect(SessionSchema.parse(recovered.json()).account.id).not.toBe(accountId);
+  coldCookie = cookies(recovered);
+  const coldMemberships = await coldApp.inject({
+    method: 'GET',
+    url: '/v1/me/memberships',
+    headers: { cookie: coldCookie },
+  });
+  expect(coldMemberships.statusCode, coldMemberships.body).toBe(200);
+  expect(coldMemberships.json().memberships).toContainEqual(
+    expect.objectContaining({ dao: domain, memberId: '1', admin: true, nonce: '1' }),
+  );
+  expect((await coldPool.query('SELECT * FROM memberships')).rowCount).toBe(0);
   const beforeRotation = await app.inject({
     method: 'GET',
     url: '/v1/me/memberships',
@@ -329,6 +388,17 @@ it('executes native governance without the member signing key, and revokes both 
       nativeAccount: walletAccount,
     }),
   );
+  expect(
+    (
+      await coldApp.inject({
+        method: 'GET',
+        url: '/v1/me/memberships',
+        headers: { cookie: coldCookie },
+      })
+    ).json().memberships,
+  ).toContainEqual(
+    expect.objectContaining({ dao: domain, memberId: '1', nonce: '2', admin: true }),
+  );
   const unlink = makeInstruction(
     domain,
     '1',
@@ -339,6 +409,15 @@ it('executes native governance without the member signing key, and revokes both 
     encodeAction('unlinknat', { runtime: 'daclifycore', dao_id: dao, member_id: '1' }),
   );
   await push('submitnat', encodeAction('submitnat', { request: unlink }), native, walletAccount);
+  expect(
+    (
+      await coldApp.inject({
+        method: 'GET',
+        url: '/v1/me/memberships',
+        headers: { cookie: coldCookie },
+      })
+    ).json(),
+  ).toEqual({ memberships: [] });
   const after = makeInstruction(
     domain,
     '1',

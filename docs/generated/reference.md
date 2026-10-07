@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.5.0-alpha.1 · interface 1.
+Package 0.6.0-alpha.1 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -72,13 +72,23 @@ Telos Zero login currently supports active permission with direct weighted keys,
 
 Telos EVM EOA login uses server-issued ERC-4361 messages. Direct DAO governance uses different EIP-712 signed bytes and on-chain K1/Keccak primitives. Chains 40/41 are supported; ERC-1271 wallets, EVM assets/payouts and cross-chain settlement are unavailable.
 
-## Recover without changing identity
+## Recover keys and blockchain access
 
-Keep your encrypted recovery kit and separate credential in different safe places. The kit contains ciphertext and public keys, never plaintext signing keys.
+User-controlled signing and P-256 decryption private keys are encrypted in this browser’s local vault and downloaded recovery kit. The password protects the local envelope; the separate recovery credential protects the recovery envelope. Both use PBKDF2-SHA256 with 600,000 iterations and AES-256-GCM. The API stores public keys, not these private keys or your vault password.
 
-Recovery restores the same signing and decryption identities on a fresh device. Rotating a signing key is a separate authorized on-chain process; it must preserve balances and memberships.
+The contracts retain DAO membership, permissions, balances, document CIDs, key-epoch commitments and per-member encrypted epoch-key grants. Large encrypted document bytes are on IPFS. A recovered original decryption key opens its surviving grants and ciphertext; a wallet signature or a replacement encryption key cannot decrypt old content. Keep the encrypted kit and recovery credential in separate safe places and retain durable IPFS pins or a content export.
 
-Managed recovery is explicitly operator-assisted. Production availability depends on verified custody access policies and restore procedures.
+After losing the service database, connect a Telos Zero wallet or supported Telos EVM EOA and sign a fresh browser-bound challenge. The API verifies wallet control and finds current bindings in the configured runtime. It reconstructs wallet-only service access with no claimed vault keys, no new membership or creation fee. Each DAO’s current binding and permissions are checked again. Matching public signing keys in another DAO do not grant wallet access there.
+
+A recovered wallet profile has a new service ID; the chain membership ID stays unchanged. Restore the original encrypted kit and confirm with the wallet to attach your proved vault identity to that same recovered profile. You can instead create new keys for new DAOs; new keys do not recover old private documents or change existing contract keys. Both current wallet control and incoming signing-key possession are required. An already registered vault identity is not silently merged with another service profile.
+
+Google, Telegram and email pairings, passkey public credentials, wallet sign-in pairings and service sessions are PostgreSQL records. Blockchain governance bindings are separate. Lost social pairings require a verified database restore or explicit re-pairing after recovering control. Do not publish email addresses, Telegram IDs or raw provider tokens on the public chain. Restore does not make an old session or provider proof fresh.
+
+Wallet-only profiles must retain a blockchain control credential. Removing the last one is rejected transactionally. Unlinking or revoking a governance binding on chain removes the corresponding access; an old service pairing does not restore it. Inactive memberships do not gain new governance rights; existing exit rights remain governed by the contract.
+
+Operators need encrypted off-host PostgreSQL backups, a separate secret/configuration backup, retained provider and IPFS credentials, and tested restore drills. Revoke all restored sessions and pending login/control challenges before exposing a restored API. A stale backup can restore removed social pairings; reconfirm them if revocation history is uncertain. Jobs and payment records need reconciliation with the chain and provider before workers resume.
+
+Managed signing and decryption recovery remain unqualified and unavailable. OpenBao is a candidate, not a working production recovery guarantee. If every wallet key, vault recovery path and independent backup is lost, Daclify cannot manufacture the missing secrets.
 
 ## Documents that survive transaction history gaps
 
@@ -224,7 +234,7 @@ Basic complete JSON/CSV exports are free and do not require an Operations subscr
 
 ## Use the matching release and enabled modules
 
-Core, module and frontend packages are versioned together at 0.5.0-alpha.1. Documentation displays its package version and warns when the selected DAO deployment does not match. Module actions remain unavailable when the installed frontend SDK differs from the deployed module version or code hash.
+Core, module and frontend packages are versioned together at 0.6.0-alpha.1. Documentation displays its package version and warns when the selected DAO deployment does not match. Module actions remain unavailable when the installed frontend SDK differs from the deployed module version or code hash.
 
 A DAO administrator enables optional modules in Workspace → Modules. Grants rounds requires Works and Decide; funded awards continue through Works delivery, independent review and Treasury settlement. Enable Endorsement admission before configuring an opt-in member endorsement rule in Members. Representative elections are available in Decide and confer term labels, without administrator or spending powers.
 
@@ -1178,6 +1188,227 @@ Source ABI JSON SHA-256: `ae70e5f0f7af1f1a9ded1b8ce193c5e6cab1808799f4e11c7e9ad1
 | abi_hash | checksum256 |
 | metadata | string |
 | listed | bool |
+
+## POST /v1/account/vault/challenge
+
+Guide: recovery.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "signingKey": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "encryptionKey": {
+      "type": "object",
+      "properties": {
+        "kty": {
+          "type": "string",
+          "const": "EC"
+        },
+        "crv": {
+          "type": "string",
+          "const": "P-256"
+        },
+        "x": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43}$"
+        },
+        "y": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43}$"
+        }
+      },
+      "required": [
+        "kty",
+        "crv",
+        "x",
+        "y"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "signingKey",
+    "encryptionKey"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "message": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "expires": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+    }
+  },
+  "required": [
+    "id",
+    "message",
+    "expires"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/account/vault
+
+Guide: recovery.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "signature": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160
+    }
+  },
+  "required": [
+    "id",
+    "signature"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "account": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "signingKey": {
+              "type": "string",
+              "maxLength": 128
+            },
+            "custody": {
+              "type": "string",
+              "enum": [
+                "user-controlled",
+                "managed"
+              ]
+            },
+            "encryptionKey": {
+              "type": "object",
+              "properties": {
+                "kty": {
+                  "type": "string",
+                  "const": "EC"
+                },
+                "crv": {
+                  "type": "string",
+                  "const": "P-256"
+                },
+                "x": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                },
+                "y": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                }
+              },
+              "required": [
+                "kty",
+                "crv",
+                "x",
+                "y"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "id",
+            "signingKey",
+            "custody",
+            "encryptionKey"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "custody": {
+              "type": "string",
+              "const": "user-controlled"
+            },
+            "signingKey": {
+              "type": "null"
+            },
+            "encryptionKey": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "id",
+            "custody",
+            "signingKey",
+            "encryptionKey"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "csrfToken": {
+      "type": "string",
+      "minLength": 32,
+      "maxLength": 128
+    }
+  },
+  "required": [
+    "account",
+    "csrfToken"
+  ],
+  "additionalProperties": false
+}
+```
 
 ## GET /v1/platform/status
 
@@ -8100,60 +8331,91 @@ Response:
   "type": "object",
   "properties": {
     "account": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-        },
-        "signingKey": {
-          "type": "string",
-          "maxLength": 128
-        },
-        "custody": {
-          "type": "string",
-          "enum": [
-            "user-controlled",
-            "managed"
-          ]
-        },
-        "encryptionKey": {
+      "anyOf": [
+        {
           "type": "object",
           "properties": {
-            "kty": {
+            "id": {
               "type": "string",
-              "const": "EC"
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             },
-            "crv": {
+            "signingKey": {
               "type": "string",
-              "const": "P-256"
+              "maxLength": 128
             },
-            "x": {
+            "custody": {
               "type": "string",
-              "pattern": "^[A-Za-z0-9_-]{43}$"
+              "enum": [
+                "user-controlled",
+                "managed"
+              ]
             },
-            "y": {
-              "type": "string",
-              "pattern": "^[A-Za-z0-9_-]{43}$"
+            "encryptionKey": {
+              "type": "object",
+              "properties": {
+                "kty": {
+                  "type": "string",
+                  "const": "EC"
+                },
+                "crv": {
+                  "type": "string",
+                  "const": "P-256"
+                },
+                "x": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                },
+                "y": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                }
+              },
+              "required": [
+                "kty",
+                "crv",
+                "x",
+                "y"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
-            "kty",
-            "crv",
-            "x",
-            "y"
+            "id",
+            "signingKey",
+            "custody",
+            "encryptionKey"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "custody": {
+              "type": "string",
+              "const": "user-controlled"
+            },
+            "signingKey": {
+              "type": "null"
+            },
+            "encryptionKey": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "id",
+            "custody",
+            "signingKey",
+            "encryptionKey"
           ],
           "additionalProperties": false
         }
-      },
-      "required": [
-        "id",
-        "signingKey",
-        "custody",
-        "encryptionKey"
-      ],
-      "additionalProperties": false
+      ]
     },
     "csrfToken": {
       "type": "string",
@@ -8183,60 +8445,91 @@ Response:
   "type": "object",
   "properties": {
     "account": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-        },
-        "signingKey": {
-          "type": "string",
-          "maxLength": 128
-        },
-        "custody": {
-          "type": "string",
-          "enum": [
-            "user-controlled",
-            "managed"
-          ]
-        },
-        "encryptionKey": {
+      "anyOf": [
+        {
           "type": "object",
           "properties": {
-            "kty": {
+            "id": {
               "type": "string",
-              "const": "EC"
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             },
-            "crv": {
+            "signingKey": {
               "type": "string",
-              "const": "P-256"
+              "maxLength": 128
             },
-            "x": {
+            "custody": {
               "type": "string",
-              "pattern": "^[A-Za-z0-9_-]{43}$"
+              "enum": [
+                "user-controlled",
+                "managed"
+              ]
             },
-            "y": {
-              "type": "string",
-              "pattern": "^[A-Za-z0-9_-]{43}$"
+            "encryptionKey": {
+              "type": "object",
+              "properties": {
+                "kty": {
+                  "type": "string",
+                  "const": "EC"
+                },
+                "crv": {
+                  "type": "string",
+                  "const": "P-256"
+                },
+                "x": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                },
+                "y": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                }
+              },
+              "required": [
+                "kty",
+                "crv",
+                "x",
+                "y"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
-            "kty",
-            "crv",
-            "x",
-            "y"
+            "id",
+            "signingKey",
+            "custody",
+            "encryptionKey"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "custody": {
+              "type": "string",
+              "const": "user-controlled"
+            },
+            "signingKey": {
+              "type": "null"
+            },
+            "encryptionKey": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "id",
+            "custody",
+            "signingKey",
+            "encryptionKey"
           ],
           "additionalProperties": false
         }
-      },
-      "required": [
-        "id",
-        "signingKey",
-        "custody",
-        "encryptionKey"
-      ],
-      "additionalProperties": false
+      ]
     }
   },
   "required": [
@@ -8495,60 +8788,91 @@ Response:
   "type": "object",
   "properties": {
     "account": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-        },
-        "signingKey": {
-          "type": "string",
-          "maxLength": 128
-        },
-        "custody": {
-          "type": "string",
-          "enum": [
-            "user-controlled",
-            "managed"
-          ]
-        },
-        "encryptionKey": {
+      "anyOf": [
+        {
           "type": "object",
           "properties": {
-            "kty": {
+            "id": {
               "type": "string",
-              "const": "EC"
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             },
-            "crv": {
+            "signingKey": {
               "type": "string",
-              "const": "P-256"
+              "maxLength": 128
             },
-            "x": {
+            "custody": {
               "type": "string",
-              "pattern": "^[A-Za-z0-9_-]{43}$"
+              "enum": [
+                "user-controlled",
+                "managed"
+              ]
             },
-            "y": {
-              "type": "string",
-              "pattern": "^[A-Za-z0-9_-]{43}$"
+            "encryptionKey": {
+              "type": "object",
+              "properties": {
+                "kty": {
+                  "type": "string",
+                  "const": "EC"
+                },
+                "crv": {
+                  "type": "string",
+                  "const": "P-256"
+                },
+                "x": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                },
+                "y": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                }
+              },
+              "required": [
+                "kty",
+                "crv",
+                "x",
+                "y"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
-            "kty",
-            "crv",
-            "x",
-            "y"
+            "id",
+            "signingKey",
+            "custody",
+            "encryptionKey"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "custody": {
+              "type": "string",
+              "const": "user-controlled"
+            },
+            "signingKey": {
+              "type": "null"
+            },
+            "encryptionKey": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "id",
+            "custody",
+            "signingKey",
+            "encryptionKey"
           ],
           "additionalProperties": false
         }
-      },
-      "required": [
-        "id",
-        "signingKey",
-        "custody",
-        "encryptionKey"
-      ],
-      "additionalProperties": false
+      ]
     },
     "csrfToken": {
       "type": "string",
@@ -10028,60 +10352,91 @@ Response:
   "type": "object",
   "properties": {
     "account": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-        },
-        "signingKey": {
-          "type": "string",
-          "maxLength": 128
-        },
-        "custody": {
-          "type": "string",
-          "enum": [
-            "user-controlled",
-            "managed"
-          ]
-        },
-        "encryptionKey": {
+      "anyOf": [
+        {
           "type": "object",
           "properties": {
-            "kty": {
+            "id": {
               "type": "string",
-              "const": "EC"
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             },
-            "crv": {
+            "signingKey": {
               "type": "string",
-              "const": "P-256"
+              "maxLength": 128
             },
-            "x": {
+            "custody": {
               "type": "string",
-              "pattern": "^[A-Za-z0-9_-]{43}$"
+              "enum": [
+                "user-controlled",
+                "managed"
+              ]
             },
-            "y": {
-              "type": "string",
-              "pattern": "^[A-Za-z0-9_-]{43}$"
+            "encryptionKey": {
+              "type": "object",
+              "properties": {
+                "kty": {
+                  "type": "string",
+                  "const": "EC"
+                },
+                "crv": {
+                  "type": "string",
+                  "const": "P-256"
+                },
+                "x": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                },
+                "y": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                }
+              },
+              "required": [
+                "kty",
+                "crv",
+                "x",
+                "y"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
-            "kty",
-            "crv",
-            "x",
-            "y"
+            "id",
+            "signingKey",
+            "custody",
+            "encryptionKey"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "custody": {
+              "type": "string",
+              "const": "user-controlled"
+            },
+            "signingKey": {
+              "type": "null"
+            },
+            "encryptionKey": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "id",
+            "custody",
+            "signingKey",
+            "encryptionKey"
           ],
           "additionalProperties": false
         }
-      },
-      "required": [
-        "id",
-        "signingKey",
-        "custody",
-        "encryptionKey"
-      ],
-      "additionalProperties": false
+      ]
     },
     "csrfToken": {
       "type": "string",
@@ -10375,60 +10730,91 @@ Response:
   "type": "object",
   "properties": {
     "account": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-        },
-        "signingKey": {
-          "type": "string",
-          "maxLength": 128
-        },
-        "custody": {
-          "type": "string",
-          "enum": [
-            "user-controlled",
-            "managed"
-          ]
-        },
-        "encryptionKey": {
+      "anyOf": [
+        {
           "type": "object",
           "properties": {
-            "kty": {
+            "id": {
               "type": "string",
-              "const": "EC"
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             },
-            "crv": {
+            "signingKey": {
               "type": "string",
-              "const": "P-256"
+              "maxLength": 128
             },
-            "x": {
+            "custody": {
               "type": "string",
-              "pattern": "^[A-Za-z0-9_-]{43}$"
+              "enum": [
+                "user-controlled",
+                "managed"
+              ]
             },
-            "y": {
-              "type": "string",
-              "pattern": "^[A-Za-z0-9_-]{43}$"
+            "encryptionKey": {
+              "type": "object",
+              "properties": {
+                "kty": {
+                  "type": "string",
+                  "const": "EC"
+                },
+                "crv": {
+                  "type": "string",
+                  "const": "P-256"
+                },
+                "x": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                },
+                "y": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                }
+              },
+              "required": [
+                "kty",
+                "crv",
+                "x",
+                "y"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
-            "kty",
-            "crv",
-            "x",
-            "y"
+            "id",
+            "signingKey",
+            "custody",
+            "encryptionKey"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "custody": {
+              "type": "string",
+              "const": "user-controlled"
+            },
+            "signingKey": {
+              "type": "null"
+            },
+            "encryptionKey": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "id",
+            "custody",
+            "signingKey",
+            "encryptionKey"
           ],
           "additionalProperties": false
         }
-      },
-      "required": [
-        "id",
-        "signingKey",
-        "custody",
-        "encryptionKey"
-      ],
-      "additionalProperties": false
+      ]
     },
     "csrfToken": {
       "type": "string",
@@ -10458,6 +10844,7 @@ Request:
     "path": {
       "type": "string",
       "enum": [
+        "/v1/account/vault",
         "/v1/auth/providers/link",
         "/v1/auth/providers/unlink",
         "/v1/sign-in/email/confirm",
@@ -10539,60 +10926,91 @@ Response:
   "type": "object",
   "properties": {
     "account": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-        },
-        "signingKey": {
-          "type": "string",
-          "maxLength": 128
-        },
-        "custody": {
-          "type": "string",
-          "enum": [
-            "user-controlled",
-            "managed"
-          ]
-        },
-        "encryptionKey": {
+      "anyOf": [
+        {
           "type": "object",
           "properties": {
-            "kty": {
+            "id": {
               "type": "string",
-              "const": "EC"
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             },
-            "crv": {
+            "signingKey": {
               "type": "string",
-              "const": "P-256"
+              "maxLength": 128
             },
-            "x": {
+            "custody": {
               "type": "string",
-              "pattern": "^[A-Za-z0-9_-]{43}$"
+              "enum": [
+                "user-controlled",
+                "managed"
+              ]
             },
-            "y": {
-              "type": "string",
-              "pattern": "^[A-Za-z0-9_-]{43}$"
+            "encryptionKey": {
+              "type": "object",
+              "properties": {
+                "kty": {
+                  "type": "string",
+                  "const": "EC"
+                },
+                "crv": {
+                  "type": "string",
+                  "const": "P-256"
+                },
+                "x": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                },
+                "y": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                }
+              },
+              "required": [
+                "kty",
+                "crv",
+                "x",
+                "y"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
-            "kty",
-            "crv",
-            "x",
-            "y"
+            "id",
+            "signingKey",
+            "custody",
+            "encryptionKey"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "custody": {
+              "type": "string",
+              "const": "user-controlled"
+            },
+            "signingKey": {
+              "type": "null"
+            },
+            "encryptionKey": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "id",
+            "custody",
+            "signingKey",
+            "encryptionKey"
           ],
           "additionalProperties": false
         }
-      },
-      "required": [
-        "id",
-        "signingKey",
-        "custody",
-        "encryptionKey"
-      ],
-      "additionalProperties": false
+      ]
     },
     "csrfToken": {
       "type": "string",
@@ -11237,60 +11655,91 @@ Response:
   "type": "object",
   "properties": {
     "account": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-        },
-        "signingKey": {
-          "type": "string",
-          "maxLength": 128
-        },
-        "custody": {
-          "type": "string",
-          "enum": [
-            "user-controlled",
-            "managed"
-          ]
-        },
-        "encryptionKey": {
+      "anyOf": [
+        {
           "type": "object",
           "properties": {
-            "kty": {
+            "id": {
               "type": "string",
-              "const": "EC"
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             },
-            "crv": {
+            "signingKey": {
               "type": "string",
-              "const": "P-256"
+              "maxLength": 128
             },
-            "x": {
+            "custody": {
               "type": "string",
-              "pattern": "^[A-Za-z0-9_-]{43}$"
+              "enum": [
+                "user-controlled",
+                "managed"
+              ]
             },
-            "y": {
-              "type": "string",
-              "pattern": "^[A-Za-z0-9_-]{43}$"
+            "encryptionKey": {
+              "type": "object",
+              "properties": {
+                "kty": {
+                  "type": "string",
+                  "const": "EC"
+                },
+                "crv": {
+                  "type": "string",
+                  "const": "P-256"
+                },
+                "x": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                },
+                "y": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                }
+              },
+              "required": [
+                "kty",
+                "crv",
+                "x",
+                "y"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
-            "kty",
-            "crv",
-            "x",
-            "y"
+            "id",
+            "signingKey",
+            "custody",
+            "encryptionKey"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "custody": {
+              "type": "string",
+              "const": "user-controlled"
+            },
+            "signingKey": {
+              "type": "null"
+            },
+            "encryptionKey": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "id",
+            "custody",
+            "signingKey",
+            "encryptionKey"
           ],
           "additionalProperties": false
         }
-      },
-      "required": [
-        "id",
-        "signingKey",
-        "custody",
-        "encryptionKey"
-      ],
-      "additionalProperties": false
+      ]
     },
     "csrfToken": {
       "type": "string",
@@ -11390,60 +11839,91 @@ Response:
   "type": "object",
   "properties": {
     "account": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-        },
-        "signingKey": {
-          "type": "string",
-          "maxLength": 128
-        },
-        "custody": {
-          "type": "string",
-          "enum": [
-            "user-controlled",
-            "managed"
-          ]
-        },
-        "encryptionKey": {
+      "anyOf": [
+        {
           "type": "object",
           "properties": {
-            "kty": {
+            "id": {
               "type": "string",
-              "const": "EC"
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             },
-            "crv": {
+            "signingKey": {
               "type": "string",
-              "const": "P-256"
+              "maxLength": 128
             },
-            "x": {
+            "custody": {
               "type": "string",
-              "pattern": "^[A-Za-z0-9_-]{43}$"
+              "enum": [
+                "user-controlled",
+                "managed"
+              ]
             },
-            "y": {
-              "type": "string",
-              "pattern": "^[A-Za-z0-9_-]{43}$"
+            "encryptionKey": {
+              "type": "object",
+              "properties": {
+                "kty": {
+                  "type": "string",
+                  "const": "EC"
+                },
+                "crv": {
+                  "type": "string",
+                  "const": "P-256"
+                },
+                "x": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                },
+                "y": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                }
+              },
+              "required": [
+                "kty",
+                "crv",
+                "x",
+                "y"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
-            "kty",
-            "crv",
-            "x",
-            "y"
+            "id",
+            "signingKey",
+            "custody",
+            "encryptionKey"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "custody": {
+              "type": "string",
+              "const": "user-controlled"
+            },
+            "signingKey": {
+              "type": "null"
+            },
+            "encryptionKey": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "id",
+            "custody",
+            "signingKey",
+            "encryptionKey"
           ],
           "additionalProperties": false
         }
-      },
-      "required": [
-        "id",
-        "signingKey",
-        "custody",
-        "encryptionKey"
-      ],
-      "additionalProperties": false
+      ]
     },
     "csrfToken": {
       "type": "string",
@@ -11752,60 +12232,91 @@ Response:
   "type": "object",
   "properties": {
     "account": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-        },
-        "signingKey": {
-          "type": "string",
-          "maxLength": 128
-        },
-        "custody": {
-          "type": "string",
-          "enum": [
-            "user-controlled",
-            "managed"
-          ]
-        },
-        "encryptionKey": {
+      "anyOf": [
+        {
           "type": "object",
           "properties": {
-            "kty": {
+            "id": {
               "type": "string",
-              "const": "EC"
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             },
-            "crv": {
+            "signingKey": {
               "type": "string",
-              "const": "P-256"
+              "maxLength": 128
             },
-            "x": {
+            "custody": {
               "type": "string",
-              "pattern": "^[A-Za-z0-9_-]{43}$"
+              "enum": [
+                "user-controlled",
+                "managed"
+              ]
             },
-            "y": {
-              "type": "string",
-              "pattern": "^[A-Za-z0-9_-]{43}$"
+            "encryptionKey": {
+              "type": "object",
+              "properties": {
+                "kty": {
+                  "type": "string",
+                  "const": "EC"
+                },
+                "crv": {
+                  "type": "string",
+                  "const": "P-256"
+                },
+                "x": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                },
+                "y": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                }
+              },
+              "required": [
+                "kty",
+                "crv",
+                "x",
+                "y"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
-            "kty",
-            "crv",
-            "x",
-            "y"
+            "id",
+            "signingKey",
+            "custody",
+            "encryptionKey"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "custody": {
+              "type": "string",
+              "const": "user-controlled"
+            },
+            "signingKey": {
+              "type": "null"
+            },
+            "encryptionKey": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "id",
+            "custody",
+            "signingKey",
+            "encryptionKey"
           ],
           "additionalProperties": false
         }
-      },
-      "required": [
-        "id",
-        "signingKey",
-        "custody",
-        "encryptionKey"
-      ],
-      "additionalProperties": false
+      ]
     },
     "csrfToken": {
       "type": "string",

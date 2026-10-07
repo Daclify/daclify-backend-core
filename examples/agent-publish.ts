@@ -3,7 +3,7 @@
 import { readFile } from 'node:fs/promises';
 import { PrivateKey } from '@wharfkit/antelope';
 import { z } from 'zod';
-import { ApiRoutes, DaoRefSchema, AccountSchema, IdSchema } from '@daclify/core-protocol';
+import { ApiRoutes, DaoRefSchema, VaultAccountSchema, IdSchema } from '@daclify/core-protocol';
 import {
   encodeAction,
   makeInstruction,
@@ -98,7 +98,9 @@ async function main() {
     await request(ApiRoutes.login.path, {
       challengeId: challenge.id,
       signature: signing.signMessage(new TextEncoder().encode(challenge.message)).toString(),
-      encryptionKey: AccountSchema.shape.encryptionKey.parse(JSON.parse(member.encryption_key)),
+      encryptionKey: VaultAccountSchema.shape.encryptionKey.parse(
+        JSON.parse(member.encryption_key),
+      ),
     }),
   );
   csrf = session.csrfToken;

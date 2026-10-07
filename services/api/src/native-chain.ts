@@ -62,6 +62,7 @@ import {
   type DaoSummary,
   type Network,
   type UserMembership,
+  type WalletIdentity,
   CreateDaoSchema,
 } from '../../../protocol/api.js';
 import {
@@ -147,7 +148,9 @@ export class NativeChainGateway implements ChainGateway {
     this.api = new APIClient({ url: config.rpcUrl });
   }
   async network(): Promise<Network> {
-    const { abi } = await this.api.v1.chain.get_abi(this.config.runtime);
+    const { abi } = await this.api.v1.chain.get_abi(this.config.runtime).catch(() => {
+      throw new ApiError('CHAIN_UNAVAILABLE', 503);
+    });
     const actions = abi?.actions.map((action) => Name.from(action.name).toString()) ?? [];
     const presets = await this.supportsPresets(actions);
     return NetworkSchema.parse({
@@ -638,36 +641,114 @@ export class NativeChainGateway implements ChainGateway {
     // ponytail: scans DAOs and their paged members; add a verified membership index when measured scale requires it.
     const daos = await this.listDaos();
     const matches: UserMembership[] = [];
+    const wallets = await this.linkedWallets(account.id);
+    if (wallets.length) await this.checkWalletChain();
     // This read model is intentionally bounded; an indexed projection replaces scans before large deployments.
     for (const dao of daos) {
       const rows = await this.table('members', dao.reference.daoId, '0', 5000);
-      const id = await this.memberIdentity(account, dao.reference.daoId, rows);
+      const id = await this.memberIdentity(account, dao.reference.daoId, rows, wallets);
       const member = rows.find((row) => row.id === id);
-      if (member)
-        matches.push(
-          UserMembershipSchema.parse({
-            dao: dao.reference,
-            memberId: member.id,
-            nonce: member.nonce,
-            active: member.active,
-            admin: member.admin,
-            reviewer: member.reviewer,
-            credits: member.credits,
-            claim: member.claim,
-            stake: member.stake,
-            nativeAccount: member.native_account,
-            custody: member.custody === 0 ? 'user-controlled' : 'managed',
-            signingKey: member.signing_key,
-          }),
-        );
+      if (member) matches.push(this.membershipView(dao, member));
     }
     return matches;
+  }
+  private membershipView(
+    dao: DaoSummary,
+    member: z.infer<typeof RuntimeTableSchemas.members>,
+  ): UserMembership {
+    return UserMembershipSchema.parse({
+      dao: dao.reference,
+      memberId: member.id,
+      nonce: member.nonce,
+      active: member.active,
+      admin: member.admin,
+      reviewer: member.reviewer,
+      credits: member.credits,
+      claim: member.claim,
+      stake: member.stake,
+      nativeAccount: member.native_account,
+      custody: member.custody === 0 ? 'user-controlled' : 'managed',
+      signingKey: member.signing_key,
+    });
+  }
+  private async linkedWallets(accountId: string): Promise<WalletIdentity[]> {
+    if (!this.pool) return [];
+    const [native, evm] = await Promise.all([
+      this.pool.query<{ native_account: string }>(
+        "SELECT native_account FROM native_links WHERE account_id=$1 AND chain_id=$2 AND permission='active'",
+        [accountId, this.config.chainId],
+      ),
+      this.pool.query<{ chain_id: 40 | 41; address: string }>(
+        'SELECT chain_id,address FROM evm_links WHERE account_id=$1 AND control_verified_at IS NOT NULL',
+        [accountId],
+      ),
+    ]);
+    return [
+      ...native.rows.map((row): WalletIdentity => ({
+        kind: 'native',
+        chainId: this.config.chainId,
+        account: row.native_account,
+      })),
+      ...evm.rows.map((row): WalletIdentity => ({
+        kind: 'evm',
+        chainId: row.chain_id,
+        address: row.address,
+      })),
+    ];
+  }
+  private async walletMemberId(
+    daoId: string,
+    rows: z.infer<typeof RuntimeTableSchemas.members>[],
+    wallet: WalletIdentity,
+  ): Promise<string | undefined> {
+    if (wallet.kind === 'native') {
+      if (wallet.chainId !== this.config.chainId) throw new ApiError('CHAIN_ID_MISMATCH', 503);
+      return rows.find((row) => row.native_account === wallet.account)?.id;
+    }
+    const bindings = await this.table('evmbindings', daoId);
+    const binding = bindings.find(
+      (row) =>
+        row.active &&
+        row.chain_id === String(wallet.chainId) &&
+        row.address.toLowerCase() === wallet.address.replace(/^0x/, '').toLowerCase(),
+    );
+    return binding && rows.some((row) => row.id === binding.member_id)
+      ? binding.member_id
+      : undefined;
+  }
+  async walletMemberships(wallet: WalletIdentity): Promise<UserMembership[]> {
+    await this.checkWalletChain();
+    const matches: UserMembership[] = [];
+    for (const dao of await this.listDaos()) {
+      const rows = await this.table('members', dao.reference.daoId);
+      const id = await this.walletMemberId(dao.reference.daoId, rows, wallet);
+      const member = rows.find((row) => row.id === id);
+      if (member) matches.push(this.membershipView(dao, member));
+    }
+    return matches;
+  }
+  private async checkWalletChain(): Promise<void> {
+    const info = await this.api.v1.chain.get_info().catch(() => {
+      throw new ApiError('CHAIN_UNAVAILABLE', 503);
+    });
+    if (info.chain_id.toString() !== this.config.chainId)
+      throw new ApiError('CHAIN_ID_MISMATCH', 503);
   }
   private async memberIdentity(
     account: Account,
     daoId: string,
     rows: z.infer<typeof RuntimeTableSchemas.members>[],
+    wallets: WalletIdentity[],
   ): Promise<string | undefined> {
+    const ids = new Set(
+      (await Promise.all(wallets.map((wallet) => this.walletMemberId(daoId, rows, wallet)))).filter(
+        (id) => id !== undefined,
+      ),
+    );
+    if (account.signingKey === null) {
+      if (ids.size > 1) throw new ApiError('WALLET_MEMBERSHIP_CONFLICT', 409);
+      return ids.values().next().value;
+    }
     const root = rows.find((row) => row.signing_key === account.signingKey);
     if (!this.pool) return root?.id;
     // A recorded root-key identity survives rotation; a newly paired wallet never creates this association.
@@ -680,7 +761,10 @@ export class NativeChainGateway implements ChainGateway {
       'SELECT member_id::text FROM memberships WHERE account_id=$1 AND chain_id=$2 AND contract=$3 AND dao_id=$4',
       [account.id, this.config.chainId, this.config.runtime, daoId],
     );
-    return saved.rows[0]?.member_id;
+    const stored = saved.rows[0]?.member_id;
+    if (stored && rows.some((row) => row.id === stored)) ids.add(stored);
+    if (ids.size > 1) throw new ApiError('WALLET_MEMBERSHIP_CONFLICT', 409);
+    return ids.values().next().value;
   }
   async memberProfile(
     daoId: string,
@@ -846,6 +930,7 @@ export class NativeChainGateway implements ChainGateway {
     input: z.infer<typeof CreateDaoSchema>,
     paid?: { reference: string; daoId: string },
   ): Promise<DaoSummary> {
+    if (account.signingKey === null) throw new ApiError('VAULT_IDENTITY_REQUIRED', 409);
     await this.validateCreation(input);
     const bootstrap = this.config.bootstrap;
     if (!bootstrap) throw new ApiError('DAO_CREATION_UNAVAILABLE', 503);
@@ -1468,6 +1553,7 @@ export class NativeChainGateway implements ChainGateway {
     signature: string,
     sessionId?: string,
   ): Promise<{ transactionId: string }> {
+    if (account.signingKey === null) throw new ApiError('VAULT_IDENTITY_REQUIRED', 409);
     if (request.chain_id !== this.config.chainId || request.deployment !== this.config.runtime)
       throw new ApiError('INSTRUCTION_DOMAIN');
     let valid = false;
@@ -1523,7 +1609,12 @@ export class NativeChainGateway implements ChainGateway {
     if (
       !member ||
       member.id !== request.member_id ||
-      (await this.memberIdentity(account, request.dao_id, [member])) !== request.member_id
+      (await this.memberIdentity(
+        account,
+        request.dao_id,
+        [member],
+        await this.linkedWallets(account.id),
+      )) !== request.member_id
     )
       throw new ApiError('MEMBERSHIP_REQUIRED', 403);
     const binding = await this.evmBinding(request.dao_id, request.member_id);

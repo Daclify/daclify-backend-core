@@ -6,7 +6,7 @@ import { ApiError } from '../errors.js';
 
 interface AccountRow {
   id: string;
-  signing_key: string;
+  signing_key: string | null;
   custody: string;
   encryption_key: unknown;
 }
@@ -38,6 +38,15 @@ export async function withTransaction<T>(
     return result;
   } catch (error) {
     await client.query('ROLLBACK');
+    if (
+      z
+        .object({
+          code: z.literal('23514'),
+          constraint: z.literal('wallet_account_control_required'),
+        })
+        .safeParse(error).success
+    )
+      throw new ApiError('LAST_CONTROL_CREDENTIAL', 409);
     throw error;
   } finally {
     client.release();

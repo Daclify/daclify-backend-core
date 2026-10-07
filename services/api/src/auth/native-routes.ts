@@ -1,8 +1,9 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { APIClient } from '@wharfkit/antelope';
+import { z } from 'zod';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Pool } from 'pg';
-import type { Account, Network } from '../../../../protocol/api.js';
+import type { Account, Network, WalletIdentity, UserMembership } from '../../../../protocol/api.js';
 import {
   NativeFinishSchema,
   NativeUnlinkSchema,
@@ -14,6 +15,7 @@ import { insertAccountSession, uniqueViolation, withTransaction } from './accoun
 import { revokeCredentialSessions } from './intent.js';
 import { ApiError } from '../errors.js';
 import { createWindowLimiter } from '../limits.js';
+import { walletAccount } from './wallet-recovery.js';
 const hash = (text: string) => createHash('sha256').update(text).digest();
 const credential = (chain: string, account: string) => `native:${chain}:${account}`;
 interface Intent {
@@ -36,6 +38,7 @@ export function registerNativeRoutes(
   network: () => Promise<Network>,
   session: (token: string | undefined, csrf?: string) => Promise<Account>,
   sessionCookie: (reply: FastifyReply, token: string) => void,
+  discover?: (wallet: WalletIdentity) => Promise<UserMembership[]>,
 ): void {
   const secure = new URL(origin).protocol === 'https:',
     attemptCookie = secure ? '__Host-daclify_native_attempt' : 'daclify_native_attempt';
@@ -130,6 +133,9 @@ export function registerNativeRoutes(
       )
     ).rows[0];
     if (!row) throw new ApiError('NATIVE_PROOF_INVALID', 401);
+    const site = z.object({ origin: z.string() }).parse(JSON.parse(row.message)).origin;
+    if (site !== (request.headers.origin ?? origin))
+      throw new ApiError('NATIVE_PROOF_INVALID', 401);
     const info = await network();
     if (info.chainId !== row.chain_id || info.runtime !== row.runtime)
       throw new ApiError('NATIVE_PROOF_INVALID', 401);
@@ -180,16 +186,14 @@ export function registerNativeRoutes(
   app.post('/v1/sign-in/native', async (request, reply) => {
     const { identity } = await finish(request, 'login');
     const opened = await withTransaction(pool, async (client) => {
-      const owner = (
-        await client.query<{ account_id: string }>(
-          'SELECT account_id FROM native_links WHERE chain_id=$1 AND native_account=$2 AND permission=$3 FOR SHARE',
-          [identity.chainId, identity.account, identity.permission],
-        )
-      ).rows[0];
-      if (!owner) throw new ApiError('PROVIDER_UNKNOWN', 401);
+      const accountId = await walletAccount(
+        client,
+        { kind: 'native', chainId: identity.chainId, account: identity.account },
+        discover,
+      );
       return insertAccountSession(
         client,
-        owner.account_id,
+        accountId,
         credential(identity.chainId, identity.account),
       );
     });
@@ -201,6 +205,7 @@ export function registerNativeRoutes(
     const current = await control(request),
       input = NativeUnlinkSchema.parse(request.body);
     await withTransaction(pool, async (client) => {
+      await client.query('SELECT id FROM accounts WHERE id=$1 FOR UPDATE', [current.id]);
       const removed = (
         await client.query<{ native_account: string }>(
           'DELETE FROM native_links WHERE account_id=$1 AND chain_id=$2 RETURNING native_account',

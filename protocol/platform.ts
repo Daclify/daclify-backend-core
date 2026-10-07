@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { NetworkSchema, CreateDaoSchema, AccountSchema } from './api.js';
+import { NetworkSchema, CreateDaoSchema, VaultAccountSchema } from './api.js';
 import { DaoRefSchema, ChainIdSchema } from './base.js';
 import { RuntimeTableSchemas } from '../sdk/generated/schemas.js';
 export const DeploymentKindSchema = z.enum(['shared', 'independent']);
@@ -13,7 +13,7 @@ export const CreationRequestSchema = z.strictObject({
 export const CreationOrderViewSchema = z.strictObject({
   network: NetworkSchema,
   setup: CreateDaoSchema,
-  creator: AccountSchema.pick({ signingKey: true, encryptionKey: true, custody: true }),
+  creator: VaultAccountSchema.pick({ signingKey: true, encryptionKey: true, custody: true }),
   requestId: z.uuid(),
   deployment: DeploymentKindSchema,
   method: CreationMethodSchema,

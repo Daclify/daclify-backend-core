@@ -12,6 +12,8 @@ import {
   DaoSummarySchema,
   CreateDaoSchema,
   UserMembershipSchema,
+  VaultAttachRequestSchema,
+  VaultAttachFinishSchema,
 } from './api.js';
 import { ContentPageQuerySchema, DaoContentSchema } from './content.js';
 import { RuntimeActionSchemas } from '../sdk/generated/schemas.js';
@@ -28,6 +30,20 @@ import { Uint64Schema } from './base.js';
 import { PlatformRoutes } from './platform.js';
 import { SpendingReportSchema } from './reporting.js';
 export const ApiRoutes = {
+  vaultAttachChallenge: {
+    method: 'POST',
+    path: '/v1/account/vault/challenge',
+    input: VaultAttachRequestSchema,
+    response: ChallengeSchema,
+    helpTopic: 'recovery',
+  },
+  vaultAttach: {
+    method: 'POST',
+    path: '/v1/account/vault',
+    input: VaultAttachFinishSchema,
+    response: SessionSchema,
+    helpTopic: 'recovery',
+  },
   ...PlatformRoutes,
   spendingReport: {
     method: 'GET',

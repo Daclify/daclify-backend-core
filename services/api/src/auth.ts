@@ -1,7 +1,13 @@
 import type { Pool } from 'pg';
 import { createHash, randomBytes, randomUUID, ECDH, timingSafeEqual } from 'node:crypto';
 import { PublicKey, Signature } from '@wharfkit/antelope';
-import { AccountSchema, SigningPublicKeySchema, type Account } from '../../../protocol/api.js';
+import {
+  AccountSchema,
+  VaultAccountSchema,
+  SigningPublicKeySchema,
+  type Account,
+  type VaultAccount,
+} from '../../../protocol/api.js';
 import { EncryptionPublicKeySchema } from '../../../protocol/crypto.js';
 import type { Challenge } from './store.js';
 import { ApiError } from './errors.js';
@@ -27,7 +33,7 @@ export function validEncryptionKey(
 }
 interface AccountRow {
   id: string;
-  signing_key: string;
+  signing_key: string | null;
   custody: string;
   encryption_key: unknown;
 }
@@ -64,7 +70,7 @@ export async function authenticate(
   id: string,
   signature: string,
   encryptionKey: unknown,
-): Promise<{ account: Account; token: string; csrfToken: string }> {
+): Promise<{ account: VaultAccount; token: string; csrfToken: string }> {
   const encryption = validEncryptionKey(encryptionKey);
   const client = await pool.connect();
   try {
@@ -98,7 +104,7 @@ export async function authenticate(
       )
     ).rows[0];
     if (!row) throw new ApiError('AUTH_INVALID', 401);
-    const account = accountFromRow(row);
+    const account = VaultAccountSchema.parse(accountFromRow(row));
     if (JSON.stringify(account.encryptionKey) !== JSON.stringify(encryption))
       throw new ApiError('KEY_CHANGE_REQUIRED', 409);
     // Managed identities use a provider ceremony; public key login cannot convert custody.

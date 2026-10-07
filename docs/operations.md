@@ -229,3 +229,5 @@ Still required before production:
 Still outside the current contracts: memberships, bounties, vesting, inbound dues, a budget cap, a global hackathon module owned by the project DAO, and committee seats. Seat counts and terms are not chosen. The legacy elections module stays in the legacy repository and is not ported. Hub is not the hackathon authority.
 
 Pinata uploads work when `PINATA_JWT` and `CONTENT_GATEWAY` are set. They do not use a group id. Expired upload reservations that are uncertain stay reserved, record `UPLOAD_REVIEW_REQUIRED`, and are not unpinned. Google and Telegram live redirects are not qualified. The browser still targets one configured runtime.
+
+For service/device loss, follow the [disaster recovery runbook](disaster-recovery.md). Wallet recovery preserves on-chain member IDs without depending on a service database backup; social pairings and operational history still require verified backups or explicit reconstruction.

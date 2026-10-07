@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { CID } from 'multiformats/cid';
 import { satisfies, valid, validRange } from 'semver';
 
-export const VERSION = '0.5.0-alpha.1';
+export const VERSION = '0.6.0-alpha.1';
 export const INTERFACE_VERSION = 1;
 export const MAX_ASSET_UNITS = (1n << 62n) - 1n;
 export const Uint64Schema = z

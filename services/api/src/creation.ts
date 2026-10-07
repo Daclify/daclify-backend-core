@@ -41,6 +41,7 @@ export class CreationService {
   ) {}
   // Persist the immutable request before publishing its order. A lost chain response can be reconciled.
   async prepare(account: Account, input: CreationRequest): Promise<CreationOrderView> {
+    if (account.signingKey === null) throw new ApiError('VAULT_IDENTITY_REQUIRED', 409);
     input = CreationRequestSchema.parse(input);
     if (input.deployment !== 'shared') throw new ApiError('INDEPENDENT_UNAVAILABLE', 409);
     const status = await this.chain.platform();

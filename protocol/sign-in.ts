@@ -44,6 +44,7 @@ export const AccountControlProofSchema = z.discriminatedUnion('kind', [
 export type AccountControlProof = z.infer<typeof AccountControlProofSchema>;
 
 export const AccountControlPaths = Object.freeze([
+  '/v1/account/vault',
   '/v1/auth/providers/link',
   '/v1/auth/providers/unlink',
   '/v1/sign-in/email/confirm',
@@ -66,7 +67,7 @@ export const AccountControlMessageSchema = AccountControlRequestSchema.extend({
   domain: z.literal('daclify.account-control.v1'),
   origin: z.url(),
   accountId: z.uuid(),
-  signingKey: SigningPublicKeySchema,
+  signingKey: SigningPublicKeySchema.nullable(),
   challengeId: z.uuid(),
   expires: z.string().datetime(),
 });

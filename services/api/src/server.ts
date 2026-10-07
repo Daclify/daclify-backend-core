@@ -28,6 +28,7 @@ import { verifyGoogle, verifyTelegram } from './providers/proofs.js';
 import { registerSignInRoutes, type SignInConfiguration } from './auth/sign-in-routes.js';
 import { registerEvmRoutes } from './auth/evm-routes.js';
 import { registerNativeRoutes } from './auth/native-routes.js';
+import { registerVaultAttachRoutes } from './auth/vault-attach.js';
 import { registerEvmSignInRoutes } from './auth/evm-sign-in.js';
 import { EvmRelaySchema } from '../../../protocol/evm-wallet.js';
 import { beginAccountControl, consumeAccountControl } from './auth/intent.js';
@@ -199,7 +200,17 @@ export async function createServer(
         throw new ApiError('ACCOUNT_CONTROL_REQUIRED', 403);
       }
     }
-    await consumeAccountControl(pool, account, token, path, raw, id, proof, () => chain.network());
+    await consumeAccountControl(
+      pool,
+      account,
+      token,
+      path,
+      raw,
+      id,
+      proof,
+      () => chain.network(),
+      request.headers.origin ?? origin,
+    );
   });
   app.get('/health', async () => ({ status: 'ok' }));
   registerTelegramOidcRoutes(
@@ -626,7 +637,16 @@ export async function createServer(
     sessionCookie,
   );
   registerEvmRoutes(app, pool, cookieName, session);
-  registerEvmSignInRoutes(app, pool, origin, cookieName, session, sessionCookie);
+  registerVaultAttachRoutes(app, pool, origin, cookieName, session, sessionCookie);
+  registerEvmSignInRoutes(
+    app,
+    pool,
+    origin,
+    cookieName,
+    session,
+    sessionCookie,
+    chain.walletMemberships?.bind(chain),
+  );
   registerNativeRoutes(
     app,
     pool,
@@ -635,6 +655,7 @@ export async function createServer(
     () => chain.network(),
     session,
     sessionCookie,
+    chain.walletMemberships?.bind(chain),
   );
   registerDocsRoutes(app, options.docs);
   return app;

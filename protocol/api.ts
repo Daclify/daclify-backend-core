@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { EncryptionPublicKeySchema, SigningPublicKeySchema } from './crypto.js';
+import type { NativeIdentity } from './native-wallet.js';
+import type { EvmIntentSchema } from './evm-wallet.js';
 import {
   DaoRefSchema,
   PrivacySchema,
@@ -16,19 +18,38 @@ import {
   DaoBrandingSchema,
 } from './dao.js';
 export { SigningPublicKeySchema } from './crypto.js';
-export const AccountSchema = z.strictObject({
+export const VaultAccountSchema = z.strictObject({
   id: z.uuid(),
   signingKey: SigningPublicKeySchema,
   custody: CustodySchema,
   encryptionKey: EncryptionPublicKeySchema,
 });
-export const JoinIdentitySchema = AccountSchema.omit({ id: true }).extend({
+export const WalletAccountSchema = z.strictObject({
+  id: z.uuid(),
+  custody: z.literal('user-controlled'),
+  signingKey: z.null(),
+  encryptionKey: z.null(),
+});
+export const AccountSchema = z.union([VaultAccountSchema, WalletAccountSchema]);
+export const JoinIdentitySchema = VaultAccountSchema.omit({ id: true }).extend({
   version: z.literal(1),
 });
 export const ChallengeRequestSchema = z.strictObject({ signingKey: SigningPublicKeySchema });
 export const ChallengeSchema = z.strictObject({
   id: z.uuid(),
   message: z.string().max(2048),
+  expires: z.string().datetime(),
+});
+export const VaultAttachRequestSchema = JoinIdentitySchema.omit({ version: true, custody: true });
+export const VaultAttachFinishSchema = z.strictObject({
+  id: z.uuid(),
+  signature: z.string().min(1).max(160),
+});
+export const VaultAttachMessageSchema = VaultAttachRequestSchema.extend({
+  domain: z.literal('daclify.vault-attach.v1'),
+  origin: z.url(),
+  accountId: z.uuid(),
+  id: z.uuid(),
   expires: z.string().datetime(),
 });
 export const LoginRequestSchema = z.strictObject({
@@ -116,6 +137,10 @@ export const UserMembershipSchema = z.strictObject({
   signingKey: SigningPublicKeySchema.optional(),
 });
 export type Account = z.infer<typeof AccountSchema>;
+export type VaultAccount = z.infer<typeof VaultAccountSchema>;
+export type WalletIdentity =
+  | ({ kind: 'native' } & Omit<NativeIdentity, 'permission'>)
+  | ({ kind: 'evm' } & Pick<z.infer<typeof EvmIntentSchema>, 'chainId' | 'address'>);
 export type Session = z.infer<typeof SessionSchema>;
 export type DaoSummary = z.infer<typeof DaoSummarySchema>;
 export type Network = z.infer<typeof NetworkSchema>;

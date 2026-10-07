@@ -1,14 +1,19 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import type { Pool } from 'pg';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import type { Account } from '../../../../protocol/api.js';
-import { EvmFinishSchema, EvmIntentSchema } from '../../../../protocol/evm-wallet.js';
+import type { Account, WalletIdentity, UserMembership } from '../../../../protocol/api.js';
+import {
+  EvmFinishSchema,
+  EvmIntentSchema,
+  TelosEvmChainSchema,
+} from '../../../../protocol/evm-wallet.js';
 import { checksumAddress } from './evm-proof.js';
 import { siweMessage, verifySiweSignature } from './siwe.js';
 import { insertAccountSession, withTransaction, uniqueViolation } from './account-session.js';
 import { revokeCredentialSessions } from './intent.js';
 import { ApiError } from '../errors.js';
 import { createWindowLimiter } from '../limits.js';
+import { walletAccount } from './wallet-recovery.js';
 const hash = (text: string) => createHash('sha256').update(text).digest();
 interface Intent {
   id: string;
@@ -26,6 +31,7 @@ export function registerEvmSignInRoutes(
   cookieName: string,
   session: (token: string | undefined, csrf?: string) => Promise<Account>,
   sessionCookie: (reply: FastifyReply, token: string) => void,
+  discover?: (wallet: WalletIdentity) => Promise<UserMembership[]>,
 ): void {
   const secure = new URL(origin).protocol === 'https:',
     attemptCookie = secure ? '__Host-daclify_evm_attempt' : 'daclify_evm_attempt',
@@ -100,9 +106,16 @@ export function registerEvmSignInRoutes(
       )
     ).rows[0];
     if (!row) throw new ApiError('EVM_CHALLENGE_INVALID', 401);
+    if (
+      !row.message.startsWith(
+        `${request.headers.origin ?? origin} wants you to sign in with your Ethereum account:\n`,
+      )
+    )
+      throw new ApiError('EVM_CHALLENGE_INVALID', 401);
     verifySiweSignature(row.message, row.address, input.signature);
-    const chainId = Number(row.chain_id);
-    if (chainId !== 40 && chainId !== 41) throw new ApiError('EVM_CHAIN_INVALID', 400);
+    const parsedChain = TelosEvmChainSchema.safeParse(Number(row.chain_id));
+    if (!parsedChain.success) throw new ApiError('EVM_CHAIN_INVALID', 400);
+    const chainId = parsedChain.data;
     return { row, chainId, current };
   }
   app.post('/v1/account/evm/sign-in/link', async (request) => {
@@ -133,14 +146,12 @@ export function registerEvmSignInRoutes(
   app.post('/v1/sign-in/evm', async (request, reply) => {
     const { row, chainId } = await finish(request, 'login');
     const result = await withTransaction(pool, async (client) => {
-      const link = (
-        await client.query<{ account_id: string }>(
-          'SELECT account_id FROM evm_links WHERE chain_id=$1 AND address=$2 AND control_verified_at IS NOT NULL FOR SHARE',
-          [chainId, row.address],
-        )
-      ).rows[0];
-      if (!link) throw new ApiError('PROVIDER_UNKNOWN', 401);
-      return insertAccountSession(client, link.account_id, `evm:${chainId}:${row.address}`);
+      const accountId = await walletAccount(
+        client,
+        { kind: 'evm', chainId, address: row.address },
+        discover,
+      );
+      return insertAccountSession(client, accountId, `evm:${chainId}:${row.address}`);
     });
     sessionCookie(reply, result.token);
     reply.clearCookie(attemptCookie, { path: '/' });
