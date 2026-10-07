@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "publication": "refused",
+  "qualified": false,
+  "reason": "Publication is refused. Held checks and pinned artifact verification are not a qualified release.",
+  "repositories": [
+    {
+      "name": "daclify-backend-core",
+      "commit": "20d7cedcfe82ec90f6fc4bf9faabc9ceb2d25844",
+      "version": "0.6.0-alpha.1",
+      "lockfileSha256": "ed26df8c224e4137c6de81d215514efe4517bed44dcec102add1e5319154451b"
+    },
+    {
+      "name": "daclify-backend-modules",
+      "commit": "26389d7be2ee9720cca2ba38ef8f11276bc527f1",
+      "version": "0.6.0-alpha.1",
+      "lockfileSha256": "100daa29749b13628d6ad2dd110147888b731d9a4ec00753d1603b29ae107d2a"
+    },
+    {
+      "name": "daclify-frontend",
+      "commit": "ff19728e060feb5461f7c327f9d3b32b0d37b1d5",
+      "version": "0.6.0-alpha.1",
+      "lockfileSha256": "3d4a428337e56f57dcbd26ee0ef10b9246e67fee65f3fe6cf15a455b618191dd"
+    }
+  ],
+  "toolchain": {
+    "cdt": "4.1.1",
+    "spring": "1.2.2",
+    "node": "24.21.0"
+  },
+  "interfaceVersion": 1,
+  "artifacts": {
+    "runtimeCodeHash": "35b7018872391f8eb883b7b75e1ecad91325bceaae77e9207fc5403c4b2838b0",
+    "runtimeAbiSha256": "e786287e4241c6f5923150ba6e571f5005e71d6fff1864ab0b6642e6f3f34e6b",
+    "documentationSha256": "87fffe830c7752c2b5d8ecba2942cb63c05de17fc1ea27d26c54b9dd3683a4b3"
+  },
+  "moduleCapabilities": ["decide", "endorsement-admission", "grants-rounds", "payroll", "works"],
+  "moduleCodeHashes": {
+    "decide": "94f0fe24dad8ef28e16f7d2fbae4485d46e7154df7594b2a298904beac28dd62",
+    "endorsement-admission": "6b03c73787541cdb28446f981bdd31e42234f10f3f5b3bccc33c7ba750b86cbc",
+    "grants-rounds": "e31202b04f590f98adbc001a7949889c39c576fec9aa81b83f64403cf6fd9f2c",
+    "payroll": "efdceb30d194fbf7ed06f921e94cafe0de9fb7f9d6c11792507f2c2388108ffc",
+    "works": "ae355df0647e244a059def9ddee0a2a54f4b5833d5e10e5dc337864d9a7e0a33"
+  },
+  "checks": {
+    "held": [
+      "live SMTP deliverability and Telegram provider/client qualification",
+      "real Anchor and EOA wallet-client qualification",
+      "OpenBao durable production signing, audit, recovery and isolation qualification",
+      "selected production chain protocol-feature and authority verification",
+      "immutable published artifact verification"
+    ],
+    "recordedPasses": []
+  }
+}
