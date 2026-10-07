@@ -123,6 +123,26 @@ The Node SDK is `stripe` 22.4.0 and the API version is `2026-07-29.dahlia`. Chec
 
 If the three Stripe variables are absent, checkout and the webhook return `STRIPE_NOT_CONFIGURED`.
 
+### Local Stripe test workspace
+
+On 2026-10-07, the separate `daclify-testnet` Stripe CLI profile was authorized for Animusystems. Its private configuration is `.artifacts/stripe-test/config.toml`; the Daclify copy retains only the test API key. Credentials and the listener signing secret are stored in Git-ignored `.env.testnet` and `.env.stripe-test` files with mode `0600`. CLI authorization expires after 90 days and must be renewed. These credentials do not qualify production payments.
+
+The running Stripe workspace uses `http://localhost:5178`, API port 3008 and the isolated `daclify_stripe_test` PostgreSQL database. It uses the owned local Spring chain on 20288 while Telos testnet deployment is pending. The original playground on 5188 is preserved. Hosted file storage is not configured in this separate payment workspace.
+
+From core, start the API with `DACLIFY_ENV_FILE=.env.stripe-test npm run dev`. From frontend, use `DACLIFY_TEST_API_PORT=3008 DACLIFY_TEST_UI_PORT=5178 npm run dev`. Open the UI with hostname `localhost` to match its configured Origin and keep its cookies separate from the original `127.0.0.1` playground.
+
+Keep local forwarding running:
+
+```sh
+stripe listen --config .artifacts/stripe-test/config.toml --project-name daclify-testnet \
+  --events checkout.session.completed,checkout.session.async_payment_succeeded,checkout.session.async_payment_failed \
+  --forward-to http://127.0.0.1:3008/v1/billing/stripe/webhook
+```
+
+Use the listener's current signing secret in both environment files; restart the API if that value changes. A permanently registered Stripe Dashboard destination requires a reachable public API URL and its own endpoint secret.
+
+Actual sandbox verification completed: the application created a $20 USD service Checkout, Stripe confirmed `livemode: false` and a paid/completed session, the browser returned to Daclify and the signed webhook stored the paid receipt in PostgreSQL. A separate $20 shared DAO Checkout also completed; its webhook attested the payment on the local native contract and the paid order created a DAO. An invalid webhook signature was rejected with HTTP 400. The service Price is a test fixture; DAO checkout generates its captured setup amount independently. Private local evidence is under core/frontend `.artifacts/stripe-test/`. The initial browser automation needed corrections for navigation timing and capturing the vault before it was saved; the final service and DAO journeys passed. Declines, cancellation, 3DS, public Telos deployment and production Stripe remain separate qualification work.
+
 ## TLOS service payments
 
 The billing account receives service TLOS. On testnet that account is `daclifyfees1`. On production it is `fees.we`. On the fixture it is `fees`, which this guide does not create.
