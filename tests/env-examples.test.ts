@@ -30,6 +30,7 @@ it('documents complete API settings separately from deployment credentials', () 
     'GOOGLE_PUBLIC_JWK',
     'OPENROUTER_API_KEY',
     'OPENROUTER_MODEL',
+    'OPENROUTER_DECISIONS_MODEL',
   ];
   for (const file of [
     '.env.example',

@@ -2,8 +2,7 @@ import { z } from 'zod';
 import type { DocsAgentConfiguration } from './config.js';
 import type { HandbookTopic } from './handbook.js';
 
-const JEV_MODEL = 'typesafe/jev-1.13';
-const JEV_URL = 'https://openrouter.ai/api/alpha/decisions';
+const DECISIONS_URL = 'https://openrouter.ai/api/alpha/decisions';
 const CHAT_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const OUTSIDE =
   'That question is outside the handbook. Ask about accounts, recovery, documents, treasury, modules, or the marketplace.';
@@ -85,8 +84,8 @@ export async function answerHandbookQuestion(
   };
   for (const topic of topics) criteria[topic.id] = topic.title;
   const decision = DecisionSchema.safeParse(
-    await postJson(agent, JEV_URL, {
-      model: JEV_MODEL,
+    await postJson(agent, DECISIONS_URL, {
+      model: agent.decisionsModel,
       state: {
         question,
         topics: topics.map((topic) => ({ id: topic.id, title: topic.title })),
@@ -113,7 +112,7 @@ export async function answerHandbookQuestion(
   const selected = topics.find((topic) => topic.id === decision.data.answers.topic.choice);
   const probability =
     decision.data.answers.topic.probabilities?.[decision.data.answers.topic.choice] ?? 0;
-  // Independent Jev answers: require both a handbook yes and a confident topic before spending a chat call.
+  // Require both a handbook yes and a confident topic before spending a chat call.
   if (!selected || decision.data.answers.in_handbook.noul < 0.5 || probability < 0.2) {
     return { status: 'outside', topicId: null, title: null, answer: OUTSIDE };
   }

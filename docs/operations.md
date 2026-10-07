@@ -187,7 +187,18 @@ SMTP requires `SMTP_HOST` and `SMTP_FROM`, with `SMTP_USERNAME`/`SMTP_PASSWORD` 
 
 Telegram OIDC requires `TELEGRAM_OIDC_CLIENT_ID`, `TELEGRAM_OIDC_CLIENT_SECRET` and the exact `TELEGRAM_OIDC_REDIRECT_URI` ending `/v1/sign-in/telegram/oidc/callback`. The callback must use HTTPS for testnet/mainnet. Mini Apps require `TELEGRAM_BOT_TOKEN`; the legacy widget additionally needs `TELEGRAM_BOT_USERNAME` without `@`. OIDC does not require these separate bot-token fields in this adapter.
 
-Google uses `GOOGLE_CLIENT_ID` plus `GOOGLE_PUBLIC_JWK` (a public RSA JWK, not an OAuth client secret). Complete browser login and provider-key rotation remain unqualified. The optional documentation assistant uses `OPENROUTER_API_KEY` and optional `OPENROUTER_MODEL`; generated documentation needs neither. `OPENBAO_URL`/`OPENBAO_TOKEN` are custody/provider-test inputs, not a switch that enables managed accounts in the regular API.
+Google uses `GOOGLE_CLIENT_ID` plus `GOOGLE_PUBLIC_JWK` (a public RSA JWK, not an OAuth client secret). Complete browser login and provider-key rotation remain unqualified. `OPENBAO_URL`/`OPENBAO_TOKEN` are custody/provider-test inputs, not a switch that enables managed accounts in the regular API.
+
+The optional handbook assistant needs a backend-only `OPENROUTER_API_KEY`. Its two model settings are independent:
+
+```sh
+OPENROUTER_DECISIONS_MODEL=openai/gpt-6-luna-decisions
+OPENROUTER_MODEL=openai/gpt-4.1-mini
+```
+
+These are the defaults when either model setting is absent or empty. Decisions selects the handbook topic through `POST https://openrouter.ai/api/alpha/decisions`; the chat model writes the reply through `/api/v1/chat/completions`. To explicitly retain Jev, set `OPENROUTER_DECISIONS_MODEL=typesafe/jev-1.13`. Model names receive syntax validation at startup; provider availability, permissions and credits are checked by the actual call, with failures exposed only as `DOCS_AGENT_FAILED`. Restart the API after changing its credentials or model settings. Generated documentation works without any AI provider.
+
+As checked on 2026-10-07, [OpenRouter lists Luna Decisions](https://openrouter.ai/openai/gpt-6-luna-decisions) with a 1,050,000-token context window and [Jev](https://openrouter.ai/typesafe/jev-1.13) with 32,000. The assistant currently sends only the question and topic titles to Decisions, and one selected guide capped at 12,000 characters to the answer model. Changing the selector does not expand its inputs or grant access to vaults, balances, private documents, DAO records or transaction execution. Responses still need the existing handbook and topic-probability thresholds; calibrate them with representative support questions before broader rollout. Deterministic provider fixtures verify wiring and failure behavior; they do not establish live provider access or routing quality.
 
 ## Frontend development configuration
 

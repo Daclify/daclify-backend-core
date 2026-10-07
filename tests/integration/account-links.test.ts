@@ -90,7 +90,12 @@ const fetchImpl: typeof fetch = async (input) => {
   );
 };
 const app = await createServer(pool, chain, origin, {
-  docs: { apiKey: 'sk-or-v1-local-fixture-key', model: 'openai/gpt-4.1-mini', fetch: fetchImpl },
+  docs: {
+    apiKey: 'sk-or-v1-local-fixture-key',
+    model: 'openai/gpt-4.1-mini',
+    decisionsModel: 'openai/gpt-6-luna-decisions',
+    fetch: fetchImpl,
+  },
 });
 const closed = await createServer(pool, chain, origin);
 beforeAll(() => migrate(pool));
