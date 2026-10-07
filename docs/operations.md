@@ -40,7 +40,7 @@ The local fixture can create the short develop names because its `eosio` account
 
 | Role                               | Contract  | Develop       | Testnet        | Production   |
 | ---------------------------------- | --------- | ------------- | -------------- | ------------ |
-| Creator, not created by the script | none      | `eosio`       | `daclifyadmin` | `we`         |
+| Creator, not created by the script | none      | `eosio`       | `3boidanimus3` | `we`         |
 | Runtime                            | `runtime` | `daclifycore` | `daclifycore1` | `core.we`    |
 | Hub                                | `hub`     | `daclifyhub`  | `daclifyhubv1` | `hub.we`     |
 | Decide                             | `decide`  | `decide`      | `daclifydecid` | `decide.we`  |
@@ -48,14 +48,17 @@ The local fixture can create the short develop names because its `eosio` account
 | Payroll                            | `payroll` | `payroll`     | `daclifypayr1` | `payroll.we` |
 | Relay, no contract                 | none      | `relay`       | `daclifyrelay` | `relay.we`   |
 | Billing, no contract               | none      | `fees`        | `daclifyfees1` | `fees.we`    |
+| Grants, explicitly configured | `grants` | fixture-selected | `daclifygrant` | operator-selected |
+| Endorsement, explicitly configured | `endorse` | fixture-selected | `daclifyendor` | operator-selected |
+| Names, explicitly configured | `names` | fixture-selected | `daclifynames` | operator-selected |
 
-On 2026-10-06, `get_account` against `https://testnet.telos.caleos.io` reported `daclifyadmin`, `daclifycore1`, `daclifyhubv1`, `daclifydecid`, `daclifyworks`, `daclifypayr1`, `daclifyrelay`, and `daclifyfees1` as absent. `daclifyhub11` already existed, which is why the hub account is `daclifyhubv1`. A later occupant would show up in the dry run. The script does not replace an existing account.
+On 2026-10-07 the user authorized a Telos testnet deployment from their funded `3boidanimus3` account. All seven base accounts, Grants (`daclifygrant`), Endorsement (`daclifyendor`) and Names (`daclifynames`) were created, with eight contracts installed. The user's funded account permissions were preserved. See [testnet evidence](evidence/2026-10-07-telos-testnet.md).
 
-Create and fund `daclifyadmin` on Telos testnet before the first testnet `--commit`. Use a testnet account creator, not the mainnet wallet flow. Fund it from the Telos Zero testnet faucet described at [Telos faucets](https://docs.telos.net/build/faucets/). Put that account's private key in `DEPLOYER_PRIVATE_KEY` inside `.env.testnet`. The script never prints the key. It also never creates the creator. If the creator is missing, the dry run says so and a send throws `CREATOR_MISSING` before any key file is written.
+`DEPLOYER_PRIVATE_KEY` belongs in Git-ignored `.env.testnet`, mode `0600`. Keep it out of chat, frontend configuration and the running API environment. This workstation uses `.env.testnet-api`, copied without `DEPLOYER_PRIVATE_KEY`, for the API. The script never creates the creator account. Missing creators fail before generating keys.
 
 ## Resources
 
-Testnet and production buy the same RAM and stake the same CPU and NET. The stake lines are transferred with `delegatebw` and `transfer` false, so the creator keeps ownership of the stake. Develop uses the bare resource model: the fixture has no `eosio.system` market, and the stake amounts are `0.0000 TLOS`.
+The seven base accounts use the same resource allocations on testnet and production. The testnet profile additionally includes Grants, Endorsement and Names. The stake lines are transferred with `delegatebw` and `transfer` false, so the creator keeps ownership of the stake. Develop uses the bare resource model: the fixture has no `eosio.system` market, and the stake amounts are `0.0000 TLOS`.
 
 | Account role        | RAM                  | CPU stake    | NET stake   | `eosio.code` on active |
 | ------------------- | -------------------- | ------------ | ----------- | ---------------------- |
@@ -64,7 +67,9 @@ Testnet and production buy the same RAM and stake the same CPU and NET. The stak
 | Hub, Works, Payroll | 1,048,576 bytes each | 2.0000 TLOS  | 1.0000 TLOS | Works and Payroll only |
 | Relay, Billing      | 16,384 bytes each    | 2.0000 TLOS  | 1.0000 TLOS | no                     |
 
-The seven buys total 13,664,256 bytes of RAM, 32.0000 TLOS of CPU stake, and 11.0000 TLOS of NET stake. The creator must already hold the 43.0000 TLOS of stake plus enough liquid TLOS to buy that RAM at the current chain price, and enough left over to pay the transaction. This page does not quote a RAM price. RAM price moves.
+The seven base buys total 13,664,256 bytes of RAM, 32.0000 TLOS of CPU stake, and 11.0000 TLOS of NET stake. The creator must already hold the 43.0000 TLOS of stake plus enough liquid TLOS to buy that RAM at the current chain price, and enough left over to pay the transaction. This page does not quote a RAM price. RAM price moves.
+
+The three extra testnet accounts each buy 1,048,576 bytes of RAM and stake 2.0000 TLOS CPU plus 1.0000 TLOS NET. The complete ten-account plan totals 16,809,984 bytes of RAM and 52.0000 TLOS of stake, plus RAM purchase costs. The actual testnet setup spent 1,012.9303 dummy TLOS; this is historical evidence, not a future RAM quote.
 
 The owner key of each created account is the deployer public key. The active key is generated, written to `.artifacts/deploy/<profile>-keys.json` with mode `0600` before the first broadcast, and reused on a later run. A dry run does not generate keys. `RELAY_PRIVATE_KEY` in the API environment comes from that file for the relay account. Do not commit the key file.
 
@@ -83,7 +88,7 @@ npm run price:tlos -- testnet 1000
 
 `1000` is the USD amount in minor units, so this asks for a quote of 10.00 USD. The command reads Delphi pair `tlosusd` at precision 4, adds the 2000 bps premium, and refuses a median older than 900 seconds. There is no EUR pair on that oracle. A quote printed on one day is not a standing price. On 2026-10-06 the testnet median was 197 and the same command printed 609.1371 TLOS including the premium.
 
-Add `--commit` only after a develop or testnet dry run is the plan you want. Add `--confirm` only for a production send, and only when you intend to spend mainnet TLOS from `we`. Neither flag has been used to broadcast this profile.
+Add `--commit` only after a develop or testnet dry run is the plan you want. Add `--confirm` only for a production send, and only when you intend to spend mainnet TLOS from `we`. Testnet `--commit` was used on 2026-10-07. No production broadcast has been sent. Deployment waits for each submitted block to become irreversible before sending dependent account/contract transactions. Public API writes also wait with a shorter bounded confirmation window; a timeout does not prove rejection. Resume the saved request and inspect authoritative state before retrying a payment.
 
 ## API environment
 
@@ -91,11 +96,11 @@ Start the API with the file you mean to load:
 
 ```sh
 npm run dev
-DACLIFY_ENV_FILE=.env.testnet npm run dev
+DACLIFY_ENV_FILE=.env.testnet-api npm run dev
 DACLIFY_ENV_FILE=.env.production npm run dev
 ```
 
-`npm run dev` loads `.env`. Set `MODULE_DEPLOYMENTS` to the deployed accounts for `decide`, `works`, `payroll`, `grants-rounds` and `endorsement-admission`. The default public deployment profile currently contains the original three; configure the two extra modules before exposing their workflows. Without configured module deployments, module reads stay empty and payroll settlement stays on `payob`.
+`npm run dev` loads `.env`. Set `MODULE_DEPLOYMENTS` to the deployed accounts for `decide`, `works`, `payroll`, `grants-rounds` and `endorsement-admission`. The testnet profile includes all five; production still requires explicitly reviewed extra accounts. Without configured module deployments, module reads stay empty and payroll settlement stays on `payob`.
 
 `FRONTEND_ORIGIN` is one https origin for a deployed API, or `http://127.0.0.1:5178` for local development. Both the testnet API and the production API must use the same origin when one deployed frontend talks to both. The browser sends that origin on ordinary requests. The API rejects a foreign origin.
 
@@ -172,15 +177,15 @@ The account screen can start a card checkout when the API has Stripe configured.
 
 This tree is not a production launch. `npm run package:release` still refuses publication. The work-package checklists under `docs/superpowers/plans/` are the acceptance register, and they are not marked complete by this guide.
 
-Still required before a public Telos deployment:
+Still required before production:
 
-- Create and fund testnet `daclifyadmin`, review a fresh dry run, and only then decide to `--commit`. That broadcast has not been sent.
+- Complete public-testnet application/provider rehearsals and preserve their transaction evidence. Account/contract deployment, code hashes and narrow permission links have passed.
 - Production still spends mainnet TLOS from `we` and still requires `--confirm`. It has not been sent.
-- Name the founding member of the project DAO before anyone creates it. The treasury asset for that DAO is TLOS. Governance is integer credit weights. The DAO does not become the runtime upgrade key unless that authority is assigned later.
-- Configure a Price id, restricted key and signed webhook destination for each intended payment environment. Local PostgreSQL integration checks and the actual Stripe sandbox receipt/DAO setup journeys have passed. Production Stripe payments and production database deployment remain unqualified.
+- Testnet platform DAO 1 has the user-selected founding member, linked on-chain to `3boidanimus3`, under the standard community governance policy. The treasury asset is TLOS. Native account owner/upgrade authority remains separate from DAO governance and has not been transferred to a DAO.
+- Configure a Price id, restricted key and signed webhook destination for each intended payment environment. Local PostgreSQL integration checks and actual Stripe sandbox receipt/DAO setup journeys have passed, including signed sandbox settlement and DAO fulfillment on public Telos testnet. Production Stripe payments and production database deployment remain unqualified.
 - Rerun the native suite against the current runtime, and rerun the PostgreSQL and browser suites as a release gate. Local OpenBao is not production custody. An independent review is still required.
 - Wire a chain watcher before a TLOS or Telos EVM transfer can be treated as a service payment. Do not add a second treasury symbol for an EVM asset.
-- Choose no SKU amount in the repository. Delphi has `tlosusd` and no EUR pair. A contract-stored USD or EUR price is not implemented. The Stripe Price id is the card amount.
+- Shared DAO setup is contract-priced at $20, independent setup at $50 plus separate resources, with the existing 20% TLOS premium. Independent self-service remains disabled. Account-service checkout uses the configured Stripe Price; name-sale tier prices still need an explicit policy. Delphi has `tlosusd` and no EUR pair.
 
 Still outside the current contracts: memberships, bounties, vesting, inbound dues, a budget cap, a global hackathon module owned by the project DAO, and committee seats. Seat counts and terms are not chosen. The legacy elections module stays in the legacy repository and is not ported. Hub is not the hackathon authority.
 

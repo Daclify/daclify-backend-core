@@ -93,7 +93,7 @@ async function deploy(name: DeployName, setContract: boolean, send: boolean): Pr
     );
     if (name === 'testnet') {
       console.log(
-        'On testnet that creator is an ordinary 12-character account. Create and fund it, then this script can create the other seven.',
+        'On testnet that creator is an ordinary 12-character account. Create and fund it, then this script can create the configured deployment accounts.',
       );
     }
   }
