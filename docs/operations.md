@@ -95,7 +95,7 @@ DACLIFY_ENV_FILE=.env.testnet npm run dev
 DACLIFY_ENV_FILE=.env.production npm run dev
 ```
 
-`npm run dev` loads `.env`. Set `MODULE_DEPLOYMENTS` to the decide, works, and payroll accounts for that profile. Without it, module reads stay empty and payroll settlement stays on `payob`.
+`npm run dev` loads `.env`. Set `MODULE_DEPLOYMENTS` to the deployed accounts for `decide`, `works`, `payroll`, `grants-rounds` and `endorsement-admission`. The default public deployment profile currently contains the original three; configure the two extra modules before exposing their workflows. Without configured module deployments, module reads stay empty and payroll settlement stays on `payob`.
 
 `FRONTEND_ORIGIN` is one https origin for a deployed API, or `http://127.0.0.1:5178` for local development. Both the testnet API and the production API must use the same origin when one deployed frontend talks to both. The browser sends that origin on ordinary requests. The API rejects a foreign origin.
 
@@ -117,7 +117,7 @@ The checkout route is `POST /v1/billing/checkout`. It requires a session and the
 
 The webhook is `POST /v1/billing/stripe/webhook`. Point Stripe at that path on the API host. Subscribe to `checkout.session.completed`, `checkout.session.async_payment_succeeded`, and `checkout.session.async_payment_failed`. The handler verifies the signature against the raw body. A paid receipt is written only for the two success events when `payment_status` is not `unpaid`. The failed event records a failure and does not downgrade a receipt that is already paid. Unknown event types are acknowledged and ignored. The route does not use the browser `Origin` header, because Stripe does not send one.
 
-The Node SDK is `stripe` 22.4.0 and the API version is `2026-07-29.dahlia`. Checkout Sessions are created without `payment_method_types` and without `automatic_tax`. No live Stripe call is part of this repository's checks.
+The Node SDK is `stripe` 22.4.0 and the API version is `2026-07-29.dahlia`. Account service Checkout Sessions omit `payment_method_types` and `automatic_tax`; DAO setup explicitly selects card payments. Ordinary repository tests use fixtures. Actual Stripe sandbox smoke verification is recorded separately below.
 
 `GET /v1/billing/receipts` lists the signed-in account's rows. Migration `migrations/003_service_payments.sql` creates `service_payments`. The API applies a pending migration the next time it starts. The table is an account receipt. Writing it does not change `entitlements`, votes, permissions, withdrawals, or treasury obligations. Do not edit `001_core.sql` or `002_hosted_content.sql`. Do not edit `003` after a database has applied it.
 
@@ -177,7 +177,7 @@ Still required before a public Telos deployment:
 - Create and fund testnet `daclifyadmin`, review a fresh dry run, and only then decide to `--commit`. That broadcast has not been sent.
 - Production still spends mainnet TLOS from `we` and still requires `--confirm`. It has not been sent.
 - Name the founding member of the project DAO before anyone creates it. The treasury asset for that DAO is TLOS. Governance is integer credit weights. The DAO does not become the runtime upgrade key unless that authority is assigned later.
-- Put a real Stripe Price id, restricted key, and webhook on each environment that should charge. No charge has been created from this tree. The `service_payments` SQL has not been executed against a live database here. The Postgres settlement path is covered by the same decision function as the unit tests and has not itself been run on PostgreSQL.
+- Configure a Price id, restricted key and signed webhook destination for each intended payment environment. Local PostgreSQL integration checks and the actual Stripe sandbox receipt/DAO setup journeys have passed. Production Stripe payments and production database deployment remain unqualified.
 - Rerun the native suite against the current runtime, and rerun the PostgreSQL and browser suites as a release gate. Local OpenBao is not production custody. An independent review is still required.
 - Wire a chain watcher before a TLOS or Telos EVM transfer can be treated as a service payment. Do not add a second treasury symbol for an EVM asset.
 - Choose no SKU amount in the repository. Delphi has `tlosusd` and no EUR pair. A contract-stored USD or EUR price is not implemented. The Stripe Price id is the card amount.
