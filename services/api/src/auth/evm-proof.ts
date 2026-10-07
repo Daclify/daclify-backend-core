@@ -38,6 +38,9 @@ function reject(): never {
 
 // Ethereum personal_sign uses recovery id 0/1 or 27/28. It is not an Antelope signature.
 export function recoverEvmAddress(message: string, signature: string): string {
+  return recoverEvmDigest(personalDigest(message), signature);
+}
+export function recoverEvmDigest(digest: Uint8Array, signature: string): string {
   if (!/^0x[0-9a-fA-F]{130}$/.test(signature)) reject();
   const eth = Buffer.from(signature.slice(2), 'hex');
   const parity = eth[64];
@@ -49,9 +52,7 @@ export function recoverEvmAddress(message: string, signature: string): string {
   noble[0] = recovery;
   noble.set(eth.subarray(0, 64), 1);
   try {
-    const point = secp256k1.Signature.fromBytes(noble, 'recovered').recoverPublicKey(
-      personalDigest(message),
-    );
+    const point = secp256k1.Signature.fromBytes(noble, 'recovered').recoverPublicKey(digest);
     const encoded = point.toBytes(false);
     if (encoded.length !== 65 || encoded[0] !== 0x04) reject();
     const hash = keccak_256(encoded.subarray(1));

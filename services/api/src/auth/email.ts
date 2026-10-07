@@ -1,7 +1,8 @@
 import { createHash, randomInt, randomUUID } from 'node:crypto';
-import type { Pool } from 'pg';
+import type { Pool, PoolClient } from 'pg';
 import { ApiError } from '../errors.js';
-import { openAccountSession } from './account-session.js';
+import { openAccountSession, withTransaction } from './account-session.js';
+import { revokeCredentialSessions } from './intent.js';
 import type { Account } from '../../../../protocol/api.js';
 
 export interface EmailDelivery {
@@ -19,7 +20,7 @@ export function normalizeMailbox(value: string): string {
   return email;
 }
 
-async function limited(pool: Pool, purpose: string, subject: string): Promise<void> {
+async function limited(pool: Pool | PoolClient, purpose: string, subject: string): Promise<void> {
   const count = await pool.query<{ count: string }>(
     `SELECT count(*) FROM signin_challenges WHERE purpose=$1 AND subject=$2 AND created_at>now()-interval '10 minutes'`,
     [purpose, subject],
@@ -33,12 +34,25 @@ async function storeCode(
   accountId: string | null,
   email: string,
   code: string,
-): Promise<void> {
-  await pool.query(
-    `INSERT INTO signin_challenges(id,purpose,account_id,subject,secret_hash,expires_at)
-     VALUES($1,$2,$3,$4,$5,now()+interval '10 minutes')`,
-    [randomUUID(), purpose, accountId, email, digest(code)],
-  );
+  context: Uint8Array,
+): Promise<string> {
+  const id = randomUUID();
+  await withTransaction(pool, async (client) => {
+    await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [
+      `${purpose}:${email}`,
+    ]);
+    await limited(client, purpose, email);
+    await client.query(
+      'UPDATE signin_challenges SET consumed_at=now() WHERE purpose=$1 AND subject=$2 AND account_id IS NOT DISTINCT FROM $3 AND consumed_at IS NULL',
+      [purpose, email, accountId],
+    );
+    await client.query(
+      `INSERT INTO signin_challenges(id,purpose,account_id,subject,secret_hash,context_hash,expires_at)
+     VALUES($1,$2,$3,$4,$5,$6,now()+interval '10 minutes')`,
+      [id, purpose, accountId, email, digest(code), context],
+    );
+  });
+  return id;
 }
 
 async function consumeCode(
@@ -47,6 +61,7 @@ async function consumeCode(
   accountId: string | null,
   email: string,
   code: string,
+  context: Uint8Array,
 ): Promise<void> {
   const consumed = await pool.query<{ accepted: boolean }>(
     `UPDATE signin_challenges SET attempts=attempts+1,
@@ -54,10 +69,10 @@ async function consumeCode(
      WHERE consumed_at IS NULL AND expires_at>now() AND attempts<5
        AND id=(SELECT id FROM signin_challenges
          WHERE purpose=$1 AND subject=$2 AND consumed_at IS NULL AND expires_at>now()
-           AND account_id IS NOT DISTINCT FROM $4
+           AND account_id IS NOT DISTINCT FROM $4 AND context_hash=$5
          ORDER BY created_at DESC,id DESC LIMIT 1)
      RETURNING secret_hash=$3 AS accepted`,
-    [purpose, email, digest(code), accountId],
+    [purpose, email, digest(code), accountId, context],
   );
   if (consumed.rowCount !== 1 || !consumed.rows[0]?.accepted)
     throw new ApiError('EMAIL_INVALID', 401);
@@ -72,14 +87,19 @@ export async function startEmailLink(
   accountId: string,
   value: string,
   delivery: EmailDelivery,
+  context: Uint8Array,
 ): Promise<{ delivery: 'local'; code: string } | { delivery: 'sent' }> {
   const email = normalizeMailbox(value);
   if (!delivery.revealCode && !delivery.deliver) throw new ApiError('EMAIL_UNAVAILABLE', 503);
-  await limited(pool, 'email-link', email);
   const code = freshCode();
-  await storeCode(pool, 'email-link', accountId, email, code);
+  const id = await storeCode(pool, 'email-link', accountId, email, code, context);
   if (delivery.deliver) {
-    await delivery.deliver(email, code);
+    try {
+      await delivery.deliver(email, code);
+    } catch {
+      await pool.query('UPDATE signin_challenges SET consumed_at=now() WHERE id=$1', [id]);
+      throw new ApiError('EMAIL_DELIVERY_FAILED', 503);
+    }
     return { delivery: 'sent' };
   }
   return { delivery: 'local', code };
@@ -90,9 +110,10 @@ export async function confirmEmailLink(
   accountId: string,
   value: string,
   code: string,
+  context: Uint8Array,
 ): Promise<{ subject: string }> {
   const email = normalizeMailbox(value);
-  await consumeCode(pool, 'email-link', accountId, email, code);
+  await consumeCode(pool, 'email-link', accountId, email, code, context);
   const providerKey = `email:${email}`;
   const inserted = await pool.query<{ account_id: string }>(
     'INSERT INTO credentials(provider_key,account_id) VALUES($1,$2) ON CONFLICT(provider_key) DO NOTHING RETURNING account_id',
@@ -114,16 +135,17 @@ export async function startEmailLogin(
   pool: Pool,
   value: string,
   deliver: (to: string, code: string) => Promise<void>,
+  context: Uint8Array,
 ): Promise<{ delivery: 'sent' }> {
   const email = normalizeMailbox(value);
-  const linked = await pool.query('SELECT account_id FROM credentials WHERE provider_key=$1', [
-    `email:${email}`,
-  ]);
-  if ((linked.rowCount ?? 0) > 0) {
-    await limited(pool, 'email-login', email);
-    const code = freshCode();
-    await storeCode(pool, 'email-login', null, email, code);
+  // Issue/deliver the same bounded attempt whether paired or not. SMTP timing and
+  // the per-mailbox resend limit must not disclose the credential directory.
+  const code = freshCode();
+  const id = await storeCode(pool, 'email-login', null, email, code, context);
+  try {
     await deliver(email, code);
+  } catch {
+    await pool.query('UPDATE signin_challenges SET consumed_at=now() WHERE id=$1', [id]);
   }
   return { delivery: 'sent' };
 }
@@ -132,9 +154,10 @@ export async function confirmEmailLogin(
   pool: Pool,
   value: string,
   code: string,
+  context: Uint8Array,
 ): Promise<{ account: Account; token: string; csrfToken: string }> {
   const email = normalizeMailbox(value);
-  await consumeCode(pool, 'email-login', null, email, code);
+  await consumeCode(pool, 'email-login', null, email, code, context);
   const row = (
     await pool.query<{ account_id: string }>(
       'SELECT account_id FROM credentials WHERE provider_key=$1',
@@ -142,13 +165,16 @@ export async function confirmEmailLogin(
     )
   ).rows[0];
   if (!row) throw new ApiError('PROVIDER_UNKNOWN', 401);
-  return openAccountSession(pool, row.account_id);
+  return openAccountSession(pool, row.account_id, `email:${email}`);
 }
 
 export async function removeEmail(pool: Pool, accountId: string, value: string): Promise<void> {
-  const deleted = await pool.query(
-    'DELETE FROM credentials WHERE provider_key=$1 AND account_id=$2',
-    [`email:${normalizeMailbox(value)}`, accountId],
-  );
-  if (deleted.rowCount !== 1) throw new ApiError('CREDENTIAL_UNKNOWN', 404);
+  await withTransaction(pool, async (client) => {
+    const deleted = await client.query(
+      'DELETE FROM credentials WHERE provider_key=$1 AND account_id=$2',
+      [`email:${normalizeMailbox(value)}`, accountId],
+    );
+    if (deleted.rowCount !== 1) throw new ApiError('CREDENTIAL_UNKNOWN', 404);
+    await revokeCredentialSessions(client, accountId, `email:${normalizeMailbox(value)}`);
+  });
 }

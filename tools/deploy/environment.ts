@@ -16,7 +16,9 @@ const AccountSchema = z.strictObject({
     .max(64 * 1024 * 1024),
   cpuStake: StakeSchema,
   netStake: StakeSchema,
-  contract: z.enum(['runtime', 'hub', 'decide', 'works', 'payroll']).nullable(),
+  contract: z
+    .enum(['runtime', 'hub', 'decide', 'works', 'payroll', 'grants', 'endorse'])
+    .nullable(),
   inlineCode: z.boolean(),
 });
 const NameSchema = z.enum(['develop', 'production', 'testnet']);
@@ -40,6 +42,15 @@ const EnvironmentSchema = z
       premiumBps: z.literal(2000),
     }),
     accounts: z.array(AccountSchema).length(7),
+    extraModules: z
+      .array(
+        AccountSchema.extend({
+          contract: z.enum(['grants', 'endorse']),
+          inlineCode: z.literal(true),
+        }),
+      )
+      .max(2)
+      .default([]),
   })
   .refine((environment) => environment.chainId !== null || environment.chainIdFile, 'CHAIN_SOURCE')
   .refine(
@@ -50,11 +61,20 @@ const EnvironmentSchema = z
     const contracts = ['runtime', 'hub', 'decide', 'works', 'payroll', null, null] as const;
     return contracts.every((contract, index) => environment.accounts[index]?.contract === contract);
   }, 'ACCOUNT_ORDER')
+  .refine(
+    (environment) =>
+      new Set([...environment.accounts, ...environment.extraModules].map((account) => account.name))
+        .size ===
+        environment.accounts.length + environment.extraModules.length &&
+      new Set(environment.extraModules.map((account) => account.contract)).size ===
+        environment.extraModules.length,
+    'DUPLICATE_MODULE_ACCOUNT',
+  )
   .refine((environment) => {
     if (environment.name !== 'testnet') return true;
     const names = [
       environment.creatorAccount,
-      ...environment.accounts.map((account) => account.name),
+      ...[...environment.accounts, ...environment.extraModules].map((account) => account.name),
     ];
     return names.every((name) => /^[a-z1-5]{12}$/.test(name));
   }, 'TESTNET_NAME');
@@ -62,6 +82,9 @@ const EnvironmentSchema = z
 export type DeployEnvironment = z.infer<typeof EnvironmentSchema> & { chainId: string };
 export type DeployAccount = DeployEnvironment['accounts'][number];
 export const DEPLOY_ROLES = RoleSchema.options;
+export function deploymentAccounts(environment: DeployEnvironment): readonly DeployAccount[] {
+  return [...environment.accounts, ...environment.extraModules];
+}
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
 export const CORE_ROOT = path.resolve(directory, '../..');

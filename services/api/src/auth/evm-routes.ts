@@ -1,14 +1,11 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { Pool } from 'pg';
-import { z } from 'zod';
+import {
+  EvmChainInputSchema as ChainSchema,
+  EvmLinkInputSchema as LinkSchema,
+} from '../../../../protocol/evm-wallet.js';
 import type { Account } from '../../../../protocol/api.js';
 import { beginEvmLink, finishEvmLink, listEvmLinks, unlinkEvm } from './evm-link.js';
-
-const ChainSchema = z.strictObject({ chainId: z.union([z.literal(40), z.literal(41)]) });
-const LinkSchema = ChainSchema.extend({
-  address: z.string().regex(/^0x[0-9a-fA-F]{40}$/),
-  signature: z.string().regex(/^0x[0-9a-fA-F]{130}$/),
-});
 
 export function registerEvmRoutes(
   app: FastifyInstance,

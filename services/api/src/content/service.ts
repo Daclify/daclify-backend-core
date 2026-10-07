@@ -18,6 +18,7 @@ import { Uint64Schema } from '../../../../protocol/base.js';
 import type { ChainGateway } from '../chain.js';
 import type { ContentProvider, PinnedFile } from './provider.js';
 import { ApiError } from '../errors.js';
+import { validateBrandImage } from './branding.js';
 const RowSchema = z.object({
   id: z.uuid(),
   account_id: z.uuid(),
@@ -49,6 +50,14 @@ export class ContentService {
   }
   configuration(): z.infer<typeof StorageStatusSchema> {
     return { provider: this.providerName, configured: true, uploadLimit: MAX_HOSTED_CONTENT_BYTES };
+  }
+  async brandingBytes(daoId: string, slot: 'logo' | 'cover') {
+    const dao = await this.chain.dao(daoId),
+      reference = dao.branding?.[slot];
+    if (!reference) throw new ApiError('CONTENT_UNAVAILABLE', 404);
+    const bytes = await this.provider.retrieve(reference.cid, reference.bytes);
+    validateBrandImage(reference, bytes);
+    return { content: Buffer.from(bytes).toString('base64'), mediaType: reference.mediaType };
   }
   #receipt(row: UploadRow): HostedDocument {
     if (!row.cid) throw new ApiError('UPLOAD_PENDING', 409);
@@ -155,7 +164,17 @@ export class ContentService {
       content.dao.daoId !== input.dao.daoId
     )
       throw new ApiError('DAO_REFERENCE');
-    const member = content.members.find((row) => row.signing_key === account.signingKey);
+    const identity = content.members.some((row) => row.signing_key === account.signingKey)
+      ? undefined
+      : (await this.chain.memberships(account)).find(
+          (row) =>
+            row.dao.chainId === input.dao.chainId &&
+            row.dao.contract === input.dao.contract &&
+            row.dao.daoId === input.dao.daoId,
+        );
+    const member = content.members.find(
+      (row) => row.signing_key === account.signingKey || row.id === identity?.memberId,
+    );
     if (!member?.active || member.custody !== (account.custody === 'managed' ? 1 : 0))
       throw new ApiError('MEMBER_REQUIRED', 403);
     const versions = content.documents.filter(

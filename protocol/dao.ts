@@ -5,6 +5,8 @@ import {
   Uint64Schema,
   DaoRefSchema,
   ModuleManifestSchema,
+  CidSchema,
+  ChainIdSchema,
 } from './base.js';
 import { RuntimeTableSchemas } from '../sdk/generated/schemas.js';
 import { EncryptionPublicKeySchema, SigningPublicKeySchema } from './crypto.js';
@@ -81,8 +83,38 @@ export const PresetMetadataSchema = z
     (value) => value.purpose === value.setup.presetId,
     'Purpose must match preset provenance',
   );
+export const BrandImageSchema = z.strictObject({
+  cid: CidSchema,
+  bytes: z
+    .int()
+    .min(1)
+    .max(2 * 1024 * 1024),
+  mediaType: z.enum(['image/png', 'image/jpeg', 'image/webp']),
+  commitment: ChainIdSchema,
+});
+export const DaoBrandingSchema = z.strictObject({
+  summary: z
+    .string()
+    .max(280)
+    .refine((value) => new TextEncoder().encode(value).length <= 1120)
+    .optional(),
+  logo: BrandImageSchema.optional(),
+  cover: BrandImageSchema.optional(),
+});
+export const BrandedMetadataSchema = z
+  .strictObject({
+    schemaVersion: z.literal(3),
+    ...identity,
+    purpose: DaoPurposeSchema,
+    setup: DaoSetupSchema.nullable(),
+    branding: DaoBrandingSchema,
+  })
+  .refine(
+    (value) => (value.setup ? value.purpose === value.setup.presetId : value.purpose === 'custom'),
+    'Purpose must preserve provenance',
+  );
 export const MetadataSchema = z
-  .union([LegacyMetadataSchema, PresetMetadataSchema])
+  .union([LegacyMetadataSchema, PresetMetadataSchema, BrandedMetadataSchema])
   .refine(
     (value) => new TextEncoder().encode(JSON.stringify(value)).byteLength <= 4096,
     'Metadata exceeds 4096 bytes',
@@ -166,6 +198,7 @@ export const GovernanceStateSchema = z.strictObject({
   sessions: z.array(RuntimeTableSchemas.sessions),
   guardian: RuntimeTableSchemas.guards.nullable(),
   budget: RuntimeTableSchemas.budgets.nullable(),
+  admission: RuntimeTableSchemas.admpolicies.nullable().default(null),
 });
 export function defaultDaoSetup(presetId: DaoPurpose = 'community'): DaoSetup {
   const preset = DaoPresets.find((preset) => preset.id === presetId);

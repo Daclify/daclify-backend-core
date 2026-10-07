@@ -93,7 +93,7 @@ export function generateDocumentation(
   }
   for (const endpoint of api)
     sections.push(
-      `## ${endpoint.method} ${endpoint.path}\n\nGuide: ${endpoint.helpTopic}.\n\n${endpoint.input === undefined ? (endpoint.method === 'GET' ? 'No request body.' : 'Request fields are not included in this response reference; consult the endpoint implementation.') : `Request:\n\n\`\`\`json\n${JSON.stringify(endpoint.input, null, 2)}\n\`\`\``}\n\n${endpoint.query === undefined ? '' : `Query:\n\n\`\`\`json\n${JSON.stringify(endpoint.query, null, 2)}\n\`\`\`\n\n`}Response:\n\n\`\`\`json\n${JSON.stringify(endpoint.response, null, 2)}\n\`\`\``,
+      `## ${endpoint.method} ${endpoint.path}\n\nGuide: ${endpoint.helpTopic}.${endpoint.status === undefined ? '' : ` HTTP ${endpoint.status}.`}\n\n${endpoint.input === undefined ? (endpoint.method === 'GET' ? 'No request body.' : 'Request fields are not included in this response reference; consult the endpoint implementation.') : `Request:\n\n\`\`\`json\n${JSON.stringify(endpoint.input, null, 2)}\n\`\`\``}\n\n${endpoint.query === undefined ? '' : `Query:\n\n\`\`\`json\n${JSON.stringify(endpoint.query, null, 2)}\n\`\`\`\n\n`}Response:\n\n\`\`\`json\n${JSON.stringify(endpoint.response, null, 2)}\n\`\`\``,
     );
   for (const module of bundle.modules)
     sections.push(

@@ -64,21 +64,26 @@ const pool = new Pool({
   connectionString: database,
 });
 await migrate(pool);
-const chain = new NativeChainGateway({
-  rpcUrl: network.url,
-  chainId: network.chainId,
-  runtime: 'daclifycore',
-  hub: 'daclifyhub',
-  environment: 'local',
-  relayActor: 'relay',
-  relayKey: fixtureKey('relay'),
-  bootstrap: { owner: 'alice', key: fixtureKey('alice') },
-  modules: [
-    { id: 'decide', account: 'decide' },
-    { id: 'works', account: 'works' },
-    { id: 'payroll', account: 'payroll' },
-  ],
-});
+const chain = new NativeChainGateway(
+  {
+    rpcUrl: network.url,
+    chainId: network.chainId,
+    runtime: 'daclifycore',
+    hub: 'daclifyhub',
+    environment: 'local',
+    relayActor: 'relay',
+    relayKey: fixtureKey('relay'),
+    bootstrap: { owner: 'alice', key: fixtureKey('alice') },
+    modules: [
+      { id: 'decide', account: 'decide' },
+      { id: 'works', account: 'works' },
+      { id: 'payroll', account: 'payroll' },
+      { id: 'grants-rounds', account: 'grants' },
+      { id: 'endorsement-admission', account: 'endorse' },
+    ],
+  },
+  pool,
+);
 const content = new ContentService(
   pool,
   chain,

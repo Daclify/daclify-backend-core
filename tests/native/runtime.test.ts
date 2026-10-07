@@ -50,7 +50,7 @@ function push(action: string, data: object | unknown[], actor = 'alice'): string
   ]);
 }
 beforeAll(() => {
-  unlockFixtureWallet('daclify-v2-native');
+  unlockFixtureWallet(network.container);
   push('createdao', [
     dao,
     'alice',

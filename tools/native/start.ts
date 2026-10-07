@@ -12,6 +12,8 @@ const name = z
     'daclify-dao-presets-native',
     'daclify-platform-native',
     'daclify-access-native',
+    'daclify-research-native',
+    'daclify-research-paid-native',
   ])
   .parse(process.env.DACLIFY_NATIVE_CONTAINER ?? 'daclify-v2-native');
 const port = z.coerce
@@ -47,6 +49,8 @@ const accountNames = [
   'decide',
   'works',
   'payroll',
+  'grants',
+  'endorse',
   'permprobe',
 ] as const;
 const accountKeys = Object.fromEntries(

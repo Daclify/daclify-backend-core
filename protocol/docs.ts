@@ -20,6 +20,7 @@ export const DocumentationSourceSchema = z.strictObject({
 export const ApiReferenceSchema = z.strictObject({
   method: z.enum(['GET', 'POST']),
   path: z.string().startsWith('/v1/'),
+  status: z.number().int().min(200).max(299).optional(),
   input: z.unknown().optional(),
   query: z.unknown().optional(),
   response: z.unknown(),

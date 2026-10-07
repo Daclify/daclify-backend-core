@@ -5,6 +5,8 @@ import { PrivateKey } from '@wharfkit/antelope';
 import { importJWK } from 'jose';
 import { z } from 'zod';
 import type { ProviderConfiguration } from './auth/linking.js';
+import { readMailDelivery } from './auth/mail.js';
+import { readTelegramOidc } from './auth/telegram-oidc.js';
 import { NativeChainGateway } from './native-chain.js';
 import { migrate } from './store.js';
 import { createServer } from './server.js';
@@ -62,19 +64,22 @@ function privateKey(value: string): PrivateKey {
 }
 const pool = new Pool({ connectionString: env.DATABASE_URL, max: 10 });
 await migrate(pool);
-const chain = new NativeChainGateway({
-  rpcUrl: env.CHAIN_RPC_URL,
-  chainId: env.CHAIN_ID,
-  runtime: env.RUNTIME_ACCOUNT,
-  hub: env.HUB_ACCOUNT ?? null,
-  environment: env.NETWORK_ENVIRONMENT,
-  relayActor: env.RELAY_ACCOUNT,
-  relayKey: privateKey(env.RELAY_PRIVATE_KEY),
-  ...(env.BOOTSTRAP_OWNER && env.BOOTSTRAP_PRIVATE_KEY
-    ? { bootstrap: { owner: env.BOOTSTRAP_OWNER, key: privateKey(env.BOOTSTRAP_PRIVATE_KEY) } }
-    : {}),
-  ...(env.MODULE_DEPLOYMENTS ? { modules: parseModuleDeployments(env.MODULE_DEPLOYMENTS) } : {}),
-});
+const chain = new NativeChainGateway(
+  {
+    rpcUrl: env.CHAIN_RPC_URL,
+    chainId: env.CHAIN_ID,
+    runtime: env.RUNTIME_ACCOUNT,
+    hub: env.HUB_ACCOUNT ?? null,
+    environment: env.NETWORK_ENVIRONMENT,
+    relayActor: env.RELAY_ACCOUNT,
+    relayKey: privateKey(env.RELAY_PRIVATE_KEY),
+    ...(env.BOOTSTRAP_OWNER && env.BOOTSTRAP_PRIVATE_KEY
+      ? { bootstrap: { owner: env.BOOTSTRAP_OWNER, key: privateKey(env.BOOTSTRAP_PRIVATE_KEY) } }
+      : {}),
+    ...(env.MODULE_DEPLOYMENTS ? { modules: parseModuleDeployments(env.MODULE_DEPLOYMENTS) } : {}),
+  },
+  pool,
+);
 const content =
   env.PINATA_JWT && env.CONTENT_GATEWAY
     ? new ContentService(
@@ -85,6 +90,7 @@ const content =
       )
     : undefined;
 const providers: ProviderConfiguration = {};
+const telegramOidc = readTelegramOidc(process.env);
 if (env.GOOGLE_CLIENT_ID && env.GOOGLE_PUBLIC_JWK) {
   try {
     const parsed: unknown = JSON.parse(env.GOOGLE_PUBLIC_JWK);
@@ -99,15 +105,17 @@ if (env.GOOGLE_CLIENT_ID && env.GOOGLE_PUBLIC_JWK) {
 }
 if (env.TELEGRAM_BOT_USERNAME && !env.TELEGRAM_BOT_TOKEN)
   throw new Error('TELEGRAM_CONFIGURATION_INVALID');
-if (env.TELEGRAM_BOT_TOKEN) {
+if (env.TELEGRAM_BOT_TOKEN || telegramOidc) {
   providers.telegram = {
-    botToken: env.TELEGRAM_BOT_TOKEN,
+    ...(env.TELEGRAM_BOT_TOKEN ? { botToken: env.TELEGRAM_BOT_TOKEN } : {}),
+    ...(telegramOidc ? { oidc: telegramOidc } : {}),
     ...(env.TELEGRAM_BOT_USERNAME ? { botUsername: env.TELEGRAM_BOT_USERNAME } : {}),
   };
 }
 const stripeConfig = readStripeConfig(process.env);
 const docs = readDocsAgent(process.env);
 const creation = new CreationService(pool, chain);
+const deliverEmail = readMailDelivery(process.env);
 const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
   creation,
   ...(content ? { content } : {}),
@@ -115,7 +123,7 @@ const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
   ...(stripeConfig
     ? { billing: new StripeBilling(pool, stripeConfig, env.FRONTEND_ORIGIN, chain, creation) }
     : {}),
-  signIn: { environment: env.NETWORK_ENVIRONMENT },
+  signIn: { environment: env.NETWORK_ENVIRONMENT, ...(deliverEmail ? { deliverEmail } : {}) },
   ...(docs ? { docs } : {}),
 });
 await app.listen({ host: '127.0.0.1', port: env.API_PORT });

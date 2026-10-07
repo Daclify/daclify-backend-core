@@ -13,6 +13,7 @@ import {
   FoundingAgentSchema,
   DaoPurposeSchema,
   ParticipantModeSchema,
+  DaoBrandingSchema,
 } from './dao.js';
 export { SigningPublicKeySchema } from './crypto.js';
 export const AccountSchema = z.strictObject({
@@ -68,6 +69,7 @@ export const DaoSummarySchema = z.strictObject({
   purpose: DaoPurposeSchema.optional(),
   participantMode: ParticipantModeSchema.optional(),
   setup: DaoSetupSchema.nullable().optional(),
+  branding: DaoBrandingSchema.optional(),
 });
 export const CreateDaoSchema = z
   .strictObject({
@@ -111,6 +113,7 @@ export const UserMembershipSchema = z.strictObject({
   stake: Uint64Schema,
   nativeAccount: z.string(),
   custody: CustodySchema,
+  signingKey: SigningPublicKeySchema.optional(),
 });
 export type Account = z.infer<typeof AccountSchema>;
 export type Session = z.infer<typeof SessionSchema>;

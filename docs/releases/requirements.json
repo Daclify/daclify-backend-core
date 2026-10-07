@@ -1,166 +1,206 @@
 {
-  "requiredSuites": [
-    "vert",
-    "native",
-    "integration",
-    "provider",
-    "modules",
-    "browser",
-    "unit"
-  ],
+  "requiredSuites": ["vert", "native", "integration", "provider", "modules", "browser", "unit"],
   "requirements": [
     {
       "id": "WP03-CALLBACK-SENDER",
       "suite": "vert",
-      "tests": [
-        "tests/module-callback-authority.test.ts"
-      ]
+      "tests": ["tests/module-callback-authority.test.ts"]
     },
     {
       "id": "WP03-HUB-REGISTRATION",
       "suite": "vert",
-      "tests": [
-        "tests/hub.test.ts"
-      ]
+      "tests": ["tests/hub.test.ts"]
     },
     {
       "id": "WP03-INDEPENDENT-RUNTIME",
       "suite": "vert",
-      "tests": [
-        "tests/independent-runtime.test.ts"
-      ]
+      "tests": ["tests/independent-runtime.test.ts"]
     },
     {
       "id": "WP07-TREASURY",
       "suite": "vert",
-      "tests": [
-        "tests/treasury.test.ts"
-      ]
+      "tests": ["tests/treasury.test.ts"]
     },
     {
       "id": "WP07-EXTERNAL-EVIDENCE",
       "suite": "vert",
-      "tests": [
-        "tests/external-evidence.test.ts"
-      ]
+      "tests": ["tests/external-evidence.test.ts"]
     },
     {
       "id": "WP02-NATIVE-PERMISSION",
       "suite": "native",
-      "tests": [
-        "tests/native/permission.test.ts"
-      ]
+      "tests": ["tests/native/permission.test.ts"]
     },
     {
       "id": "WP02-INTEGRATION-HTTP",
       "suite": "integration",
-      "tests": [
-        "tests/integration/http.test.ts"
-      ]
+      "tests": ["tests/integration/http.test.ts"]
     },
     {
       "id": "WP04-OPENBAO-PROBE",
       "suite": "provider",
-      "tests": [
-        "tests/providers/openbao.test.ts"
-      ]
+      "tests": ["tests/providers/openbao.test.ts"]
     },
     {
       "id": "WP08-DECIDE",
       "suite": "modules",
-      "tests": [
-        "../daclify-backend-modules/tests/decide.test.ts"
-      ]
+      "tests": ["../daclify-backend-modules/tests/decide.test.ts"]
     },
     {
       "id": "WP09-WORKS",
       "suite": "modules",
-      "tests": [
-        "../daclify-backend-modules/tests/works.test.ts"
-      ]
+      "tests": ["../daclify-backend-modules/tests/works.test.ts"]
     },
     {
       "id": "WP10-PAYROLL",
       "suite": "modules",
-      "tests": [
-        "../daclify-backend-modules/tests/payroll.test.ts"
-      ]
+      "tests": ["../daclify-backend-modules/tests/payroll.test.ts"]
     },
     {
       "id": "WP13-BROWSER-WORKSPACE",
       "suite": "browser",
-      "tests": [
-        "../daclify-frontend/tests/e2e/workspace.spec.ts"
-      ]
+      "tests": ["../daclify-frontend/tests/e2e/workspace.spec.ts"]
     },
     {
       "id": "WP04-SIGNING-KEY",
       "suite": "vert",
-      "tests": [
-        "tests/signing-key.test.ts"
-      ]
+      "tests": ["tests/signing-key.test.ts"]
     },
     {
       "id": "WP02-REQUIREMENT-REGISTER",
       "suite": "unit",
-      "tests": [
-        "tests/requirements.test.ts"
-      ]
+      "tests": ["tests/requirements.test.ts"]
     },
     {
       "id": "WP02-RELEASE-MANIFEST",
       "suite": "unit",
-      "tests": [
-        "tests/release-manifest.test.ts"
-      ]
+      "tests": ["tests/release-manifest.test.ts"]
     },
     {
       "id": "WP05-PROOF-VERIFIERS",
       "suite": "unit",
-      "tests": [
-        "tests/provider-proofs.test.ts"
-      ]
+      "tests": ["tests/provider-proofs.test.ts"]
     },
     {
       "id": "WP05-SESSION-LINKING",
       "suite": "integration",
-      "tests": [
-        "tests/integration/session-linking.test.ts"
-      ]
+      "tests": ["tests/integration/session-linking.test.ts"]
     },
     {
       "id": "PLATFORM-CREATION-PAYMENT",
       "suite": "vert",
-      "tests": [
-        "tests/creation-fees.test.ts"
-      ]
+      "tests": ["tests/creation-fees.test.ts"]
     },
     {
       "id": "PLATFORM-CARD-BOUNDARY",
       "suite": "unit",
-      "tests": [
-        "tests/billing-creation.test.ts"
-      ]
+      "tests": ["tests/billing-creation.test.ts"]
     },
     {
       "id": "PLATFORM-ORDER-IDEMPOTENCY",
       "suite": "integration",
-      "tests": [
-        "tests/integration/creation.test.ts"
-      ]
+      "tests": ["tests/integration/creation.test.ts"]
     },
     {
       "id": "PLATFORM-NATIVE-GOVERNANCE",
       "suite": "native",
-      "tests": [
-        "tests/native/dao-presets.test.ts"
-      ]
+      "tests": ["tests/native/dao-presets.test.ts"]
     },
     {
       "id": "PLATFORM-BROWSER",
       "suite": "browser",
+      "tests": ["../daclify-frontend/tests/e2e/platform.spec.ts"]
+    },
+    {
+      "id": "N1-PAIRED-CONTROL",
+      "suite": "integration",
       "tests": [
-        "../daclify-frontend/tests/e2e/platform.spec.ts"
+        "tests/integration/sign-in-methods.test.ts",
+        "tests/integration/account-links.test.ts",
+        "tests/integration/account-upgrade.test.ts"
+      ]
+    },
+    {
+      "id": "N1-TELEGRAM",
+      "suite": "unit",
+      "tests": ["tests/telegram-oidc.test.ts"]
+    },
+    {
+      "id": "N1-SMTP",
+      "suite": "provider",
+      "tests": ["tests/providers/mail.test.ts"]
+    },
+    {
+      "id": "N2-NATIVE-WALLET",
+      "suite": "native",
+      "tests": ["tests/native/paired-wallets.test.ts"]
+    },
+    {
+      "id": "N3-EOA-GOVERNANCE",
+      "suite": "native",
+      "tests": ["tests/native/evm-feasibility.test.ts", "tests/native/evm-governance.test.ts"]
+    },
+    {
+      "id": "N4-BRANDING",
+      "suite": "unit",
+      "tests": ["tests/dao-branding.test.ts"]
+    },
+    {
+      "id": "N5-AGREEMENTS",
+      "suite": "native",
+      "tests": ["tests/native/contribution-agreements.test.ts"]
+    },
+    {
+      "id": "N6-REPORTS",
+      "suite": "unit",
+      "tests": ["tests/spending-report.test.ts"]
+    },
+    {
+      "id": "N7-GRANTS",
+      "suite": "native",
+      "tests": ["tests/native/grants.test.ts"]
+    },
+    {
+      "id": "N8-ADMISSION",
+      "suite": "native",
+      "tests": ["tests/native/admission.test.ts"]
+    },
+    {
+      "id": "N9-ELECTIONS",
+      "suite": "native",
+      "tests": ["tests/native/elections.test.ts"]
+    },
+    {
+      "id": "N7-N9-MODULES",
+      "suite": "modules",
+      "tests": [
+        "../daclify-backend-modules/tests/grants.test.ts",
+        "../daclify-backend-modules/tests/admission.test.ts",
+        "../daclify-backend-modules/tests/elections.test.ts",
+        "../daclify-backend-modules/tests/deployment-conformance.test.ts"
+      ]
+    },
+    {
+      "id": "N10-UPGRADE",
+      "suite": "native",
+      "tests": ["tests/native/upgrade.test.ts", "tests/native/deployment-abi.test.ts"]
+    },
+    {
+      "id": "N10-WALLET-CONTEXT",
+      "suite": "unit",
+      "tests": [
+        "../daclify-frontend/tests/unit/wallet-signing.test.ts",
+        "../daclify-frontend/tests/unit/native-wallet.test.ts",
+        "../daclify-frontend/tests/unit/module-release.test.ts"
+      ]
+    },
+    {
+      "id": "N10-BROWSER",
+      "suite": "browser",
+      "tests": [
+        "../daclify-frontend/tests/e2e/research-modules.spec.ts",
+        "../daclify-frontend/tests/e2e/route-recovery.spec.ts",
+        "../daclify-frontend/tests/e2e/module-authoring.spec.ts"
       ]
     }
   ]

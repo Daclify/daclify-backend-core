@@ -12,12 +12,10 @@ const REPOSITORIES = [
 ] as const;
 
 const HELD_CHECKS = [
-  'native runtime suite on the pinned runtime wasm',
-  'native HTTP and API suite',
-  'PostgreSQL and API integration on this checkout',
-  'OpenBao production qualification',
-  'frontend browser journeys',
-  'Telos mainnet GET_CODE_HASH activation',
+  'live SMTP deliverability and Telegram provider/client qualification',
+  'real Anchor and EOA wallet-client qualification',
+  'OpenBao durable production signing, audit, recovery and isolation qualification',
+  'selected production chain protocol-feature and authority verification',
   'immutable published artifact verification',
 ] as const;
 
@@ -141,8 +139,15 @@ function modulePins(modulesRoot: string): {
   if (capabilities.length === 0) pin('module capabilities are missing');
   const hashes: Record<string, string> = {};
   for (const name of capabilities)
-    hashes[name] = sha256(path.join(modulesRoot, '.artifacts', 'contracts', `${name}.wasm`));
-  return { capabilities, hashes };
+    hashes[
+      name === 'grants' ? 'grants-rounds' : name === 'endorse' ? 'endorsement-admission' : name
+    ] = sha256(path.join(modulesRoot, '.artifacts', 'contracts', `${name}.wasm`));
+  return {
+    capabilities: capabilities.map((name) =>
+      name === 'grants' ? 'grants-rounds' : name === 'endorse' ? 'endorsement-admission' : name,
+    ),
+    hashes,
+  };
 }
 
 export function loadCheckoutManifest(coreRoot: string): ReleaseManifest {

@@ -1,3 +1,4 @@
+import { controlledInject } from '../helpers/account-control.js';
 import { readFileSync } from 'node:fs';
 import { createHash, createHmac, generateKeyPairSync, randomInt, randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -168,6 +169,7 @@ async function httpLogin() {
   const session = SessionSchema.parse(response.json());
   return {
     session,
+    key,
     cookie: response.cookies.map((item) => `${item.name}=${item.value}`).join('; '),
   };
 }
@@ -282,7 +284,7 @@ describe('provider session linking', () => {
     expect(missing.json()).toMatchObject({ code: 'CSRF_REQUIRED' });
     const aliceSubject = `alice-${randomUUID()}`;
     const bobSubject = `bob-${randomUUID()}`;
-    const linked = await configured.inject({
+    const linked = await controlledInject(configured, current.key, {
       method: 'POST',
       url: '/v1/auth/providers/link',
       headers: { origin, cookie: current.cookie, 'x-csrf-token': current.session.csrfToken },
@@ -291,7 +293,7 @@ describe('provider session linking', () => {
     expect(linked.statusCode).toBe(200);
     expect(linked.json()).toMatchObject({ provider: 'google', subject: aliceSubject });
     const other = await httpLogin();
-    const otherLink = await configured.inject({
+    const otherLink = await controlledInject(configured, other.key, {
       method: 'POST',
       url: '/v1/auth/providers/link',
       headers: { origin, cookie: other.cookie, 'x-csrf-token': other.session.csrfToken },
@@ -313,7 +315,7 @@ describe('provider session linking', () => {
     const current = await httpLogin();
     const subject = randomInt(10_000, 2_000_000_000);
     const proof = telegram(subject);
-    const linked = await configured.inject({
+    const linked = await controlledInject(configured, current.key, {
       method: 'POST',
       url: '/v1/auth/providers/link',
       headers: { origin, cookie: current.cookie, 'x-csrf-token': current.session.csrfToken },
@@ -340,7 +342,7 @@ describe('provider session linking', () => {
     expect(session.account.id).toBe(current.session.account.id);
     expect(session.account.encryptionKey).toEqual(current.session.account.encryptionKey);
     expect(fresh.body).not.toContain('PVT_');
-    const removed = await configured.inject({
+    const removed = await controlledInject(configured, current.key, {
       method: 'POST',
       url: '/v1/auth/providers/unlink',
       headers: {

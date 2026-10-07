@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { Blockchain } from '@proton/vert';
 import { ABI, Checksum256, PrivateKey, Serializer } from '@wharfkit/antelope';
 import { z } from 'zod';
-import { loadContract, row, send } from './helpers/vert.js';
+import { loadContract, row, send, allowFixtureInheritedAuth } from './helpers/vert.js';
 
 const artifact = '.artifacts/contracts/runtime';
 const chainId = 'ab'.repeat(32);
@@ -61,11 +61,17 @@ function signed(action: string, object: object, signer: PrivateKey, nonce: numbe
 
 describe('signing-key rotation without a second member', () => {
   it('links a native wallet without a second member or a second vote', async () => {
+    allowFixtureInheritedAuth(chain, 'bob', 'daclifycore');
     await send(
       runtime,
-      'linknative',
-      ['daclifycore', 1, 1, 'bob'],
-      ['daclifycore@active', 'bob@active'],
+      'submit',
+      signed(
+        'linknative',
+        { runtime: 'daclifycore', dao_id: 1, member_id: 1, account: 'bob' },
+        key,
+        0,
+      ),
+      'bob@active',
     );
     expect(memberSchema.parse(row(runtime, 'members', 1n, 1n))).toMatchObject({
       id: 1,

@@ -1,3 +1,5 @@
+import { fixtureNetwork } from '../../tools/native/network.js';
+const ownedNetwork = fixtureNetwork();
 import { unlockFixtureWallet } from '../../tools/native/wallet.js';
 import { fixtureKey } from '../../tools/native/keys.js';
 import { beforeAll, afterAll, describe, it, expect } from 'vitest';
@@ -55,7 +57,7 @@ let csrf = '';
 let dao: z.infer<typeof DaoSummarySchema>;
 let account: z.infer<typeof AccountSchema>;
 beforeAll(async () => {
-  unlockFixtureWallet('daclify-v2-native');
+  unlockFixtureWallet(ownedNetwork.container);
   listFirstPartyModule('decide', ModuleCodeHashes.decide, 'Decide');
   await migrate(pool);
   const c = ChallengeSchema.parse(

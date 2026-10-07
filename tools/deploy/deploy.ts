@@ -3,15 +3,17 @@ import path from 'node:path';
 import { APIClient, Action, PublicKey, Transaction, SignedTransaction } from '@wharfkit/antelope';
 import { z } from 'zod';
 import { loadEnvFile } from '../../services/api/src/env-file.js';
-import { creationActions, encodeSystem } from './actions.js';
+import { creationActions, encodeContractAbi, encodeSystem } from './actions.js';
 import {
   CORE_ROOT,
+  deploymentAccounts,
   loadEnvironment,
   type DeployAccount,
   type DeployEnvironment,
   type DeployName,
 } from './environment.js';
 import { deployerKey, keyFilePath, loadOrCreateActiveKeys, type ActiveKey } from './keys.js';
+import { contextPermissionPlan } from './permissions.js';
 import { planDeployment, type AccountView } from './plan.js';
 import { deploymentSend } from './send.js';
 
@@ -51,10 +53,33 @@ async function deploy(name: DeployName, setContract: boolean, send: boolean): Pr
   const info = z.object({ chain_id: z.string() }).parse(await infoResponse.json());
   if (info.chain_id !== environment.chainId) throw new Error('CHAIN_ID');
   const views = new Map<string, AccountView>();
-  for (const account of environment.accounts) {
+  for (const account of deploymentAccounts(environment)) {
     views.set(account.name, await readAccount(environment.rpcUrl, account.name));
   }
   const changes = planDeployment(environment, views, setContract);
+  const runtime = environment.accounts[0];
+  if (!runtime) throw new Error('DEPLOY_RUNTIME');
+  const modules = deploymentAccounts(environment).flatMap<
+    Parameters<typeof contextPermissionPlan>[1][number]
+  >((account) => {
+    const id =
+      account.contract === 'grants'
+        ? 'grants-rounds'
+        : account.contract === 'endorse'
+          ? 'endorsement-admission'
+          : account.contract;
+    return id === 'decide' ||
+      id === 'works' ||
+      id === 'payroll' ||
+      id === 'grants-rounds' ||
+      id === 'endorsement-admission'
+      ? [{ id, account: account.name }]
+      : [];
+  });
+  console.log(
+    'Context authority plan (review and apply separately with each account controller): ' +
+      JSON.stringify(contextPermissionPlan(runtime.name, modules)),
+  );
   console.log(`Environment ${environment.name} on ${environment.rpcUrl}`);
   console.log(`Chain ${environment.chainId} matches.`);
   for (const change of changes) {
@@ -89,7 +114,7 @@ async function deploy(name: DeployName, setContract: boolean, send: boolean): Pr
   const api = new APIClient({ url: environment.rpcUrl });
   for (const change of changes) {
     if (change.action === 'unchanged') continue;
-    const account = environment.accounts.find((item) => item.name === change.account);
+    const account = deploymentAccounts(environment).find((item) => item.name === change.account);
     const active = activeKeys.find((item) => item.account === change.account);
     if (!account || !active) throw new Error('DEPLOY_ACCOUNT_VIEW');
     if (change.action === 'create') {
@@ -215,7 +240,7 @@ function artifactPath(
 }
 
 function assertArtifacts(environment: DeployEnvironment): void {
-  for (const account of environment.accounts) {
+  for (const account of deploymentAccounts(environment)) {
     if (!account.contract) continue;
     for (const extension of ['wasm', 'abi'] as const) {
       try {
@@ -253,7 +278,10 @@ async function installContract(
       name: 'setabi',
       authorizationActor: account.name,
       permission: 'owner',
-      data: encodeSystem('setabi', { account: account.name, abi: new Uint8Array(abiFile) }),
+      data: encodeSystem('setabi', {
+        account: account.name,
+        abi: encodeContractAbi(abiFile.toString('utf8')),
+      }),
     },
   ]);
 }

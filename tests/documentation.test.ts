@@ -107,3 +107,13 @@ it('documents query cursors from the producer schema', () => {
   expect(output.markdown).toContain('Query:');
   expect(output.markdown).toContain('after');
 });
+
+it('documents paired-login request schemas and bodyless credential removal', async () => {
+  const { CoreHelpBundle } = await import('../protocol/generated/help.js');
+  const finish = CoreHelpBundle.api.find((route) => route.path === '/v1/sign-in/native');
+  expect(finish?.input).toMatchObject({ required: ['id', 'proof'] });
+  const start = CoreHelpBundle.api.find((route) => route.path === '/v1/sign-in/email/login/start');
+  expect(start?.input).toMatchObject({ required: ['email'] });
+  const removal = CoreHelpBundle.api.find((route) => route.path === '/v1/sign-in/remove');
+  expect(removal).toMatchObject({ status: 204, input: { required: ['method', 'subject'] } });
+});

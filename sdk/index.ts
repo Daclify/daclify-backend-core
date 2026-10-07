@@ -11,6 +11,13 @@ export { runtimeAbi, runtimeAbiHash } from './generated/runtime.js';
 export type { RuntimeActions, instruction } from './generated/runtime.js';
 export { RuntimeActionSchemas, RuntimeTableSchemas } from './generated/schemas.js';
 export { governanceSettings } from './dao.js';
+export {
+  bindingTypedData,
+  governanceTypedData,
+  evmTypedDigest,
+  canonicalEvmSignature,
+  type EvmBinding,
+} from './evm.js';
 const abi = ABI.from(runtimeAbi);
 export function encodeAction<K extends keyof RuntimeActions>(
   name: K,

@@ -6,6 +6,8 @@ export function unlockFixtureWallet(container: string): void {
     'daclify-dao-presets-native',
     'daclify-platform-native',
     'daclify-access-native',
+    'daclify-research-native',
+    'daclify-research-paid-native',
   ]).parse(container);
   try {
     const base = ['exec', container, 'cleos', '--wallet-url', 'http://127.0.0.1:8900', 'wallet'];

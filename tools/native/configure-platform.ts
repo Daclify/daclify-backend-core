@@ -8,8 +8,12 @@ import { fixtureKey } from './keys.js';
 import { unlockFixtureWallet } from './wallet.js';
 const network = z
   .object({
-    container: z.enum(['daclify-platform-native', 'daclify-access-native']),
-    url: z.enum(['http://127.0.0.1:19988', 'http://127.0.0.1:20088']),
+    container: z.enum([
+      'daclify-platform-native',
+      'daclify-access-native',
+      'daclify-research-paid-native',
+    ]),
+    url: z.enum(['http://127.0.0.1:19988', 'http://127.0.0.1:20088', 'http://127.0.0.1:20288']),
     chainId: z.string(),
   })
   .parse(JSON.parse(readFileSync('.artifacts/native/network.json', 'utf8')));
@@ -67,8 +71,20 @@ for (const [id, title, summary] of [
   ['decide', 'Decide', 'Ballots and proposals for a DAO.'],
   ['works', 'Works', 'Proposals, milestones and review.'],
   ['payroll', 'Payroll', 'Funded payment schedules.'],
+  ['grants', 'Grants rounds', 'Applications and DAO-approved milestone awards.'],
+  ['endorse', 'Endorsement admission', 'Opt-in member endorsement admission.'],
 ] as const) {
-  action('daclifycore', 'listmod', [id, 'alice', 0, 1, '0.0000 TLOS', ModuleCodeHashes[id], title]);
+  action('daclifycore', 'listmod', [
+    id,
+    'alice',
+    0,
+    1,
+    '0.0000 TLOS',
+    ModuleCodeHashes[
+      id === 'grants' ? 'grants-rounds' : id === 'endorse' ? 'endorsement-admission' : id
+    ],
+    title,
+  ]);
   action('daclifycore', 'setmodcopy', [id, summary, '']);
 }
 action('daclifycore', 'setcreate', [2000, 5000, 2000, 'relay']);

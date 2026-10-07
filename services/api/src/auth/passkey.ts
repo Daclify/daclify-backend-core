@@ -3,6 +3,7 @@ import type { Pool } from 'pg';
 import { z } from 'zod';
 import { ApiError } from '../errors.js';
 import { insertAccountSession, uniqueViolation, withTransaction } from './account-session.js';
+import { revokeCredentialSessions } from './intent.js';
 import { verifyPasskeyAssertion, verifyPasskeyRegistration } from './passkey-proof.js';
 import type { Account } from '../../../../protocol/api.js';
 
@@ -45,27 +46,33 @@ async function consume(
   purpose: 'passkey-register' | 'passkey-login',
   challenge: Uint8Array,
   accountId: string | null,
+  context: Uint8Array,
 ): Promise<void> {
   const consumed = await pool.query(
     `UPDATE signin_challenges SET consumed_at=now()
      WHERE consumed_at IS NULL AND expires_at>now()
        AND id=(SELECT id FROM signin_challenges
        WHERE purpose=$1 AND secret_hash=$2 AND consumed_at IS NULL AND expires_at>now()
-         AND account_id IS NOT DISTINCT FROM $3
+         AND account_id IS NOT DISTINCT FROM $3 AND context_hash=$4
        ORDER BY created_at LIMIT 1)
      RETURNING id`,
-    [purpose, digest(challenge), accountId],
+    [purpose, digest(challenge), accountId, context],
   );
   if (consumed.rowCount !== 1) throw new ApiError('PASSKEY_INVALID', 401);
 }
 
-export async function beginPasskeyRegistration(pool: Pool, accountId: string, origin: string) {
+export async function beginPasskeyRegistration(
+  pool: Pool,
+  accountId: string,
+  origin: string,
+  context: Uint8Array,
+) {
   await limited(pool, 'passkey-register', accountId, 8);
   const challenge = randomBytes(32);
   await pool.query(
-    `INSERT INTO signin_challenges(id,purpose,account_id,secret_hash,expires_at)
-     VALUES($1,'passkey-register',$2,$3,now()+interval '5 minutes')`,
-    [randomUUID(), accountId, digest(challenge)],
+    `INSERT INTO signin_challenges(id,purpose,account_id,secret_hash,context_hash,expires_at)
+     VALUES($1,'passkey-register',$2,$3,$4,now()+interval '5 minutes')`,
+    [randomUUID(), accountId, digest(challenge), context],
   );
   const existing = await pool.query<{ credential_id: Buffer }>(
     'SELECT credential_id FROM passkeys WHERE account_id=$1 ORDER BY created_at',
@@ -99,11 +106,12 @@ export async function finishPasskeyRegistration(
   accountId: string,
   origin: string,
   input: { clientDataJSON: string; attestationObject: string },
+  context: Uint8Array,
 ): Promise<{ id: string }> {
   const clientDataJSON = encoded(input.clientDataJSON);
   const attestationObject = encoded(input.attestationObject);
   const challenge = challengeOf(clientDataJSON);
-  await consume(pool, 'passkey-register', challenge, accountId);
+  await consume(pool, 'passkey-register', challenge, accountId, context);
   let verified: ReturnType<typeof verifyPasskeyRegistration>;
   try {
     verified = verifyPasskeyRegistration({ origin, challenge, clientDataJSON, attestationObject });
@@ -132,12 +140,12 @@ export async function finishPasskeyRegistration(
   return { id: Buffer.from(verified.credentialId).toString('base64url') };
 }
 
-export async function beginPasskeyLogin(pool: Pool, origin: string) {
+export async function beginPasskeyLogin(pool: Pool, origin: string, context: Uint8Array) {
   const challenge = randomBytes(32);
   await pool.query(
-    `INSERT INTO signin_challenges(id,purpose,secret_hash,expires_at)
-     VALUES($1,'passkey-login',$2,now()+interval '5 minutes')`,
-    [randomUUID(), digest(challenge)],
+    `INSERT INTO signin_challenges(id,purpose,secret_hash,context_hash,expires_at)
+     VALUES($1,'passkey-login',$2,$3,now()+interval '5 minutes')`,
+    [randomUUID(), digest(challenge), context],
   );
   return {
     challenge: challenge.toString('base64url'),
@@ -156,13 +164,14 @@ export async function finishPasskeyLogin(
     authenticatorData: string;
     signature: string;
   },
+  context: Uint8Array,
 ): Promise<{ account: Account; token: string; csrfToken: string }> {
   const credentialId = encoded(input.credentialId, 2048);
   const clientDataJSON = encoded(input.clientDataJSON);
   const authenticatorData = encoded(input.authenticatorData, 2048);
   const signature = encoded(input.signature, 512);
   const challenge = challengeOf(clientDataJSON);
-  await consume(pool, 'passkey-login', challenge, null);
+  await consume(pool, 'passkey-login', challenge, null, context);
   const found = (
     await pool.query<{ account_id: string; public_key: Buffer; sign_count: string }>(
       'SELECT account_id,public_key,sign_count::text FROM passkeys WHERE credential_id=$1',
@@ -190,7 +199,11 @@ export async function finishPasskeyLogin(
       [checked.signCount, credentialId, found.sign_count],
     );
     if (updated.rowCount !== 1) throw new ApiError('PASSKEY_INVALID', 401);
-    return insertAccountSession(client, found.account_id);
+    return insertAccountSession(
+      client,
+      found.account_id,
+      `passkey:${credentialId.toString('base64url')}`,
+    );
   });
 }
 
@@ -205,11 +218,14 @@ export async function removePasskey(
   } catch {
     throw new ApiError('CREDENTIAL_UNKNOWN', 404);
   }
-  const deleted = await pool.query(
-    'DELETE FROM passkeys WHERE credential_id=$1 AND account_id=$2',
-    [id, accountId],
-  );
-  if (deleted.rowCount !== 1) throw new ApiError('CREDENTIAL_UNKNOWN', 404);
+  await withTransaction(pool, async (client) => {
+    const deleted = await client.query(
+      'DELETE FROM passkeys WHERE credential_id=$1 AND account_id=$2',
+      [id, accountId],
+    );
+    if (deleted.rowCount !== 1) throw new ApiError('CREDENTIAL_UNKNOWN', 404);
+    await revokeCredentialSessions(client, accountId, `passkey:${id.toString('base64url')}`);
+  });
 }
 
 export async function listPasskeys(pool: Pool, accountId: string): Promise<{ id: string }[]> {

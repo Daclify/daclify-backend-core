@@ -1,7 +1,18 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Pool } from 'pg';
 import { z } from 'zod';
+import { createHash, randomBytes } from 'node:crypto';
 import type { Account } from '../../../../protocol/api.js';
+import {
+  CredentialHistoryQuerySchema,
+  CredentialHistorySchema,
+  SignInProofSchema as ProofSchema,
+  SignInEmailSchema as EmailSchema,
+  SignInEmailCodeSchema as EmailCodeSchema,
+  SignInPasskeyRegisterSchema as PasskeyRegisterSchema,
+  SignInPasskeyLoginSchema as PasskeyLoginSchema,
+  SignInRemoveSchema as RemoveSchema,
+} from '../../../../protocol/sign-in.js';
 import { ApiError } from '../errors.js';
 import { createWindowLimiter } from '../limits.js';
 import {
@@ -32,25 +43,6 @@ export interface SignInConfiguration {
   deliverEmail?: (to: string, code: string) => Promise<void>;
 }
 
-const ProofSchema = z.strictObject({ proof: z.string().min(1).max(16384) });
-const EmailSchema = z.strictObject({ email: z.string().min(3).max(254) });
-const EmailCodeSchema = EmailSchema.extend({ code: z.string().regex(/^\d{8}$/) });
-const EncodedSchema = z.string().regex(/^[A-Za-z0-9_-]{1,16384}$/);
-const PasskeyRegisterSchema = z.strictObject({
-  clientDataJSON: EncodedSchema,
-  attestationObject: EncodedSchema,
-});
-const PasskeyLoginSchema = z.strictObject({
-  credentialId: z.string().regex(/^[A-Za-z0-9_-]{1,2048}$/),
-  clientDataJSON: EncodedSchema,
-  authenticatorData: EncodedSchema,
-  signature: EncodedSchema,
-});
-const RemoveSchema = z.strictObject({
-  method: z.enum(['telegram', 'email', 'passkey']),
-  subject: z.string().min(1).max(2048),
-});
-
 function emailDelivery(signIn: SignInConfiguration | undefined): 'local' | 'mail' | 'unavailable' {
   if (signIn?.deliverEmail) return 'mail';
   if (signIn?.environment === 'local') return 'local';
@@ -77,16 +69,72 @@ export function registerSignInRoutes(
   });
   const delivery = emailDelivery(signIn);
   const telegram = providers?.telegram;
+  const secure = new URL(origin).protocol === 'https:';
+  const attemptCookie = secure ? '__Host-daclify_signin_attempt' : 'daclify_signin_attempt';
+  function context(request: FastifyRequest, reply?: FastifyReply): Buffer {
+    let value = request.cookies[attemptCookie];
+    if (!value || !/^[A-Za-z0-9_-]{43}$/.test(value)) {
+      if (!reply) throw new ApiError('SIGNIN_ATTEMPT_INVALID', 401);
+      value = randomBytes(32).toString('base64url');
+      reply.setCookie(attemptCookie, value, {
+        path: '/',
+        httpOnly: true,
+        secure,
+        sameSite: 'strict',
+        maxAge: 600,
+      });
+    }
+    return createHash('sha256').update(value).digest();
+  }
+  function pairingContext(request: FastifyRequest): Buffer {
+    return createHash('sha256')
+      .update(request.cookies[cookieName] ?? '')
+      .digest();
+  }
   function csrf(header: string | string[] | undefined): string {
     return typeof header === 'string' ? header : '';
   }
   function account(request: FastifyRequest) {
     return session(request.cookies[cookieName], csrf(request.headers['x-csrf-token']));
   }
+  app.get('/v1/account/history', async (request) => {
+    const current = await session(request.cookies[cookieName]);
+    const query = CredentialHistoryQuerySchema.parse(request.query);
+    const result = await pool.query<{ id: string; public_reference: unknown; created_at: Date }>(
+      "SELECT id::text,public_reference,created_at FROM audit_events WHERE account_id=$1 AND kind='credential.change' AND ($2::bigint IS NULL OR id<$2) ORDER BY id DESC LIMIT 51",
+      [current.id, query.before ?? null],
+    );
+    const entries = result.rows.slice(0, 50).map((row) => ({
+      ...CredentialHistorySchema.shape.entries.element
+        .omit({ id: true, at: true })
+        .parse(row.public_reference),
+      id: row.id,
+      at: row.created_at.toISOString(),
+    }));
+    return { entries, next: result.rows.length > 50 ? (entries.at(-1)?.id ?? null) : null };
+  });
+  app.post('/v1/sign-in/session', async (request) => {
+    z.strictObject({}).parse(request.body);
+    const token = request.cookies[cookieName];
+    const current = await session(token);
+    if (!token) throw new ApiError('AUTH_REQUIRED', 401);
+    const csrfToken = randomBytes(32).toString('base64url');
+    const changed = await pool.query(
+      'UPDATE sessions SET csrf_hash=$2 WHERE token_hash=$1 AND revoked_at IS NULL AND expires_at>now()',
+      [
+        createHash('sha256').update(token).digest(),
+        createHash('sha256').update(csrfToken).digest(),
+      ],
+    );
+    if (changed.rowCount !== 1) throw new ApiError('AUTH_REQUIRED', 401);
+    return { account: current, csrfToken };
+  });
   app.get('/v1/sign-in/options', async () => ({
     telegram: {
-      configured: Boolean(telegram?.botToken && telegram.botUsername),
+      configured: Boolean(telegram?.oidc || (telegram?.botToken && telegram.botUsername)),
       username: telegram?.botUsername ?? null,
+      oidc: Boolean(telegram?.oidc),
+      miniApp: Boolean(telegram?.botToken),
     },
     email: { delivery },
     passkey: { rpId: new URL(origin).hostname },
@@ -103,9 +151,11 @@ export function registerSignInRoutes(
         .map((row) => row.provider_key.slice(prefix.length));
     return {
       telegram: {
-        configured: Boolean(telegram?.botToken && telegram.botUsername),
+        configured: Boolean(telegram?.oidc || (telegram?.botToken && telegram.botUsername)),
         username: telegram?.botUsername ?? null,
         subjects: subjects('telegram:'),
+        oidc: Boolean(telegram?.oidc),
+        miniApp: Boolean(telegram?.botToken),
       },
       email: { delivery, subjects: subjects('email:') },
       passkeys: await listPasskeys(pool, current.id),
@@ -113,12 +163,12 @@ export function registerSignInRoutes(
   });
   app.post('/v1/sign-in/telegram', async (request) => {
     const current = await account(request);
-    if (!telegram) throw new ApiError('PROVIDER_UNCONFIGURED', 503);
+    if (!telegram?.botToken) throw new ApiError('PROVIDER_UNCONFIGURED', 503);
     const input = ProofSchema.parse(request.body);
     return linkProvider(pool, current.id, verifyTelegram(input.proof, telegram.botToken));
   });
   app.post('/v1/sign-in/telegram/login', async (request, reply) => {
-    if (!telegram) throw new ApiError('PROVIDER_UNCONFIGURED', 503);
+    if (!telegram?.botToken) throw new ApiError('PROVIDER_UNCONFIGURED', 503);
     const input = ProofSchema.parse(request.body);
     const result = await openLinkedSession(pool, verifyTelegram(input.proof, telegram.botToken));
     sessionCookie(reply, result.token);
@@ -128,29 +178,41 @@ export function registerSignInRoutes(
     const current = await account(request);
     const input = EmailSchema.parse(request.body);
     if (signIn?.deliverEmail) {
-      return startEmailLink(pool, current.id, input.email, {
-        revealCode: false,
-        deliver: signIn.deliverEmail,
-      });
+      return startEmailLink(
+        pool,
+        current.id,
+        input.email,
+        {
+          revealCode: false,
+          deliver: signIn.deliverEmail,
+        },
+        pairingContext(request),
+      );
     }
     if (signIn?.environment === 'local') {
-      return startEmailLink(pool, current.id, input.email, { revealCode: true });
+      return startEmailLink(
+        pool,
+        current.id,
+        input.email,
+        { revealCode: true },
+        pairingContext(request),
+      );
     }
     throw new ApiError('EMAIL_UNAVAILABLE', 503);
   });
   app.post('/v1/sign-in/email/confirm', async (request) => {
     const current = await account(request);
     const input = EmailCodeSchema.parse(request.body);
-    return confirmEmailLink(pool, current.id, input.email, input.code);
+    return confirmEmailLink(pool, current.id, input.email, input.code, pairingContext(request));
   });
-  app.post('/v1/sign-in/email/login/start', async (request) => {
+  app.post('/v1/sign-in/email/login/start', async (request, reply) => {
     const input = EmailSchema.parse(request.body);
     if (!signIn?.deliverEmail) throw new ApiError('EMAIL_UNAVAILABLE', 503);
-    return startEmailLogin(pool, input.email, signIn.deliverEmail);
+    return startEmailLogin(pool, input.email, signIn.deliverEmail, context(request, reply));
   });
   app.post('/v1/sign-in/email/login', async (request, reply) => {
     const input = EmailCodeSchema.parse(request.body);
-    const result = await confirmEmailLogin(pool, input.email, input.code);
+    const result = await confirmEmailLogin(pool, input.email, input.code, context(request));
     sessionCookie(reply, result.token);
     return { account: result.account, csrfToken: result.csrfToken };
   });
@@ -158,8 +220,9 @@ export function registerSignInRoutes(
     return typeof request.headers.origin === 'string' ? request.headers.origin : origin;
   }
   app.post('/v1/sign-in/passkey/register/options', async (request) => {
+    z.strictObject({}).parse(request.body);
     const current = await account(request);
-    return beginPasskeyRegistration(pool, current.id, site(request));
+    return beginPasskeyRegistration(pool, current.id, site(request), pairingContext(request));
   });
   app.post('/v1/sign-in/passkey/register', async (request) => {
     const current = await account(request);
@@ -168,16 +231,19 @@ export function registerSignInRoutes(
       current.id,
       site(request),
       PasskeyRegisterSchema.parse(request.body),
+      pairingContext(request),
     );
   });
-  app.post('/v1/sign-in/passkey/login/options', async (request) =>
-    beginPasskeyLogin(pool, site(request)),
-  );
+  app.post('/v1/sign-in/passkey/login/options', async (request, reply) => {
+    z.strictObject({}).parse(request.body);
+    return beginPasskeyLogin(pool, site(request), context(request, reply));
+  });
   app.post('/v1/sign-in/passkey/login', async (request, reply) => {
     const result = await finishPasskeyLogin(
       pool,
       site(request),
       PasskeyLoginSchema.parse(request.body),
+      context(request),
     );
     sessionCookie(reply, result.token);
     return { account: result.account, csrfToken: result.csrfToken };

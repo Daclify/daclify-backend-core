@@ -8,6 +8,8 @@ The implementation is not a production release. `npm run package:release` still 
 
 ## Read next
 
+The 0.5.0-alpha.1 research implementation adds paired login and direct linked-wallet governance, v3 discovery metadata, contribution agreements, spending receipts/reports, grant rounds, endorsement admission and representative elections. [Execution evidence](docs/evidence/2026-10-07-research-execution.md), [provider setup](docs/operations/paired-login.md) and [upgrade instructions](docs/operations/upgrade-0.5.md) distinguish verified local behavior from external production gates.
+
 - [Development checkouts and tests](docs/development.md) covers Node, bootstrap, the local fixture, and which suite proves what.
 - [Operations](docs/operations.md) covers the three deploy profiles, testnet account names, Stripe, the TLOS quote, and the frontend network switch.
 - [Implementation limits](docs/evidence/implementation-limits.md) records what has been exercised and what is still held.
@@ -17,9 +19,9 @@ The implementation is not a production release. `npm run package:release` still 
 
 ## What is implemented
 
-The runtime owns DAO identity, roles, governance credits, one native treasury asset per DAO, obligations, and native settlement. The Hub lists deployments. Decide, Works, and payroll live in the modules repository and settle through this runtime. A module install that keeps any action stores the `get_code_hash` pin for that account. Direct module-key calls do not pass the sender check. `confirmext` stores a DAO-confirmed external payment statement and does not pay. `payroll::settle` pays every installment that is already due on that schedule.
+The runtime owns DAO identity, roles, governance credits, one native treasury asset per DAO, obligations, and native settlement. The Hub lists deployments. Decide, Works, Payroll, Grants rounds and Endorsement admission live in the modules repository and settle through this runtime. A module install that keeps any action stores the `get_code_hash` pin for that account. Direct module-key calls do not pass the sender check. `confirmext` stores a DAO-confirmed external payment statement and does not pay. `payroll::settle` pays every installment that is already due on that schedule.
 
-The API serves the versioned routes in `protocol/routes.ts`, plus the billing routes below, which are intentionally outside the packed route table. PostgreSQL migrations are `migrations/001_core.sql`, `migrations/002_hosted_content.sql`, and `migrations/003_service_payments.sql`. The first two are immutable. The third adds `service_payments` and is applied the next time the API starts. Do not edit a migration after a database has applied it.
+The API serves the versioned routes in `protocol/routes.ts`, plus the billing routes below, which are intentionally outside the packed route table. PostgreSQL migrations 001–014 include content/payments, account-control intents, paired native/EOA sign-in, Telegram OIDC, credential provenance/history and return destinations. Applied migration bytes are immutable. The actual seven-migration schema is exercised by the upgrade test before current migrations are applied.
 
 User-controlled accounts keep signing and decryption keys in the browser. Managed recovery is an OpenBao development boundary, not a production custody operation. Hosted files can use Pinata when `PINATA_JWT` and `CONTENT_GATEWAY` are set in the gitignored environment file. The uploader uses the public network and does not send a group id.
 
@@ -37,7 +39,7 @@ npm test
 npm run verify
 ```
 
-`npm test` does not run `tests/integration`, `tests/providers`, or `tests/native`. Those are `npm run test:integration`, `npm run test:providers`, and `npm run test:native`. Integration tests require an isolated database whose name ends in `_test`. Browser journeys are run from the frontend repository. A green local `npm run verify` does not mean GitHub Actions has run. This launch does not use GitHub Actions.
+`npm test` does not run `tests/integration`, `tests/providers`, or `tests/native`. Those are `npm run test:integration`, `npm run test:providers`, and `npm run test:native`. Integration tests require an isolated database whose name ends in `_test`. Native qualification uses both `test:native:research` and `test:native:paid` with their matching owned fixture bundles; their bootstrap/payment setup is deliberately different. See the 0.5 upgrade runbook. Browser journeys are run from the frontend repository. A green local `npm run verify` does not mean GitHub Actions has run. This launch does not use GitHub Actions.
 
 ## Deploy profiles
 

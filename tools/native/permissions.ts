@@ -1,40 +1,22 @@
 import { execFileSync } from 'node:child_process';
 import { z } from 'zod';
-export const localCoreCallbacks = [
-  'setdaogov',
-  'addmember',
-  'addsession',
-  'delsession',
-  'rotatekey',
-  'setmeta',
-  'setprofile',
-  'putdoc',
-  'putjson',
-  'commitepoch',
-  'rotateepoch',
-  'linknative',
-  'setactive',
-  'setroles',
-  'grantkey',
-  'withdraw',
-  'unstake',
-  'modconfig',
-  'setcredits',
-  'confirmext',
-  'govfees',
-  'govcreate',
-  'govlist',
-  'govunlist',
-  'govmodcopy',
-] as const;
-export function configureFixtureContext(container: string, runtime = 'daclifycore'): void {
+import { contextPermissionPlan } from '../deploy/permissions.js';
+export function configureFixtureContext(
+  container: string,
+  runtime = 'daclifycore',
+  moduleAccounts: Partial<
+    Record<'decide' | 'works' | 'payroll' | 'grants' | 'endorse', string>
+  > = {},
+): void {
   z.enum([
     'daclify-v2-native',
     'daclify-dao-presets-native',
     'daclify-platform-native',
     'daclify-access-native',
+    'daclify-research-native',
+    'daclify-research-paid-native',
   ]).parse(container);
-  z.enum(['daclifycore', 'daclifytwo']).parse(runtime);
+  z.enum(['daclifycore', 'daclifytwo', 'upgcore']).parse(runtime);
   function cleos(args: string[]): string {
     try {
       return execFileSync(
@@ -46,19 +28,20 @@ export function configureFixtureContext(container: string, runtime = 'daclifycor
       throw new Error('Local context permission configuration failed');
     }
   }
-  const authority = {
-    threshold: 1,
-    keys: [],
-    waits: [],
-    accounts: [{ permission: { actor: runtime, permission: 'eosio.code' }, weight: 1 }],
-  };
+  const plan = contextPermissionPlan(runtime, [
+    { id: 'decide', account: moduleAccounts.decide ?? 'decide' },
+    { id: 'works', account: moduleAccounts.works ?? 'works' },
+    { id: 'payroll', account: moduleAccounts.payroll ?? 'payroll' },
+    { id: 'grants-rounds', account: moduleAccounts.grants ?? 'grants' },
+    { id: 'endorsement-admission', account: moduleAccounts.endorse ?? 'endorse' },
+  ]);
   cleos([
     'set',
     'account',
     'permission',
     runtime,
     'execctx',
-    JSON.stringify(authority),
+    JSON.stringify(plan.authority),
     'active',
     '-p',
     `${runtime}@active`,
@@ -77,35 +60,19 @@ export function configureFixtureContext(container: string, runtime = 'daclifycor
     .parse(JSON.parse(cleos(['get', 'account', runtime, '--json'])));
   const linked =
     permissions.permissions.find((p) => p.perm_name === 'execctx')?.linked_actions ?? [];
-  for (const action of localCoreCallbacks)
-    if (!linked.some((link) => link.account === runtime && link.action === action))
+  for (const link of plan.links)
+    if (
+      !linked.some((current) => current.account === link.account && current.action === link.action)
+    )
       cleos([
         'set',
         'action',
         'permission',
         runtime,
-        runtime,
-        action,
+        link.account,
+        link.action,
         'execctx',
         '-p',
         `${runtime}@active`,
       ]);
-  for (const [account, actions] of [
-    ['decide', ['open', 'vote', 'openwork']],
-    ['works', ['propose', 'accept', 'submitwork', 'review', 'cancel']],
-    ['payroll', ['commit', 'edit']],
-  ] as const)
-    for (const action of actions)
-      if (!linked.some((link) => link.account === account && link.action === action))
-        cleos([
-          'set',
-          'action',
-          'permission',
-          runtime,
-          account,
-          action,
-          'execctx',
-          '-p',
-          `${runtime}@active`,
-        ]);
 }

@@ -1,5 +1,38 @@
 import { z } from 'zod';
 import { SessionSchema, ProviderLinkResultSchema } from './api.js';
+import {
+  AccountControlChallengeSchema,
+  AccountControlRequestSchema,
+  SignInProofSchema,
+  SignInEmailSchema,
+  SignInEmailCodeSchema,
+  SignInPasskeyRegisterSchema,
+  SignInPasskeyLoginSchema,
+  SignInRemoveSchema,
+  TelegramStartSchema,
+  TelegramPairConfirmSchema,
+  CredentialHistoryQuerySchema,
+  TelegramAuthorizationSchema,
+  TelegramPendingPairSchema,
+  CredentialHistorySchema,
+} from './sign-in.js';
+import {
+  NativeChallengeSchema,
+  NativeIdentitySchema,
+  NativeLinksSchema,
+  NativeIntentSchema,
+  NativeFinishSchema,
+  NativeUnlinkSchema,
+} from './native-wallet.js';
+import {
+  EvmSignInChallengeSchema,
+  EvmGovernanceBindingSchema,
+  EvmIntentSchema,
+  EvmFinishSchema,
+  EvmRelaySchema,
+  EvmChainInputSchema,
+  EvmLinkInputSchema,
+} from './evm-wallet.js';
 export const ServiceCheckoutSchema = z.strictObject({ url: z.url() });
 export const ServiceReceiptSchema = z.strictObject({
   status: z.enum(['paid', 'failed']),
@@ -17,7 +50,12 @@ export const MemberProfileSchema = z.strictObject({
 });
 export const SignInDeliverySchema = z.enum(['local', 'mail', 'unavailable']);
 export const SignInOptionsSchema = z.strictObject({
-  telegram: z.strictObject({ configured: z.boolean(), username: z.string().nullable() }),
+  telegram: z.strictObject({
+    configured: z.boolean(),
+    username: z.string().nullable(),
+    oidc: z.boolean().default(false),
+    miniApp: z.boolean().default(false),
+  }),
   email: z.strictObject({ delivery: SignInDeliverySchema }),
   passkey: z.strictObject({ rpId: z.string().min(1) }),
 });
@@ -26,6 +64,8 @@ export const SignInMethodsSchema = z.strictObject({
     configured: z.boolean(),
     username: z.string().nullable(),
     subjects: z.array(z.string()),
+    oidc: z.boolean().default(false),
+    miniApp: z.boolean().default(false),
   }),
   email: z.strictObject({ delivery: SignInDeliverySchema, subjects: z.array(z.string()) }),
   passkeys: z.array(z.strictObject({ id: z.string().min(1) })),
@@ -61,7 +101,8 @@ export const EvmLinkSchema = z.strictObject({
   chainId: TelosChainSchema,
   address: z.string().regex(/^0x[0-9a-fA-F]{40}$/),
 });
-export const EvmLinksSchema = z.strictObject({ links: z.array(EvmLinkSchema) });
+export const EvmLinkedCredentialSchema = EvmLinkSchema.extend({ controlVerified: z.boolean() });
+export const EvmLinksSchema = z.strictObject({ links: z.array(EvmLinkedCredentialSchema) });
 export const EvmChallengeSchema = z.strictObject({
   chainId: TelosChainSchema,
   message: z.string().min(1),
@@ -154,40 +195,222 @@ export const DocsAnswerSchema = z.strictObject({
 });
 
 export const ServiceResponseRoutes = [
+  {
+    method: 'POST',
+    path: '/v1/sign-in/email/login/start',
+    input: SignInEmailSchema,
+    response: z.strictObject({ delivery: z.literal('sent') }),
+  },
+  {
+    method: 'POST',
+    path: '/v1/sign-in/remove',
+    input: SignInRemoveSchema,
+    status: 204,
+    response: z.never(),
+  },
+  {
+    method: 'POST',
+    path: '/v1/account/native/unlink',
+    input: NativeUnlinkSchema,
+    status: 204,
+    response: z.never(),
+  },
+  {
+    method: 'POST',
+    path: '/v1/account/evm/unlink',
+    input: EvmChainInputSchema,
+    status: 204,
+    response: z.never(),
+  },
+  {
+    method: 'GET',
+    path: '/v1/account/history',
+    query: CredentialHistoryQuerySchema,
+    response: CredentialHistorySchema,
+  },
+  { method: 'GET', path: '/v1/daos/:id/evm/:member', response: EvmGovernanceBindingSchema },
+  {
+    method: 'POST',
+    path: '/v1/relay/evm',
+    input: EvmRelaySchema,
+    response: z.strictObject({ transactionId: z.string().regex(/^[0-9a-f]{64}$/) }),
+  },
+  {
+    method: 'POST',
+    path: '/v1/account/evm/sign-in/challenge',
+    input: EvmIntentSchema,
+    response: EvmSignInChallengeSchema,
+  },
+  {
+    method: 'POST',
+    path: '/v1/account/evm/sign-in/link',
+    input: EvmFinishSchema,
+    response: EvmLinkSchema,
+  },
+  { method: 'POST', path: '/v1/sign-in/evm', input: EvmFinishSchema, response: SessionSchema },
+  { method: 'GET', path: '/v1/account/native', response: NativeLinksSchema },
+  {
+    method: 'POST',
+    path: '/v1/account/native/challenge',
+    input: NativeIntentSchema,
+    response: NativeChallengeSchema,
+  },
+  {
+    method: 'POST',
+    path: '/v1/account/native/link',
+    input: NativeFinishSchema,
+    response: NativeIdentitySchema,
+  },
+  {
+    method: 'POST',
+    path: '/v1/sign-in/native',
+    input: NativeFinishSchema,
+    response: SessionSchema,
+  },
+  {
+    method: 'POST',
+    path: '/v1/account/control',
+    input: AccountControlRequestSchema,
+    response: AccountControlChallengeSchema,
+  },
+  {
+    method: 'POST',
+    path: '/v1/sign-in/session',
+    input: z.strictObject({}),
+    response: SessionSchema,
+  },
+  {
+    method: 'POST',
+    path: '/v1/sign-in/telegram/oidc/login/start',
+    input: TelegramStartSchema,
+    response: TelegramAuthorizationSchema,
+  },
+  {
+    method: 'POST',
+    path: '/v1/sign-in/telegram/oidc/pair/start',
+    input: TelegramStartSchema,
+    response: TelegramAuthorizationSchema,
+  },
+  {
+    method: 'GET',
+    path: '/v1/sign-in/telegram/oidc/pair/:id',
+    response: TelegramPendingPairSchema,
+  },
+  {
+    method: 'POST',
+    path: '/v1/sign-in/telegram/oidc/pair/confirm',
+    input: TelegramPairConfirmSchema,
+    response: ProviderLinkResultSchema,
+  },
   { method: 'GET', path: '/v1/profile', response: MemberProfileSchema },
   { method: 'POST', path: '/v1/billing/checkout', response: ServiceCheckoutSchema },
   { method: 'GET', path: '/v1/billing/receipts', response: ServiceReceiptsSchema },
   { method: 'GET', path: '/v1/sign-in/options', response: SignInOptionsSchema },
   { method: 'GET', path: '/v1/sign-in/methods', response: SignInMethodsSchema },
-  { method: 'POST', path: '/v1/sign-in/email/start', response: EmailStartSchema },
-  { method: 'POST', path: '/v1/sign-in/email/confirm', response: EmailSubjectSchema },
-  { method: 'POST', path: '/v1/sign-in/email/login', response: SessionSchema },
-  { method: 'POST', path: '/v1/sign-in/telegram', response: ProviderLinkResultSchema },
-  { method: 'POST', path: '/v1/sign-in/telegram/login', response: SessionSchema },
+  {
+    method: 'POST',
+    path: '/v1/sign-in/email/start',
+    input: SignInEmailSchema,
+    response: EmailStartSchema,
+  },
+  {
+    method: 'POST',
+    path: '/v1/sign-in/email/confirm',
+    input: SignInEmailCodeSchema,
+    response: EmailSubjectSchema,
+  },
+  {
+    method: 'POST',
+    path: '/v1/sign-in/email/login',
+    input: SignInEmailCodeSchema,
+    response: SessionSchema,
+  },
+  {
+    method: 'POST',
+    path: '/v1/sign-in/telegram',
+    input: SignInProofSchema,
+    response: ProviderLinkResultSchema,
+  },
+  {
+    method: 'POST',
+    path: '/v1/sign-in/telegram/login',
+    input: SignInProofSchema,
+    response: SessionSchema,
+  },
   {
     method: 'POST',
     path: '/v1/sign-in/passkey/register/options',
+    input: z.strictObject({}),
     response: PasskeyRegisterOptionsSchema,
   },
-  { method: 'POST', path: '/v1/sign-in/passkey/register', response: PasskeyRegisteredSchema },
+  {
+    method: 'POST',
+    path: '/v1/sign-in/passkey/register',
+    input: SignInPasskeyRegisterSchema,
+    response: PasskeyRegisteredSchema,
+  },
   {
     method: 'POST',
     path: '/v1/sign-in/passkey/login/options',
+    input: z.strictObject({}),
     response: PasskeyLoginOptionsSchema,
   },
-  { method: 'POST', path: '/v1/sign-in/passkey/login', response: SessionSchema },
+  {
+    method: 'POST',
+    path: '/v1/sign-in/passkey/login',
+    input: SignInPasskeyLoginSchema,
+    response: SessionSchema,
+  },
   { method: 'GET', path: '/v1/account/evm', response: EvmLinksSchema },
-  { method: 'POST', path: '/v1/account/evm/challenge', response: EvmChallengeSchema },
-  { method: 'POST', path: '/v1/account/evm/link', response: EvmLinkSchema },
+  {
+    method: 'POST',
+    path: '/v1/account/evm/challenge',
+    input: EvmChainInputSchema,
+    response: EvmChallengeSchema,
+  },
+  {
+    method: 'POST',
+    path: '/v1/account/evm/link',
+    input: EvmLinkInputSchema,
+    response: EvmLinkSchema,
+  },
   { method: 'GET', path: '/v1/marketplace', response: MarketplaceSchema },
   { method: 'GET', path: '/v1/names', response: NamesServiceSchema },
   { method: 'GET', path: '/v1/names/quote', response: NameQuoteSchema },
   { method: 'POST', path: '/v1/names/checkout', response: ServiceCheckoutSchema },
   { method: 'GET', path: '/v1/docs/agent', response: DocsAgentStatusSchema },
   { method: 'POST', path: '/v1/docs/ask', response: DocsAnswerSchema },
-] satisfies readonly { method: 'GET' | 'POST'; path: string; response: z.ZodType }[];
+] satisfies readonly {
+  method: 'GET' | 'POST';
+  path: string;
+  response: z.ZodType;
+  input?: z.ZodType;
+  query?: z.ZodType;
+  status?: number;
+}[];
 
 export const ContractFailureMessages = {
+  INSUFFICIENT_AVAILABLE:
+    'The DAO does not have enough available Treasury funds to reserve every milestone.',
+  ROUND_CAP: 'This award would exceed the round’s lifetime cap.',
+  APPLICATION_CHANGED:
+    'The application changed after voting began. Open a new vote for the current revision.',
+  APPLICATION_NOT_ELIGIBLE:
+    'Submit consent and obtain an eligibility review before proposing or executing an award.',
+  AWARDS_CLOSED: 'The award deadline has passed.',
+  ADMISSION_REQUIRED: 'This DAO requires member endorsements before admission.',
+  ADMISSION_POLICY_CHANGED: 'The admission policy changed. Submit a current application.',
+  ENDORSEMENT_THRESHOLD: 'The application needs more current eligible member endorsements.',
+  APPLICATION_REVISION:
+    'This application revision changed. Review the current terms before signing.',
+  APPLICATION_EXPIRED: 'The application expired. Ask its sponsor to renew it.',
+
+  EVM_BINDING: 'The selected EVM wallet is not currently authorized for this DAO member.',
+  EVM_UNLINKED: 'This member has no active EVM wallet authorization.',
+  EVM_BINDING_EPOCH: 'The wallet authorization changed. Refresh it before signing again.',
+  EVM_ADDRESS: 'The signature does not match the authorized EVM wallet.',
+  EVM_SIGNATURE: 'The EVM signature could not be verified.',
+  EVM_SIGNATURE_CANONICAL: 'The wallet returned an unsupported signature form.',
   GOVERNANCE_LOCKED:
     'An active ballot has locked voting weights or policy. Close the ballot before making this change.',
   POLICY_CHANGED: 'The funding policy changed. Members must approve a new funding vote.',

@@ -46,10 +46,72 @@ export function loadContract(chain: Blockchain, name: string, artifact: string):
       },
     }),
   ]);
+  // VERT 0.3.24 leaves compiler-rt 128-bit shifts unimplemented. Supply arithmetic,
+  // not authorization/cryptography mocks; matching real-native cases remain required.
+  const recreate = account.recreateVm.bind(account);
+  account.recreateVm = async () => {
+    const pending = recreate(),
+      vm = account.vm;
+    if (!vm) throw new Error('VERT_VM_REQUIRED');
+    const imports: unknown = vm.imports;
+    if (
+      typeof imports !== 'object' ||
+      imports === null ||
+      !('env' in imports) ||
+      typeof imports.env !== 'object' ||
+      imports.env === null
+    )
+      throw new Error('VERT_IMPORTS_REQUIRED');
+    for (const operation of ['__ashlti3', '__ashrti3', '__lshrti3'])
+      Reflect.set(
+        imports.env,
+        operation,
+        (pointer: number, low: bigint, high: bigint, shift: number) => {
+          if (!Number.isInteger(shift) || shift < 0 || shift > 127)
+            throw new Error('VERT_SHIFT_RANGE');
+          const value = (BigInt.asUintN(64, high) << 64n) | BigInt.asUintN(64, low);
+          const result = BigInt.asUintN(
+            128,
+            operation === '__ashlti3'
+              ? value << BigInt(shift)
+              : operation === '__ashrti3'
+                ? BigInt.asIntN(128, value) >> BigInt(shift)
+                : value >> BigInt(shift),
+          );
+          const memory = new DataView(vm.memory.buffer);
+          memory.setBigUint64(pointer, result & ((1n << 64n) - 1n), true);
+          memory.setBigUint64(pointer + 8, result >> 64n, true);
+        },
+      );
+    await pending;
+  };
   return account;
 }
 export function contractAbi(path: string): ABI {
   return ABI.from(readFileSync(`${path}.abi`, 'utf8'));
+}
+export function allowFixtureInheritedAuth(
+  chain: Blockchain,
+  accountName: string,
+  runtimeName: string,
+): void {
+  // VERT does not propagate a parent's supplied authority into an inline action.
+  // State-transition fixtures bridge that emulator gap; native tests check real incoming consent.
+  const account = chain.accounts[accountName];
+  if (!account) throw new Error('FIXTURE_ACCOUNT_REQUIRED');
+  account.setPermissions([
+    ...account.permissions.filter((permission) => permission.perm_name.toString() !== 'active'),
+    API.v1.AccountPermission.from({
+      perm_name: 'active',
+      parent: 'owner',
+      required_auth: {
+        threshold: 1,
+        keys: [],
+        waits: [],
+        accounts: [{ permission: { actor: runtimeName, permission: 'eosio.code' }, weight: 1 }],
+      },
+    }),
+  ]);
 }
 export async function send(
   account: Account,

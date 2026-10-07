@@ -149,6 +149,20 @@ describe('bounded governance locks and financial exit', () => {
       'daclifycore@active',
     );
     expect(balance().claims).toBe(0);
+    expect(row(runtime, 'receipts', 1n, 1n)).toMatchObject({
+      kind: 0,
+      obligation_id: 1,
+      recipient: 2,
+      destination: '',
+      quantity: '1.0000 TLOS',
+    });
+    expect(row(runtime, 'receipts', 1n, 2n)).toMatchObject({
+      kind: 2,
+      obligation_id: 0,
+      recipient: 2,
+      destination: 'bob',
+      quantity: '1.0000 TLOS',
+    });
   });
   it('allows an offboarded member to withdraw an accepted liability', async () => {
     await send(

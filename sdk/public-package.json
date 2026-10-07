@@ -1,6 +1,6 @@
 {
   "name": "@daclify/core-protocol",
-  "version": "0.4.0-alpha.1",
+  "version": "0.5.0-alpha.1",
   "type": "module",
   "description": "Daclify public protocol and generated contract SDK",
   "engines": {
@@ -38,6 +38,7 @@
   },
   "files": ["dist/protocol", "dist/sdk", "docs/generated", "README.md", "contracts/common"],
   "dependencies": {
+    "@noble/hashes": "2.4.0",
     "@wharfkit/antelope": "4.0.2",
     "zod": "4.6.5",
     "multiformats": "14.0.5",

@@ -23,6 +23,7 @@ import {
   PrivateKey,
   Signature,
   PublicKey,
+  Name,
 } from '@wharfkit/antelope';
 import {
   Catalog,
@@ -46,6 +47,8 @@ import {
   DecideTableSchemas,
   WorksTableSchemas,
   PayrollTableSchemas,
+  GrantsTableSchemas,
+  EndorseTableSchemas,
 } from '@daclify/modules/sdk';
 import { AccountResourceSchema, resourcesAcceptable } from './deployment-check.js';
 import { randomBytes } from 'node:crypto';
@@ -83,6 +86,10 @@ import {
   type instruction,
 } from '../../../sdk/index.js';
 import type { ChainGateway } from './chain.js';
+import type { EvmRelay } from '../../../protocol/evm-wallet.js';
+import type { Pool } from 'pg';
+import { canonicalEvmSignature, evmTypedDigest, governanceTypedData } from '../../../sdk/evm.js';
+import { recoverEvmDigest } from './auth/evm-proof.js';
 import { ApiError, contractError } from './errors.js';
 import {
   ChainPlatformSchema,
@@ -121,7 +128,10 @@ export function payrollSettlementAccount(
 }
 export class NativeChainGateway implements ChainGateway {
   private readonly api: APIClient;
-  constructor(private readonly config: NativeChainConfig) {
+  constructor(
+    private readonly config: NativeChainConfig,
+    private readonly pool?: Pool,
+  ) {
     ChainIdSchema.parse(config.chainId);
     NativeAccountSchema.parse(config.runtime);
     NativeAccountSchema.parse(config.relayActor);
@@ -136,7 +146,9 @@ export class NativeChainGateway implements ChainGateway {
     this.api = new APIClient({ url: config.rpcUrl });
   }
   async network(): Promise<Network> {
-    const presets = await this.supportsPresets();
+    const { abi } = await this.api.v1.chain.get_abi(this.config.runtime);
+    const actions = abi?.actions.map((action) => Name.from(action.name).toString()) ?? [];
+    const presets = await this.supportsPresets(actions);
     return NetworkSchema.parse({
       chainId: this.config.chainId,
       rpcUrl: this.config.rpcUrl,
@@ -149,6 +161,10 @@ export class NativeChainGateway implements ChainGateway {
         'internal-k1',
         'native-linked',
         'encrypted-documents',
+        ...(actions.includes('authproof') ? ['native-sign-in'] : []),
+        ...(actions.includes('submitevm') && actions.includes('linkevm')
+          ? ['evm-eoa-governance']
+          : []),
         ...(this.config.bootstrap ? ['shared-dao-create'] : []),
         ...(presets ? ['dao-presets', 'guarded-agents', 'governance-policy'] : []),
       ],
@@ -307,8 +323,13 @@ export class NativeChainGateway implements ChainGateway {
       this.config.relayKey,
     );
   }
-  private async supportsPresets(): Promise<boolean> {
-    const { abi } = await this.api.v1.chain.get_abi(this.config.runtime);
+  private async supportsPresets(knownActions?: readonly string[]): Promise<boolean> {
+    const actions =
+      knownActions ??
+      (await this.api.v1.chain.get_abi(this.config.runtime)).abi?.actions.map((action) =>
+        Name.from(action.name).toString(),
+      ) ??
+      [];
     return [
       'initgov',
       'setdaogov',
@@ -320,7 +341,7 @@ export class NativeChainGateway implements ChainGateway {
       'guardpause',
       'guardrevoke',
       'guardrecover',
-    ].every((name) => abi?.actions.some((action) => action.name === name));
+    ].every((name) => actions.includes(name));
   }
   async tablePage<K extends keyof typeof RuntimeTableSchemas>(
     table: K,
@@ -375,7 +396,7 @@ export class NativeChainGateway implements ChainGateway {
   private async summary(row: z.infer<typeof RuntimeTableSchemas.daos>): Promise<DaoSummary> {
     const metadata = MetadataSchema.safeParse(JSON.parse(row.metadata));
     const setup =
-      metadata.success && metadata.data.schemaVersion === 2 ? metadata.data.setup : null;
+      metadata.success && metadata.data.schemaVersion !== 1 ? metadata.data.setup : null;
     const policy = setup
       ? (await this.table('govpolicies', this.config.runtime, row.id, 1))[0]
       : undefined;
@@ -405,11 +426,14 @@ export class NativeChainGateway implements ChainGateway {
       claims: row.claims,
       keyEpoch: row.key_epoch,
       purpose:
-        metadata.success && metadata.data.schemaVersion === 2 ? metadata.data.purpose : 'custom',
+        metadata.success && metadata.data.schemaVersion !== 1 ? metadata.data.purpose : 'custom',
       participantMode: policy
         ? ['humans', 'mixed', 'agents-guarded'][policy.config.participant_mode]
         : undefined,
       setup,
+      ...(metadata.success && metadata.data.schemaVersion === 3
+        ? { branding: metadata.data.branding }
+        : {}),
     });
   }
   async content(daoId: string, query?: ContentPageQuery): Promise<DaoContent> {
@@ -481,12 +505,19 @@ export class NativeChainGateway implements ChainGateway {
   }
   async governance(daoId: string): Promise<GovernanceState> {
     const dao = await this.dao(daoId);
-    const [policies, actors, sessions, guardians, budgets] = await Promise.all([
+    const [policies, actors, sessions, guardians, budgets, admission] = await Promise.all([
       this.table('govpolicies', this.config.runtime, daoId, 1),
       this.table('actors', daoId, '0', 5000),
       this.table('sessions', daoId, '0', 5000),
       this.table('guards', this.config.runtime, daoId, 1),
       this.table('budgets', this.config.runtime, daoId, 1),
+      this.api.v1.chain
+        .get_abi(this.config.runtime)
+        .then((result) =>
+          result.abi?.tables.some((table) => table.name === 'admpolicies')
+            ? this.table('admpolicies', this.config.runtime, daoId, 1)
+            : [],
+        ),
     ]);
     return GovernanceStateSchema.parse({
       dao: dao.reference,
@@ -495,6 +526,7 @@ export class NativeChainGateway implements ChainGateway {
       sessions,
       guardian: guardians.find((row) => row.dao_id === daoId) ?? null,
       budget: budgets.find((row) => row.dao_id === daoId) ?? null,
+      admission: admission.find((row) => row.dao_id === daoId) ?? null,
     });
   }
   async dao(daoId: string): Promise<DaoSummary> {
@@ -504,10 +536,14 @@ export class NativeChainGateway implements ChainGateway {
   }
   async treasury(daoId: string): Promise<Treasury> {
     const dao = await this.dao(daoId);
+    const abi = await this.api.v1.chain.get_abi(this.config.runtime);
+    const receiptsAvailable = abi.abi?.tables.some((table) => table.name === 'receipts') === true;
     return TreasurySchema.parse({
       dao: dao.reference,
       obligations: await this.table('obligations', daoId, '0', 5000),
       evidence: evidenceForDao(await this.evidenceRows(), daoId),
+      receipts: receiptsAvailable ? await this.table('receipts', daoId, '0', 5000) : [],
+      receiptsAvailable,
     });
   }
   private async evidenceRows(): Promise<z.infer<typeof RuntimeTableSchemas.evidence>[]> {
@@ -604,7 +640,8 @@ export class NativeChainGateway implements ChainGateway {
     // This read model is intentionally bounded; an indexed projection replaces scans before large deployments.
     for (const dao of daos) {
       const rows = await this.table('members', dao.reference.daoId, '0', 5000);
-      const member = rows.find((row) => row.signing_key === account.signingKey);
+      const id = await this.memberIdentity(account, dao.reference.daoId, rows);
+      const member = rows.find((row) => row.id === id);
       if (member)
         matches.push(
           UserMembershipSchema.parse({
@@ -619,10 +656,30 @@ export class NativeChainGateway implements ChainGateway {
             stake: member.stake,
             nativeAccount: member.native_account,
             custody: member.custody === 0 ? 'user-controlled' : 'managed',
+            signingKey: member.signing_key,
           }),
         );
     }
     return matches;
+  }
+  private async memberIdentity(
+    account: Account,
+    daoId: string,
+    rows: z.infer<typeof RuntimeTableSchemas.members>[],
+  ): Promise<string | undefined> {
+    const root = rows.find((row) => row.signing_key === account.signingKey);
+    if (!this.pool) return root?.id;
+    // A recorded root-key identity survives rotation; a newly paired wallet never creates this association.
+    if (root)
+      await this.pool.query(
+        'INSERT INTO memberships(account_id,chain_id,contract,dao_id,member_id) VALUES($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING',
+        [account.id, this.config.chainId, this.config.runtime, daoId, root.id],
+      );
+    const saved = await this.pool.query<{ member_id: string }>(
+      'SELECT member_id::text FROM memberships WHERE account_id=$1 AND chain_id=$2 AND contract=$3 AND dao_id=$4',
+      [account.id, this.config.chainId, this.config.runtime, daoId],
+    );
+    return saved.rows[0]?.member_id;
   }
   async memberProfile(
     daoId: string,
@@ -939,7 +996,9 @@ export class NativeChainGateway implements ChainGateway {
     const deployment = state.modules.find((module) => module.deployment.id === 'decide');
     if (!deployment?.compatible || !deployment.codeVerified)
       throw new ApiError('MODULE_UNVERIFIED', 409);
-    const plan = state.executions.find((plan) => plan.ballot_id === input.ballotId);
+    input = ModuleApiRoutes.execute.input.parse(input);
+    const awardPlan = state.grantPlans.find((plan) => plan.ballot_id === input.ballotId);
+    const plan = awardPlan ?? state.executions.find((plan) => plan.ballot_id === input.ballotId);
     if (!plan) throw new ApiError('EXECUTION_UNKNOWN', 404);
     if (plan.executed) return { state: 'already-executed' };
     const ballot = state.ballots.find((ballot) => ballot.id === input.ballotId);
@@ -947,8 +1006,8 @@ export class NativeChainGateway implements ChainGateway {
     try {
       const result = await this.pushEncoded(
         deployment.deployment.account,
-        'execute',
-        encodeDecide('execute', {
+        awardPlan ? 'executeaward' : 'execute',
+        encodeDecide(awardPlan ? 'executeaward' : 'execute', {
           runtime: input.dao.contract,
           dao_id: input.dao.daoId,
           ballot_id: input.ballotId,
@@ -959,7 +1018,11 @@ export class NativeChainGateway implements ChainGateway {
       return { state: 'executed', transactionId: result.transactionId };
     } catch (cause) {
       const current = await this.moduleState(input.dao.daoId);
-      if (current.executions.some((plan) => plan.ballot_id === input.ballotId && plan.executed))
+      if (
+        [...current.executions, ...current.grantPlans].some(
+          (plan) => plan.ballot_id === input.ballotId && plan.executed,
+        )
+      )
         return { state: 'already-executed' };
       throw cause;
     }
@@ -1037,21 +1100,43 @@ export class NativeChainGateway implements ChainGateway {
           ballots: all.next.ballots ?? 'done',
           projects: all.next.projects ?? 'done',
           schedules: all.next.schedules ?? 'done',
+          rounds: all.next.rounds ?? 'done',
+          applications: all.next.applications ?? 'done',
+          joinApplications: all.next.joinApplications ?? 'done',
+          elections: all.next.elections ?? 'done',
+          terms: all.next.terms ?? 'done',
         });
         all.ballots.push(...page.ballots);
         all.votes.push(...page.votes);
         all.projects.push(...page.projects);
         all.milestones.push(...page.milestones);
+        all.agreements.push(...page.agreements);
         all.schedules.push(...page.schedules);
         all.entries.push(...page.entries);
         all.controls.push(...page.controls);
         all.executions.push(...page.executions);
+        all.grantPlans.push(...page.grantPlans);
+        all.rounds.push(...page.rounds);
+        all.applications.push(...page.applications);
+        all.joinApplications.push(...page.joinApplications);
+        all.elections.push(...page.elections);
+        all.nominations.push(...page.nominations);
+        all.terms.push(...page.terms);
         all.next = page.next;
       }
       return all;
     }
     query = ModulePageQuerySchema.parse(query);
-    const next: ModuleState['next'] = { ballots: null, projects: null, schedules: null };
+    const next: ModuleState['next'] = {
+      ballots: null,
+      projects: null,
+      schedules: null,
+      rounds: null,
+      applications: null,
+      joinApplications: null,
+      elections: null,
+      terms: null,
+    };
     const dao = (await this.table('daos', this.config.runtime, daoId, 1))[0];
     if (!dao || dao.id !== daoId) throw new ApiError('DAO_UNKNOWN', 404);
     const installed = await this.table('modules', daoId, '0', 100);
@@ -1060,10 +1145,18 @@ export class NativeChainGateway implements ChainGateway {
     let votes: ModuleState['votes'] = [];
     let projects: ModuleState['projects'] = [];
     let milestones: ModuleState['milestones'] = [];
+    let agreements: ModuleState['agreements'] = [];
     let schedules: ModuleState['schedules'] = [];
     let entries: ModuleState['entries'] = [];
     let controls: ModuleState['controls'] = [];
     let executions: ModuleState['executions'] = [];
+    let elections: ModuleState['elections'] = [],
+      nominations: ModuleState['nominations'] = [],
+      terms: ModuleState['terms'] = [];
+    let joinApplications: ModuleState['joinApplications'] = [];
+    let grantPlans: ModuleState['grantPlans'] = [],
+      rounds: ModuleState['rounds'] = [],
+      applications: ModuleState['applications'] = [];
     for (const deployment of this.config.modules ?? []) {
       NativeAccountSchema.parse(deployment.account);
       const manifest = Catalog.find((item) => item.id === deployment.id);
@@ -1104,6 +1197,39 @@ export class NativeChainGateway implements ChainGateway {
       if (!verified) continue;
       if (!enabled) continue;
       if (deployment.id === 'decide') {
+        const electionPage = await this.modulePage(
+          deployment.account,
+          'elections',
+          DecideTableSchemas.elections,
+          daoId,
+          query.elections,
+        );
+        elections = electionPage.rows;
+        next.elections = electionPage.next;
+        const termPage = await this.modulePage(
+          deployment.account,
+          'terms',
+          DecideTableSchemas.terms,
+          daoId,
+          query.terms,
+        );
+        terms = termPage.rows;
+        next.terms = termPage.next;
+        for (const election of elections) {
+          const nominees = await this.moduleRows(
+            deployment.account,
+            'nominations',
+            DecideTableSchemas.nominations,
+            election.id,
+            election.id,
+            3,
+            'i64',
+            15,
+          );
+          nominations.push(
+            ...nominees.rows.filter((n) => n.dao_id === daoId && n.election_id === election.id),
+          );
+        }
         const page = await this.modulePage(
           deployment.account,
           'ballots',
@@ -1126,6 +1252,19 @@ export class NativeChainGateway implements ChainGateway {
           );
           executions.push(
             ...plan.rows.filter((row) => row.ballot_id === ballot.id && row.dao_id === daoId),
+          );
+          const award = await this.moduleRows(
+            deployment.account,
+            'grantplans',
+            DecideTableSchemas.grantplans,
+            ballot.id,
+            ballot.id,
+            1,
+            'i64',
+            1,
+          );
+          grantPlans.push(
+            ...award.rows.filter((row) => row.ballot_id === ballot.id && row.dao_id === daoId),
           );
           if (query.memberId) {
             const key = ((BigInt(ballot.id) << 64n) | BigInt(query.memberId)).toString();
@@ -1158,6 +1297,19 @@ export class NativeChainGateway implements ChainGateway {
         projects = page.rows;
         next.projects = page.next;
         for (const project of projects) {
+          const consent = await this.moduleRows(
+            deployment.account,
+            'agreements',
+            WorksTableSchemas.agreements,
+            project.id,
+            project.id,
+            1,
+            'i64',
+            1,
+          );
+          agreements.push(
+            ...consent.rows.filter((row) => row.dao_id === daoId && row.project_id === project.id),
+          );
           const items = await this.moduleRows(
             deployment.account,
             'milestones',
@@ -1172,6 +1324,37 @@ export class NativeChainGateway implements ChainGateway {
             ...items.rows.filter((row) => row.project_id === project.id && row.dao_id === daoId),
           );
         }
+      }
+      if (deployment.id === 'endorsement-admission') {
+        const page = await this.modulePage(
+          deployment.account,
+          'joinapps',
+          EndorseTableSchemas.joinapps,
+          daoId,
+          query.joinApplications,
+        );
+        joinApplications = page.rows;
+        next.joinApplications = page.next;
+      }
+      if (deployment.id === 'grants-rounds') {
+        const r = await this.modulePage(
+          deployment.account,
+          'rounds',
+          GrantsTableSchemas.rounds,
+          daoId,
+          query.rounds,
+        );
+        rounds = r.rows;
+        next.rounds = r.next;
+        const a = await this.modulePage(
+          deployment.account,
+          'applications',
+          GrantsTableSchemas.applications,
+          daoId,
+          query.applications,
+        );
+        applications = a.rows;
+        next.applications = a.next;
       }
       if (deployment.id === 'payroll') {
         const page = await this.modulePage(
@@ -1224,10 +1407,18 @@ export class NativeChainGateway implements ChainGateway {
       votes,
       projects,
       milestones,
+      agreements,
       schedules,
       entries,
       controls,
       executions,
+      grantPlans,
+      rounds,
+      applications,
+      joinApplications,
+      elections,
+      nominations,
+      terms,
     });
   }
   private async assertResources(account: string): Promise<void> {
@@ -1294,6 +1485,49 @@ export class NativeChainGateway implements ChainGateway {
       this.config.relayActor,
       this.config.relayKey,
     );
+  }
+  async evmBinding(daoId: string, memberId: string) {
+    IdSchema.parse(daoId);
+    IdSchema.parse(memberId);
+    const abi = await this.api.v1.chain.get_abi(this.config.runtime);
+    if (!abi.abi?.tables.some((table) => table.name === 'evmbindings')) return null;
+    const record = (await this.table('evmbindings', daoId, memberId, 1))[0];
+    return record?.member_id === memberId ? record : null;
+  }
+  async relayEvm(account: Account, input: EvmRelay): Promise<{ transactionId: string }> {
+    const request = input.request;
+    if (request.chain_id !== this.config.chainId || request.deployment !== this.config.runtime)
+      throw new ApiError('INSTRUCTION_DOMAIN');
+    const member = (await this.table('members', request.dao_id, request.member_id, 1))[0];
+    if (
+      !member ||
+      member.id !== request.member_id ||
+      (await this.memberIdentity(account, request.dao_id, [member])) !== request.member_id
+    )
+      throw new ApiError('MEMBERSHIP_REQUIRED', 403);
+    const binding = await this.evmBinding(request.dao_id, request.member_id);
+    if (
+      !binding?.active ||
+      binding.chain_id !== input.evm_chain_id ||
+      binding.address !== input.address ||
+      binding.epoch !== input.binding_epoch
+    )
+      throw new ApiError('EVM_BINDING', 409);
+    const chainId = Number(binding.chain_id);
+    if (chainId !== 40 && chainId !== 41) throw new ApiError('EVM_CHAIN_INVALID', 400);
+    try {
+      const signature = canonicalEvmSignature(`0x${input.proof}`);
+      const typed = governanceTypedData(request, {
+        chainId,
+        address: `0x${binding.address}`,
+        epoch: binding.epoch,
+      });
+      if (recoverEvmDigest(evmTypedDigest(typed), signature) !== `0x${binding.address}`)
+        throw new Error('Signature mismatch');
+    } catch {
+      throw new ApiError('EVM_SIGNATURE_INVALID', 401);
+    }
+    return this.push('submitevm', input, this.config.relayActor, this.config.relayKey);
   }
   marketplace() {
     return readMarketplace(this.config.rpcUrl, this.config.runtime);

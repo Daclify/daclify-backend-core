@@ -2,7 +2,7 @@ import { chmodSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { PrivateKey, PublicKey } from '@wharfkit/antelope';
 import { z } from 'zod';
-import { CORE_ROOT, type DeployEnvironment } from './environment.js';
+import { deploymentAccounts, CORE_ROOT, type DeployEnvironment } from './environment.js';
 
 const StoredKeySchema = z.object({
   account: z.string(),
@@ -56,7 +56,7 @@ export function loadOrCreateActiveKeys(
   if (stored.environment !== environment.name) throw new Error('DEPLOY_KEY_FILE_INVALID');
   const byAccount = new Map(stored.accounts.map((row) => [row.account, row]));
   const resolved: ActiveKey[] = [];
-  for (const account of environment.accounts) {
+  for (const account of deploymentAccounts(environment)) {
     const existing = byAccount.get(account.name);
     if (existing) {
       const key = PrivateKey.from(existing.privateKey);

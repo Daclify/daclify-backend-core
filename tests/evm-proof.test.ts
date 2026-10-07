@@ -45,7 +45,9 @@ describe('Telos EVM personal signatures', () => {
       41,
       'nonce-value-0123456789',
     );
-    expect(recoverEvmAddress('different message', sign(signed, secret))).not.toBe(addressOf(secret));
+    expect(recoverEvmAddress('different message', sign(signed, secret))).not.toBe(
+      addressOf(secret),
+    );
     expect(() => recoverEvmAddress(signed, '0x1234')).toThrow('EVM_SIGNATURE_INVALID');
   });
 });

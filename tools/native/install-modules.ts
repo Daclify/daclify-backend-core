@@ -1,8 +1,8 @@
 import { activateFixtureFeatures } from './features.js';
 import { configureFixtureContext } from './permissions.js';
-import { readFileSync, mkdirSync, copyFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { Checksum256 } from '@wharfkit/antelope';
+import { Checksum256, PrivateKey } from '@wharfkit/antelope';
 import { ModuleCodeHashes } from '@daclify/modules/sdk';
 import { unlockFixtureWallet } from './wallet.js';
 import { z } from 'zod';
@@ -13,6 +13,8 @@ const network = z
       'daclify-dao-presets-native',
       'daclify-platform-native',
       'daclify-access-native',
+      'daclify-research-native',
+      'daclify-research-paid-native',
     ]),
     chainId: z.string(),
     url: z.string().regex(/^http:\/\/127\.0\.0\.1:[0-9]{4,5}$/),
@@ -54,9 +56,30 @@ cleos([
   'daclifycore@active',
 ]);
 mkdirSync('.artifacts/modules-release', { recursive: true });
-for (const name of ['decide', 'works', 'payroll'] as const) {
+for (const [id, name] of [
+  ['decide', 'decide'],
+  ['works', 'works'],
+  ['payroll', 'payroll'],
+  ['grants-rounds', 'grants'],
+  ['endorsement-admission', 'endorse'],
+] as const) {
+  const account = await fetch(`${network.url}/v1/chain/get_account`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ account_name: name }),
+  });
+  if (!account.ok) {
+    const signer = PrivateKey.generate('K1'),
+      accounts = z
+        .record(z.string(), z.object({ privateKey: z.string(), publicKey: z.string() }))
+        .parse(JSON.parse(readFileSync('.artifacts/native/accounts.json', 'utf8')));
+    cleos(['wallet', 'import', '--private-key', signer.toString()]);
+    cleos(['create', 'account', 'eosio', name, signer.toPublic().toString()]);
+    accounts[name] = { privateKey: signer.toString(), publicKey: signer.toPublic().toString() };
+    writeFileSync('.artifacts/native/accounts.json', JSON.stringify(accounts), { mode: 0o600 });
+  }
   const source = `../daclify-backend-modules/.artifacts/contracts/${name}`;
-  if (Checksum256.hash(readFileSync(`${source}.wasm`)).toString() !== ModuleCodeHashes[name])
+  if (Checksum256.hash(readFileSync(`${source}.wasm`)).toString() !== ModuleCodeHashes[id])
     throw new Error('Module artifact differs from the public SDK build hash');
   for (const ext of ['wasm', 'abi'])
     copyFileSync(`${source}.${ext}`, `.artifacts/modules-release/${name}.${ext}`);

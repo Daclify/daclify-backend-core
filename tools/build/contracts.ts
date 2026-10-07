@@ -3,7 +3,16 @@ import { resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 const root = resolve(process.cwd());
 mkdirSync('.artifacts/contracts', { recursive: true });
-for (const contract of ['runtime', 'hub', 'permprobe', 'testtoken', 'boot', 'modrelay', 'names', 'eosstub']) {
+for (const contract of [
+  'runtime',
+  'hub',
+  'permprobe',
+  'testtoken',
+  'boot',
+  'modrelay',
+  'names',
+  'eosstub',
+]) {
   execFileSync(
     'docker',
     [

@@ -1,6 +1,6 @@
 {
   "name": "@daclify/backend-core",
-  "version": "0.4.0-alpha.1",
+  "version": "0.5.0-alpha.1",
   "type": "module",
   "description": "Daclify core services and Antelope runtime",
   "engines": {
@@ -33,11 +33,14 @@
     "lint": "eslint . --max-warnings 0",
     "verify": "tsx tools/verify.ts",
     "format:check": "prettier --check \"**/*.{ts,vue,css,json,yml}\"",
-    "format": "prettier --write \"**/*.{ts,vue,css,json,yml}\""
+    "format": "prettier --write \"**/*.{ts,vue,css,json,yml}\"",
+    "build:upgrade-fixture": "tsx tools/build/upgrade.ts",
+    "test:native:research": "vitest run --config vitest.native.config.ts --exclude tests/native/dao-presets.test.ts",
+    "test:native:paid": "vitest run --config vitest.native.config.ts tests/native/dao-presets.test.ts"
   },
   "dependencies": {
-    "@daclify/core-protocol": "file:.artifacts/daclify-core-protocol-0.4.0-alpha.1.tgz",
-    "@daclify/modules": "file:../daclify-backend-modules/.artifacts/daclify-modules-0.4.0-alpha.1.tgz",
+    "@daclify/core-protocol": "file:.artifacts/daclify-core-protocol-0.5.0-alpha.1.tgz",
+    "@daclify/modules": "file:../daclify-backend-modules/.artifacts/daclify-modules-0.5.0-alpha.1.tgz",
     "@fastify/cookie": "11.1.2",
     "@fastify/cors": "11.3.0",
     "@noble/curves": "2.4.0",
@@ -46,6 +49,7 @@
     "fastify": "5.12.5",
     "jose": "6.2.12",
     "multiformats": "14.0.5",
+    "nodemailer": "10.0.15",
     "pg": "8.23.1",
     "pinata": "2.5.6",
     "semver": "7.8.5",
@@ -63,6 +67,7 @@
     "tsx": "4.23.15",
     "typescript": "5.9.3",
     "typescript-eslint": "8.71.0",
+    "viem": "2.57.3",
     "vitest": "5.0.3"
   },
   "allowScripts": {

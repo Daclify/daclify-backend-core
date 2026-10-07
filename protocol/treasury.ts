@@ -5,6 +5,8 @@ export const TreasurySchema = z.strictObject({
   dao: DaoRefSchema,
   obligations: z.array(RuntimeTableSchemas.obligations).max(5000),
   evidence: z.array(RuntimeTableSchemas.evidence).max(5000),
+  receipts: z.array(RuntimeTableSchemas.receipts).max(5000).default([]),
+  receiptsAvailable: z.boolean().default(false),
 });
 export function evidenceForDao<Row extends { dao_id: string }>(
   rows: readonly Row[],

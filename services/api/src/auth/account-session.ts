@@ -47,6 +47,7 @@ export async function withTransaction<T>(
 export async function insertAccountSession(
   client: PoolClient,
   accountId: string,
+  credentialKey: string | null = null,
 ): Promise<{ account: Account; token: string; csrfToken: string }> {
   const row = (
     await client.query<AccountRow>(
@@ -59,8 +60,8 @@ export async function insertAccountSession(
   const token = randomBytes(32).toString('base64url');
   const csrfToken = randomBytes(32).toString('base64url');
   await client.query(
-    "INSERT INTO sessions(token_hash,account_id,csrf_hash,expires_at) VALUES($1,$2,$3,now()+interval '12 hours')",
-    [digest(token), account.id, digest(csrfToken)],
+    "INSERT INTO sessions(token_hash,account_id,csrf_hash,expires_at,credential_key) VALUES($1,$2,$3,now()+interval '12 hours',$4)",
+    [digest(token), account.id, digest(csrfToken), credentialKey],
   );
   return { account, token, csrfToken };
 }
@@ -68,6 +69,16 @@ export async function insertAccountSession(
 export async function openAccountSession(
   pool: Pool,
   accountId: string,
+  credentialKey: string | null = null,
 ): Promise<{ account: Account; token: string; csrfToken: string }> {
-  return withTransaction(pool, (client) => insertAccountSession(client, accountId));
+  return withTransaction(pool, async (client) => {
+    if (credentialKey !== null) {
+      const credential = await client.query(
+        'SELECT account_id FROM credentials WHERE provider_key=$1 AND account_id=$2 FOR SHARE',
+        [credentialKey, accountId],
+      );
+      if (credential.rowCount !== 1) throw new ApiError('AUTH_INVALID', 401);
+    }
+    return insertAccountSession(client, accountId, credentialKey);
+  });
 }

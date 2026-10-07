@@ -8,11 +8,18 @@ import type {
 } from '@daclify/modules';
 import type { DaoSummary, Network, Account, UserMembership } from '../../../protocol/api.js';
 import type { instruction } from '../../../sdk/index.js';
+import type { EvmRelay } from '../../../protocol/evm-wallet.js';
+import type { RuntimeTableSchemas } from '../../../sdk/generated/schemas.js';
 import type { CreateDaoSchema } from '../../../protocol/api.js';
 import type { z } from 'zod';
 import type { GovernanceState } from '../../../protocol/dao.js';
 import type { ExecutionRequest, ExecutionResult } from '@daclify/modules';
 export interface ChainGateway {
+  evmBinding?(
+    daoId: string,
+    memberId: string,
+  ): Promise<z.infer<typeof RuntimeTableSchemas.evmbindings> | null>;
+  relayEvm?(account: Account, input: EvmRelay): Promise<{ transactionId: string }>;
   governance(daoId: string): Promise<GovernanceState>;
   execute(input: ExecutionRequest): Promise<ExecutionResult>;
   treasury(daoId: string): Promise<Treasury>;

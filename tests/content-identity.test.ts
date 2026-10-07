@@ -4,7 +4,8 @@ import { PrivateKey } from '@wharfkit/antelope';
 import { CID } from 'multiformats/cid';
 import { sha256 } from 'multiformats/hashes/sha2';
 import { z } from 'zod';
-import { loadContract, send, row } from './helpers/vert.js';
+import { loadContract, send, row, allowFixtureInheritedAuth } from './helpers/vert.js';
+import { makeInstruction, encodeAction, instructionDigest } from '../sdk/index.js';
 let runtime: ReturnType<typeof loadContract>;
 let cid: string;
 const key = PrivateKey.generate('K1');
@@ -105,11 +106,34 @@ describe('credential ownership and offboarding', () => {
     ).rejects.toThrow();
   });
   it('links a proved native credential to the existing member', async () => {
+    await expect(
+      send(
+        runtime,
+        'linknative',
+        ['daclifycore', 1, 1, 'alice'],
+        ['daclifycore@active', 'alice@active'],
+      ),
+    ).rejects.toThrow('ACTOR_SENDER');
+    allowFixtureInheritedAuth(runtime.bc, 'alice', 'daclifycore');
+    const request = makeInstruction(
+      { chainId: 'ab'.repeat(32), contract: 'daclifycore', daoId: '1', interfaceVersion: 1 },
+      '1',
+      '0',
+      runtime.bc.timestamp.toMilliseconds() / 1000 + 120,
+      'daclifycore',
+      'linknative',
+      encodeAction('linknative', {
+        runtime: 'daclifycore',
+        dao_id: '1',
+        member_id: '1',
+        account: 'alice',
+      }),
+    );
     await send(
       runtime,
-      'linknative',
-      ['daclifycore', 1, 1, 'alice'],
-      ['daclifycore@active', 'alice@active'],
+      'submit',
+      [request, key.signDigest(instructionDigest(request)).toString()],
+      'alice@active',
     );
     expect(
       z.object({ native_account: z.string() }).parse(row(runtime, 'members', 1n, 1n))

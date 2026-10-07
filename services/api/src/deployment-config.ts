@@ -1,14 +1,15 @@
 import { z } from 'zod';
+import { ModuleDeploymentSchema } from '@daclify/modules';
 import { NativeAccountSchema } from '../../../protocol/base.js';
 
 const ModuleDeploymentConfigSchema = z
   .array(
     z.strictObject({
-      id: z.enum(['decide', 'works', 'payroll']),
+      id: ModuleDeploymentSchema.shape.id,
       account: NativeAccountSchema,
     }),
   )
-  .max(3)
+  .max(5)
   .refine((rows) => new Set(rows.map((row) => row.id)).size === rows.length, 'Duplicate module');
 
 export type ModuleDeploymentConfig = z.infer<typeof ModuleDeploymentConfigSchema>;

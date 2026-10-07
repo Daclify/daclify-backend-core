@@ -26,3 +26,5 @@ Core owns the shared architecture, the common guides, and the cross-repository r
 ## Custody note
 
 [Custody decision](decisions/custody.md) records the OpenBao development boundary. Local OpenBao checks are not a production custody qualification.
+
+The 0.5 development implementation is tracked in [the execution ledger](evidence/2026-10-07-research-execution.md). Follow [paired login setup](operations/paired-login.md) and [the 0.5 upgrade runbook](operations/upgrade-0.5.md) before preparing a deployment.

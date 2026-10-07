@@ -28,6 +28,8 @@ export async function activateFixtureFeatures(
     'daclify-dao-presets-native',
     'daclify-platform-native',
     'daclify-access-native',
+    'daclify-research-native',
+    'daclify-research-paid-native',
   ]).parse(container);
   const url = z
     .string()
@@ -58,7 +60,8 @@ export async function activateFixtureFeatures(
   const preactivate = features.get('PREACTIVATE_FEATURE');
   const sender = features.get('GET_SENDER');
   const codeHash = features.get('GET_CODE_HASH');
-  if (!preactivate || !sender || !codeHash)
+  const crypto = features.get('CRYPTO_PRIMITIVES');
+  if (!preactivate || !sender || !codeHash || !crypto)
     throw new Error('Required native protocol features unavailable');
   if (!(await activated(preactivate))) {
     await rpc(url, '/v1/producer/schedule_protocol_feature_activations', {
@@ -69,6 +72,7 @@ export async function activateFixtureFeatures(
   const pending = [];
   if (!(await activated(sender))) pending.push(sender);
   if (!(await activated(codeHash))) pending.push(codeHash);
+  if (!(await activated(crypto))) pending.push(crypto);
   if (pending.length === 0) return;
   function cleos(args: string[]) {
     try {

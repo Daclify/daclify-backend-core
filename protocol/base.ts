@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { CID } from 'multiformats/cid';
 import { satisfies, valid, validRange } from 'semver';
 
-export const VERSION = '0.4.0-alpha.1';
+export const VERSION = '0.5.0-alpha.1';
 export const INTERFACE_VERSION = 1;
 export const MAX_ASSET_UNITS = (1n << 62n) - 1n;
 export const Uint64Schema = z
@@ -14,6 +14,9 @@ export const Uint64Schema = z
   );
 export const IdSchema = Uint64Schema.refine((value) => value !== '0', 'ID must be positive');
 export const ChainIdSchema = z.string().regex(/^[0-9a-f]{64}$/);
+export const TelosEvmChainSchema = z.union([z.literal(40), z.literal(41)]);
+export const EvmAddressSchema = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
+export const EvmSignatureSchema = z.string().regex(/^0x[0-9a-fA-F]{130}$/);
 export const NativeAccountSchema = z
   .string()
   .regex(/^[a-z1-5][a-z1-5.]{0,12}$/)

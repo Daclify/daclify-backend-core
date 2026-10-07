@@ -27,9 +27,16 @@ import {
 import { verifyGoogle, verifyTelegram } from './providers/proofs.js';
 import { registerSignInRoutes, type SignInConfiguration } from './auth/sign-in-routes.js';
 import { registerEvmRoutes } from './auth/evm-routes.js';
+import { registerNativeRoutes } from './auth/native-routes.js';
+import { registerEvmSignInRoutes } from './auth/evm-sign-in.js';
+import { EvmRelaySchema } from '../../../protocol/evm-wallet.js';
+import { beginAccountControl, consumeAccountControl } from './auth/intent.js';
+import { registerTelegramOidcRoutes } from './auth/telegram-oidc.js';
+import { AccountControlPaths } from '../../../protocol/sign-in.js';
 import { registerDocsRoutes } from './docs/routes.js';
 import type { DocsAgentConfiguration } from './docs/config.js';
 import { IdSchema } from '../../../protocol/base.js';
+import { spendingReport, spendingCsv } from './reporting/spending.js';
 import { ApiError } from './errors.js';
 import { DaoPresets } from '../../../protocol/dao.js';
 import type { ContentService } from './content/service.js';
@@ -61,6 +68,7 @@ export async function createServer(
   } = {},
 ) {
   const admitCheckout = createWindowLimiter(8, 3_600_000, 80);
+  const admitAccountControl = createWindowLimiter(40, 600_000, 4000);
   const admitSponsored = createWindowLimiter(
     SPONSORED_WRITES_PER_WINDOW,
     SPONSORED_WINDOW_MS,
@@ -103,7 +111,13 @@ export async function createServer(
     origin,
     credentials: true,
     methods: ['GET', 'POST'],
-    allowedHeaders: ['content-type', 'x-csrf-token'],
+    allowedHeaders: [
+      'content-type',
+      'x-csrf-token',
+      'x-account-intent-id',
+      'x-account-signature',
+      'x-account-proof',
+    ],
   });
   app.setErrorHandler((error, _request, reply) => {
     if (error instanceof ApiError)
@@ -128,7 +142,62 @@ export async function createServer(
       throw new ApiError('CSRF_REQUIRED', 403);
     return account;
   }
+  app.post('/v1/account/control', async (request) => {
+    const token = request.cookies[cookieName];
+    const account = await session(
+      token,
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    if (!token) throw new ApiError('AUTH_REQUIRED', 401);
+    if (!admitAccountControl(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    return beginAccountControl(
+      pool,
+      account,
+      token,
+      request.headers.origin ?? origin,
+      request.body,
+    );
+  });
+  app.addHook('preHandler', async (request) => {
+    const path = request.routeOptions.url ?? '';
+    if (request.method !== 'POST' || !AccountControlPaths.some((route) => route === path)) return;
+    const token = request.cookies[cookieName];
+    const account = await session(
+      token,
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    const id = request.headers['x-account-intent-id'];
+    const signature = request.headers['x-account-signature'];
+    const supplied = request.headers['x-account-proof'];
+    const raw = rawJsonBodies.get(request);
+    if (
+      !token ||
+      !raw ||
+      typeof id !== 'string' ||
+      (typeof signature !== 'string' && typeof supplied !== 'string')
+    )
+      throw new ApiError('ACCOUNT_CONTROL_REQUIRED', 403);
+    let proof: unknown = { kind: 'root', signature };
+    if (typeof supplied === 'string') {
+      try {
+        if (supplied.length > 12000) throw new Error('Proof size');
+        proof = JSON.parse(supplied);
+      } catch {
+        throw new ApiError('ACCOUNT_CONTROL_REQUIRED', 403);
+      }
+    }
+    await consumeAccountControl(pool, account, token, path, raw, id, proof, () => chain.network());
+  });
   app.get('/health', async () => ({ status: 'ok' }));
+  registerTelegramOidcRoutes(
+    app,
+    pool,
+    origin,
+    cookieName,
+    options.providers?.telegram?.oidc,
+    session,
+    sessionCookie,
+  );
   function creationService() {
     if (!options.creation) throw new ApiError('DAO_CREATION_UNAVAILABLE', 503);
     return options.creation;
@@ -318,6 +387,26 @@ export async function createServer(
     if (!options.content) throw new ApiError('STORAGE_UNCONFIGURED', 503);
     return options.content;
   }
+  const reports = createWindowLimiter(20, 60_000, 2000);
+  app.get<{ Params: { id: string } }>(ApiRoutes.spendingReport.path, async (request) => {
+    if (!reports(request.ip, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    return spendingReport(chain, IdSchema.parse(request.params.id));
+  });
+  app.get<{ Params: { id: string } }>(ApiRoutes.spendingCsv.path, async (request) => {
+    if (!reports(request.ip, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    return {
+      format: 'csv',
+      content: spendingCsv(await spendingReport(chain, IdSchema.parse(request.params.id))),
+    };
+  });
+  const images = createWindowLimiter(100, 60_000, 4000);
+  app.get<{ Params: { id: string; slot: string } }>(ApiRoutes.branding.path, async (request) => {
+    if (!images(request.ip, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    return contentService().brandingBytes(
+      IdSchema.parse(request.params.id),
+      z.enum(['logo', 'cover']).parse(request.params.slot),
+    );
+  });
   app.post(ApiRoutes.upload.path, { bodyLimit: 8 * 1024 * 1024 }, async (request) => {
     const account = await session(
       request.cookies[cookieName],
@@ -375,7 +464,7 @@ export async function createServer(
       return verifyGoogle(input.proof, google.clientId, input.nonce, google.key);
     }
     const telegram = options.providers?.telegram;
-    if (!telegram) throw new ApiError('PROVIDER_UNCONFIGURED', 503);
+    if (!telegram?.botToken) throw new ApiError('PROVIDER_UNCONFIGURED', 503);
     return verifyTelegram(input.proof, telegram.botToken);
   }
   app.post(ApiRoutes.login.path, async (request, reply) => {
@@ -460,6 +549,27 @@ export async function createServer(
       'session_id' in input ? input.session_id : undefined,
     );
   });
+  app.get('/v1/daos/:id/evm/:member', async (request) => {
+    const params = z.strictObject({ id: IdSchema, member: IdSchema }).parse(request.params);
+    if (!chain.evmBinding) throw new ApiError('EVM_GOVERNANCE_UNAVAILABLE', 503);
+    return { binding: await chain.evmBinding(params.id, params.member) };
+  });
+  app.post('/v1/relay/evm', async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    const input = EvmRelaySchema.parse(request.body);
+    spend(account.id);
+    if (!chain.relayEvm) throw new ApiError('EVM_GOVERNANCE_UNAVAILABLE', 503);
+    const chainId = Number(input.evm_chain_id);
+    const paired = await pool.query(
+      'SELECT 1 FROM evm_links WHERE account_id=$1 AND chain_id=$2 AND address=$3 AND control_verified_at IS NOT NULL',
+      [account.id, chainId, `0x${input.address}`],
+    );
+    if (paired.rowCount !== 1) throw new ApiError('EVM_LINKED_REQUIRED', 403);
+    return chain.relayEvm(account, input);
+  });
   function billingService(): StripeBilling {
     if (!options.billing) throw new ApiError('STRIPE_NOT_CONFIGURED', 503);
     return options.billing;
@@ -503,6 +613,16 @@ export async function createServer(
     sessionCookie,
   );
   registerEvmRoutes(app, pool, cookieName, session);
+  registerEvmSignInRoutes(app, pool, origin, cookieName, session, sessionCookie);
+  registerNativeRoutes(
+    app,
+    pool,
+    origin,
+    cookieName,
+    () => chain.network(),
+    session,
+    sessionCookie,
+  );
   registerDocsRoutes(app, options.docs);
   return app;
 }

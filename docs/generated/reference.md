@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.4.0-alpha.1 · interface 1.
+Package 0.5.0-alpha.1 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -14,13 +14,17 @@ Removing a member rotates the key for future content. It cannot erase plaintext 
 
 ## Two clearly labelled account modes
 
-User-controlled accounts keep encrypted signing and decryption keys in your browser. Recovery requires an encrypted kit and a separate recovery credential. Social login alone cannot recover these keys.
+Sign in first with your Daclify keys or a previously paired email, Telegram, passkey, Telos Zero account or Telos EVM wallet. Signing in opens the existing service account; admission and permissions are separate in each DAO.
 
-Managed recovery delegates signing and decryption recovery to an operator. OpenBao is the tested open-source candidate; production use requires an isolated custody service, audit logs, access controls, and tested recovery.
+Adding or removing a sign-in method requires a fresh proof from existing Daclify keys or an already verified paired wallet, plus proof of the incoming credential. Review the exact credential before confirming. Removal revokes sessions opened with that credential; history is available in Account → Sign-in.
 
-An internal account does not need a native account. Linking a native account requires proof from that account and preserves your DAO member identity.
+A paired native or EVM wallet can authorize governance after explicit activation for the same member in each DAO. It adds no member or voting weight. Private documents still require the separate encryption keys.
 
-Use Account → Keys → Public join identity to share only public signing and encryption keys with a DAO administrator. Your encrypted recovery kit and its credential are private backups, not admission documents. User-controlled signing requires unlocking your vault; successful unlocking returns to the DAO or creation step that requested it. Social sign-in alone does not decrypt the vault.
+User-controlled accounts keep encrypted signing and decryption keys in your browser. Recovery requires the encrypted kit and its separate recovery credential. Social login and publicly visible wallet signatures cannot recover or derive these keys.
+
+Managed recovery delegates signing and decryption recovery to an operator. OpenBao remains the open-source candidate; production custody is gated on isolated service, audit, provider and recovery qualification.
+
+Share Account → Keys → Public join identity with a DAO administrator. Never share recovery kits or their credentials. A recorded service-to-member association survives DAO signing-key rotation; current chain permissions and credential bindings remain authoritative.
 
 ## Shared or independent deployment
 
@@ -56,13 +60,17 @@ This release supports one configured native treasury asset per DAO. Governance s
 
 ## Configure external services
 
-Pinata credentials stay on the backend. Upload limits, quotas, replay protection, and content checks run before a reference is published. No Pinata account is configured in the current local fixture.
+Email codes are delivered only when the server configures SMTP. Codes expire, have bounded guesses, are browser-bound, and a resend invalidates earlier codes. Local revealed pairing codes are a development fixture; they cannot sign in from another browser.
 
-Google requires an OAuth client and exact redirect origin. Validate issuer, audience, nonce, expiry, signature, and the immutable subject identifier. Never merge accounts by matching email. Linking requires the current session. A provider session identifies the linked account and does not unwrap a user-controlled vault.
+Telegram website sign-in uses OIDC with state, nonce, PKCE and verified current JWKS signatures. Mini App initData and legacy widget data use separately verified bot proofs. Untrusted profile or wallet connection data is never authentication.
 
-Telegram Mini Apps require a configured bot. The backend validates signed initialization data and freshness. A Telegram identity alone does not decrypt a user-controlled vault.
+Telegram OIDC subjects use an oidc: namespace. Numeric widget/Mini App IDs are not automatically merged with OIDC identities. Pair each method explicitly from your existing account.
 
-Configured hosted storage runs a bounded reconciliation worker using PostgreSQL leases. Uncertain or duplicate provider results retain their allocated budget and can require operator review. Automated unpinning, retention guarantees and measured paid allowances are not offered by this development release.
+Website login restores the initiating frontend origin and local return destination. A Telegram callback consumes one browser-bound attempt and stores no provider token in frontend URLs. Configure a real Telegram client/bot and test a real client before qualification.
+
+Telos Zero login currently supports active permission with direct weighted keys, including a real threshold; delegated accounts, waits and other permission structures are rejected. The UI adapter supports Anchor through pinned WharfKit 4.0.2; real wallet-client qualification remains separate.
+
+Telos EVM EOA login uses server-issued ERC-4361 messages. Direct DAO governance uses different EIP-712 signed bytes and on-chain K1/Keccak primitives. Chains 40/41 are supported; ERC-1271 wallets, EVM assets/payouts and cross-chain settlement are unavailable.
 
 ## Recover without changing identity
 
@@ -194,9 +202,39 @@ Configured providers are not evidence of successful live integration or a qualif
 
 Status starts with user-facing capabilities and distinguishes configured services from qualified live integrations. Expand Technical platform details to inspect hashes, authorities, resources and migration state.
 
+## Find and identify a DAO
+
+The directory covers the configured native runtime. Search, purpose, membership and sort filters are in the URL so a view can be shared or restored. A membership match includes chain, runtime, DAO and active member state.
+
+Display metadata version 3 adds a brief public summary and optional public PNG/JPEG/WebP logo and cover references. Images are capped at 2 MiB each and include their CID, MIME, byte size and SHA-256 commitment. Hosted retrieval validates the bytes; unavailable images fall back to the original Daclify card.
+
+DAO purpose and original setup remain immutable. All directory text and image references are public, including a DAO with encrypted document contents. Choose a sparse listing if needed. Deployment labels describe configuration; they are not audit certifications.
+
+## Reconcile spending and export records
+
+Treasury reports separate approved/reserved obligations, settled obligations, current internal claims and actual native cashflow. An internal claim credit and its later withdrawal are one settled expense, with withdrawal shown as cashflow. Do not add these different metrics together. Amounts use exact integer base units with the native token contract, symbol and precision.
+
+New runtime receipts record internal claim credits, native obligation payments and claim withdrawals atomically with their ledger transition and native transaction ID. Existing settlements before the receipt upgrade retain an unknown destination classification. The receipt history starts at the upgrade; it cannot reconstruct earlier withdrawals or prove all-time external cashflow.
+
+Reports read live paged chain tables, not an atomic historical snapshot. The export records chain/runtime/DAO/read times, completeness, reconciliation gaps and receipt coverage. A failed/truncated source is labelled unavailable; refresh if the ledger changes during reading. An unverified module prevents complete module provenance, while ordinary claims remain accessible.
+
+A DAO-confirmed external payment statement is evidence asserted by that DAO. It does not settle a native obligation and is not proof of external-chain finality. Native receipts describe the runtime transaction; RPC trust and chain finality remain separate operating assumptions.
+
+Basic complete JSON/CSV exports are free and do not require an Operations subscription. CSV cells neutralize spreadsheet formulas. Exports include public document IDs/CIDs/commitments and agreement references, never narrative/private titles, decrypted bodies or credentials. Export after offboarding or hosted entitlement expiry preserves payment, recovery and financial rights.
+
+## Use the matching release and enabled modules
+
+Core, module and frontend packages are versioned together at 0.5.0-alpha.1. Documentation displays its package version and warns when the selected DAO deployment does not match. Module actions remain unavailable when the installed frontend SDK differs from the deployed module version or code hash.
+
+A DAO administrator enables optional modules in Workspace → Modules. Grants rounds requires Works and Decide; funded awards continue through Works delivery, independent review and Treasury settlement. Enable Endorsement admission before configuring an opt-in member endorsement rule in Members. Representative elections are available in Decide and confer term labels, without administrator or spending powers.
+
+Contract upgrades preserve balances, approved liabilities, old documents and existing identities. Changed module code invalidates old execution pins; review a new proposal rather than changing the terms of an existing vote. Complete spending exports remain available and mark missing historical receipts or document references as incomplete.
+
+Deployment operators should follow the repository upgrade-0.5 runbook, review account permissions and immutable artifact hashes, and qualify live providers and wallet clients before enabling those services. Local fixture passes do not qualify production managed custody.
+
 ## runtime contract
 
-Source ABI JSON SHA-256: `3a68bd2f500e84f7662487a9e452ef408c60ccef392f33239e5252c4673c4b14`.
+Source ABI JSON SHA-256: `e786287e4241c6f5923150ba6e571f5005e71d6fff1864ab0b6642e6f3f34e6b`.
 
 ### Action: addmember
 
@@ -223,6 +261,15 @@ Source ABI JSON SHA-256: `3a68bd2f500e84f7662487a9e452ef408c60ccef392f33239e5252
 | expires | uint32 |
 | permissions | session_permission[] |
 
+### Action: admitfrom
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| source | name |
+| application_id | uint64 |
+| revision | uint64 |
+
 ### Action: approveob
 
 | Field | ABI type |
@@ -230,6 +277,13 @@ Source ABI JSON SHA-256: `3a68bd2f500e84f7662487a9e452ef408c60ccef392f33239e5252
 | dao_id | uint64 |
 | source | name |
 | source_id | uint64 |
+
+### Action: authproof
+
+| Field | ABI type |
+| --- | --- |
+| account | name |
+| intent | checksum256 |
 
 ### Action: cancelob
 
@@ -457,6 +511,20 @@ Source ABI JSON SHA-256: `3a68bd2f500e84f7662487a9e452ef408c60ccef392f33239e5252
 | dao_id | uint64 |
 | settings | gov_settings |
 
+### Action: linkevm
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| evm_chain_id | uint64 |
+| address | checksum160 |
+| epoch | uint64 |
+| nonce | uint64 |
+| expires | uint32 |
+| proof | bytes |
+
 ### Action: linknative
 
 | Field | ABI type |
@@ -574,6 +642,19 @@ Source ABI JSON SHA-256: `3a68bd2f500e84f7662487a9e452ef408c60ccef392f33239e5252
 | member_id | uint64 |
 | target | uint64 |
 | active | bool |
+
+### Action: setadmit
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| enabled | bool |
+| source | name |
+| threshold | uint8 |
+| allow_agents | bool |
+| admin_override | bool |
 
 ### Action: setcreate
 
@@ -699,6 +780,16 @@ Source ABI JSON SHA-256: `3a68bd2f500e84f7662487a9e452ef408c60ccef392f33239e5252
 | request | instruction |
 | sig | signature |
 
+### Action: submitevm
+
+| Field | ABI type |
+| --- | --- |
+| request | instruction |
+| evm_chain_id | uint64 |
+| address | checksum160 |
+| binding_epoch | uint64 |
+| proof | bytes |
+
 ### Action: submitnat
 
 | Field | ABI type |
@@ -712,6 +803,22 @@ Source ABI JSON SHA-256: `3a68bd2f500e84f7662487a9e452ef408c60ccef392f33239e5252
 | request | instruction |
 | session_id | uint64 |
 | sig | signature |
+
+### Action: unlinkevm
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+
+### Action: unlinknat
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
 
 ### Action: unlistmod
 
@@ -748,6 +855,18 @@ Source ABI JSON SHA-256: `3a68bd2f500e84f7662487a9e452ef408c60ccef392f33239e5252
 | operator_label | string |
 | revoked | bool |
 | credential_epoch | uint64 |
+
+### Table: admpolicies
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| revision | uint64 |
+| mode | uint8 |
+| source | name |
+| threshold | uint8 |
+| allow_agents | bool |
+| admin_override | bool |
 
 ### Table: budgets
 
@@ -859,6 +978,16 @@ Source ABI JSON SHA-256: `3a68bd2f500e84f7662487a9e452ef408c60ccef392f33239e5252
 | payer | string |
 | reference | checksum256 |
 | mode | uint8 |
+
+### Table: evmbindings
+
+| Field | ABI type |
+| --- | --- |
+| member_id | uint64 |
+| chain_id | uint64 |
+| address | checksum160 |
+| epoch | uint64 |
+| active | bool |
 
 ### Table: feecfg
 
@@ -986,6 +1115,20 @@ Source ABI JSON SHA-256: `3a68bd2f500e84f7662487a9e452ef408c60ccef392f33239e5252
 | member_id | uint64 |
 | account_name | name |
 | profile | string |
+
+### Table: receipts
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| kind | uint8 |
+| obligation_id | uint64 |
+| recipient | uint64 |
+| destination | name |
+| token_contract | name |
+| quantity | asset |
+| at | uint32 |
+| transaction_id | checksum256 |
 
 ### Table: sessions
 
@@ -1938,6 +2081,222 @@ Request:
                 "setup"
               ],
               "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "schemaVersion": {
+                  "type": "number",
+                  "const": 3
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 160
+                },
+                "description": {
+                  "default": "",
+                  "type": "string",
+                  "maxLength": 4000
+                },
+                "purpose": {
+                  "type": "string",
+                  "enum": [
+                    "community",
+                    "ngo-grants",
+                    "gaming-guild",
+                    "team",
+                    "custom"
+                  ]
+                },
+                "setup": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "presetId": {
+                          "type": "string",
+                          "enum": [
+                            "community",
+                            "ngo-grants",
+                            "gaming-guild",
+                            "team",
+                            "custom"
+                          ]
+                        },
+                        "presetVersion": {
+                          "type": "number",
+                          "const": 1
+                        },
+                        "participantMode": {
+                          "type": "string",
+                          "enum": [
+                            "humans",
+                            "mixed",
+                            "agents-guarded"
+                          ]
+                        },
+                        "governance": {
+                          "type": "object",
+                          "properties": {
+                            "weight": {
+                              "type": "string",
+                              "enum": [
+                                "member",
+                                "credit",
+                                "native-stake"
+                              ]
+                            },
+                            "duration": {
+                              "type": "integer",
+                              "minimum": 60,
+                              "maximum": 2592000
+                            },
+                            "quorumBasisPoints": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 10000
+                            },
+                            "approvalBasisPoints": {
+                              "type": "integer",
+                              "minimum": 5001,
+                              "maximum": 10000
+                            },
+                            "governedWorks": {
+                              "type": "boolean"
+                            },
+                            "maxCommitment": {
+                              "type": "string",
+                              "maxLength": 20
+                            },
+                            "dailyCommitment": {
+                              "type": "string",
+                              "maxLength": 20
+                            },
+                            "guardian": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "const": ""
+                                },
+                                {
+                                  "type": "string",
+                                  "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "weight",
+                            "duration",
+                            "quorumBasisPoints",
+                            "approvalBasisPoints",
+                            "governedWorks",
+                            "maxCommitment",
+                            "dailyCommitment",
+                            "guardian"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "presetId",
+                        "presetVersion",
+                        "participantMode",
+                        "governance"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "branding": {
+                  "type": "object",
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "maxLength": 280
+                    },
+                    "logo": {
+                      "type": "object",
+                      "properties": {
+                        "cid": {
+                          "type": "string",
+                          "maxLength": 128
+                        },
+                        "bytes": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 2097152
+                        },
+                        "mediaType": {
+                          "type": "string",
+                          "enum": [
+                            "image/png",
+                            "image/jpeg",
+                            "image/webp"
+                          ]
+                        },
+                        "commitment": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{64}$"
+                        }
+                      },
+                      "required": [
+                        "cid",
+                        "bytes",
+                        "mediaType",
+                        "commitment"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "cover": {
+                      "type": "object",
+                      "properties": {
+                        "cid": {
+                          "type": "string",
+                          "maxLength": 128
+                        },
+                        "bytes": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 2097152
+                        },
+                        "mediaType": {
+                          "type": "string",
+                          "enum": [
+                            "image/png",
+                            "image/jpeg",
+                            "image/webp"
+                          ]
+                        },
+                        "commitment": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{64}$"
+                        }
+                      },
+                      "required": [
+                        "cid",
+                        "bytes",
+                        "mediaType",
+                        "commitment"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "title",
+                "purpose",
+                "setup",
+                "branding"
+              ],
+              "additionalProperties": false
             }
           ]
         },
@@ -2361,6 +2720,221 @@ Response:
                 "description",
                 "purpose",
                 "setup"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "schemaVersion": {
+                  "type": "number",
+                  "const": 3
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 160
+                },
+                "description": {
+                  "default": "",
+                  "type": "string",
+                  "maxLength": 4000
+                },
+                "purpose": {
+                  "type": "string",
+                  "enum": [
+                    "community",
+                    "ngo-grants",
+                    "gaming-guild",
+                    "team",
+                    "custom"
+                  ]
+                },
+                "setup": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "presetId": {
+                          "type": "string",
+                          "enum": [
+                            "community",
+                            "ngo-grants",
+                            "gaming-guild",
+                            "team",
+                            "custom"
+                          ]
+                        },
+                        "presetVersion": {
+                          "type": "number",
+                          "const": 1
+                        },
+                        "participantMode": {
+                          "type": "string",
+                          "enum": [
+                            "humans",
+                            "mixed",
+                            "agents-guarded"
+                          ]
+                        },
+                        "governance": {
+                          "type": "object",
+                          "properties": {
+                            "weight": {
+                              "type": "string",
+                              "enum": [
+                                "member",
+                                "credit",
+                                "native-stake"
+                              ]
+                            },
+                            "duration": {
+                              "type": "integer",
+                              "minimum": 60,
+                              "maximum": 2592000
+                            },
+                            "quorumBasisPoints": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 10000
+                            },
+                            "approvalBasisPoints": {
+                              "type": "integer",
+                              "minimum": 5001,
+                              "maximum": 10000
+                            },
+                            "governedWorks": {
+                              "type": "boolean"
+                            },
+                            "maxCommitment": {
+                              "type": "string"
+                            },
+                            "dailyCommitment": {
+                              "type": "string"
+                            },
+                            "guardian": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "const": ""
+                                },
+                                {
+                                  "type": "string",
+                                  "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "weight",
+                            "duration",
+                            "quorumBasisPoints",
+                            "approvalBasisPoints",
+                            "governedWorks",
+                            "maxCommitment",
+                            "dailyCommitment",
+                            "guardian"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "presetId",
+                        "presetVersion",
+                        "participantMode",
+                        "governance"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "branding": {
+                  "type": "object",
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "maxLength": 280
+                    },
+                    "logo": {
+                      "type": "object",
+                      "properties": {
+                        "cid": {
+                          "type": "string",
+                          "maxLength": 128
+                        },
+                        "bytes": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 2097152
+                        },
+                        "mediaType": {
+                          "type": "string",
+                          "enum": [
+                            "image/png",
+                            "image/jpeg",
+                            "image/webp"
+                          ]
+                        },
+                        "commitment": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{64}$"
+                        }
+                      },
+                      "required": [
+                        "cid",
+                        "bytes",
+                        "mediaType",
+                        "commitment"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "cover": {
+                      "type": "object",
+                      "properties": {
+                        "cid": {
+                          "type": "string",
+                          "maxLength": 128
+                        },
+                        "bytes": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 2097152
+                        },
+                        "mediaType": {
+                          "type": "string",
+                          "enum": [
+                            "image/png",
+                            "image/jpeg",
+                            "image/webp"
+                          ]
+                        },
+                        "commitment": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{64}$"
+                        }
+                      },
+                      "required": [
+                        "cid",
+                        "bytes",
+                        "mediaType",
+                        "commitment"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "title",
+                "description",
+                "purpose",
+                "setup",
+                "branding"
               ],
               "additionalProperties": false
             }
@@ -2950,6 +3524,221 @@ Response:
                 "description",
                 "purpose",
                 "setup"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "schemaVersion": {
+                  "type": "number",
+                  "const": 3
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 160
+                },
+                "description": {
+                  "default": "",
+                  "type": "string",
+                  "maxLength": 4000
+                },
+                "purpose": {
+                  "type": "string",
+                  "enum": [
+                    "community",
+                    "ngo-grants",
+                    "gaming-guild",
+                    "team",
+                    "custom"
+                  ]
+                },
+                "setup": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "presetId": {
+                          "type": "string",
+                          "enum": [
+                            "community",
+                            "ngo-grants",
+                            "gaming-guild",
+                            "team",
+                            "custom"
+                          ]
+                        },
+                        "presetVersion": {
+                          "type": "number",
+                          "const": 1
+                        },
+                        "participantMode": {
+                          "type": "string",
+                          "enum": [
+                            "humans",
+                            "mixed",
+                            "agents-guarded"
+                          ]
+                        },
+                        "governance": {
+                          "type": "object",
+                          "properties": {
+                            "weight": {
+                              "type": "string",
+                              "enum": [
+                                "member",
+                                "credit",
+                                "native-stake"
+                              ]
+                            },
+                            "duration": {
+                              "type": "integer",
+                              "minimum": 60,
+                              "maximum": 2592000
+                            },
+                            "quorumBasisPoints": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 10000
+                            },
+                            "approvalBasisPoints": {
+                              "type": "integer",
+                              "minimum": 5001,
+                              "maximum": 10000
+                            },
+                            "governedWorks": {
+                              "type": "boolean"
+                            },
+                            "maxCommitment": {
+                              "type": "string"
+                            },
+                            "dailyCommitment": {
+                              "type": "string"
+                            },
+                            "guardian": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "const": ""
+                                },
+                                {
+                                  "type": "string",
+                                  "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "weight",
+                            "duration",
+                            "quorumBasisPoints",
+                            "approvalBasisPoints",
+                            "governedWorks",
+                            "maxCommitment",
+                            "dailyCommitment",
+                            "guardian"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "presetId",
+                        "presetVersion",
+                        "participantMode",
+                        "governance"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "branding": {
+                  "type": "object",
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "maxLength": 280
+                    },
+                    "logo": {
+                      "type": "object",
+                      "properties": {
+                        "cid": {
+                          "type": "string",
+                          "maxLength": 128
+                        },
+                        "bytes": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 2097152
+                        },
+                        "mediaType": {
+                          "type": "string",
+                          "enum": [
+                            "image/png",
+                            "image/jpeg",
+                            "image/webp"
+                          ]
+                        },
+                        "commitment": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{64}$"
+                        }
+                      },
+                      "required": [
+                        "cid",
+                        "bytes",
+                        "mediaType",
+                        "commitment"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "cover": {
+                      "type": "object",
+                      "properties": {
+                        "cid": {
+                          "type": "string",
+                          "maxLength": 128
+                        },
+                        "bytes": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 2097152
+                        },
+                        "mediaType": {
+                          "type": "string",
+                          "enum": [
+                            "image/png",
+                            "image/jpeg",
+                            "image/webp"
+                          ]
+                        },
+                        "commitment": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{64}$"
+                        }
+                      },
+                      "required": [
+                        "cid",
+                        "bytes",
+                        "mediaType",
+                        "commitment"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "title",
+                "description",
+                "purpose",
+                "setup",
+                "branding"
               ],
               "additionalProperties": false
             }
@@ -3584,6 +4373,221 @@ Response:
                 "setup"
               ],
               "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "schemaVersion": {
+                  "type": "number",
+                  "const": 3
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 160
+                },
+                "description": {
+                  "default": "",
+                  "type": "string",
+                  "maxLength": 4000
+                },
+                "purpose": {
+                  "type": "string",
+                  "enum": [
+                    "community",
+                    "ngo-grants",
+                    "gaming-guild",
+                    "team",
+                    "custom"
+                  ]
+                },
+                "setup": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "presetId": {
+                          "type": "string",
+                          "enum": [
+                            "community",
+                            "ngo-grants",
+                            "gaming-guild",
+                            "team",
+                            "custom"
+                          ]
+                        },
+                        "presetVersion": {
+                          "type": "number",
+                          "const": 1
+                        },
+                        "participantMode": {
+                          "type": "string",
+                          "enum": [
+                            "humans",
+                            "mixed",
+                            "agents-guarded"
+                          ]
+                        },
+                        "governance": {
+                          "type": "object",
+                          "properties": {
+                            "weight": {
+                              "type": "string",
+                              "enum": [
+                                "member",
+                                "credit",
+                                "native-stake"
+                              ]
+                            },
+                            "duration": {
+                              "type": "integer",
+                              "minimum": 60,
+                              "maximum": 2592000
+                            },
+                            "quorumBasisPoints": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 10000
+                            },
+                            "approvalBasisPoints": {
+                              "type": "integer",
+                              "minimum": 5001,
+                              "maximum": 10000
+                            },
+                            "governedWorks": {
+                              "type": "boolean"
+                            },
+                            "maxCommitment": {
+                              "type": "string"
+                            },
+                            "dailyCommitment": {
+                              "type": "string"
+                            },
+                            "guardian": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "const": ""
+                                },
+                                {
+                                  "type": "string",
+                                  "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "weight",
+                            "duration",
+                            "quorumBasisPoints",
+                            "approvalBasisPoints",
+                            "governedWorks",
+                            "maxCommitment",
+                            "dailyCommitment",
+                            "guardian"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "presetId",
+                        "presetVersion",
+                        "participantMode",
+                        "governance"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "branding": {
+                  "type": "object",
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "maxLength": 280
+                    },
+                    "logo": {
+                      "type": "object",
+                      "properties": {
+                        "cid": {
+                          "type": "string",
+                          "maxLength": 128
+                        },
+                        "bytes": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 2097152
+                        },
+                        "mediaType": {
+                          "type": "string",
+                          "enum": [
+                            "image/png",
+                            "image/jpeg",
+                            "image/webp"
+                          ]
+                        },
+                        "commitment": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{64}$"
+                        }
+                      },
+                      "required": [
+                        "cid",
+                        "bytes",
+                        "mediaType",
+                        "commitment"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "cover": {
+                      "type": "object",
+                      "properties": {
+                        "cid": {
+                          "type": "string",
+                          "maxLength": 128
+                        },
+                        "bytes": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 2097152
+                        },
+                        "mediaType": {
+                          "type": "string",
+                          "enum": [
+                            "image/png",
+                            "image/jpeg",
+                            "image/webp"
+                          ]
+                        },
+                        "commitment": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{64}$"
+                        }
+                      },
+                      "required": [
+                        "cid",
+                        "bytes",
+                        "mediaType",
+                        "commitment"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "title",
+                "description",
+                "purpose",
+                "setup",
+                "branding"
+              ],
+              "additionalProperties": false
             }
           ]
         },
@@ -3941,6 +4945,542 @@ Response:
     "state",
     "dao",
     "checkoutUrl"
+  ],
+  "additionalProperties": false
+}
+```
+
+## GET /v1/daos/:id/reports/spending
+
+Guide: spending-reports.
+
+No request body.
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "number",
+      "const": 1
+    },
+    "dao": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "contract": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "daoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "interfaceVersion": {
+          "type": "number",
+          "const": 1
+        }
+      },
+      "required": [
+        "chainId",
+        "contract",
+        "daoId",
+        "interfaceVersion"
+      ],
+      "additionalProperties": false
+    },
+    "asset": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "contract": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "symbol": {
+          "type": "string",
+          "pattern": "^[A-Z]{1,7}$"
+        },
+        "precision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18
+        }
+      },
+      "required": [
+        "chainId",
+        "contract",
+        "symbol",
+        "precision"
+      ],
+      "additionalProperties": false
+    },
+    "read": {
+      "type": "object",
+      "properties": {
+        "startedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        },
+        "atomic": {
+          "type": "boolean",
+          "const": false
+        }
+      },
+      "required": [
+        "startedAt",
+        "completedAt",
+        "atomic"
+      ],
+      "additionalProperties": false
+    },
+    "complete": {
+      "type": "boolean"
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "treasury-unavailable",
+          "content-unavailable",
+          "modules-unavailable",
+          "module-records-unavailable",
+          "document-reference-unavailable",
+          "reconciliation-changed"
+        ]
+      }
+    },
+    "receiptCoverage": {
+      "type": "string",
+      "enum": [
+        "since-receipt-upgrade",
+        "unavailable"
+      ]
+    },
+    "summary": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "available": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "reserved": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "claims": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "settledObligations": {
+              "type": "string",
+              "maxLength": 40,
+              "pattern": "^(0|[1-9][0-9]*)$"
+            },
+            "externalCashflow": {
+              "type": "string",
+              "maxLength": 40,
+              "pattern": "^(0|[1-9][0-9]*)$"
+            },
+            "legacyUnknownSettlements": {
+              "type": "string",
+              "maxLength": 40,
+              "pattern": "^(0|[1-9][0-9]*)$"
+            }
+          },
+          "required": [
+            "available",
+            "reserved",
+            "claims",
+            "settledObligations",
+            "externalCashflow",
+            "legacyUnknownSettlements"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "obligations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "source": {
+            "type": "string",
+            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+          },
+          "sourceId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "beneficiary": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "amount": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "due": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "reserved",
+              "approved",
+              "settled",
+              "cancelled"
+            ]
+          },
+          "settlement": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "internal-claim",
+              "native-payment",
+              "legacy-unknown"
+            ]
+          },
+          "receiptId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "works",
+              "payroll",
+              "other"
+            ]
+          },
+          "projectId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "agreementTerms": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "version": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "cid": {
+                  "type": "string"
+                },
+                "commitment": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "encrypted": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "id",
+                "version",
+                "cid",
+                "commitment",
+                "encrypted"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "statements": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "dao_id": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "obligation_id": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "recipient": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "quantity": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)? [A-Z]{1,7}$"
+                },
+                "chain": {
+                  "type": "string",
+                  "maxLength": 16384
+                },
+                "payer": {
+                  "type": "string",
+                  "maxLength": 16384
+                },
+                "reference": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "mode": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                }
+              },
+              "required": [
+                "id",
+                "dao_id",
+                "obligation_id",
+                "recipient",
+                "quantity",
+                "chain",
+                "payer",
+                "reference",
+                "mode"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "sourceId",
+          "beneficiary",
+          "amount",
+          "due",
+          "state",
+          "settlement",
+          "receiptId",
+          "category",
+          "projectId",
+          "agreementTerms",
+          "documents",
+          "statements"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "claimBalances": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "member": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "amount": {
+            "type": "string",
+            "maxLength": 20
+          }
+        },
+        "required": [
+          "member",
+          "amount"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "receipts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "kind": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          },
+          "obligation_id": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "recipient": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "destination": {
+            "type": "string",
+            "maxLength": 13
+          },
+          "token_contract": {
+            "type": "string",
+            "maxLength": 13
+          },
+          "quantity": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)? [A-Z]{1,7}$"
+          },
+          "at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295
+          },
+          "transaction_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "obligation_id",
+          "recipient",
+          "destination",
+          "token_contract",
+          "quantity",
+          "at",
+          "transaction_id"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "dao",
+    "asset",
+    "read",
+    "complete",
+    "issues",
+    "receiptCoverage",
+    "summary",
+    "obligations",
+    "claimBalances",
+    "receipts"
+  ],
+  "additionalProperties": false
+}
+```
+
+## GET /v1/daos/:id/reports/spending/csv
+
+Guide: spending-reports.
+
+No request body.
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "string",
+      "const": "csv"
+    },
+    "content": {
+      "type": "string",
+      "maxLength": 16777216
+    }
+  },
+  "required": [
+    "format",
+    "content"
+  ],
+  "additionalProperties": false
+}
+```
+
+## GET /v1/daos/:id/branding/:slot
+
+Guide: dao-discovery.
+
+No request body.
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "content": {
+      "type": "string",
+      "minLength": 4,
+      "maxLength": 6990508
+    },
+    "mediaType": {
+      "type": "string",
+      "enum": [
+        "image/png",
+        "image/jpeg",
+        "image/webp"
+      ]
+    }
+  },
+  "required": [
+    "content",
+    "mediaType"
   ],
   "additionalProperties": false
 }
@@ -4368,6 +5908,57 @@ Response:
           "type": "null"
         }
       ]
+    },
+    "admission": {
+      "default": null,
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "dao_id": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "revision": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "mode": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "source": {
+              "type": "string",
+              "maxLength": 13
+            },
+            "threshold": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "allow_agents": {
+              "type": "boolean"
+            },
+            "admin_override": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "dao_id",
+            "revision",
+            "mode",
+            "source",
+            "threshold",
+            "allow_agents",
+            "admin_override"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   },
   "required": [
@@ -4376,7 +5967,8 @@ Response:
     "actors",
     "sessions",
     "guardian",
-    "budget"
+    "budget",
+    "admission"
   ],
   "additionalProperties": false
 }
@@ -4695,6 +6287,82 @@ Response:
                 "type": "null"
               }
             ]
+          },
+          "branding": {
+            "type": "object",
+            "properties": {
+              "summary": {
+                "type": "string",
+                "maxLength": 280
+              },
+              "logo": {
+                "type": "object",
+                "properties": {
+                  "cid": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  "bytes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 2097152
+                  },
+                  "mediaType": {
+                    "type": "string",
+                    "enum": [
+                      "image/png",
+                      "image/jpeg",
+                      "image/webp"
+                    ]
+                  },
+                  "commitment": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                },
+                "required": [
+                  "cid",
+                  "bytes",
+                  "mediaType",
+                  "commitment"
+                ],
+                "additionalProperties": false
+              },
+              "cover": {
+                "type": "object",
+                "properties": {
+                  "cid": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  "bytes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 2097152
+                  },
+                  "mediaType": {
+                    "type": "string",
+                    "enum": [
+                      "image/png",
+                      "image/jpeg",
+                      "image/webp"
+                    ]
+                  },
+                  "commitment": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                },
+                "required": [
+                  "cid",
+                  "bytes",
+                  "mediaType",
+                  "commitment"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
           }
         },
         "required": [
@@ -5336,6 +7004,82 @@ Response:
           "type": "null"
         }
       ]
+    },
+    "branding": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string",
+          "maxLength": 280
+        },
+        "logo": {
+          "type": "object",
+          "properties": {
+            "cid": {
+              "type": "string",
+              "maxLength": 128
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2097152
+            },
+            "mediaType": {
+              "type": "string",
+              "enum": [
+                "image/png",
+                "image/jpeg",
+                "image/webp"
+              ]
+            },
+            "commitment": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "cid",
+            "bytes",
+            "mediaType",
+            "commitment"
+          ],
+          "additionalProperties": false
+        },
+        "cover": {
+          "type": "object",
+          "properties": {
+            "cid": {
+              "type": "string",
+              "maxLength": 128
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 2097152
+            },
+            "mediaType": {
+              "type": "string",
+              "enum": [
+                "image/png",
+                "image/jpeg",
+                "image/webp"
+              ]
+            },
+            "commitment": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "cid",
+            "bytes",
+            "mediaType",
+            "commitment"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   },
   "required": [
@@ -5504,12 +7248,79 @@ Response:
         ],
         "additionalProperties": false
       }
+    },
+    "receipts": {
+      "default": [],
+      "maxItems": 5000,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "kind": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          },
+          "obligation_id": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "recipient": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "destination": {
+            "type": "string",
+            "maxLength": 13
+          },
+          "token_contract": {
+            "type": "string",
+            "maxLength": 13
+          },
+          "quantity": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)? [A-Z]{1,7}$"
+          },
+          "at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295
+          },
+          "transaction_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "obligation_id",
+          "recipient",
+          "destination",
+          "token_contract",
+          "quantity",
+          "at",
+          "transaction_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "receiptsAvailable": {
+      "default": false,
+      "type": "boolean"
     }
   },
   "required": [
     "dao",
     "obligations",
-    "evidence"
+    "evidence",
+    "receipts",
+    "receiptsAvailable"
   ],
   "additionalProperties": false
 }
@@ -6519,6 +8330,10 @@ Response:
               "user-controlled",
               "managed"
             ]
+          },
+          "signingKey": {
+            "type": "string",
+            "maxLength": 128
           }
         },
         "required": [
@@ -6957,6 +8772,222 @@ Request:
             "setup"
           ],
           "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "schemaVersion": {
+              "type": "number",
+              "const": 3
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            },
+            "description": {
+              "default": "",
+              "type": "string",
+              "maxLength": 4000
+            },
+            "purpose": {
+              "type": "string",
+              "enum": [
+                "community",
+                "ngo-grants",
+                "gaming-guild",
+                "team",
+                "custom"
+              ]
+            },
+            "setup": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "presetId": {
+                      "type": "string",
+                      "enum": [
+                        "community",
+                        "ngo-grants",
+                        "gaming-guild",
+                        "team",
+                        "custom"
+                      ]
+                    },
+                    "presetVersion": {
+                      "type": "number",
+                      "const": 1
+                    },
+                    "participantMode": {
+                      "type": "string",
+                      "enum": [
+                        "humans",
+                        "mixed",
+                        "agents-guarded"
+                      ]
+                    },
+                    "governance": {
+                      "type": "object",
+                      "properties": {
+                        "weight": {
+                          "type": "string",
+                          "enum": [
+                            "member",
+                            "credit",
+                            "native-stake"
+                          ]
+                        },
+                        "duration": {
+                          "type": "integer",
+                          "minimum": 60,
+                          "maximum": 2592000
+                        },
+                        "quorumBasisPoints": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 10000
+                        },
+                        "approvalBasisPoints": {
+                          "type": "integer",
+                          "minimum": 5001,
+                          "maximum": 10000
+                        },
+                        "governedWorks": {
+                          "type": "boolean"
+                        },
+                        "maxCommitment": {
+                          "type": "string",
+                          "maxLength": 20
+                        },
+                        "dailyCommitment": {
+                          "type": "string",
+                          "maxLength": 20
+                        },
+                        "guardian": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "const": ""
+                            },
+                            {
+                              "type": "string",
+                              "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "weight",
+                        "duration",
+                        "quorumBasisPoints",
+                        "approvalBasisPoints",
+                        "governedWorks",
+                        "maxCommitment",
+                        "dailyCommitment",
+                        "guardian"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "presetId",
+                    "presetVersion",
+                    "participantMode",
+                    "governance"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "branding": {
+              "type": "object",
+              "properties": {
+                "summary": {
+                  "type": "string",
+                  "maxLength": 280
+                },
+                "logo": {
+                  "type": "object",
+                  "properties": {
+                    "cid": {
+                      "type": "string",
+                      "maxLength": 128
+                    },
+                    "bytes": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 2097152
+                    },
+                    "mediaType": {
+                      "type": "string",
+                      "enum": [
+                        "image/png",
+                        "image/jpeg",
+                        "image/webp"
+                      ]
+                    },
+                    "commitment": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    }
+                  },
+                  "required": [
+                    "cid",
+                    "bytes",
+                    "mediaType",
+                    "commitment"
+                  ],
+                  "additionalProperties": false
+                },
+                "cover": {
+                  "type": "object",
+                  "properties": {
+                    "cid": {
+                      "type": "string",
+                      "maxLength": 128
+                    },
+                    "bytes": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 2097152
+                    },
+                    "mediaType": {
+                      "type": "string",
+                      "enum": [
+                        "image/png",
+                        "image/jpeg",
+                        "image/webp"
+                      ]
+                    },
+                    "commitment": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    }
+                  },
+                  "required": [
+                    "cid",
+                    "bytes",
+                    "mediaType",
+                    "commitment"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "title",
+            "purpose",
+            "setup",
+            "branding"
+          ],
+          "additionalProperties": false
         }
       ]
     },
@@ -7364,6 +9395,1388 @@ Response:
 }
 ```
 
+## POST /v1/sign-in/email/login/start
+
+Guide: providers.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 254
+    }
+  },
+  "required": [
+    "email"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "delivery": {
+      "type": "string",
+      "const": "sent"
+    }
+  },
+  "required": [
+    "delivery"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/sign-in/remove
+
+Guide: providers. HTTP 204.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "method": {
+      "type": "string",
+      "enum": [
+        "telegram",
+        "email",
+        "passkey"
+      ]
+    },
+    "subject": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048
+    }
+  },
+  "required": [
+    "method",
+    "subject"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "not": {}
+}
+```
+
+## POST /v1/account/native/unlink
+
+Guide: accounts. HTTP 204.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "chainId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "chainId"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "not": {}
+}
+```
+
+## POST /v1/account/evm/unlink
+
+Guide: accounts. HTTP 204.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "chainId": {
+      "anyOf": [
+        {
+          "type": "number",
+          "const": 40
+        },
+        {
+          "type": "number",
+          "const": 41
+        }
+      ]
+    }
+  },
+  "required": [
+    "chainId"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "not": {}
+}
+```
+
+## GET /v1/account/history
+
+Guide: accounts.
+
+No request body.
+
+Query:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "before": {
+      "type": "string",
+      "maxLength": 20
+    }
+  },
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "linked",
+              "unlinked",
+              "updated"
+            ]
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "email",
+              "telegram",
+              "google",
+              "passkey",
+              "native",
+              "evm"
+            ]
+          },
+          "subject": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2048
+          },
+          "chainId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "method",
+          "subject",
+          "chainId",
+          "at"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "next": {
+      "anyOf": [
+        {
+          "type": "string",
+          "maxLength": 20
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "entries",
+    "next"
+  ],
+  "additionalProperties": false
+}
+```
+
+## GET /v1/daos/:id/evm/:member
+
+Guide: providers.
+
+No request body.
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "binding": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "member_id": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "chain_id": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "address": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            },
+            "epoch": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "active": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "member_id",
+            "chain_id",
+            "address",
+            "epoch",
+            "active"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "binding"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/relay/evm
+
+Guide: providers.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "request": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535
+        },
+        "chain_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "deployment": {
+          "type": "string",
+          "maxLength": 13
+        },
+        "dao_id": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "member_id": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "nonce": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "expires": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "target": {
+          "type": "string",
+          "maxLength": 13
+        },
+        "action": {
+          "type": "string",
+          "maxLength": 13
+        },
+        "data": {
+          "type": "string",
+          "maxLength": 32768,
+          "pattern": "^(?:[0-9a-f]{2})*$"
+        }
+      },
+      "required": [
+        "version",
+        "chain_id",
+        "deployment",
+        "dao_id",
+        "member_id",
+        "nonce",
+        "expires",
+        "target",
+        "action",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "evm_chain_id": {
+      "type": "string",
+      "maxLength": 20
+    },
+    "address": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "binding_epoch": {
+      "type": "string",
+      "maxLength": 20
+    },
+    "proof": {
+      "type": "string",
+      "maxLength": 32768,
+      "pattern": "^(?:[0-9a-f]{2})*$"
+    }
+  },
+  "required": [
+    "request",
+    "evm_chain_id",
+    "address",
+    "binding_epoch",
+    "proof"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "transactionId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "transactionId"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/account/evm/sign-in/challenge
+
+Guide: accounts.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "purpose": {
+      "type": "string",
+      "enum": [
+        "login",
+        "pair"
+      ]
+    },
+    "chainId": {
+      "anyOf": [
+        {
+          "type": "number",
+          "const": 40
+        },
+        {
+          "type": "number",
+          "const": 41
+        }
+      ]
+    },
+    "address": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]{40}$"
+    }
+  },
+  "required": [
+    "purpose",
+    "chainId",
+    "address"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "message": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "expires": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+    },
+    "chainId": {
+      "anyOf": [
+        {
+          "type": "number",
+          "const": 40
+        },
+        {
+          "type": "number",
+          "const": 41
+        }
+      ]
+    },
+    "address": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]{40}$"
+    }
+  },
+  "required": [
+    "id",
+    "message",
+    "expires",
+    "chainId",
+    "address"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/account/evm/sign-in/link
+
+Guide: accounts.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "signature": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]{130}$"
+    }
+  },
+  "required": [
+    "id",
+    "signature"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "chainId": {
+      "anyOf": [
+        {
+          "type": "number",
+          "const": 40
+        },
+        {
+          "type": "number",
+          "const": 41
+        }
+      ]
+    },
+    "address": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]{40}$"
+    }
+  },
+  "required": [
+    "chainId",
+    "address"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/sign-in/evm
+
+Guide: providers.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "signature": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]{130}$"
+    }
+  },
+  "required": [
+    "id",
+    "signature"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "account": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "signingKey": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "custody": {
+          "type": "string",
+          "enum": [
+            "user-controlled",
+            "managed"
+          ]
+        },
+        "encryptionKey": {
+          "type": "object",
+          "properties": {
+            "kty": {
+              "type": "string",
+              "const": "EC"
+            },
+            "crv": {
+              "type": "string",
+              "const": "P-256"
+            },
+            "x": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{43}$"
+            },
+            "y": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{43}$"
+            }
+          },
+          "required": [
+            "kty",
+            "crv",
+            "x",
+            "y"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "id",
+        "signingKey",
+        "custody",
+        "encryptionKey"
+      ],
+      "additionalProperties": false
+    },
+    "csrfToken": {
+      "type": "string",
+      "minLength": 32,
+      "maxLength": 128
+    }
+  },
+  "required": [
+    "account",
+    "csrfToken"
+  ],
+  "additionalProperties": false
+}
+```
+
+## GET /v1/account/native
+
+Guide: accounts.
+
+No request body.
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "links": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "chainId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "account": {
+            "type": "string",
+            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+          },
+          "permission": {
+            "type": "string",
+            "const": "active"
+          }
+        },
+        "required": [
+          "chainId",
+          "account",
+          "permission"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "links"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/account/native/challenge
+
+Guide: accounts.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "account": {
+      "type": "string",
+      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+    },
+    "permission": {
+      "type": "string",
+      "const": "active"
+    },
+    "purpose": {
+      "type": "string",
+      "enum": [
+        "login",
+        "pair"
+      ]
+    }
+  },
+  "required": [
+    "account",
+    "permission",
+    "purpose"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "message": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "expires": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+    },
+    "identity": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "account": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "permission": {
+          "type": "string",
+          "const": "active"
+        }
+      },
+      "required": [
+        "chainId",
+        "account",
+        "permission"
+      ],
+      "additionalProperties": false
+    },
+    "runtime": {
+      "type": "string",
+      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+    }
+  },
+  "required": [
+    "id",
+    "message",
+    "expires",
+    "identity",
+    "runtime"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/account/native/link
+
+Guide: accounts.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "proof": {
+      "type": "object",
+      "properties": {
+        "packedTransaction": {
+          "type": "string",
+          "pattern": "^(?:[0-9a-f]{2}){1,4096}$"
+        },
+        "signatures": {
+          "minItems": 1,
+          "maxItems": 8,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          }
+        }
+      },
+      "required": [
+        "packedTransaction",
+        "signatures"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "id",
+    "proof"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "chainId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "account": {
+      "type": "string",
+      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+    },
+    "permission": {
+      "type": "string",
+      "const": "active"
+    }
+  },
+  "required": [
+    "chainId",
+    "account",
+    "permission"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/sign-in/native
+
+Guide: providers.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "proof": {
+      "type": "object",
+      "properties": {
+        "packedTransaction": {
+          "type": "string",
+          "pattern": "^(?:[0-9a-f]{2}){1,4096}$"
+        },
+        "signatures": {
+          "minItems": 1,
+          "maxItems": 8,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          }
+        }
+      },
+      "required": [
+        "packedTransaction",
+        "signatures"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "id",
+    "proof"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "account": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "signingKey": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "custody": {
+          "type": "string",
+          "enum": [
+            "user-controlled",
+            "managed"
+          ]
+        },
+        "encryptionKey": {
+          "type": "object",
+          "properties": {
+            "kty": {
+              "type": "string",
+              "const": "EC"
+            },
+            "crv": {
+              "type": "string",
+              "const": "P-256"
+            },
+            "x": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{43}$"
+            },
+            "y": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{43}$"
+            }
+          },
+          "required": [
+            "kty",
+            "crv",
+            "x",
+            "y"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "id",
+        "signingKey",
+        "custody",
+        "encryptionKey"
+      ],
+      "additionalProperties": false
+    },
+    "csrfToken": {
+      "type": "string",
+      "minLength": 32,
+      "maxLength": 128
+    }
+  },
+  "required": [
+    "account",
+    "csrfToken"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/account/control
+
+Guide: accounts.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "path": {
+      "type": "string",
+      "enum": [
+        "/v1/auth/providers/link",
+        "/v1/auth/providers/unlink",
+        "/v1/sign-in/email/confirm",
+        "/v1/sign-in/telegram",
+        "/v1/sign-in/telegram/oidc/pair/confirm",
+        "/v1/sign-in/passkey/register",
+        "/v1/sign-in/remove",
+        "/v1/account/evm/link",
+        "/v1/account/evm/unlink",
+        "/v1/account/native/link",
+        "/v1/account/native/unlink",
+        "/v1/account/evm/sign-in/link"
+      ]
+    },
+    "bodyHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "path",
+    "bodyHash"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "message": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "expires": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+    }
+  },
+  "required": [
+    "id",
+    "message",
+    "expires"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/sign-in/session
+
+Guide: providers.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "account": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "signingKey": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "custody": {
+          "type": "string",
+          "enum": [
+            "user-controlled",
+            "managed"
+          ]
+        },
+        "encryptionKey": {
+          "type": "object",
+          "properties": {
+            "kty": {
+              "type": "string",
+              "const": "EC"
+            },
+            "crv": {
+              "type": "string",
+              "const": "P-256"
+            },
+            "x": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{43}$"
+            },
+            "y": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{43}$"
+            }
+          },
+          "required": [
+            "kty",
+            "crv",
+            "x",
+            "y"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "id",
+        "signingKey",
+        "custody",
+        "encryptionKey"
+      ],
+      "additionalProperties": false
+    },
+    "csrfToken": {
+      "type": "string",
+      "minLength": 32,
+      "maxLength": 128
+    }
+  },
+  "required": [
+    "account",
+    "csrfToken"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/sign-in/telegram/oidc/login/start
+
+Guide: providers.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "returnTo": {
+      "type": "string",
+      "maxLength": 2048
+    }
+  },
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "authorizationUrl": {
+      "type": "string",
+      "format": "uri"
+    }
+  },
+  "required": [
+    "authorizationUrl"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/sign-in/telegram/oidc/pair/start
+
+Guide: providers.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "returnTo": {
+      "type": "string",
+      "maxLength": 2048
+    }
+  },
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "authorizationUrl": {
+      "type": "string",
+      "format": "uri"
+    }
+  },
+  "required": [
+    "authorizationUrl"
+  ],
+  "additionalProperties": false
+}
+```
+
+## GET /v1/sign-in/telegram/oidc/pair/:id
+
+Guide: providers.
+
+No request body.
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "subject": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "expires": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+    }
+  },
+  "required": [
+    "id",
+    "subject",
+    "expires"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/sign-in/telegram/oidc/pair/confirm
+
+Guide: providers.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    }
+  },
+  "required": [
+    "id"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "provider": {
+      "type": "string",
+      "enum": [
+        "google",
+        "telegram"
+      ]
+    },
+    "subject": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    }
+  },
+  "required": [
+    "provider",
+    "subject"
+  ],
+  "additionalProperties": false
+}
+```
+
 ## GET /v1/profile
 
 Guide: accounts.
@@ -7517,11 +10930,21 @@ Response:
             "string",
             "null"
           ]
+        },
+        "oidc": {
+          "default": false,
+          "type": "boolean"
+        },
+        "miniApp": {
+          "default": false,
+          "type": "boolean"
         }
       },
       "required": [
         "configured",
-        "username"
+        "username",
+        "oidc",
+        "miniApp"
       ],
       "additionalProperties": false
     },
@@ -7595,12 +11018,22 @@ Response:
           "items": {
             "type": "string"
           }
+        },
+        "oidc": {
+          "default": false,
+          "type": "boolean"
+        },
+        "miniApp": {
+          "default": false,
+          "type": "boolean"
         }
       },
       "required": [
         "configured",
         "username",
-        "subjects"
+        "subjects",
+        "oidc",
+        "miniApp"
       ],
       "additionalProperties": false
     },
@@ -7658,7 +11091,25 @@ Response:
 
 Guide: providers.
 
-Request fields are not included in this response reference; consult the endpoint implementation.
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 254
+    }
+  },
+  "required": [
+    "email"
+  ],
+  "additionalProperties": false
+}
+```
 
 Response:
 
@@ -7705,7 +11156,30 @@ Response:
 
 Guide: providers.
 
-Request fields are not included in this response reference; consult the endpoint implementation.
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 254
+    },
+    "code": {
+      "type": "string",
+      "pattern": "^\\d{8}$"
+    }
+  },
+  "required": [
+    "email",
+    "code"
+  ],
+  "additionalProperties": false
+}
+```
 
 Response:
 
@@ -7730,7 +11204,30 @@ Response:
 
 Guide: providers.
 
-Request fields are not included in this response reference; consult the endpoint implementation.
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 254
+    },
+    "code": {
+      "type": "string",
+      "pattern": "^\\d{8}$"
+    }
+  },
+  "required": [
+    "email",
+    "code"
+  ],
+  "additionalProperties": false
+}
+```
 
 Response:
 
@@ -7813,7 +11310,25 @@ Response:
 
 Guide: providers.
 
-Request fields are not included in this response reference; consult the endpoint implementation.
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "proof": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    }
+  },
+  "required": [
+    "proof"
+  ],
+  "additionalProperties": false
+}
+```
 
 Response:
 
@@ -7847,7 +11362,25 @@ Response:
 
 Guide: providers.
 
-Request fields are not included in this response reference; consult the endpoint implementation.
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "proof": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16384
+    }
+  },
+  "required": [
+    "proof"
+  ],
+  "additionalProperties": false
+}
+```
 
 Response:
 
@@ -7930,7 +11463,16 @@ Response:
 
 Guide: providers.
 
-Request fields are not included in this response reference; consult the endpoint implementation.
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}
+```
 
 Response:
 
@@ -8071,7 +11613,29 @@ Response:
 
 Guide: providers.
 
-Request fields are not included in this response reference; consult the endpoint implementation.
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "clientDataJSON": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,16384}$"
+    },
+    "attestationObject": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,16384}$"
+    }
+  },
+  "required": [
+    "clientDataJSON",
+    "attestationObject"
+  ],
+  "additionalProperties": false
+}
+```
 
 Response:
 
@@ -8096,7 +11660,16 @@ Response:
 
 Guide: providers.
 
-Request fields are not included in this response reference; consult the endpoint implementation.
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}
+```
 
 Response:
 
@@ -8137,7 +11710,39 @@ Response:
 
 Guide: providers.
 
-Request fields are not included in this response reference; consult the endpoint implementation.
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "credentialId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,2048}$"
+    },
+    "clientDataJSON": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,16384}$"
+    },
+    "authenticatorData": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,16384}$"
+    },
+    "signature": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,16384}$"
+    }
+  },
+  "required": [
+    "credentialId",
+    "clientDataJSON",
+    "authenticatorData",
+    "signature"
+  ],
+  "additionalProperties": false
+}
+```
 
 Response:
 
@@ -8249,11 +11854,15 @@ Response:
           "address": {
             "type": "string",
             "pattern": "^0x[0-9a-fA-F]{40}$"
+          },
+          "controlVerified": {
+            "type": "boolean"
           }
         },
         "required": [
           "chainId",
-          "address"
+          "address",
+          "controlVerified"
         ],
         "additionalProperties": false
       }
@@ -8270,7 +11879,32 @@ Response:
 
 Guide: accounts.
 
-Request fields are not included in this response reference; consult the endpoint implementation.
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "chainId": {
+      "anyOf": [
+        {
+          "type": "number",
+          "const": 40
+        },
+        {
+          "type": "number",
+          "const": 41
+        }
+      ]
+    }
+  },
+  "required": [
+    "chainId"
+  ],
+  "additionalProperties": false
+}
+```
 
 Response:
 
@@ -8313,7 +11947,42 @@ Response:
 
 Guide: accounts.
 
-Request fields are not included in this response reference; consult the endpoint implementation.
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "chainId": {
+      "anyOf": [
+        {
+          "type": "number",
+          "const": 40
+        },
+        {
+          "type": "number",
+          "const": 41
+        }
+      ]
+    },
+    "address": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]{40}$"
+    },
+    "signature": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]{130}$"
+    }
+  },
+  "required": [
+    "chainId",
+    "address",
+    "signature"
+  ],
+  "additionalProperties": false
+}
+```
 
 Response:
 

@@ -27,6 +27,9 @@ const output = generateDocumentation(
     ...ServiceResponseRoutes.map((endpoint) => ({
       method: endpoint.method,
       path: endpoint.path,
+      ...('status' in endpoint ? { status: endpoint.status } : {}),
+      ...('input' in endpoint ? { input: z.toJSONSchema(endpoint.input, { io: 'input' }) } : {}),
+      ...('query' in endpoint ? { query: z.toJSONSchema(endpoint.query, { io: 'input' }) } : {}),
       response: z.toJSONSchema(endpoint.response, { io: 'output' }),
       helpTopic:
         endpoint.path.startsWith('/v1/marketplace') || endpoint.path.startsWith('/v1/names')

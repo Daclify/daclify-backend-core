@@ -1,3 +1,6 @@
+import { controlledInject } from '../helpers/account-control.js';
+import { parseSiweMessage } from 'viem/siwe';
+import { EvmSignInChallengeSchema } from '../../protocol/evm-wallet.js';
 import { generateKeyPairSync, randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Pool } from 'pg';
@@ -133,6 +136,7 @@ async function login(server: typeof app) {
   const session = SessionSchema.parse(response.json());
   return {
     session,
+    key,
     cookie: response.cookies.map((item) => `${item.name}=${item.value}`).join('; '),
   };
 }
@@ -141,6 +145,104 @@ function headers(cookie: string, csrf: string) {
 }
 
 describe('Telos EVM account links', () => {
+  it('uses browser-bound SIWE and dual consent, preserves identity and revokes removed wallet sessions', async () => {
+    const owner = await login(app),
+      secret = secp256k1.utils.randomSecretKey(),
+      address = addressOf(secret);
+    const started = await app.inject({
+      method: 'POST',
+      url: '/v1/account/evm/sign-in/challenge',
+      headers: headers(owner.cookie, owner.session.csrfToken),
+      payload: { purpose: 'pair', chainId: 41, address },
+    });
+    const challenge = EvmSignInChallengeSchema.parse(started.json());
+    expect(parseSiweMessage(challenge.message)).toMatchObject({
+      domain: 'localhost:5178',
+      scheme: 'http',
+      address: checksumAddress(address),
+      chainId: 41,
+      uri: origin + '/account',
+      version: '1',
+    });
+    const attempt = started.cookies.map((item) => `${item.name}=${item.value}`).join('; '),
+      payload = { id: challenge.id, signature: sign(challenge.message, secret) },
+      pairHeaders = headers(`${owner.cookie}; ${attempt}`, owner.session.csrfToken);
+    expect(
+      (
+        await app.inject({
+          method: 'POST',
+          url: '/v1/account/evm/sign-in/link',
+          headers: pairHeaders,
+          payload,
+        })
+      ).statusCode,
+    ).toBe(403);
+    expect(
+      (
+        await controlledInject(app, owner.key, {
+          method: 'POST',
+          url: '/v1/account/evm/sign-in/link',
+          headers: pairHeaders,
+          payload,
+        })
+      ).statusCode,
+    ).toBe(200);
+    const loginStart = await app.inject({
+      method: 'POST',
+      url: '/v1/account/evm/sign-in/challenge',
+      headers: { origin },
+      payload: { purpose: 'login', chainId: 41, address },
+    });
+    const incoming = EvmSignInChallengeSchema.parse(loginStart.json()),
+      loginCookie = loginStart.cookies.map((item) => `${item.name}=${item.value}`).join('; '),
+      loginProof = { id: incoming.id, signature: sign(incoming.message, secret) };
+    expect(
+      (
+        await app.inject({
+          method: 'POST',
+          url: '/v1/sign-in/evm',
+          headers: { origin },
+          payload: loginProof,
+        })
+      ).statusCode,
+    ).toBe(401);
+    const logged = await app.inject({
+      method: 'POST',
+      url: '/v1/sign-in/evm',
+      headers: { origin, cookie: loginCookie },
+      payload: loginProof,
+    });
+    expect(logged.statusCode).toBe(200);
+    expect(SessionSchema.parse(logged.json()).account.id).toBe(owner.session.account.id);
+    expect(
+      (
+        await app.inject({
+          method: 'POST',
+          url: '/v1/sign-in/evm',
+          headers: { origin, cookie: loginCookie },
+          payload: loginProof,
+        })
+      ).statusCode,
+    ).toBe(401);
+    const removed = await controlledInject(app, owner.key, {
+      method: 'POST',
+      url: '/v1/account/evm/unlink',
+      headers: headers(owner.cookie, owner.session.csrfToken),
+      payload: { chainId: 41 },
+    });
+    expect(removed.statusCode).toBe(204);
+    expect(
+      (
+        await app.inject({
+          method: 'GET',
+          url: '/v1/me',
+          headers: {
+            cookie: logged.cookies.map((item) => `${item.name}=${item.value}`).join('; '),
+          },
+        })
+      ).statusCode,
+    ).toBe(401);
+  });
   it('links an address proved by personal_sign and refuses a second account', async () => {
     const first = await login(app);
     const second = await login(app);
@@ -154,14 +256,14 @@ describe('Telos EVM account links', () => {
     });
     expect(challenge.statusCode).toBe(200);
     const body = challenge.json() as { message: string };
-    const bad = await app.inject({
+    const bad = await controlledInject(app, first.key, {
       method: 'POST',
       url: '/v1/account/evm/link',
       headers: headers(first.cookie, first.session.csrfToken),
       payload: { chainId: 41, address: claimed, signature: `0x${'ab'.repeat(65)}` },
     });
     expect(bad.statusCode).toBe(401);
-    const linked = await app.inject({
+    const linked = await controlledInject(app, first.key, {
       method: 'POST',
       url: '/v1/account/evm/link',
       headers: headers(first.cookie, first.session.csrfToken),
@@ -174,7 +276,9 @@ describe('Telos EVM account links', () => {
       url: '/v1/account/evm',
       headers: { cookie: first.cookie },
     });
-    expect(listed.json()).toEqual({ links: [{ chainId: 41, address: checksumAddress(claimed) }] });
+    expect(listed.json()).toEqual({
+      links: [{ chainId: 41, address: checksumAddress(claimed), controlVerified: true }],
+    });
     const otherChallenge = await app.inject({
       method: 'POST',
       url: '/v1/account/evm/challenge',
@@ -182,14 +286,14 @@ describe('Telos EVM account links', () => {
       payload: { chainId: 41 },
     });
     const other = otherChallenge.json() as { message: string };
-    const conflict = await app.inject({
+    const conflict = await controlledInject(app, second.key, {
       method: 'POST',
       url: '/v1/account/evm/link',
       headers: headers(second.cookie, second.session.csrfToken),
       payload: { chainId: 41, address: claimed, signature: sign(other.message, secret) },
     });
     expect(conflict.statusCode).toBe(409);
-    const removed = await app.inject({
+    const removed = await controlledInject(app, first.key, {
       method: 'POST',
       url: '/v1/account/evm/unlink',
       headers: headers(first.cookie, first.session.csrfToken),

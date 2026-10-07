@@ -2,6 +2,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
 import { ApiError } from '../errors.js';
 import { uniqueViolation, withTransaction } from './account-session.js';
+import { revokeCredentialSessions } from './intent.js';
 import {
   checksumAddress,
   isTelosEvmChain,
@@ -25,12 +26,22 @@ function present(row: { chain_id: number; address: string }): EvmLink {
   return { chainId: row.chain_id, address: checksumAddress(row.address) };
 }
 
-export async function listEvmLinks(pool: Pool, accountId: string): Promise<EvmLink[]> {
-  const result = await pool.query<{ chain_id: number; address: string }>(
-    'SELECT chain_id,address FROM evm_links WHERE account_id=$1 ORDER BY chain_id',
+export async function listEvmLinks(
+  pool: Pool,
+  accountId: string,
+): Promise<(EvmLink & { controlVerified: boolean })[]> {
+  const result = await pool.query<{
+    chain_id: number;
+    address: string;
+    control_verified_at: Date | null;
+  }>(
+    'SELECT chain_id,address,control_verified_at FROM evm_links WHERE account_id=$1 ORDER BY chain_id',
     [accountId],
   );
-  return result.rows.map(present);
+  return result.rows.map((row) => ({
+    ...present(row),
+    controlVerified: row.control_verified_at !== null,
+  }));
 }
 
 export async function beginEvmLink(
@@ -84,6 +95,7 @@ export async function finishEvmLink(
   if (!/^0x[0-9a-f]{40}$/.test(claimed)) throw new ApiError('EVM_SIGNATURE_INVALID', 401);
   try {
     return await withTransaction(pool, async (client) => {
+      await client.query('SELECT id FROM accounts WHERE id=$1 FOR UPDATE', [accountId]);
       const message = await consumeChallenge(client, accountId, chainId);
       let recovered: string;
       try {
@@ -98,11 +110,19 @@ export async function finishEvmLink(
       );
       const owner = taken.rows[0]?.account_id;
       if (owner && owner !== accountId) throw new ApiError('EVM_LINKED', 409);
+      const previous = (
+        await client.query<{ address: string }>(
+          'SELECT address FROM evm_links WHERE account_id=$1 AND chain_id=$2',
+          [accountId, chainId],
+        )
+      ).rows[0];
       await client.query(
-        `INSERT INTO evm_links(account_id,chain_id,address) VALUES($1,$2,$3)
-         ON CONFLICT (account_id, chain_id) DO UPDATE SET address=EXCLUDED.address, created_at=now()`,
+        `INSERT INTO evm_links(account_id,chain_id,address,control_verified_at) VALUES($1,$2,$3,now())
+         ON CONFLICT (account_id, chain_id) DO UPDATE SET address=EXCLUDED.address,control_verified_at=now(), created_at=now()`,
         [accountId, chainId, recovered],
       );
+      if (previous && previous.address !== recovered)
+        await revokeCredentialSessions(client, accountId, `evm:${chainId}:${previous.address}`);
       return { chainId, address: checksumAddress(recovered) };
     });
   } catch (error) {
@@ -116,9 +136,14 @@ export async function unlinkEvm(
   accountId: string,
   chainId: TelosEvmChainId,
 ): Promise<void> {
-  const result = await pool.query('DELETE FROM evm_links WHERE account_id=$1 AND chain_id=$2', [
-    accountId,
-    chainId,
-  ]);
-  if (result.rowCount !== 1) throw new ApiError('EVM_UNKNOWN', 404);
+  await withTransaction(pool, async (client) => {
+    const row = (
+      await client.query<{ address: string }>(
+        'DELETE FROM evm_links WHERE account_id=$1 AND chain_id=$2 RETURNING address',
+        [accountId, chainId],
+      )
+    ).rows[0];
+    if (!row) throw new ApiError('EVM_UNKNOWN', 404);
+    await revokeCredentialSessions(client, accountId, `evm:${chainId}:${row.address}`);
+  });
 }

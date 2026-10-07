@@ -1,3 +1,4 @@
+import { readBoundedResponse } from '../http.js';
 import type { ContentProvider, PinnedFile } from './provider.js';
 import { z } from 'zod';
 import { CidSchema } from '../../../../protocol/base.js';
@@ -10,40 +11,12 @@ const FileSchema = z.object({
   number_of_files: z.literal(1),
 });
 const ListedFileSchema = FileSchema.extend({ keyvalues: z.record(z.string(), z.string()) });
-async function readBounded(response: Response, maximum: number): Promise<Uint8Array> {
-  if (!response.body) throw new ApiError('CONTENT_UNAVAILABLE', 503);
-  const length = response.headers.get('content-length');
-  if (length !== null && (!/^[0-9]+$/.test(length) || BigInt(length) > BigInt(maximum)))
-    throw new ApiError('CONTENT_SIZE', 502);
-  const reader = response.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let size = 0;
-  try {
-    while (true) {
-      const chunk = await reader.read();
-      if (chunk.done) break;
-      size += chunk.value.length;
-      if (size > maximum) throw new ApiError('CONTENT_SIZE', 502);
-      chunks.push(chunk.value);
-    }
-  } catch (cause) {
-    await reader.cancel().catch(() => undefined);
-    throw cause;
-  } finally {
-    reader.releaseLock();
-  }
-  const result = new Uint8Array(size);
-  let offset = 0;
-  for (const chunk of chunks) {
-    result.set(chunk, offset);
-    offset += chunk.length;
-  }
-  return result;
-}
 async function vendorJson(response: Response): Promise<unknown> {
   try {
     return JSON.parse(
-      new TextDecoder('utf-8', { fatal: true }).decode(await readBounded(response, 256 * 1024)),
+      new TextDecoder('utf-8', { fatal: true }).decode(
+        await readBoundedResponse(response, 256 * 1024),
+      ),
     );
   } catch {
     throw new ApiError('PINATA_RESPONSE_INVALID', 502);
@@ -147,7 +120,7 @@ export class PinataStorage implements ContentProvider {
         signal: AbortSignal.timeout(12000),
       });
       if (!response.ok) throw new ApiError('CONTENT_UNAVAILABLE', 503);
-      const bytes = await readBounded(response, expectedBytes);
+      const bytes = await readBoundedResponse(response, expectedBytes);
       if (bytes.length !== expectedBytes) throw new ApiError('CONTENT_SIZE', 502);
       return bytes;
     } catch (cause) {

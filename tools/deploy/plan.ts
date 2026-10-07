@@ -1,4 +1,4 @@
-import { DEPLOY_ROLES, type DeployEnvironment } from './environment.js';
+import { deploymentAccounts, DEPLOY_ROLES, type DeployEnvironment } from './environment.js';
 
 export interface AccountView {
   exists: boolean;
@@ -20,8 +20,8 @@ export function planDeployment(
   setContract: boolean,
 ): DeployChange[] {
   const changes: DeployChange[] = [];
-  environment.accounts.forEach((account, index) => {
-    const role = DEPLOY_ROLES[index];
+  deploymentAccounts(environment).forEach((account, index) => {
+    const role = index < DEPLOY_ROLES.length ? DEPLOY_ROLES[index] : account.contract;
     if (!role) throw new Error('DEPLOY_ACCOUNT_VIEW');
     const view = views.get(account.name);
     if (!view) throw new Error('DEPLOY_ACCOUNT_VIEW');

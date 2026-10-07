@@ -1,3 +1,4 @@
+import { controlledInject } from '../helpers/account-control.js';
 import {
   createHash,
   createHmac,
@@ -8,6 +9,7 @@ import {
 } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Pool } from 'pg';
+import { generateKeyPair, SignJWT } from 'jose';
 import { PrivateKey } from '@wharfkit/antelope';
 import { migrate } from '../../services/api/src/store.js';
 import { createServer } from '../../services/api/src/server.js';
@@ -71,6 +73,37 @@ const chain: ChainGateway = {
   },
 };
 const delivered: { to: string; code: string }[] = [];
+const oidcKeys = await generateKeyPair('RS256');
+let oidcNonce = '';
+let oidcSubject = '';
+const oidcServer = await createServer(pool, chain, origin, {
+  providers: {
+    telegram: {
+      botToken: bot,
+      oidc: {
+        clientId: '12345',
+        clientSecret: 'local-only-fixture',
+        redirectUri: 'http://localhost:3112/v1/sign-in/telegram/oidc/callback',
+        key: oidcKeys.publicKey,
+        fetch: async () =>
+          new Response(
+            JSON.stringify({
+              id_token: await new SignJWT({ nonce: oidcNonce })
+                .setProtectedHeader({ alg: 'RS256' })
+                .setIssuer('https://oauth.telegram.org')
+                .setAudience('12345')
+                .setSubject(oidcSubject)
+                .setIssuedAt()
+                .setExpirationTime('5m')
+                .sign(oidcKeys.privateKey),
+            }),
+            { status: 200 },
+          ),
+      },
+    },
+  },
+  signIn: { environment: 'local' },
+});
 const local = await createServer(pool, chain, origin, {
   providers: { telegram: { botToken: bot, botUsername: 'fixture_bot' } },
   signIn: { environment: 'local' },
@@ -89,6 +122,7 @@ afterAll(async () => {
   await local.close();
   await mailed.close();
   await closed.close();
+  await oidcServer.close();
   await pool.end();
 });
 async function httpLogin(app: typeof local) {
@@ -229,7 +263,7 @@ describe('account sign-in methods', () => {
     expect(options.statusCode).toBe(200);
     const credentialId = randomBytes(16);
     const challenge = zChallenge(options.json());
-    const registered = await local.inject({
+    const registered = await controlledInject(local, owner.key, {
       method: 'POST',
       url: '/v1/sign-in/passkey/register',
       headers: headers(owner.cookie, owner.session.csrfToken),
@@ -242,7 +276,7 @@ describe('account sign-in methods', () => {
       headers: headers(other.cookie, other.session.csrfToken),
       payload: {},
     });
-    const rejected = await local.inject({
+    const rejected = await controlledInject(local, other.key, {
       method: 'POST',
       url: '/v1/sign-in/passkey/register',
       headers: headers(other.cookie, other.session.csrfToken),
@@ -258,7 +292,7 @@ describe('account sign-in methods', () => {
     const logged = await local.inject({
       method: 'POST',
       url: '/v1/sign-in/passkey/login',
-      headers: { origin },
+      headers: { origin, cookie: cookieOf(loginOptions) },
       payload: {
         credentialId: credentialId.toString('base64url'),
         ...assertion(zChallenge(loginOptions.json()), 1),
@@ -272,7 +306,7 @@ describe('account sign-in methods', () => {
     const replay = await local.inject({
       method: 'POST',
       url: '/v1/sign-in/passkey/login',
-      headers: { origin },
+      headers: { origin, cookie: cookieOf(loginOptions) },
       payload: {
         credentialId: credentialId.toString('base64url'),
         ...assertion(zChallenge(loginOptions.json()), 1),
@@ -301,7 +335,7 @@ describe('account sign-in methods', () => {
     });
     expect(anonymous.statusCode).toBe(503);
     expect(anonymous.body).not.toContain(body.code);
-    const confirmed = await local.inject({
+    const confirmed = await controlledInject(local, owner.key, {
       method: 'POST',
       url: '/v1/sign-in/email/confirm',
       headers: headers(owner.cookie, owner.session.csrfToken),
@@ -329,7 +363,7 @@ describe('account sign-in methods', () => {
       payload: { email: mailbox },
     });
     const secondCode = second.json<{ code: string }>().code;
-    const conflict = await local.inject({
+    const conflict = await controlledInject(local, other.key, {
       method: 'POST',
       url: '/v1/sign-in/email/confirm',
       headers: headers(other.cookie, other.session.csrfToken),
@@ -358,7 +392,7 @@ describe('account sign-in methods', () => {
     expect(started.statusCode).toBe(200);
     expect(started.json()).toEqual({ delivery: 'sent' });
     expect(started.body).not.toContain(delivered[before]?.code);
-    const confirmed = await mailed.inject({
+    const confirmed = await controlledInject(mailed, owner.key, {
       method: 'POST',
       url: '/v1/sign-in/email/confirm',
       headers: headers(owner.cookie, owner.session.csrfToken),
@@ -378,14 +412,14 @@ describe('account sign-in methods', () => {
     const logged = await mailed.inject({
       method: 'POST',
       url: '/v1/sign-in/email/login',
-      headers: { origin },
+      headers: { origin, cookie: cookieOf(loginStart) },
       payload: { email: mailbox, code },
     });
     expect(SessionSchema.parse(logged.json()).account.id).toBe(owner.session.account.id);
     const again = await mailed.inject({
       method: 'POST',
       url: '/v1/sign-in/email/login',
-      headers: { origin },
+      headers: { origin, cookie: cookieOf(loginStart) },
       payload: { email: mailbox, code },
     });
     expect(again.statusCode).toBe(401);
@@ -400,13 +434,13 @@ describe('account sign-in methods', () => {
       payload: { email: mailbox },
     });
     expect(linked.statusCode).toBe(200);
-    await mailed.inject({
+    await controlledInject(mailed, owner.key, {
       method: 'POST',
       url: '/v1/sign-in/email/confirm',
       headers: headers(owner.cookie, owner.session.csrfToken),
       payload: { email: mailbox, code: delivered.at(-1)?.code },
     });
-    await mailed.inject({
+    const emailStart = await mailed.inject({
       method: 'POST',
       url: '/v1/sign-in/email/login/start',
       headers: { origin },
@@ -421,7 +455,7 @@ describe('account sign-in methods', () => {
       mailed.inject({
         method: 'POST',
         url: '/v1/sign-in/email/login',
-        headers: { origin },
+        headers: { origin, cookie: cookieOf(emailStart) },
         payload: { email: mailbox, code },
       }),
     );
@@ -434,7 +468,7 @@ describe('account sign-in methods', () => {
     const credential = randomBytes(16);
     expect(
       (
-        await local.inject({
+        await controlledInject(local, owner.key, {
           method: 'POST',
           url: '/v1/sign-in/passkey/register',
           headers: headers(owner.cookie, owner.session.csrfToken),
@@ -458,7 +492,7 @@ describe('account sign-in methods', () => {
       local.inject({
         method: 'POST',
         url: '/v1/sign-in/passkey/login',
-        headers: { origin },
+        headers: { origin, cookie: cookieOf(options) },
         payload,
       }),
     );
@@ -476,7 +510,7 @@ describe('account sign-in methods', () => {
     for (let attempt = 0; attempt < 5; attempt++)
       expect(
         (
-          await local.inject({
+          await controlledInject(local, owner.key, {
             method: 'POST',
             url: '/v1/sign-in/email/confirm',
             headers: headers(owner.cookie, owner.session.csrfToken),
@@ -486,7 +520,7 @@ describe('account sign-in methods', () => {
       ).toBe(401);
     expect(
       (
-        await local.inject({
+        await controlledInject(local, owner.key, {
           method: 'POST',
           url: '/v1/sign-in/email/confirm',
           headers: headers(owner.cookie, owner.session.csrfToken),
@@ -512,7 +546,7 @@ describe('account sign-in methods', () => {
   it('links a Telegram login widget to the current account and can remove it', async () => {
     const owner = await httpLogin(local);
     const subject = 200_000_000 + Math.floor(Math.random() * 100_000_000);
-    const linked = await local.inject({
+    const linked = await controlledInject(local, owner.key, {
       method: 'POST',
       url: '/v1/sign-in/telegram',
       headers: headers(owner.cookie, owner.session.csrfToken),
@@ -543,13 +577,19 @@ describe('account sign-in methods', () => {
       telegram: { username: 'fixture_bot', subjects: [String(subject)] },
       email: { delivery: 'local' },
     });
-    const removed = await local.inject({
+    const removed = await controlledInject(local, owner.key, {
       method: 'POST',
       url: '/v1/sign-in/remove',
       headers: headers(owner.cookie, owner.session.csrfToken),
       payload: { method: 'telegram', subject: String(subject) },
     });
     expect(removed.statusCode).toBe(204);
+    const staleSession = await local.inject({
+      method: 'GET',
+      url: '/v1/me',
+      headers: { cookie: logged.cookies.map((item) => `${item.name}=${item.value}`).join('; ') },
+    });
+    expect(staleSession.statusCode).toBe(401);
     const after = await local.inject({
       method: 'POST',
       url: '/v1/sign-in/telegram/login',
@@ -559,6 +599,239 @@ describe('account sign-in methods', () => {
     expect(after.statusCode).toBe(401);
   });
 });
+it('rejects pairing a new Telegram credential with only a stolen session and CSRF token', async () => {
+  const owner = await httpLogin(local);
+  const response = await local.inject({
+    method: 'POST',
+    url: '/v1/sign-in/telegram',
+    headers: headers(owner.cookie, owner.session.csrfToken),
+    payload: { proof: widget(Math.floor(Math.random() * 1_000_000_000) + 1) },
+  });
+  expect(response.statusCode).toBe(403);
+  expect(response.json()).toMatchObject({ code: 'ACCOUNT_CONTROL_REQUIRED' });
+});
+
+it('binds account-control consent to the exact body, session and a single consumption', async () => {
+  const owner = await httpLogin(local);
+  const payload = { proof: widget(Math.floor(Math.random() * 1_000_000_000) + 1) };
+  const serialized = JSON.stringify(payload);
+  const started = await local.inject({
+    method: 'POST',
+    url: '/v1/account/control',
+    headers: headers(owner.cookie, owner.session.csrfToken),
+    payload: {
+      path: '/v1/sign-in/telegram',
+      bodyHash: createHash('sha256').update(serialized).digest('hex'),
+    },
+  });
+  const challenge = ChallengeSchema.parse(started.json());
+  const proofHeaders = {
+    ...headers(owner.cookie, owner.session.csrfToken),
+    'x-account-intent-id': challenge.id,
+    'x-account-signature': owner.key
+      .signMessage(new TextEncoder().encode(challenge.message))
+      .toString(),
+  };
+  const changed = await local.inject({
+    method: 'POST',
+    url: '/v1/sign-in/telegram',
+    headers: proofHeaders,
+    payload: { proof: 'changed' },
+  });
+  expect(changed.statusCode).toBe(403);
+  const results = await Promise.all(
+    [0, 1].map(() =>
+      local.inject({ method: 'POST', url: '/v1/sign-in/telegram', headers: proofHeaders, payload }),
+    ),
+  );
+  expect(results.map((result) => result.statusCode).sort()).toEqual([200, 403]);
+});
+
+it('invalidates older email login codes after a resend and successful newer login', async () => {
+  const owner = await httpLogin(mailed);
+  const email = `resend-${randomUUID()}@example.test`;
+  await mailed.inject({
+    method: 'POST',
+    url: '/v1/sign-in/email/start',
+    headers: headers(owner.cookie, owner.session.csrfToken),
+    payload: { email },
+  });
+  const pairCode = delivered.filter((item) => item.to === email).at(-1)?.code;
+  await controlledInject(mailed, owner.key, {
+    method: 'POST',
+    url: '/v1/sign-in/email/confirm',
+    headers: headers(owner.cookie, owner.session.csrfToken),
+    payload: { email, code: pairCode },
+  });
+  const oldAttempt = await mailed.inject({
+    method: 'POST',
+    url: '/v1/sign-in/email/login/start',
+    headers: { origin },
+    payload: { email },
+  });
+  const old = delivered.filter((item) => item.to === email).at(-1)?.code;
+  await mailed.inject({
+    method: 'POST',
+    url: '/v1/sign-in/email/login/start',
+    headers: { origin, cookie: cookieOf(oldAttempt) },
+    payload: { email },
+  });
+  const fresh = delivered.filter((item) => item.to === email).at(-1)?.code;
+  const wrongBrowser = await mailed.inject({
+    method: 'POST',
+    url: '/v1/sign-in/email/login',
+    headers: { origin },
+    payload: { email, code: fresh },
+  });
+  expect(wrongBrowser.statusCode).toBe(401);
+  const success = await mailed.inject({
+    method: 'POST',
+    url: '/v1/sign-in/email/login',
+    headers: { origin, cookie: cookieOf(oldAttempt) },
+    payload: { email, code: fresh },
+  });
+  expect(success.statusCode).toBe(200);
+  const stale = await mailed.inject({
+    method: 'POST',
+    url: '/v1/sign-in/email/login',
+    headers: { origin, cookie: cookieOf(oldAttempt) },
+    payload: { email, code: old },
+  });
+  expect(stale.statusCode).toBe(401);
+});
+it('uses the same delivery and resend limits for unpaired mailboxes without creating an account', async () => {
+  const email = `unpaired-${randomUUID()}@example.test`;
+  const before = delivered.length;
+  const attempts = await Promise.all(
+    Array.from({ length: 6 }, () =>
+      mailed.inject({
+        method: 'POST',
+        url: '/v1/sign-in/email/login/start',
+        headers: { origin },
+        payload: { email },
+      }),
+    ),
+  );
+  expect(attempts.map((result) => result.statusCode).sort()).toEqual([
+    200, 200, 200, 200, 200, 429,
+  ]);
+  expect(delivered.length - before).toBe(5);
+  expect(
+    (await pool.query('SELECT 1 FROM credentials WHERE provider_key=$1', [`email:${email}`]))
+      .rowCount,
+  ).toBe(0);
+});
+
+it('pairs OIDC Telegram only after identity consent and binds callbacks to the initiating browser', async () => {
+  const owner = await httpLogin(oidcServer);
+  const started = await oidcServer.inject({
+    method: 'POST',
+    url: '/v1/sign-in/telegram/oidc/pair/start',
+    headers: headers(owner.cookie, owner.session.csrfToken),
+    payload: {},
+  });
+  expect(started.statusCode).toBe(200);
+  const result = started.json();
+  if (typeof result.authorizationUrl !== 'string') throw new Error('Missing authorization URL');
+  const auth = new URL(result.authorizationUrl);
+  oidcNonce = auth.searchParams.get('nonce') ?? '';
+  oidcSubject = randomUUID();
+  const callback = `/v1/sign-in/telegram/oidc/callback?state=${auth.searchParams.get('state')}&code=fixture-code`;
+  const wrong = await oidcServer.inject({
+    method: 'GET',
+    url: callback,
+    headers: { cookie: owner.cookie },
+  });
+  expect(wrong.statusCode).toBe(401);
+  const browser = started.cookies.map((item) => `${item.name}=${item.value}`).join('; ');
+  const verified = await oidcServer.inject({
+    method: 'GET',
+    url: callback,
+    headers: { cookie: `${owner.cookie}; ${browser}` },
+  });
+  expect(verified.statusCode).toBe(302);
+  const target = new URL(String(verified.headers.location));
+  const id = target.searchParams.get('telegramPair');
+  const pending = await oidcServer.inject({
+    method: 'GET',
+    url: `/v1/sign-in/telegram/oidc/pair/${id}`,
+    headers: { cookie: `${owner.cookie}; ${browser}` },
+  });
+  expect(pending.json()).toMatchObject({ subject: `oidc:${oidcSubject}` });
+  const unapproved = await oidcServer.inject({
+    method: 'POST',
+    url: '/v1/sign-in/telegram/oidc/pair/confirm',
+    headers: headers(`${owner.cookie}; ${browser}`, owner.session.csrfToken),
+    payload: { id },
+  });
+  expect(unapproved.statusCode).toBe(403);
+  const confirmed = await controlledInject(oidcServer, owner.key, {
+    method: 'POST',
+    url: '/v1/sign-in/telegram/oidc/pair/confirm',
+    headers: headers(`${owner.cookie}; ${browser}`, owner.session.csrfToken),
+    payload: { id },
+  });
+  expect(confirmed.statusCode).toBe(200);
+  const startedLogin = await oidcServer.inject({
+    method: 'POST',
+    url: '/v1/sign-in/telegram/oidc/login/start',
+    headers: { origin },
+    payload: { returnTo: '/dao/7/documents?epoch=2' },
+  });
+  const loginAuth = new URL(String(startedLogin.json().authorizationUrl));
+  oidcNonce = loginAuth.searchParams.get('nonce') ?? '';
+  const loginCookie = startedLogin.cookies.map((item) => `${item.name}=${item.value}`).join('; ');
+  const logged = await oidcServer.inject({
+    method: 'GET',
+    url: `/v1/sign-in/telegram/oidc/callback?state=${loginAuth.searchParams.get('state')}&code=fixture-login`,
+    headers: { cookie: loginCookie },
+  });
+  expect(logged.statusCode).toBe(302);
+  expect(new URL(String(logged.headers.location)).searchParams.get('returnTo')).toBe(
+    '/dao/7/documents?epoch=2',
+  );
+  const history = await oidcServer.inject({
+    method: 'GET',
+    url: '/v1/account/history',
+    headers: { cookie: owner.cookie },
+  });
+  expect(history.statusCode).toBe(200);
+  expect(history.json().entries).toContainEqual(
+    expect.objectContaining({
+      method: 'telegram',
+      action: 'linked',
+      subject: `oidc:${oidcSubject}`,
+    }),
+  );
+  const other = await httpLogin(oidcServer);
+  const otherHistory = await oidcServer.inject({
+    method: 'GET',
+    url: '/v1/account/history',
+    headers: { cookie: other.cookie },
+  });
+  expect(otherHistory.json().entries).toEqual([]);
+  for (const returnTo of ['//external.test', '/account', '/\\external.test'])
+    expect(
+      (
+        await oidcServer.inject({
+          method: 'POST',
+          url: '/v1/sign-in/telegram/oidc/login/start',
+          headers: { origin },
+          payload: { returnTo },
+        })
+      ).statusCode,
+    ).toBe(400);
+  const me = await oidcServer.inject({
+    method: 'GET',
+    url: '/v1/me',
+    headers: { cookie: logged.cookies.map((item) => `${item.name}=${item.value}`).join('; ') },
+  });
+  expect(me.json()).toMatchObject({ account: { id: owner.session.account.id } });
+});
+
+function cookieOf(response: { cookies: { name: string; value: string }[] }): string {
+  return response.cookies.map((item) => `${item.name}=${item.value}`).join('; ');
+}
 function zChallenge(value: unknown): string {
   if (typeof value !== 'object' || value === null || !('challenge' in value))
     throw new Error('Missing challenge');

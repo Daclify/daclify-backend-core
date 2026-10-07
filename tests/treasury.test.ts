@@ -139,6 +139,13 @@ describe('native treasury backing and obligations', () => {
         ),
       );
     expect(balance.balance).toBe('15.0000 TLOS');
+    expect(row(runtime, 'receipts', 1n, 1n)).toMatchObject({
+      kind: 1,
+      obligation_id: 1,
+      recipient: 1,
+      destination: 'alice',
+      quantity: '5.0000 TLOS',
+    });
     await expect(send(runtime, 'payob', [1, 'works', 1], 'bob@active')).rejects.toThrow(
       'NOT_PAYABLE',
     );

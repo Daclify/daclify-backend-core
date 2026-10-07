@@ -4,14 +4,15 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@noble/hashes": "2.4.0",
     "@wharfkit/antelope": "4.0.2",
-    "zod": "4.6.5",
     "multiformats": "14.0.5",
-    "semver": "7.8.5"
+    "semver": "7.8.5",
+    "zod": "4.6.5"
   },
   "devDependencies": {
-    "typescript": "5.9.3",
     "@types/node": "24.19.1",
-    "@types/semver": "7.8.0"
+    "@types/semver": "7.8.0",
+    "typescript": "5.9.3"
   }
 }

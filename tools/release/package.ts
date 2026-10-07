@@ -13,7 +13,8 @@ const manifest = z
   .parse(JSON.parse(await readFile('sdk/public-package.json', 'utf8')));
 if (
   Object.keys(manifest.dependencies).some(
-    (name) => !['@wharfkit/antelope', 'zod', 'multiformats', 'semver'].includes(name),
+    (name) =>
+      !['@wharfkit/antelope', '@noble/hashes', 'zod', 'multiformats', 'semver'].includes(name),
   )
 )
   throw new Error('Private service dependencies cannot enter the public protocol package');

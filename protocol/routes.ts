@@ -26,8 +26,35 @@ import {
 import { TreasurySchema, SettlementRequestSchema, SettlementResultSchema } from './treasury.js';
 import { Uint64Schema } from './base.js';
 import { PlatformRoutes } from './platform.js';
+import { SpendingReportSchema } from './reporting.js';
 export const ApiRoutes = {
   ...PlatformRoutes,
+  spendingReport: {
+    method: 'GET',
+    path: '/v1/daos/:id/reports/spending',
+    response: SpendingReportSchema,
+    helpTopic: 'spending-reports',
+  },
+  spendingCsv: {
+    method: 'GET',
+    path: '/v1/daos/:id/reports/spending/csv',
+    response: z.strictObject({
+      format: z.literal('csv'),
+      content: z.string().max(16 * 1024 * 1024),
+    }),
+    helpTopic: 'spending-reports',
+  },
+  branding: {
+    method: 'GET',
+    path: '/v1/daos/:id/branding/:slot',
+    response: z.strictObject({
+      content: HostedBytesSchema.refine(
+        (value) => value.length <= Math.ceil((2 * 1024 * 1024) / 3) * 4,
+      ),
+      mediaType: z.enum(['image/png', 'image/jpeg', 'image/webp']),
+    }),
+    helpTopic: 'dao-discovery',
+  },
   presets: {
     method: 'GET',
     path: '/v1/dao-presets',

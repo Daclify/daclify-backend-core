@@ -1,3 +1,5 @@
+import { fixtureNetwork } from '../../tools/native/network.js';
+const ownedNetwork = fixtureNetwork();
 import { unlockFixtureWallet } from '../../tools/native/wallet.js';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
@@ -9,7 +11,7 @@ function cleos(args: string[]): string {
   try {
     return execFileSync(
       'docker',
-      ['exec', 'daclify-v2-native', 'cleos', '--wallet-url', 'http://127.0.0.1:8900', ...args],
+      ['exec', ownedNetwork.container, 'cleos', '--wallet-url', 'http://127.0.0.1:8900', ...args],
       { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] },
     );
   } catch {
@@ -17,7 +19,7 @@ function cleos(args: string[]): string {
   }
 }
 beforeAll(() => {
-  unlockFixtureWallet('daclify-v2-native');
+  unlockFixtureWallet(ownedNetwork.container);
   try {
     cleos(['get', 'account', 'permprobe']);
   } catch {

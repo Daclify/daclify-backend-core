@@ -1,3 +1,5 @@
+import { fixtureNetwork } from '../../tools/native/network.js';
+const ownedNetwork = fixtureNetwork();
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -11,12 +13,12 @@ import { ZERO_CODE_HASH, wasmCodeHash } from '../helpers/code-hash.js';
 import { listFirstPartyModule, unlistModule } from './list-module.js';
 import { z } from 'zod';
 const dao = String(Date.now());
-const rpc = 'http://127.0.0.1:18888';
+const rpc = ownedNetwork.url;
 function cleos(args: string[]): string {
   try {
     return execFileSync(
       'docker',
-      ['exec', 'daclify-v2-native', 'cleos', '--wallet-url', 'http://127.0.0.1:8900', ...args],
+      ['exec', ownedNetwork.container, 'cleos', '--wallet-url', 'http://127.0.0.1:8900', ...args],
       { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] },
     );
   } catch (error) {
@@ -55,7 +57,7 @@ function unsignedLeb128(value: number): Buffer {
 }
 let worksHash = '';
 beforeAll(async () => {
-  unlockFixtureWallet('daclify-v2-native');
+  unlockFixtureWallet(ownedNetwork.container);
   worksHash = await liveCodeHash('works');
   if (worksHash !== wasmCodeHash('../daclify-backend-modules/.artifacts/contracts/works.wasm'))
     throw new Error('WORKS_ARTIFACT_HASH');
@@ -105,8 +107,8 @@ function deployRelay(account: string, wasm: Buffer) {
   const dir = mkdtempSync(join(tmpdir(), 'daclify-modpin-'));
   writeFileSync(join(dir, 'modrelay.wasm'), wasm);
   writeFileSync(join(dir, 'modrelay.abi'), readFileSync('.artifacts/contracts/modrelay.abi'));
-  execFileSync('docker', ['exec', 'daclify-v2-native', 'rm', '-rf', `/tmp/${account}`]);
-  execFileSync('docker', ['cp', dir, `daclify-v2-native:/tmp/${account}`]);
+  execFileSync('docker', ['exec', ownedNetwork.container, 'rm', '-rf', `/tmp/${account}`]);
+  execFileSync('docker', ['cp', dir, `${ownedNetwork.container}:/tmp/${account}`]);
   cleos([
     'set',
     'contract',

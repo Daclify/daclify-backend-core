@@ -35,6 +35,7 @@ export function generateContract(
         'string',
         'bytes',
         'checksum256',
+        'checksum160',
         'public_key',
         'signature',
         'time_point_sec',
@@ -82,6 +83,7 @@ export function generateContract(
     if (type === 'bytes') return 'z.string().max(32768).regex(/^(?:[0-9a-f]{2})*$/)';
     if (type === 'string') return 'z.string().max(16384)';
     if (type === 'checksum256') return 'ChainIdSchema';
+    if (type === 'checksum160') return 'z.string().regex(/^[0-9a-f]{40}$/)';
     if (type === 'asset')
       return 'z.string().max(64).regex(/^-?(0|[1-9][0-9]*)(\\.[0-9]+)? [A-Z]{1,7}$/)';
     if (type === 'symbol') return 'z.string().regex(/^(0|[1-9][0-9]?),[A-Z]{1,7}$/)';

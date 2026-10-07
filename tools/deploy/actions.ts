@@ -3,6 +3,9 @@ import { SYSTEM_ABI } from './system-abi.js';
 import { activeAuthority, ownerAuthority } from './keys.js';
 
 const abi = ABI.from(SYSTEM_ABI);
+export function encodeContractAbi(text: string): Uint8Array {
+  return Serializer.encode({ object: ABI.from(text) }).array;
+}
 
 export function encodeSystem(type: string, object: object): Uint8Array {
   return Serializer.encode({ abi, type, object }).array;

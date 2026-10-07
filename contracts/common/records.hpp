@@ -38,6 +38,13 @@ struct [[eosio::table("members"), eosio::contract("runtime")]] member_record {
   EOSLIB_SERIALIZE(member_record,(id)(native_account)(signing_key)(encryption_key)(custody)(nonce)(credits)(active)(admin)(reviewer)(stake)(claim)(join_epoch))
 };
 using members = multi_index<"members"_n,member_record,indexed_by<"bynative"_n,const_mem_fun<member_record,uint64_t,&member_record::by_native>>,indexed_by<"bykey"_n,const_mem_fun<member_record,checksum256,&member_record::by_key>>>;
+struct [[eosio::table("evmbindings"), eosio::contract("runtime")]] evm_binding_record {
+  uint64_t member_id;uint64_t chain_id;checksum160 address;uint64_t epoch=1;bool active=true;
+  uint64_t primary_key()const{return member_id;}
+  checksum256 by_wallet()const{if(!active)return checksum256{};const auto value=pack(std::make_tuple(chain_id,address));return sha256(value.data(),value.size());}
+  EOSLIB_SERIALIZE(evm_binding_record,(member_id)(chain_id)(address)(epoch)(active))
+};
+using evm_bindings=multi_index<"evmbindings"_n,evm_binding_record,indexed_by<"bywallet"_n,const_mem_fun<evm_binding_record,checksum256,&evm_binding_record::by_wallet>>>;
 struct [[eosio::table("profiles"), eosio::contract("runtime")]] profile_record {
   uint64_t id; uint64_t dao_id; uint64_t member_id; name account_name; std::string profile;
   uint64_t primary_key() const { return id; }
@@ -59,6 +66,12 @@ struct [[eosio::table("obligations"), eosio::contract("runtime")]] obligation_re
   EOSLIB_SERIALIZE(obligation_record,(id)(source)(source_id)(recipient)(quantity)(due)(status))
 };
 using obligations = multi_index<"obligations"_n,obligation_record,indexed_by<"bysource"_n,const_mem_fun<obligation_record,checksum256,&obligation_record::by_source>>>;
+struct [[eosio::table("receipts"), eosio::contract("runtime")]] finance_receipt {
+ uint64_t id;uint8_t kind;uint64_t obligation_id;uint64_t recipient;name destination;name token_contract;asset quantity;uint32_t at;checksum256 transaction_id;
+ uint64_t primary_key()const{return id;}
+ EOSLIB_SERIALIZE(finance_receipt,(id)(kind)(obligation_id)(recipient)(destination)(token_contract)(quantity)(at)(transaction_id))
+};
+using finance_receipts=multi_index<"receipts"_n,finance_receipt>;
 struct [[eosio::table("evidence"), eosio::contract("runtime")]] evidence_record {
   uint64_t id; uint64_t dao_id; uint64_t obligation_id; uint64_t recipient; asset quantity; std::string chain; std::string payer; checksum256 reference; uint8_t mode;
   uint64_t primary_key() const { return id; }

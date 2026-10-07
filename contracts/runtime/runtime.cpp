@@ -1,6 +1,9 @@
+#include "admission.hpp"
 #include "records.hpp"
 #include "governance.hpp"
 #include "creation.hpp"
+#include "evm_authorization.hpp"
+#include <eosio/transaction.hpp>
 #define JSON_NOEXCEPTION
 #define JSON_HAS_FILESYSTEM 0
 #define JSON_HAS_EXPERIMENTAL_FILESYSTEM 0
@@ -8,6 +11,8 @@
 using namespace daclify;
 CONTRACT runtime : public contract {
 public:
+  // Off-chain login signs this inert action. Accidental broadcast grants no rights.
+  ACTION authproof(name account,checksum256 intent) { require_auth(account);check(intent!=checksum256{},"AUTH_INTENT"); }
   using contract::contract;
   TABLE settings { checksum256 chain_id; uint16_t interface_version=1; EOSLIB_SERIALIZE(settings,(chain_id)(interface_version)) };
   using config = singleton<"settings"_n,settings>;
@@ -30,7 +35,7 @@ private:
   void create_dao(uint64_t dao_id,name owner,const std::string& metadata,uint8_t privacy,name token_contract,symbol token_symbol) {
     require_auth(owner); configuration(); check(dao_id>0,"DAO_ID"); check(privacy<=2,"PRIVACY_POLICY");
     check(is_account(owner),"OWNER_ACCOUNT"); check(token_contract.value>0&&token_symbol.is_valid(),"ASSET_IDENTITY");
-    check(dao_rows.find(dao_id)==dao_rows.end(),"DAO_EXISTS"); validate_metadata(metadata);
+    check(dao_rows.find(dao_id)==dao_rows.end(),"DAO_EXISTS"); validate_dao_metadata(metadata);
     dao_rows.emplace(get_self(),[&](auto& d){ d.id=dao_id; d.owner=owner; d.metadata=metadata; d.privacy=privacy; d.token_contract=token_contract; d.token_symbol=token_symbol; });
   }
 public:
@@ -117,11 +122,21 @@ public:
     require_guardian(dao_id);participants rows(get_self(),dao_id);const auto& p=rows.get(member_id,"AGENT_UNKNOWN");check(p.kind==1&&p.revoked,"AGENT_RECOVERY");
     check_unique_key(dao_id,signing_key);members people(get_self(),dao_id);const auto& m=people.get(member_id,"MEMBER_UNKNOWN");
     people.modify(m,same_payer,[&](auto& r){r.signing_key=signing_key;r.native_account=name{};});
+    evm_bindings bindings(get_self(),dao_id);auto binding=bindings.find(member_id);if(binding!=bindings.end())bindings.modify(binding,same_payer,[](auto& r){r.active=false;r.epoch=add64(r.epoch,1);});
     rows.modify(p,same_payer,[&](auto& r){r.revoked=false;r.credential_epoch=add64(r.credential_epoch,1);});
   }
+  ACTION setadmit(name runtime,uint64_t dao_id,uint64_t member_id,bool enabled,name source,uint8_t threshold,bool allow_agents,bool admin_override){
+    authorized_actor(runtime,dao_id,member_id,true);check(threshold>=1&&threshold<=20,"ENDORSEMENT_THRESHOLD");if(enabled){modules installed(get_self(),dao_id);const auto& grant=installed.get(source.value,"MODULE_DISABLED");check_pinned(grant,source);check(std::find(grant.grants.begin(),grant.grants.end(),"admit"_n)!=grant.grants.end(),"MODULE_GRANT");}
+    admission_policies rows(get_self(),get_self().value);auto found=rows.find(dao_id);auto update=[&](auto& r){r.mode=enabled?1:0;r.source=enabled?source:name{};r.threshold=threshold;r.allow_agents=allow_agents;r.admin_override=enabled&&admin_override;};if(found==rows.end())rows.emplace(get_self(),[&](auto& r){r.dao_id=dao_id;update(r);});else rows.modify(found,same_payer,[&](auto& r){r.revision=add64(r.revision,1);update(r);});
+  }
+  ACTION admitfrom(uint64_t dao_id,name source,uint64_t application_id,uint64_t revision){
+    require_source(dao_id,source,"admit"_n);admission_policies policies(get_self(),get_self().value);const auto& policy=policies.get(dao_id,"ADMISSION_POLICY_UNKNOWN");check(policy.mode==1&&policy.source==source,"ADMISSION_POLICY_CHANGED");admission_applications apps(source,get_self().value);const auto& app=apps.get(application_id,"APPLICATION_UNKNOWN");check(app.dao_id==dao_id&&app.admitted&&app.revision==revision&&app.policy_revision==policy.revision,"APPLICATION_DOMAIN");check(current_time_point().sec_since_epoch()<app.expires,"APPLICATION_EXPIRED");
+    enroll_member(dao_id,app.member_id,name{},app.signing_key,app.encryption_key,app.custody,app.kind,app.operator_label,false,true);
+  }
 private:
-  void enroll_member(uint64_t dao_id,uint64_t member_id,name native_account,public_key signing_key,const std::string& encryption_key,uint8_t custody,uint8_t kind,const std::string& operator_label,bool owner_auth=true) {
+  void enroll_member(uint64_t dao_id,uint64_t member_id,name native_account,public_key signing_key,const std::string& encryption_key,uint8_t custody,uint8_t kind,const std::string& operator_label,bool owner_auth=true,bool endorsed=false) {
     const auto& d=dao_rows.get(dao_id,"DAO_UNKNOWN"); if(owner_auth)require_auth(d.owner);
+    admission_policies admission(get_self(),get_self().value);auto rule=admission.find(dao_id);check(endorsed||rule==admission.end()||rule->mode==0||rule->admin_override,"ADMISSION_REQUIRED");
     gov_policies policies(get_self(),get_self().value);auto policy=policies.find(dao_id);
     check(kind==0||(policy!=policies.end()&&policy->config.participant_mode>0),"PARTICIPANT_MODE");
     check(kind==1||policy==policies.end()||policy->config.participant_mode!=2,"PARTICIPANT_MODE");
@@ -162,12 +177,22 @@ public:
     const auto& m=rows.get(request.member_id,"MEMBER_UNKNOWN"); check(m.native_account.value,"NATIVE_UNLINKED");
     require_auth(m.native_account); dispatch(request);
   }
+  ACTION submitevm(instruction request,uint64_t evm_chain_id,checksum160 address,uint64_t binding_epoch,std::vector<char> proof) {
+    validate_instruction(request);evm_bindings bindings(get_self(),request.dao_id);const auto& binding=bindings.get(request.member_id,"EVM_UNLINKED");
+    check(binding.active&&binding.chain_id==evm_chain_id&&binding.address==address&&binding.epoch==binding_epoch,"EVM_BINDING");
+    const auto data_hash=sha256(request.data.data(),request.data.size()).extract_as_byte_array();
+    const auto body=evm_hash_words({evm_text("DaclifyInstruction(uint16 version,bytes32 nativeChain,uint64 runtime,uint64 daoId,uint64 memberId,uint64 evmChainId,address wallet,uint64 bindingEpoch,uint64 nonce,uint32 expires,uint64 target,uint64 action,bytes32 dataHash,uint16 signatureVersion)"),evm_uint(request.version),request.chain_id.extract_as_byte_array(),evm_uint(request.deployment.value),evm_uint(request.dao_id),evm_uint(request.member_id),evm_uint(evm_chain_id),evm_address_word(address),evm_uint(binding_epoch),evm_uint(request.nonce),evm_uint(request.expires),evm_uint(request.target.value),evm_uint(request.action.value),data_hash,evm_uint(1)});
+    check(recover_evm_address(evm_typed_digest(request.chain_id,get_self(),evm_chain_id,body),proof)==address,"EVM_ADDRESS");dispatch(request);
+  }
   ACTION setmeta(name runtime,uint64_t dao_id,uint64_t member_id,std::string metadata) {
-    authorized_actor(runtime,dao_id,member_id,true); validate_metadata(metadata);
+    authorized_actor(runtime,dao_id,member_id,true); validate_dao_metadata(metadata);
     const auto& d=dao_rows.get(dao_id);
     const auto before=nlohmann::json::parse(d.metadata);const auto after=nlohmann::json::parse(metadata);
-    if(before.is_object()&&before.contains("schemaVersion")&&before["schemaVersion"]==2&&before.contains("setup")){
-      check(after.is_object()&&after.contains("schemaVersion")&&after["schemaVersion"]==2&&after.contains("setup")&&after["setup"]==before["setup"]&&after.contains("purpose")&&before.contains("purpose")&&after["purpose"]==before["purpose"],"PRESET_IDENTITY_IMMUTABLE");
+    if(before.is_object()&&before.contains("schemaVersion")&&(before["schemaVersion"]==2||before["schemaVersion"]==3)&&before.contains("setup")){
+      check(after.is_object()&&after.contains("schemaVersion")&&(after["schemaVersion"]==2||after["schemaVersion"]==3)&&after.contains("setup")&&after["setup"]==before["setup"]&&after.contains("purpose")&&before.contains("purpose")&&after["purpose"]==before["purpose"],"PRESET_IDENTITY_IMMUTABLE");
+      if(before["schemaVersion"]==3)check(after["schemaVersion"]==3,"METADATA_VERSION");
+    }else if(after.is_object()&&after.contains("schemaVersion")){
+      if(after["schemaVersion"]==3)check(after["setup"].is_null()&&after["purpose"]=="custom","PRESET_IDENTITY_IMMUTABLE");
     }
     dao_rows.modify(d,same_payer,[&](auto& r){r.metadata=metadata;});
   }
@@ -317,6 +342,7 @@ public:
     dao_rows.modify(d,same_payer,[&](auto& r){r.reserved=add_amount(r.reserved,-quantity.amount);if(!destination.value)r.claims=add_amount(r.claims,quantity.amount);});
     if(destination.value)action(permission_level{get_self(),"active"_n},d.token_contract,"transfer"_n,std::make_tuple(get_self(),destination,quantity,std::string("Daclify approved obligation"))).send();
     else people.modify(m,same_payer,[&](auto& r){r.claim=add_amount(r.claim,quantity.amount);});
+    receipt(dao_id,destination.value?1:0,o.id,o.recipient,destination,d.token_contract,quantity);
   }
   ACTION putdoc(name runtime,uint64_t dao_id,uint64_t member_id,uint64_t document_id,uint32_t version,std::string cid,std::string metadata,checksum256 commitment,uint32_t bytes,uint16_t envelope_version,uint64_t key_epoch) {
     authorized_actor(runtime,dao_id,member_id);const auto& d=dao_rows.get(dao_id);check(document_id>0&&version>0,"DOCUMENT_ID");validate_cid(cid);validate_metadata(metadata);check(bytes<=100000000,"CONTENT_SIZE");
@@ -346,9 +372,29 @@ public:
     rows.modify(m,same_payer,[&](auto& r){r.signing_key=signing_key;});
   }
   ACTION linknative(name runtime,uint64_t dao_id,uint64_t member_id,name account) {
+    check(get_sender()==get_self(),"ACTOR_SENDER");
     authorized_actor(runtime,dao_id,member_id);require_auth(account);check(is_account(account),"NATIVE_ACCOUNT");members rows(get_self(),dao_id);
     auto index=rows.get_index<"bynative"_n>();auto linked=index.find(account.value);check(linked==index.end()||linked->id==member_id,"CREDENTIAL_EXISTS");
-    const auto& m=rows.get(member_id);rows.modify(m,same_payer,[&](auto& r){r.native_account=account;});
+    const auto& m=rows.get(member_id);check(m.native_account!=account,"ALREADY_IN_STATE");bump_credentials(dao_id,member_id);rows.modify(m,same_payer,[&](auto& r){r.native_account=account;});
+  }
+  ACTION unlinknat(name runtime,uint64_t dao_id,uint64_t member_id) {
+    check(get_sender()==get_self(),"ACTOR_SENDER");authorized_actor(runtime,dao_id,member_id);
+    members rows(get_self(),dao_id);const auto& m=rows.get(member_id);check(m.native_account.value,"NATIVE_UNLINKED");bump_credentials(dao_id,member_id);rows.modify(m,same_payer,[](auto& r){r.native_account=name{};});
+  }
+  ACTION linkevm(name runtime,uint64_t dao_id,uint64_t member_id,uint64_t evm_chain_id,checksum160 address,uint64_t epoch,uint64_t nonce,uint32_t expires,std::vector<char> proof) {
+    check(get_sender()==get_self(),"ACTOR_SENDER");authorized_actor(runtime,dao_id,member_id);check((evm_chain_id==40||evm_chain_id==41)&&address!=checksum160{},"EVM_CHAIN_ADDRESS");
+    members people(get_self(),dao_id);const auto& member=people.get(member_id);check(member.nonce>0&&nonce==member.nonce-1,"NONCE");
+    const auto now=current_time_point().sec_since_epoch();check(expires>now&&uint64_t(expires)<=uint64_t(now)+900,"EXPIRED_OR_TOO_LONG");
+    evm_bindings bindings(get_self(),dao_id);const auto previous=bindings.find(member_id);check(epoch==(previous==bindings.end()?1:add64(previous->epoch,1)),"EVM_BINDING_EPOCH");
+    const auto lookup=pack(std::make_tuple(evm_chain_id,address));const auto wallet=bindings.get_index<"bywallet"_n>();const auto owner=wallet.find(sha256(lookup.data(),lookup.size()));check(owner==wallet.end()||owner->member_id==member_id,"CREDENTIAL_EXISTS");
+    const auto chain=configuration().chain_id;
+    const auto body=evm_hash_words({evm_text("DaclifyBinding(bytes32 nativeChain,uint64 runtime,uint64 daoId,uint64 memberId,uint64 evmChainId,address wallet,uint64 epoch,uint64 nonce,uint32 expires,uint16 signatureVersion)"),chain.extract_as_byte_array(),evm_uint(get_self().value),evm_uint(dao_id),evm_uint(member_id),evm_uint(evm_chain_id),evm_address_word(address),evm_uint(epoch),evm_uint(nonce),evm_uint(expires),evm_uint(1)});
+    check(recover_evm_address(evm_typed_digest(chain,get_self(),evm_chain_id,body),proof)==address,"EVM_ADDRESS");
+    bump_credentials(dao_id,member_id);
+    if(previous==bindings.end())bindings.emplace(get_self(),[&](auto& r){r.member_id=member_id;r.chain_id=evm_chain_id;r.address=address;r.epoch=epoch;});else bindings.modify(previous,same_payer,[&](auto& r){r.chain_id=evm_chain_id;r.address=address;r.epoch=epoch;r.active=true;});
+  }
+  ACTION unlinkevm(name runtime,uint64_t dao_id,uint64_t member_id) {
+    check(get_sender()==get_self(),"ACTOR_SENDER");authorized_actor(runtime,dao_id,member_id);evm_bindings bindings(get_self(),dao_id);const auto& binding=bindings.get(member_id,"EVM_UNLINKED");check(binding.active,"EVM_UNLINKED");bump_credentials(dao_id,member_id);bindings.modify(binding,same_payer,[](auto& r){r.active=false;r.epoch=add64(r.epoch,1);});
   }
   ACTION setactive(name runtime,uint64_t dao_id,uint64_t member_id,uint64_t target,bool active) {
     authorized_actor(runtime,dao_id,member_id,true);const auto& d=dao_rows.get(dao_id);members rows(get_self(),dao_id);const auto& m=rows.get(target,"MEMBER_UNKNOWN");check(m.active!=active,"ALREADY_IN_STATE");
@@ -383,6 +429,7 @@ public:
     authorized_actor(runtime,dao_id,member_id,false,true);const auto& d=dao_rows.get(dao_id);check(quantity.symbol==d.token_symbol&&quantity.amount>0,"ASSET_QUANTITY");check(destination!=get_self()&&is_account(destination),"PAYOUT_DESTINATION");members people(get_self(),dao_id);const auto& m=people.get(member_id);check(quantity.amount<=m.claim,"INSUFFICIENT_CLAIM");
     people.modify(m,same_payer,[&](auto& r){r.claim=add_amount(r.claim,-quantity.amount);});dao_rows.modify(d,same_payer,[&](auto& r){r.claims=add_amount(r.claims,-quantity.amount);});
     action(permission_level{get_self(),"active"_n},d.token_contract,"transfer"_n,std::make_tuple(get_self(),destination,quantity,std::string("Daclify claim withdrawal"))).send();
+    receipt(dao_id,2,0,member_id,destination,d.token_contract,quantity);
   }
   ACTION unstake(name runtime,uint64_t dao_id,uint64_t member_id,name destination,asset quantity) {
     authorized_actor(runtime,dao_id,member_id,false,true);const auto& d=dao_rows.get(dao_id);check(d.active_ballots==0,"GOVERNANCE_LOCKED");check(quantity.symbol==d.token_symbol&&quantity.amount>0,"ASSET_QUANTITY");check(destination!=get_self()&&is_account(destination),"PAYOUT_DESTINATION");members people(get_self(),dao_id);const auto& m=people.get(member_id);check(quantity.amount<=m.stake,"INSUFFICIENT_STAKE");
@@ -527,6 +574,24 @@ private:
     size_t padding=0;for(size_t i=0;i<ciphertext.size();i++){if(ciphertext[i]=='='){padding++;check(i>=ciphertext.size()-2&&padding<=2,"PRIVACY_ENVELOPE");}else check(!padding&&alphabet.find(ciphertext[i])!=std::string::npos,"PRIVACY_ENVELOPE");}
   }
   void validate_metadata(const std::string& metadata) { check(metadata.size()>0&&metadata.size()<=4096,"METADATA_SIZE"); check(nlohmann::json::accept(metadata),"METADATA_JSON"); }
+  void receipt(uint64_t dao_id,uint8_t kind,uint64_t obligation,uint64_t recipient,name destination,name token_contract,asset quantity){
+    finance_receipts rows(get_self(),dao_id);auto id=rows.available_primary_key();if(!id)id=1;check(id<std::numeric_limits<uint64_t>::max(),"RECEIPT_LIMIT");
+    std::vector<char> bytes(transaction_size());check(read_transaction(bytes.data(),bytes.size())==bytes.size(),"TRANSACTION_BYTES");const auto tx=sha256(bytes.data(),bytes.size());
+    rows.emplace(get_self(),[&](auto& r){r.id=id;r.kind=kind;r.obligation_id=obligation;r.recipient=recipient;r.destination=destination;r.token_contract=token_contract;r.quantity=quantity;r.at=current_time_point().sec_since_epoch();r.transaction_id=tx;});
+  }
+  void validate_dao_metadata(const std::string& metadata){
+    validate_metadata(metadata);const auto value=nlohmann::json::parse(metadata);
+    if(!value.is_object()||!value.contains("schemaVersion")||value["schemaVersion"]!=3)return;
+    check(value.size()==6&&value.contains("title")&&value["title"].is_string()&&value.contains("description")&&value["description"].is_string()&&value.contains("purpose")&&value["purpose"].is_string()&&value.contains("setup")&&value.contains("branding")&&value["branding"].is_object(),"METADATA_FIELDS");
+    const auto title=value["title"].get<std::string>();check(!title.empty()&&title.size()<=640,"METADATA_FIELDS");
+    for(auto it=value["branding"].begin();it!=value["branding"].end();++it){
+      if(it.key()=="summary"){check(it.value().is_string()&&it.value().get<std::string>().size()<=1120,"BRANDING_IMAGE");continue;}
+      check(it.key()=="logo"||it.key()=="cover","BRANDING_IMAGE");const auto& image=it.value();
+      check(image.is_object()&&image.size()==4&&image.contains("cid")&&image["cid"].is_string()&&image.contains("bytes")&&image["bytes"].is_number_unsigned()&&image["bytes"].get<uint64_t>()>0&&image["bytes"].get<uint64_t>()<=2097152&&image.contains("mediaType")&&image["mediaType"].is_string()&&image.contains("commitment")&&image["commitment"].is_string(),"BRANDING_IMAGE");
+      validate_cid(image["cid"].get<std::string>());const auto mime=image["mediaType"].get<std::string>();check(mime=="image/png"||mime=="image/jpeg"||mime=="image/webp","BRANDING_IMAGE");
+      const auto hash=image["commitment"].get<std::string>();check(hash.size()==64,"BRANDING_IMAGE");for(auto c:hash)check((c>='0'&&c<='9')||(c>='a'&&c<='f'),"BRANDING_IMAGE");
+    }
+  }
   void validate_profile(const std::string& profile,name account_name) {
     const std::string written=account_name.to_string();
     check(account_name.value&&written.size()<=12&&written.front()!='.'&&written.back()!='.'&&written.find("..")==std::string::npos,"PROFILE_NAME");
@@ -561,7 +626,7 @@ private:
   uint64_t obligation_id(obligations& rows,name source,uint64_t id){auto index=rows.get_index<"bysource"_n>();const auto& o=index.get(source_hash(source,id),"OBLIGATION_UNKNOWN");check(o.source==source&&o.source_id==id,"OBLIGATION_DOMAIN");return o.id;}
   void install_module(uint64_t dao_id,name account,uint16_t version,const std::vector<name>& actions,const std::vector<name>& grants,checksum256 code_hash) {
     check(is_account(account)&&account!=get_self(),"MODULE_ACCOUNT");check(version==1&&actions.size()<=16&&grants.size()<=16,"MODULE_VERSION_OR_LIMIT");
-    for(auto grant:grants)check(grant=="reserve"_n||grant=="approve"_n||grant=="cancel"_n||grant=="govlock"_n,"MODULE_GRANT_UNKNOWN");
+    for(auto grant:grants)check(grant=="reserve"_n||grant=="approve"_n||grant=="cancel"_n||grant=="govlock"_n||grant=="awardwork"_n||grant=="admit"_n,"MODULE_GRANT_UNKNOWN");
     auto unique=[](const auto& list){for(size_t i=0;i<list.size();i++){check(list[i].value>0,"MODULE_ACTION");for(size_t j=i+1;j<list.size();j++)check(list[i]!=list[j],"DUPLICATE_GRANT");}};unique(actions);unique(grants);
     // Clearing both lists removes a module after its code has changed. Any remaining
     // action or grant must pin the hash of the code loaded at that account.
@@ -588,7 +653,7 @@ private:
     auto now=current_time_point().sec_since_epoch();check(r.expires>now&&uint64_t(r.expires)<=uint64_t(now)+900,"EXPIRED_OR_TOO_LONG");
     check(r.data.size()>=24&&r.data.size()<=16384,"PAYLOAD_SIZE");auto context=unpack<actor_context>(r.data);
     check(context.runtime==get_self()&&context.dao_id==r.dao_id&&context.member_id==r.member_id,"PAYLOAD_DOMAIN");
-    if(r.target==get_self())check(r.action=="govcreate"_n||r.action=="govlist"_n||r.action=="govunlist"_n||r.action=="govmodcopy"_n||r.action=="addmember"_n||r.action=="setdaogov"_n||r.action=="addsession"_n||r.action=="delsession"_n||r.action=="setmeta"_n||r.action=="setprofile"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n||r.action=="govfees"_n,"ACTION_UNSUPPORTED");
+    if(r.target==get_self())check(r.action=="govcreate"_n||r.action=="govlist"_n||r.action=="govunlist"_n||r.action=="govmodcopy"_n||r.action=="addmember"_n||r.action=="setadmit"_n||r.action=="setdaogov"_n||r.action=="addsession"_n||r.action=="delsession"_n||r.action=="setmeta"_n||r.action=="setprofile"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="unlinknat"_n||r.action=="linkevm"_n||r.action=="unlinkevm"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n||r.action=="govfees"_n,"ACTION_UNSUPPORTED");
     else { modules rows(get_self(),r.dao_id);const auto& installed=rows.get(r.target.value,"MODULE_DISABLED");check(std::find(installed.actions.begin(),installed.actions.end(),r.action)!=installed.actions.end(),"ACTION_UNSUPPORTED");check_pinned(installed,r.target); }
   }
   void dispatch(const instruction& r) {
@@ -600,6 +665,7 @@ private:
 };
 extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
   if(code==receiver){switch(action_name){
+    EOSIO_DISPATCH_HELPER(runtime,(authproof)(unlinknat)(linkevm)(unlinkevm)(submitevm)(setadmit)(admitfrom))
     EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(setprofile)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(confirmext)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))
     EOSIO_DISPATCH_HELPER(runtime,(enrollagent)(addmember)(initgov)(setdaogov)(addsession)(delsession)(guardpause)(guardrevoke)(guardrecover)(submitsess)(setfees)(listmod)(unlistmod)(setmodcopy)(setpolicy)(setgov)(setoracle)(govfees)(setcreate)(govcreate)(setcrrate)(ordercreate)(cardcreate)(createpaid)(govlist)(govunlist)(govmodcopy))
   }}

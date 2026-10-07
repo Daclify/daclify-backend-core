@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = '3a68bd2f500e84f7662487a9e452ef408c60ccef392f33239e5252c4673c4b14';
+export const runtimeAbiHash = 'e786287e4241c6f5923150ba6e571f5005e71d6fff1864ab0b6642e6f3f34e6b';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -78,6 +78,62 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "admission_policy",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "revision",
+          "type": "uint64"
+        },
+        {
+          "name": "mode",
+          "type": "uint8"
+        },
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "threshold",
+          "type": "uint8"
+        },
+        {
+          "name": "allow_agents",
+          "type": "bool"
+        },
+        {
+          "name": "admin_override",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "admitfrom",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "application_id",
+          "type": "uint64"
+        },
+        {
+          "name": "revision",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
       "name": "approveob",
       "base": "",
       "fields": [
@@ -92,6 +148,20 @@ export const runtimeAbi = {
         {
           "name": "source_id",
           "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "authproof",
+      "base": "",
+      "fields": [
+        {
+          "name": "account",
+          "type": "name"
+        },
+        {
+          "name": "intent",
+          "type": "checksum256"
         }
       ]
     },
@@ -694,6 +764,32 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "evm_binding_record",
+      "base": "",
+      "fields": [
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "chain_id",
+          "type": "uint64"
+        },
+        {
+          "name": "address",
+          "type": "checksum160"
+        },
+        {
+          "name": "epoch",
+          "type": "uint64"
+        },
+        {
+          "name": "active",
+          "type": "bool"
+        }
+      ]
+    },
+    {
       "name": "fee_config",
       "base": "",
       "fields": [
@@ -720,6 +816,48 @@ export const runtimeAbi = {
         {
           "name": "names",
           "type": "name"
+        }
+      ]
+    },
+    {
+      "name": "finance_receipt",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "kind",
+          "type": "uint8"
+        },
+        {
+          "name": "obligation_id",
+          "type": "uint64"
+        },
+        {
+          "name": "recipient",
+          "type": "uint64"
+        },
+        {
+          "name": "destination",
+          "type": "name"
+        },
+        {
+          "name": "token_contract",
+          "type": "name"
+        },
+        {
+          "name": "quantity",
+          "type": "asset"
+        },
+        {
+          "name": "at",
+          "type": "uint32"
+        },
+        {
+          "name": "transaction_id",
+          "type": "checksum256"
         }
       ]
     },
@@ -1216,6 +1354,48 @@ export const runtimeAbi = {
         {
           "name": "envelope",
           "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "linkevm",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "evm_chain_id",
+          "type": "uint64"
+        },
+        {
+          "name": "address",
+          "type": "checksum160"
+        },
+        {
+          "name": "epoch",
+          "type": "uint64"
+        },
+        {
+          "name": "nonce",
+          "type": "uint64"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
+        },
+        {
+          "name": "proof",
+          "type": "bytes"
         }
       ]
     },
@@ -1834,6 +2014,44 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "setadmit",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "enabled",
+          "type": "bool"
+        },
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "threshold",
+          "type": "uint8"
+        },
+        {
+          "name": "allow_agents",
+          "type": "bool"
+        },
+        {
+          "name": "admin_override",
+          "type": "bool"
+        }
+      ]
+    },
+    {
       "name": "setcreate",
       "base": "",
       "fields": [
@@ -2148,6 +2366,32 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "submitevm",
+      "base": "",
+      "fields": [
+        {
+          "name": "request",
+          "type": "instruction"
+        },
+        {
+          "name": "evm_chain_id",
+          "type": "uint64"
+        },
+        {
+          "name": "address",
+          "type": "checksum160"
+        },
+        {
+          "name": "binding_epoch",
+          "type": "uint64"
+        },
+        {
+          "name": "proof",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
       "name": "submitnat",
       "base": "",
       "fields": [
@@ -2172,6 +2416,42 @@ export const runtimeAbi = {
         {
           "name": "sig",
           "type": "signature"
+        }
+      ]
+    },
+    {
+      "name": "unlinkevm",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "unlinknat",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
         }
       ]
     },
@@ -2250,8 +2530,18 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "admitfrom",
+      "type": "admitfrom",
+      "ricardian_contract": ""
+    },
+    {
       "name": "approveob",
       "type": "approveob",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "authproof",
+      "type": "authproof",
       "ricardian_contract": ""
     },
     {
@@ -2370,6 +2660,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "linkevm",
+      "type": "linkevm",
+      "ricardian_contract": ""
+    },
+    {
       "name": "linknative",
       "type": "linknative",
       "ricardian_contract": ""
@@ -2422,6 +2717,11 @@ export const runtimeAbi = {
     {
       "name": "setactive",
       "type": "setactive",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "setadmit",
+      "type": "setadmit",
       "ricardian_contract": ""
     },
     {
@@ -2495,6 +2795,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "submitevm",
+      "type": "submitevm",
+      "ricardian_contract": ""
+    },
+    {
       "name": "submitnat",
       "type": "submitnat",
       "ricardian_contract": ""
@@ -2502,6 +2807,16 @@ export const runtimeAbi = {
     {
       "name": "submitsess",
       "type": "submitsess",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "unlinkevm",
+      "type": "unlinkevm",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "unlinknat",
+      "type": "unlinknat",
       "ricardian_contract": ""
     },
     {
@@ -2524,6 +2839,13 @@ export const runtimeAbi = {
     {
       "name": "actors",
       "type": "participant_record",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "admpolicies",
+      "type": "admission_policy",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -2580,6 +2902,13 @@ export const runtimeAbi = {
     {
       "name": "evidence",
       "type": "evidence_record",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "evmbindings",
+      "type": "evm_binding_record",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -2669,6 +2998,13 @@ export const runtimeAbi = {
       "key_types": []
     },
     {
+      "name": "receipts",
+      "type": "finance_receipt",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "sessions",
       "type": "session_record",
       "index_type": "i64",
@@ -2706,10 +3042,29 @@ export interface addsession {
   expires: number;
   permissions: session_permission[];
 }
+export interface admission_policy {
+  dao_id: string;
+  revision: string;
+  mode: number;
+  source: string;
+  threshold: number;
+  allow_agents: boolean;
+  admin_override: boolean;
+}
+export interface admitfrom {
+  dao_id: string;
+  source: string;
+  application_id: string;
+  revision: string;
+}
 export interface approveob {
   dao_id: string;
   source: string;
   source_id: string;
+}
+export interface authproof {
+  account: string;
+  intent: string;
 }
 export interface budget_record {
   dao_id: string;
@@ -2869,6 +3224,13 @@ export interface evidence_record {
   reference: string;
   mode: number;
 }
+export interface evm_binding_record {
+  member_id: string;
+  chain_id: string;
+  address: string;
+  epoch: string;
+  active: boolean;
+}
 export interface fee_config {
   third_party_bps: number;
   first_party_bps: number;
@@ -2876,6 +3238,17 @@ export interface fee_config {
   token_contract: string;
   token_symbol: string;
   names: string;
+}
+export interface finance_receipt {
+  id: string;
+  kind: number;
+  obligation_id: string;
+  recipient: string;
+  destination: string;
+  token_contract: string;
+  quantity: string;
+  at: number;
+  transaction_id: string;
 }
 export interface gov_policy_record {
   dao_id: string;
@@ -3010,6 +3383,17 @@ export interface key_grant_record {
   recipient: string;
   grantor: string;
   envelope: string;
+}
+export interface linkevm {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  evm_chain_id: string;
+  address: string;
+  epoch: string;
+  nonce: string;
+  expires: number;
+  proof: string;
 }
 export interface linknative {
   runtime: string;
@@ -3175,6 +3559,16 @@ export interface setactive {
   target: string;
   active: boolean;
 }
+export interface setadmit {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  enabled: boolean;
+  source: string;
+  threshold: number;
+  allow_agents: boolean;
+  admin_override: boolean;
+}
 export interface setcreate {
   shared_usd: number;
   independent_usd: number;
@@ -3261,6 +3655,13 @@ export interface submit {
   request: instruction;
   sig: string;
 }
+export interface submitevm {
+  request: instruction;
+  evm_chain_id: string;
+  address: string;
+  binding_epoch: string;
+  proof: string;
+}
 export interface submitnat {
   request: instruction;
 }
@@ -3268,6 +3669,16 @@ export interface submitsess {
   request: instruction;
   session_id: string;
   sig: string;
+}
+export interface unlinkevm {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+}
+export interface unlinknat {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
 }
 export interface unlistmod {
   account: string;
@@ -3289,7 +3700,9 @@ export interface withdraw {
 export interface RuntimeActions {
   addmember: addmember;
   addsession: addsession;
+  admitfrom: admitfrom;
   approveob: approveob;
+  authproof: authproof;
   cancelob: cancelob;
   cardcreate: cardcreate;
   commitepoch: commitepoch;
@@ -3313,6 +3726,7 @@ export interface RuntimeActions {
   guardrevoke: guardrevoke;
   init: init;
   initgov: initgov;
+  linkevm: linkevm;
   linknative: linknative;
   listmod: listmod;
   modconfig: modconfig;
@@ -3324,6 +3738,7 @@ export interface RuntimeActions {
   rotateepoch: rotateepoch;
   rotatekey: rotatekey;
   setactive: setactive;
+  setadmit: setadmit;
   setcreate: setcreate;
   setcredits: setcredits;
   setcrrate: setcrrate;
@@ -3338,8 +3753,11 @@ export interface RuntimeActions {
   setprofile: setprofile;
   setroles: setroles;
   submit: submit;
+  submitevm: submitevm;
   submitnat: submitnat;
   submitsess: submitsess;
+  unlinkevm: unlinkevm;
+  unlinknat: unlinknat;
   unlistmod: unlistmod;
   unstake: unstake;
   withdraw: withdraw;
