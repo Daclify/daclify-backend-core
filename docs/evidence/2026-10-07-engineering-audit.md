@@ -1,6 +1,6 @@
 # Engineering audit and Ponytail refactor
 
-Scope: the active backend core, backend modules, frontend and landing page. The six legacy repositories and third-party research clones are preserved as historical inputs. Baselines pushed to `main`: core `7763454`, modules `218435f`, frontend `1d32add`; landing `1ca48d6` already matched its remote. Audit changes are isolated on `codex/engineering-audit`.
+Scope: the active backend core, backend modules, frontend and landing page. The six legacy repositories and third-party research clones are preserved as historical inputs. Baselines pushed to `main`: core `7763454`, modules `218435f`, frontend `1d32add`; landing `1ca48d6` already matched its remote. Audit changes were isolated on `codex/engineering-audit`, then merged and pushed to `main` in all three application repositories.
 
 ## Discovery and safety net
 
@@ -44,10 +44,12 @@ Safe fixes above are implemented. Verification performed in the owned sibling wo
 | Browser paid phase | 68 desktop/mobile cases passed on its matching paid chain. |
 | Browser native-evidence phase | 8 desktop/mobile cases passed on the research chain; real grant/admission/election records and complete spending exports checked. |
 | Landing typecheck/build/export/format/tests/browser | 43 Node checks and 46 desktop/mobile browser cases passed; source/export unchanged. |
-| Dependency advisories | Zero known production dependency advisories in all three application lockfiles at audit time. |
+| Dependency advisories | `npm audit --omit=dev --json`: zero known production advisories in all four active repositories. Full audit: frontend/landing zero; core/modules each report four development dependency entries (two low, two high) through VERT, with no npm fix available. See the dependency decision below. |
 | Workflow files / diff | YAML parsed successfully, current v4 action hashes checked against upstream repositories, all final diffs checked for whitespace/type escape hatches and unintended contract/schema changes. |
 
 The initial raw browser diagnostic had 66 passes / 10 failures: 8 from mixing chain fixtures and 2 mobile cases during a development reload. Paid selection then passed all 68; research selection passed all 8. The component harness now has an isolated cache, and wrong-phase preflight was exercised and rejected before cases ran. The final actual-key check adds two passing provider-session regressions; the 20 affected desktop/mobile account/recovery browser cases passed again after that fix. These reruns are not counted as additional unique browser cases. No known failed product test is being treated as a pass.
+
+Fresh `main` checkouts were also bootstrapped with `node tools/bootstrap.ts --contracts`, rebuilding the pinned C++ artifacts and public development packages. Core/modules/frontend `npm run verify` passed again with 384/82/84 tests, respectively; builds and formatting checks passed. Bootstrap refreshed development archive integrities in all three lockfiles. The archive comparison found only JSON formatting in the protocol package manifest and corrected module README text; package versions, parsed package metadata, public code, generated references and contract/ABI hashes are unchanged. Every changed lock entry was checked against its actual archive SHA-512. Historical review manifests are preserved; a separate bootstrap snapshot records these new development archive pins.
 
 ### Remaining operational limits
 
@@ -56,3 +58,11 @@ All three pushed baseline CI runs stop before testing because `DACLIFY_CHECKOUT_
 Live provider credentials, supported Anchor/EOA clients, third-party-cookie browser restrictions, durable production custody isolation/recovery, selected production permission/resource checks and immutable package publication remain unqualified. Contracts/SDKs/schemas/applied migrations are unchanged in this audit; existing compiled-WASM suites ran, and the affected native paired-wallet cases ran, rather than claiming a fresh run of every historical native case. Public ingress abuse limits, trusted client-IP handling and challenge/audit retention must be established for the actual production topology before public exposure; existing process-local limiters are not a distributed abuse-control service. The largest frontend chunk remains about 515 kB (151 kB gzip); profiling real network/load is the next step before changing chunking or adding infrastructure.
 
 No product policy, destructive migration or production deployment decision was made. The new development review snapshot pins the audited commits and preserves the original historical manifest; both remain explicitly unqualified. No passing local suite establishes production readiness.
+
+### Dependency impact and decision
+
+Verified: core and modules pin `@proton/vert` as a development dependency. Their full npm audits each report the same four affected dependency entries, not four independent defects: VERT, `@greymass/eosio`, `elliptic` and `lodash.set`. The underlying advisories concern [elliptic signing](https://github.com/advisories/GHSA-848j-6mx2-7j84) and [lodash prototype pollution](https://github.com/advisories/GHSA-p6mc-m468-83gw). npm reports `fixAvailable: false` for every affected entry. The production dependency audits are clean; whether particular emulator inputs can trigger either issue was not established by this review.
+
+Option A: retain the current test harness for isolated development fixtures, with disposable test keys and no production credentials, while qualifying critical permissions and signatures against actual Spring. This preserves existing compiled-WASM coverage but retains the development advisories. Option B: adopt a reviewed maintained VERT patch or replace the emulator, then requalify its signature intrinsics, transaction rollback, table behavior and contract suites; this removes reliance on the affected dependency paths only if the replacement is actually verified, and introduces substantial harness compatibility risk.
+
+Recommendation: preserve the tested harness in this audit and schedule a reviewed upstream fix or replacement as a separate dependency decision. Do not force incompatible overrides, remove contract coverage or label these findings resolved. A major test-engine replacement falls under the requested Impact & Decision gate.
