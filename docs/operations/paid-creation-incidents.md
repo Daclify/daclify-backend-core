@@ -1,0 +1,13 @@
+# Paid creation: reconcile first, retry safely
+
+Development behavior for 0.4.0-alpha.1. This is not an authorization to move production assets.
+
+1. The owner opens the saved `/create?order=<request UUID>` link, signs in with the original account and selects **Check payment status**. Review the immutable setup and founding public identity. An unpaid expired quote cannot be paid; a paid order remains paid after quote expiry.
+2. If paid, choose **Create this paid DAO**. Fulfillment runs in one native transaction and the stored native reference permits at most one DAO. A lost response is reconciled by reading the same order; do not create another order to repair it.
+3. If fulfillment fails, record only the request ID, chain/runtime and redacted error code. The order remains paid. Restore the original pinned module deployments/catalogue/permissions or correct the infrastructure failure, then retry the unchanged order. Do not rewrite its request, founding keys, treasury asset or DAO ID. A changed policy or unavailable module needs explicit operator investigation.
+4. The operator compares the owner-bound database order with the native `createorders` record and the actual token transaction or validated Stripe checkout/webhook. A browser return URL, screenshot, memo text or hosted-service receipt is not payment evidence. Confirm that the order has not already created a DAO before any support resolution.
+5. **Automatic refunds are unavailable.** The current contract has no refund/cancellation transition for a paid order. A manual token transfer does not invalidate that order: it could still be fulfilled afterward. Do not promise or issue a production refund while fulfillment remains possible. A refund feature requires a reviewed native transition that atomically consumes the order, preserves accounting and is tested against fulfillment/refund races and replay. Card refunds/chargebacks likewise require processor reconciliation and a coordinated native policy before launch.
+
+Preflight checks prevent a nonexistent native guardian or wrong token symbol/precision from becoming a payable order. On-chain state can still change after a quote; preflight is not a guarantee of future execution. The fee asset is immutable after creation pricing is configured so earlier token orders retain the same payment asset. Fee levels can change for later quotes; saved quotes remain immutable.
+
+Paid creation requires production operator procedures and qualified providers before activation. Independent provisioning remains unavailable: the $50 setup fee plus separate blockchain resources is a displayed policy, not an enabled checkout flow.

@@ -202,6 +202,7 @@ public:
     if(saved.exists()){
       const auto previous=saved.get();
       if(previous.token_contract!=token_contract||previous.token_symbol!=token_symbol){
+        check(!creation_settings(get_self(),get_self().value).exists(),"CREATION_ASSET_IMMUTABLE");
         catalogue listed(get_self(),get_self().value);check(listed.begin()==listed.end(),"FEE_SYMBOL");
       }
     }

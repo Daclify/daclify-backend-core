@@ -72,6 +72,7 @@ const platform = ChainPlatformSchema.parse({
 const orders = new Map<string, ReturnType<typeof RuntimeTableSchemas.createords.parse>>();
 let creations = 0;
 const chain = {
+  validateCreation: vi.fn(async (_input: ReturnType<typeof CreateDaoSchema.parse>) => {}),
   platform: async () => platform,
   creationOrder: async (reference: string) => orders.get(reference) ?? null,
   orderCreation: async (reference: string, creator: string, method: 'card' | 'tlos') => {
@@ -195,6 +196,33 @@ describe('creation order PostgreSQL ownership and settlement', () => {
     await expect(
       service.prepare(account, { ...input, requestId: randomUUID(), deployment: 'independent' }),
     ).rejects.toMatchObject({ code: 'INDEPENDENT_UNAVAILABLE' });
+  });
+  it('validates deterministic prerequisites before publishing an order and exposes its immutable setup', async () => {
+    const input = {
+      requestId: randomUUID(),
+      deployment: 'shared' as const,
+      method: 'tlos' as const,
+      request,
+    };
+    const before = orders.size;
+    chain.validateCreation.mockRejectedValueOnce(new Error('POLICY_GUARDIAN'));
+    await expect(service.prepare(account, input)).rejects.toThrow('POLICY_GUARDIAN');
+    expect(orders.size).toBe(before);
+    const quote = await service.prepare(account, input);
+    expect(quote).toMatchObject({
+      setup: request,
+      creator: { signingKey: account.signingKey, encryptionKey: account.encryptionKey },
+    });
+    const row = orders.get(quote.memo.slice(7));
+    if (!row) throw new Error('Fixture');
+    row.expires = Math.floor(Date.now() / 1000) - 1;
+    expect((await service.status(account.id, quote.requestId)).state).toBe('expired');
+    row.paid = true;
+    const fail = vi.spyOn(chain, 'createDao').mockRejectedValueOnce(new Error('CHAIN_UNAVAILABLE'));
+    await expect(service.fulfill(account, quote.requestId)).rejects.toThrow('CHAIN_UNAVAILABLE');
+    expect((await service.status(account.id, quote.requestId)).state).toBe('paid');
+    expect((await service.fulfill(account, quote.requestId)).state).toBe('created');
+    fail.mockRestore();
   });
   it('settles only a verified, bound card checkout and creates once under concurrent retries', async () => {
     const quote = await service.prepare(account, {

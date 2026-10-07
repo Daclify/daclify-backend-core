@@ -390,6 +390,125 @@ describe('account sign-in methods', () => {
     });
     expect(again.statusCode).toBe(401);
   });
+  it('consumes concurrent email and zero-counter passkey proofs only once', async () => {
+    const owner = await httpLogin(mailed);
+    const mailbox = `race.${randomUUID()}@example.test`;
+    const linked = await mailed.inject({
+      method: 'POST',
+      url: '/v1/sign-in/email/start',
+      headers: headers(owner.cookie, owner.session.csrfToken),
+      payload: { email: mailbox },
+    });
+    expect(linked.statusCode).toBe(200);
+    await mailed.inject({
+      method: 'POST',
+      url: '/v1/sign-in/email/confirm',
+      headers: headers(owner.cookie, owner.session.csrfToken),
+      payload: { email: mailbox, code: delivered.at(-1)?.code },
+    });
+    await mailed.inject({
+      method: 'POST',
+      url: '/v1/sign-in/email/login/start',
+      headers: { origin },
+      payload: { email: mailbox },
+    });
+    const code = delivered.at(-1)?.code;
+    const emailRow = await pool.query<{ id: string }>(
+      "SELECT id FROM signin_challenges WHERE subject=$1 AND purpose='email-login' AND consumed_at IS NULL",
+      [mailbox],
+    );
+    await concurrentProof(emailRow.rows[0]?.id ?? '', () =>
+      mailed.inject({
+        method: 'POST',
+        url: '/v1/sign-in/email/login',
+        headers: { origin },
+        payload: { email: mailbox, code },
+      }),
+    );
+    const registration = await local.inject({
+      method: 'POST',
+      url: '/v1/sign-in/passkey/register/options',
+      headers: headers(owner.cookie, owner.session.csrfToken),
+      payload: {},
+    });
+    const credential = randomBytes(16);
+    expect(
+      (
+        await local.inject({
+          method: 'POST',
+          url: '/v1/sign-in/passkey/register',
+          headers: headers(owner.cookie, owner.session.csrfToken),
+          payload: attestation(credential, zChallenge(registration.json())),
+        })
+      ).statusCode,
+    ).toBe(200);
+    const options = await local.inject({
+      method: 'POST',
+      url: '/v1/sign-in/passkey/login/options',
+      headers: { origin },
+      payload: {},
+    });
+    const challenge = zChallenge(options.json());
+    const passkeyRow = await pool.query<{ id: string }>(
+      "SELECT id FROM signin_challenges WHERE secret_hash=$1 AND purpose='passkey-login'",
+      [createHash('sha256').update(Buffer.from(challenge, 'base64url')).digest()],
+    );
+    const payload = { credentialId: credential.toString('base64url'), ...assertion(challenge, 0) };
+    await concurrentProof(passkeyRow.rows[0]?.id ?? '', () =>
+      local.inject({
+        method: 'POST',
+        url: '/v1/sign-in/passkey/login',
+        headers: { origin },
+        payload,
+      }),
+    );
+  });
+  it('exhausts an email challenge after five incorrect guesses', async () => {
+    const owner = await httpLogin(local);
+    const mailbox = `budget.${randomUUID()}@example.test`;
+    const started = await local.inject({
+      method: 'POST',
+      url: '/v1/sign-in/email/start',
+      headers: headers(owner.cookie, owner.session.csrfToken),
+      payload: { email: mailbox },
+    });
+    const code = started.json<{ code: string }>().code;
+    for (let attempt = 0; attempt < 5; attempt++)
+      expect(
+        (
+          await local.inject({
+            method: 'POST',
+            url: '/v1/sign-in/email/confirm',
+            headers: headers(owner.cookie, owner.session.csrfToken),
+            payload: { email: mailbox, code: code === '00000000' ? '00000001' : '00000000' },
+          })
+        ).statusCode,
+      ).toBe(401);
+    expect(
+      (
+        await local.inject({
+          method: 'POST',
+          url: '/v1/sign-in/email/confirm',
+          headers: headers(owner.cookie, owner.session.csrfToken),
+          payload: { email: mailbox, code },
+        })
+      ).statusCode,
+    ).toBe(401);
+  });
+  it('limits challenge issuance per caller even when query strings vary', async () => {
+    const request = (address: string, index: number) =>
+      local.inject({
+        method: 'POST',
+        url: '/v1/sign-in/passkey/login/options?nonce=' + index,
+        remoteAddress: address,
+        headers: { origin },
+        payload: {},
+      });
+    for (let index = 0; index < 20; index++)
+      expect((await request('203.0.113.7', index)).statusCode).toBe(200);
+    expect((await request('203.0.113.7', 20)).statusCode).toBe(429);
+    expect((await request('203.0.113.8', 21)).statusCode).toBe(200);
+  });
   it('links a Telegram login widget to the current account and can remove it', async () => {
     const owner = await httpLogin(local);
     const subject = 200_000_000 + Math.floor(Math.random() * 100_000_000);
@@ -446,4 +565,31 @@ function zChallenge(value: unknown): string {
   const challenge = value.challenge;
   if (typeof challenge !== 'string') throw new Error('Missing challenge');
   return challenge;
+}
+
+async function concurrentProof(id: string, submit: () => Promise<{ statusCode: number }>) {
+  expect(id).not.toBe('');
+  const blocker = await pool.connect();
+  await blocker.query('BEGIN');
+  await blocker.query('SELECT id FROM signin_challenges WHERE id=$1 FOR UPDATE', [id]);
+  const first = submit();
+  const second = submit();
+  let blocked = 0;
+  const deadline = Date.now() + 5000;
+  try {
+    while (Date.now() < deadline) {
+      const row = await pool.query<{ count: string }>(
+        "SELECT count(*) FROM pg_stat_activity WHERE datname=current_database() AND wait_event_type='Lock' AND query LIKE '%UPDATE signin_challenges%' AND pid<>pg_backend_pid()",
+      );
+      blocked = Number(row.rows[0]?.count);
+      if (blocked >= 2) break;
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+  } finally {
+    await blocker.query('COMMIT');
+    blocker.release();
+  }
+  const results = await Promise.all([first, second]);
+  expect(blocked).toBe(2);
+  expect(results.map((result) => result.statusCode).sort()).toEqual([200, 401]);
 }

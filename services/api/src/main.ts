@@ -28,7 +28,7 @@ const configuration = z
     HUB_ACCOUNT: z.string().optional(),
     BOOTSTRAP_OWNER: z.string().optional(),
     BOOTSTRAP_PRIVATE_KEY: z.string().optional(),
-    NETWORK_ENVIRONMENT: z.enum(['local', 'testnet', 'mainnet']).default('local'),
+    NETWORK_ENVIRONMENT: z.enum(['local', 'testnet', 'mainnet']),
     API_PORT: z.coerce.number().int().min(1).max(65535).default(3008),
     PINATA_JWT: z.string().min(1).optional(),
     CONTENT_GATEWAY: z.url().optional(),

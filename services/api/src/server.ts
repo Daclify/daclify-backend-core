@@ -2,6 +2,7 @@ import type { CreationService } from './creation.js';
 import { PlatformStatusSchema } from '../../../protocol/platform.js';
 import { VERSION } from '../../../protocol/base.js';
 import { VERSION as MODULE_VERSION } from '@daclify/modules';
+import { ServiceResponseRoutes } from '../../../protocol/service-api.js';
 import { ApiRoutes } from '../../../protocol/routes.js';
 import { ModuleApiRoutes } from '@daclify/modules';
 import Fastify, { type FastifyReply, errorCodes } from 'fastify';
@@ -86,6 +87,16 @@ export async function createServer(
     } catch {
       done(new errorCodes.FST_ERR_CTP_INVALID_JSON_BODY(), undefined);
     }
+  });
+  app.addHook('preSerialization', async (request, reply, payload) => {
+    if (reply.statusCode >= 400) return payload;
+    const route = ServiceResponseRoutes.find(
+      (route) => route.method === request.method && route.path === request.routeOptions.url,
+    );
+    if (!route) return payload;
+    const response = route.response.safeParse(payload);
+    if (!response.success) throw new ApiError('RESPONSE_INVALID', 503);
+    return response.data;
   });
   await app.register(cookie);
   await app.register(cors, {
@@ -249,7 +260,12 @@ export async function createServer(
     chain.governance(IdSchema.parse(request.params.id)),
   );
   app.get(ApiRoutes.network.path, async () => chain.network());
-  app.get(ApiRoutes.daos.path, async () => ({ daos: await chain.listDaos() }));
+  app.get(ApiRoutes.daos.path, async (request) => {
+    const query = ApiRoutes.daos.query.parse(request.query);
+    return chain.listDaosPage
+      ? chain.listDaosPage(query.after)
+      : { daos: await chain.listDaos(), next: null };
+  });
   app.get<{ Params: { id: string } }>(ApiRoutes.dao.path, async (request) =>
     chain.dao(IdSchema.parse(request.params.id)),
   );
@@ -265,10 +281,13 @@ export async function createServer(
     return chain.settle(ApiRoutes.settle.input.parse(request.body));
   });
   app.get<{ Params: { id: string } }>(ApiRoutes.content.path, async (request) =>
-    chain.content(IdSchema.parse(request.params.id)),
+    chain.content(IdSchema.parse(request.params.id), ApiRoutes.content.query.parse(request.query)),
   );
   app.get<{ Params: { id: string } }>(ModuleApiRoutes.state.path, async (request) =>
-    chain.moduleState(IdSchema.parse(request.params.id)),
+    chain.moduleState(
+      IdSchema.parse(request.params.id),
+      ModuleApiRoutes.state.query.parse(request.query),
+    ),
   );
   app.post(ModuleApiRoutes.finalize.path, async (request) => {
     const account = await session(

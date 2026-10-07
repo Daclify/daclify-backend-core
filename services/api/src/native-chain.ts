@@ -1,4 +1,9 @@
-import { DaoContentSchema, type DaoContent } from '../../../protocol/content.js';
+import {
+  ContentPageQuerySchema,
+  DaoContentSchema,
+  type ContentPageQuery,
+  type DaoContent,
+} from '../../../protocol/content.js';
 import {
   TreasurySchema,
   SettlementRequestSchema,
@@ -24,6 +29,8 @@ import {
   ModulePermissions,
   ModuleApiRoutes,
   ModuleStateSchema,
+  ModulePageQuerySchema,
+  type ModulePageQuery,
   VERSION as MODULE_VERSION,
   type ModuleState,
   type ModuleDeployment,
@@ -51,7 +58,7 @@ import {
   type DaoSummary,
   type Network,
   type UserMembership,
-  type CreateDaoSchema,
+  CreateDaoSchema,
 } from '../../../protocol/api.js';
 import {
   VERSION,
@@ -76,7 +83,7 @@ import {
   type instruction,
 } from '../../../sdk/index.js';
 import type { ChainGateway } from './chain.js';
-import { ApiError } from './errors.js';
+import { ApiError, contractError } from './errors.js';
 import {
   ChainPlatformSchema,
   ContractStatusSchema,
@@ -315,12 +322,12 @@ export class NativeChainGateway implements ChainGateway {
       'guardrecover',
     ].every((name) => abi?.actions.some((action) => action.name === name));
   }
-  async table<K extends keyof typeof RuntimeTableSchemas>(
+  async tablePage<K extends keyof typeof RuntimeTableSchemas>(
     table: K,
     scope: string,
     lower = '0',
-    limit = 100,
-  ): Promise<z.infer<(typeof RuntimeTableSchemas)[K]>[]> {
+    limit = 200,
+  ): Promise<{ rows: z.infer<(typeof RuntimeTableSchemas)[K]>[]; next: string | null }> {
     Uint64Schema.parse(lower);
     const response = await fetch(`${this.config.rpcUrl}/v1/chain/get_table_rows`, {
       method: 'POST',
@@ -339,11 +346,31 @@ export class NativeChainGateway implements ChainGateway {
     if (!response.ok) throw new ApiError('CHAIN_UNAVAILABLE', 503);
     const body = z
       .object({ rows: z.array(z.unknown()), more: z.boolean(), next_key: z.string().optional() })
-      .parse(await response.json());
-    if (body.more && limit !== 1) throw new ApiError('RESULT_LIMIT', 413);
-    const parsed = z.array(RuntimeTableSchemas[table]).safeParse(body.rows);
+      .safeParse(await response.json());
+    if (!body.success) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+    const parsed = z.array(RuntimeTableSchemas[table]).safeParse(body.data.rows);
     if (!parsed.success) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
-    return parsed.data;
+    const next = body.data.more && limit !== 1 ? Uint64Schema.safeParse(body.data.next_key) : null;
+    if (next && (!next.success || BigInt(next.data) <= BigInt(lower)))
+      throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+    return { rows: parsed.data, next: next?.success ? next.data : null };
+  }
+  async table<K extends keyof typeof RuntimeTableSchemas>(
+    table: K,
+    scope: string,
+    lower = '0',
+    limit = 100,
+  ): Promise<z.infer<(typeof RuntimeTableSchemas)[K]>[]> {
+    const first = await this.tablePage(table, scope, lower, Math.min(limit, 200));
+    const rows = first.rows;
+    if (limit === 1) return rows;
+    let cursor = first.next;
+    while (cursor !== null) {
+      const page = await this.tablePage(table, scope, cursor);
+      rows.push(...page.rows);
+      cursor = page.next;
+    }
+    return rows;
   }
   private async summary(row: z.infer<typeof RuntimeTableSchemas.daos>): Promise<DaoSummary> {
     const metadata = MetadataSchema.safeParse(JSON.parse(row.metadata));
@@ -385,14 +412,39 @@ export class NativeChainGateway implements ChainGateway {
       setup,
     });
   }
-  async content(daoId: string): Promise<DaoContent> {
+  async content(daoId: string, query?: ContentPageQuery): Promise<DaoContent> {
+    if (query === undefined) {
+      const all = await this.content(daoId, {});
+      while (Object.values(all.next).some((cursor) => cursor !== null)) {
+        const page = await this.content(daoId, {
+          members: all.next.members ?? 'done',
+          documents: all.next.documents ?? 'done',
+          keyGrants: all.next.keyGrants ?? 'done',
+          epochs: all.next.epochs ?? 'done',
+        });
+        all.members.push(...page.members);
+        all.documents.push(...page.documents);
+        all.keyGrants.push(...page.keyGrants);
+        all.epochs.push(...page.epochs);
+        all.next = page.next;
+      }
+      return all;
+    }
+    query = ContentPageQuerySchema.parse(query);
     const dao = (await this.table('daos', this.config.runtime, daoId, 1))[0];
     if (!dao || dao.id !== daoId) throw new ApiError('DAO_UNKNOWN', 404);
+    const read = <K extends keyof typeof RuntimeTableSchemas>(
+      table: K,
+      cursor: string | undefined,
+    ) =>
+      cursor === 'done'
+        ? Promise.resolve({ rows: [], next: null })
+        : this.tablePage(table, daoId, cursor ?? '0');
     const [members, documents, keyGrants, epochs] = await Promise.all([
-      this.table('members', daoId, '0', 5000),
-      this.table('documents', daoId, '0', 1000),
-      this.table('keygrants', daoId, '0', 1000),
-      this.table('epochs', daoId, '0', 1000),
+      read('members', query.members),
+      read('documents', query.documents),
+      read('keygrants', query.keyGrants),
+      read('epochs', query.epochs),
     ]);
     return DaoContentSchema.parse({
       dao: {
@@ -401,20 +453,34 @@ export class NativeChainGateway implements ChainGateway {
         daoId,
         interfaceVersion: 1,
       },
-      members,
-      documents,
-      keyGrants,
-      epochs,
+      members: members.rows,
+      documents: documents.rows,
+      keyGrants: keyGrants.rows,
+      epochs: epochs.rows,
+      next: {
+        members: members.next,
+        documents: documents.next,
+        keyGrants: keyGrants.next,
+        epochs: epochs.next,
+      },
     });
   }
+  async listDaosPage(after = '0') {
+    const page = await this.tablePage('daos', this.config.runtime, after, 50);
+    return { daos: await Promise.all(page.rows.map((row) => this.summary(row))), next: page.next };
+  }
   async listDaos(): Promise<DaoSummary[]> {
-    return Promise.all(
-      (await this.table('daos', this.config.runtime, '0', 500)).map((row) => this.summary(row)),
-    );
+    const page = await this.listDaosPage();
+    let cursor = page.next;
+    while (cursor !== null) {
+      const next = await this.listDaosPage(cursor);
+      page.daos.push(...next.daos);
+      cursor = next.next;
+    }
+    return page.daos;
   }
   async governance(daoId: string): Promise<GovernanceState> {
     const dao = await this.dao(daoId);
-    // ponytail: 5,000 credentials per snapshot; add pagination before supporting larger DAO credential sets.
     const [policies, actors, sessions, guardians, budgets] = await Promise.all([
       this.table('govpolicies', this.config.runtime, daoId, 1),
       this.table('actors', daoId, '0', 5000),
@@ -532,6 +598,7 @@ export class NativeChainGateway implements ChainGateway {
     }
   }
   async memberships(account: Account): Promise<UserMembership[]> {
+    // ponytail: scans DAOs and their paged members; add a verified membership index when measured scale requires it.
     const daos = await this.listDaos();
     const matches: UserMembership[] = [];
     // This read model is intentionally bounded; an indexed projection replaces scans before large deployments.
@@ -606,8 +673,8 @@ export class NativeChainGateway implements ChainGateway {
           .regex(/^[0-9a-f]{64}$/)
           .parse(result.transaction_id),
       };
-    } catch {
-      throw new ApiError('CHAIN_ACTION_REJECTED', 409);
+    } catch (cause) {
+      throw contractError(cause);
     }
   }
   async finalize(input: FinalizationRequest): Promise<FinalizationResult> {
@@ -648,11 +715,61 @@ export class NativeChainGateway implements ChainGateway {
       throw cause;
     }
   }
+  async validateCreation(input: z.infer<typeof CreateDaoSchema>): Promise<void> {
+    input = CreateDaoSchema.parse(input);
+    if (input.token.chainId !== this.config.chainId) throw new ApiError('ASSET_CHAIN_MISMATCH');
+    const guardian = input.setup?.governance.guardian;
+    if (guardian) {
+      const response = await fetch(`${this.config.rpcUrl}/v1/chain/get_account`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ account_name: guardian }),
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!response.ok) throw new ApiError('POLICY_GUARDIAN', 409);
+      const account = z
+        .object({ account_name: NativeAccountSchema })
+        .safeParse(await response.json());
+      if (!account.success || account.data.account_name !== guardian)
+        throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+    }
+    const response = await fetch(`${this.config.rpcUrl}/v1/chain/get_table_rows`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        code: input.token.contract,
+        scope: input.token.symbol,
+        table: 'stat',
+        json: true,
+        limit: 2,
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new ApiError('ASSET_UNAVAILABLE', 409);
+    const stat = z
+      .object({
+        rows: z.array(z.object({ supply: z.string(), issuer: NativeAccountSchema })),
+        more: z.boolean(),
+      })
+      .safeParse(await response.json());
+    const row =
+      stat.success && !stat.data.more && stat.data.rows.length === 1
+        ? stat.data.rows[0]
+        : undefined;
+    const quantity = row?.supply.match(/^(0|[1-9][0-9]*)(?:\.([0-9]+))? ([A-Z]{1,7})$/);
+    if (
+      !quantity ||
+      quantity[3] !== input.token.symbol ||
+      (quantity[2]?.length ?? 0) !== input.token.precision
+    )
+      throw new ApiError('ASSET_UNAVAILABLE', 409);
+  }
   async createDao(
     account: Account,
     input: z.infer<typeof CreateDaoSchema>,
     paid?: { reference: string; daoId: string },
   ): Promise<DaoSummary> {
+    await this.validateCreation(input);
     const bootstrap = this.config.bootstrap;
     if (!bootstrap) throw new ApiError('DAO_CREATION_UNAVAILABLE', 503);
     if (input.token.chainId !== this.config.chainId) throw new ApiError('ASSET_CHAIN_MISMATCH');
@@ -804,8 +921,8 @@ export class NativeChainGateway implements ChainGateway {
           ],
         }),
       );
-    } catch {
-      throw new ApiError('CHAIN_ACTION_REJECTED', 409);
+    } catch (cause) {
+      throw contractError(cause);
     }
     const row = (await this.table('daos', this.config.runtime, id, 1))[0];
     if (!row || row.id !== id) throw new ApiError('CHAIN_UNAVAILABLE', 503);
@@ -847,7 +964,16 @@ export class NativeChainGateway implements ChainGateway {
       throw cause;
     }
   }
-  private async moduleRows<T>(account: string, table: string, schema: z.ZodType<T>): Promise<T[]> {
+  private async moduleRows<T>(
+    account: string,
+    table: string,
+    schema: z.ZodType<T>,
+    lower: string,
+    upper: string,
+    index = 1,
+    keyType = 'i64',
+    limit = 200,
+  ): Promise<{ rows: T[]; more: boolean }> {
     const response = await fetch(`${this.config.rpcUrl}/v1/chain/get_table_rows`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -856,20 +982,76 @@ export class NativeChainGateway implements ChainGateway {
         table,
         scope: this.config.runtime,
         json: true,
-        limit: 1000,
+        limit,
+        index_position: index,
+        key_type: keyType,
+        lower_bound: lower,
+        upper_bound: upper,
       }),
       signal: AbortSignal.timeout(10000),
     });
     if (!response.ok) throw new ApiError('CHAIN_UNAVAILABLE', 503);
-    const body = z
-      .object({ rows: z.array(z.unknown()), more: z.boolean() })
-      .parse(await response.json());
-    if (body.more) throw new ApiError('RESULT_LIMIT', 413);
-    const parsed = z.array(schema).safeParse(body.rows);
+    const parsed = z
+      .object({ rows: z.array(schema), more: z.boolean() })
+      .safeParse(await response.json());
     if (!parsed.success) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
     return parsed.data;
   }
-  async moduleState(daoId: string): Promise<ModuleState> {
+  private async modulePage<T extends { id: string; dao_id: string }>(
+    account: string,
+    table: string,
+    schema: z.ZodType<T>,
+    daoId: string,
+    cursor: string | undefined,
+  ) {
+    if (cursor === 'done') return { rows: [], next: null };
+    // ponytail: continuation scans shared primary rows in bounded pages; migrate a DAO/id composite index if this becomes costly.
+    const first = !cursor || cursor === '0';
+    const page = await this.moduleRows(
+      account,
+      table,
+      schema,
+      first ? daoId : cursor,
+      first ? daoId : ((1n << 64n) - 1n).toString(),
+      first ? 2 : 1,
+      'i64',
+      first ? 50 : 200,
+    );
+    const last = page.rows.at(-1);
+    if (
+      (page.more && !last) ||
+      (!first && page.rows.some((row) => BigInt(row.id) < BigInt(cursor)))
+    )
+      throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+    const next =
+      page.more && last && BigInt(last.id) < (1n << 64n) - 1n
+        ? (BigInt(last.id) + 1n).toString()
+        : null;
+    return { rows: page.rows.filter((row) => row.dao_id === daoId), next };
+  }
+  async moduleState(daoId: string, query?: ModulePageQuery): Promise<ModuleState> {
+    if (query === undefined) {
+      const all = await this.moduleState(daoId, {});
+      while (Object.values(all.next).some((cursor) => cursor !== null)) {
+        const page = await this.moduleState(daoId, {
+          ballots: all.next.ballots ?? 'done',
+          projects: all.next.projects ?? 'done',
+          schedules: all.next.schedules ?? 'done',
+        });
+        all.ballots.push(...page.ballots);
+        all.votes.push(...page.votes);
+        all.projects.push(...page.projects);
+        all.milestones.push(...page.milestones);
+        all.schedules.push(...page.schedules);
+        all.entries.push(...page.entries);
+        all.controls.push(...page.controls);
+        all.executions.push(...page.executions);
+        all.next = page.next;
+      }
+      return all;
+    }
+    query = ModulePageQuerySchema.parse(query);
+    const next: ModuleState['next'] = { ballots: null, projects: null, schedules: null };
     const dao = (await this.table('daos', this.config.runtime, daoId, 1))[0];
     if (!dao || dao.id !== daoId) throw new ApiError('DAO_UNKNOWN', 404);
     const installed = await this.table('modules', daoId, '0', 100);
@@ -911,6 +1093,7 @@ export class NativeChainGateway implements ChainGateway {
         },
         manifest,
         enabled: !!enabled && enabled.actions.length > 0,
+        installed: !!enabled,
         compatible:
           compatible(VERSION, manifest.coreRange) &&
           (!enabled || enabled.version === manifest.interfaceVersion),
@@ -919,37 +1102,113 @@ export class NativeChainGateway implements ChainGateway {
         grants: enabled?.grants ?? [],
       });
       if (!verified) continue;
+      if (!enabled) continue;
       if (deployment.id === 'decide') {
-        executions = (
-          await this.moduleRows(deployment.account, 'executions', DecideTableSchemas.executions)
-        ).filter((row) => row.dao_id === daoId);
-        ballots = (
-          await this.moduleRows(deployment.account, 'ballots', DecideTableSchemas.ballots)
-        ).filter((row) => row.dao_id === daoId);
-        const ids = new Set(ballots.map((row) => row.id));
-        votes = (
-          await this.moduleRows(deployment.account, 'votes', DecideTableSchemas.votes)
-        ).filter((row) => ids.has(row.ballot));
+        const page = await this.modulePage(
+          deployment.account,
+          'ballots',
+          DecideTableSchemas.ballots,
+          daoId,
+          query.ballots,
+        );
+        ballots = page.rows;
+        next.ballots = page.next;
+        for (const ballot of ballots) {
+          const plan = await this.moduleRows(
+            deployment.account,
+            'executions',
+            DecideTableSchemas.executions,
+            ballot.id,
+            ballot.id,
+            1,
+            'i64',
+            1,
+          );
+          executions.push(
+            ...plan.rows.filter((row) => row.ballot_id === ballot.id && row.dao_id === daoId),
+          );
+          if (query.memberId) {
+            const key = ((BigInt(ballot.id) << 64n) | BigInt(query.memberId)).toString();
+            const page = await this.moduleRows(
+              deployment.account,
+              'votes',
+              DecideTableSchemas.votes,
+              key,
+              key,
+              2,
+              'i128',
+              1,
+            );
+            votes.push(
+              ...page.rows.filter(
+                (row) => row.ballot === ballot.id && row.member === query.memberId,
+              ),
+            );
+          }
+        }
       }
       if (deployment.id === 'works') {
-        projects = (
-          await this.moduleRows(deployment.account, 'projects', WorksTableSchemas.projects)
-        ).filter((row) => row.dao_id === daoId);
-        milestones = (
-          await this.moduleRows(deployment.account, 'milestones', WorksTableSchemas.milestones)
-        ).filter((row) => row.dao_id === daoId);
+        const page = await this.modulePage(
+          deployment.account,
+          'projects',
+          WorksTableSchemas.projects,
+          daoId,
+          query.projects,
+        );
+        projects = page.rows;
+        next.projects = page.next;
+        for (const project of projects) {
+          const items = await this.moduleRows(
+            deployment.account,
+            'milestones',
+            WorksTableSchemas.milestones,
+            project.id,
+            project.id,
+            2,
+            'i64',
+            16,
+          );
+          milestones.push(
+            ...items.rows.filter((row) => row.project_id === project.id && row.dao_id === daoId),
+          );
+        }
       }
       if (deployment.id === 'payroll') {
-        schedules = (
-          await this.moduleRows(deployment.account, 'schedules', PayrollTableSchemas.schedules)
-        ).filter((row) => row.dao_id === daoId);
-        entries = (
-          await this.moduleRows(deployment.account, 'entries', PayrollTableSchemas.entries)
-        ).filter((row) => row.dao_id === daoId);
-        const scheduleIds = new Set(schedules.map((row) => row.id));
-        controls = (
-          await this.moduleRows(deployment.account, 'controls', PayrollTableSchemas.controls)
-        ).filter((row) => scheduleIds.has(row.schedule_id));
+        const page = await this.modulePage(
+          deployment.account,
+          'schedules',
+          PayrollTableSchemas.schedules,
+          daoId,
+          query.schedules,
+        );
+        schedules = page.rows;
+        next.schedules = page.next;
+        for (const schedule of schedules) {
+          const items = await this.moduleRows(
+            deployment.account,
+            'entries',
+            PayrollTableSchemas.entries,
+            schedule.id,
+            schedule.id,
+            2,
+            'i64',
+            12,
+          );
+          entries.push(
+            ...items.rows.filter((row) => row.schedule_id === schedule.id && row.dao_id === daoId),
+          );
+          const flags = await this.moduleRows(
+            deployment.account,
+            'controls',
+            PayrollTableSchemas.controls,
+            schedule.id,
+            schedule.id,
+            1,
+            'i64',
+            1,
+          );
+          controls.push(...flags.rows.filter((row) => row.schedule_id === schedule.id));
+        }
       }
     }
     return ModuleStateSchema.parse({
@@ -960,6 +1219,7 @@ export class NativeChainGateway implements ChainGateway {
         interfaceVersion: 1,
       },
       modules: states,
+      next,
       ballots,
       votes,
       projects,

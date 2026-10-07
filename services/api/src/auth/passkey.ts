@@ -48,7 +48,8 @@ async function consume(
 ): Promise<void> {
   const consumed = await pool.query(
     `UPDATE signin_challenges SET consumed_at=now()
-     WHERE id=(SELECT id FROM signin_challenges
+     WHERE consumed_at IS NULL AND expires_at>now()
+       AND id=(SELECT id FROM signin_challenges
        WHERE purpose=$1 AND secret_hash=$2 AND consumed_at IS NULL AND expires_at>now()
          AND account_id IS NOT DISTINCT FROM $3
        ORDER BY created_at LIMIT 1)
@@ -132,7 +133,6 @@ export async function finishPasskeyRegistration(
 }
 
 export async function beginPasskeyLogin(pool: Pool, origin: string) {
-  await limited(pool, 'passkey-login', null, 100);
   const challenge = randomBytes(32);
   await pool.query(
     `INSERT INTO signin_challenges(id,purpose,secret_hash,expires_at)

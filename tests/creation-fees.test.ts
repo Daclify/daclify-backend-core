@@ -47,6 +47,14 @@ describe('DAO creation payment authority', () => {
       send(core, 'createdao', [1, 'alice', '{}', 0, 'eosio.token', '4,TLOS'], 'alice@active'),
     ).rejects.toThrow('CREATION_PAYMENT_REQUIRED');
   });
+  it('keeps the configured payment token stable once creation fees are enabled', async () => {
+    await order();
+    await expect(
+      send(core, 'setfees', [500, 10000, 'treasury', 'bob', '4,TLOS', ''], 'daclifycore@active'),
+    ).rejects.toThrow('CREATION_ASSET_IMMUTABLE');
+    await pay();
+    await paid();
+  });
   it('charges the quoted TLOS fee and consumes payment once', async () => {
     await order();
     await expect(paid()).rejects.toThrow('CREATION_UNPAID');

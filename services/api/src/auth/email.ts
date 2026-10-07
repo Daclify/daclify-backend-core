@@ -48,16 +48,19 @@ async function consumeCode(
   email: string,
   code: string,
 ): Promise<void> {
-  const consumed = await pool.query(
-    `UPDATE signin_challenges SET consumed_at=now()
-     WHERE id=(SELECT id FROM signin_challenges
-       WHERE purpose=$1 AND subject=$2 AND secret_hash=$3 AND consumed_at IS NULL AND expires_at>now()
-         AND account_id IS NOT DISTINCT FROM $4
-       ORDER BY created_at LIMIT 1)
-     RETURNING id`,
+  const consumed = await pool.query<{ accepted: boolean }>(
+    `UPDATE signin_challenges SET attempts=attempts+1,
+       consumed_at=CASE WHEN secret_hash=$3 THEN now() ELSE consumed_at END
+     WHERE consumed_at IS NULL AND expires_at>now() AND attempts<5
+       AND id=(SELECT id FROM signin_challenges
+         WHERE purpose=$1 AND subject=$2 AND consumed_at IS NULL AND expires_at>now()
+           AND account_id IS NOT DISTINCT FROM $4
+         ORDER BY created_at DESC,id DESC LIMIT 1)
+     RETURNING secret_hash=$3 AS accepted`,
     [purpose, email, digest(code), accountId],
   );
-  if (consumed.rowCount !== 1) throw new ApiError('EMAIL_INVALID', 401);
+  if (consumed.rowCount !== 1 || !consumed.rows[0]?.accepted)
+    throw new ApiError('EMAIL_INVALID', 401);
 }
 
 function freshCode(): string {

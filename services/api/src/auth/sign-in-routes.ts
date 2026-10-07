@@ -3,6 +3,7 @@ import type { Pool } from 'pg';
 import { z } from 'zod';
 import type { Account } from '../../../../protocol/api.js';
 import { ApiError } from '../errors.js';
+import { createWindowLimiter } from '../limits.js';
 import {
   linkProvider,
   openLinkedSession,
@@ -66,6 +67,14 @@ export function registerSignInRoutes(
   session: (token: string | undefined, csrf?: string) => Promise<Account>,
   sessionCookie: (reply: FastifyReply, token: string) => void,
 ): void {
+  const admit = createWindowLimiter(20, 10 * 60_000, 2000);
+  const confirm = createWindowLimiter(60, 10 * 60_000, 6000);
+  app.addHook('preHandler', async (request) => {
+    const path = request.routeOptions.url ?? '';
+    if (request.method !== 'POST' || !path.startsWith('/v1/sign-in/')) return;
+    const limiter = path.endsWith('/options') || path.endsWith('/start') ? admit : confirm;
+    if (!limiter(request.ip, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+  });
   const delivery = emailDelivery(signIn);
   const telegram = providers?.telegram;
   function csrf(header: string | string[] | undefined): string {

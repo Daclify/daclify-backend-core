@@ -1,3 +1,7 @@
+## Access review follow-up — 2026-10-07
+
+The eight focused access/payment review findings are addressed on `codex/access-flow-fixes` in coordinated 0.4.0-alpha.1 development checkouts. See [fix and verification evidence](../../evidence/2026-10-07-access-fixes.md) and [comparative module proposals](../../evidence/2026-10-07-module-research.md). These records supersede the older account-flow, read-limit and pause-copy observations below; historical test counts remain historical. Native multi-runtime discovery/routing, qualified production custody/providers, refund cancellation and published artifact qualification remain open. New modules in the research document are proposals, not implemented capabilities.
+
 # Daclify V2 remaining work
 
 Reconciled 2026-10-05 against `main` at core `27ba179`, modules `b2d6cba`, and frontend `13784ed`. Those commits match the recorded checkpoints and `origin/main`. This file is an execution backlog. A checkbox in the work-package plan is not evidence, and a passing UI build is not a finished package.

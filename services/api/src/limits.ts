@@ -8,12 +8,20 @@ export const RESOURCE_RAM_FLOOR_BYTES = 1_024;
 export function createWindowLimiter(limit: number, windowMs: number, globalLimit = limit) {
   const hits = new Map<string, number[]>();
   const all: number[] = [];
+  let pruneAt = 0;
   return function admit(key: string, now: number): boolean {
     const start = now - windowMs;
+    if (now >= pruneAt) {
+      for (const [subject, times] of hits) {
+        const recent = times.filter((time) => time > start);
+        if (recent.length) hits.set(subject, recent);
+        else hits.delete(subject);
+      }
+      pruneAt = now + windowMs;
+    }
     while (all.length > 0 && all[0] !== undefined && all[0] <= start) all.shift();
     const recent = (hits.get(key) ?? []).filter((time) => time > start);
     if (recent.length >= limit || all.length >= globalLimit) {
-      hits.set(key, recent);
       return false;
     }
     recent.push(now);

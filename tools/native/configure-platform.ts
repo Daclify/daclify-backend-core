@@ -8,8 +8,8 @@ import { fixtureKey } from './keys.js';
 import { unlockFixtureWallet } from './wallet.js';
 const network = z
   .object({
-    container: z.literal('daclify-platform-native'),
-    url: z.literal('http://127.0.0.1:19988'),
+    container: z.enum(['daclify-platform-native', 'daclify-access-native']),
+    url: z.enum(['http://127.0.0.1:19988', 'http://127.0.0.1:20088']),
     chainId: z.string(),
   })
   .parse(JSON.parse(readFileSync('.artifacts/native/network.json', 'utf8')));

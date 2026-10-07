@@ -23,6 +23,7 @@ const network = z
       'daclify-v2-native',
       'daclify-dao-presets-native',
       'daclify-platform-native',
+      'daclify-access-native',
     ]),
     url: z.string().regex(/^http:\/\/127\.0\.0\.1:[0-9]{4,5}$/),
     chainId: z.string().regex(/^[0-9a-f]{64}$/),

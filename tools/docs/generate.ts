@@ -1,6 +1,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { z } from 'zod';
 import { generateDocumentation } from '../../sdk/documentation.js';
+import { ServiceResponseRoutes } from '../../protocol/service-api.js';
 import { ApiRoutes } from '../../protocol/routes.js';
 import { VERSION } from '../../protocol/base.js';
 const topics: unknown = JSON.parse(await readFile('docs/guides/topics.json', 'utf8'));
@@ -14,13 +15,29 @@ const api = Object.values(ApiRoutes).map((endpoint) => ({
   method: endpoint.method,
   path: endpoint.path,
   helpTopic: endpoint.helpTopic,
+  ...('query' in endpoint ? { query: z.toJSONSchema(endpoint.query, { io: 'input' }) } : {}),
   ...('input' in endpoint ? { input: z.toJSONSchema(endpoint.input, { io: 'input' }) } : {}),
   response: z.toJSONSchema(endpoint.response, { io: 'output' }),
 }));
 const output = generateDocumentation(
   { producer: 'core', packageVersion: VERSION, interfaceVersion: 1, topics },
   contracts,
-  api,
+  [
+    ...api,
+    ...ServiceResponseRoutes.map((endpoint) => ({
+      method: endpoint.method,
+      path: endpoint.path,
+      response: z.toJSONSchema(endpoint.response, { io: 'output' }),
+      helpTopic:
+        endpoint.path.startsWith('/v1/marketplace') || endpoint.path.startsWith('/v1/names')
+          ? 'marketplace'
+          : endpoint.path.startsWith('/v1/billing')
+            ? 'service-payment'
+            : endpoint.path.startsWith('/v1/account') || endpoint.path.includes('profile')
+              ? 'accounts'
+              : 'providers',
+    })),
+  ],
 );
 const files = new Map([
   ['docs/generated/reference.json', JSON.stringify(output.bundle, null, 2) + '\n'],

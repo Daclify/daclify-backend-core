@@ -21,6 +21,7 @@ export const ApiReferenceSchema = z.strictObject({
   method: z.enum(['GET', 'POST']),
   path: z.string().startsWith('/v1/'),
   input: z.unknown().optional(),
+  query: z.unknown().optional(),
   response: z.unknown(),
   helpTopic: z.string(),
 });

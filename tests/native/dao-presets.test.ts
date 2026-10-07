@@ -34,9 +34,13 @@ import { fixtureKey } from '../../tools/native/keys.js';
 import { unlockFixtureWallet } from '../../tools/native/wallet.js';
 const network = z
   .object({
-    url: z.enum(['http://127.0.0.1:19888', 'http://127.0.0.1:19988']),
+    url: z.enum(['http://127.0.0.1:19888', 'http://127.0.0.1:19988', 'http://127.0.0.1:20088']),
     chainId: z.string(),
-    container: z.enum(['daclify-dao-presets-native', 'daclify-platform-native']),
+    container: z.enum([
+      'daclify-dao-presets-native',
+      'daclify-platform-native',
+      'daclify-access-native',
+    ]),
   })
   .parse(JSON.parse(readFileSync('.artifacts/native/network.json', 'utf8')));
 const pool = new Pool({

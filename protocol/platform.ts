@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { NetworkSchema, CreateDaoSchema } from './api.js';
+import { NetworkSchema, CreateDaoSchema, AccountSchema } from './api.js';
 import { DaoRefSchema, ChainIdSchema } from './base.js';
 import { RuntimeTableSchemas } from '../sdk/generated/schemas.js';
 export const DeploymentKindSchema = z.enum(['shared', 'independent']);
@@ -12,6 +12,8 @@ export const CreationRequestSchema = z.strictObject({
 });
 export const CreationOrderViewSchema = z.strictObject({
   network: NetworkSchema,
+  setup: CreateDaoSchema,
+  creator: AccountSchema.pick({ signingKey: true, encryptionKey: true, custody: true }),
   requestId: z.uuid(),
   deployment: DeploymentKindSchema,
   method: CreationMethodSchema,
@@ -21,7 +23,7 @@ export const CreationOrderViewSchema = z.strictObject({
   tokenContract: z.string(),
   memo: z.string(),
   expires: z.int().nonnegative(),
-  state: z.enum(['awaiting-payment', 'paid', 'created']),
+  state: z.enum(['awaiting-payment', 'expired', 'paid', 'created']),
   dao: DaoRefSchema.nullable(),
   checkoutUrl: z.url().nullable(),
 });

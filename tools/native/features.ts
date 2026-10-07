@@ -23,9 +23,12 @@ export async function activateFixtureFeatures(
   container: string,
   endpoint = 'http://127.0.0.1:18888',
 ): Promise<void> {
-  z.enum(['daclify-v2-native', 'daclify-dao-presets-native', 'daclify-platform-native']).parse(
-    container,
-  );
+  z.enum([
+    'daclify-v2-native',
+    'daclify-dao-presets-native',
+    'daclify-platform-native',
+    'daclify-access-native',
+  ]).parse(container);
   const url = z
     .string()
     .regex(/^http:\/\/127\.0\.0\.1:[0-9]{4,5}$/)

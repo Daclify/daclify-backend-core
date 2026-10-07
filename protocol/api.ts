@@ -21,6 +21,9 @@ export const AccountSchema = z.strictObject({
   custody: CustodySchema,
   encryptionKey: EncryptionPublicKeySchema,
 });
+export const JoinIdentitySchema = AccountSchema.omit({ id: true }).extend({
+  version: z.literal(1),
+});
 export const ChallengeRequestSchema = z.strictObject({ signingKey: SigningPublicKeySchema });
 export const ChallengeSchema = z.strictObject({
   id: z.uuid(),

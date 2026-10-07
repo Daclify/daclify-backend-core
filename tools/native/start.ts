@@ -7,7 +7,12 @@ import { PrivateKey } from '@wharfkit/antelope';
 import { z } from 'zod';
 const root = resolve(process.cwd());
 const name = z
-  .enum(['daclify-v2-native', 'daclify-dao-presets-native', 'daclify-platform-native'])
+  .enum([
+    'daclify-v2-native',
+    'daclify-dao-presets-native',
+    'daclify-platform-native',
+    'daclify-access-native',
+  ])
   .parse(process.env.DACLIFY_NATIVE_CONTAINER ?? 'daclify-v2-native');
 const port = z.coerce
   .number()

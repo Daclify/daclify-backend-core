@@ -1,13 +1,28 @@
 import { z } from 'zod';
 import { DaoRefSchema, IdSchema, Uint64Schema } from './base.js';
 import { RuntimeTableSchemas } from '../sdk/generated/schemas.js';
+export const ContentPageQuerySchema = z.strictObject({
+  members: z.union([Uint64Schema, z.literal('done')]).optional(),
+  documents: z.union([Uint64Schema, z.literal('done')]).optional(),
+  keyGrants: z.union([Uint64Schema, z.literal('done')]).optional(),
+  epochs: z.union([Uint64Schema, z.literal('done')]).optional(),
+});
+export type ContentPageQuery = z.infer<typeof ContentPageQuerySchema>;
 // Records are generated from the producer's C++ ABI, including transport normalization.
 export const DaoContentSchema = z.strictObject({
   dao: DaoRefSchema,
-  members: z.array(RuntimeTableSchemas.members).max(5000),
-  documents: z.array(RuntimeTableSchemas.documents).max(1000),
-  keyGrants: z.array(RuntimeTableSchemas.keygrants).max(1000),
-  epochs: z.array(RuntimeTableSchemas.epochs).max(1000),
+  next: z
+    .strictObject({
+      members: Uint64Schema.nullable(),
+      documents: Uint64Schema.nullable(),
+      keyGrants: Uint64Schema.nullable(),
+      epochs: Uint64Schema.nullable(),
+    })
+    .default({ members: null, documents: null, keyGrants: null, epochs: null }),
+  members: z.array(RuntimeTableSchemas.members),
+  documents: z.array(RuntimeTableSchemas.documents),
+  keyGrants: z.array(RuntimeTableSchemas.keygrants),
+  epochs: z.array(RuntimeTableSchemas.epochs),
 });
 export type DaoContent = z.infer<typeof DaoContentSchema>;
 export function contentDomain(

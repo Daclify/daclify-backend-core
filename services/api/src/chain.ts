@@ -1,6 +1,11 @@
-import type { DaoContent } from '../../../protocol/content.js';
+import type { ContentPageQuery, DaoContent } from '../../../protocol/content.js';
 import type { Treasury, SettlementRequest, SettlementResult } from '../../../protocol/treasury.js';
-import type { ModuleState, FinalizationRequest, FinalizationResult } from '@daclify/modules';
+import type {
+  ModulePageQuery,
+  ModuleState,
+  FinalizationRequest,
+  FinalizationResult,
+} from '@daclify/modules';
 import type { DaoSummary, Network, Account, UserMembership } from '../../../protocol/api.js';
 import type { instruction } from '../../../sdk/index.js';
 import type { CreateDaoSchema } from '../../../protocol/api.js';
@@ -13,10 +18,11 @@ export interface ChainGateway {
   treasury(daoId: string): Promise<Treasury>;
   settle(input: SettlementRequest): Promise<SettlementResult>;
   finalize(input: FinalizationRequest): Promise<FinalizationResult>;
-  content(daoId: string): Promise<DaoContent>;
+  content(daoId: string, query?: ContentPageQuery): Promise<DaoContent>;
   dao(daoId: string): Promise<DaoSummary>;
   network(): Promise<Network>;
-  moduleState(daoId: string): Promise<ModuleState>;
+  moduleState(daoId: string, query?: ModulePageQuery): Promise<ModuleState>;
+  listDaosPage?(after?: string): Promise<{ daos: DaoSummary[]; next: string | null }>;
   listDaos(): Promise<DaoSummary[]>;
   memberships(account: Account): Promise<UserMembership[]>;
   memberProfile(

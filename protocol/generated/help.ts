@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle={
   "producer": "core",
-  "packageVersion": "0.3.0-alpha.1",
+  "packageVersion": "0.4.0-alpha.1",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -20,7 +20,8 @@ export const CoreHelpBundle={
       "paragraphs": [
         "User-controlled accounts keep encrypted signing and decryption keys in your browser. Recovery requires an encrypted kit and a separate recovery credential. Social login alone cannot recover these keys.",
         "Managed recovery delegates signing and decryption recovery to an operator. OpenBao is the tested open-source candidate; production use requires an isolated custody service, audit logs, access controls, and tested recovery.",
-        "An internal account does not need a native account. Linking a native account requires proof from that account and preserves your DAO member identity."
+        "An internal account does not need a native account. Linking a native account requires proof from that account and preserves your DAO member identity.",
+        "Use Account → Keys → Public join identity to share only public signing and encryption keys with a DAO administrator. Your encrypted recovery kit and its credential are private backups, not admission documents. User-controlled signing requires unlocking your vault; successful unlocking returns to the DAO or creation step that requested it. Social sign-in alone does not decrypt the vault."
       ]
     },
     {
@@ -29,7 +30,8 @@ export const CoreHelpBundle={
       "paragraphs": [
         "Shared DAOs have separate scopes in a common runtime. The operator controls contract upgrades and on-chain authority; member permissions do not remove this operator trust.",
         "Independent DAOs deploy and administer their own Antelope C++ runtime and compatible modules. Their owner controls upgrade keys, resource funding, and deployment permissions.",
-        "The hub lists deployments and advertised interface versions. A listing is not a security audit, code endorsement, or transfer of governance authority."
+        "The hub lists deployments and advertised interface versions. A listing is not a security audit, code endorsement, or transfer of governance authority.",
+        "The hub currently reads the configured runtime only. Independent contracts can be prepared and connected on chain with the deployment kit, but automatic multi-runtime discovery and routing are not implemented by this frontend. An independent DAO is not available here merely because a hub record exists."
       ]
     },
     {
@@ -81,7 +83,8 @@ export const CoreHelpBundle={
         "Hosted file uploads have a 5 MiB stored-byte limit and use a bounded backend path with an explicit storage allowance. Private filenames and file contents are encrypted before upload; encoding reduces the maximum original size. Upload and verify the file, then sign its permanent contract record. Keep the request ID to resume after a reload or lost response. The backend retrieves the stored bytes and checks their separate SHA-256 commitment; a matching CID or on-chain record alone does not establish byte verification.",
         "Private documents use a committed key for each DAO epoch. Initialization stores the commitment and the creator’s encrypted grant atomically. An administrator can grant that epoch to admitted members. Different recipients, DAO deployments and document versions have distinct encryption domains.",
         "Changing membership or rotating an epoch protects future content after the next key is initialized. Old grants and disclosed plaintext remain accessible to anyone who kept the old key. A client checks content integrity and the epoch commitment before decryption.",
-        "Download checks the recorded byte count and commitment before opening a file. A private download also checks the DAO epoch commitment and decrypts in your browser. Previous file versions remain downloadable from version history. A saved plaintext download is not erased when your vault locks. The local disk fixture is labelled explicitly and does not establish live Pinata or public IPFS availability."
+        "Download checks the recorded byte count and commitment before opening a file. A private download also checks the DAO epoch commitment and decrypts in your browser. Previous file versions remain downloadable from version history. A saved plaintext download is not erased when your vault locks. The local disk fixture is labelled explicitly and does not establish live Pinata or public IPFS availability.",
+        "Changing DAO deployment, account, member identity or privacy clears document drafts and decrypted views. Late responses from a previous context are discarded. Content histories are read in scoped pages with advancing cursors; a large DAO does not fail merely because it exceeds the former row ceiling."
       ]
     },
     {
@@ -91,7 +94,8 @@ export const CoreHelpBundle={
         "Each DAO records internal members with separate signing and encryption keys. A linked native account is a credential of the existing member rather than a second voting identity.",
         "Administrators assign administrator and reviewer roles. The final active administrator cannot be demoted or removed. Reviewers can review contributions within the Works policy; contribution authors cannot approve their own work.",
         "Governance credits are nontransferable units. Their issuance and removal require DAO authority and stop while an active ballot has locked weights. Removing access preserves recorded balances and accepted payment rights.",
-        "Encrypted DAOs rotate the future-content epoch when a member is deactivated. Remaining authorized members need grants for the new committed key. Deactivation cannot revoke earlier keys or erase exported history."
+        "Encrypted DAOs rotate the future-content epoch when a member is deactivated. Remaining authorized members need grants for the new committed key. Deactivation cannot revoke earlier keys or erase exported history.",
+        "In Members, an active administrator pastes the applicant’s public join identity and signs admission. Confirm the keys through a trusted channel first. Then select the admitted member to assign roles and governance credits; grant an encryption epoch separately for private documents. Admission never makes an applicant an administrator automatically. Managed admission remains unavailable in this deployment."
       ]
     },
     {
@@ -159,7 +163,9 @@ export const CoreHelpBundle={
         "Orders are bound to the signed-in account and immutable setup. Check and resume an existing order after a lost response; paid orders create at most one shared DAO. Creation, initial governance, enrollment and module installation run in one transaction, so a failed setup leaves the paid order available to retry. Keep the order ID for support. Refunds and chargebacks require operator handling.",
         "Independent self-service provisioning is unavailable. The application displays its setup price but refuses checkout until a provisioner and blockchain resource quote exist. Use the reviewed deployment kit; do not send a shared setup payment for an independent deployment.",
         "Before enabling paid creation, a native operator configures setfees and setcreate (2000 shared USD cents, 5000 independent USD cents, 2000 premium basis points, relay settler), verifies the fee treasury and installs callback permission links. Bootstrap the platform DAO before setting creation fees, or create it with a paid order. Link it with setgov. setcrrate requires a fresh positive observation and native runtime authority. npm run price:tlos -- testnet --creation-rate reads Delphi and prints an unsigned update for review; it sends no transaction. Arrange operator updates often enough that observations remain less than 15 minutes old. A stale or future observation refuses new TLOS quotes.",
-        "API clients prepare with POST /v1/dao-orders, read GET /v1/dao-orders/:id, start card checkout with POST /v1/dao-orders/:id/checkout and create/reconcile with POST /v1/dao-orders/:id/fulfill. The former POST /v1/daos free-creation endpoint now returns HTTP 409 CREATION_PAYMENT_REQUIRED and never creates a DAO. Update clients to the paid order flow."
+        "API clients prepare with POST /v1/dao-orders, read GET /v1/dao-orders/:id, start card checkout with POST /v1/dao-orders/:id/checkout and create/reconcile with POST /v1/dao-orders/:id/fulfill. The former POST /v1/daos free-creation endpoint now returns HTTP 409 CREATION_PAYMENT_REQUIRED and never creates a DAO. Update clients to the paid order flow.",
+        "The service checks the treasury token’s actual symbol and precision and any native guardian before preparing a payable order. The saved order review displays the complete immutable setup and founding public identity. An expired unpaid order cannot be paid; a paid order remains available for execution after quote expiry. Check payment status, review the original terms, then explicitly select Create this paid DAO. Starting another order does not cancel the previous quote: retain its order link until it expires or is resolved.",
+        "A failed paid fulfillment retains the paid order and can be retried after its unchanged deployment dependencies are restored. Operators must reconcile the stored account, immutable request, native order and transaction or card evidence before handling a support refund. This release has no automatic on-chain refund action or refund state; a manual transfer must not be represented as cancelling the still-paid order. Follow the paid-creation incident guide before any production refund. The creation asset is immutable once creation pricing is configured, protecting existing token quotes."
       ]
     },
     {
@@ -170,7 +176,8 @@ export const CoreHelpBundle={
         "Active administrators of the linked DAO can sign creation fee and settler changes, commission and names policy changes, first-party module registration, catalogue removal and first-party module descriptions. These are administrator actions, not automatic execution of a member ballot. Use the DAO workspace for proposals, voting, members and treasury. Native upgrade, fee treasury and oracle authorities remain with the operator.",
         "Module registration checks the on-chain code hash, accepted fee rule and asset identity. Removing a catalogue entry prevents new installations but does not erase existing DAO installations, pending work or financial exit rights. Publishers retain control over their third-party listings and prices.",
         "Status displays the selected network, actual chain ID and head blocks, runtime and module hashes, public permission authorities, resources, on-chain fee and governance configuration, database migrations and safe provider configuration flags. Missing services are labelled unconfigured. Module hash checks verify the pinned SDK artifact; unpinned runtime and hub hashes are displayed without claiming they are verified.",
-        "Configured providers are not evidence of successful live integration or a qualified production release. Pinata, Stripe, Google, Telegram and managed recovery require their own configuration and acceptance checks. Public status excludes credentials, private keys, DSNs, account records and raw internal errors."
+        "Configured providers are not evidence of successful live integration or a qualified production release. Pinata, Stripe, Google, Telegram and managed recovery require their own configuration and acceptance checks. Public status excludes credentials, private keys, DSNs, account records and raw internal errors.",
+        "Status starts with user-facing capabilities and distinguishes configured services from qualified live integrations. Expand Technical platform details to inspect hashes, authorities, resources and migration state."
       ]
     }
   ],
@@ -3469,6 +3476,407 @@ export const CoreHelpBundle={
             ],
             "additionalProperties": false
           },
+          "setup": {
+            "type": "object",
+            "properties": {
+              "metadata": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                      },
+                      "description": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 4000
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "description"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 2
+                      },
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                      },
+                      "description": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "purpose": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "setup": {
+                        "type": "object",
+                        "properties": {
+                          "presetId": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "presetVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "participantMode": {
+                            "type": "string",
+                            "enum": [
+                              "humans",
+                              "mixed",
+                              "agents-guarded"
+                            ]
+                          },
+                          "governance": {
+                            "type": "object",
+                            "properties": {
+                              "weight": {
+                                "type": "string",
+                                "enum": [
+                                  "member",
+                                  "credit",
+                                  "native-stake"
+                                ]
+                              },
+                              "duration": {
+                                "type": "integer",
+                                "minimum": 60,
+                                "maximum": 2592000
+                              },
+                              "quorumBasisPoints": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 10000
+                              },
+                              "approvalBasisPoints": {
+                                "type": "integer",
+                                "minimum": 5001,
+                                "maximum": 10000
+                              },
+                              "governedWorks": {
+                                "type": "boolean"
+                              },
+                              "maxCommitment": {
+                                "type": "string"
+                              },
+                              "dailyCommitment": {
+                                "type": "string"
+                              },
+                              "guardian": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "const": ""
+                                  },
+                                  {
+                                    "type": "string",
+                                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "weight",
+                              "duration",
+                              "quorumBasisPoints",
+                              "approvalBasisPoints",
+                              "governedWorks",
+                              "maxCommitment",
+                              "dailyCommitment",
+                              "guardian"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "presetId",
+                          "presetVersion",
+                          "participantMode",
+                          "governance"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "description",
+                      "purpose",
+                      "setup"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "privacy": {
+                "type": "string",
+                "enum": [
+                  "public",
+                  "encrypted-managed-allowed",
+                  "encrypted-user-controlled"
+                ]
+              },
+              "token": {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "contract": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "symbol": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{1,7}$"
+                  },
+                  "precision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 18
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "contract",
+                  "symbol",
+                  "precision"
+                ],
+                "additionalProperties": false
+              },
+              "setup": {
+                "type": "object",
+                "properties": {
+                  "presetId": {
+                    "type": "string",
+                    "enum": [
+                      "community",
+                      "ngo-grants",
+                      "gaming-guild",
+                      "team",
+                      "custom"
+                    ]
+                  },
+                  "presetVersion": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "participantMode": {
+                    "type": "string",
+                    "enum": [
+                      "humans",
+                      "mixed",
+                      "agents-guarded"
+                    ]
+                  },
+                  "governance": {
+                    "type": "object",
+                    "properties": {
+                      "weight": {
+                        "type": "string",
+                        "enum": [
+                          "member",
+                          "credit",
+                          "native-stake"
+                        ]
+                      },
+                      "duration": {
+                        "type": "integer",
+                        "minimum": 60,
+                        "maximum": 2592000
+                      },
+                      "quorumBasisPoints": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10000
+                      },
+                      "approvalBasisPoints": {
+                        "type": "integer",
+                        "minimum": 5001,
+                        "maximum": 10000
+                      },
+                      "governedWorks": {
+                        "type": "boolean"
+                      },
+                      "maxCommitment": {
+                        "type": "string"
+                      },
+                      "dailyCommitment": {
+                        "type": "string"
+                      },
+                      "guardian": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "const": ""
+                          },
+                          {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "weight",
+                      "duration",
+                      "quorumBasisPoints",
+                      "approvalBasisPoints",
+                      "governedWorks",
+                      "maxCommitment",
+                      "dailyCommitment",
+                      "guardian"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "presetId",
+                  "presetVersion",
+                  "participantMode",
+                  "governance"
+                ],
+                "additionalProperties": false
+              },
+              "foundingAgent": {
+                "type": "object",
+                "properties": {
+                  "signingKey": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  "encryptionKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "operator": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "pattern": "^[\\x20-\\x7e]+$"
+                  }
+                },
+                "required": [
+                  "signingKey",
+                  "encryptionKey",
+                  "operator"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "metadata",
+              "privacy",
+              "token"
+            ],
+            "additionalProperties": false
+          },
+          "creator": {
+            "type": "object",
+            "properties": {
+              "signingKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "encryptionKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "custody": {
+                "type": "string",
+                "enum": [
+                  "user-controlled",
+                  "managed"
+                ]
+              }
+            },
+            "required": [
+              "signingKey",
+              "encryptionKey",
+              "custody"
+            ],
+            "additionalProperties": false
+          },
           "requestId": {
             "type": "string",
             "format": "uuid",
@@ -3517,6 +3925,7 @@ export const CoreHelpBundle={
             "type": "string",
             "enum": [
               "awaiting-payment",
+              "expired",
               "paid",
               "created"
             ]
@@ -3570,6 +3979,8 @@ export const CoreHelpBundle={
         },
         "required": [
           "network",
+          "setup",
+          "creator",
           "requestId",
           "deployment",
           "method",
@@ -3648,6 +4059,407 @@ export const CoreHelpBundle={
             ],
             "additionalProperties": false
           },
+          "setup": {
+            "type": "object",
+            "properties": {
+              "metadata": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                      },
+                      "description": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 4000
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "description"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 2
+                      },
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                      },
+                      "description": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "purpose": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "setup": {
+                        "type": "object",
+                        "properties": {
+                          "presetId": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "presetVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "participantMode": {
+                            "type": "string",
+                            "enum": [
+                              "humans",
+                              "mixed",
+                              "agents-guarded"
+                            ]
+                          },
+                          "governance": {
+                            "type": "object",
+                            "properties": {
+                              "weight": {
+                                "type": "string",
+                                "enum": [
+                                  "member",
+                                  "credit",
+                                  "native-stake"
+                                ]
+                              },
+                              "duration": {
+                                "type": "integer",
+                                "minimum": 60,
+                                "maximum": 2592000
+                              },
+                              "quorumBasisPoints": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 10000
+                              },
+                              "approvalBasisPoints": {
+                                "type": "integer",
+                                "minimum": 5001,
+                                "maximum": 10000
+                              },
+                              "governedWorks": {
+                                "type": "boolean"
+                              },
+                              "maxCommitment": {
+                                "type": "string"
+                              },
+                              "dailyCommitment": {
+                                "type": "string"
+                              },
+                              "guardian": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "const": ""
+                                  },
+                                  {
+                                    "type": "string",
+                                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "weight",
+                              "duration",
+                              "quorumBasisPoints",
+                              "approvalBasisPoints",
+                              "governedWorks",
+                              "maxCommitment",
+                              "dailyCommitment",
+                              "guardian"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "presetId",
+                          "presetVersion",
+                          "participantMode",
+                          "governance"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "description",
+                      "purpose",
+                      "setup"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "privacy": {
+                "type": "string",
+                "enum": [
+                  "public",
+                  "encrypted-managed-allowed",
+                  "encrypted-user-controlled"
+                ]
+              },
+              "token": {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "contract": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "symbol": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{1,7}$"
+                  },
+                  "precision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 18
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "contract",
+                  "symbol",
+                  "precision"
+                ],
+                "additionalProperties": false
+              },
+              "setup": {
+                "type": "object",
+                "properties": {
+                  "presetId": {
+                    "type": "string",
+                    "enum": [
+                      "community",
+                      "ngo-grants",
+                      "gaming-guild",
+                      "team",
+                      "custom"
+                    ]
+                  },
+                  "presetVersion": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "participantMode": {
+                    "type": "string",
+                    "enum": [
+                      "humans",
+                      "mixed",
+                      "agents-guarded"
+                    ]
+                  },
+                  "governance": {
+                    "type": "object",
+                    "properties": {
+                      "weight": {
+                        "type": "string",
+                        "enum": [
+                          "member",
+                          "credit",
+                          "native-stake"
+                        ]
+                      },
+                      "duration": {
+                        "type": "integer",
+                        "minimum": 60,
+                        "maximum": 2592000
+                      },
+                      "quorumBasisPoints": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10000
+                      },
+                      "approvalBasisPoints": {
+                        "type": "integer",
+                        "minimum": 5001,
+                        "maximum": 10000
+                      },
+                      "governedWorks": {
+                        "type": "boolean"
+                      },
+                      "maxCommitment": {
+                        "type": "string"
+                      },
+                      "dailyCommitment": {
+                        "type": "string"
+                      },
+                      "guardian": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "const": ""
+                          },
+                          {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "weight",
+                      "duration",
+                      "quorumBasisPoints",
+                      "approvalBasisPoints",
+                      "governedWorks",
+                      "maxCommitment",
+                      "dailyCommitment",
+                      "guardian"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "presetId",
+                  "presetVersion",
+                  "participantMode",
+                  "governance"
+                ],
+                "additionalProperties": false
+              },
+              "foundingAgent": {
+                "type": "object",
+                "properties": {
+                  "signingKey": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  "encryptionKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "operator": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "pattern": "^[\\x20-\\x7e]+$"
+                  }
+                },
+                "required": [
+                  "signingKey",
+                  "encryptionKey",
+                  "operator"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "metadata",
+              "privacy",
+              "token"
+            ],
+            "additionalProperties": false
+          },
+          "creator": {
+            "type": "object",
+            "properties": {
+              "signingKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "encryptionKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "custody": {
+                "type": "string",
+                "enum": [
+                  "user-controlled",
+                  "managed"
+                ]
+              }
+            },
+            "required": [
+              "signingKey",
+              "encryptionKey",
+              "custody"
+            ],
+            "additionalProperties": false
+          },
           "requestId": {
             "type": "string",
             "format": "uuid",
@@ -3696,6 +4508,7 @@ export const CoreHelpBundle={
             "type": "string",
             "enum": [
               "awaiting-payment",
+              "expired",
               "paid",
               "created"
             ]
@@ -3749,6 +4562,8 @@ export const CoreHelpBundle={
         },
         "required": [
           "network",
+          "setup",
+          "creator",
           "requestId",
           "deployment",
           "method",
@@ -3858,6 +4673,407 @@ export const CoreHelpBundle={
             ],
             "additionalProperties": false
           },
+          "setup": {
+            "type": "object",
+            "properties": {
+              "metadata": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                      },
+                      "description": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 4000
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "description"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 2
+                      },
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                      },
+                      "description": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "purpose": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "setup": {
+                        "type": "object",
+                        "properties": {
+                          "presetId": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "presetVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "participantMode": {
+                            "type": "string",
+                            "enum": [
+                              "humans",
+                              "mixed",
+                              "agents-guarded"
+                            ]
+                          },
+                          "governance": {
+                            "type": "object",
+                            "properties": {
+                              "weight": {
+                                "type": "string",
+                                "enum": [
+                                  "member",
+                                  "credit",
+                                  "native-stake"
+                                ]
+                              },
+                              "duration": {
+                                "type": "integer",
+                                "minimum": 60,
+                                "maximum": 2592000
+                              },
+                              "quorumBasisPoints": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 10000
+                              },
+                              "approvalBasisPoints": {
+                                "type": "integer",
+                                "minimum": 5001,
+                                "maximum": 10000
+                              },
+                              "governedWorks": {
+                                "type": "boolean"
+                              },
+                              "maxCommitment": {
+                                "type": "string"
+                              },
+                              "dailyCommitment": {
+                                "type": "string"
+                              },
+                              "guardian": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "const": ""
+                                  },
+                                  {
+                                    "type": "string",
+                                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "weight",
+                              "duration",
+                              "quorumBasisPoints",
+                              "approvalBasisPoints",
+                              "governedWorks",
+                              "maxCommitment",
+                              "dailyCommitment",
+                              "guardian"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "presetId",
+                          "presetVersion",
+                          "participantMode",
+                          "governance"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "description",
+                      "purpose",
+                      "setup"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "privacy": {
+                "type": "string",
+                "enum": [
+                  "public",
+                  "encrypted-managed-allowed",
+                  "encrypted-user-controlled"
+                ]
+              },
+              "token": {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "contract": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "symbol": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{1,7}$"
+                  },
+                  "precision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 18
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "contract",
+                  "symbol",
+                  "precision"
+                ],
+                "additionalProperties": false
+              },
+              "setup": {
+                "type": "object",
+                "properties": {
+                  "presetId": {
+                    "type": "string",
+                    "enum": [
+                      "community",
+                      "ngo-grants",
+                      "gaming-guild",
+                      "team",
+                      "custom"
+                    ]
+                  },
+                  "presetVersion": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "participantMode": {
+                    "type": "string",
+                    "enum": [
+                      "humans",
+                      "mixed",
+                      "agents-guarded"
+                    ]
+                  },
+                  "governance": {
+                    "type": "object",
+                    "properties": {
+                      "weight": {
+                        "type": "string",
+                        "enum": [
+                          "member",
+                          "credit",
+                          "native-stake"
+                        ]
+                      },
+                      "duration": {
+                        "type": "integer",
+                        "minimum": 60,
+                        "maximum": 2592000
+                      },
+                      "quorumBasisPoints": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10000
+                      },
+                      "approvalBasisPoints": {
+                        "type": "integer",
+                        "minimum": 5001,
+                        "maximum": 10000
+                      },
+                      "governedWorks": {
+                        "type": "boolean"
+                      },
+                      "maxCommitment": {
+                        "type": "string"
+                      },
+                      "dailyCommitment": {
+                        "type": "string"
+                      },
+                      "guardian": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "const": ""
+                          },
+                          {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "weight",
+                      "duration",
+                      "quorumBasisPoints",
+                      "approvalBasisPoints",
+                      "governedWorks",
+                      "maxCommitment",
+                      "dailyCommitment",
+                      "guardian"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "presetId",
+                  "presetVersion",
+                  "participantMode",
+                  "governance"
+                ],
+                "additionalProperties": false
+              },
+              "foundingAgent": {
+                "type": "object",
+                "properties": {
+                  "signingKey": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  "encryptionKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "operator": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "pattern": "^[\\x20-\\x7e]+$"
+                  }
+                },
+                "required": [
+                  "signingKey",
+                  "encryptionKey",
+                  "operator"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "metadata",
+              "privacy",
+              "token"
+            ],
+            "additionalProperties": false
+          },
+          "creator": {
+            "type": "object",
+            "properties": {
+              "signingKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "encryptionKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "custody": {
+                "type": "string",
+                "enum": [
+                  "user-controlled",
+                  "managed"
+                ]
+              }
+            },
+            "required": [
+              "signingKey",
+              "encryptionKey",
+              "custody"
+            ],
+            "additionalProperties": false
+          },
           "requestId": {
             "type": "string",
             "format": "uuid",
@@ -3906,6 +5122,7 @@ export const CoreHelpBundle={
             "type": "string",
             "enum": [
               "awaiting-payment",
+              "expired",
               "paid",
               "created"
             ]
@@ -3959,6 +5176,8 @@ export const CoreHelpBundle={
         },
         "required": [
           "network",
+          "setup",
+          "creator",
           "requestId",
           "deployment",
           "method",
@@ -4463,6 +5682,17 @@ export const CoreHelpBundle={
     {
       "method": "GET",
       "path": "/v1/daos",
+      "query": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "after": {
+            "type": "string",
+            "maxLength": 20
+          }
+        },
+        "additionalProperties": false
+      },
       "response": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -4702,10 +5932,23 @@ export const CoreHelpBundle={
               ],
               "additionalProperties": false
             }
+          },
+          "next": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
-          "daos"
+          "daos",
+          "next"
         ],
         "additionalProperties": false
       },
@@ -4714,6 +5957,61 @@ export const CoreHelpBundle={
     {
       "method": "GET",
       "path": "/v1/daos/:id/content",
+      "query": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "members": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "string",
+                "const": "done"
+              }
+            ]
+          },
+          "documents": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "string",
+                "const": "done"
+              }
+            ]
+          },
+          "keyGrants": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "string",
+                "const": "done"
+              }
+            ]
+          },
+          "epochs": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "string",
+                "const": "done"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
       "response": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -4746,8 +6044,69 @@ export const CoreHelpBundle={
             ],
             "additionalProperties": false
           },
+          "next": {
+            "default": {
+              "members": null,
+              "documents": null,
+              "keyGrants": null,
+              "epochs": null
+            },
+            "type": "object",
+            "properties": {
+              "members": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "documents": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "keyGrants": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "epochs": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "members",
+              "documents",
+              "keyGrants",
+              "epochs"
+            ],
+            "additionalProperties": false
+          },
           "members": {
-            "maxItems": 5000,
             "type": "array",
             "items": {
               "type": "object",
@@ -4822,7 +6181,6 @@ export const CoreHelpBundle={
             }
           },
           "documents": {
-            "maxItems": 1000,
             "type": "array",
             "items": {
               "type": "object",
@@ -4887,7 +6245,6 @@ export const CoreHelpBundle={
             }
           },
           "keyGrants": {
-            "maxItems": 1000,
             "type": "array",
             "items": {
               "type": "object",
@@ -4924,7 +6281,6 @@ export const CoreHelpBundle={
             }
           },
           "epochs": {
-            "maxItems": 1000,
             "type": "array",
             "items": {
               "type": "object",
@@ -4953,6 +6309,7 @@ export const CoreHelpBundle={
         },
         "required": [
           "dao",
+          "next",
           "members",
           "documents",
           "keyGrants",
@@ -7074,6 +8431,1440 @@ export const CoreHelpBundle={
         "additionalProperties": false
       },
       "helpTopic": "modules"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/profile",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "accountName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "profile": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "accountName",
+          "profile"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/billing/checkout",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "service-payment"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/billing/receipts",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "receipts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "paid",
+                    "failed"
+                  ]
+                },
+                "currency": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[a-z]{3}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "amountMinor": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "paymentStatus": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "status",
+                "currency",
+                "amountMinor",
+                "paymentStatus"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "receipts"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "service-payment"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/sign-in/options",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "telegram": {
+            "type": "object",
+            "properties": {
+              "configured": {
+                "type": "boolean"
+              },
+              "username": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "configured",
+              "username"
+            ],
+            "additionalProperties": false
+          },
+          "email": {
+            "type": "object",
+            "properties": {
+              "delivery": {
+                "type": "string",
+                "enum": [
+                  "local",
+                  "mail",
+                  "unavailable"
+                ]
+              }
+            },
+            "required": [
+              "delivery"
+            ],
+            "additionalProperties": false
+          },
+          "passkey": {
+            "type": "object",
+            "properties": {
+              "rpId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "rpId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "telegram",
+          "email",
+          "passkey"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/sign-in/methods",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "telegram": {
+            "type": "object",
+            "properties": {
+              "configured": {
+                "type": "boolean"
+              },
+              "username": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "subjects": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "configured",
+              "username",
+              "subjects"
+            ],
+            "additionalProperties": false
+          },
+          "email": {
+            "type": "object",
+            "properties": {
+              "delivery": {
+                "type": "string",
+                "enum": [
+                  "local",
+                  "mail",
+                  "unavailable"
+                ]
+              },
+              "subjects": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "delivery",
+              "subjects"
+            ],
+            "additionalProperties": false
+          },
+          "passkeys": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "id"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "telegram",
+          "email",
+          "passkeys"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/sign-in/email/start",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "delivery": {
+                "type": "string",
+                "const": "local"
+              },
+              "code": {
+                "type": "string",
+                "pattern": "^\\d{8}$"
+              }
+            },
+            "required": [
+              "delivery",
+              "code"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "delivery": {
+                "type": "string",
+                "const": "sent"
+              }
+            },
+            "required": [
+              "delivery"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/sign-in/email/confirm",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "subject"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/sign-in/email/login",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "signingKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "custody": {
+                "type": "string",
+                "enum": [
+                  "user-controlled",
+                  "managed"
+                ]
+              },
+              "encryptionKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "signingKey",
+              "custody",
+              "encryptionKey"
+            ],
+            "additionalProperties": false
+          },
+          "csrfToken": {
+            "type": "string",
+            "minLength": 32,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "account",
+          "csrfToken"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/sign-in/telegram",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "google",
+              "telegram"
+            ]
+          },
+          "subject": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "provider",
+          "subject"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/sign-in/telegram/login",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "signingKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "custody": {
+                "type": "string",
+                "enum": [
+                  "user-controlled",
+                  "managed"
+                ]
+              },
+              "encryptionKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "signingKey",
+              "custody",
+              "encryptionKey"
+            ],
+            "additionalProperties": false
+          },
+          "csrfToken": {
+            "type": "string",
+            "minLength": 32,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "account",
+          "csrfToken"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/sign-in/passkey/register/options",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "challenge": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+$"
+          },
+          "rp": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "id"
+            ],
+            "additionalProperties": false
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "displayName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "displayName"
+            ],
+            "additionalProperties": false
+          },
+          "pubKeyCredParams": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "public-key"
+                },
+                "alg": {
+                  "type": "number",
+                  "const": -7
+                }
+              },
+              "required": [
+                "type",
+                "alg"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "timeout": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "attestation": {
+            "type": "string",
+            "const": "none"
+          },
+          "authenticatorSelection": {
+            "type": "object",
+            "properties": {
+              "residentKey": {
+                "type": "string",
+                "const": "required"
+              },
+              "requireResidentKey": {
+                "type": "boolean",
+                "const": true
+              },
+              "userVerification": {
+                "type": "string",
+                "const": "required"
+              }
+            },
+            "required": [
+              "residentKey",
+              "requireResidentKey",
+              "userVerification"
+            ],
+            "additionalProperties": false
+          },
+          "excludeCredentials": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "public-key"
+                },
+                "id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type",
+                "id"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "challenge",
+          "rp",
+          "user",
+          "pubKeyCredParams",
+          "timeout",
+          "attestation",
+          "authenticatorSelection",
+          "excludeCredentials"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/sign-in/passkey/register",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/sign-in/passkey/login/options",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "challenge": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+$"
+          },
+          "timeout": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "rpId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "userVerification": {
+            "type": "string",
+            "const": "required"
+          }
+        },
+        "required": [
+          "challenge",
+          "timeout",
+          "rpId",
+          "userVerification"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/sign-in/passkey/login",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "account": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "signingKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "custody": {
+                "type": "string",
+                "enum": [
+                  "user-controlled",
+                  "managed"
+                ]
+              },
+              "encryptionKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "signingKey",
+              "custody",
+              "encryptionKey"
+            ],
+            "additionalProperties": false
+          },
+          "csrfToken": {
+            "type": "string",
+            "minLength": 32,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "account",
+          "csrfToken"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/account/evm",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "chainId": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "const": 40
+                    },
+                    {
+                      "type": "number",
+                      "const": 41
+                    }
+                  ]
+                },
+                "address": {
+                  "type": "string",
+                  "pattern": "^0x[0-9a-fA-F]{40}$"
+                }
+              },
+              "required": [
+                "chainId",
+                "address"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "links"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account/evm/challenge",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "chainId": {
+            "anyOf": [
+              {
+                "type": "number",
+                "const": 40
+              },
+              {
+                "type": "number",
+                "const": 41
+              }
+            ]
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expiresAt": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "chainId",
+          "message",
+          "expiresAt"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account/evm/link",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "chainId": {
+            "anyOf": [
+              {
+                "type": "number",
+                "const": 40
+              },
+              {
+                "type": "number",
+                "const": 41
+              }
+            ]
+          },
+          "address": {
+            "type": "string",
+            "pattern": "^0x[0-9a-fA-F]{40}$"
+          }
+        },
+        "required": [
+          "chainId",
+          "address"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/marketplace",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "configured": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "thirdPartyBps": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "firstPartyBps": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "treasury": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "account": {
+                  "type": "string"
+                },
+                "publisher": {
+                  "type": "string"
+                },
+                "party": {
+                  "type": "string",
+                  "enum": [
+                    "first-party",
+                    "third-party"
+                  ]
+                },
+                "price": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "codeHash": {
+                  "type": "string"
+                },
+                "summary": {
+                  "type": "string"
+                },
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "account",
+                "publisher",
+                "party",
+                "price",
+                "title",
+                "codeHash",
+                "summary",
+                "detail"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "configured",
+          "reason",
+          "thirdPartyBps",
+          "firstPartyBps",
+          "treasury",
+          "modules"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "marketplace"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/names",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "configured": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cardPayments": {
+            "type": "boolean"
+          },
+          "thirdPartyBps": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "firstPartyBps": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "treasury": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tiers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "basic",
+                    "premium"
+                  ]
+                },
+                "price": {
+                  "type": "string"
+                },
+                "usdCents": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "ramBytes": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "netStake": {
+                  "type": "string"
+                },
+                "cpuStake": {
+                  "type": "string"
+                },
+                "tlosQuote": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "kind",
+                "price",
+                "usdCents",
+                "ramBytes",
+                "netStake",
+                "cpuStake",
+                "tlosQuote"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "listings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "accountName": {
+                  "type": "string"
+                },
+                "seller": {
+                  "type": "string"
+                },
+                "price": {
+                  "type": "string"
+                },
+                "usdCents": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "sold": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "accountName",
+                "seller",
+                "price",
+                "usdCents",
+                "sold"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "suffixes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "suffix": {
+                  "type": "string"
+                },
+                "seller": {
+                  "type": "string"
+                },
+                "price": {
+                  "type": "string"
+                },
+                "usdCents": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "sales": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "suffix",
+                "seller",
+                "price",
+                "usdCents",
+                "sales"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "bumpBps": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "quotePremiumBps": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "oracleMedian": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "oraclePrecision": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "oracleObservedAt": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "daoId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "configured",
+          "reason",
+          "cardPayments",
+          "thirdPartyBps",
+          "firstPartyBps",
+          "treasury",
+          "tiers",
+          "listings",
+          "suffixes",
+          "bumpBps",
+          "quotePremiumBps",
+          "oracleMedian",
+          "oraclePrecision",
+          "oracleObservedAt",
+          "daoId"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "marketplace"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/names/quote",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "accountName": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "basic",
+              "premium"
+            ]
+          },
+          "listed": {
+            "type": "boolean"
+          },
+          "seller": {
+            "type": "string"
+          },
+          "party": {
+            "type": "string",
+            "enum": [
+              "first-party",
+              "third-party"
+            ]
+          },
+          "price": {
+            "type": "string"
+          },
+          "usdCents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "platformBps": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "suffix": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bumpBps": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "quotePremiumBps": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "ramBytes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "netStake": {
+            "type": "string"
+          },
+          "cpuStake": {
+            "type": "string"
+          },
+          "priceFromOracle": {
+            "type": "boolean"
+          },
+          "sales": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "nextPrice": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nextUsdCents": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "accountName",
+          "kind",
+          "listed",
+          "seller",
+          "party",
+          "price",
+          "usdCents",
+          "platformBps",
+          "suffix",
+          "bumpBps",
+          "quotePremiumBps",
+          "ramBytes",
+          "netStake",
+          "cpuStake",
+          "priceFromOracle",
+          "sales",
+          "nextPrice",
+          "nextUsdCents"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "marketplace"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/names/checkout",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "marketplace"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/docs/agent",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "configured": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "configured"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/docs/ask",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "answered",
+              "outside"
+            ]
+          },
+          "topicId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "answer": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "topicId",
+          "title",
+          "answer"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
     }
   ],
   "modules": []

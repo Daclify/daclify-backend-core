@@ -14,7 +14,8 @@
     "paragraphs": [
       "User-controlled accounts keep encrypted signing and decryption keys in your browser. Recovery requires an encrypted kit and a separate recovery credential. Social login alone cannot recover these keys.",
       "Managed recovery delegates signing and decryption recovery to an operator. OpenBao is the tested open-source candidate; production use requires an isolated custody service, audit logs, access controls, and tested recovery.",
-      "An internal account does not need a native account. Linking a native account requires proof from that account and preserves your DAO member identity."
+      "An internal account does not need a native account. Linking a native account requires proof from that account and preserves your DAO member identity.",
+      "Use Account → Keys → Public join identity to share only public signing and encryption keys with a DAO administrator. Your encrypted recovery kit and its credential are private backups, not admission documents. User-controlled signing requires unlocking your vault; successful unlocking returns to the DAO or creation step that requested it. Social sign-in alone does not decrypt the vault."
     ]
   },
   {
@@ -23,7 +24,8 @@
     "paragraphs": [
       "Shared DAOs have separate scopes in a common runtime. The operator controls contract upgrades and on-chain authority; member permissions do not remove this operator trust.",
       "Independent DAOs deploy and administer their own Antelope C++ runtime and compatible modules. Their owner controls upgrade keys, resource funding, and deployment permissions.",
-      "The hub lists deployments and advertised interface versions. A listing is not a security audit, code endorsement, or transfer of governance authority."
+      "The hub lists deployments and advertised interface versions. A listing is not a security audit, code endorsement, or transfer of governance authority.",
+      "The hub currently reads the configured runtime only. Independent contracts can be prepared and connected on chain with the deployment kit, but automatic multi-runtime discovery and routing are not implemented by this frontend. An independent DAO is not available here merely because a hub record exists."
     ]
   },
   {
@@ -43,8 +45,8 @@
       "Funds move from available to reserved when an obligation is created. Review approves it. Settlement either transfers native tokens or credits a backed internal claim.",
       "Approved liabilities remain payable after module removal or subscription expiry. Offboarded members retain financial exit rights. Internal governance credits are not redeemable treasury balances.",
       "The treasury view shows reserved, approved, settled and cancelled obligations. A signed-in user can request settlement of an already approved, due obligation; the contract chooses its recorded recipient and amount. This does not require reinstalling the source module. Existing internal claims and governance stake can be withdrawn through a signed instruction to an existing native payout account.",
-      "An administrator can record one DAO-confirmed external payment statement with a signed instruction. It names the chain, payer and reference, and it must repeat the approved obligation\u2019s recipient and exact asset amount. Reusing that reference for another obligation is rejected. The record does not move a balance, mark the obligation paid, or block later native settlement. Attested and contract-verified external settlement are separate and are not implemented. A direct runtime key cannot create this record.",
-      "This release supports one configured native treasury asset per DAO. Governance stake deposits currently require the member\u2019s linked native account and the stake memo shown in the treasury. Walletless members can use internal governance credits. Claim-to-stake conversion and multi-asset treasury accounting are not implemented."
+      "An administrator can record one DAO-confirmed external payment statement with a signed instruction. It names the chain, payer and reference, and it must repeat the approved obligation’s recipient and exact asset amount. Reusing that reference for another obligation is rejected. The record does not move a balance, mark the obligation paid, or block later native settlement. Attested and contract-verified external settlement are separate and are not implemented. A direct runtime key cannot create this record.",
+      "This release supports one configured native treasury asset per DAO. Governance stake deposits currently require the member’s linked native account and the stake memo shown in the treasury. Walletless members can use internal governance credits. Claim-to-stake conversion and multi-asset treasury accounting are not implemented."
     ]
   },
   {
@@ -73,9 +75,10 @@
       "Small JSON documents are stored directly in contract tables. Larger files use immutable IPFS CIDs and a separate SHA-256 commitment of retrieved bytes. Document IDs have contiguous, permanent version histories.",
       "The 4096-byte inline limit includes the complete stored JSON. For private content it includes the encrypted envelope, so the available plaintext space is smaller. Members can create documents; only their author or an administrator can publish later versions.",
       "Hosted file uploads have a 5 MiB stored-byte limit and use a bounded backend path with an explicit storage allowance. Private filenames and file contents are encrypted before upload; encoding reduces the maximum original size. Upload and verify the file, then sign its permanent contract record. Keep the request ID to resume after a reload or lost response. The backend retrieves the stored bytes and checks their separate SHA-256 commitment; a matching CID or on-chain record alone does not establish byte verification.",
-      "Private documents use a committed key for each DAO epoch. Initialization stores the commitment and the creator\u2019s encrypted grant atomically. An administrator can grant that epoch to admitted members. Different recipients, DAO deployments and document versions have distinct encryption domains.",
+      "Private documents use a committed key for each DAO epoch. Initialization stores the commitment and the creator’s encrypted grant atomically. An administrator can grant that epoch to admitted members. Different recipients, DAO deployments and document versions have distinct encryption domains.",
       "Changing membership or rotating an epoch protects future content after the next key is initialized. Old grants and disclosed plaintext remain accessible to anyone who kept the old key. A client checks content integrity and the epoch commitment before decryption.",
-      "Download checks the recorded byte count and commitment before opening a file. A private download also checks the DAO epoch commitment and decrypts in your browser. Previous file versions remain downloadable from version history. A saved plaintext download is not erased when your vault locks. The local disk fixture is labelled explicitly and does not establish live Pinata or public IPFS availability."
+      "Download checks the recorded byte count and commitment before opening a file. A private download also checks the DAO epoch commitment and decrypts in your browser. Previous file versions remain downloadable from version history. A saved plaintext download is not erased when your vault locks. The local disk fixture is labelled explicitly and does not establish live Pinata or public IPFS availability.",
+      "Changing DAO deployment, account, member identity or privacy clears document drafts and decrypted views. Late responses from a previous context are discarded. Content histories are read in scoped pages with advancing cursors; a large DAO does not fail merely because it exceeds the former row ceiling."
     ]
   },
   {
@@ -85,7 +88,8 @@
       "Each DAO records internal members with separate signing and encryption keys. A linked native account is a credential of the existing member rather than a second voting identity.",
       "Administrators assign administrator and reviewer roles. The final active administrator cannot be demoted or removed. Reviewers can review contributions within the Works policy; contribution authors cannot approve their own work.",
       "Governance credits are nontransferable units. Their issuance and removal require DAO authority and stop while an active ballot has locked weights. Removing access preserves recorded balances and accepted payment rights.",
-      "Encrypted DAOs rotate the future-content epoch when a member is deactivated. Remaining authorized members need grants for the new committed key. Deactivation cannot revoke earlier keys or erase exported history."
+      "Encrypted DAOs rotate the future-content epoch when a member is deactivated. Remaining authorized members need grants for the new committed key. Deactivation cannot revoke earlier keys or erase exported history.",
+      "In Members, an active administrator pastes the applicant’s public join identity and signs admission. Confirm the keys through a trusted channel first. Then select the admitted member to assign roles and governance credits; grant an encryption epoch separately for private documents. Admission never makes an applicant an administrator automatically. Managed admission remains unavailable in this deployment."
     ]
   },
   {
@@ -153,7 +157,9 @@
       "Orders are bound to the signed-in account and immutable setup. Check and resume an existing order after a lost response; paid orders create at most one shared DAO. Creation, initial governance, enrollment and module installation run in one transaction, so a failed setup leaves the paid order available to retry. Keep the order ID for support. Refunds and chargebacks require operator handling.",
       "Independent self-service provisioning is unavailable. The application displays its setup price but refuses checkout until a provisioner and blockchain resource quote exist. Use the reviewed deployment kit; do not send a shared setup payment for an independent deployment.",
       "Before enabling paid creation, a native operator configures setfees and setcreate (2000 shared USD cents, 5000 independent USD cents, 2000 premium basis points, relay settler), verifies the fee treasury and installs callback permission links. Bootstrap the platform DAO before setting creation fees, or create it with a paid order. Link it with setgov. setcrrate requires a fresh positive observation and native runtime authority. npm run price:tlos -- testnet --creation-rate reads Delphi and prints an unsigned update for review; it sends no transaction. Arrange operator updates often enough that observations remain less than 15 minutes old. A stale or future observation refuses new TLOS quotes.",
-      "API clients prepare with POST /v1/dao-orders, read GET /v1/dao-orders/:id, start card checkout with POST /v1/dao-orders/:id/checkout and create/reconcile with POST /v1/dao-orders/:id/fulfill. The former POST /v1/daos free-creation endpoint now returns HTTP 409 CREATION_PAYMENT_REQUIRED and never creates a DAO. Update clients to the paid order flow."
+      "API clients prepare with POST /v1/dao-orders, read GET /v1/dao-orders/:id, start card checkout with POST /v1/dao-orders/:id/checkout and create/reconcile with POST /v1/dao-orders/:id/fulfill. The former POST /v1/daos free-creation endpoint now returns HTTP 409 CREATION_PAYMENT_REQUIRED and never creates a DAO. Update clients to the paid order flow.",
+      "The service checks the treasury token’s actual symbol and precision and any native guardian before preparing a payable order. The saved order review displays the complete immutable setup and founding public identity. An expired unpaid order cannot be paid; a paid order remains available for execution after quote expiry. Check payment status, review the original terms, then explicitly select Create this paid DAO. Starting another order does not cancel the previous quote: retain its order link until it expires or is resolved.",
+      "A failed paid fulfillment retains the paid order and can be retried after its unchanged deployment dependencies are restored. Operators must reconcile the stored account, immutable request, native order and transaction or card evidence before handling a support refund. This release has no automatic on-chain refund action or refund state; a manual transfer must not be represented as cancelling the still-paid order. Follow the paid-creation incident guide before any production refund. The creation asset is immutable once creation pricing is configured, protecting existing token quotes."
     ]
   },
   {
@@ -164,7 +170,8 @@
       "Active administrators of the linked DAO can sign creation fee and settler changes, commission and names policy changes, first-party module registration, catalogue removal and first-party module descriptions. These are administrator actions, not automatic execution of a member ballot. Use the DAO workspace for proposals, voting, members and treasury. Native upgrade, fee treasury and oracle authorities remain with the operator.",
       "Module registration checks the on-chain code hash, accepted fee rule and asset identity. Removing a catalogue entry prevents new installations but does not erase existing DAO installations, pending work or financial exit rights. Publishers retain control over their third-party listings and prices.",
       "Status displays the selected network, actual chain ID and head blocks, runtime and module hashes, public permission authorities, resources, on-chain fee and governance configuration, database migrations and safe provider configuration flags. Missing services are labelled unconfigured. Module hash checks verify the pinned SDK artifact; unpinned runtime and hub hashes are displayed without claiming they are verified.",
-      "Configured providers are not evidence of successful live integration or a qualified production release. Pinata, Stripe, Google, Telegram and managed recovery require their own configuration and acceptance checks. Public status excludes credentials, private keys, DSNs, account records and raw internal errors."
+      "Configured providers are not evidence of successful live integration or a qualified production release. Pinata, Stripe, Google, Telegram and managed recovery require their own configuration and acceptance checks. Public status excludes credentials, private keys, DSNs, account records and raw internal errors.",
+      "Status starts with user-facing capabilities and distinguishes configured services from qualified live integrations. Expand Technical platform details to inspect hashes, authorities, resources and migration state."
     ]
   }
 ]

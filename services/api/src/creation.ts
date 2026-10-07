@@ -15,7 +15,12 @@ import type { StripeBilling } from './billing/service.js';
 import { ApiError } from './errors.js';
 type Chain = Pick<
   NativeChainGateway,
-  'platform' | 'creationOrder' | 'orderCreation' | 'attestCreation' | 'createDao'
+  | 'validateCreation'
+  | 'platform'
+  | 'creationOrder'
+  | 'orderCreation'
+  | 'attestCreation'
+  | 'createDao'
 >;
 const RowSchema = z.object({
   id: z.uuid(),
@@ -76,6 +81,7 @@ export class CreationService {
       )
         throw new ApiError('DAO_REFERENCE', 409);
       if (!(await this.chain.creationOrder(row.reference))) {
+        await this.chain.validateCreation(input.request);
         if (!status.sharedAvailable) throw new ApiError('DAO_CREATION_UNAVAILABLE', 503);
         if (input.request.setup) {
           const preset = DaoPresets.find(
@@ -186,6 +192,14 @@ export class CreationService {
     if (!order) throw new ApiError('CREATION_ORDER_PENDING', 503);
     return CreationOrderViewSchema.parse({
       network: status.network,
+      setup: row.request.request,
+      creator: row.request.request.foundingAgent
+        ? {
+            signingKey: row.request.request.foundingAgent.signingKey,
+            encryptionKey: row.request.request.foundingAgent.encryptionKey,
+            custody: 'user-controlled',
+          }
+        : await this.creator(row.account_id),
       requestId: row.id,
       deployment: row.request.deployment,
       method: row.request.method,
@@ -195,12 +209,28 @@ export class CreationService {
       tokenContract: status.fees?.token_contract ?? '',
       memo: 'create:' + row.reference,
       expires: order.expires,
-      state: order.used ? 'created' : order.paid ? 'paid' : 'awaiting-payment',
+      state: order.used
+        ? 'created'
+        : order.paid
+          ? 'paid'
+          : order.expires < Math.floor(Date.now() / 1000)
+            ? 'expired'
+            : 'awaiting-payment',
       dao: order.used
         ? { chainId: row.chain_id, contract: row.runtime, daoId: order.dao_id, interfaceVersion: 1 }
         : null,
       checkoutUrl: row.checkout_url,
     });
+  }
+  private async creator(accountId: string) {
+    const result = await this.pool.query<{
+      signing_key: string;
+      encryption_key: unknown;
+      custody: string;
+    }>('SELECT signing_key,encryption_key,custody FROM accounts WHERE id=$1', [accountId]);
+    const row = result.rows[0];
+    if (!row) throw new ApiError('CREATION_OWNER', 403);
+    return { signingKey: row.signing_key, encryptionKey: row.encryption_key, custody: row.custody };
   }
   private async lock<T>(
     accountId: string,

@@ -85,3 +85,25 @@ describe('producer-owned versioned documentation', () => {
     ).toThrow('Unknown module help topic');
   });
 });
+
+it('documents query cursors from the producer schema', () => {
+  const output = generateDocumentation(
+    source,
+    [],
+    [
+      {
+        method: 'GET',
+        path: '/v1/daos',
+        helpTopic: 'accounts',
+        query: { type: 'object', properties: { after: { type: 'string' } } },
+        response: { type: 'object' },
+      },
+    ],
+  );
+  expect(output.bundle.api[0]?.query).toEqual({
+    type: 'object',
+    properties: { after: { type: 'string' } },
+  });
+  expect(output.markdown).toContain('Query:');
+  expect(output.markdown).toContain('after');
+});

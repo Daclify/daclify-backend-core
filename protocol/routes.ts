@@ -13,7 +13,7 @@ import {
   CreateDaoSchema,
   UserMembershipSchema,
 } from './api.js';
-import { DaoContentSchema } from './content.js';
+import { ContentPageQuerySchema, DaoContentSchema } from './content.js';
 import { RuntimeActionSchemas } from '../sdk/generated/schemas.js';
 import { DaoPresetSchema, GovernanceStateSchema } from './dao.js';
 import {
@@ -24,6 +24,7 @@ import {
   HostedBytesSchema,
 } from './storage.js';
 import { TreasurySchema, SettlementRequestSchema, SettlementResultSchema } from './treasury.js';
+import { Uint64Schema } from './base.js';
 import { PlatformRoutes } from './platform.js';
 export const ApiRoutes = {
   ...PlatformRoutes,
@@ -48,12 +49,17 @@ export const ApiRoutes = {
   daos: {
     method: 'GET',
     path: '/v1/daos',
-    response: z.strictObject({ daos: z.array(DaoSummarySchema) }),
+    response: z.strictObject({
+      daos: z.array(DaoSummarySchema),
+      next: Uint64Schema.nullable().default(null),
+    }),
+    query: z.strictObject({ after: Uint64Schema.optional() }),
     helpTopic: 'deployments',
   },
   content: {
     method: 'GET',
     path: '/v1/daos/:id/content',
+    query: ContentPageQuerySchema,
     response: DaoContentSchema,
     helpTopic: 'documents',
   },
@@ -185,6 +191,7 @@ export const ApiRoutes = {
     method: 'GET' | 'POST';
     path: string;
     input?: z.ZodType;
+    query?: z.ZodType;
     response: z.ZodType;
     helpTopic: string;
   }
