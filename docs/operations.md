@@ -6,11 +6,11 @@ The account names and resource numbers below are the ones in `tools/deploy/envir
 
 ## Three profiles
 
-| Profile | Chain | API environment | API file | Deployment-only file | Send flag |
-| --- | --- | --- | --- | --- | --- |
-| `develop` | Owned local fixture | `local` | `.env` | `.env.deploy.develop` | `--commit` |
-| `testnet` | Telos testnet | `testnet` | `.env.testnet` | `.env.deploy.testnet` | `--commit` |
-| `production` | Telos mainnet | `mainnet` | `.env.production` | `.env.deploy.production` | `--confirm` |
+| Profile      | Chain               | API environment | API file          | Deployment-only file     | Send flag   |
+| ------------ | ------------------- | --------------- | ----------------- | ------------------------ | ----------- |
+| `develop`    | Owned local fixture | `local`         | `.env`            | `.env.deploy.develop`    | `--commit`  |
+| `testnet`    | Telos testnet       | `testnet`       | `.env.testnet`    | `.env.deploy.testnet`    | `--commit`  |
+| `production` | Telos mainnet       | `mainnet`       | `.env.production` | `.env.deploy.production` | `--confirm` |
 
 Deploy profile names and the API's `NETWORK_ENVIRONMENT` are different enums. The API accepts `local`, `testnet`, or `mainnet`. The deploy command accepts `develop`, `production`, or `testnet`.
 
@@ -44,19 +44,19 @@ Production uses the premium suffix `we` because that name exists on Telos mainne
 
 The local fixture can create the short develop names because its `eosio` account is not running the Telos premium-name rule. Do not copy those short names onto testnet.
 
-| Role                               | Contract  | Develop       | Testnet        | Production   |
-| ---------------------------------- | --------- | ------------- | -------------- | ------------ |
-| Creator, not created by the script | none      | `eosio`       | `3boidanimus3` | `we`         |
-| Runtime                            | `runtime` | `daclifycore` | `daclifycore1` | `core.we`    |
-| Hub                                | `hub`     | `daclifyhub`  | `daclifyhubv1` | `hub.we`     |
-| Decide                             | `decide`  | `decide`      | `daclifydecid` | `decide.we`  |
-| Works                              | `works`   | `works`       | `daclifyworks` | `works.we`   |
-| Payroll                            | `payroll` | `payroll`     | `daclifypayr1` | `payroll.we` |
-| Relay, no contract                 | none      | `relay`       | `daclifyrelay` | `relay.we`   |
-| Billing, no contract               | none      | `fees`        | `daclifyfees1` | `fees.we`    |
-| Grants, explicitly configured | `grants` | fixture-selected | `daclifygrant` | operator-selected |
+| Role                               | Contract  | Develop          | Testnet        | Production        |
+| ---------------------------------- | --------- | ---------------- | -------------- | ----------------- |
+| Creator, not created by the script | none      | `eosio`          | `3boidanimus3` | `we`              |
+| Runtime                            | `runtime` | `daclifycore`    | `daclifycore1` | `core.we`         |
+| Hub                                | `hub`     | `daclifyhub`     | `daclifyhubv1` | `hub.we`          |
+| Decide                             | `decide`  | `decide`         | `daclifydecid` | `decide.we`       |
+| Works                              | `works`   | `works`          | `daclifyworks` | `works.we`        |
+| Payroll                            | `payroll` | `payroll`        | `daclifypayr1` | `payroll.we`      |
+| Relay, no contract                 | none      | `relay`          | `daclifyrelay` | `relay.we`        |
+| Billing, no contract               | none      | `fees`           | `daclifyfees1` | `fees.we`         |
+| Grants, explicitly configured      | `grants`  | fixture-selected | `daclifygrant` | operator-selected |
 | Endorsement, explicitly configured | `endorse` | fixture-selected | `daclifyendor` | operator-selected |
-| Names, explicitly configured | `names` | fixture-selected | `daclifynames` | operator-selected |
+| Names, explicitly configured       | `names`   | fixture-selected | `daclifynames` | operator-selected |
 
 On 2026-10-07 the user authorized a Telos testnet deployment from their funded `3boidanimus3` account. All seven base accounts, Grants (`daclifygrant`), Endorsement (`daclifyendor`) and Names (`daclifynames`) were created, with eight contracts installed. The user's funded account permissions were preserved. See [testnet evidence](evidence/2026-10-07-telos-testnet.md).
 
@@ -120,7 +120,7 @@ Set these three together, or leave all three unset. A partial set refuses to sta
 
 - `STRIPE_SECRET_KEY`: a restricted key (`rk_`) for that environment. A secret key is accepted by the parser. Prefer the restricted key. Use a different key for develop, testnet, and production.
 - `STRIPE_WEBHOOK_SECRET`: the signing secret for this API's endpoint.
-- `STRIPE_PRICE_ID`: the Stripe Price id. The repository does not contain a dollar amount. Create the Price in Stripe and paste its id here.
+- `STRIPE_PRICE_ID`: the optional account-service Stripe Price id. Create that Price in Stripe and paste its id here. DAO setup uses the separate on-chain fee configuration captured in its creation order, currently $20 shared and $50 independent plus independent blockchain resources.
 
 Local and testnet APIs reject live Stripe keys. Only an explicitly configured mainnet API may use a live key. The configuration helper defaults to local when no environment is supplied. For local webhook forwarding, use the signing secret emitted by `stripe listen` for that listener; a separately registered Dashboard destination has its own secret. Keep all three settings in the Git-ignored environment file and select the same Stripe test account or sandbox for its key, Price and listener. The Price id is used by account service checkout; DAO setup checkout generates its amount from the captured creation order.
 
@@ -138,7 +138,7 @@ If the three Stripe variables are absent, checkout and the webhook return `STRIP
 
 On 2026-10-07, the separate `daclify-testnet` Stripe CLI profile was authorized for Animusystems. Its private configuration is `.artifacts/stripe-test/config.toml`; the Daclify copy retains only the test API key. Credentials and the listener signing secret are stored in Git-ignored `.env.testnet` and `.env.stripe-test` files with mode `0600`. CLI authorization expires after 90 days and must be renewed. These credentials do not qualify production payments.
 
-The running Stripe workspace uses `http://localhost:5178`, API port 3008 and the isolated `daclify_stripe_test` PostgreSQL database. It uses the owned local Spring chain on 20288 while Telos testnet deployment is pending. The original playground on 5188 is preserved. Hosted file storage is not configured in this separate payment workspace.
+The initial local Stripe rehearsal used `http://localhost:5178`, API port 3008 and the isolated `daclify_stripe_test` PostgreSQL database. It used the owned local Spring chain on 20288 before the subsequently completed Telos testnet deployment. These are recorded fixture addresses, not the hosted deployment configuration. The original playground on 5188 is preserved. Hosted file storage is not configured in this separate payment workspace.
 
 From core, start the API with `DACLIFY_ENV_FILE=.env.stripe-test npm run dev`. From frontend, use `DACLIFY_TEST_API_PORT=3008 DACLIFY_TEST_UI_PORT=5178 npm run dev`. Open the UI with hostname `localhost` to match its configured Origin and keep its cookies separate from the original `127.0.0.1` playground.
 
@@ -226,8 +226,27 @@ Still required before production:
 - Wire a chain watcher before a TLOS or Telos EVM transfer can be treated as a service payment. Do not add a second treasury symbol for an EVM asset.
 - Shared DAO setup is contract-priced at $20, independent setup at $50 plus separate resources, with the existing 20% TLOS premium. Independent self-service remains disabled. Account-service checkout uses the configured Stripe Price; name-sale tier prices still need an explicit policy. Delphi has `tlosusd` and no EUR pair.
 
-Still outside the current contracts: memberships, bounties, vesting, inbound dues, a budget cap, a global hackathon module owned by the project DAO, and committee seats. Seat counts and terms are not chosen. The legacy elections module stays in the legacy repository and is not ported. Hub is not the hackathon authority.
+Still outside the current contracts: paid membership subscriptions, bounties, vesting, inbound dues, a global hackathon module owned by the project DAO, and delegated committee spending authority. Ordinary DAO membership and optional endorsement admission already exist. Core has per-obligation and UTC-day commitment limits; Decide has bounded representative elections and term records, which confer no administrative or spending authority. The legacy elections module stays in the legacy repository and is not ported. Hub is not the hackathon authority.
 
 Pinata uploads work when `PINATA_JWT` and `CONTENT_GATEWAY` are set. They do not use a group id. Expired upload reservations that are uncertain stay reserved, record `UPLOAD_REVIEW_REQUIRED`, and are not unpinned. Google and Telegram live redirects are not qualified. The browser still targets one configured runtime.
 
 For service/device loss, follow the [disaster recovery runbook](disaster-recovery.md). Wallet recovery preserves on-chain member IDs without depending on a service database backup; social pairings and operational history still require verified backups or explicit reconstruction.
+
+## Hosted topology and recovery
+
+The selected layout is a Netlify frontend and two independent Node API services behind HAProxy on one Hetzner VM. PostgreSQL 17 runs in Docker with a persistent volume; publish its port only on loopback. Each network needs a separate database, non-superuser role and private environment file. Do not grant one role access to the other network's database.
+
+| Host                      | Destination                   |
+| ------------------------- | ----------------------------- |
+| `api.daclify.com`         | Mainnet API, `127.0.0.1:3018` |
+| `testnet.api.daclify.com` | Testnet API, `127.0.0.1:3028` |
+| `app.daclify.com`         | Netlify frontend              |
+| `testnet.app.daclify.com` | Netlify testnet frontend      |
+
+This is the agreed target, not evidence that DNS, certificates or the VM are configured. Mainnet must return an unavailable response until its own contracts/keys/providers are ready; never route its hostname to testnet. HAProxy must use exact host routes, reject unknown hosts and avoid retries of mutating requests. Sanitize forwarding headers at HAProxy and implement/test narrow Fastify proxy trust before relying on client-IP rate limits: the current API does not configure `trustProxy`, so it sees the loopback proxy as the client.
+
+Automated API certificates need a tested ACME renewal timer and deploy hook that validates HAProxy configuration before reloading its combined certificate PEM. Netlify manages frontend certificates separately. Make DNS changes at the domain's current authoritative provider; being registered at Namecheap does not imply Namecheap DNS is authoritative.
+
+The VM can clone/build all three sibling repositories from reviewed Git revisions. It does not require the Mac's API artifacts or database dump. Use the existing testnet contracts and chain configuration. Start fresh databases when service UUIDs/pairings/history are intentionally not retained, or restore a verified archive to preserve them. Follow [0.6 upgrade](operations/upgrade-0.6.md) and [disaster recovery](disaster-recovery.md). The Mac frontend makes outbound requests to the hosted testnet API; it has no public API address, tunnel or incoming connection requirement.
+
+Encrypted automated PostgreSQL/configuration backups must be stored outside the VM, with retained decryption keys, retention/freshness monitoring and actual restore drills. Pinata ciphertext needs durable pins or another portable encrypted copy. A single VM is a shared failure domain for mainnet and testnet; two processes and two databases do not make it highly available.

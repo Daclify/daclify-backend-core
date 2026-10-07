@@ -8,7 +8,7 @@ The implementation is not a production release. `npm run package:release` still 
 
 ## Read next
 
-The 0.5.0-alpha.1 research implementation adds paired login and direct linked-wallet governance, v3 discovery metadata, contribution agreements, spending receipts/reports, grant rounds, endorsement admission and representative elections. [Execution evidence](docs/evidence/2026-10-07-research-execution.md), [provider setup](docs/operations/paired-login.md) and [upgrade instructions](docs/operations/upgrade-0.5.md) distinguish verified local behavior from external production gates.
+The current development version is **0.6.0-alpha.1**, with contract interface 1. It adds wallet recovery after service-database loss and explicit vault attachment to the 0.5 paired-login, governance, discovery and module flows. The 0.6 change preserves existing contract code and table layouts; it needs migration 015 and matching API/frontend/SDK artifacts. Follow the [0.6 upgrade guide](docs/operations/upgrade-0.6.md), rather than redeploying existing contracts to recover access.
 
 - [Development checkouts and tests](docs/development.md) covers Node, bootstrap, the local fixture, and which suite proves what.
 - [Operations](docs/operations.md) covers the three deploy profiles, testnet account names, Stripe, the TLOS quote, and the frontend network switch.
@@ -16,14 +16,25 @@ The 0.5.0-alpha.1 research implementation adds paired login and direct linked-wa
 - [Documentation index](docs/README.md) points at the plan, the architecture, and the generated reference.
 - [Public protocol package](sdk/README.md) is the boundary other repositories import.
 - [DAO presets and guarded agents](docs/dao-presets.md) covers the 0.2 feature, authority boundaries, compatibility and merge order.
+- [Disaster recovery](docs/disaster-recovery.md) explains per-user recovery, document keys, lost login pairings and operator backups.
+- [Paired login setup](docs/operations/paired-login.md) covers providers and the distinction between service login and on-chain wallet activation.
+- [Recovery verification evidence](docs/evidence/2026-10-07-wallet-recovery.md) records actual database, native-runtime, browser and public-testnet checks.
 
 ## What is implemented
 
 The runtime owns DAO identity, roles, governance credits, one native treasury asset per DAO, obligations, and native settlement. The Hub lists deployments. Decide, Works, Payroll, Grants rounds and Endorsement admission live in the modules repository and settle through this runtime. A module install that keeps any action stores the `get_code_hash` pin for that account. Direct module-key calls do not pass the sender check. `confirmext` stores a DAO-confirmed external payment statement and does not pay. `payroll::settle` pays every installment that is already due on that schedule.
 
-The API serves the versioned routes in `protocol/routes.ts`, plus the billing routes below, which are intentionally outside the packed route table. PostgreSQL migrations 001–014 include content/payments, account-control intents, paired native/EOA sign-in, Telegram OIDC, credential provenance/history and return destinations. Applied migration bytes are immutable. The actual seven-migration schema is exercised by the upgrade test before current migrations are applied.
+The API serves the versioned routes in `protocol/routes.ts`, with additional provider/billing response references in `protocol/service-api.ts`. PostgreSQL migrations 001–015 include content/payments, account-control intents, paired native/EOA sign-in, Telegram OIDC, credential provenance/history, return destinations and wallet-only accounts. Applied migration bytes are immutable. The actual seven-migration schema is exercised by the upgrade test before current migrations are applied.
 
 User-controlled accounts keep signing and decryption keys in the browser. Managed recovery is an OpenBao development boundary, not a production custody operation. Hosted files can use Pinata when `PINATA_JWT` and `CONTENT_GATEWAY` are set in the gitignored environment file. The uploader uses the public network and does not send a group id.
+
+## What survives a server failure
+
+The deployed contracts retain DAO/member IDs, roles, balances, votes, current governance wallet bindings, document references and encrypted epoch-key grants. A user can recover their own access using current Daclify signing keys restored from their kit, or a supported currently bound blockchain wallet. Recovery does not create another DAO, member or creation fee. A new empty database gives the user a new service UUID; restoring a verified database backup preserves the original UUID.
+
+One recovered administrator can manage the DAO again. Their kit does not recover the other members' private keys or login pairings; each member needs their own recovery path. An ordinary member remains an ordinary member. An old kit whose signing key was rotated on chain may still decrypt old content, but that old signing key alone cannot regain governance.
+
+Google, Telegram, email and passkey associations are PostgreSQL records, not public-chain identities. Without the database and its backups, users must pair them again after recovering control. These metadata columns are not application-encrypted: protect the database and use encrypted off-host backups. Private documents additionally require the original decryption key, matching epoch grant and surviving ciphertext. An IPFS CID does not guarantee continued file availability. See the [recovery runbook](docs/disaster-recovery.md) for the complete procedure and session invalidation.
 
 ## Requirements
 
@@ -47,7 +58,7 @@ npm run verify
 
 | Role    | Develop       | Testnet        | Production   |
 | ------- | ------------- | -------------- | ------------ |
-| Creator | `eosio`       | `daclifyadmin` | `we`         |
+| Creator | `eosio`       | `3boidanimus3` | `we`         |
 | Runtime | `daclifycore` | `daclifycore1` | `core.we`    |
 | Hub     | `daclifyhub`  | `daclifyhubv1` | `hub.we`     |
 | Decide  | `decide`      | `daclifydecid` | `decide.we`  |
@@ -58,7 +69,7 @@ npm run verify
 
 Testnet names are ordinary 12-character Telos accounts. Production keeps the `we` suffix. Develop uses the short fixture names. The script does not create the creator. Testnet `--commit` spends testnet TLOS. Production spends mainnet TLOS only with `--confirm`.
 
-`npm run price:tlos -- <profile> <minor-units>` quotes TLOS from Delphi `tlosusd` plus 20 percent. `1000` means 10.00 USD. The repository does not store a product price.
+`npm run price:tlos -- <profile> <minor-units>` quotes TLOS from Delphi `tlosusd` plus 20 percent. `1000` means 10.00 USD. DAO setup is contract-priced at $20 shared or $50 independent, with blockchain resources charged separately for independent deployment. Independent self-service remains disabled. Optional account-service checkout uses the separately configured Stripe Price.
 
 ## Stripe
 
@@ -70,4 +81,4 @@ Set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `STRIPE_PRICE_ID` together
 
 `npm run dev` loads `.env` and listens on `API_PORT` (3008 in the examples). The frontend dev server proxies `/v1` to `127.0.0.1:3008`. `npm run dev:local` is the disposable native fixture API used by browser tests. `npm run native:start` starts that fixture chain. Do not reset a fixture that already holds state you need.
 
-Secrets stay in the gitignored environment files. Do not print them, and do not commit `.artifacts/deploy/*-keys.json`.
+Secrets stay in the gitignored environment files. Use `.env.testnet` for the testnet API and `.env.deploy.testnet` only for the deployment key; the API refuses a deployer key. Do not print secrets or commit `.artifacts/deploy/*-keys.json`. The [operations guide](docs/operations.md) describes the planned Netlify frontend and separate mainnet/testnet API services on one Hetzner VM; source availability does not establish a deployed service.

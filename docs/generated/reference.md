@@ -10,11 +10,11 @@ Private DAO documents are encrypted in the browser before they reach Pinata or t
 
 Memberships, voting activity, outcomes, balances, timing, and content hashes remain visible on a public blockchain. This release does not provide anonymous governance.
 
-Removing a member rotates the key for future content. It cannot erase plaintext or old keys the member already kept. Re-pinning preserves ciphertext, not confidentiality after a key compromise.
+Deactivating a member advances the epoch for future content; an authorized administrator must initialize its new key and grants. This cannot erase plaintext or old keys the member already kept. Re-pinning preserves ciphertext, not confidentiality after a key compromise.
 
 ## Two clearly labelled account modes
 
-Sign in first with your Daclify keys or a previously paired email, Telegram, passkey, Telos Zero account or Telos EVM wallet. Signing in opens the existing service account; admission and permissions are separate in each DAO.
+Sign in with your Daclify keys or a previously paired supported email, Telegram, passkey, Telos Zero account or Telos EVM wallet. A currently activated on-chain wallet can also reconstruct wallet-only access after the service database is lost. Signing in and recovering service access do not create membership or grant new permissions in a DAO. Provider availability depends on server configuration; complete Google browser login remains unfinished.
 
 Adding or removing a sign-in method requires a fresh proof from existing Daclify keys or an already verified paired wallet, plus proof of the incoming credential. Review the exact credential before confirming. Removal revokes sessions opened with that credential; history is available in Account → Sign-in.
 
@@ -24,7 +24,7 @@ User-controlled accounts keep encrypted signing and decryption keys in your brow
 
 Managed recovery delegates signing and decryption recovery to an operator. OpenBao remains the open-source candidate; production custody is gated on isolated service, audit, provider and recovery qualification.
 
-Share Account → Keys → Public join identity with a DAO administrator. Never share recovery kits or their credentials. A recorded service-to-member association survives DAO signing-key rotation; current chain permissions and credential bindings remain authoritative.
+Accounts with vault keys can share Account → Keys → Public join identity with a DAO administrator. Never share recovery kits or their credentials. A saved service-to-member association can survive DAO signing-key rotation while its database exists; a lost mapping cannot make an old signing key current again. Current chain permissions and wallet bindings remain authoritative.
 
 ## Shared or independent deployment
 
@@ -82,7 +82,11 @@ After losing the service database, connect a Telos Zero wallet or supported Telo
 
 A recovered wallet profile has a new service ID; the chain membership ID stays unchanged. Restore the original encrypted kit and confirm with the wallet to attach your proved vault identity to that same recovered profile. You can instead create new keys for new DAOs; new keys do not recover old private documents or change existing contract keys. Both current wallet control and incoming signing-key possession are required. An already registered vault identity is not silently merged with another service profile.
 
-Google, Telegram and email pairings, passkey public credentials, wallet sign-in pairings and service sessions are PostgreSQL records. Blockchain governance bindings are separate. Lost social pairings require a verified database restore or explicit re-pairing after recovering control. Do not publish email addresses, Telegram IDs or raw provider tokens on the public chain. Restore does not make an old session or provider proof fresh.
+Google, Telegram and email pairings, passkey public credentials, wallet sign-in pairings and service sessions are PostgreSQL records. Blockchain governance bindings are separate. These pairing metadata columns are not application-encrypted. Restrict database access and encrypt off-host backups. Lost social pairings require a verified database restore or explicit re-pairing after recovering control. Do not publish email addresses, Telegram IDs or raw provider tokens on the public chain. Restore does not make an old session or provider proof fresh.
+
+For a ten-member DAO, one recovered administrator can manage the existing DAO again, but their kit restores only their own keys and access. Every other member must recover independently. An ordinary member remains an ordinary member. Losing a server does not lose login pairings if a verified database backup survives; if all database copies are lost, pair those methods again after recovering your own control.
+
+An old kit may still decrypt old documents after its signing key was rotated on chain, but that old signing key alone no longer authorizes governance. Use a surviving current wallet or other current control path. Human-member signing-key rotation requires that member’s authorization; another administrator’s kit cannot reset it. New vault keys do not replace the member’s existing encryption identity.
 
 Wallet-only profiles must retain a blockchain control credential. Removing the last one is rejected transactionally. Unlinking or revoking a governance binding on chain removes the corresponding access; an old service pairing does not restore it. Inactive memberships do not gain new governance rights; existing exit rights remain governed by the contract.
 
@@ -240,7 +244,7 @@ A DAO administrator enables optional modules in Workspace → Modules. Grants ro
 
 Contract upgrades preserve balances, approved liabilities, old documents and existing identities. Changed module code invalidates old execution pins; review a new proposal rather than changing the terms of an existing vote. Complete spending exports remain available and mark missing historical receipts or document references as incomplete.
 
-Deployment operators should follow the repository upgrade-0.5 runbook, review account permissions and immutable artifact hashes, and qualify live providers and wallet clients before enabling those services. Local fixture passes do not qualify production managed custody.
+Version 0.6 adds service migration 015, wallet-only access and vault attachment while retaining the 0.5 contract code/layouts. Operators should follow the repository upgrade-0.6 runbook for this service update; the earlier upgrade-0.5 procedure applies to older contracts. Use matching API/frontend/protocol/help artifacts, review permissions and immutable hashes, and qualify live providers, wallet clients, backups and proxy trust before enabling a hosted service. Local fixture passes do not qualify production managed custody.
 
 ## runtime contract
 

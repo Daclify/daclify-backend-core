@@ -1,6 +1,6 @@
 # DAO presets and guarded agents
 
-This feature is included in the coordinated 0.2.0-alpha.1 development prerelease. It is not a qualified production release.
+Introduced in 0.2.0-alpha.1 and retained in the current 0.6.0-alpha.1 development prerelease, with contract interface 1. This is not a qualified production release. Follow the current [upgrade guide](operations/upgrade-0.6.md) and [recovery runbook](disaster-recovery.md) for service updates and per-user recovery; the original integration notes below are historical.
 
 Purpose and participants are independent. Choose community, NGO/grants, gaming guild, team/cooperative or custom; then choose human, mixed or guarded-agent participation. Presets initialise modules and an explicitly confirmed policy. They do not certify charitable status, game ownership, model behaviour or operator independence.
 
@@ -34,14 +34,14 @@ The examples/agent-publish.ts script demonstrates a scoped login and signed publ
 
 Large content continues to use IPFS/Pinata. Encrypt private content before publication; sending decrypted content to a model provider is a separate disclosure. Existing production custody/provider and deployment qualifications remain open.
 
-## Compatibility and merge
+## Compatibility and original integration
 
 Metadata schema 1 remains readable. Schema 2 preserves the resolved initial preset snapshot. Core adds govpolicies, actors, sessions, guards and budgets; Decide adds executions. Existing DAO/member/ballot/project/milestone layouts remain unchanged. Native execution requires links for the new core callbacks and Decide openwork. The updated local fixture permission tooling demonstrates these links; a real deployment needs a separately prepared, reviewed permission plan. No production permission changes are performed by this branch.
 
-The public packages and application advance together to 0.2.0-alpha.1. Additive API response fields and capabilities can break strict 0.1 clients even though native interface version 1 and existing table encodings remain unchanged. Upgrade API consumers and their pinned protocol/module artifacts together; this branch does not qualify old HTTP client compatibility or a production migration.
+The original feature advanced the public packages and application together to 0.2.0-alpha.1. Its additive API response fields and capabilities can break strict 0.1 clients even though native interface version 1 and existing table encodings remain unchanged. Current 0.6 consumers must use matching protocol/module artifacts; neither the original feature nor the recovery update qualifies old HTTP client compatibility or a production migration.
 
-Merge core, modules and frontend together, resolve source conflicts first, then regenerate ABI SDKs, code hashes, references and package locks with the development bootstrap. Do not choose one side of generated-file conflicts as the final artifact. Align the prerelease version with other branches before publishing. Existing release gates remain in force.
+For coordinated changes, integrate core, modules and frontend together, resolve source conflicts first, then regenerate affected ABI SDKs, code hashes, references and package locks with the development bootstrap. Do not choose one side of generated-file conflicts as the final artifact. Align the prerelease version with other branches before publishing. Existing release gates remain in force.
 
 Marketplace integration preserves module listing and fee-rule checks. Required preset modules must be present in the runtime catalogue with the reviewed code hash as well as deployed. The test fixtures explicitly list their free first-party modules; production catalogue configuration remains an operator responsibility. The merge retained marketplace, billing and naming behavior and regenerated the shared SDKs and guides from both sets of changes.
 
-The isolated native fixture uses daclify-dao-presets-native on port 19888 and a separate PostgreSQL container on port 16432. Original agents' containers and worktrees are untouched. Core's regular unit suite, module WASM tests, new native/API flows and browser presets have separate evidence; an emulator check is not a native check.
+The original feature verification used daclify-dao-presets-native on port 19888 and a separate PostgreSQL container on port 16432, preserving other containers/worktrees. These are historical fixture details; use the current upgrade/development guides to select matching test bundles. Core's regular unit suite, module WASM tests, native/API flows and browser presets have separate evidence; an emulator check is not a native check.

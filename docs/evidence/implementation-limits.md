@@ -1,6 +1,6 @@
 # Implementation limits and verification holds
 
-Updated 2026-10-06. This is an incomplete development release, not a production readiness claim.
+Historical checkpoint recorded 2026-10-06. The details below are retained as evidence of that revision, not a current feature inventory. Later [research execution](2026-10-07-research-execution.md), [testnet deployment](2026-10-07-telos-testnet.md), [provider smoke checks](2026-10-07-support-telegram.md) and [wallet recovery](2026-10-07-wallet-recovery.md) supersede completed items. Use [operations](../operations.md) and [disaster recovery](../disaster-recovery.md) for current procedures. Production remains unqualified.
 
 ## Platform interruption
 

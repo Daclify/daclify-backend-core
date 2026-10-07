@@ -4,6 +4,8 @@
 
 Wallet recovery after service database loss; per-DAO live native/EVM bindings and explicit wallet-only accounts. Dual-proof vault attachment preserves the recovered service ID. SQL migration 015 preserves existing accounts and rejects last-control removal. Includes restore-session invalidation, generated recovery help and failure/concurrency tests.
 
+Updated READMEs, documentation navigation, recovery/storage limits and coordinated 0.6 upgrade instructions. Generated help and development package integrities are refreshed together; older dated evidence remains historical.
+
 Development prerelease; production release gates remain in force.
 
 ## 0.2.0-alpha.1 — DAO presets and guarded agents

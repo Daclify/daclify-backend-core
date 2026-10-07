@@ -1,6 +1,6 @@
 # Paired login and signing setup
 
-Apply migrations using the existing API startup coordinator. Migration 008 intentionally revokes old service sessions with unknown credential provenance; users sign in again. Migration 010 invalidates old unbound sign-in challenges. Migration 012 leaves legacy EVM pairings unverified until fresh explicit pairing. Migrations 013/014 add credential history and browser return destinations; they do not rewrite keys or member rights.
+Apply migrations using the existing API startup coordinator. Migration 008 intentionally revokes old service sessions with unknown credential provenance; users sign in again. Migration 010 invalidates old unbound sign-in challenges. Migration 012 leaves legacy EVM pairings unverified until fresh explicit pairing. Migrations 013/014 add credential history and browser return destinations; they do not rewrite keys or member rights. Migration 015 adds wallet-only service profiles, dual-proof vault attachment and last-control-credential constraints. Follow the [0.6 upgrade guide](upgrade-0.6.md) for a coordinated API/frontend update.
 
 Configure SMTP from .env.example. STARTTLS is mandatory on port 587 by default; implicit TLS can use tls mode/465. Plaintext is limited to loopback in local development. Use a dedicated sender and credentials in local/production secret configuration, never frontend environment variables. Test deliverability and failure behavior using actual configured mailboxes before qualification. Pairing codes can be displayed only in local fixtures; email login always requires delivery.
 
@@ -8,7 +8,7 @@ Configure Telegram's official OIDC client ID/secret/exact callback `/v1/sign-in/
 
 Native login accepts active permission with direct weighted keys and no delegated accounts/waits. Threshold proofs accept up to eight signatures; unsupported authority structures fail rather than being approximated. Pin supported Anchor/WharfKit client versions and verify actual wallet bytes, chain and permission. Direct native governance uses submitnat; users can submit the exact producer-generated request to the runtime directly in a transaction authorized by the bound native account, without this hosted API. Incoming native activation uses submit with existing member signature and incoming native transaction authorization. Review expiry/nonces/resource requirements; never enable broadcasting before exact transaction validation.
 
-EVM EOA login uses server-issued ERC-4361 messages and an explicit existing service-account mapping. Direct governance is activated per DAO through linkevm with existing member authorization plus the incoming EIP-712 binding signature. submitevm can be submitted directly to the native runtime using the exact producer-generated request and typed signature. Native relayer funding is required to broadcast; it is not governance authority. Verify Spring cryptographic feature availability before deployment. Connected-wallet metadata alone is not login.
+EVM EOA login uses server-issued ERC-4361 messages. Existing verified service pairings open their account; when no pairing survives, 0.6 can reconstruct wallet-only access from a current governance binding in the configured runtime after verifying the signature. Native login supports the same recovery distinction. A saved service pairing and an on-chain governance binding are separate records; pairing a new wallet for login alone does not activate it in a DAO. Direct governance is activated per DAO through linkevm with existing member authorization plus the incoming EIP-712 binding signature. submitevm can be submitted directly to the native runtime using the exact producer-generated request and typed signature. Native relayer funding is required to broadcast; it is not governance authority. Verify Spring cryptographic feature availability before deployment. Connected-wallet metadata alone is not login.
 
 Signing keys and encryption keys remain separate. Provider login never restores a user-controlled vault. Restore the encrypted recovery kit and its credential for private documents on a new device. Wallet signatures are public and must not derive private decryption keys. Managed custody remains production-gated pending the existing OpenBao qualification requirements.
 
@@ -29,6 +29,7 @@ For the selected Netlify frontend / Hetzner API deployment, keep both HTTPS host
    ```
 
    Replace `YOUR_TEST_HOST` with the actual test host. Keep the signing algorithm at **RS256**, which the current backend accepts. Copy the displayed **Client ID** and **Client Secret** into local backend configuration. The client secret is separate from the bot token. [Telegram's official login setup](https://core.telegram.org/bots/telegram-login).
+
 3. In backend `.env.testnet`, enable all three OIDC fields together and align the frontend origin:
 
    ```sh
@@ -39,7 +40,8 @@ For the selected Netlify frontend / Hetzner API deployment, keep both HTTPS host
    ```
 
    Keep the secret out of frontend files and chat. Register the actual callback exactly; do not use the UI's `/account` route or the local HTTP API address `http://127.0.0.1:3028` as the testnet callback. Restart the API after edits. `GET /v1/sign-in/options` should report `telegram.oidc: true`, and the account page should show **Continue with Telegram** or **Pair Telegram** instead of the legacy iframe.
-4. First sign in to the existing Daclify account, unlock its vault, open **Account → Sign-in**, and pair Telegram. Complete provider consent and the explicit pairing confirmation. Then test Telegram entry in a separate browser session. An unpaired identity cannot open an existing account, and a Telegram session does not restore user-controlled signing/decryption keys.
+
+4. First sign in to the existing Daclify account, unlock its vault, open **Account → Sign-in**, and pair Telegram. Complete provider consent and the explicit pairing confirmation. Then test Telegram entry in a separate browser session. An unpaired Telegram identity cannot open an existing account, and a Telegram session does not restore user-controlled signing/decryption keys. After database loss, recover your own account control first, then pair Telegram again; see [disaster recovery](../disaster-recovery.md).
 
 Mini App setup is separate from OIDC. In BotFather, configure the bot's **Main Mini App** or **Menu Button** to open the same reachable HTTPS frontend, optionally at `/account`. The backend already uses `TELEGRAM_BOT_TOKEN` to verify Mini App launch data; adding a launch URL does not supply OIDC client credentials. Test launch/pairing from an actual Telegram client, including a phone where a computer's localhost is not reachable. [Telegram Mini App setup](https://core.telegram.org/bots/webapps).
 
