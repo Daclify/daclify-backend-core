@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "publication": "refused",
+  "qualified": false,
+  "reason": "Publication is refused. Held checks and pinned artifact verification are not a qualified release.",
+  "repositories": [
+    {
+      "name": "daclify-backend-core",
+      "commit": "a7a8a4acbd817b742ea7c314881480a77d1cfbc1",
+      "version": "0.7.0-alpha.1",
+      "lockfileSha256": "7901b4ba9dd11c899340c9c81b358e85c92f57f9c2c561f4e3f7962f33daf060"
+    },
+    {
+      "name": "daclify-backend-modules",
+      "commit": "b3c41b2e4d4718c7c63ae60ed51c249838d0794b",
+      "version": "0.7.0-alpha.1",
+      "lockfileSha256": "1d7162ddf1287b115177fbe78d1b3d11deb6d133ae433102b1dcb053f0dc4b48"
+    },
+    {
+      "name": "daclify-frontend",
+      "commit": "aea1bbbc4109fadb33b3cbc3c18aa8c5d39a464a",
+      "version": "0.7.0-alpha.1",
+      "lockfileSha256": "15b5dbeb04c3ceb57f02d53ecf25524e816ff87a76f0aa5c602724638ffd4225"
+    }
+  ],
+  "toolchain": {
+    "cdt": "4.1.1",
+    "spring": "1.2.2",
+    "node": "24.21.0"
+  },
+  "interfaceVersion": 1,
+  "artifacts": {
+    "runtimeCodeHash": "0e01df299fd3017467087aef180bd2d9e253562d2a305e731a60ffdba003c5b8",
+    "runtimeAbiSha256": "1e574fd67ef49834f47df21f59025862eeb5c69e20dd7c11ff0b10cd14a7d08c",
+    "runtimeRawAbiSha256": "cf60ec33ea42d5fd316225310da42b528524c195a1ca997d7562e122ac125863",
+    "documentationSha256": "efd7c5fc4ade96a44887b7a6adc55eed18b29f350168f8d4e7f2244a2502bc9c"
+  },
+  "moduleCapabilities": ["decide", "endorsement-admission", "grants-rounds", "payroll", "works"],
+  "moduleCodeHashes": {
+    "decide": "94f0fe24dad8ef28e16f7d2fbae4485d46e7154df7594b2a298904beac28dd62",
+    "endorsement-admission": "6b03c73787541cdb28446f981bdd31e42234f10f3f5b3bccc33c7ba750b86cbc",
+    "grants-rounds": "e31202b04f590f98adbc001a7949889c39c576fec9aa81b83f64403cf6fd9f2c",
+    "payroll": "efdceb30d194fbf7ed06f921e94cafe0de9fb7f9d6c11792507f2c2388108ffc",
+    "works": "ae355df0647e244a059def9ddee0a2a54f4b5833d5e10e5dc337864d9a7e0a33"
+  },
+  "checks": {
+    "held": [
+      "live SMTP deliverability and Telegram provider/client qualification",
+      "real Anchor and EOA wallet-client qualification",
+      "OpenBao durable production signing, audit, recovery and isolation qualification",
+      "selected production chain protocol-feature and authority verification",
+      "Stripe sandbox Connect OAuth/v2 onboarding, direct charge, refund and dispute qualification",
+      "Stripe sandbox graduated subscriptions, invoice lifecycle and native capacity qualification",
+      "independent operator browser cookie/CORS and wallet-client qualification",
+      "immutable published artifact verification"
+    ],
+    "recordedPasses": [
+      "core verify: 425 tests, lint, types, generated docs",
+      "modules verify: 83 tests, lint, types, generated docs",
+      "frontend verify: 101 tests, source lint and Vue types",
+      "PostgreSQL integration: 119 tests, migrations through 021",
+      "Spring native payment selection: 2 tests",
+      "desktop/mobile browser payment selection: 4 tests, axe and overflow checks",
+      "build and format checks: all three repositories"
+    ]
+  }
+}
