@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "publication": "refused",
+  "qualified": false,
+  "reason": "Publication is refused. Held checks and pinned artifact verification are not a qualified release.",
+  "repositories": [
+    {
+      "name": "daclify-backend-core",
+      "commit": "623a06dbfd01bdf4f64fc3303e9d24643cc1e433",
+      "version": "0.5.0-alpha.1",
+      "lockfileSha256": "0a8721d7e71bc81b076238eeed6a57fcf8db7ee6ce5a3ded0d03412cd72f8b9f"
+    },
+    {
+      "name": "daclify-backend-modules",
+      "commit": "836bbec7362aa3c78c77818ec242f8a63447b2c6",
+      "version": "0.5.0-alpha.1",
+      "lockfileSha256": "10573bd4b91ef2bfd5488cfac0240dd07780d8e2c75d2cdde6a06df76c1ad106"
+    },
+    {
+      "name": "daclify-frontend",
+      "commit": "accee7b7b4941c842b3906b9cbd887b1c1bc57df",
+      "version": "0.5.0-alpha.1",
+      "lockfileSha256": "e41aa001f5df8cadc500fab1bd65310647cee11bb33a2a3410b06fcd612adf4b"
+    }
+  ],
+  "toolchain": {
+    "cdt": "4.1.1",
+    "spring": "1.2.2",
+    "node": "24.21.0"
+  },
+  "interfaceVersion": 1,
+  "artifacts": {
+    "runtimeCodeHash": "35b7018872391f8eb883b7b75e1ecad91325bceaae77e9207fc5403c4b2838b0",
+    "runtimeAbiSha256": "e786287e4241c6f5923150ba6e571f5005e71d6fff1864ab0b6642e6f3f34e6b",
+    "documentationSha256": "0873f47370adaa4e803a4421b40b001ae5ea91312c48bac319eda9fa0d270124"
+  },
+  "moduleCapabilities": ["decide", "endorsement-admission", "grants-rounds", "payroll", "works"],
+  "moduleCodeHashes": {
+    "decide": "94f0fe24dad8ef28e16f7d2fbae4485d46e7154df7594b2a298904beac28dd62",
+    "endorsement-admission": "6b03c73787541cdb28446f981bdd31e42234f10f3f5b3bccc33c7ba750b86cbc",
+    "grants-rounds": "e31202b04f590f98adbc001a7949889c39c576fec9aa81b83f64403cf6fd9f2c",
+    "payroll": "efdceb30d194fbf7ed06f921e94cafe0de9fb7f9d6c11792507f2c2388108ffc",
+    "works": "ae355df0647e244a059def9ddee0a2a54f4b5833d5e10e5dc337864d9a7e0a33"
+  },
+  "checks": {
+    "held": [
+      "live SMTP deliverability and Telegram provider/client qualification",
+      "real Anchor and EOA wallet-client qualification",
+      "OpenBao durable production signing, audit, recovery and isolation qualification",
+      "selected production chain protocol-feature and authority verification",
+      "immutable published artifact verification"
+    ],
+    "recordedPasses": [
+      "fresh main: node tools/bootstrap.ts --contracts rebuilt pinned C++ artifacts and generated public development packages",
+      "fresh main: npm run verify passed core 57 files / 384 tests, modules 13 / 82, frontend 20 / 84; type, lint and generated-documentation checks passed",
+      "fresh main: core/modules/frontend builds and formatting checks passed",
+      "fresh main: each changed development package integrity matches actual archive SHA-512; only package.json formatting and module README differ from audit archives",
+      "actual PostgreSQL integration: 11 files / 84 tests passed in audited owned checkout",
+      "actual local OpenBao and Mailpit provider checks: 2 files / 6 tests passed in audited owned checkout",
+      "actual Spring native paired-wallet proof/link/login/key rotation: 1 file / 2 tests passed in audited owned checkout",
+      "audited frontend browser selections: paid 68 / 68 and research 8 / 8 passed; final vault change also reran 20 / 20 affected account/recovery cases",
+      "unchanged landing: typecheck/build/export/format passed; Node 43 / 43 and browser 46 / 46 passed",
+      "fresh main: production dependency audit reports zero known advisories across all four active repositories; full development advisory findings remain documented in engineering-audit.md",
+      "fresh main: contract, ABI and generated-reference hashes match prior audited snapshot; release qualification and publication remain refused"
+    ]
+  }
+}
