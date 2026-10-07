@@ -39,7 +39,7 @@ npm test
 npm run verify
 ```
 
-`npm test` does not run `tests/integration`, `tests/providers`, or `tests/native`. Those are `npm run test:integration`, `npm run test:providers`, and `npm run test:native`. Integration tests require an isolated database whose name ends in `_test`. Native qualification uses both `test:native:research` and `test:native:paid` with their matching owned fixture bundles; their bootstrap/payment setup is deliberately different. See the 0.5 upgrade runbook. Browser journeys are run from the frontend repository. A green local `npm run verify` does not mean GitHub Actions has run. This launch does not use GitHub Actions.
+`npm test` does not run `tests/integration`, `tests/providers`, or `tests/native`. Those are `npm run test:integration`, `npm run test:providers`, and `npm run test:native`. Integration tests require an isolated database whose name ends in `_test`. Native qualification uses both `test:native:research` and `test:native:paid` with their matching owned fixture bundles; their bootstrap/payment setup is deliberately different. See the 0.5 upgrade runbook. Browser journeys are run from the frontend repository. Builds and tests run locally. GitHub verification workflows are manual-only, so pushing source does not start CI. See [manual Netlify uploads and hosted-testnet development](docs/development.md#local-builds-and-manual-netlify-uploads).
 
 ## Deploy profiles
 

@@ -16,6 +16,8 @@ Development checks use owned loopback PostgreSQL/native/Mailpit fixtures; run th
 
 Session and browser-attempt cookies use `HttpOnly; Secure; SameSite=None` under HTTPS so browser-bound login works when the API and frontend are on different sites. Local HTTP ceremonies retain Strict (Telegram OIDC uses Lax for its redirect). Cross-site access still requires the configured exact frontend Origin, credentialed CORS, browser-bound challenges and applicable CSRF/account-control proofs. Browser restrictions on third-party cookies can still block unrelated-site deployments; prefer app/API hosts under the same site or a same-origin API proxy and qualify supported browsers.
 
+For the selected Netlify frontend / Hetzner API deployment, keep both HTTPS hosts under the same site. Local frontend development can use an HTTPS loopback hostname under that site and the explicit testnet `FRONTEND_ADDITIONAL_ORIGINS` setting. The OIDC redirect URI stays on the hosted API, while the saved initiating frontend origin controls the browser's return destination. See [local frontend setup](../development.md#local-frontend-with-a-hosted-testnet-api).
+
 ## Telegram OIDC setup for testing
 
 1. Choose an HTTPS test address. Prefer one origin serving the frontend and proxying `/v1` to the API, so account and browser-attempt cookies remain on the same host. `http://testnet.localhost:5198` currently fails Telegram's legacy-widget domain check and cannot be configured as a Daclify testnet OIDC callback because this profile requires HTTPS. A temporary HTTPS tunnel or a hosted staging address can provide a test origin; these instructions do not imply one is already deployed.

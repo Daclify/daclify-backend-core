@@ -9,6 +9,10 @@ import { ApiRoutes } from '../../protocol/routes.js';
 import { ModuleApiRoutes } from '@daclify/modules';
 import type { ChainGateway } from '../../services/api/src/chain.js';
 import { NetworkSchema, SessionSchema, ChallengeSchema } from '../../protocol/api.js';
+import {
+  AccountControlChallengeSchema,
+  AccountControlMessageSchema,
+} from '../../protocol/sign-in.js';
 const url = process.env.DATABASE_URL;
 if (
   !url ||
@@ -73,22 +77,22 @@ afterAll(async () => {
   await app.close();
   await pool.end();
 });
-async function login() {
+async function login(server = app, browserOrigin = origin) {
   const key = PrivateKey.generate('K1');
-  const challengeResponse = await app.inject({
+  const challengeResponse = await server.inject({
     method: 'POST',
     url: '/v1/auth/challenge',
-    headers: { origin },
+    headers: { origin: browserOrigin },
     payload: { signingKey: key.toPublic().toString() },
   });
   const challenge = ChallengeSchema.parse(challengeResponse.json());
   const jwk = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.export({
     format: 'jwk',
   });
-  const response = await app.inject({
+  const response = await server.inject({
     method: 'POST',
     url: '/v1/auth/login',
-    headers: { origin },
+    headers: { origin: browserOrigin },
     payload: {
       challengeId: challenge.id,
       signature: key.signMessage(new TextEncoder().encode(challenge.message)).toString(),
@@ -103,6 +107,45 @@ async function login() {
   };
 }
 describe('HTTP session boundary', () => {
+  it('keeps authenticated developer-origin requests and account-control challenges bound to that origin', async () => {
+    const development = 'https://dev.app.example:5198';
+    const hosted = await createServer(pool, chain, 'https://testnet.app.example', {
+      origins: [development],
+    });
+    try {
+      const { response, session, cookie } = await login(hosted, development);
+      expect(response.statusCode).toBe(200);
+      const setCookie = String(response.headers['set-cookie']);
+      expect(setCookie).toContain('__Host-daclify_session=');
+      expect(setCookie).toContain('HttpOnly');
+      expect(setCookie).toContain('Secure');
+      expect(setCookie).toContain('SameSite=None');
+      const headers = { origin: development, cookie, 'x-csrf-token': session.csrfToken };
+      const me = await hosted.inject({ method: 'GET', url: '/v1/me', headers });
+      expect(me.statusCode).toBe(200);
+      expect(me.headers['access-control-allow-origin']).toBe(development);
+      const control = await hosted.inject({
+        method: 'POST',
+        url: '/v1/account/control',
+        headers,
+        payload: { path: ApiRoutes.providerUnlink.path, bodyHash: 'ab'.repeat(32) },
+      });
+      expect(control.statusCode).toBe(200);
+      const challenge = AccountControlChallengeSchema.parse(control.json());
+      expect(AccountControlMessageSchema.parse(JSON.parse(challenge.message)).origin).toBe(
+        development,
+      );
+      const logout = await hosted.inject({
+        method: 'POST',
+        url: '/v1/auth/logout',
+        headers,
+        payload: {},
+      });
+      expect(logout.statusCode).toBe(204);
+    } finally {
+      await hosted.close();
+    }
+  });
   it.each([
     ['{', 'application/json', 400, 'INPUT_INVALID'],
     ['', 'application/json', 400, 'INPUT_INVALID'],

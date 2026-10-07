@@ -128,6 +128,55 @@ describe('Stripe service checkout', () => {
     }
   });
 
+  it('uses the explicit browser origin list for CORS and POST authorization', async () => {
+    const pool = new Pool({ connectionString: 'postgres://127.0.0.1:9/none' });
+    const primary = 'https://testnet.app.example';
+    const development = 'https://dev.app.example:5198';
+    const app = await createServer(pool, unusedChain(), primary, { origins: [development] });
+    try {
+      for (const origin of [primary, development, 'https://evil.example']) {
+        const allowed = origin !== 'https://evil.example';
+        const preflight = await app.inject({
+          method: 'OPTIONS',
+          url: '/v1/auth/logout',
+          headers: {
+            origin,
+            'access-control-request-method': 'POST',
+            'access-control-request-headers': 'content-type,x-csrf-token,x-account-signature',
+          },
+        });
+        expect(preflight.headers['access-control-allow-origin']).toBe(allowed ? origin : undefined);
+        if (allowed) {
+          expect(preflight.statusCode).toBe(204);
+          expect(preflight.headers['access-control-allow-credentials']).toBe('true');
+          expect(preflight.headers['access-control-allow-headers']).toContain(
+            'x-account-signature',
+          );
+          expect(preflight.headers.vary).toContain('Origin');
+        }
+        const read = await app.inject({ method: 'GET', url: '/health', headers: { origin } });
+        expect(read.headers['access-control-allow-origin']).toBe(allowed ? origin : undefined);
+        const post = await app.inject({
+          method: 'POST',
+          url: '/v1/auth/logout',
+          headers: { origin },
+          payload: {},
+        });
+        expect(post.statusCode).toBe(allowed ? 401 : 403);
+        expect(post.json()).toMatchObject({ code: allowed ? 'AUTH_REQUIRED' : 'ORIGIN_REJECTED' });
+      }
+      const missingOrigin = await app.inject({
+        method: 'POST',
+        url: '/v1/auth/logout',
+        payload: {},
+      });
+      expect(missingOrigin.statusCode).toBe(403);
+    } finally {
+      await app.close();
+      await pool.end();
+    }
+  });
+
   it('verifies the webhook signature against the raw body', () => {
     const secret = 'whsec_fixture';
     const payload = JSON.stringify({ id: 'evt_signed', type: 'checkout.session.completed' });

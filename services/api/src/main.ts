@@ -14,7 +14,7 @@ import { PinataStorage } from './content/pinata.js';
 import { ContentService } from './content/service.js';
 import { startContentWorker } from './content/jobs.js';
 import { Uint64Schema } from '../../../protocol/base.js';
-import { parseModuleDeployments } from './deployment-config.js';
+import { parseFrontendOrigins, parseModuleDeployments } from './deployment-config.js';
 import { readStripeConfig } from './billing/config.js';
 import { StripeBilling } from './billing/service.js';
 import { readDocsAgent } from './docs/config.js';
@@ -22,6 +22,7 @@ const configuration = z
   .object({
     DATABASE_URL: z.url(),
     FRONTEND_ORIGIN: z.url(),
+    FRONTEND_ADDITIONAL_ORIGINS: z.string().min(2).max(8192).optional(),
     CHAIN_RPC_URL: z.url(),
     CHAIN_ID: z.string().regex(/^[0-9a-f]{64}$/),
     RUNTIME_ACCOUNT: z.string(),
@@ -50,6 +51,7 @@ const configuration = z
   .safeParse(process.env);
 if (!configuration.success) throw new Error('API_CONFIGURATION_INVALID');
 const env = configuration.data;
+const origins = parseFrontendOrigins(env.FRONTEND_ORIGIN, env.FRONTEND_ADDITIONAL_ORIGINS);
 if (!!env.BOOTSTRAP_OWNER !== !!env.BOOTSTRAP_PRIVATE_KEY)
   throw new Error('Bootstrap owner and key must be configured together');
 if (!!env.PINATA_JWT !== !!env.CONTENT_GATEWAY) throw new Error('PINATA_CONFIGURATION_INVALID');
@@ -117,6 +119,7 @@ const docs = readDocsAgent(process.env);
 const creation = new CreationService(pool, chain);
 const deliverEmail = readMailDelivery(process.env);
 const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
+  origins,
   creation,
   ...(content ? { content } : {}),
   ...(providers.google || providers.telegram ? { providers } : {}),

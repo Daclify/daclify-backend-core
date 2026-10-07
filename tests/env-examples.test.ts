@@ -4,10 +4,48 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { expect, it } from 'vitest';
 import { parseEnvFile } from '../services/api/src/env-file.js';
-import { parseModuleDeployments } from '../services/api/src/deployment-config.js';
+import {
+  parseFrontendOrigins,
+  parseModuleDeployments,
+} from '../services/api/src/deployment-config.js';
+
+it('accepts exact browser origins and rejects wildcard, malformed and remote HTTP configuration', () => {
+  expect(
+    parseFrontendOrigins('https://testnet.app.example', '["https://dev.app.example:5198"]'),
+  ).toEqual(['https://testnet.app.example', 'https://dev.app.example:5198']);
+  expect(parseFrontendOrigins('http://testnet.localhost:5198')).toEqual([
+    'http://testnet.localhost:5198',
+  ]);
+  expect(parseFrontendOrigins('https://app.example', '["https://app.example"]')).toEqual([
+    'https://app.example',
+  ]);
+  const expanded = parseFrontendOrigins(
+    'https://app.example',
+    JSON.stringify(Array.from({ length: 8 }, (_, index) => `https://frontend${index}.example`)),
+  );
+  expect(parseFrontendOrigins('https://app.example', JSON.stringify(expanded))).toEqual(expanded);
+  for (const value of [
+    '*',
+    '["*"]',
+    '["https://*.example"]',
+    '["http://remote.example"]',
+    '["https://app.example/path"]',
+    '["https://user:secret@app.example"]',
+    'null',
+    '{}',
+  ]) {
+    expect(() => parseFrontendOrigins('https://app.example', value)).toThrow(
+      'FRONTEND_ORIGINS_INVALID',
+    );
+  }
+  expect(() => parseFrontendOrigins('https://app.example/path')).toThrow(
+    'FRONTEND_ORIGINS_INVALID',
+  );
+});
 
 it('documents complete API settings separately from deployment credentials', () => {
   const optional = [
+    'FRONTEND_ADDITIONAL_ORIGINS',
     'BOOTSTRAP_OWNER',
     'BOOTSTRAP_PRIVATE_KEY',
     'PINATA_JWT',

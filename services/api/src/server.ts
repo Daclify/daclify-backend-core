@@ -38,6 +38,7 @@ import type { DocsAgentConfiguration } from './docs/config.js';
 import { IdSchema } from '../../../protocol/base.js';
 import { spendingReport, spendingCsv } from './reporting/spending.js';
 import { ApiError } from './errors.js';
+import { parseFrontendOrigins } from './deployment-config.js';
 import { DaoPresets } from '../../../protocol/dao.js';
 import type { ContentService } from './content/service.js';
 import { StripeBilling } from './billing/service.js';
@@ -77,8 +78,8 @@ export async function createServer(
   function spend(accountId: string): void {
     if (!admitSponsored(accountId, Date.now())) throw new ApiError('RATE_LIMIT', 429);
   }
+  const origins = parseFrontendOrigins(origin, JSON.stringify(options.origins ?? []));
   const secure = new URL(origin).protocol === 'https:';
-  const origins = options.origins ?? [origin];
   const sameSite = secure ? 'none' : 'strict';
   const cookieName = secure ? '__Host-daclify_session' : 'daclify_session';
   const app = Fastify({ logger: false, bodyLimit: 65536, requestTimeout: 15000 });
@@ -108,7 +109,7 @@ export async function createServer(
   });
   await app.register(cookie);
   await app.register(cors, {
-    origin,
+    origin: origins,
     credentials: true,
     methods: ['GET', 'POST'],
     allowedHeaders: [

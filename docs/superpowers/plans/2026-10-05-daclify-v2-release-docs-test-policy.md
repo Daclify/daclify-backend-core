@@ -20,7 +20,7 @@ Define public compatibility before `1.0.0`. Use prereleases for incomplete devel
 
 Start with one release train per repository. The modules repository publishes a catalogue containing each module's code/interface/configuration versions. Introduce independently released module packages only when needed; do not create a release bureaucracy for every folder. Core and module public SDK/schema artifacts remain separately versioned where consumers depend on them.
 
-Each repository owns its changelog, dependency lockfile, CI and release artifacts. Release automation rejects moving/replacing a published version, mismatched generated code, unpinned production dependencies and a release manifest lacking required verification. Rebuild from clean checkouts and include enough provenance to reproduce the artifact. Repository visibility is private initially; public licensing, registry access and package visibility are separate explicit release decisions.
+Each repository owns its changelog, dependency lockfile, verification commands and release artifacts. On 2026-10-07 the user selected local builds/tests on the Mac and manual deployment of the checked artifacts. GitHub workflows are optional `workflow_dispatch` jobs only; pushes and pull requests do not start them. A local check must record the exact source/artifact combination tested; GitHub status is not a release requirement. Release automation rejects moving/replacing a published version, mismatched generated code, unpinned production dependencies and a release manifest lacking required verification. Rebuild from clean checkouts and include enough provenance to reproduce the artifact. Repository visibility is private initially; public licensing, registry access and package visibility are separate explicit release decisions.
 
 ## Compatibility and migrations
 
@@ -58,7 +58,7 @@ Use stable documentation topic IDs linked by schemas/manifests and UI features. 
 
 Publish documentation and executable artifacts together through the release manifest. Public reference pages stay generic; member-specific help/support exports obey DAO authorization and privacy policy. Sanitize rendered Markdown/HTML, restrict external content and prevent module metadata from injecting executable help pages.
 
-Documentation CI checks generated-output consistency, topic/link resolution, configuration examples against schemas, reproducible request/action examples against fixtures and missing coverage for newly exposed fields/actions. UI tests verify help access, focus restoration, search, error-code guidance and version switching. Publish a documentation preview with each reviewable feature. Reference generation and user-guide completeness are separate acceptance checks.
+Local documentation verification checks generated-output consistency, topic/link resolution, configuration examples against schemas, reproducible request/action examples against fixtures and missing coverage for newly exposed fields/actions. UI tests verify help access, focus restoration, search, error-code guidance and version switching. Publish a documentation preview with each reviewable feature. Reference generation and user-guide completeness are separate acceptance checks.
 
 ## Pinata pinning and content lifecycle
 
@@ -93,7 +93,7 @@ The user requested as many tests as practical. Optimize for coverage of behavior
 
 Maintain critical invariants: unauthorized actors cannot change DAO state; relayers cannot manufacture member consent; DAO scopes never authorize cross-DAO actions; backing covers recorded liabilities; obligations pay once; approved work remains interpretable after upgrades; linked credentials cannot duplicate votes; noncustodial recovery needs the recovery credential; privacy grants match custody/admission/history policy; billing expiry cannot seize funds or keys.
 
-For manageable state spaces, test all boundary combinations. For larger sequences, use state-machine/property tests with independent expected models, seed recording and a bounded CI budget. Add selected mutation checks to critical authorization/accounting code to confirm that tests catch removal of a guard or duplication of a payout. Do not require exhaustive global combinations or a cosmetic universal coverage percentage.
+For manageable state spaces, test all boundary combinations. For larger sequences, use state-machine/property tests with independent expected models, seed recording and a bounded local execution budget. Add selected mutation checks to critical authorization/accounting code to confirm that tests catch removal of a guard or duplication of a payout. Do not require exhaustive global combinations or a cosmetic universal coverage percentage.
 
 Run fast relevant checks during development, affected integration journeys after meaningful changes and a clean full release suite before delivery. Extend checks when failures, changed contracts or unresolved concerns justify it. Mark provider/native/client tests that could not run as unverified; mocks do not convert them into real integration passes. Gather source coverage where available, but behavioral and invariant evidence remains the acceptance standard.
 
