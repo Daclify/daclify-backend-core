@@ -139,6 +139,46 @@ describe('Stripe service checkout', () => {
     );
   });
 
+  it.each(['local', 'testnet'] as const)('rejects live Stripe credentials on %s', (environment) => {
+    for (const secretKey of ['rk_live_fixturekeyvalue', 'sk_live_fixturekeyvalue']) {
+      expect(() =>
+        readStripeConfig(
+          {
+            STRIPE_SECRET_KEY: secretKey,
+            STRIPE_WEBHOOK_SECRET: 'whsec_fixture',
+            STRIPE_PRICE_ID: priceId,
+          },
+          environment,
+        ),
+      ).toThrow('STRIPE_CONFIGURATION_INVALID');
+    }
+  });
+
+  it('defaults to test-only credentials when no chain environment is supplied', () => {
+    expect(() =>
+      readStripeConfig({
+        STRIPE_SECRET_KEY: 'sk_live_fixturekeyvalue',
+        STRIPE_WEBHOOK_SECRET: 'whsec_fixture',
+        STRIPE_PRICE_ID: priceId,
+      }),
+    ).toThrow('STRIPE_CONFIGURATION_INVALID');
+  });
+
+  it('accepts live credentials only with an explicit mainnet environment', () => {
+    for (const secretKey of ['rk_live_fixturekeyvalue', 'sk_live_fixturekeyvalue']) {
+      expect(
+        readStripeConfig(
+          {
+            STRIPE_SECRET_KEY: secretKey,
+            STRIPE_WEBHOOK_SECRET: 'whsec_fixture',
+            STRIPE_PRICE_ID: priceId,
+          },
+          'mainnet',
+        )?.secretKey,
+      ).toBe(secretKey);
+    }
+  });
+
   it('requires the restricted-key settings together and accepts no partial configuration', () => {
     expect(readStripeConfig({})).toBeUndefined();
     expect(() =>

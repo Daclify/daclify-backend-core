@@ -94,7 +94,7 @@ const content = new ContentService(
 const docs = readDocsAgent(process.env);
 let stripeConfig: ReturnType<typeof readStripeConfig>;
 try {
-  stripeConfig = readStripeConfig(process.env);
+  stripeConfig = readStripeConfig(process.env, 'local');
 } catch {
   stripeConfig = undefined;
   console.log('Card payments are not configured.');

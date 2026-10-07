@@ -112,7 +112,7 @@ if (env.TELEGRAM_BOT_TOKEN || telegramOidc) {
     ...(env.TELEGRAM_BOT_USERNAME ? { botUsername: env.TELEGRAM_BOT_USERNAME } : {}),
   };
 }
-const stripeConfig = readStripeConfig(process.env);
+const stripeConfig = readStripeConfig(process.env, env.NETWORK_ENVIRONMENT);
 const docs = readDocsAgent(process.env);
 const creation = new CreationService(pool, chain);
 const deliverEmail = readMailDelivery(process.env);
