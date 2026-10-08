@@ -16,6 +16,8 @@ import { VERSION as MODULE_VERSION } from '@daclify/modules';
 import { ServiceResponseRoutes } from '../../../protocol/service-api.js';
 import { ApiRoutes } from '../../../protocol/routes.js';
 import { ModuleApiRoutes } from '@daclify/modules';
+import { ArchiveRoutes } from '@daclify/modules/archive';
+import { archivePreview } from './archive/service.js';
 import Fastify, { type FastifyReply, errorCodes } from 'fastify';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
@@ -589,6 +591,14 @@ export async function createServer(
       IdSchema.parse(request.params.id),
     ),
   );
+  app.post(ArchiveRoutes.preview.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    if (!reports(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    return archivePreview(chain, account, request.body);
+  });
   app.post(ApiRoutes.upload.path, { bodyLimit: 8 * 1024 * 1024 }, async (request) => {
     const account = await session(
       request.cookies[cookieName],

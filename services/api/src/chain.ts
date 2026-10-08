@@ -25,7 +25,9 @@ import type { PaymentPolicy } from '../../../protocol/payments.js';
 import type { ResourcePolicy } from '../../../protocol/resources.js';
 import type { HostingChain } from '../../../protocol/hosting.js';
 import type { HubDirectorySchema } from '../../../protocol/directory.js';
+import type { ArchivePreviewRequest, OrdinaryPollArchivePlan } from '@daclify/modules/archive';
 export interface ChainGateway {
+  archivePreview?(input: ArchivePreviewRequest): Promise<OrdinaryPollArchivePlan>;
   resourcePolicy?(): Promise<ResourcePolicy | null>;
   hosting?(dao: DaoRef): Promise<HostingChain>;
   attestCapacity?(dao: DaoRef, members: number, expires: number, receipt: string): Promise<void>;

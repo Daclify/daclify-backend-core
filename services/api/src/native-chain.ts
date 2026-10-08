@@ -54,6 +54,14 @@ import {
 import { AccountResourceSchema, resourcesAcceptable } from './deployment-check.js';
 import { randomBytes } from 'node:crypto';
 import {
+  ArchiveRoutes,
+  OrdinaryPollArchiveInputSchema,
+  archiveSourceSchema,
+  planOrdinaryPollArchive,
+  MAX_ARCHIVE_LEAVES,
+  type ArchivePreviewRequest,
+} from '@daclify/modules/archive';
+import {
   HubDeploymentRowSchema,
   HubMetadataSchema,
   registryDirectory,
@@ -356,6 +364,135 @@ export class NativeChainGateway implements ChainGateway {
     if (setting?.chain_id !== this.config.chainId) throw new ApiError('DAO_REFERENCE');
     const row = (await this.table('resourcecfg', this.config.runtime))[0];
     return row ? resourcePolicyFromRow(row) : null;
+  }
+  async archivePreview(value: ArchivePreviewRequest) {
+    const input = ArchiveRoutes.preview.input.parse(value);
+    if (
+      input.dao.chainId !== this.config.chainId ||
+      input.dao.contract !== this.config.runtime ||
+      input.dao.interfaceVersion !== 1
+    )
+      throw new ApiError('DAO_REFERENCE');
+    await this.reviewedRuntime(input.dao.contract);
+    const deployment = this.config.modules?.find((row) => row.id === 'decide');
+    if (!deployment) throw new ApiError('ARCHIVE_UNAVAILABLE', 503);
+    const source = archiveSourceSchema('ordinary-poll-votes');
+    const reviewedSource = async () => {
+      const raw = await this.api.v1.chain.get_raw_abi(deployment.account);
+      if (String(raw.code_hash) !== source.codeHash || String(raw.abi_hash) !== source.rawAbiHash)
+        throw new ApiError('ARCHIVE_SCHEMA_UNSUPPORTED', 409);
+    };
+    await reviewedSource();
+    const installed = (await this.table('modules', input.dao.daoId)).find(
+      (row) => row.account === deployment.account,
+    );
+    if (
+      !installed ||
+      installed.version !== 1 ||
+      ((installed.actions.length || installed.grants.length) &&
+        installed.code_hash !== source.codeHash)
+    )
+      throw new ApiError('MODULE_UNVERIFIED', 409);
+    const info = await this.api.v1.chain.get_info();
+    if (
+      info.chain_id.toString() !== input.dao.chainId ||
+      Number(info.last_irreversible_block_num) < 1
+    )
+      throw new ApiError('ARCHIVE_SNAPSHOT_UNQUALIFIED', 503);
+    const [block, account] = await Promise.all([
+      this.api.v1.chain.get_block(info.last_irreversible_block_num),
+      this.api.v1.chain.get_account(deployment.account),
+    ]);
+    if (
+      block.id.toString() !== info.last_irreversible_block_id.toString() ||
+      Number(block.block_num) !== Number(info.last_irreversible_block_num)
+    )
+      throw new ApiError('ARCHIVE_SNAPSHOT_UNQUALIFIED', 503);
+    const state: z.infer<typeof OrdinaryPollArchiveInputSchema> = {
+      dao: input.dao,
+      source: {
+        account: deployment.account,
+        codeHash: source.codeHash,
+        abiHash: source.rawAbiHash,
+      },
+      snapshot: {
+        blockNumber: Number(block.block_num),
+        blockId: block.id.toString(),
+        timestamp: new Date(block.timestamp.toMilliseconds()).toISOString(),
+      },
+      sourceUpdatedAt: new Date(account.last_code_update.toMilliseconds()).toISOString(),
+      retentionSeconds: input.retentionSeconds,
+      ballots: [],
+      votes: [],
+      terminals: [],
+      elections: [],
+      executions: [],
+      grantplans: [],
+    };
+    const one = async <T>(table: string, schema: z.ZodType<T>, id: string) => {
+      const result = await this.moduleRows(deployment.account, table, schema, id, id, 1, 'i64', 1);
+      if (result.more || result.rows.length > 1)
+        throw new ApiError('ARCHIVE_COVERAGE_INCOMPLETE', 409);
+      return result.rows[0];
+    };
+    for (const id of input.ballotIds) {
+      const [ballot, terminal, election, work, grant] = await Promise.all([
+        one('ballots', DecideTableSchemas.ballots, id),
+        one('pollends', DecideTableSchemas.pollends, id),
+        one('elections', DecideTableSchemas.elections, id),
+        one('executions', DecideTableSchemas.executions, id),
+        one('grantplans', DecideTableSchemas.grantplans, id),
+      ]);
+      if (
+        !ballot ||
+        ballot.id !== id ||
+        (terminal && terminal.ballot_id !== id) ||
+        (election && election.id !== id) ||
+        (work && work.ballot_id !== id) ||
+        (grant && grant.ballot_id !== id)
+      )
+        throw new ApiError('BALLOT_UNKNOWN', 404);
+      state.ballots.push(ballot);
+      if (terminal) state.terminals.push(terminal);
+      if (election) state.elections.push({ id: election.id, dao_id: election.dao_id });
+      if (work) state.executions.push({ ballot_id: work.ballot_id, dao_id: work.dao_id });
+      if (grant) state.grantplans.push({ ballot_id: grant.ballot_id, dao_id: grant.dao_id });
+      let cursor = BigInt(id) << 64n;
+      const upper = (BigInt(id) << 64n) | ((1n << 64n) - 1n);
+      for (;;) {
+        const page = await this.moduleRows(
+          deployment.account,
+          'votes',
+          DecideTableSchemas.votes,
+          cursor.toString(),
+          upper.toString(),
+          2,
+          'i128',
+          Math.min(256, MAX_ARCHIVE_LEAVES - state.votes.length + 1),
+        );
+        if (
+          page.rows.some(
+            (row) =>
+              row.ballot !== id || ((BigInt(row.ballot) << 64n) | BigInt(row.member)) < cursor,
+          ) ||
+          state.votes.length + page.rows.length > MAX_ARCHIVE_LEAVES
+        )
+          throw new ApiError('ARCHIVE_COVERAGE_INCOMPLETE', 409);
+        state.votes.push(...page.rows);
+        if (!page.more) break;
+        const last = page.rows.at(-1);
+        if (!last || BigInt(last.member) === (1n << 64n) - 1n)
+          throw new ApiError('ARCHIVE_COVERAGE_INCOMPLETE', 409);
+        cursor = (BigInt(id) << 64n) | (BigInt(last.member) + 1n);
+      }
+    }
+    await reviewedSource();
+    await this.reviewedRuntime(input.dao.contract);
+    try {
+      return planOrdinaryPollArchive(state);
+    } catch {
+      throw new ApiError('ARCHIVE_SOURCE_INVALID', 409);
+    }
   }
   async platform(): Promise<ChainPlatform> {
     const [network, info, abi] = await Promise.all([
