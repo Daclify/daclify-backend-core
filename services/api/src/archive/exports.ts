@@ -18,6 +18,8 @@ import {
   ArchiveExportListSchema,
   verifyArchiveBundle,
   ArchiveBackupReceiptSchema,
+  ArchiveRoutes,
+  archiveAttestation,
 } from '@daclify/modules/archive';
 import { AccountSchema, type Account } from '../../../../protocol/api.js';
 import { HostedAssetReceiptSchema, HostedAssetUploadSchema } from '../../../../protocol/storage.js';
@@ -29,6 +31,7 @@ import { fundedStorage } from '../content/capacity.js';
 import { archivePreview } from './service.js';
 import { ApiError } from '../errors.js';
 import type { EncryptedArchiveBackup } from './backup.js';
+import { RuntimeTableSchemas } from '../../../../sdk/index.js';
 
 const hash = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
 const RowSchema = z.object({
@@ -38,6 +41,9 @@ const RowSchema = z.object({
   dao: ArchiveExportStatusSchema.shape.dao,
   provider_scope: ProviderScopeSchema,
   plan: OrdinaryPollArchivePlanSchema,
+  descriptor_commitment: ArchiveRoutes.attest.input.shape.descriptorCommitment.nullable(),
+  anchor_id: RuntimeTableSchemas.archives.shape.id.nullable(),
+  anchor_transaction: RuntimeTableSchemas.archives.shape.attestation_transaction.nullable(),
   request: ArchiveExportRequestSchema,
   state: ArchiveExportStatusSchema.shape.state,
   maximum_stored_bytes: ArchiveExportStatusSchema.shape.maximumStoredBytes,
@@ -120,9 +126,27 @@ export class ArchiveExports {
       'SELECT receipt FROM archive_backups WHERE export_id=$1',
       [row.id],
     );
+    const anchor =
+      row.anchor_id && row.manifest_commitment && this.chain.archiveAnchor
+        ? await this.chain.archiveAnchor(row.dao, row.manifest_commitment)
+        : null;
+    if (
+      row.anchor_id &&
+      (!anchor ||
+        anchor.id !== row.anchor_id ||
+        anchor.dao_id !== row.dao.daoId ||
+        anchor.manifest.chain_id !== row.dao.chainId ||
+        anchor.manifest.runtime !== row.dao.contract ||
+        anchor.manifest_commitment !== row.manifest_commitment ||
+        anchor.descriptor_commitment !== row.descriptor_commitment ||
+        anchor.retention_seconds !== row.request.selection.retentionSeconds)
+    )
+      throw new ApiError('ARCHIVE_ANCHOR_INVALID', 503);
     return ArchiveExportStatusSchema.parse({
       id: row.id,
       dao: row.dao,
+      retentionSeconds: row.request.selection.retentionSeconds,
+      anchor,
       state: row.state,
       maximumStoredBytes: row.maximum_stored_bytes,
       heldBytes: hold.rows[0]?.remaining_bytes,
@@ -456,6 +480,50 @@ export class ArchiveExports {
       next: result.rows.length > 20 ? rows.at(-1)?.id : null,
     });
   }
+  async attest(account: Account, id: string, value: unknown) {
+    const input = ArchiveRoutes.attest.input.parse(value),
+      row = await this.row(id);
+    await this.authorize(account, row.dao);
+    if (!this.backupStore || !this.chain.attestArchive || !this.chain.archiveAnchor)
+      throw new ApiError('ARCHIVE_VERIFIER_UNCONFIGURED', 503);
+    const status = await this.statusRow(row);
+    if (
+      !status.backup ||
+      !status.manifest ||
+      status.manifest.commitment !== input.manifestCommitment ||
+      status.backup.commitment !== input.backupCommitment ||
+      row.request.selection.retentionSeconds !== input.retentionSeconds
+    )
+      throw new ApiError('ARCHIVE_COMMITMENT', 409);
+    await this.bundle(account, id, false);
+    const restored = await this.backupStore.read(
+      id,
+      input.manifestCommitment,
+      input.backupCommitment,
+    );
+    if (restored.manifest.descriptorCommitment !== input.descriptorCommitment)
+      throw new ApiError('ARCHIVE_COMMITMENT', 409);
+    const native = archiveAttestation(restored, status.backup, input.retentionSeconds),
+      anchor = await this.chain.attestArchive(native);
+    if (
+      anchor.dao_id !== row.dao.daoId ||
+      anchor.manifest.chain_id !== row.dao.chainId ||
+      anchor.manifest.runtime !== row.dao.contract ||
+      anchor.manifest_commitment !== input.manifestCommitment ||
+      anchor.backup_commitment !== input.backupCommitment ||
+      anchor.descriptor_commitment !== input.descriptorCommitment ||
+      anchor.retention_seconds !== input.retentionSeconds
+    )
+      throw new ApiError('ARCHIVE_ANCHOR_INVALID', 503);
+    await this.authorize(account, row.dao);
+    if (row.anchor_id && row.anchor_id !== anchor.id)
+      throw new ApiError('ARCHIVE_ANCHOR_INVALID', 503);
+    await this.pool.query(
+      'UPDATE archive_exports SET anchor_id=$2,anchor_transaction=COALESCE(anchor_transaction,$3) WHERE id=$1 AND (anchor_id IS NULL OR anchor_id=$2)',
+      [id, anchor.id, anchor.attestation_transaction],
+    );
+    return this.status(account, id);
+  }
   async backup(account: Account, id: string, expected: string) {
     const status = await this.status(account, id);
     if (!this.backupStore) throw new ApiError('ARCHIVE_BACKUP_NOT_CONFIGURED', 503);
@@ -491,9 +559,12 @@ export class ArchiveExports {
     }
     return this.status(account, id);
   }
-  async bundle(account: Account, id: string) {
+  async bundle(account: Account, id: string, allowBackup = true) {
     const status = await this.status(account, id);
-    if (status.state !== 'verified' || !status.manifest)
+    if (
+      !['verified', 'approved', 'pruning', 'completed'].includes(status.state) ||
+      !status.manifest
+    )
       throw new ApiError('ARCHIVE_NOT_READY', 409);
     try {
       const file = status.manifest,
@@ -524,7 +595,7 @@ export class ArchiveExports {
         file.commitment,
       );
     } catch (cause) {
-      if (status.backup && this.backupStore) {
+      if (allowBackup && status.backup && this.backupStore) {
         try {
           return await this.backupStore.read(
             id,

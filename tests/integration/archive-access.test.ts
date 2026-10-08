@@ -305,6 +305,26 @@ it('requires session/CSRF/current administrator and binds the readonly result to
       backupSupported: true,
       backup: { manifestCommitment: manifest.commitment },
     });
+    const attestRequest = {
+      method: 'POST' as const,
+      url: ArchiveRoutes.attest.path.replace(':id', status.id),
+      headers,
+      payload: {
+        manifestCommitment: manifest.commitment,
+        descriptorCommitment: 'ab'.repeat(32),
+        backupCommitment: 'cd'.repeat(32),
+        retentionSeconds: 90 * 86400,
+      },
+    };
+    expect((await app.inject({ ...attestRequest, headers: { origin } })).statusCode).toBe(401);
+    expect(
+      (await app.inject({ ...attestRequest, headers: { ...headers, 'x-csrf-token': '' } }))
+        .statusCode,
+    ).toBe(403);
+    admin = false;
+    expect((await app.inject(attestRequest)).statusCode).toBe(403);
+    admin = true;
+    expect((await app.inject(attestRequest)).statusCode).toBe(503);
     delete chain.archivePreview;
     expect((await app.inject(request)).statusCode).toBe(503);
   } finally {

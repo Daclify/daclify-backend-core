@@ -286,7 +286,7 @@
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "33252c0538af6dd9291388abdca057a42885b831fabc3d48f8a24f783a89f740",
+      "sourceAbiHash": "db8bef39613ab6082e15a902ede8f5a4e99a507804f9c07ed29d9567d26969e7",
       "actions": [
         {
           "name": "addmember",
@@ -393,6 +393,105 @@
             {
               "name": "source_id",
               "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "archapprove",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "manifest_commitment",
+              "type": "checksum256"
+            },
+            {
+              "name": "descriptor_commitment",
+              "type": "checksum256"
+            },
+            {
+              "name": "backup_commitment",
+              "type": "checksum256"
+            },
+            {
+              "name": "retention_seconds",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
+          "name": "archattest",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "manifest",
+              "type": "archive_manifest_descriptor"
+            },
+            {
+              "name": "manifest_cid",
+              "type": "string"
+            },
+            {
+              "name": "manifest_bytes",
+              "type": "uint32"
+            },
+            {
+              "name": "manifest_commitment",
+              "type": "checksum256"
+            },
+            {
+              "name": "backup_commitment",
+              "type": "checksum256"
+            },
+            {
+              "name": "retention_seconds",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
+          "name": "archrevoke",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "manifest_commitment",
+              "type": "checksum256"
+            },
+            {
+              "name": "descriptor_commitment",
+              "type": "checksum256"
+            },
+            {
+              "name": "backup_commitment",
+              "type": "checksum256"
+            },
+            {
+              "name": "retention_seconds",
+              "type": "uint32"
             }
           ]
         },
@@ -1634,6 +1733,23 @@
           ]
         },
         {
+          "name": "setarchcfg",
+          "fields": [
+            {
+              "name": "verifier",
+              "type": "name"
+            },
+            {
+              "name": "minimum_retention_seconds",
+              "type": "uint32"
+            },
+            {
+              "name": "pruning_enabled",
+              "type": "bool"
+            }
+          ]
+        },
+        {
           "name": "setcapacity",
           "fields": [
             {
@@ -2204,6 +2320,117 @@
             {
               "name": "admin_override",
               "type": "bool"
+            }
+          ]
+        },
+        {
+          "name": "archcfg",
+          "fields": [
+            {
+              "name": "verifier",
+              "type": "name"
+            },
+            {
+              "name": "minimum_retention_seconds",
+              "type": "uint32"
+            },
+            {
+              "name": "pruning_enabled",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "name": "archives",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uint64"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "manifest",
+              "type": "archive_manifest_descriptor"
+            },
+            {
+              "name": "manifest_cid",
+              "type": "string"
+            },
+            {
+              "name": "manifest_bytes",
+              "type": "uint32"
+            },
+            {
+              "name": "manifest_commitment",
+              "type": "checksum256"
+            },
+            {
+              "name": "descriptor_commitment",
+              "type": "checksum256"
+            },
+            {
+              "name": "backup_commitment",
+              "type": "checksum256"
+            },
+            {
+              "name": "verifier",
+              "type": "name"
+            },
+            {
+              "name": "attestation_transaction",
+              "type": "checksum256"
+            },
+            {
+              "name": "approval_transaction",
+              "type": "checksum256"
+            },
+            {
+              "name": "retention_seconds",
+              "type": "uint32"
+            },
+            {
+              "name": "attested_at",
+              "type": "uint32"
+            },
+            {
+              "name": "approved_by",
+              "type": "uint64"
+            },
+            {
+              "name": "approved_at",
+              "type": "uint32"
+            },
+            {
+              "name": "revoked",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "name": "archpos",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uint64"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "archive_id",
+              "type": "uint64"
+            },
+            {
+              "name": "chunk_ordinal",
+              "type": "uint32"
+            },
+            {
+              "name": "pruned",
+              "type": "uint32"
             }
           ]
         },

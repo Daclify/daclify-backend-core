@@ -13,6 +13,7 @@ import type {
   UserMembership,
   WalletIdentity,
 } from '../../../protocol/api.js';
+import type { RuntimeActions } from '../../../sdk/generated/runtime.js';
 import type { instruction } from '../../../sdk/index.js';
 import type { EvmRelay } from '../../../protocol/evm-wallet.js';
 import type { RuntimeTableSchemas } from '../../../sdk/generated/schemas.js';
@@ -32,6 +33,13 @@ import type { HostingChain } from '../../../protocol/hosting.js';
 import type { HubDirectorySchema } from '../../../protocol/directory.js';
 import type { ArchivePreviewRequest, OrdinaryPollArchivePlan } from '@daclify/modules/archive';
 export interface ChainGateway {
+  archiveAnchor?(
+    dao: DaoRef,
+    manifestCommitment: string,
+  ): Promise<z.infer<typeof RuntimeTableSchemas.archives> | null>;
+  attestArchive?(
+    input: RuntimeActions['archattest'],
+  ): Promise<z.infer<typeof RuntimeTableSchemas.archives>>;
   archivePreview?(input: ArchivePreviewRequest): Promise<OrdinaryPollArchivePlan>;
   resourcePolicy?(): Promise<ResourcePolicy | null>;
   ramUsage?(daoId: string): Promise<RamUsage>;

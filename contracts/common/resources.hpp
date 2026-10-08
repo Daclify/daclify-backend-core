@@ -70,7 +70,7 @@ inline uint8_t ram_category(eosio::name table,uint64_t dao_id){
   if(!dao_id)return 3;
   switch(table.value){
     case "members"_n.value:case "actors"_n.value:case "sessions"_n.value:case "evmbindings"_n.value:case "profiles"_n.value:case "epochs"_n.value:case "keygrants"_n.value:return 0;
-    case "ramcards"_n.value:case "ramorders"_n.value:case "ramalloc"_n.value:case "receipts"_n.value:case "evidence"_n.value:case "capreceipts"_n.value:case "createords"_n.value:case "obligations"_n.value:case "budgets"_n.value:case "executions"_n.value:case "grantplans"_n.value:case "agreements"_n.value:case "controls"_n.value:case "entries"_n.value:case "schedules"_n.value:case "terms"_n.value:return 2;
+    case "archives"_n.value:case "archpos"_n.value:case "ramcards"_n.value:case "ramorders"_n.value:case "ramalloc"_n.value:case "receipts"_n.value:case "evidence"_n.value:case "capreceipts"_n.value:case "createords"_n.value:case "obligations"_n.value:case "budgets"_n.value:case "executions"_n.value:case "grantplans"_n.value:case "agreements"_n.value:case "controls"_n.value:case "entries"_n.value:case "schedules"_n.value:case "terms"_n.value:return 2;
     default:return 1;
   }
 }

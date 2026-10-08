@@ -4,6 +4,7 @@
 #include "creation.hpp"
 #include "evm_authorization.hpp"
 #include "telos_resources.hpp"
+#include "archive_state.hpp"
 #include <eosio/transaction.hpp>
 #define JSON_NOEXCEPTION
 #define JSON_HAS_FILESYSTEM 0
@@ -47,6 +48,40 @@ public:
     const auto fee=order.platform_fee;const auto refund=asset(order.received.amount-order.spent.amount-fee.amount,fee.symbol);const auto payer=order.payer,treasury=order.treasury;
     index.modify(order,same_payer,[&](auto& row){row.purchases=result;row.settled=true;});
     pay_share("eosio.token"_n,treasury,fee,"Daclify RAM operational fee");pay_share("eosio.token"_n,payer,refund,"Daclify RAM purchase change");
+  }
+  ACTION setarchcfg(name verifier,uint32_t minimum_retention_seconds,bool pruning_enabled){
+    require_auth(get_self());check(is_account(verifier)&&minimum_retention_seconds>=archive_min_retention&&minimum_retention_seconds<=315360000,"ARCHIVE_POLICY");
+    ram_observer_settings observer(get_self(),get_self().value);check(observer.exists()&&observer.get().runtime_hash==get_code_hash(get_self()),"RAM_OBSERVER_REQUIRED");
+    archive_settings(get_self(),get_self().value).set(archive_policy{verifier,minimum_retention_seconds,pruning_enabled},get_self());
+  }
+  ACTION archattest(uint64_t dao_id,archive_manifest_descriptor manifest,std::string manifest_cid,uint32_t manifest_bytes,checksum256 manifest_commitment,checksum256 backup_commitment,uint32_t retention_seconds){
+    const auto policy=archive_settings(get_self(),get_self().value).get();require_auth(policy.verifier);dao_rows.get(dao_id,"DAO_UNKNOWN");
+    check(action_data_size()<=16384,"ARCHIVE_ACTION_SIZE");validate_archive_manifest(dao_id,manifest);
+    validate_cid(manifest_cid);check(manifest_bytes>0&&manifest_bytes<=archive_max_chunk_bytes&&manifest_commitment!=checksum256{}&&backup_commitment!=checksum256{},"ARCHIVE_COMMITMENT");
+    check(retention_seconds>=policy.minimum_retention_seconds&&retention_seconds<=315360000,"ARCHIVE_POLICY");
+    const auto commitment=archive_descriptor_hash(manifest);const uint32_t now=current_time_point().sec_since_epoch();
+    archive_anchors anchors(get_self(),dao_id);auto index=anchors.get_index<"bymanifest"_n>();auto found=index.find(manifest_commitment);
+    if(found!=index.end()){
+      check(found->retention_seconds==retention_seconds&&found->descriptor_commitment==commitment&&found->backup_commitment==backup_commitment&&found->manifest_cid==manifest_cid&&found->manifest_bytes==manifest_bytes&&pack(found->manifest)==pack(manifest),"ARCHIVE_ANCHOR_IMMUTABLE");
+      index.modify(found,same_payer,[&](auto& r){r.attested_at=now;r.verifier=policy.verifier;r.attestation_transaction=current_transaction_id();});return;
+    }
+    auto id=anchors.available_primary_key();if(!id)id=1;check(id<std::numeric_limits<uint64_t>::max()/archive_anchor_max_chunks,"ARCHIVE_ANCHOR_LIMIT");
+    anchors.emplace(get_self(),[&](auto& r){r.id=id;r.dao_id=dao_id;r.manifest=manifest;r.manifest_cid=manifest_cid;r.manifest_bytes=manifest_bytes;r.manifest_commitment=manifest_commitment;r.descriptor_commitment=commitment;r.backup_commitment=backup_commitment;r.verifier=policy.verifier;r.retention_seconds=retention_seconds;r.attested_at=now;r.attestation_transaction=current_transaction_id();});
+    archive_positions positions(get_self(),dao_id);
+    for(uint32_t ordinal=0;ordinal<manifest.families.front().chunks.size();ordinal++)positions.emplace(get_self(),[&](auto& r){r.id=id*archive_anchor_max_chunks+ordinal;r.dao_id=dao_id;r.archive_id=id;r.chunk_ordinal=ordinal;});
+  }
+  ACTION archapprove(name runtime,uint64_t dao_id,uint64_t member_id,checksum256 manifest_commitment,checksum256 descriptor_commitment,checksum256 backup_commitment,uint32_t retention_seconds){
+    check(get_sender()==get_self(),"ACTOR_SENDER");authorized_actor(runtime,dao_id,member_id,true);
+    archive_anchors anchors(get_self(),dao_id);auto index=anchors.get_index<"bymanifest"_n>();const auto& anchor=index.get(manifest_commitment,"ARCHIVE_ANCHOR_UNKNOWN");
+    check(anchor.retention_seconds==retention_seconds&&anchor.descriptor_commitment==descriptor_commitment&&anchor.backup_commitment==backup_commitment,"ARCHIVE_COMMITMENT");validate_archive_manifest(dao_id,anchor.manifest);
+    check(anchor.verifier==archive_settings(get_self(),get_self().value).get().verifier,"ARCHIVE_VERIFIER_CHANGED");
+    const uint32_t now=current_time_point().sec_since_epoch();check(anchor.attested_at<=now&&uint64_t(now)-anchor.attested_at<=archive_availability_lifetime,"ARCHIVE_AVAILABILITY_EXPIRED");
+    if(anchor.approved_by==member_id&&!anchor.revoked)return;
+    index.modify(anchor,same_payer,[&](auto& r){r.approved_by=member_id;r.approved_at=now;r.revoked=false;r.approval_transaction=current_transaction_id();});
+  }
+  ACTION archrevoke(name runtime,uint64_t dao_id,uint64_t member_id,checksum256 manifest_commitment,checksum256 descriptor_commitment,checksum256 backup_commitment,uint32_t retention_seconds){
+    check(get_sender()==get_self(),"ACTOR_SENDER");authorized_actor(runtime,dao_id,member_id,true);archive_anchors anchors(get_self(),dao_id);auto index=anchors.get_index<"bymanifest"_n>();const auto& anchor=index.get(manifest_commitment,"ARCHIVE_ANCHOR_UNKNOWN");
+    check(anchor.retention_seconds==retention_seconds&&anchor.descriptor_commitment==descriptor_commitment&&anchor.backup_commitment==backup_commitment,"ARCHIVE_COMMITMENT");if(!anchor.revoked)index.modify(anchor,same_payer,[](auto& r){r.revoked=true;});
   }
   ACTION initramobs(){
     require_auth(get_self());check(dao_rows.begin()==dao_rows.end()&&!ram_reserve_settings(get_self(),get_self().value).exists(),"RAM_BACKFILL_REQUIRED");
@@ -560,6 +595,24 @@ public:
 private:
   daos dao_rows{get_self(),get_self().value};
   checksum256 current_transaction_id(){std::vector<char> bytes(transaction_size());check(read_transaction(bytes.data(),bytes.size())==bytes.size(),"TRANSACTION_BYTES");return sha256(bytes.data(),bytes.size());}
+  void validate_archive_manifest(uint64_t dao_id,const archive_manifest_descriptor& manifest){
+    check(manifest.format_version==1&&manifest.chain_id==configuration().chain_id&&manifest.runtime==get_self()&&manifest.dao_id==dao_id&&manifest.source!=get_self(),"ARCHIVE_DOMAIN");
+    check(manifest.families.size()==1&&manifest.files.empty(),"ARCHIVE_FAMILY_PROTECTED");
+    ram_observer_settings observer(get_self(),get_self().value);check(observer.exists()&&observer.get().runtime_hash==get_code_hash(get_self()),"RAM_OBSERVER_REQUIRED");
+    modules installed(get_self(),dao_id);const auto& source=installed.get(manifest.source.value,"MODULE_DISABLED");check_pinned(source,manifest.source);
+    check(manifest.code_hash==source.code_hash&&manifest.abi_hash!=checksum256{},"ARCHIVE_SOURCE_CODE");
+    const auto block=manifest.block_id.extract_as_byte_array();const uint32_t number=(uint32_t(block[0])<<24)|(uint32_t(block[1])<<16)|(uint32_t(block[2])<<8)|uint32_t(block[3]);
+    check(number==manifest.block_number&&number>0&&manifest.timestamp.size()>=20&&manifest.timestamp.size()<=32,"ARCHIVE_SNAPSHOT");
+    const auto& family=manifest.families.front();check(family.kind=="ordinary-poll-votes"&&family.parent_id>0&&family.table=="votes"_n&&family.scope==get_self().value&&family.schema_hash!=checksum256{},"ARCHIVE_FAMILY_PROTECTED");
+    check(family.chunks.size()<=archive_anchor_max_chunks&&family.records<=archive_max_leaves,"ARCHIVE_CHUNK_COUNT");uint64_t count=0,last=0;bool first=true;
+    for(uint32_t ordinal=0;ordinal<family.chunks.size();ordinal++){
+      const auto& chunk=family.chunks[ordinal];const auto& d=chunk.domain;archive_domain_hash(d);
+      check(d.chain_id==manifest.chain_id&&d.runtime==get_self()&&d.dao_id==dao_id&&d.source==manifest.source&&d.code_hash==manifest.code_hash&&d.abi_hash==manifest.abi_hash&&d.schema_hash==family.schema_hash&&d.table==family.table&&d.scope==family.scope&&d.chunk_ordinal==ordinal,"ARCHIVE_DOMAIN");
+      check(chunk.root!=checksum256{}&&chunk.commitment!=checksum256{}&&chunk.bytes>=188&&chunk.bytes<=archive_max_chunk_bytes&&chunk.first_key<=chunk.last_key&&(first||chunk.first_key>last),"ARCHIVE_CHUNK_BOUNDS");
+      validate_cid(chunk.cid);count=add64(count,d.leaf_count);first=false;last=chunk.last_key;
+    }
+    check(count==family.records,"ARCHIVE_COVERAGE_INCOMPLETE");
+  }
   ram_order prepare_ram_order(uint64_t dao_id,name payer,checksum256 reference,uint64_t policy_revision,asset maximum,uint32_t expires,const std::vector<ram_purchase>& purchases,uint16_t fee_bps){
     dao_rows.get(dao_id,"DAO_UNKNOWN");
     check(ram_observer_settings(get_self(),get_self().value).exists(),"RAM_OBSERVER_REQUIRED");
@@ -823,7 +876,7 @@ private:
     auto now=current_time_point().sec_since_epoch();check(r.expires>now&&uint64_t(r.expires)<=uint64_t(now)+900,"EXPIRED_OR_TOO_LONG");
     check(r.data.size()>=24&&r.data.size()<=16384,"PAYLOAD_SIZE");auto context=unpack<actor_context>(r.data);
     check(context.runtime==get_self()&&context.dao_id==r.dao_id&&context.member_id==r.member_id,"PAYLOAD_DOMAIN");
-    if(r.target==get_self())check(r.action=="govresources"_n||r.action=="govhosted"_n||r.action=="govseatfee"_n||r.action=="govpayfees"_n||r.action=="govcreate"_n||r.action=="govlist"_n||r.action=="govunlist"_n||r.action=="govmodcopy"_n||r.action=="addmember"_n||r.action=="setadmit"_n||r.action=="setdaogov"_n||r.action=="addsession"_n||r.action=="delsession"_n||r.action=="setmeta"_n||r.action=="setprofile"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="unlinknat"_n||r.action=="linkevm"_n||r.action=="unlinkevm"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n||r.action=="govfees"_n,"ACTION_UNSUPPORTED");
+    if(r.target==get_self())check(r.action=="archapprove"_n||r.action=="archrevoke"_n||r.action=="govresources"_n||r.action=="govhosted"_n||r.action=="govseatfee"_n||r.action=="govpayfees"_n||r.action=="govcreate"_n||r.action=="govlist"_n||r.action=="govunlist"_n||r.action=="govmodcopy"_n||r.action=="addmember"_n||r.action=="setadmit"_n||r.action=="setdaogov"_n||r.action=="addsession"_n||r.action=="delsession"_n||r.action=="setmeta"_n||r.action=="setprofile"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="unlinknat"_n||r.action=="linkevm"_n||r.action=="unlinkevm"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n||r.action=="govfees"_n,"ACTION_UNSUPPORTED");
     else { modules rows(get_self(),r.dao_id);const auto& installed=rows.get(r.target.value,"MODULE_DISABLED");check(std::find(installed.actions.begin(),installed.actions.end(),r.action)!=installed.actions.end(),"ACTION_UNSUPPORTED");check_pinned(installed,r.target); }
   }
   void dispatch(const instruction& r) {
@@ -836,7 +889,7 @@ private:
 extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
   if(code==receiver){switch(action_name){
     EOSIO_DISPATCH_HELPER(runtime,(authproof)(unlinknat)(linkevm)(unlinkevm)(submitevm)(setadmit)(admitfrom))
-    EOSIO_DISPATCH_HELPER(runtime,(initramobs)(rebindramobs)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram)(fulfilram))
+    EOSIO_DISPATCH_HELPER(runtime,(setarchcfg)(archattest)(archapprove)(archrevoke)(initramobs)(rebindramobs)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram)(fulfilram))
     EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(setprofile)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(confirmext)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))
     EOSIO_DISPATCH_HELPER(runtime,(sethosted)(govhosted)(govseatfee)(orderfree)(setcapacity)(revokecap)(resumecap))
     EOSIO_DISPATCH_HELPER(runtime,(enrollagent)(addmember)(initgov)(setdaogov)(addsession)(delsession)(guardpause)(guardrevoke)(guardrecover)(submitsess)(setfees)(listmod)(unlistmod)(setmodcopy)(setpolicy)(setgov)(setoracle)(govfees)(govpayfees)(setcreate)(govcreate)(setcrrate)(ordercreate)(cardcreate)(createpaid)(govlist)(govunlist)(govmodcopy))

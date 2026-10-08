@@ -100,6 +100,7 @@ import {
 } from '../../../protocol/dao.js';
 import {
   RuntimeTableSchemas,
+  RuntimeActionSchemas,
   encodeAction,
   instructionDigest,
   governanceSettings,
@@ -555,6 +556,97 @@ export class NativeChainGateway implements ChainGateway {
       this.config.relayActor,
       this.config.relayKey,
     );
+  }
+  async archiveAnchor(dao: DaoRef, manifestCommitment: string) {
+    ChainIdSchema.parse(manifestCommitment);
+    if (
+      dao.chainId !== this.config.chainId ||
+      dao.contract !== this.config.runtime ||
+      dao.interfaceVersion !== 1
+    )
+      throw new ApiError('DAO_REFERENCE');
+    await this.reviewedRuntime(dao.contract);
+    const read = async () => {
+      const page = await this.api.v1.chain.get_table_rows({
+        code: dao.contract,
+        scope: dao.daoId,
+        table: 'archives',
+        json: true,
+        index_position: 'secondary',
+        key_type: 'sha256',
+        lower_bound: Checksum256.from(manifestCommitment),
+        upper_bound: Checksum256.from(manifestCommitment),
+        limit: 2,
+      });
+      const rows = z.array(RuntimeTableSchemas.archives).max(1).parse(page.rows);
+      if (
+        page.more ||
+        rows.some(
+          (r) =>
+            r.dao_id !== dao.daoId ||
+            r.manifest.dao_id !== dao.daoId ||
+            r.manifest.chain_id !== dao.chainId ||
+            r.manifest.runtime !== dao.contract ||
+            r.manifest_commitment !== manifestCommitment,
+        )
+      )
+        throw new ApiError('ARCHIVE_ANCHOR_INVALID', 503);
+      return rows[0] ?? null;
+    };
+    const first = await read();
+    if (!first) return null;
+    const info = await this.api.v1.chain.get_info();
+    if (info.chain_id.toString() !== dao.chainId) throw new ApiError('DAO_REFERENCE');
+    await this.confirmBlock(Number(info.head_block_num));
+    const current = await read();
+    if (JSON.stringify(first) !== JSON.stringify(current))
+      throw new ApiError('ARCHIVE_ANCHOR_PENDING', 503);
+    await this.reviewedRuntime(dao.contract);
+    return current;
+  }
+  async attestArchive(value: RuntimeActions['archattest']) {
+    const input = RuntimeActionSchemas.archattest.parse(value);
+    await this.reviewedRuntime(this.config.runtime);
+    if (
+      input.manifest.runtime !== this.config.runtime ||
+      input.manifest.chain_id !== this.config.chainId ||
+      input.manifest.dao_id !== input.dao_id
+    )
+      throw new ApiError('DAO_REFERENCE');
+    const config = (await this.table('archcfg', this.config.runtime))[0];
+    if (config?.verifier !== this.config.relayActor)
+      throw new ApiError('ARCHIVE_VERIFIER_UNCONFIGURED', 503);
+    const dao: DaoRef = {
+      chainId: this.config.chainId,
+      contract: this.config.runtime,
+      daoId: input.dao_id,
+      interfaceVersion: 1,
+    };
+    let failure: unknown;
+    try {
+      await this.push('archattest', input, this.config.relayActor, this.config.relayKey);
+    } catch (cause) {
+      failure = cause;
+    }
+    const row = await this.archiveAnchor(dao, input.manifest_commitment),
+      info = await this.api.v1.chain.get_info();
+    if (info.chain_id.toString() !== dao.chainId) throw new ApiError('DAO_REFERENCE');
+    const now = Math.floor(info.head_block_time.toMilliseconds() / 1000);
+    if (
+      !row ||
+      row.verifier !== this.config.relayActor ||
+      row.retention_seconds !== input.retention_seconds ||
+      row.attested_at > now ||
+      now - row.attested_at > 900 ||
+      row.manifest_cid !== input.manifest_cid ||
+      row.manifest_bytes !== input.manifest_bytes ||
+      row.backup_commitment !== input.backup_commitment ||
+      JSON.stringify(row.manifest) !== JSON.stringify(input.manifest)
+    ) {
+      if (failure) throw failure;
+      throw new ApiError('ARCHIVE_ANCHOR_INVALID', 503);
+    }
+    return row;
   }
   async archivePreview(value: ArchivePreviewRequest) {
     const input = ArchiveRoutes.preview.input.parse(value);

@@ -1,4 +1,6 @@
 export const CoreContextActions = [
+  'archapprove',
+  'archrevoke',
   'setdaogov',
   'addmember',
   'setadmit',

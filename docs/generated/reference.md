@@ -320,7 +320,7 @@ Archive preview and resumable export are available for qualified ordinary-poll v
 
 ## runtime contract
 
-Source ABI JSON SHA-256: `33252c0538af6dd9291388abdca057a42885b831fabc3d48f8a24f783a89f740`.
+Source ABI JSON SHA-256: `db8bef39613ab6082e15a902ede8f5a4e99a507804f9c07ed29d9567d26969e7`.
 
 ### Action: addmember
 
@@ -363,6 +363,42 @@ Source ABI JSON SHA-256: `33252c0538af6dd9291388abdca057a42885b831fabc3d48f8a24f
 | dao_id | uint64 |
 | source | name |
 | source_id | uint64 |
+
+### Action: archapprove
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| manifest_commitment | checksum256 |
+| descriptor_commitment | checksum256 |
+| backup_commitment | checksum256 |
+| retention_seconds | uint32 |
+
+### Action: archattest
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| manifest | archive_manifest_descriptor |
+| manifest_cid | string |
+| manifest_bytes | uint32 |
+| manifest_commitment | checksum256 |
+| backup_commitment | checksum256 |
+| retention_seconds | uint32 |
+
+### Action: archrevoke
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| manifest_commitment | checksum256 |
+| descriptor_commitment | checksum256 |
+| backup_commitment | checksum256 |
+| retention_seconds | uint32 |
 
 ### Action: authproof
 
@@ -862,6 +898,14 @@ Source ABI JSON SHA-256: `33252c0538af6dd9291388abdca057a42885b831fabc3d48f8a24f
 | allow_agents | bool |
 | admin_override | bool |
 
+### Action: setarchcfg
+
+| Field | ABI type |
+| --- | --- |
+| verifier | name |
+| minimum_retention_seconds | uint32 |
+| pruning_enabled | bool |
+
 ### Action: setcapacity
 
 | Field | ABI type |
@@ -1109,6 +1153,45 @@ Source ABI JSON SHA-256: `33252c0538af6dd9291388abdca057a42885b831fabc3d48f8a24f
 | threshold | uint8 |
 | allow_agents | bool |
 | admin_override | bool |
+
+### Table: archcfg
+
+| Field | ABI type |
+| --- | --- |
+| verifier | name |
+| minimum_retention_seconds | uint32 |
+| pruning_enabled | bool |
+
+### Table: archives
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| dao_id | uint64 |
+| manifest | archive_manifest_descriptor |
+| manifest_cid | string |
+| manifest_bytes | uint32 |
+| manifest_commitment | checksum256 |
+| descriptor_commitment | checksum256 |
+| backup_commitment | checksum256 |
+| verifier | name |
+| attestation_transaction | checksum256 |
+| approval_transaction | checksum256 |
+| retention_seconds | uint32 |
+| attested_at | uint32 |
+| approved_by | uint64 |
+| approved_at | uint32 |
+| revoked | bool |
+
+### Table: archpos
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| dao_id | uint64 |
+| archive_id | uint64 |
+| chunk_ordinal | uint32 |
+| pruned | uint32 |
 
 ### Table: budgets
 

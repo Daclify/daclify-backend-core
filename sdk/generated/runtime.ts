@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = '33252c0538af6dd9291388abdca057a42885b831fabc3d48f8a24f783a89f740';
+export const runtimeAbiHash = 'db8bef39613ab6082e15a902ede8f5a4e99a507804f9c07ed29d9567d26969e7';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -148,6 +148,432 @@ export const runtimeAbi = {
         {
           "name": "source_id",
           "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "archapprove",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "manifest_commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "descriptor_commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "backup_commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "retention_seconds",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "archattest",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "manifest",
+          "type": "archive_manifest_descriptor"
+        },
+        {
+          "name": "manifest_cid",
+          "type": "string"
+        },
+        {
+          "name": "manifest_bytes",
+          "type": "uint32"
+        },
+        {
+          "name": "manifest_commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "backup_commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "retention_seconds",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "archive_anchor",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "manifest",
+          "type": "archive_manifest_descriptor"
+        },
+        {
+          "name": "manifest_cid",
+          "type": "string"
+        },
+        {
+          "name": "manifest_bytes",
+          "type": "uint32"
+        },
+        {
+          "name": "manifest_commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "descriptor_commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "backup_commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "verifier",
+          "type": "name"
+        },
+        {
+          "name": "attestation_transaction",
+          "type": "checksum256"
+        },
+        {
+          "name": "approval_transaction",
+          "type": "checksum256"
+        },
+        {
+          "name": "retention_seconds",
+          "type": "uint32"
+        },
+        {
+          "name": "attested_at",
+          "type": "uint32"
+        },
+        {
+          "name": "approved_by",
+          "type": "uint64"
+        },
+        {
+          "name": "approved_at",
+          "type": "uint32"
+        },
+        {
+          "name": "revoked",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "archive_chunk_descriptor",
+      "base": "",
+      "fields": [
+        {
+          "name": "domain",
+          "type": "archive_domain"
+        },
+        {
+          "name": "root",
+          "type": "checksum256"
+        },
+        {
+          "name": "cid",
+          "type": "string"
+        },
+        {
+          "name": "bytes",
+          "type": "uint32"
+        },
+        {
+          "name": "commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "first_key",
+          "type": "uint64"
+        },
+        {
+          "name": "last_key",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "archive_domain",
+      "base": "",
+      "fields": [
+        {
+          "name": "format_version",
+          "type": "uint16"
+        },
+        {
+          "name": "chain_id",
+          "type": "checksum256"
+        },
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "code_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "abi_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "schema_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "table",
+          "type": "name"
+        },
+        {
+          "name": "scope",
+          "type": "uint64"
+        },
+        {
+          "name": "chunk_ordinal",
+          "type": "uint32"
+        },
+        {
+          "name": "leaf_count",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "archive_family_descriptor",
+      "base": "",
+      "fields": [
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "parent_id",
+          "type": "uint64"
+        },
+        {
+          "name": "table",
+          "type": "name"
+        },
+        {
+          "name": "scope",
+          "type": "uint64"
+        },
+        {
+          "name": "schema_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "records",
+          "type": "uint64"
+        },
+        {
+          "name": "chunks",
+          "type": "archive_chunk_descriptor[]"
+        }
+      ]
+    },
+    {
+      "name": "archive_file_reference",
+      "base": "",
+      "fields": [
+        {
+          "name": "document_id",
+          "type": "uint64"
+        },
+        {
+          "name": "version",
+          "type": "uint32"
+        },
+        {
+          "name": "cid",
+          "type": "string"
+        },
+        {
+          "name": "bytes",
+          "type": "uint64"
+        },
+        {
+          "name": "commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "envelope_version",
+          "type": "uint8"
+        },
+        {
+          "name": "key_epoch",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "archive_manifest_descriptor",
+      "base": "",
+      "fields": [
+        {
+          "name": "format_version",
+          "type": "uint16"
+        },
+        {
+          "name": "chain_id",
+          "type": "checksum256"
+        },
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "code_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "abi_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "block_number",
+          "type": "uint32"
+        },
+        {
+          "name": "block_id",
+          "type": "checksum256"
+        },
+        {
+          "name": "timestamp",
+          "type": "string"
+        },
+        {
+          "name": "families",
+          "type": "archive_family_descriptor[]"
+        },
+        {
+          "name": "files",
+          "type": "archive_file_reference[]"
+        }
+      ]
+    },
+    {
+      "name": "archive_policy",
+      "base": "",
+      "fields": [
+        {
+          "name": "verifier",
+          "type": "name"
+        },
+        {
+          "name": "minimum_retention_seconds",
+          "type": "uint32"
+        },
+        {
+          "name": "pruning_enabled",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "archive_position",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "archive_id",
+          "type": "uint64"
+        },
+        {
+          "name": "chunk_ordinal",
+          "type": "uint32"
+        },
+        {
+          "name": "pruned",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "archrevoke",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "manifest_commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "descriptor_commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "backup_commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "retention_seconds",
+          "type": "uint32"
         }
       ]
     },
@@ -2725,6 +3151,24 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "setarchcfg",
+      "base": "",
+      "fields": [
+        {
+          "name": "verifier",
+          "type": "name"
+        },
+        {
+          "name": "minimum_retention_seconds",
+          "type": "uint32"
+        },
+        {
+          "name": "pruning_enabled",
+          "type": "bool"
+        }
+      ]
+    },
+    {
       "name": "setcapacity",
       "base": "",
       "fields": [
@@ -3301,6 +3745,21 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "archapprove",
+      "type": "archapprove",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "archattest",
+      "type": "archattest",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "archrevoke",
+      "type": "archrevoke",
+      "ricardian_contract": ""
+    },
+    {
       "name": "authproof",
       "type": "authproof",
       "ricardian_contract": ""
@@ -3551,6 +4010,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "setarchcfg",
+      "type": "setarchcfg",
+      "ricardian_contract": ""
+    },
+    {
       "name": "setcapacity",
       "type": "setcapacity",
       "ricardian_contract": ""
@@ -3692,6 +4156,27 @@ export const runtimeAbi = {
     {
       "name": "admpolicies",
       "type": "admission_policy",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "archcfg",
+      "type": "archive_policy",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "archives",
+      "type": "archive_anchor",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "archpos",
+      "type": "archive_position",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -4005,6 +4490,118 @@ export interface approveob {
   dao_id: string;
   source: string;
   source_id: string;
+}
+export interface archapprove {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  manifest_commitment: string;
+  descriptor_commitment: string;
+  backup_commitment: string;
+  retention_seconds: number;
+}
+export interface archattest {
+  dao_id: string;
+  manifest: archive_manifest_descriptor;
+  manifest_cid: string;
+  manifest_bytes: number;
+  manifest_commitment: string;
+  backup_commitment: string;
+  retention_seconds: number;
+}
+export interface archive_anchor {
+  id: string;
+  dao_id: string;
+  manifest: archive_manifest_descriptor;
+  manifest_cid: string;
+  manifest_bytes: number;
+  manifest_commitment: string;
+  descriptor_commitment: string;
+  backup_commitment: string;
+  verifier: string;
+  attestation_transaction: string;
+  approval_transaction: string;
+  retention_seconds: number;
+  attested_at: number;
+  approved_by: string;
+  approved_at: number;
+  revoked: boolean;
+}
+export interface archive_chunk_descriptor {
+  domain: archive_domain;
+  root: string;
+  cid: string;
+  bytes: number;
+  commitment: string;
+  first_key: string;
+  last_key: string;
+}
+export interface archive_domain {
+  format_version: number;
+  chain_id: string;
+  runtime: string;
+  dao_id: string;
+  source: string;
+  code_hash: string;
+  abi_hash: string;
+  schema_hash: string;
+  table: string;
+  scope: string;
+  chunk_ordinal: number;
+  leaf_count: number;
+}
+export interface archive_family_descriptor {
+  kind: string;
+  parent_id: string;
+  table: string;
+  scope: string;
+  schema_hash: string;
+  records: string;
+  chunks: archive_chunk_descriptor[];
+}
+export interface archive_file_reference {
+  document_id: string;
+  version: number;
+  cid: string;
+  bytes: string;
+  commitment: string;
+  envelope_version: number;
+  key_epoch: string;
+}
+export interface archive_manifest_descriptor {
+  format_version: number;
+  chain_id: string;
+  runtime: string;
+  dao_id: string;
+  source: string;
+  code_hash: string;
+  abi_hash: string;
+  block_number: number;
+  block_id: string;
+  timestamp: string;
+  families: archive_family_descriptor[];
+  files: archive_file_reference[];
+}
+export interface archive_policy {
+  verifier: string;
+  minimum_retention_seconds: number;
+  pruning_enabled: boolean;
+}
+export interface archive_position {
+  id: string;
+  dao_id: string;
+  archive_id: string;
+  chunk_ordinal: number;
+  pruned: number;
+}
+export interface archrevoke {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  manifest_commitment: string;
+  descriptor_commitment: string;
+  backup_commitment: string;
+  retention_seconds: number;
 }
 export interface authproof {
   account: string;
@@ -4697,6 +5294,11 @@ export interface setadmit {
   allow_agents: boolean;
   admin_override: boolean;
 }
+export interface setarchcfg {
+  verifier: string;
+  minimum_retention_seconds: number;
+  pruning_enabled: boolean;
+}
 export interface setcapacity {
   dao_id: string;
   member_limit: number;
@@ -4854,6 +5456,9 @@ export interface RuntimeActions {
   addsession: addsession;
   admitfrom: admitfrom;
   approveob: approveob;
+  archapprove: archapprove;
+  archattest: archattest;
+  archrevoke: archrevoke;
   authproof: authproof;
   cancelob: cancelob;
   cardcreate: cardcreate;
@@ -4904,6 +5509,7 @@ export interface RuntimeActions {
   rotatekey: rotatekey;
   setactive: setactive;
   setadmit: setadmit;
+  setarchcfg: setarchcfg;
   setcapacity: setcapacity;
   setcreate: setcreate;
   setcredits: setcredits;

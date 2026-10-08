@@ -396,11 +396,61 @@ describe('hosted upload transactions with a simulated provider', () => {
       await expect(
         restarted.backup(account, created.id, bundle.manifestFile.commitment),
       ).rejects.toThrow('ARCHIVE_BACKUP_NOT_CONFIGURED');
+      let anchor: ReturnType<typeof RuntimeTableSchemas.archives.parse> | null = null;
+      fixture.chain.archiveAnchor = async () => anchor;
+      fixture.chain.attestArchive = async (input) => {
+        anchor = RuntimeTableSchemas.archives.parse({
+          id: '1',
+          dao_id: input.dao_id,
+          manifest: input.manifest,
+          manifest_cid: input.manifest_cid,
+          manifest_bytes: input.manifest_bytes,
+          manifest_commitment: input.manifest_commitment,
+          descriptor_commitment: bundle.manifest.descriptorCommitment,
+          backup_commitment: input.backup_commitment,
+          verifier: 'relay',
+          retention_seconds: input.retention_seconds,
+          attested_at: 1700000000,
+          approved_by: '0',
+          approved_at: 0,
+          revoked: false,
+          attestation_transaction: 'cd'.repeat(32),
+          approval_transaction: '00'.repeat(32),
+        });
+        return anchor;
+      };
+      const authorization = {
+        manifestCommitment: bundle.manifestFile.commitment,
+        descriptorCommitment: bundle.manifest.descriptorCommitment,
+        backupCommitment: backed.backup?.commitment,
+        retentionSeconds: fixture.request.selection.retentionSeconds,
+      };
+      await expect(
+        withBackup.attest(account, created.id, {
+          ...authorization,
+          descriptorCommitment: 'ff'.repeat(32),
+        }),
+      ).rejects.toThrow('ARCHIVE_COMMITMENT');
+      const attested = await withBackup.attest(account, created.id, authorization);
+      expect(attested.anchor).toMatchObject({
+        id: '1',
+        approved_by: '0',
+        backup_commitment: backed.backup?.commitment,
+      });
+      expect((await withBackup.attest(account, created.id, authorization)).anchor).toEqual(
+        attested.anchor,
+      );
+      await expect(
+        pool.query("UPDATE archive_exports SET anchor_id='2' WHERE id=$1", [created.id]),
+      ).rejects.toThrow('ARCHIVE_ANCHOR_IMMUTABLE');
       const originalRetrieve = fixture.provider.retrieve;
       fixture.provider.retrieve = async () => {
         throw new Error('Primary provider lost');
       };
       expect(await withBackup.bundle(account, created.id)).toEqual(bundle);
+      await expect(withBackup.attest(account, created.id, authorization)).rejects.toThrow(
+        'ARCHIVE_BUNDLE_UNAVAILABLE',
+      );
       fixture.provider.retrieve = originalRetrieve;
 
       expect(() =>

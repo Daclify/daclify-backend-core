@@ -84,6 +84,16 @@ export function loadContract(chain: Blockchain, name: string, artifact: string):
         },
       );
     await pending;
+    // VERT omits the parent transaction on inline contexts; inherit its real encoded bytes.
+    const apply = vm.apply.bind(vm);
+    vm.apply = (context) => {
+      if (!context.transaction) {
+        const transaction = chain.actionTraces.find((trace) => trace.transaction)?.transaction;
+        if (!transaction) throw new Error('VERT_TRANSACTION_REQUIRED');
+        context.transaction = transaction;
+      }
+      return apply(context);
+    };
   };
   return account;
 }

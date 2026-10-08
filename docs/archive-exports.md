@@ -37,3 +37,19 @@ npm run archive:verify -- --encrypted /path/export.daclify-archive.enc EXPECTED_
 ```
 
 Keep the expected manifest SHA-256 separately from the backup file. Do not put the key in command arguments, chat or source. The same command without `--encrypted` verifies the downloaded JSON bundle. Native approval/anchors, bounded source pruning, historic schema retention and complete index-loss rebuilding remain separate release gates. A backup receipt is evidence of the tested verification event, not a claim of current perpetual availability or pruning authority.
+
+## Manual native archive authorization — development
+
+The development runtime can retain an immutable on-chain ordinary-poll manifest descriptor, manifest CID/SHA-256, encrypted-backup commitment and retention delay. Availability attestation and administrator approval are distinct. `archattest` requires the configured verifier account. `archapprove` and `archrevoke` require the exact DAO administrator's signed instruction through the existing vault/native/EVM governance path. The operator cannot approve on behalf of an administrator.
+
+An operator configures `setarchcfg` only after complete qualified observation exists. Its verifier must match the API relay account for the hosted attestation route. The minimum retention cannot be below 90 days. Keep `pruning_enabled=false` until the remaining source-pruning, allocation/migration and recovery release gates pass. No environment flag enables deletion automatically. Existing deployments lacking safe observation still require backfill before this setup; this branch does not qualify their upgrade.
+
+The hosted attestation action requires current administrator/session/CSRF access and exact displayed manifest, descriptor, backup and delay. The host freshly restores the independent encrypted file, validates released source schemas and maps it through the producer-owned native encoder. Native anchors accept one ordinary-poll family, no original file references, at most 32 chunks and a 16 KiB action. Larger/multiple/protected-family exports remain downloadable exports without native pruning authorization.
+
+Anchors freeze the original payload and retention. Repeated verifier attestations update availability time without duplicating the anchor or completion cursors. Cursors are physically allocated at attestation so later progress updates need no new rows. Native transaction IDs identify attestation and approval; the API retrieves an unchanged irreversible receipt before recovering an ambiguous response. This trusts the configured qualified RPC and operating verifier; it is not independent cryptographic proof of IPFS availability. A timestamp documents a verification event, not perpetual availability.
+
+Approval binds all three commitments and the exact accepted delay. Attestation must be no older than 15 minutes and come from the currently configured verifier. Replacing the verifier invalidates its old attestation until the replacement verifies the identical payload. Another current administrator may approve the same immutable payload. Revocation preserves the anchor and previous receipt and does not require backup access or a current source-code pin; source pruning must subsequently honor it.
+
+Resources separates export reservation, encrypted backup creation, on-chain availability, signed approval and revocation. Longer retention can be chosen when previewing. Approval never calls a pruning action or unpins files. Current source-code changes block new approval; replacing source contracts does not silently rewrite the original commitment. Source pruning, historical schema retention/index rebuilding and production qualification remain required.
+
+New availability attestations require fresh retrieval of both the primary manifest/chunks and the independent encrypted backup. Download recovery may use the backup during a primary outage; that does not qualify a new pruning attestation.

@@ -38,7 +38,7 @@ class ram_table:public eosio::multi_index<Table,Row,Indices...>{
   }
   bool scoped()const{
     if constexpr(is_module)return false;
-    switch(static_cast<uint64_t>(Table)){case "ramalloc"_n.value:case "members"_n.value:case "actors"_n.value:case "sessions"_n.value:case "evmbindings"_n.value:case "modules"_n.value:case "documents"_n.value:case "epochs"_n.value:case "keygrants"_n.value:case "govlocks"_n.value:case "obligations"_n.value:case "receipts"_n.value:return true;default:return false;}
+    switch(static_cast<uint64_t>(Table)){case "archives"_n.value:case "archpos"_n.value:case "ramalloc"_n.value:case "members"_n.value:case "actors"_n.value:case "sessions"_n.value:case "evmbindings"_n.value:case "modules"_n.value:case "documents"_n.value:case "epochs"_n.value:case "keygrants"_n.value:case "govlocks"_n.value:case "obligations"_n.value:case "receipts"_n.value:return true;default:return false;}
   }
   void delta(uint64_t dao,uint64_t added,uint64_t removed){observe_ram(runtime(),dao,base::get_code(),eosio::name{Table},added,removed);}
   void header(uint64_t dao,uint64_t added,uint64_t removed){observe_ram(runtime(),scoped()?dao:0,base::get_code(),eosio::name{Table},added,removed);}

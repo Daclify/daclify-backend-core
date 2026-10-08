@@ -15,24 +15,24 @@ Plan: [RAM, prepaid storage and archives](../superpowers/plans/2026-10-08-resour
 
 ## Task status
 
-| Task                                 | State       | Evidence / boundary                                                                                    |
-| ------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------ |
-| 1 Policy definitions                 | Complete    | Checked integer fees, approved storage units and pricing snapshot hashes; unchanged membership pricing |
-| 2 Native write inventory/calibration | In progress | Enforcement unavailable until payer reconciliation is demonstrated                                     |
-| 3 Backed allowances/metering         | In progress | Opt-in counters implemented; no funded allocation or enforcement                                       |
-| 4 Existing-state migration           | In progress | Observer code rebind preserves rows/counters; legacy backfill pending                                                           |
-| 5 Atomic TLOS RAM purchases          | Implemented | Atomic actual quota acquisition, typed quotes/API/wallet UI and bounded same-transaction intent; public-chain qualification pending                                 |
-| 6 Card RAM provisioning              | Implemented | Segregated native reserve, immutable consent/provider proofs, leased retry/UI; live sandbox qualification pending                                                      |
-| 7 Hosted-object ledger               | In progress | Verified unique-CID accounting and legacy ownership checks; cleanup/lifecycle integrations pending                                                                |
-| 8 Monthly storage                    | In progress | Immutable agreements, verified invoice projection, jobs/API/Resources UI; live provider and retention gates pending                                                                      |
-| 9 Grace/retention                    | Pending     | No destructive cleanup enabled                                                                         |
-| 10 Archive format/package            | In progress | Bounded formats, installed migration, terminal markers and ordinary-poll planner; host service pending                                 |
-| 11 Export/verification/approval      | Pending     | Live records remain until verification                                                                 |
-| 12 Source pruning/references         | Pending     | Financial/key state excluded                                                                           |
-| 13 History/recovery                  | Pending     | Empty-database and original-key restore drill                                                          |
-| 14 Resources/Archive UI              | In progress | Storage counters and platform policy controls; funded purchase/Archive journeys pending                                                         |
-| 15 Documentation                     | Pending     | Qualified feature descriptions only                                                                    |
-| 16 Release/qualification             | Pending     | Native/provider/browser results recorded separately                                                    |
+| Task                                 | State       | Evidence / boundary                                                                                                                 |
+| ------------------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| 1 Policy definitions                 | Complete    | Checked integer fees, approved storage units and pricing snapshot hashes; unchanged membership pricing                              |
+| 2 Native write inventory/calibration | In progress | Enforcement unavailable until payer reconciliation is demonstrated                                                                  |
+| 3 Backed allowances/metering         | In progress | Opt-in counters implemented; no funded allocation or enforcement                                                                    |
+| 4 Existing-state migration           | In progress | Observer code rebind preserves rows/counters; legacy backfill pending                                                               |
+| 5 Atomic TLOS RAM purchases          | Implemented | Atomic actual quota acquisition, typed quotes/API/wallet UI and bounded same-transaction intent; public-chain qualification pending |
+| 6 Card RAM provisioning              | Implemented | Segregated native reserve, immutable consent/provider proofs, leased retry/UI; live sandbox qualification pending                   |
+| 7 Hosted-object ledger               | In progress | Verified unique-CID accounting and legacy ownership checks; cleanup/lifecycle integrations pending                                  |
+| 8 Monthly storage                    | In progress | Immutable agreements, verified invoice projection, jobs/API/Resources UI; live provider and retention gates pending                 |
+| 9 Grace/retention                    | Pending     | No destructive cleanup enabled                                                                                                      |
+| 10 Archive format/package            | In progress | Bounded formats, installed migration, terminal markers and ordinary-poll planner; host service pending                              |
+| 11 Export/verification/approval      | Pending     | Live records remain until verification                                                                                              |
+| 12 Source pruning/references         | Pending     | Financial/key state excluded                                                                                                        |
+| 13 History/recovery                  | Pending     | Empty-database and original-key restore drill                                                                                       |
+| 14 Resources/Archive UI              | In progress | Storage counters and platform policy controls; funded purchase/Archive journeys pending                                             |
+| 15 Documentation                     | Pending     | Qualified feature descriptions only                                                                                                 |
+| 16 Release/qualification             | Pending     | Native/provider/browser results recorded separately                                                                                 |
 
 This is a progress ledger, not a release certification. Live Stripe, Pinata and Telos testnet qualification has not been performed for these features.
 
@@ -113,7 +113,6 @@ Task 7 remains in progress for full branded-media/archive lifecycle integration 
 
 Task 8 is in progress: SQL agreements/invoices, Stripe provider verification, capacity provisioning, recurring changes and payment/retention race handling are still pending. The calendar/consent helpers are not payment qualification. The new runtime remains an unpublished local development artifact; no main merge, push, live provider write, charge or deletion occurred.
 
-
 ## Prepaid storage billing checkpoint
 
 - Migration 023 adds immutable administrator approvals and invoice identity/period/dependency domains, separate storage subscriptions/prices/changes and signed-event deduplication. A cross-subscription base dependency regression failed before the composite foreign key fix. The unpublished migration was applied only to a recreated disposable resource database; no supported or live database was reset.
@@ -127,7 +126,6 @@ Task 8 is in progress: SQL agreements/invoices, Stripe provider verification, ca
 Live Stripe/Pinata qualification, merchant/account identity checks, full legacy migration/restore, safe retention cleanup, funded RAM settlement and full Archive remain required. This checkpoint adds no external charge, public deployment, unpin or main push.
 
 - Final storage checkpoint checks: core lint/docs and the repeated PostgreSQL suite passed (20 files / 147 tests). The rebuilt public protocol artifact was installed in all three consumers; frontend production build/typecheck passed. The full twelve-case browser run passed eleven cases; the remaining recovery-navigation case passed the focused desktop rerun after waiting for hub navigation. Both desktop/mobile recovery follow-up cases then passed. Fixture unlocking uses the existing redacting helper after exact chain/container checks. These fixture failures were not silently counted as a green full run.
-
 
 ## Archive manifest integrity checkpoint
 
@@ -144,7 +142,6 @@ Archive migration/coordinator, released-schema decoding, terminal eligibility ma
 
 - Final decoder/manifest module verification: **17 files / 104 tests passed** after correcting the byte-count fixture. Core typecheck/lint and the complete 21-file / 149-test integration suite passed. Only installed producer SQL is consumed; no source-checkout-only migration path or dynamic third-party SQL loader was added. Archive workers, native approvals/pruning and historical recovery are still unavailable.
 
-
 ## Observer code-rebinding checkpoint
 
 - Added native-only `rebindramobs`, requiring current runtime authority plus exact expected previous/current reviewed hashes. Stale, wrong-code, unauthorized and replayed calls reject. The code pin changes without resetting counters or existing DAO/member/native-account/signing/encryption/nonce/document fields. This does not initialize observation over untracked legacy state or create funded capacity.
@@ -155,7 +152,6 @@ Legacy backfill, new funded allocations/reserves, native/card purchase settlemen
 
 - Final observer checkpoint: native focus **5 files / 12 tests**, core **72 unit files / 450 tests**, PostgreSQL **21 files / 149 tests**, modules **17 files / 104 tests**, generated docs and consumer typechecks passed. The focused upgrade was repeated with both platform and DAO counter scopes. Fixture configuration refuses implicit code replacement when an observer exists; an explicit maintenance upgrade is required.
 
-
 ## Atomic native RAM acquisition checkpoint
 
 - Added payer-authorized bounded RAM orders with permanent references, exact policy/fee snapshots, payment ceilings, expiry and minimum acquired bytes. Incoming TLOS funds real system acquisition; the runtime does not spend payer wallet authority or DAO liabilities.
@@ -165,14 +161,12 @@ Legacy backfill, new funded allocations/reserves, native/card purchase settlemen
 
 No hosted purchase UI, external charge, public deployment or main push was enabled.
 
-
 ## Terminal eligibility and planner checkpoint
 
 - Decide now uses parallel ordinary-poll terminal markers. Opening preallocates a fixed-size unfinished marker; finalization records actual chain time. Native maintenance marking of old finalized polls records migration time, never the old closing date, and retries leave it unchanged. Work/grant execution and election families stay protected.
 - The public producer planner validates full DAO/source/schema/snapshot domain, terminal age, unique positive vote weights/members and complete cast/tally coverage. Plans keep original packed rows and bounded chunks. Estimates are gross row/index bytes, not net savings; every plan explicitly denies pruning authority. Host snapshot finality, reservation/export/backup/approval and source pruning remain separate gates.
 - Fresh module verify passed **18 files / 110 tests**. The old observer Decide binary is reproduced from module commit 2d44085 and core c6e713e for the legacy migration test. Native opening/voting/finalization/marking passed with actual all-payer counter reconciliation. The initial native maintenance test used the wrong fixture signing key and failed; selecting that account's own disposable key fixed the repeated full native test. Wait logic now uses the actual compiled ballot closing field.
 - Runtime and all five original module structs/tables/actions still compare equal to the observer baselines; terminal/new RAM records are additive. No public contract, user-funded account or main checkout was modified.
-
 
 ## Archive preview host/UI checkpoint
 
@@ -189,7 +183,6 @@ No hosted purchase UI, external charge, public deployment or main push was enabl
 - This is internal verification groundwork. Asset/archive reservation/upload/publication workers still need to enforce capacity and byte retrieval before calling it. No public asset API or destructive cleanup was enabled.
 
 - Full shared-reference follow-up: core unit **73 files / 453 tests**, modules **18 files / 110 tests**, typecheck/lint and frontend typecheck passed. The integration run initially had one content-job concurrency failure while the browser API's worker was still polling this same disposable database. After stopping that owned API, the focused six job cases and the complete **22 files / 151 integration tests** passed. This is consistent with fixture interference, not counted as an initially green full run. Do not run a polling browser API against the integration database during those checks.
-
 
 ## Artifact reservation/transport checkpoint
 
@@ -223,7 +216,6 @@ Independent backup attestation, authenticated native anchors/approval/pruning, h
 
 Backed pools, migrated-state overlays, bounded completion reserves, RAM quote/card/purchase UI, independently verified archive backup/anchors/pruning and safe hosted retention are still outstanding. No public provider/deployment, enforcement, main merge or push was enabled.
 
-
 ## Native quote and wallet purchase checkpoint
 
 - Added producer-owned typed quote request/response, fee/payment/domain consistency validation, bounded exact integer market estimates, current installed-payer/system qualification and active exact-DAO membership checks. Quotes carry the actual system ABI hash and exact native order parameters.
@@ -232,7 +224,6 @@ Backed pools, migrated-state overlays, bounded completion reserves, RAM quote/ca
 - Core focused quote/arithmetic/usage checks: **3 files / 11 tests passed**. Core unit **75 files / 459 tests passed**, core typecheck/lint passed. Further consumer/browser and full final checks are recorded below after they run.
 - Included pools, protected completion reserves, backfill and card provisioning remain separate tasks; this purchase flow does not claim those features are complete. No public-chain funding or production change occurred.
 
-
 ## Segregated card RAM implementation checkpoint
 
 - Added additive `ramreserve`/`ramcards` native state and restricted `fulfilram`, reusing actual acquisition verification. No existing native row was changed. Reserve funding accepts only actual eosio.token TLOS via its dedicated memo. Card acquisitions add no native operational fee; the accepted card policy markup has a separate immutable receipt.
@@ -240,7 +231,6 @@ Backed pools, migrated-state overlays, bounded completion reserves, RAM quote/ca
 - Migration 026 adds immutable card approvals, provider/payment references and permanent capacity receipts. Core mounts explicit typed quote/checkout/status/reconcile routes and a signature-checked separate webhook in the existing host. Live configuration stays off by default. A stoppable namespaced polling worker reuses existing SQL leases; webhook generations survive an active lease.
 - **6 PostgreSQL/Stripe-SDK integration cases passed**: checkout alone grants nothing, exact consent/immutable state, lost native response once-only recovery, transient provider failure, wrong currency, partial refund review, lost checkout recovery and a webhook while the worker is leased. The API test also requires session, CSRF, fresh account-control proof/current admin and rejects an invalid webhook signature. These use synthetic provider HTTP, not real card charges.
 - Consumer packets, browser checks and final full verification are recorded next. Remaining Tasks 3/4/9/11–13/16 still gate enforcement, pruning, cleanup and production release.
-
 
 ## Quote/card checkpoint verification and review
 
@@ -267,3 +257,13 @@ Backed pools, migrated-state overlays, bounded completion reserves, RAM quote/ca
 - Created a separately owned browser test database to prevent polling browser workers from consuming integration-test jobs. Its fresh migration path applied core 26 / Archive 3. No running user API, private environment file, public provider/chain or main checkout was changed.
 
 - Browser follow-up: **6 desktop/mobile Playwright cases passed** for storage consent, archive export/backup receipt/reload/recovery download, and one-time card RAM consent. Axe and no-overflow checks passed. Backup/payment provider responses are labelled HTTP fixtures; the actual filesystem/SQL/database-free nonempty restore has separate integration evidence. Fresh browser-database migration counts are **core 26 / Archive 3**. No deletion or native archive authorization was enabled.
+
+## Native Archive authorization checkpoint
+
+- Added additive native archive policy/anchors/preallocated progress state and separate restricted availability attestation, signed administrator approval and revocation. Exact manifest/descriptor/backup/delay are bound; commitments and retention cannot be silently replaced. Removed verifier/expired availability blocks approval. Revocation preserves data and does not depend on backup access. No pruning action was added or enabled.
+- Native authority/counter vectors passed before the added gateway-reader follow-up; the latest full native result is recorded below after it finishes. The 6 VERT authorization cases passed. VERT exposed its existing missing-parent-transaction limitation on inline receipt creation; core's harness now uses the same actual parent-byte inheritance as the module harness. Native cases compare actual recorded transaction IDs. No authorization or cryptographic verification was mocked.
+- Producer-owned native encoding passed two descriptor/backup tests. API/SQL checks validate current admin/session/CSRF, fresh independent restore, exact commitments, immutable receipt binding and retry. The first consumer integration attempt caught core's stale self-installed protocol packet; updating that packet resolved the missing public schema. A strict encoder test also caught a misplaced nested retention field; it was corrected without changing manifest format/domain.
+- Core full checks currently passed **79 unit files / 473 tests**, **24 PostgreSQL files / 171 tests**, typecheck/lint. Frontend **28 unit files / 117 tests**, typecheck/lint passed. Archive migration 004 was applied additively (core 26 / Archive 4); no applied migration was rewritten. Final native/browser/consumer checks are recorded after they complete.
+
+- Final native authorization checks passed **5 files / 15 tests**, modules **19 files / 115 tests**, frontend **28 files / 117 tests**, and **6 desktop/mobile browser cases**. Native tests prove actual permission separation, transaction IDs and RAM conservation; browser/provider fixtures are not live-provider evidence.
+- A new regression first failed because availability attestation accepted backup-only recovery during a primary outage. Attestation now freshly verifies both primary assets and the independently encrypted backup; download recovery still permits the saved backup. The corrected focused integration suite passed **32 tests**.
