@@ -19,17 +19,35 @@ function cleos(args: string[]): string {
         '--wallet-url',
         'http://127.0.0.1:8900',
         ...args,
-        ...(args[0] === 'push' ? ['-j'] : []),
+        ...(args[0] === 'push' ? ['-j', '--force-unique'] : []),
       ],
       { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] },
     );
     if (args[0] === 'push') {
       const raw: unknown = JSON.parse(result);
+      const rejected = z.object({ processed: z.object({ except: z.unknown() }) }).safeParse(raw);
+      if (rejected.success && rejected.data.processed.except) {
+        const detail = JSON.stringify(rejected.data.processed.except);
+        for (const code of [
+          'RAM_MANAGED_ACCOUNT',
+          'RAM_ACQUISITION_MINIMUM',
+          'RAM_PURCHASE_SENDER',
+        ])
+          if (detail.includes(code)) throw new Error(code);
+      }
       const expected = z.object({ transaction_id: z.string() }).parse(raw).transaction_id;
       executedChainResult(raw, expected);
     }
     return result;
-  } catch {
+  } catch (error) {
+    for (const code of ['RAM_MANAGED_ACCOUNT', 'RAM_ACQUISITION_MINIMUM', 'RAM_PURCHASE_SENDER'])
+      if (
+        error instanceof Error &&
+        (error.message === code ||
+          ('stdout' in error && String(error.stdout).includes(code)) ||
+          ('stderr' in error && String(error.stderr).includes(code)))
+      )
+        throw new Error(code);
     throw new Error('NATIVE_RAM_MARKET_REJECTED');
   }
 }
@@ -63,6 +81,26 @@ async function resources(name: string) {
 }
 beforeAll(() => {
   unlockFixtureWallet(network.container);
+  cleos([
+    'set',
+    'contract',
+    'permprobe',
+    '/work/.artifacts/contracts',
+    'ramprobe.wasm',
+    'ramprobe.abi',
+    '-p',
+    'permprobe@active',
+  ]);
+  cleos([
+    'set',
+    'account',
+    'permission',
+    'permprobe',
+    'active',
+    '--add-code',
+    '-p',
+    'permprobe@active',
+  ]);
 });
 it('buys actual receiver quota and reconciles the supported system-table delta', async () => {
   const before = await account('daclifycore'),
@@ -107,4 +145,91 @@ it('rolls back actual quota acquisition when a later action fails', async () => 
   );
   expect(await account('decide')).toEqual(before);
   expect(await resources('decide')).toBe(billed);
+});
+it('reads supported unmanaged quota from an ordinary contract and rejects managed RAM', async () => {
+  const before = await account('daclifycore');
+  const check = () =>
+    cleos([
+      'push',
+      'action',
+      'permprobe',
+      'quotafromsys',
+      JSON.stringify(['daclifycore', before.ram_quota]),
+      '-p',
+      'permprobe@active',
+    ]);
+  check();
+  try {
+    cleos([
+      'push',
+      'action',
+      'eosio',
+      'setacctram',
+      JSON.stringify(['daclifycore', before.ram_quota + 1048576]),
+      '-p',
+      'eosio@active',
+    ]);
+    expect(() => check()).toThrow('RAM_MANAGED_ACCOUNT');
+  } finally {
+    cleos([
+      'push',
+      'action',
+      'eosio',
+      'setacctram',
+      JSON.stringify(['daclifycore', null]),
+      '-p',
+      'eosio@active',
+    ]);
+  }
+  expect((await account('daclifycore')).ram_quota).toBe(before.ram_quota);
+  check();
+});
+it('verifies actual acquisition after an inline system buy and atomically rolls back an unmet minimum', async () => {
+  const purchase = (minimum: string) =>
+    cleos([
+      'push',
+      'transaction',
+      JSON.stringify({
+        actions: [
+          {
+            account: 'eosio.token',
+            name: 'transfer',
+            authorization: [{ actor: 'alice', permission: 'active' }],
+            data: {
+              from: 'alice',
+              to: 'permprobe',
+              quantity: '0.0010 TLOS',
+              memo: 'Owned RAM acquisition fixture',
+            },
+          },
+          {
+            account: 'permprobe',
+            name: 'buyassert',
+            authorization: [{ actor: 'permprobe', permission: 'active' }],
+            data: { receiver: 'daclifycore', quantity: '0.0010 TLOS', minimum },
+          },
+        ],
+      }),
+    ]);
+  const before = await account('daclifycore');
+  purchase('1');
+  const bought = await account('daclifycore');
+  expect(bought.ram_quota).toBeGreaterThan(before.ram_quota);
+  const billed = await resources('daclifycore');
+  const balance = cleos(['get', 'currency', 'balance', 'eosio.token', 'alice', 'TLOS']);
+  expect(() => purchase('18446744073709551615')).toThrow('RAM_ACQUISITION_MINIMUM');
+  expect(await account('daclifycore')).toEqual(bought);
+  expect(await resources('daclifycore')).toBe(billed);
+  expect(cleos(['get', 'currency', 'balance', 'eosio.token', 'alice', 'TLOS'])).toBe(balance);
+  expect(() =>
+    cleos([
+      'push',
+      'action',
+      'permprobe',
+      'checkgain',
+      JSON.stringify(['daclifycore', '0', '1']),
+      '-p',
+      'permprobe@active',
+    ]),
+  ).toThrow('RAM_PURCHASE_SENDER');
 });

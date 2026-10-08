@@ -12,7 +12,7 @@ export function configureFixtureContext(
   FixtureContainerSchema.parse(container);
   z.union([
     z.enum(['daclifycore', 'daclifytwo', 'upgcore']),
-    z.string().regex(/^ramobs[1-5]{6}$/),
+    z.string().regex(/^ramobs[a-z1-5]{6}$/),
   ]).parse(runtime);
   function cleos(args: string[]): string {
     try {

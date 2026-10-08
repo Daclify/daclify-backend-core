@@ -24,7 +24,9 @@ import { ModulePermissions } from '@daclify/modules';
 const network = fixtureNetwork();
 if (network.container !== 'daclify-resources-native' || network.url !== 'http://127.0.0.1:20588')
   throw new Error('OWNED_RESOURCE_FIXTURE_REQUIRED');
-const runtime = 'ramobs' + Array.from(randomBytes(6), (v) => String(1 + (v % 5))).join(''),
+const runtime =
+    'ramobs' +
+    Array.from(randomBytes(6), (v) => '12345abcdefghijklmnopqrstuvwxyz'.charAt(v % 31)).join(''),
   api = new APIClient({ url: network.url });
 const abi = ABI.from(readFileSync('.artifacts/contracts/runtime.abi', 'utf8'));
 const key = fixtureKey('alice');

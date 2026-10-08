@@ -2,7 +2,7 @@
 
 Implementation branch: `codex/resource-billing-archives` in isolated sibling worktrees under `/Users/seth/.config/superpowers/worktrees/daclify-ram-history`. Main checkouts are not implementation targets. No sub-agents, deployment, external spending or live data cleanup is authorized by this ledger.
 
-Plan: [RAM, prepaid storage and archives](../superpowers/plans/2026-10-08-resource-billing-and-archives.md). Ponytail 5.0.0, full mode. Test-first implementation proceeds inline in dependency order.
+Plan: [RAM, prepaid storage and archives](../superpowers/plans/2026-10-08-resource-billing-and-archives.md). Ponytail 5.0.0, full mode. Test-first implementation proceeds inline; independent format work can advance while enforcement qualification remains pending.
 
 ## Verification already run
 
@@ -21,12 +21,12 @@ Plan: [RAM, prepaid storage and archives](../superpowers/plans/2026-10-08-resour
 | 2 Native write inventory/calibration | In progress | Enforcement unavailable until payer reconciliation is demonstrated                                     |
 | 3 Backed allowances/metering         | In progress | Opt-in counters implemented; no funded allocation or enforcement                                       |
 | 4 Existing-state migration           | Pending     | Existing row layouts and rights must survive                                                           |
-| 5 Atomic TLOS RAM purchases          | Pending     | Must prove actual system RAM acquisition                                                               |
+| 5 Atomic TLOS RAM purchases          | In progress | Native funded-purchase/minimum proof; DAO settlement/API still pending                                 |
 | 6 Card RAM provisioning              | Pending     | Segregated operator reserve; no simulated funding                                                      |
 | 7 Hosted-object ledger               | Pending     | Verified size and unique-CID references                                                                |
 | 8 Monthly storage                    | Pending     | Explicit prepaid capacity consent                                                                      |
 | 9 Grace/retention                    | Pending     | No destructive cleanup enabled                                                                         |
-| 10 Archive format/package            | Pending     | Independent C++/TS commitment vectors                                                                  |
+| 10 Archive format/package            | In progress | Bounded format and C++/TS vectors; manifest/service/migrations pending                                 |
 | 11 Export/verification/approval      | Pending     | Live records remain until verification                                                                 |
 | 12 Source pruning/references         | Pending     | Financial/key state excluded                                                                           |
 | 13 History/recovery                  | Pending     | Empty-database and original-key restore drill                                                          |
@@ -72,3 +72,17 @@ Remaining Task 2/3 gate: implement all write hooks and prove per-DAO/payer conse
 - npm audit still reports the existing VERT development-tool dependency advisories (elliptic and lodash.set; no fix offered). They are not new runtime dependencies. The harness remains a local disposable-fixture tool, and its results do not replace native authorization or cryptography qualification.
 
 Task 2/3 remain in progress: not every lifecycle/table has a native transition vector yet. Physically backed allocations, completion reserves, purchase settlement, legacy backfill, storage billing and Archive are not enabled or release-certified by this checkpoint. No main checkout, external provider data or live funds were changed.
+
+## Archive format and native funding checkpoint
+
+- Added the public `@daclify/modules/archive` subpath and package files for the bounded development format library. An installed tarball, rather than a source import, exposed its encoder/decoder/schema API successfully.
+- The original independent Python vector matches TypeScript and compiled C++ on the native fixture for packed domain bytes/hash, all leaves, an odd-tree root and proofs. The wire format is domain plus a bounded ordered row vector; decoding preserves original packed bytes and rejects wrong domains/roots, trailing bytes, malformed/noncanonical length prefixes and counts before allocating records.
+- Eight formatter tests pass, including deterministic property cases (seed 20261008), the exact 5 MiB encoded boundary and 65,536 leaves / sixteen proof levels. Native C++ positive/negative format checks pass. This does not establish source eligibility, approval, availability or a restore service.
+- Added the pinned-system ordinary-contract quota reader for `userres` and the RAM-managed voter flag. Native checks match the receiver's actual unmanaged quota and reject managed RAM. Missing rows, unsupported code and invalid numeric ranges are rejected; the reader is not a privileged contract and does not infer support for another system build.
+- The first inline purchase prototype correctly failed because a contract cannot spend Alice's wallet through its own code authority. The qualified fixture transfers incoming tokens to the contract, buys with that contract's own code authority, and verifies real acquired quota in the next inline callback. It grants no authority over Alice's wallet.
+- A deliberately impossible acquisition minimum rolls back the incoming funding, token balances, market resource row and actual receiver quota. A directly signed verification callback is rejected for its native sender. The prototype belongs to the disposable probe, not the DAO purchase/fee ledger.
+- Duplicate-transaction caching initially masked the intended managed-RAM rejection. Native market test pushes now use the CLI's supported unique-transaction option and assert the actual contract error; all four market cases pass.
+- Latest fresh checks: core 70 files / 440 tests, modules 15 files / 91 tests, frontend 24 files / 101 tests, native focus 4 files / 10 tests. All passed, with core typecheck/lint/docs, module verify/build and frontend typecheck. Source/package files remain local development artifacts; no publishing or external deployment occurred.
+- README and generated Archive help explicitly describe unfinished service behavior and changed development-branch module WASM. The original 0.7 upgrade guide does not qualify this branch. A new release/version packet is still required.
+
+Open storage architecture decision: mainnet/testnet have separate application databases. Automatic shared-provider cleanup requires separate Pinata ownership or a shared global reference ledger; the user has been asked which setup they intend. No cleanup is enabled while this is unresolved.
