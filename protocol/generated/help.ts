@@ -98,7 +98,8 @@ export const CoreHelpBundle={
         "Download checks the recorded byte count and commitment before opening a file. A private download also checks the DAO epoch commitment and decrypts in your browser. Previous file versions remain downloadable from version history. A saved plaintext download is not erased when your vault locks. The local disk fixture is labelled explicitly and does not establish live Pinata or public IPFS availability.",
         "Changing DAO deployment, account, member identity or privacy clears document drafts and decrypted views. Late responses from a previous context are discarded. Content histories are read in scoped pages with advancing cursors; a large DAO does not fail merely because it exceeds the former row ceiling.",
         "Development resource accounting counts each verified CID once per DAO, including hosted versions, branding and archive references. Uncertain uploads still reserve their bytes. Active members can inspect verified and reserved usage; automatic deletion and paid storage subscriptions are not enabled yet. Mainnet and testnet use separate Pinata accounts and ownership ledgers.",
-        "Storage terms are prepaid calendar months, independent of member-slot subscriptions. A January 31 anniversary uses February’s last day and returns to March 31. An unpaid paid term receives thirty exact days from its original end; retries do not restart that deadline. A future prepaid term does not grant capacity before its start. Recurring paid capacity requires an administrator to approve the exact units, pricing snapshot and monthly amount. Open Resources from DAO Settings or Documents to see measured usage, accepted pricing, paid-through and the original grace deadline. Only current administrators with fresh signing control can approve recurring units. Paid capacity requires authoritative Stripe invoice/payment/charge verification, independently of membership. Reductions begin next period; increases need verified payment and a funded base. Automatic deletion is still disabled, and live provider qualification remains required."
+        "Storage terms are prepaid calendar months, independent of member-slot subscriptions. A January 31 anniversary uses February’s last day and returns to March 31. An unpaid paid term receives thirty exact days from its original end; retries do not restart that deadline. A future prepaid term does not grant capacity before its start. Recurring paid capacity requires an administrator to approve the exact units, pricing snapshot and monthly amount. Open Resources from DAO Settings or Documents to see measured usage, accepted pricing, paid-through and the original grace deadline. Only current administrators with fresh signing control can approve recurring units. Paid capacity requires authoritative Stripe invoice/payment/charge verification, independently of membership. Reductions begin next period; increases need verified payment and a funded base. Automatic deletion is still disabled, and live provider qualification remains required.",
+        "Native RAM orders on this development branch atomically acquire and verify quota for approved core/module payers, charge the accepted 5% TLOS markup and refund change. This contract path is qualified only on the owned local system fixture. Included allowances, payer pools, completion reserves, card fulfillment and the purchase screen remain unfinished; paid hosted RAM must wait for those gates."
       ]
     },
     {
@@ -274,7 +275,7 @@ export const CoreHelpBundle={
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "70c7932eb520ca382e6c892ee2fd4407b8757f6ded92dcb3aa5671adcef972b5",
+      "sourceAbiHash": "413286a8a0fc4247235584ae484abae501b251c0b1d11c0123e93fc623d826bf",
       "actions": [
         {
           "name": "addmember",
@@ -651,6 +652,15 @@ export const CoreHelpBundle={
             {
               "name": "operator_label",
               "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "finishram",
+          "fields": [
+            {
+              "name": "reference",
+              "type": "checksum256"
             }
           ]
         },
@@ -1251,6 +1261,39 @@ export const CoreHelpBundle={
             {
               "name": "creator",
               "type": "public_key"
+            }
+          ]
+        },
+        {
+          "name": "orderram",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "payer",
+              "type": "name"
+            },
+            {
+              "name": "reference",
+              "type": "checksum256"
+            },
+            {
+              "name": "policy_revision",
+              "type": "uint64"
+            },
+            {
+              "name": "maximum",
+              "type": "asset"
+            },
+            {
+              "name": "expires",
+              "type": "uint32"
+            },
+            {
+              "name": "purchases",
+              "type": "ram_purchase[]"
             }
           ]
         },
@@ -2878,6 +2921,19 @@ export const CoreHelpBundle={
           ]
         },
         {
+          "name": "ramalloc",
+          "fields": [
+            {
+              "name": "payer",
+              "type": "name"
+            },
+            {
+              "name": "purchased_bytes",
+              "type": "uint64"
+            }
+          ]
+        },
+        {
           "name": "ramobs",
           "fields": [
             {
@@ -2887,6 +2943,71 @@ export const CoreHelpBundle={
             {
               "name": "runtime_hash",
               "type": "checksum256"
+            }
+          ]
+        },
+        {
+          "name": "ramorders",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uint64"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "reference",
+              "type": "checksum256"
+            },
+            {
+              "name": "payer",
+              "type": "name"
+            },
+            {
+              "name": "treasury",
+              "type": "name"
+            },
+            {
+              "name": "policy_revision",
+              "type": "uint64"
+            },
+            {
+              "name": "fee_bps",
+              "type": "uint16"
+            },
+            {
+              "name": "expires",
+              "type": "uint32"
+            },
+            {
+              "name": "maximum",
+              "type": "asset"
+            },
+            {
+              "name": "spent",
+              "type": "asset"
+            },
+            {
+              "name": "platform_fee",
+              "type": "asset"
+            },
+            {
+              "name": "received",
+              "type": "asset"
+            },
+            {
+              "name": "purchases",
+              "type": "ram_acquisition[]"
+            },
+            {
+              "name": "funded",
+              "type": "bool"
+            },
+            {
+              "name": "settled",
+              "type": "bool"
             }
           ]
         },

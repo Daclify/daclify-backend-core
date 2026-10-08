@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = '70c7932eb520ca382e6c892ee2fd4407b8757f6ded92dcb3aa5671adcef972b5';
+export const runtimeAbiHash = '413286a8a0fc4247235584ae484abae501b251c0b1d11c0123e93fc623d826bf';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -909,6 +909,16 @@ export const runtimeAbi = {
         },
         {
           "name": "transaction_id",
+          "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "finishram",
+      "base": "",
+      "fields": [
+        {
+          "name": "reference",
           "type": "checksum256"
         }
       ]
@@ -1929,6 +1939,40 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "orderram",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "reference",
+          "type": "checksum256"
+        },
+        {
+          "name": "policy_revision",
+          "type": "uint64"
+        },
+        {
+          "name": "maximum",
+          "type": "asset"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
+        },
+        {
+          "name": "purchases",
+          "type": "ram_purchase[]"
+        }
+      ]
+    },
+    {
       "name": "participant_record",
       "base": "",
       "fields": [
@@ -2101,6 +2145,46 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "ram_acquisition",
+      "base": "",
+      "fields": [
+        {
+          "name": "receiver",
+          "type": "name"
+        },
+        {
+          "name": "quantity",
+          "type": "asset"
+        },
+        {
+          "name": "minimum_bytes",
+          "type": "uint64"
+        },
+        {
+          "name": "before_bytes",
+          "type": "uint64"
+        },
+        {
+          "name": "acquired_bytes",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "ram_allocation",
+      "base": "",
+      "fields": [
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "purchased_bytes",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
       "name": "ram_counter",
       "base": "",
       "fields": [
@@ -2137,6 +2221,90 @@ export const runtimeAbi = {
         {
           "name": "runtime_hash",
           "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "ram_order",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "reference",
+          "type": "checksum256"
+        },
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "treasury",
+          "type": "name"
+        },
+        {
+          "name": "policy_revision",
+          "type": "uint64"
+        },
+        {
+          "name": "fee_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
+        },
+        {
+          "name": "maximum",
+          "type": "asset"
+        },
+        {
+          "name": "spent",
+          "type": "asset"
+        },
+        {
+          "name": "platform_fee",
+          "type": "asset"
+        },
+        {
+          "name": "received",
+          "type": "asset"
+        },
+        {
+          "name": "purchases",
+          "type": "ram_acquisition[]"
+        },
+        {
+          "name": "funded",
+          "type": "bool"
+        },
+        {
+          "name": "settled",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "ram_purchase",
+      "base": "",
+      "fields": [
+        {
+          "name": "receiver",
+          "type": "name"
+        },
+        {
+          "name": "quantity",
+          "type": "asset"
+        },
+        {
+          "name": "minimum_bytes",
+          "type": "uint64"
         }
       ]
     },
@@ -3103,6 +3271,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "finishram",
+      "type": "finishram",
+      "ricardian_contract": ""
+    },
+    {
       "name": "govcreate",
       "type": "govcreate",
       "ricardian_contract": ""
@@ -3225,6 +3398,11 @@ export const runtimeAbi = {
     {
       "name": "orderfree",
       "type": "orderfree",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "orderram",
+      "type": "orderram",
       "ricardian_contract": ""
     },
     {
@@ -3609,8 +3787,22 @@ export const runtimeAbi = {
       "key_types": []
     },
     {
+      "name": "ramalloc",
+      "type": "ram_allocation",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "ramobs",
       "type": "ram_observer_config",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "ramorders",
+      "type": "ram_order",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -3910,6 +4102,9 @@ export interface finance_receipt {
   at: number;
   transaction_id: string;
 }
+export interface finishram {
+  reference: string;
+}
 export interface gov_policy_record {
   dao_id: string;
   revision: string;
@@ -4184,6 +4379,15 @@ export interface orderfree {
   reference: string;
   creator: string;
 }
+export interface orderram {
+  dao_id: string;
+  payer: string;
+  reference: string;
+  policy_revision: string;
+  maximum: string;
+  expires: number;
+  purchases: ram_purchase[];
+}
 export interface participant_record {
   id: string;
   kind: number;
@@ -4230,6 +4434,17 @@ export interface putjson {
   envelope_version: number;
   key_epoch: string;
 }
+export interface ram_acquisition {
+  receiver: string;
+  quantity: string;
+  minimum_bytes: string;
+  before_bytes: string;
+  acquired_bytes: string;
+}
+export interface ram_allocation {
+  payer: string;
+  purchased_bytes: string;
+}
 export interface ram_counter {
   payer: string;
   identity: string;
@@ -4240,6 +4455,28 @@ export interface ram_counter {
 export interface ram_observer_config {
   meter_bytes: string;
   runtime_hash: string;
+}
+export interface ram_order {
+  id: string;
+  dao_id: string;
+  reference: string;
+  payer: string;
+  treasury: string;
+  policy_revision: string;
+  fee_bps: number;
+  expires: number;
+  maximum: string;
+  spent: string;
+  platform_fee: string;
+  received: string;
+  purchases: ram_acquisition[];
+  funded: boolean;
+  settled: boolean;
+}
+export interface ram_purchase {
+  receiver: string;
+  quantity: string;
+  minimum_bytes: string;
 }
 export interface ram_source {
   account: string;
@@ -4499,6 +4736,7 @@ export interface RuntimeActions {
   delsession: delsession;
   enroll: enroll;
   enrollagent: enrollagent;
+  finishram: finishram;
   govcreate: govcreate;
   govfees: govfees;
   govhosted: govhosted;
@@ -4524,6 +4762,7 @@ export interface RuntimeActions {
   modconfig: modconfig;
   ordercreate: ordercreate;
   orderfree: orderfree;
+  orderram: orderram;
   payob: payob;
   putdoc: putdoc;
   putjson: putjson;

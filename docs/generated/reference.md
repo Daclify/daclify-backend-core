@@ -116,6 +116,8 @@ Development resource accounting counts each verified CID once per DAO, including
 
 Storage terms are prepaid calendar months, independent of member-slot subscriptions. A January 31 anniversary uses February’s last day and returns to March 31. An unpaid paid term receives thirty exact days from its original end; retries do not restart that deadline. A future prepaid term does not grant capacity before its start. Recurring paid capacity requires an administrator to approve the exact units, pricing snapshot and monthly amount. Open Resources from DAO Settings or Documents to see measured usage, accepted pricing, paid-through and the original grace deadline. Only current administrators with fresh signing control can approve recurring units. Paid capacity requires authoritative Stripe invoice/payment/charge verification, independently of membership. Reductions begin next period; increases need verified payment and a funded base. Automatic deletion is still disabled, and live provider qualification remains required.
 
+Native RAM orders on this development branch atomically acquire and verify quota for approved core/module payers, charge the accepted 5% TLOS markup and refund change. This contract path is qualified only on the owned local system fixture. Included allowances, payer pools, completion reserves, card fulfillment and the purchase screen remain unfinished; paid hosted RAM must wait for those gates.
+
 ## Stable members, explicit roles
 
 Each DAO records internal members with separate signing and encryption keys. A linked native account is a credential of the existing member rather than a second voting identity.
@@ -302,7 +304,7 @@ Commercial hosting, subscriptions and paid services are allowed. Independently d
 
 ## runtime contract
 
-Source ABI JSON SHA-256: `70c7932eb520ca382e6c892ee2fd4407b8757f6ded92dcb3aa5671adcef972b5`.
+Source ABI JSON SHA-256: `413286a8a0fc4247235584ae484abae501b251c0b1d11c0123e93fc623d826bf`.
 
 ### Action: addmember
 
@@ -450,6 +452,12 @@ Source ABI JSON SHA-256: `70c7932eb520ca382e6c892ee2fd4407b8757f6ded92dcb3aa5671
 | encryption_key | string |
 | custody | uint8 |
 | operator_label | string |
+
+### Action: finishram
+
+| Field | ABI type |
+| --- | --- |
+| reference | checksum256 |
 
 ### Action: govcreate
 
@@ -695,6 +703,18 @@ Source ABI JSON SHA-256: `70c7932eb520ca382e6c892ee2fd4407b8757f6ded92dcb3aa5671
 | --- | --- |
 | reference | checksum256 |
 | creator | public_key |
+
+### Action: orderram
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| payer | name |
+| reference | checksum256 |
+| policy_revision | uint64 |
+| maximum | asset |
+| expires | uint32 |
+| purchases | ram_purchase[] |
 
 ### Action: payob
 
@@ -1345,12 +1365,39 @@ Source ABI JSON SHA-256: `70c7932eb520ca382e6c892ee2fd4407b8757f6ded92dcb3aa5671
 | account_name | name |
 | profile | string |
 
+### Table: ramalloc
+
+| Field | ABI type |
+| --- | --- |
+| payer | name |
+| purchased_bytes | uint64 |
+
 ### Table: ramobs
 
 | Field | ABI type |
 | --- | --- |
 | meter_bytes | uint64 |
 | runtime_hash | checksum256 |
+
+### Table: ramorders
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| dao_id | uint64 |
+| reference | checksum256 |
+| payer | name |
+| treasury | name |
+| policy_revision | uint64 |
+| fee_bps | uint16 |
+| expires | uint32 |
+| maximum | asset |
+| spent | asset |
+| platform_fee | asset |
+| received | asset |
+| purchases | ram_acquisition[] |
+| funded | bool |
+| settled | bool |
 
 ### Table: ramsources
 

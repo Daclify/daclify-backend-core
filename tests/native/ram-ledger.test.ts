@@ -21,6 +21,7 @@ import { unlockFixtureWallet } from '../../tools/native/wallet.js';
 import { executedChainResult } from '../../services/api/src/chain-result.js';
 import { configureFixtureContext } from '../../tools/native/permissions.js';
 import { ModulePermissions } from '@daclify/modules';
+import { DecideTableSchemas } from '@daclify/modules/sdk';
 const network = fixtureNetwork();
 if (network.container !== 'daclify-resources-native' || network.url !== 'http://127.0.0.1:20588')
   throw new Error('OWNED_RESOURCE_FIXTURE_REQUIRED');
@@ -65,15 +66,22 @@ async function rpc(path: string, body: object): Promise<unknown> {
   if (!response.ok) throw new Error('RAM_LEDGER_QUERY_FAILED');
   return response.json();
 }
-async function push(name: string, data: Record<string, unknown>, actor = 'alice') {
+async function push(
+  name: string,
+  data: Record<string, unknown>,
+  actor = 'alice',
+  target = runtime,
+) {
   const info = await api.v1.chain.get_info();
   if (info.chain_id.toString() !== network.chainId) throw new Error('FIXTURE_CHAIN_CHANGED');
   const tx = Transaction.from({
     ...info.getTransactionHeader(60 + (seq++ % 60)),
     actions: [
       Action.from(
-        { account: runtime, name, authorization: [{ actor, permission: 'active' }], data },
-        abi,
+        { account: target, name, authorization: [{ actor, permission: 'active' }], data },
+        target === runtime
+          ? abi
+          : ABI.from(readFileSync('.artifacts/modules-release/' + target + '.abi', 'utf8')),
       ),
     ],
   });
@@ -81,7 +89,11 @@ async function push(name: string, data: Record<string, unknown>, actor = 'alice'
     .push_transaction(
       SignedTransaction.from({
         ...tx,
-        signatures: [key.signDigest(tx.signingDigest(network.chainId))],
+        signatures: [
+          (actor === runtime || actor === 'alice' ? key : fixtureKey(actor)).signDigest(
+            tx.signingDigest(network.chainId),
+          ),
+        ],
       }),
     )
     .catch((error: unknown) => {
@@ -523,4 +535,36 @@ it('reconciles core and all five module payers against actual native RAM', async
   await check();
   await act('decide', 'vote', { ballot_id: 1, choice: 0 });
   await check();
-});
+  const terminal = async () =>
+    z
+      .object({ rows: z.array(DecideTableSchemas.pollends) })
+      .parse(
+        await rpc('get_table_rows', {
+          code: 'decide',
+          scope: runtime,
+          table: 'pollends',
+          json: true,
+        }),
+      )
+      .rows.find((row) => row.ballot_id === '1');
+  expect((await terminal())?.completed_at).toBe(0);
+  const closes = z
+    .object({ rows: z.array(DecideTableSchemas.ballots) })
+    .parse(
+      await rpc('get_table_rows', { code: 'decide', scope: runtime, table: 'ballots', json: true }),
+    )
+    .rows.find((row) => row.id === '1')?.closes;
+  if (!closes) throw new Error('BALLOT_CLOSE_REQUIRED');
+  while (
+    Math.floor((await api.v1.chain.get_info()).head_block_time.toMilliseconds() / 1000) < closes
+  )
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  await push('finalize', { runtime, dao_id: '1', ballot_id: '1' }, 'alice', 'decide');
+  const completed = await terminal();
+  expect(completed?.completed_at).toBeGreaterThanOrEqual(closes);
+  expect(completed?.legacy).toBe(false);
+  await check();
+  await push('markpoll', { runtime, dao_id: '1', ballot_id: '1' }, 'decide', 'decide');
+  expect(await terminal()).toEqual(completed);
+  await check();
+}, 120000);

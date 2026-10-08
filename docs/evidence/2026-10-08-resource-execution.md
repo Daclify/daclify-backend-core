@@ -21,12 +21,12 @@ Plan: [RAM, prepaid storage and archives](../superpowers/plans/2026-10-08-resour
 | 2 Native write inventory/calibration | In progress | Enforcement unavailable until payer reconciliation is demonstrated                                     |
 | 3 Backed allowances/metering         | In progress | Opt-in counters implemented; no funded allocation or enforcement                                       |
 | 4 Existing-state migration           | In progress | Observer code rebind preserves rows/counters; legacy backfill pending                                                           |
-| 5 Atomic TLOS RAM purchases          | In progress | Native funded-purchase/minimum proof; DAO settlement/API still pending                                 |
+| 5 Atomic TLOS RAM purchases          | In progress | Native atomic DAO/payer acquisition and fee/rollback proof; pools/quote/API pending                                 |
 | 6 Card RAM provisioning              | Pending     | Segregated operator reserve; no simulated funding                                                      |
 | 7 Hosted-object ledger               | In progress | Verified unique-CID accounting and legacy ownership checks; cleanup/lifecycle integrations pending                                                                |
 | 8 Monthly storage                    | In progress | Immutable agreements, verified invoice projection, jobs/API/Resources UI; live provider and retention gates pending                                                                      |
 | 9 Grace/retention                    | Pending     | No destructive cleanup enabled                                                                         |
-| 10 Archive format/package            | In progress | Bounded formats, compiled-schema decoder and installed namespaced migration; service/planner pending                                 |
+| 10 Archive format/package            | In progress | Bounded formats, installed migration, terminal markers and ordinary-poll planner; host service pending                                 |
 | 11 Export/verification/approval      | Pending     | Live records remain until verification                                                                 |
 | 12 Source pruning/references         | Pending     | Financial/key state excluded                                                                           |
 | 13 History/recovery                  | Pending     | Empty-database and original-key restore drill                                                          |
@@ -154,3 +154,21 @@ Archive migration/coordinator, released-schema decoding, terminal eligibility ma
 Legacy backfill, new funded allocations/reserves, native/card purchase settlement and complete Archive/cleanup/recovery remain pending. No public contract or main checkout was upgraded.
 
 - Final observer checkpoint: native focus **5 files / 12 tests**, core **72 unit files / 450 tests**, PostgreSQL **21 files / 149 tests**, modules **17 files / 104 tests**, generated docs and consumer typechecks passed. The focused upgrade was repeated with both platform and DAO counter scopes. Fixture configuration refuses implicit code replacement when an observer exists; an explicit maintenance upgrade is required.
+
+
+## Atomic native RAM acquisition checkpoint
+
+- Added payer-authorized bounded RAM orders with permanent references, exact policy/fee snapshots, payment ceilings, expiry and minimum acquired bytes. Incoming TLOS funds real system acquisition; the runtime does not spend payer wallet authority or DAO liabilities.
+- The callback requires native runtime sender/authority, rechecks approved installed code, verifies actual quota deltas for all receivers and credits permanent purchased capacity. Fees/change move only after all receivers succeed. No Connect or generic conversion fee is stacked.
+- The red run proved the order ABI was absent. The receiver fixture needed its catalogue registration; successful RPC reads exposed numeric booleans, now parsed through the generated schema. Four native cases passed: 1.5000 TLOS acquisition plus 0.0750 fee, refund/conservation, atomic receiver rollback, replay/callback, expiry/policy and receiver bounds. The saved quantities reflect an artificial local market, not public pricing.
+- Original runtime structs/tables/actions compare equal against the observer baseline; new records are parallel. Core unit tests still passed 72 files / 450 tests. Funded included/payer pools, quota enforcement/completion reserves, quote/UI, segregated card fulfillment and deployment qualification remain required.
+
+No hosted purchase UI, external charge, public deployment or main push was enabled.
+
+
+## Terminal eligibility and planner checkpoint
+
+- Decide now uses parallel ordinary-poll terminal markers. Opening preallocates a fixed-size unfinished marker; finalization records actual chain time. Native maintenance marking of old finalized polls records migration time, never the old closing date, and retries leave it unchanged. Work/grant execution and election families stay protected.
+- The public producer planner validates full DAO/source/schema/snapshot domain, terminal age, unique positive vote weights/members and complete cast/tally coverage. Plans keep original packed rows and bounded chunks. Estimates are gross row/index bytes, not net savings; every plan explicitly denies pruning authority. Host snapshot finality, reservation/export/backup/approval and source pruning remain separate gates.
+- Fresh module verify passed **18 files / 110 tests**. The old observer Decide binary is reproduced from module commit 2d44085 and core c6e713e for the legacy migration test. Native opening/voting/finalization/marking passed with actual all-payer counter reconciliation. The initial native maintenance test used the wrong fixture signing key and failed; selecting that account's own disposable key fixed the repeated full native test. Wait logic now uses the actual compiled ballot closing field.
+- Runtime and all five original module structs/tables/actions still compare equal to the observer baselines; terminal/new RAM records are additive. No public contract, user-funded account or main checkout was modified.

@@ -3,6 +3,7 @@
 #include "governance.hpp"
 #include "creation.hpp"
 #include "evm_authorization.hpp"
+#include "telos_resources.hpp"
 #include <eosio/transaction.hpp>
 #define JSON_NOEXCEPTION
 #define JSON_HAS_FILESYSTEM 0
@@ -14,6 +15,38 @@ public:
   // Off-chain login signs this inert action. Accidental broadcast grants no rights.
   ACTION authproof(name account,checksum256 intent) { require_auth(account);check(intent!=checksum256{},"AUTH_INTENT"); }
   using contract::contract;
+  using ram_orders=ram_table<"ramorders"_n,ram_order,indexed_by<"byreference"_n,const_mem_fun<ram_order,checksum256,&ram_order::by_reference>>>;
+  using ram_allocations=ram_table<"ramalloc"_n,ram_allocation>;
+  ACTION orderram(uint64_t dao_id,name payer,checksum256 reference,uint64_t policy_revision,asset maximum,uint32_t expires,std::vector<ram_purchase> purchases){
+    require_auth(payer);check(payer!=get_self(),"RAM_PAYER");dao_rows.get(dao_id,"DAO_UNKNOWN");
+    check(ram_observer_settings(get_self(),get_self().value).exists(),"RAM_OBSERVER_REQUIRED");
+    auto cfg=resource_settings(get_self(),get_self().value).get();check(cfg.revision==policy_revision,"RESOURCE_POLICY_CHANGED");
+    auto fees=fee_configuration();check(fees.token_contract=="eosio.token"_n&&fees.token_symbol==symbol("TLOS",4),"RAM_TOKEN_IDENTITY");
+    const auto now=current_time_point().sec_since_epoch();check(expires>now&&uint64_t(expires)<=uint64_t(now)+cfg.quote_lifetime_seconds,"RAM_QUOTE_EXPIRED");
+    check(reference!=checksum256{}&&maximum.is_valid()&&maximum.symbol==fees.token_symbol&&maximum.amount>0&&purchases.size()>0&&purchases.size()<=6,"RAM_PURCHASE_RANGE");
+    ram_orders orders(get_self(),get_self().value);auto index=orders.get_index<"byreference"_n>();check(index.find(reference)==index.end(),"RAM_ORDER_EXISTS");
+    ram_order value;value.dao_id=dao_id;value.reference=reference;value.payer=payer;value.treasury=fees.treasury;value.policy_revision=policy_revision;value.fee_bps=cfg.native_ram_bps;value.expires=expires;value.maximum=maximum;
+    int64_t total=0;name previous;
+    for(const auto& purchase:purchases){
+      check(purchase.receiver.value>previous.value,"RAM_RECEIVER_ORDER");previous=purchase.receiver;validate_ram_receiver(dao_id,purchase.receiver);
+      check(purchase.quantity.is_valid()&&purchase.quantity.symbol==fees.token_symbol&&purchase.quantity.amount>0&&purchase.minimum_bytes>0,"RAM_PURCHASE_RANGE");
+      total=add_amount(total,purchase.quantity.amount);value.purchases.push_back(ram_acquisition{purchase.receiver,purchase.quantity,purchase.minimum_bytes,0,0});
+    }
+    const __int128 markup=(__int128(total)*cfg.native_ram_bps+9999)/10000;check(markup<=asset::max_amount,"RAM_PURCHASE_RANGE");
+    value.spent=asset(total,fees.token_symbol);value.platform_fee=asset(int64_t(markup),fees.token_symbol);value.received=asset(0,fees.token_symbol);check(add_amount(total,int64_t(markup))<=maximum.amount,"RAM_PAYMENT_RANGE");
+    auto id=orders.available_primary_key();if(!id)id=1;check(id<std::numeric_limits<uint64_t>::max(),"RAM_ORDER_LIMIT");value.id=id;orders.emplace(get_self(),[&](auto& row){row=value;});
+  }
+  ACTION finishram(checksum256 reference){
+    check(get_sender()==get_self(),"RAM_PURCHASE_SENDER");require_auth(get_self());
+    ram_orders orders(get_self(),get_self().value);auto index=orders.get_index<"byreference"_n>();const auto& order=index.get(reference,"RAM_ORDER_UNKNOWN");check(order.funded&&!order.settled,"RAM_ORDER_SETTLED");
+    auto result=order.purchases;
+    for(auto& purchase:result){validate_ram_receiver(order.dao_id,purchase.receiver);auto after=telos_unmanaged_ram(purchase.receiver);check(after>=purchase.before_bytes&&after-purchase.before_bytes>=purchase.minimum_bytes,"RAM_ACQUISITION_MINIMUM");purchase.acquired_bytes=after-purchase.before_bytes;}
+    ram_allocations allocations(get_self(),order.dao_id);
+    for(const auto& purchase:result){auto old=allocations.find(purchase.receiver.value);if(old==allocations.end())allocations.emplace(get_self(),[&](auto& row){row.payer=purchase.receiver;row.purchased_bytes=purchase.acquired_bytes;});else allocations.modify(old,same_payer,[&](auto& row){row.purchased_bytes=add64(row.purchased_bytes,purchase.acquired_bytes);});}
+    const auto fee=order.platform_fee;const auto refund=asset(order.received.amount-order.spent.amount-fee.amount,fee.symbol);const auto payer=order.payer,treasury=order.treasury;
+    index.modify(order,same_payer,[&](auto& row){row.purchases=result;row.settled=true;});
+    pay_share("eosio.token"_n,treasury,fee,"Daclify RAM operational fee");pay_share("eosio.token"_n,payer,refund,"Daclify RAM purchase change");
+  }
   ACTION initramobs(){
     require_auth(get_self());check(dao_rows.begin()==dao_rows.end(),"RAM_BACKFILL_REQUIRED");
     check(!fee_settings(get_self(),get_self().value).exists()&&!payment_settings(get_self(),get_self().value).exists()&&!market_settings(get_self(),get_self().value).exists()&&!creation_settings(get_self(),get_self().value).exists()&&!hosted_settings(get_self(),get_self().value).exists()&&!seat_settings(get_self(),get_self().value).exists()&&!resource_settings(get_self(),get_self().value).exists(),"RAM_BACKFILL_REQUIRED");
@@ -506,6 +539,7 @@ public:
     if(to!=get_self()||from==get_self())return;
     check(quantity.is_valid()&&quantity.amount>0,"ASSET_QUANTITY");
     if(memo.rfind("create:",0)==0){creation_payment(quantity,memo);return;}
+    if(memo.rfind("ram:",0)==0){ram_payment(from,quantity,memo);return;}
     if(memo.rfind("mod:",0)==0){settle_module(from,quantity,memo);return;}
     check(memo.size()<=64,"DEPOSIT_REFERENCE");
     std::vector<std::string> parts;size_t start=0;
@@ -518,6 +552,25 @@ public:
   }
 private:
   daos dao_rows{get_self(),get_self().value};
+  void validate_ram_receiver(uint64_t dao_id,name receiver){
+    ram_observer_settings saved(get_self(),get_self().value);const auto cfg=saved.get();
+    if(receiver==get_self())check(get_code_hash(receiver)==cfg.runtime_hash,"RAM_SOURCE_CODE");
+    else{ram_sources sources(get_self(),get_self().value);const auto& source=sources.get(receiver.value,"RAM_SOURCE_UNKNOWN");check(get_code_hash(receiver)==source.code_hash,"RAM_SOURCE_CODE");modules rows(get_self(),dao_id);const auto& installed=rows.get(receiver.value,"RAM_RECEIVER_UNINSTALLED");check(installed.code_hash==source.code_hash,"RAM_SOURCE_CODE");}
+    telos_unmanaged_ram(receiver);
+  }
+  void ram_payment(name from,asset quantity,const std::string& memo){
+    check(get_first_receiver()=="eosio.token"_n&&quantity.symbol==symbol("TLOS",4),"RAM_TOKEN_IDENTITY");check(memo.size()==68,"RAM_PAYMENT_REFERENCE");
+    std::array<uint8_t,32> bytes{};auto nibble=[](char c)->uint8_t{check((c>='0'&&c<='9')||(c>='a'&&c<='f'),"RAM_PAYMENT_REFERENCE");return c<='9'?c-'0':c-'a'+10;};
+    for(size_t i=0;i<32;i++)bytes[i]=(nibble(memo[4+i*2])<<4)|nibble(memo[5+i*2]);
+    const auto reference=checksum256(bytes);ram_orders orders(get_self(),get_self().value);auto index=orders.get_index<"byreference"_n>();const auto& order=index.get(reference,"RAM_ORDER_UNKNOWN");
+    check(!order.funded&&!order.settled,"RAM_ORDER_SETTLED");check(order.payer==from,"RAM_PAYER");check(order.expires>current_time_point().sec_since_epoch(),"RAM_QUOTE_EXPIRED");
+    auto cfg=resource_settings(get_self(),get_self().value).get();check(cfg.revision==order.policy_revision&&cfg.native_ram_bps==order.fee_bps,"RESOURCE_POLICY_CHANGED");const auto fees=fee_configuration();check(fees.treasury==order.treasury&&fees.token_contract==get_first_receiver()&&fees.token_symbol==quantity.symbol,"RAM_TOKEN_IDENTITY");
+    check(quantity.amount>=add_amount(order.spent.amount,order.platform_fee.amount)&&quantity.amount<=order.maximum.amount,"RAM_PAYMENT_RANGE");auto purchases=order.purchases;
+    for(auto& purchase:purchases){validate_ram_receiver(order.dao_id,purchase.receiver);purchase.before_bytes=telos_unmanaged_ram(purchase.receiver);}
+    index.modify(order,same_payer,[&](auto& row){row.funded=true;row.received=quantity;row.purchases=purchases;});
+    for(const auto& purchase:purchases)action(permission_level{get_self(),"active"_n},"eosio"_n,"buyram"_n,std::make_tuple(get_self(),purchase.receiver,purchase.quantity)).send();
+    action(permission_level{get_self(),"active"_n},get_self(),"finishram"_n,std::make_tuple(reference)).send();
+  }
   void save_resources(uint16_t native_ram_bps,uint16_t card_ram_bps,uint64_t included_activity_bytes,uint64_t identity_bytes_per_slot,uint32_t quote_lifetime_seconds,uint64_t storage_free_bytes,uint64_t storage_unit_bytes,uint32_t storage_monthly_usd){
     check(native_ram_bps<=10000&&card_ram_bps<=10000&&quote_lifetime_seconds>0&&quote_lifetime_seconds<=3600&&storage_unit_bytes>0&&storage_monthly_usd>0&&storage_monthly_usd<=99999999,"RESOURCE_POLICY");
     resource_settings saved(get_self(),get_self().value);auto cfg=saved.exists()?saved.get():resource_policy{};
@@ -750,7 +803,7 @@ private:
 extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
   if(code==receiver){switch(action_name){
     EOSIO_DISPATCH_HELPER(runtime,(authproof)(unlinknat)(linkevm)(unlinkevm)(submitevm)(setadmit)(admitfrom))
-    EOSIO_DISPATCH_HELPER(runtime,(initramobs)(rebindramobs)(setresources)(govresources)(setramcode)(ramadjust))
+    EOSIO_DISPATCH_HELPER(runtime,(initramobs)(rebindramobs)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram))
     EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(setprofile)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(confirmext)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))
     EOSIO_DISPATCH_HELPER(runtime,(sethosted)(govhosted)(govseatfee)(orderfree)(setcapacity)(revokecap)(resumecap))
     EOSIO_DISPATCH_HELPER(runtime,(enrollagent)(addmember)(initgov)(setdaogov)(addsession)(delsession)(guardpause)(guardrevoke)(guardrecover)(submitsess)(setfees)(listmod)(unlistmod)(setmodcopy)(setpolicy)(setgov)(setoracle)(govfees)(govpayfees)(setcreate)(govcreate)(setcrrate)(ordercreate)(cardcreate)(createpaid)(govlist)(govunlist)(govmodcopy))
