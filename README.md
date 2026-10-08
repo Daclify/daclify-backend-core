@@ -92,3 +92,5 @@ First-party code, contracts, SDKs and documentation are licensed under
 Third-party files retain their own licenses. Contributions remain owned by their authors.
 
 Hosted storage development accounting now deduplicates verified CIDs per DAO and retains uncertain upload reservations. Mainnet/testnet use separate Pinata accounts. Legacy upload ownership requires explicit provider/byte verification; see [storage accounting](docs/storage-accounting.md). Monthly storage billing and automatic deletion remain unavailable on this branch.
+
+The development Daclify DAO screen can govern the separate revisioned resource policy through `govresources`. It protects against stale updates and has an explicit `execctx` permission-plan link. Policy settings do not fund RAM or activate storage subscriptions; prepaid payment provisioning remains pending.

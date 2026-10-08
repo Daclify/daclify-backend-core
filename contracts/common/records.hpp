@@ -7,6 +7,7 @@
 #include "ram_table.hpp"
 using namespace eosio;
 namespace daclify {
+using resource_settings=ram_singleton<"resourcecfg"_n,resource_policy>;
 struct instruction {
   uint16_t version;
   checksum256 chain_id;

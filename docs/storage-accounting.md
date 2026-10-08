@@ -31,3 +31,9 @@ This is an explicit operator write for one selected upload. It requires exactly 
 ## Retention boundary
 
 Automatic unpinning is disabled. Object generations and `removing` state prepare the reference fence: verification rejects a new reference to an object being removed. They do not yet implement the thirty-day billing grace, staged ciphertext backup, provider leases or compensation. No file is deleted because of an expired upload reservation or unpaid membership subscription in this checkpoint.
+
+## Governed resource policy and prepaid period helpers
+
+The separate `resourcecfg` contract table records the Daclify DAO’s revisioned RAM fees, capacity targets and storage pricing. `govresources` uses the existing signed administrator context and requires the expected revision. A stale update or another DAO cannot change the policy. Native `setresources` is an operator bootstrap override, consistent with existing platform authority; a native operator retains upgrade/control authority. Runtime permission plans must link the new `govresources` action to the existing code-only `execctx` permission before its signed route works. This has only been applied to the owned fixture, not any public deployment.
+
+The platform screen signs exact decimal inputs and shows that policies alone do not fund capacity or start billing. Approved monthly units bind the full immutable pricing hash, amount and recurring consent. Calendar/grace helpers are tested with January 31, leap February, month-end recovery, UTC daylight saving boundaries, future prepayment and the exact thirty-day deadline. Stripe subscription/invoice persistence, provider reconciliation and funded allowance provisioning are still pending; these helpers do not establish payment verification.

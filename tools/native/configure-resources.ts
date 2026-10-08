@@ -5,6 +5,7 @@ import { ModuleCodeHashes } from '@daclify/modules/sdk';
 import { RuntimeCodeHash } from '../../sdk/index.js';
 import { APIClient } from '@wharfkit/antelope';
 import { fixtureNetwork } from './network.js';
+import { configureFixtureContext } from './permissions.js';
 import { unlockFixtureWallet } from './wallet.js';
 import { executedChainResult } from '../../services/api/src/chain-result.js';
 const network = fixtureNetwork();
@@ -53,6 +54,7 @@ if (current.code_hash !== RuntimeCodeHash) {
     throw new Error('RESOURCE_FIXTURE_DEPLOYMENT_REJECTED');
   }
 }
+configureFixtureContext(network.container);
 for (const [name, data] of [
   ['setfees', [500, 10000, 'alice', 'eosio.token', '4,TLOS', '']],
   ['sethosted', [10, 'relay']],

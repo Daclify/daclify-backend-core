@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = '6773df839f6a21a75bc13a8d7f6ad74dce5c1f78334477e6c7b74f6310fe5651';
+export const runtimeAbiHash = '4b9d44365b04cc5683fe3409ab4fed7f67937b039f3dc09ea0482677c344b025';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -1206,6 +1206,60 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "govresources",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "expected_revision",
+          "type": "uint64"
+        },
+        {
+          "name": "native_ram_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "card_ram_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "included_activity_bytes",
+          "type": "uint64"
+        },
+        {
+          "name": "identity_bytes_per_slot",
+          "type": "uint64"
+        },
+        {
+          "name": "quote_lifetime_seconds",
+          "type": "uint32"
+        },
+        {
+          "name": "storage_free_bytes",
+          "type": "uint64"
+        },
+        {
+          "name": "storage_unit_bytes",
+          "type": "uint64"
+        },
+        {
+          "name": "storage_monthly_usd",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
       "name": "govseatfee",
       "base": "",
       "fields": [
@@ -2157,6 +2211,56 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "resource_policy",
+      "base": "",
+      "fields": [
+        {
+          "name": "schema_version",
+          "type": "uint16"
+        },
+        {
+          "name": "revision",
+          "type": "uint64"
+        },
+        {
+          "name": "native_ram_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "card_ram_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "included_activity_bytes",
+          "type": "uint64"
+        },
+        {
+          "name": "identity_bytes_per_slot",
+          "type": "uint64"
+        },
+        {
+          "name": "quote_lifetime_seconds",
+          "type": "uint32"
+        },
+        {
+          "name": "grace_seconds",
+          "type": "uint32"
+        },
+        {
+          "name": "storage_free_bytes",
+          "type": "uint64"
+        },
+        {
+          "name": "storage_unit_bytes",
+          "type": "uint64"
+        },
+        {
+          "name": "storage_monthly_usd",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
       "name": "resumecap",
       "base": "",
       "fields": [
@@ -2665,6 +2769,44 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "setresources",
+      "base": "",
+      "fields": [
+        {
+          "name": "native_ram_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "card_ram_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "included_activity_bytes",
+          "type": "uint64"
+        },
+        {
+          "name": "identity_bytes_per_slot",
+          "type": "uint64"
+        },
+        {
+          "name": "quote_lifetime_seconds",
+          "type": "uint32"
+        },
+        {
+          "name": "storage_free_bytes",
+          "type": "uint64"
+        },
+        {
+          "name": "storage_unit_bytes",
+          "type": "uint64"
+        },
+        {
+          "name": "storage_monthly_usd",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
       "name": "setroles",
       "base": "",
       "fields": [
@@ -2982,6 +3124,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "govresources",
+      "type": "govresources",
+      "ricardian_contract": ""
+    },
+    {
       "name": "govseatfee",
       "type": "govseatfee",
       "ricardian_contract": ""
@@ -3194,6 +3341,11 @@ export const runtimeAbi = {
     {
       "name": "setramcode",
       "type": "setramcode",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "setresources",
+      "type": "setresources",
       "ricardian_contract": ""
     },
     {
@@ -3461,6 +3613,13 @@ export const runtimeAbi = {
     {
       "name": "receipts",
       "type": "finance_receipt",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "resourcecfg",
+      "type": "resource_policy",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -3810,6 +3969,20 @@ export interface govpayfees {
   member_id: string;
   bps: number;
 }
+export interface govresources {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  expected_revision: string;
+  native_ram_bps: number;
+  card_ram_bps: number;
+  included_activity_bytes: string;
+  identity_bytes_per_slot: string;
+  quote_lifetime_seconds: number;
+  storage_free_bytes: string;
+  storage_unit_bytes: string;
+  storage_monthly_usd: number;
+}
 export interface govseatfee {
   runtime: string;
   dao_id: string;
@@ -4068,6 +4241,19 @@ export interface reserve {
   quantity: string;
   due: number;
 }
+export interface resource_policy {
+  schema_version: number;
+  revision: string;
+  native_ram_bps: number;
+  card_ram_bps: number;
+  included_activity_bytes: string;
+  identity_bytes_per_slot: string;
+  quote_lifetime_seconds: number;
+  grace_seconds: number;
+  storage_free_bytes: string;
+  storage_unit_bytes: string;
+  storage_monthly_usd: number;
+}
 export interface resumecap {
   dao_id: string;
   receipt: string;
@@ -4207,6 +4393,16 @@ export interface setramcode {
   account: string;
   code_hash: string;
 }
+export interface setresources {
+  native_ram_bps: number;
+  card_ram_bps: number;
+  included_activity_bytes: string;
+  identity_bytes_per_slot: string;
+  quote_lifetime_seconds: number;
+  storage_free_bytes: string;
+  storage_unit_bytes: string;
+  storage_monthly_usd: number;
+}
 export interface setroles {
   runtime: string;
   dao_id: string;
@@ -4287,6 +4483,7 @@ export interface RuntimeActions {
   govlock: govlock;
   govmodcopy: govmodcopy;
   govpayfees: govpayfees;
+  govresources: govresources;
   govseatfee: govseatfee;
   govunlist: govunlist;
   govunlock: govunlock;
@@ -4330,6 +4527,7 @@ export interface RuntimeActions {
   setpolicy: setpolicy;
   setprofile: setprofile;
   setramcode: setramcode;
+  setresources: setresources;
   setroles: setroles;
   submit: submit;
   submitevm: submitevm;

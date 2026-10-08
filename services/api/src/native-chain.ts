@@ -102,6 +102,7 @@ import type { EvmRelay } from '../../../protocol/evm-wallet.js';
 import type { Pool } from 'pg';
 import { canonicalEvmSignature, evmTypedDigest, governanceTypedData } from '../../../sdk/evm.js';
 import { recoverEvmDigest } from './auth/evm-proof.js';
+import { resourcePolicyFromRow } from '../../../protocol/resources.js';
 import { ApiError, contractError } from './errors.js';
 import {
   ChainPlatformSchema,
@@ -361,6 +362,7 @@ export class NativeChainGateway implements ChainGateway {
       hosting,
       seatPricing,
       paymentPolicy,
+      resourcePolicy,
     ] = await Promise.all([
       optional(this, 'feecfg'),
       optional(this, 'mktcfg'),
@@ -372,6 +374,7 @@ export class NativeChainGateway implements ChainGateway {
       optional(this, 'capcfg'),
       optional(this, 'seatcfg'),
       optional(this, 'paycfg'),
+      optional(this, 'resourcecfg'),
     ]);
     const contracts = await Promise.all(
       [
@@ -445,6 +448,7 @@ export class NativeChainGateway implements ChainGateway {
       hosting,
       seatPricing,
       paymentPolicy,
+      resourcePolicy: resourcePolicy ? resourcePolicyFromRow(resourcePolicy) : null,
       runtimeSettings,
       rateFresh:
         !!creation &&

@@ -73,6 +73,7 @@ export const UploadStatusSchema = z.strictObject({
   document: HostedDocumentSchema.optional(),
 });
 
+export const STORAGE_GRACE_SECONDS = 30 * 86_400;
 export const StorageUnitsSchema = z.int().min(0).max(999_999);
 export const StoragePricingSchema = z.strictObject({
   schemaVersion: z.literal(1),
@@ -126,3 +127,42 @@ export const HostedStorageUsageSchema = z.strictObject({
   references: z.int().nonnegative(),
   cleanup: z.literal('disabled'),
 });
+
+export const StorageApprovalSchema = z
+  .strictObject({
+    schemaVersion: z.literal(1),
+    requestId: z.uuid(),
+    dao: DaoRefSchema,
+    units: StorageUnitsSchema,
+    pricingHash: ChainIdSchema,
+    monthlyUsdCents: z.int().min(0).max(99_999_999),
+    recurringConsent: z.boolean(),
+    acceptCurrentPricing: z.boolean().default(false),
+  })
+  .refine((value) => value.units === 0 || value.recurringConsent, {
+    path: ['recurringConsent'],
+    message: 'Paid storage requires explicit recurring consent',
+  });
+export type StorageApproval = z.infer<typeof StorageApprovalSchema>;
+export function validateStorageApproval(value: unknown, snapshot: StoragePricing): StorageApproval {
+  const approval = StorageApprovalSchema.parse(value);
+  if (
+    approval.pricingHash !== storagePricingHash(snapshot) ||
+    approval.monthlyUsdCents !== monthlyStorageUsdCents(approval.units, snapshot)
+  )
+    throw new RangeError('STORAGE_APPROVAL_CHANGED');
+  storageCapacity(approval.units, snapshot);
+  return approval;
+}
+
+export const StorageInstantSchema = z
+  .union([z.iso.datetime({ precision: 0 }), z.iso.datetime({ precision: 3 })])
+  .refine(
+    (value) => Number.isFinite(Date.parse(value)) && new Date(value).getUTCFullYear() >= 1970,
+  );
+export const StoragePeriodSchema = z
+  .strictObject({ startsAt: StorageInstantSchema, endsAt: StorageInstantSchema })
+  .refine((value) => Date.parse(value.endsAt) > Date.parse(value.startsAt), {
+    path: ['endsAt'],
+    message: 'A paid period must end after its start',
+  });

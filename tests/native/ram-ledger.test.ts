@@ -337,6 +337,21 @@ it('reconciles core and all five module payers against actual native RAM', async
     runtime,
   );
   expect(BigInt((await used()) - baseline)).toBe(await accounted());
+  await push(
+    'setresources',
+    {
+      native_ram_bps: 500,
+      card_ram_bps: 2000,
+      included_activity_bytes: '262144',
+      identity_bytes_per_slot: '2048',
+      quote_lifetime_seconds: 300,
+      storage_free_bytes: '100000000',
+      storage_unit_bytes: '1000000000',
+      storage_monthly_usd: 100,
+    },
+    runtime,
+  );
+  expect(BigInt((await used()) - baseline)).toBe(await accounted());
   for (const id of daoScopes.slice(1)) {
     await push('createdao', {
       dao_id: id,

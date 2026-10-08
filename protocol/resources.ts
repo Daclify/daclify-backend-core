@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { checkedAdd, Uint64Schema } from './base.js';
-import { DEFAULT_STORAGE_PRICING, StoragePricingSchema } from './storage.js';
+import { RuntimeTableSchemas } from '../sdk/generated/schemas.js';
+import { DEFAULT_STORAGE_PRICING, StoragePricingSchema, STORAGE_GRACE_SECONDS } from './storage.js';
 
 export const RamPaymentRailSchema = z.enum(['tlos', 'card']);
 export type RamPaymentRail = z.infer<typeof RamPaymentRailSchema>;
@@ -12,7 +13,7 @@ export const ResourcePolicySchema = z.strictObject({
   includedActivityBytes: Uint64Schema,
   identityBytesPerSlot: Uint64Schema,
   quoteLifetimeSeconds: z.int().min(1).max(3600),
-  graceSeconds: z.literal(30 * 86_400),
+  graceSeconds: z.literal(STORAGE_GRACE_SECONDS),
   storage: StoragePricingSchema,
 });
 export type ResourcePolicy = z.infer<typeof ResourcePolicySchema>;
@@ -24,7 +25,7 @@ export const DEFAULT_RESOURCE_POLICY: ResourcePolicy = ResourcePolicySchema.pars
   includedActivityBytes: '262144',
   identityBytesPerSlot: '2048',
   quoteLifetimeSeconds: 300,
-  graceSeconds: 30 * 86_400,
+  graceSeconds: STORAGE_GRACE_SECONDS,
   storage: DEFAULT_STORAGE_PRICING,
 });
 
@@ -53,4 +54,25 @@ export function ramRowBytes(packedBytes: number, indexWidths: readonly number[])
 }
 export function ramScopeBytes(indexCount: number): bigint {
   return BigInt(Math.max(1, z.int().min(0).max(16).parse(indexCount))) * 112n;
+}
+
+export function resourcePolicyFromRow(value: unknown): ResourcePolicy {
+  const row = RuntimeTableSchemas.resourcecfg.parse(value);
+  return ResourcePolicySchema.parse({
+    schemaVersion: row.schema_version,
+    revision: row.revision,
+    nativeRamBps: row.native_ram_bps,
+    cardRamBps: row.card_ram_bps,
+    includedActivityBytes: row.included_activity_bytes,
+    identityBytesPerSlot: row.identity_bytes_per_slot,
+    quoteLifetimeSeconds: row.quote_lifetime_seconds,
+    graceSeconds: row.grace_seconds,
+    storage: {
+      schemaVersion: row.schema_version,
+      revision: row.revision,
+      freeBytes: row.storage_free_bytes,
+      unitBytes: row.storage_unit_bytes,
+      monthlyUnitUsdCents: row.storage_monthly_usd,
+    },
+  });
 }

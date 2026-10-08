@@ -397,6 +397,10 @@ export const ServiceResponseRoutes = [
 }[];
 
 export const ContractFailureMessages = {
+  RESOURCE_POLICY_CHANGED:
+    'The resource policy changed. Refresh and review the current values before signing.',
+  RESOURCE_POLICY:
+    'Choose valid resource fees, a bounded quote lifetime, and positive storage units and monthly price.',
   MEMBERSHIP_CAPACITY:
     'This DAO has reached its member allowance. Ask an administrator to approve more capacity; existing members retain their rights.',
   HOSTED_PRICE:

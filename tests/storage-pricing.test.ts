@@ -5,6 +5,7 @@ import {
   storageCapacity,
   monthlyStorageUsdCents,
   storagePricingHash,
+  validateStorageApproval,
 } from '../protocol/storage.js';
 
 describe('administrator-approved pinned storage', () => {
@@ -54,4 +55,36 @@ describe('administrator-approved pinned storage', () => {
       StoragePricingSchema.safeParse({ ...DEFAULT_STORAGE_PRICING, archiveSurcharge: 100 }).success,
     ).toBe(false);
   });
+});
+
+it('requires consent to exact approved storage capacity and immutable prices', () => {
+  const value = {
+    schemaVersion: 1,
+    requestId: '8ef6cfa7-4da5-46cb-8a4b-73e7df738172',
+    dao: { chainId: 'ab'.repeat(32), contract: 'daclifycore', daoId: '1', interfaceVersion: 1 },
+    units: 1,
+    pricingHash: storagePricingHash(DEFAULT_STORAGE_PRICING),
+    monthlyUsdCents: 100,
+    recurringConsent: true,
+  };
+  expect(validateStorageApproval(value, DEFAULT_STORAGE_PRICING).units).toBe(1);
+  expect(() =>
+    validateStorageApproval({ ...value, recurringConsent: false }, DEFAULT_STORAGE_PRICING),
+  ).toThrow();
+  expect(() => validateStorageApproval({ ...value, units: 2 }, DEFAULT_STORAGE_PRICING)).toThrow(
+    'STORAGE_APPROVAL_CHANGED',
+  );
+  expect(() =>
+    validateStorageApproval(value, {
+      ...DEFAULT_STORAGE_PRICING,
+      revision: '1',
+      monthlyUnitUsdCents: 125,
+    }),
+  ).toThrow('STORAGE_APPROVAL_CHANGED');
+  expect(
+    validateStorageApproval(
+      { ...value, units: 0, monthlyUsdCents: 0, recurringConsent: false },
+      DEFAULT_STORAGE_PRICING,
+    ).units,
+  ).toBe(0);
 });

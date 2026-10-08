@@ -3,6 +3,15 @@
 #include <eosio/singleton.hpp>
 #include <eosio/crypto.hpp>
 namespace daclify {
+struct [[eosio::table("resourcecfg"),eosio::contract("runtime")]] resource_policy {
+  uint16_t schema_version=1;uint64_t revision=0;
+  uint16_t native_ram_bps=500,card_ram_bps=2000;
+  uint64_t included_activity_bytes=262144,identity_bytes_per_slot=2048;
+  uint32_t quote_lifetime_seconds=300,grace_seconds=2592000;
+  uint64_t storage_free_bytes=100000000,storage_unit_bytes=1000000000;
+  uint32_t storage_monthly_usd=100;
+  EOSLIB_SERIALIZE(resource_policy,(schema_version)(revision)(native_ram_bps)(card_ram_bps)(included_activity_bytes)(identity_bytes_per_slot)(quote_lifetime_seconds)(grace_seconds)(storage_free_bytes)(storage_unit_bytes)(storage_monthly_usd))
+};
 struct [[eosio::table("ramobs"),eosio::contract("runtime")]] ram_observer_config {
   uint64_t meter_bytes=0;
   eosio::checksum256 runtime_hash;

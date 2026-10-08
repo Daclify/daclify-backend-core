@@ -5,7 +5,9 @@
     "existingTables": 31,
     "unchanged": true,
     "baselineAbiSourceHash": "85792f25f395dc89f03fe430a4a403675f47f14a63ddfaba4afe58bb286288c6",
-    "currentCodeHash": "c0beb659ca4d00faafad73868e8fc595e2a785db2d6c84b72865afc13ac2cb68"
+    "currentCodeHash": "8bd76a7279d850710bada0ba374b535fee59c69c9ed3fb3aa9fc53e701b19a6f",
+    "existingActions": 71,
+    "actionsUnchanged": true
   },
   {
     "contract": "decide",

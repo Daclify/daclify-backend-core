@@ -114,6 +114,8 @@ Changing DAO deployment, account, member identity or privacy clears document dra
 
 Development resource accounting counts each verified CID once per DAO, including hosted versions, branding and archive references. Uncertain uploads still reserve their bytes. Active members can inspect verified and reserved usage; automatic deletion and paid storage subscriptions are not enabled yet. Mainnet and testnet use separate Pinata accounts and ownership ledgers.
 
+Planned storage terms are prepaid calendar months, independent of member-slot subscriptions. A January 31 anniversary uses February’s last day and returns to March 31. An unpaid paid term receives thirty exact days from its original end; retries do not restart that deadline. A future prepaid term does not grant capacity before its start. Recurring paid capacity requires an administrator to approve the exact units, pricing snapshot and monthly amount. The tested period/consent helpers are not a completed payment or deletion service.
+
 ## Stable members, explicit roles
 
 Each DAO records internal members with separate signing and encryption keys. A linked native account is a credential of the existing member rather than a second voting identity.
@@ -212,6 +214,8 @@ Configured providers are not evidence of successful live integration or a qualif
 
 Status starts with user-facing capabilities and distinguishes configured services from qualified live integrations. Expand Technical platform details to inspect hashes, authorities, resources and migration state.
 
+Development resource policy is stored separately in resourcecfg. A linked Daclify DAO administrator can sign govresources to set the native RAM fee, card operational markup, storage allowance, unit price and capacity targets. The expected revision prevents stale overwrites. The launch policy is 5% for TLOS RAM purchases, 20% for card RAM purchases, 100 MB free pinned storage and $1/month per approved extra 1 GB. This policy does not itself buy RAM, fund an included allocation or activate a storage subscription; those services remain under implementation.
+
 ## Find and identify a DAO
 
 The directory covers the configured native runtime. Search, purpose, membership and sort filters are in the URL so a view can be shared or restored. A membership match includes chain, runtime, DAO and active member state.
@@ -298,7 +302,7 @@ Commercial hosting, subscriptions and paid services are allowed. Independently d
 
 ## runtime contract
 
-Source ABI JSON SHA-256: `6773df839f6a21a75bc13a8d7f6ad74dce5c1f78334477e6c7b74f6310fe5651`.
+Source ABI JSON SHA-256: `4b9d44365b04cc5683fe3409ab4fed7f67937b039f3dc09ea0482677c344b025`.
 
 ### Action: addmember
 
@@ -521,6 +525,23 @@ Source ABI JSON SHA-256: `6773df839f6a21a75bc13a8d7f6ad74dce5c1f78334477e6c7b74f
 | dao_id | uint64 |
 | member_id | uint64 |
 | bps | uint16 |
+
+### Action: govresources
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| expected_revision | uint64 |
+| native_ram_bps | uint16 |
+| card_ram_bps | uint16 |
+| included_activity_bytes | uint64 |
+| identity_bytes_per_slot | uint64 |
+| quote_lifetime_seconds | uint32 |
+| storage_free_bytes | uint64 |
+| storage_unit_bytes | uint64 |
+| storage_monthly_usd | uint32 |
 
 ### Action: govseatfee
 
@@ -915,6 +936,19 @@ Source ABI JSON SHA-256: `6773df839f6a21a75bc13a8d7f6ad74dce5c1f78334477e6c7b74f
 | --- | --- |
 | account | name |
 | code_hash | checksum256 |
+
+### Action: setresources
+
+| Field | ABI type |
+| --- | --- |
+| native_ram_bps | uint16 |
+| card_ram_bps | uint16 |
+| included_activity_bytes | uint64 |
+| identity_bytes_per_slot | uint64 |
+| quote_lifetime_seconds | uint32 |
+| storage_free_bytes | uint64 |
+| storage_unit_bytes | uint64 |
+| storage_monthly_usd | uint32 |
 
 ### Action: setroles
 
@@ -1341,6 +1375,22 @@ Source ABI JSON SHA-256: `6773df839f6a21a75bc13a8d7f6ad74dce5c1f78334477e6c7b74f
 | quantity | asset |
 | at | uint32 |
 | transaction_id | checksum256 |
+
+### Table: resourcecfg
+
+| Field | ABI type |
+| --- | --- |
+| schema_version | uint16 |
+| revision | uint64 |
+| native_ram_bps | uint16 |
+| card_ram_bps | uint16 |
+| included_activity_bytes | uint64 |
+| identity_bytes_per_slot | uint64 |
+| quote_lifetime_seconds | uint32 |
+| grace_seconds | uint32 |
+| storage_free_bytes | uint64 |
+| storage_unit_bytes | uint64 |
+| storage_monthly_usd | uint32 |
 
 ### Table: seatcfg
 
@@ -2259,6 +2309,100 @@ Response:
                 }
               ]
             },
+            "resourcePolicy": {
+              "default": null,
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "schemaVersion": {
+                      "type": "number",
+                      "const": 1
+                    },
+                    "revision": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "nativeRamBps": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 10000
+                    },
+                    "cardRamBps": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 10000
+                    },
+                    "includedActivityBytes": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "identityBytesPerSlot": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "quoteLifetimeSeconds": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 3600
+                    },
+                    "graceSeconds": {
+                      "type": "number",
+                      "const": 2592000
+                    },
+                    "storage": {
+                      "type": "object",
+                      "properties": {
+                        "schemaVersion": {
+                          "type": "number",
+                          "const": 1
+                        },
+                        "revision": {
+                          "type": "string",
+                          "maxLength": 20
+                        },
+                        "freeBytes": {
+                          "type": "string",
+                          "maxLength": 20
+                        },
+                        "unitBytes": {
+                          "type": "string",
+                          "maxLength": 20
+                        },
+                        "monthlyUnitUsdCents": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 99999999
+                        }
+                      },
+                      "required": [
+                        "schemaVersion",
+                        "revision",
+                        "freeBytes",
+                        "unitBytes",
+                        "monthlyUnitUsdCents"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "schemaVersion",
+                    "revision",
+                    "nativeRamBps",
+                    "cardRamBps",
+                    "includedActivityBytes",
+                    "identityBytesPerSlot",
+                    "quoteLifetimeSeconds",
+                    "graceSeconds",
+                    "storage"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "runtimeSettings": {
               "anyOf": [
                 {
@@ -2346,6 +2490,7 @@ Response:
             "hosting",
             "seatPricing",
             "paymentPolicy",
+            "resourcePolicy",
             "runtimeSettings",
             "rateFresh",
             "platformDao",

@@ -24,13 +24,13 @@ Plan: [RAM, prepaid storage and archives](../superpowers/plans/2026-10-08-resour
 | 5 Atomic TLOS RAM purchases          | In progress | Native funded-purchase/minimum proof; DAO settlement/API still pending                                 |
 | 6 Card RAM provisioning              | Pending     | Segregated operator reserve; no simulated funding                                                      |
 | 7 Hosted-object ledger               | In progress | Verified unique-CID accounting and legacy ownership checks; cleanup/lifecycle integrations pending                                                                |
-| 8 Monthly storage                    | Pending     | Explicit prepaid capacity consent                                                                      |
+| 8 Monthly storage                    | In progress | Exact recurring consent/calendar helpers; provider agreements and provisioning pending                                                                      |
 | 9 Grace/retention                    | Pending     | No destructive cleanup enabled                                                                         |
 | 10 Archive format/package            | In progress | Bounded format and C++/TS vectors; manifest/service/migrations pending                                 |
 | 11 Export/verification/approval      | Pending     | Live records remain until verification                                                                 |
 | 12 Source pruning/references         | Pending     | Financial/key state excluded                                                                           |
 | 13 History/recovery                  | Pending     | Empty-database and original-key restore drill                                                          |
-| 14 Resources/Archive UI              | Pending     | Correct DAO/operator context and accessibility                                                         |
+| 14 Resources/Archive UI              | In progress | Storage counters and platform policy controls; funded purchase/Archive journeys pending                                                         |
 | 15 Documentation                     | Pending     | Qualified feature descriptions only                                                                    |
 | 16 Release/qualification             | Pending     | Native/provider/browser results recorded separately                                                    |
 
@@ -100,3 +100,15 @@ Confirmed storage architecture: the user selected **separate Pinata accounts for
 - Fresh core unit tests: 70 files / 440 tests; modules verify: 15 files / 91 tests; frontend verify: 25 files / 103 tests. Typecheck/lint/generated docs and frontend production build passed. Public artifacts were rebuilt and consumed locally; the version remains an unpublished development packet, not a new immutable release.
 
 Task 7 remains in progress for full branded-media/archive lifecycle integration and safe orphan release. Monthly storage payments, thirty-day retention cleanup, funded RAM allocations/purchase settlement and archive pruning/recovery still remain required. No main branch merge, push, live charge or unpin was performed.
+
+## Governed policy and prepaid-period checkpoint
+
+- Added additive `resourcecfg`, native bootstrap `setresources` and signed administrator `govresources`. The latter is restricted to the linked Daclify DAO and requires the expected revision; stale edits, another DAO and invalid fees/unit prices roll back. Revisioned settings do not grant RAM or start a subscription.
+- The canonical producer maps the compiled table into `ResourcePolicySchema`. API status and the Daclify DAO screen expose that validated policy. Existing serialized ABI structures, tables and actions remain unchanged against baseline commit 1954ebf; [compatibility evidence](2026-10-08-observer-abi-compatibility.json) records the current runtime hash.
+- Resource settings use the platform RAM observer hooks. Initialization rejects a pre-existing resource policy until backfill. The native core/all-module conservation case now includes the resource singleton and passed. Existing observer deployments still require the pending code-rebinding/backfill qualification; no public upgrade was attempted.
+- Paid storage approval binds exact units, amount, full pricing hash and recurring consent. UTC calendar helpers preserve January 31 anniversaries through leap/non-leap February, refuse invalid periods/clocks, keep future prepaid terms pending until their start, and mark overdue at exactly original term end plus 2,592,000 seconds. No retries or membership state enter that calculation.
+- Browser regression first caught Vue's implicit number coercion in the new decimal inputs, then the missing native action link. The UI now uses exact decimal text inputs and clears previous success before validation. `govresources` is in the shared execution permission plan; the owned fixture setup applies its code-only `execctx` link. This is native permission evidence, not a public authority change.
+- Fresh core unit result: **71 files / 448 tests passed**. The focused four native files / ten tests passed. Module verify remains 15 files / 91 tests; frontend verify is 25 files / 103 tests, with production build/typecheck/format checks passed. Core typecheck/lint/generated-doc checks passed.
+- After those fixes, **all ten desktop/mobile resource/file/platform browser cases passed**, including signing the real governed policy and reading it back from the actual local chain/API. Accessibility checks passed in those flows. The owned API was stopped afterward.
+
+Task 8 is in progress: SQL agreements/invoices, Stripe provider verification, capacity provisioning, recurring changes and payment/retention race handling are still pending. The calendar/consent helpers are not payment qualification. The new runtime remains an unpublished local development artifact; no main merge, push, live provider write, charge or deletion occurred.

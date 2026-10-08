@@ -95,7 +95,8 @@
         "Changing membership or rotating an epoch protects future content after the next key is initialized. Old grants and disclosed plaintext remain accessible to anyone who kept the old key. A client checks content integrity and the epoch commitment before decryption.",
         "Download checks the recorded byte count and commitment before opening a file. A private download also checks the DAO epoch commitment and decrypts in your browser. Previous file versions remain downloadable from version history. A saved plaintext download is not erased when your vault locks. The local disk fixture is labelled explicitly and does not establish live Pinata or public IPFS availability.",
         "Changing DAO deployment, account, member identity or privacy clears document drafts and decrypted views. Late responses from a previous context are discarded. Content histories are read in scoped pages with advancing cursors; a large DAO does not fail merely because it exceeds the former row ceiling.",
-        "Development resource accounting counts each verified CID once per DAO, including hosted versions, branding and archive references. Uncertain uploads still reserve their bytes. Active members can inspect verified and reserved usage; automatic deletion and paid storage subscriptions are not enabled yet. Mainnet and testnet use separate Pinata accounts and ownership ledgers."
+        "Development resource accounting counts each verified CID once per DAO, including hosted versions, branding and archive references. Uncertain uploads still reserve their bytes. Active members can inspect verified and reserved usage; automatic deletion and paid storage subscriptions are not enabled yet. Mainnet and testnet use separate Pinata accounts and ownership ledgers.",
+        "Planned storage terms are prepaid calendar months, independent of member-slot subscriptions. A January 31 anniversary uses February’s last day and returns to March 31. An unpaid paid term receives thirty exact days from its original end; retries do not restart that deadline. A future prepaid term does not grant capacity before its start. Recurring paid capacity requires an administrator to approve the exact units, pricing snapshot and monthly amount. The tested period/consent helpers are not a completed payment or deletion service."
       ]
     },
     {
@@ -184,7 +185,8 @@
         "Module registration checks the on-chain code hash, accepted fee rule and asset identity. Removing a catalogue entry prevents new installations but does not erase existing DAO installations, pending work or financial exit rights. Publishers retain control over their third-party listings and prices.",
         "Status displays the selected network, actual chain ID and head blocks, runtime and module hashes, public permission authorities, resources, on-chain fee and governance configuration, database migrations and safe provider configuration flags. Missing services are labelled unconfigured. Module hash checks verify the pinned SDK artifact; unpinned runtime and hub hashes are displayed without claiming they are verified.",
         "Configured providers are not evidence of successful live integration or a qualified production release. Pinata, Stripe, Google, Telegram and managed recovery require their own configuration and acceptance checks. Public status excludes credentials, private keys, DSNs, account records and raw internal errors.",
-        "Status starts with user-facing capabilities and distinguishes configured services from qualified live integrations. Expand Technical platform details to inspect hashes, authorities, resources and migration state."
+        "Status starts with user-facing capabilities and distinguishes configured services from qualified live integrations. Expand Technical platform details to inspect hashes, authorities, resources and migration state.",
+        "Development resource policy is stored separately in resourcecfg. A linked Daclify DAO administrator can sign govresources to set the native RAM fee, card operational markup, storage allowance, unit price and capacity targets. The expected revision prevents stale overwrites. The launch policy is 5% for TLOS RAM purchases, 20% for card RAM purchases, 100 MB free pinned storage and $1/month per approved extra 1 GB. This policy does not itself buy RAM, fund an included allocation or activate a storage subscription; those services remain under implementation."
       ]
     },
     {
@@ -270,7 +272,7 @@
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "6773df839f6a21a75bc13a8d7f6ad74dce5c1f78334477e6c7b74f6310fe5651",
+      "sourceAbiHash": "4b9d44365b04cc5683fe3409ab4fed7f67937b039f3dc09ea0482677c344b025",
       "actions": [
         {
           "name": "addmember",
@@ -842,6 +844,59 @@
             {
               "name": "bps",
               "type": "uint16"
+            }
+          ]
+        },
+        {
+          "name": "govresources",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "expected_revision",
+              "type": "uint64"
+            },
+            {
+              "name": "native_ram_bps",
+              "type": "uint16"
+            },
+            {
+              "name": "card_ram_bps",
+              "type": "uint16"
+            },
+            {
+              "name": "included_activity_bytes",
+              "type": "uint64"
+            },
+            {
+              "name": "identity_bytes_per_slot",
+              "type": "uint64"
+            },
+            {
+              "name": "quote_lifetime_seconds",
+              "type": "uint32"
+            },
+            {
+              "name": "storage_free_bytes",
+              "type": "uint64"
+            },
+            {
+              "name": "storage_unit_bytes",
+              "type": "uint64"
+            },
+            {
+              "name": "storage_monthly_usd",
+              "type": "uint32"
             }
           ]
         },
@@ -1768,6 +1823,43 @@
             {
               "name": "code_hash",
               "type": "checksum256"
+            }
+          ]
+        },
+        {
+          "name": "setresources",
+          "fields": [
+            {
+              "name": "native_ram_bps",
+              "type": "uint16"
+            },
+            {
+              "name": "card_ram_bps",
+              "type": "uint16"
+            },
+            {
+              "name": "included_activity_bytes",
+              "type": "uint64"
+            },
+            {
+              "name": "identity_bytes_per_slot",
+              "type": "uint64"
+            },
+            {
+              "name": "quote_lifetime_seconds",
+              "type": "uint32"
+            },
+            {
+              "name": "storage_free_bytes",
+              "type": "uint64"
+            },
+            {
+              "name": "storage_unit_bytes",
+              "type": "uint64"
+            },
+            {
+              "name": "storage_monthly_usd",
+              "type": "uint32"
             }
           ]
         },
@@ -2863,6 +2955,55 @@
           ]
         },
         {
+          "name": "resourcecfg",
+          "fields": [
+            {
+              "name": "schema_version",
+              "type": "uint16"
+            },
+            {
+              "name": "revision",
+              "type": "uint64"
+            },
+            {
+              "name": "native_ram_bps",
+              "type": "uint16"
+            },
+            {
+              "name": "card_ram_bps",
+              "type": "uint16"
+            },
+            {
+              "name": "included_activity_bytes",
+              "type": "uint64"
+            },
+            {
+              "name": "identity_bytes_per_slot",
+              "type": "uint64"
+            },
+            {
+              "name": "quote_lifetime_seconds",
+              "type": "uint32"
+            },
+            {
+              "name": "grace_seconds",
+              "type": "uint32"
+            },
+            {
+              "name": "storage_free_bytes",
+              "type": "uint64"
+            },
+            {
+              "name": "storage_unit_bytes",
+              "type": "uint64"
+            },
+            {
+              "name": "storage_monthly_usd",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
           "name": "seatcfg",
           "fields": [
             {
@@ -3845,6 +3986,100 @@
                       }
                     ]
                   },
+                  "resourcePolicy": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "revision": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "nativeRamBps": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 10000
+                          },
+                          "cardRamBps": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 10000
+                          },
+                          "includedActivityBytes": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "identityBytesPerSlot": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "quoteLifetimeSeconds": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 3600
+                          },
+                          "graceSeconds": {
+                            "type": "number",
+                            "const": 2592000
+                          },
+                          "storage": {
+                            "type": "object",
+                            "properties": {
+                              "schemaVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "revision": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "freeBytes": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "unitBytes": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "monthlyUnitUsdCents": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 99999999
+                              }
+                            },
+                            "required": [
+                              "schemaVersion",
+                              "revision",
+                              "freeBytes",
+                              "unitBytes",
+                              "monthlyUnitUsdCents"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "revision",
+                          "nativeRamBps",
+                          "cardRamBps",
+                          "includedActivityBytes",
+                          "identityBytesPerSlot",
+                          "quoteLifetimeSeconds",
+                          "graceSeconds",
+                          "storage"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "runtimeSettings": {
                     "anyOf": [
                       {
@@ -3932,6 +4167,7 @@
                   "hosting",
                   "seatPricing",
                   "paymentPolicy",
+                  "resourcePolicy",
                   "runtimeSettings",
                   "rateFresh",
                   "platformDao",

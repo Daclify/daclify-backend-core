@@ -82,3 +82,15 @@ it('requires a calibrated code pin before installing a module into an observed r
   await send(runtime, 'setramcode', ['permprobe', hash], 'daclifycore@active');
   await send(runtime, 'setmodule', [1, 'permprobe', 1, ['checkauth'], [], hash], 'alice@active');
 });
+
+it('requires backfill for existing resource settings before enabling observation', async () => {
+  await send(
+    runtime,
+    'setresources',
+    [500, 2000, '262144', '2048', 300, '100000000', '1000000000', 100],
+    'daclifycore@active',
+  );
+  await expect(send(runtime, 'initramobs', [], 'daclifycore@active')).rejects.toThrow(
+    'RAM_BACKFILL_REQUIRED',
+  );
+});

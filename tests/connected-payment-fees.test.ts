@@ -69,6 +69,59 @@ describe('free shared creation and paid membership capacity', () => {
     await send(runtime, 'setcapacity', [2, 10, end + 3600, 'ef'.repeat(32)], 'relay@active');
     expect(cap.parse(row(runtime, 'daocaps', runtime.toBigInt(), 2n)).members).toBe(10);
   });
+  it('governs RAM rail fees and storage pricing through the Daclify DAO without granting resources', async () => {
+    const policy = {
+      expected_revision: '0',
+      native_ram_bps: 500,
+      card_ram_bps: 2000,
+      included_activity_bytes: '262144',
+      identity_bytes_per_slot: '2048',
+      quote_lifetime_seconds: 300,
+      storage_free_bytes: '100000000',
+      storage_unit_bytes: '1000000000',
+      storage_monthly_usd: 100,
+    };
+    await governance('govresources', policy);
+    const value = z.object({
+      revision: z.union([z.string(), z.number()]).transform(String),
+      native_ram_bps: z.number(),
+      card_ram_bps: z.number(),
+      storage_monthly_usd: z.number(),
+    });
+    const read = () =>
+      value.parse(
+        row(
+          runtime,
+          'resourcecfg',
+          runtime.toBigInt(),
+          BigInt(Name.from('resourcecfg').value.toString()),
+        ),
+      );
+    expect(read()).toEqual({
+      revision: '1',
+      native_ram_bps: 500,
+      card_ram_bps: 2000,
+      storage_monthly_usd: 100,
+    });
+    await governance('govresources', {
+      ...policy,
+      expected_revision: '1',
+      storage_monthly_usd: 125,
+    });
+    expect(read()).toMatchObject({ revision: '2', storage_monthly_usd: 125 });
+    await expect(governance('govresources', policy, 2)).rejects.toThrow('PLATFORM_DAO');
+    await expect(
+      governance('govresources', { ...policy, expected_revision: '2', native_ram_bps: 10001 }),
+    ).rejects.toThrow('RESOURCE_POLICY');
+    await expect(
+      governance('govresources', { ...policy, expected_revision: '2', storage_unit_bytes: '0' }),
+    ).rejects.toThrow('RESOURCE_POLICY');
+    await expect(governance('govresources', policy)).rejects.toThrow('RESOURCE_POLICY_CHANGED');
+    expect(read().revision).toBe('2');
+    expect(
+      row(runtime, 'ramstats', 2n, BigInt(Name.from('daclifycore').value.toString())),
+    ).toBeUndefined();
+  });
   it('governs the per-slot price without changing existing capacity receipts', async () => {
     await send(runtime, 'sethosted', [10, 'relay'], 'daclifycore@active');
     await governance('govseatfee', { first_usd: 100, next_usd: 50, rest_usd: 20 });
