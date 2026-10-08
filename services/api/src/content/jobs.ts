@@ -10,9 +10,10 @@ export async function processContentJob(
   pool: Pool,
   service: Pick<ContentService, 'reconcile'>,
   owner: string,
+  moduleId: 'core-content' | 'core-assets' = 'core-content',
 ): Promise<ContentJobResult> {
   z.uuid().parse(owner);
-  const job = await leaseJob(pool, owner, { moduleId: 'core-content', kind: 'reconcile' });
+  const job = await leaseJob(pool, owner, { moduleId, kind: 'reconcile' });
   if (!job) return 'idle';
   let outcome: ContentJobResult = 'manual';
   let error: string | null = 'JOB_PAYLOAD_INVALID';
@@ -41,11 +42,14 @@ export async function processContentJob(
 }
 export function startContentWorker(
   pool: Pool,
-  service: Pick<ContentService, 'reconcile'>,
+  service: Pick<ContentService, 'reconcile'> & {
+    assets: Pick<ContentService['assets'], 'reconcile'>;
+  },
 ): { stop: () => Promise<void> } {
   const owner = randomUUID();
-  return startPollingWorker(
-    () => processContentJob(pool, service, owner),
-    'CONTENT_JOB_STORE_UNAVAILABLE',
-  );
+  return startPollingWorker(async () => {
+    const documents = await processContentJob(pool, service, owner);
+    const assets = await processContentJob(pool, service.assets, owner, 'core-assets');
+    return assets === 'idle' ? documents : assets;
+  }, 'CONTENT_JOB_STORE_UNAVAILABLE');
 }

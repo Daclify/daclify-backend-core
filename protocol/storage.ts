@@ -74,6 +74,17 @@ export const HostedReferenceSchema = z.strictObject({
 });
 export type HostedObjectDescriptor = z.infer<typeof HostedObjectDescriptorSchema>;
 export type HostedReference = z.infer<typeof HostedReferenceSchema>;
+export const HostedAssetIntentSchema = HostedObjectDescriptorSchema.omit({ cid: true }).extend({
+  requestId: z.uuid(),
+  kind: z.enum(['branding', 'media', 'archive']),
+  referenceKey: HostedReferenceSchema.shape.referenceKey,
+});
+export const HostedAssetUploadSchema = HostedAssetIntentSchema.extend({
+  content: HostedBytesSchema,
+});
+export const HostedAssetReceiptSchema = HostedAssetIntentSchema.extend({ cid: CidSchema });
+export type HostedAssetUpload = z.infer<typeof HostedAssetUploadSchema>;
+export type HostedAssetReceipt = z.infer<typeof HostedAssetReceiptSchema>;
 export type HostedUpload = z.infer<typeof HostedUploadSchema>;
 export type HostedDocument = z.infer<typeof HostedDocumentSchema>;
 export const StorageStatusSchema = z.strictObject({

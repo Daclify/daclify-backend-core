@@ -49,10 +49,12 @@ export async function storageUsed(client: PoolClient, daoKey: string): Promise<b
        SELECT object_id AS id FROM hosted_references WHERE dao_key=$1
        UNION SELECT storage_object_id FROM uploads WHERE dao_key=$1 AND storage_object_id IS NOT NULL
          AND (state<>'failed' OR provider_id IS NOT NULL)
+       UNION SELECT storage_object_id FROM asset_uploads WHERE dao_key=$1 AND storage_object_id IS NOT NULL
      ) SELECT (
        COALESCE((SELECT sum(verified_bytes) FROM hosted_objects WHERE id IN (SELECT id FROM objects)),0)
        + COALESCE((SELECT sum(expected_size) FROM uploads WHERE dao_key=$1 AND storage_object_id IS NULL
          AND (state<>'failed' OR provider_id IS NOT NULL)),0)
+       + COALESCE((SELECT sum(expected_bytes) FROM asset_uploads WHERE dao_key=$1 AND storage_object_id IS NULL),0)
      )::text AS used`,
     [daoKey],
   );
@@ -66,7 +68,8 @@ export async function objectCharged(
   const result = await client.query<{ charged: boolean }>(
     `SELECT EXISTS(SELECT 1 FROM hosted_references WHERE dao_key=$1 AND object_id=$2
        UNION ALL SELECT 1 FROM uploads WHERE dao_key=$1 AND storage_object_id=$2
-         AND (state<>'failed' OR provider_id IS NOT NULL)) AS charged`,
+         AND (state<>'failed' OR provider_id IS NOT NULL)
+       UNION ALL SELECT 1 FROM asset_uploads WHERE dao_key=$1 AND storage_object_id=$2) AS charged`,
     [daoKey, objectId],
   );
   return z.boolean().parse(result.rows[0]?.charged);

@@ -9,7 +9,6 @@ import {
   UploadStatusSchema,
   StorageStatusSchema,
   HostedStorageUsageSchema,
-  DEFAULT_STORAGE_PRICING,
   MAX_HOSTED_CONTENT_BYTES,
   FileMetadataSchema,
   type HostedUpload,
@@ -20,7 +19,8 @@ import { Uint64Schema } from '../../../../protocol/base.js';
 import type { ChainGateway } from '../chain.js';
 import type { ContentProvider, PinnedFile } from './provider.js';
 import { ApiError } from '../errors.js';
-import { storageFunding } from '../billing/storage-state.js';
+import { fundedStorage } from './capacity.js';
+import { HostedAssets } from './assets.js';
 import { validateBrandImage } from './branding.js';
 import {
   CONTENT_IMPORT_PROFILE,
@@ -51,6 +51,7 @@ function hash(bytes: Uint8Array | string): string {
   return createHash('sha256').update(bytes).digest('hex');
 }
 export class ContentService {
+  readonly assets: HostedAssets;
   constructor(
     private readonly pool: Pool,
     private readonly chain: ChainGateway,
@@ -61,6 +62,7 @@ export class ContentService {
   ) {
     ProviderScopeSchema.parse(providerScope);
     if (allowance < 0n || allowance > (1n << 63n) - 1n) throw new Error('CONTENT_ALLOWANCE');
+    this.assets = new HostedAssets(pool, chain, provider, allowance, providerScope);
   }
   get freeAllowance(): bigint {
     return this.allowance;
@@ -90,20 +92,7 @@ export class ContentService {
       await client.query('BEGIN');
       const key = contentDaoKey(dao.reference);
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`upload-dao:${key}`]);
-      const entitlement = await client.query<{ storage_limit: string }>(
-        "SELECT storage_limit::text FROM entitlements WHERE dao_key=$1 AND (tier='free' OR expires_at IS NULL OR expires_at>now())",
-        [key],
-      );
-      const legacyCapacity = entitlement.rows[0]
-        ? Uint64Schema.parse(entitlement.rows[0].storage_limit)
-        : this.allowance.toString();
-      const funded = await storageFunding(
-        client,
-        dao.reference,
-        this.providerScope,
-        { ...DEFAULT_STORAGE_PRICING, freeBytes: legacyCapacity },
-        new Date(),
-      );
+      const funded = await fundedStorage(client, dao.reference, this.providerScope, this.allowance);
       const capacity = funded.uploadCapacityBytes;
       const total = await storageUsed(client, key);
       const measured = await client.query<{ bytes: string; objects: number; references: number }>(
@@ -179,20 +168,7 @@ export class ContentService {
         await client.query('COMMIT');
         return { row, created: false };
       }
-      const entitlement = await client.query<{ storage_limit: string }>(
-        "SELECT storage_limit::text FROM entitlements WHERE dao_key=$1 AND (tier='free' OR expires_at IS NULL OR expires_at>now())",
-        [key],
-      );
-      const legacyBudget = entitlement.rows[0]
-        ? BigInt(Uint64Schema.parse(entitlement.rows[0].storage_limit))
-        : this.allowance;
-      const funded = await storageFunding(
-        client,
-        input.dao,
-        this.providerScope,
-        { ...DEFAULT_STORAGE_PRICING, freeBytes: legacyBudget.toString() },
-        new Date(),
-      );
+      const funded = await fundedStorage(client, input.dao, this.providerScope, this.allowance);
       const budget = BigInt(funded.uploadCapacityBytes);
       const reusable = await reusableObject(
         client,

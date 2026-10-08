@@ -11,10 +11,11 @@ import {
   UserMembershipSchema,
 } from '../../protocol/api.js';
 import { DaoContentSchema } from '../../protocol/content.js';
-import { HostedUploadSchema } from '../../protocol/storage.js';
+import { HostedUploadSchema, HostedAssetUploadSchema } from '../../protocol/storage.js';
 import { RuntimeTableSchemas } from '../../sdk/index.js';
 import { ContentService } from '../../services/api/src/content/service.js';
 import { recordVerifiedPin } from '../../services/api/src/content/ledger.js';
+import { HostedAssets } from '../../services/api/src/content/assets.js';
 import { claimLegacyUpload } from '../../services/api/src/content/migrate.js';
 import type { ContentProvider } from '../../services/api/src/content/provider.js';
 import type { ChainGateway } from '../../services/api/src/chain.js';
@@ -176,7 +177,7 @@ function setup(allowance = 1000n, providerScope = randomUUID()) {
       content: bytes.toString('base64'),
     });
   }
-  return { dao, content, provider, service, request };
+  return { dao, content, provider, service, request, chain };
 }
 beforeAll(async () => {
   await migrate(pool);
@@ -187,6 +188,191 @@ beforeAll(async () => {
 });
 afterAll(() => pool.end());
 describe('hosted upload transactions with a simulated provider', () => {
+  it('reserves and verifies an archive asset, sharing document CID capacity and recovering an uncertain provider response', async () => {
+    const fixture = setup(30n),
+      doc = await fixture.service.upload(account, fixture.request());
+    const assets = new HostedAssets(
+      pool,
+      fixture.chain,
+      fixture.provider,
+      30n,
+      fixture.service.providerScope,
+    );
+    const request = HostedAssetUploadSchema.parse({
+      requestId: randomUUID(),
+      kind: 'archive',
+      referenceKey: randomUUID(),
+      content: Buffer.from('Synthetic hosted bytes').toString('base64'),
+      bytes: doc.bytes,
+      commitment: doc.commitment,
+      dao: doc.dao,
+    });
+    const receipt = await assets.upload(account, request);
+    expect(receipt.cid).toBe(doc.cid);
+    expect(await assets.upload(account, request)).toEqual(receipt);
+    expect(fixture.provider.upload).toHaveBeenCalledTimes(1);
+    expect(await fixture.service.usage(account, fixture.dao.reference.daoId)).toMatchObject({
+      totalBytes: String(doc.bytes),
+      references: 2,
+    });
+    await expect(
+      assets.upload(account, { ...request, referenceKey: randomUUID() }),
+    ).rejects.toThrow('UPLOAD_REQUEST_CONFLICT');
+    const second = setup(23n),
+      secondAssets = new HostedAssets(
+        pool,
+        second.chain,
+        second.provider,
+        23n,
+        second.service.providerScope,
+      );
+    const intent = second.request('different bytes');
+    const unknown = HostedAssetUploadSchema.parse({
+      dao: intent.dao,
+      requestId: intent.requestId,
+      kind: 'archive',
+      referenceKey: randomUUID(),
+      bytes: intent.bytes,
+      commitment: intent.commitment,
+      content: intent.content,
+    });
+    let eventual: Awaited<ReturnType<ContentProvider['upload']>> | undefined;
+    const actualUpload = second.provider.upload;
+    second.provider.upload = vi.fn(async (id, bytes) => {
+      eventual = await actualUpload(id, bytes);
+      throw new Error('Unknown provider outcome');
+    });
+    await expect(secondAssets.upload(account, unknown)).rejects.toThrow('UPLOAD_PENDING');
+    await expect(
+      secondAssets.upload(account, { ...unknown, requestId: randomUUID() }),
+    ).rejects.toThrow('STORAGE_QUOTA');
+    const held = await pool.query<{ id: string }>(
+      'SELECT id FROM asset_uploads WHERE account_id=$1 AND request_id=$2',
+      [account.id, unknown.requestId],
+    );
+    const id = held.rows[0]?.id;
+    if (!id) throw new Error('Missing asset hold');
+    await pool.query("UPDATE asset_uploads SET expires_at=now()-interval '1 hour' WHERE id=$1", [
+      id,
+    ]);
+    expect(await secondAssets.reconcile(id)).toBe('manual');
+    expect(await second.service.usage(account, second.dao.reference.daoId)).toMatchObject({
+      totalBytes: String(intent.bytes),
+    });
+    expect(second.provider.remove).not.toHaveBeenCalled();
+    second.provider.find = async (uploadId) => (uploadId === id && eventual ? [eventual] : []);
+    expect(await secondAssets.reconcile(id)).toBe('completed');
+    expect((await secondAssets.upload(account, unknown)).cid).toBe(eventual?.cid);
+    expect(second.provider.upload).toHaveBeenCalledTimes(1);
+    expect(await second.service.usage(account, second.dao.reference.daoId)).toMatchObject({
+      totalBytes: String(intent.bytes),
+      references: 1,
+    });
+  });
+  it('fences concurrent asset growth and rejects invalid authority/content before provider calls', async () => {
+    const fixture = setup(23n),
+      assets = new HostedAssets(
+        pool,
+        fixture.chain,
+        fixture.provider,
+        23n,
+        fixture.service.providerScope,
+      );
+    const make = (text = 'fifteen bytes!') => {
+      const row = fixture.request(text);
+      return HostedAssetUploadSchema.parse({
+        dao: row.dao,
+        requestId: row.requestId,
+        kind: 'archive',
+        referenceKey: randomUUID(),
+        bytes: row.bytes,
+        commitment: row.commitment,
+        content: row.content,
+      });
+    };
+    const input = make();
+    await expect(assets.upload(account, { ...input, commitment: '00'.repeat(32) })).rejects.toThrow(
+      'DOCUMENT_INTEGRITY',
+    );
+    await expect(
+      assets.upload(account, { ...input, dao: { ...input.dao, contract: 'daoother' } }),
+    ).rejects.toThrow('DAO_REFERENCE');
+    const memberships = fixture.chain.memberships;
+    fixture.chain.memberships = async () => [];
+    await expect(assets.upload(account, input)).rejects.toThrow('ADMIN_REQUIRED');
+    fixture.chain.memberships = memberships;
+    expect(fixture.provider.upload).not.toHaveBeenCalled();
+    const results = await Promise.allSettled([
+      assets.upload(account, input),
+      assets.upload(account, make('other content!')),
+    ]);
+    expect(results.filter((row) => row.status === 'fulfilled')).toHaveLength(1);
+    expect(results.filter((row) => row.status === 'rejected')).toHaveLength(1);
+    expect(fixture.provider.upload).toHaveBeenCalledTimes(1);
+  });
+  it('recovers a reused asset from its recorded provider pin after a gateway outage', async () => {
+    const fixture = setup(30n),
+      document = await fixture.service.upload(account, fixture.request());
+    const input = HostedAssetUploadSchema.parse({
+      dao: document.dao,
+      requestId: randomUUID(),
+      kind: 'archive',
+      referenceKey: randomUUID(),
+      bytes: document.bytes,
+      commitment: document.commitment,
+      content: fixture.request().content,
+    });
+    const retrieve = fixture.provider.retrieve;
+    fixture.provider.retrieve = vi.fn(async () => {
+      throw new Error('Gateway unavailable');
+    });
+    await expect(fixture.service.assets.upload(account, input)).rejects.toThrow('UPLOAD_PENDING');
+    const held = await pool.query<{ id: string }>(
+      'SELECT id FROM asset_uploads WHERE account_id=$1 AND request_id=$2',
+      [account.id, input.requestId],
+    );
+    const id = held.rows[0]?.id;
+    if (!id) throw new Error('Missing reused asset reservation');
+    await pool.query("UPDATE asset_uploads SET expires_at=now()-interval '1 hour' WHERE id=$1", [
+      id,
+    ]);
+    fixture.provider.retrieve = retrieve;
+    fixture.provider.find = vi.fn(async () => []);
+    expect(await fixture.service.assets.reconcile(id)).toBe('completed');
+    expect(fixture.provider.find).not.toHaveBeenCalled();
+    expect(fixture.provider.upload).toHaveBeenCalledTimes(1);
+    expect(fixture.provider.remove).not.toHaveBeenCalled();
+    expect(await fixture.service.usage(account, document.dao.daoId)).toMatchObject({
+      totalBytes: String(document.bytes),
+      references: 2,
+    });
+  });
+  it('retains asset holds when retrieved bytes are corrupt and never removes another provider pin', async () => {
+    const fixture = setup(23n),
+      assets = fixture.service.assets,
+      raw = fixture.request('archive fixture');
+    const input = HostedAssetUploadSchema.parse({
+      dao: raw.dao,
+      requestId: raw.requestId,
+      kind: 'archive',
+      referenceKey: randomUUID(),
+      bytes: raw.bytes,
+      commitment: raw.commitment,
+      content: raw.content,
+    });
+    fixture.provider.retrieve = async () => new Uint8Array(input.bytes);
+    await expect(assets.upload(account, input)).rejects.toThrow('UPLOAD_PENDING');
+    expect(await fixture.service.usage(account, fixture.dao.reference.daoId)).toMatchObject({
+      totalBytes: String(input.bytes),
+      verifiedBytes: '0',
+    });
+    expect(fixture.provider.remove).not.toHaveBeenCalled();
+    const jobs = await pool.query<{ count: string }>(
+      "SELECT count(*)::text FROM jobs j JOIN asset_uploads a ON j.job_key='asset-upload:'||a.id::text WHERE a.request_id=$1 AND j.module_id='core-assets'",
+      [input.requestId],
+    );
+    expect(jobs.rows[0]?.count).toBe('1');
+  });
   it('records verified pins consistently across branding/media/archive roles without double charging or changing ownership', async () => {
     const fixture = setup(),
       document = await fixture.service.upload(account, fixture.request());

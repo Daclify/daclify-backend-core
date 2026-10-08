@@ -2,7 +2,7 @@ import { beforeAll, beforeEach, afterAll, describe, it, expect, vi } from 'vites
 import { Pool } from 'pg';
 import { randomUUID } from 'node:crypto';
 import { migrate } from '../../services/api/src/store.js';
-import { processContentJob } from '../../services/api/src/content/jobs.js';
+import { processContentJob, startContentWorker } from '../../services/api/src/content/jobs.js';
 const url = process.env.DATABASE_URL;
 if (
   !url ||
@@ -24,6 +24,31 @@ async function enqueue(payload: unknown = { uploadId: randomUUID() }, module = '
   return id;
 }
 describe('bounded hosted-content jobs on PostgreSQL', () => {
+  it('drains asset jobs through the existing stoppable host loop', async () => {
+    await enqueue(undefined, 'core-assets');
+    const documents = vi.fn(async () => 'completed' as const),
+      assets = vi.fn(async () => 'completed' as const);
+    const worker = startContentWorker(pool, {
+      reconcile: documents,
+      assets: { reconcile: assets },
+    });
+    await worker.stop();
+    expect(documents).not.toHaveBeenCalled();
+    expect(assets).toHaveBeenCalledOnce();
+  });
+  it('keeps document and asset reconciliation namespaces separate under the same host', async () => {
+    const id = await enqueue(undefined, 'core-assets'),
+      reconcile = vi.fn(async () => 'completed' as const);
+    expect(await processContentJob(pool, { reconcile }, randomUUID())).toBe('idle');
+    expect(await processContentJob(pool, { reconcile }, randomUUID(), 'core-assets')).toBe(
+      'completed',
+    );
+    expect(reconcile).toHaveBeenCalledOnce();
+    expect(
+      (await pool.query<{ state: string }>('SELECT state FROM jobs WHERE id=$1', [id])).rows[0]
+        ?.state,
+    ).toBe('completed');
+  });
   it('leases a reconciliation to one worker under concurrency', async () => {
     await enqueue();
     const reconcile = vi.fn(async () => 'completed' as const);
