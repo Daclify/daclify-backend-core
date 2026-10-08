@@ -1,6 +1,10 @@
 import { beforeAll, afterAll, describe, it, expect, vi } from 'vitest';
 import { Pool } from 'pg';
 import { generateKeyPairSync, randomUUID, createHash } from 'node:crypto';
+import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { PrivateKey } from '@wharfkit/antelope';
 import { CID } from 'multiformats/cid';
 import { create } from 'multiformats/hashes/digest';
@@ -14,8 +18,18 @@ import { DaoContentSchema } from '../../protocol/content.js';
 import { HostedUploadSchema, HostedAssetUploadSchema } from '../../protocol/storage.js';
 import { RuntimeTableSchemas } from '../../sdk/index.js';
 import { ContentService } from '../../services/api/src/content/service.js';
-import { recordVerifiedPin } from '../../services/api/src/content/ledger.js';
+import {
+  recordVerifiedPin,
+  storageUsed,
+  contentDaoKey,
+} from '../../services/api/src/content/ledger.js';
 import { HostedAssets } from '../../services/api/src/content/assets.js';
+import { ArchiveExports } from '../../services/api/src/archive/exports.js';
+import {
+  archiveExportConsent,
+  planOrdinaryPollArchive,
+  archiveSourceSchema,
+} from '@daclify/modules/archive';
 import { claimLegacyUpload } from '../../services/api/src/content/migrate.js';
 import type { ContentProvider } from '../../services/api/src/content/provider.js';
 import type { ChainGateway } from '../../services/api/src/chain.js';
@@ -188,6 +202,267 @@ beforeAll(async () => {
 });
 afterAll(() => pool.end());
 describe('hosted upload transactions with a simulated provider', () => {
+  function archiveFixture(allowance = 10_000n) {
+    const fixture = setup(allowance),
+      schema = archiveSourceSchema('ordinary-poll-votes');
+    const selection = {
+      dao: fixture.dao.reference,
+      ballotIds: ['7'],
+      retentionSeconds: 90 * 86400,
+    };
+    const plan = planOrdinaryPollArchive({
+      dao: fixture.dao.reference,
+      source: { account: 'decide', codeHash: schema.codeHash, abiHash: schema.rawAbiHash },
+      snapshot: {
+        blockNumber: 1,
+        blockId: '00000001' + 'ab'.repeat(28),
+        timestamp: '2026-10-08T10:00:00.000Z',
+      },
+      sourceUpdatedAt: '2026-01-01T00:00:00.000Z',
+      retentionSeconds: 90 * 86400,
+      ballots: [
+        {
+          id: '7',
+          dao_id: fixture.dao.reference.daoId,
+          creator: '1',
+          kind: 0,
+          choices: 2,
+          closes: 1700000000,
+          quorum: 0,
+          approval: 5001,
+          denominator: '1',
+          max_member: '1',
+          cast: '1',
+          tallies: ['1', '0'],
+          status: 1,
+          winner: 0,
+          metadata: '{}',
+        },
+      ],
+      votes: [{ id: '1', ballot: '7', member: '1', weight: '1', choice: 0 }],
+      terminals: [
+        {
+          ballot_id: '7',
+          dao_id: fixture.dao.reference.daoId,
+          completed_at: 1700000000,
+          legacy: false,
+        },
+      ],
+      elections: [],
+      executions: [],
+      grantplans: [],
+    });
+    fixture.chain.archivePreview = async () => plan;
+    const service = new ArchiveExports(
+      pool,
+      fixture.chain,
+      fixture.service.assets,
+      fixture.provider,
+      allowance,
+      fixture.service.providerScope,
+    );
+    const request = { requestId: randomUUID(), selection, ...archiveExportConsent(plan) };
+    return { ...fixture, exports: service, request, plan, uploadRequest: fixture.request };
+  }
+  it('reserves the whole archive before pinning, resumes every phase and releases only unused verified capacity', async () => {
+    const fixture = archiveFixture(),
+      created = await fixture.exports.create(account, fixture.request);
+    expect(created).toMatchObject({
+      state: 'planned',
+      heldBytes: fixture.request.maximumStoredBytes,
+      verifiedChunks: 0,
+      pruningAuthorized: false,
+    });
+    expect(fixture.provider.upload).not.toHaveBeenCalled();
+    expect(await fixture.exports.create(account, fixture.request)).toEqual(created);
+    const restarted = new ArchiveExports(
+      pool,
+      fixture.chain,
+      fixture.service.assets,
+      fixture.provider,
+      10_000n,
+      fixture.service.providerScope,
+    );
+    expect(await restarted.reconcile(created.id)).toBe('retry');
+    expect(await restarted.status(account, created.id)).toMatchObject({
+      state: 'exporting',
+      verifiedChunks: 1,
+      manifest: null,
+    });
+    expect(await restarted.reconcile(created.id)).toBe('completed');
+    const finished = await restarted.status(account, created.id);
+    expect(finished).toMatchObject({
+      state: 'verified',
+      heldBytes: '0',
+      verifiedChunks: 1,
+      totalChunks: 1,
+      pruningAuthorized: false,
+    });
+    expect(finished.manifest?.cid).toBeTruthy();
+    expect(await restarted.reconcile(created.id)).toBe('completed');
+    expect(fixture.provider.upload).toHaveBeenCalledTimes(2);
+    expect(fixture.provider.remove).not.toHaveBeenCalled();
+    const usage = await fixture.service.usage(account, fixture.dao.reference.daoId);
+    expect(BigInt(usage.totalBytes)).toBeLessThanOrEqual(BigInt(created.maximumStoredBytes));
+    expect(usage.reservedBytes).toBe('0');
+    expect(
+      (await restarted.list(account, { dao: fixture.dao.reference })).exports.map((e) => e.id),
+    ).toEqual([created.id]);
+    await expect(
+      restarted.list(account, { dao: fixture.dao.reference, cursor: randomUUID() }),
+    ).rejects.toThrow('ARCHIVE_CURSOR_INVALID');
+    const bundle = await restarted.bundle(account, created.id);
+    expect(bundle.manifest.families[0]?.records).toBe('1');
+    expect(bundle.chunks).toHaveLength(1);
+    const directory = await mkdtemp(join(tmpdir(), 'daclify-archive-'));
+    try {
+      const file = join(directory, 'bundle.json');
+      await writeFile(file, JSON.stringify(bundle));
+      const result: unknown = JSON.parse(
+        execFileSync(
+          process.execPath,
+          ['--import', 'tsx', 'tools/archive/verify.ts', file, bundle.manifestFile.commitment],
+          { encoding: 'utf8', env: { ...process.env, DATABASE_URL: '' } },
+        ),
+      );
+      expect(result).toMatchObject({
+        id: created.id,
+        dao: fixture.dao.reference,
+        records: '1',
+        chunks: 1,
+        pruningAuthorized: false,
+      });
+      expect(() =>
+        execFileSync(
+          process.execPath,
+          ['--import', 'tsx', 'tools/archive/verify.ts', file, '00'.repeat(32)],
+          { stdio: 'pipe', env: { ...process.env, DATABASE_URL: '' } },
+        ),
+      ).toThrow();
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+    fixture.provider.retrieve = async () => Buffer.from('corrupt');
+    await expect(restarted.bundle(account, created.id)).rejects.toThrow(
+      'ARCHIVE_BUNDLE_UNAVAILABLE',
+    );
+  });
+  it('fences concurrent whole-bundle reservations and never borrows another DAO archive hold', async () => {
+    const fixture = archiveFixture(2000n);
+    const requests = [fixture.request, { ...fixture.request, requestId: randomUUID() }];
+    const outcomes = await Promise.allSettled(
+      requests.map((request) => fixture.exports.create(account, request)),
+    );
+    expect(outcomes.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    expect(outcomes.filter((result) => result.status === 'rejected')).toHaveLength(1);
+    const created = outcomes.find((result) => result.status === 'fulfilled');
+    if (!created || created.status !== 'fulfilled') throw new Error('No archive reservation');
+    await expect(
+      fixture.service.upload(account, fixture.uploadRequest('x'.repeat(2000))),
+    ).rejects.toThrow('STORAGE_QUOTA');
+    const foreign = setup(10_000n),
+      raw = foreign.request();
+    await expect(
+      foreign.service.assets.upload(
+        account,
+        HostedAssetUploadSchema.parse({
+          dao: raw.dao,
+          requestId: randomUUID(),
+          kind: 'archive',
+          referenceKey: randomUUID(),
+          bytes: raw.bytes,
+          commitment: raw.commitment,
+          content: raw.content,
+        }),
+        created.value.id,
+      ),
+    ).rejects.toThrow('ARCHIVE_HOLD_INVALID');
+    expect(fixture.provider.upload).not.toHaveBeenCalled();
+    expect(foreign.provider.upload).not.toHaveBeenCalled();
+  });
+  it('recovers a lost archive pin response without repinning or consuming its budget twice', async () => {
+    const fixture = archiveFixture(),
+      created = await fixture.exports.create(account, fixture.request);
+    const actualUpload = fixture.provider.upload,
+      found = new Map<string, Awaited<ReturnType<ContentProvider['upload']>>>();
+    let lost = true;
+    fixture.provider.upload = vi.fn(async (id, bytes) => {
+      const file = await actualUpload(id, bytes);
+      found.set(id, file);
+      if (lost) {
+        lost = false;
+        throw new Error('Lost provider acknowledgement');
+      }
+      return file;
+    });
+    fixture.provider.find = async (id) =>
+      found.has(id)
+        ? [found.get(id)].filter(
+            (file): file is Awaited<ReturnType<ContentProvider['upload']>> => file !== undefined,
+          )
+        : [];
+    await expect(fixture.exports.reconcile(created.id)).rejects.toThrow('UPLOAD_PENDING');
+    const held = await fixture.exports.status(account, created.id);
+    expect(held.verifiedChunks).toBe(0);
+    expect(await fixture.exports.reconcile(created.id)).toBe('retry');
+    const resumed = await fixture.exports.status(account, created.id);
+    expect(resumed.heldBytes).toBe(held.heldBytes);
+    expect(await fixture.exports.reconcile(created.id)).toBe('completed');
+    expect(fixture.provider.upload).toHaveBeenCalledTimes(2);
+    expect(fixture.provider.remove).not.toHaveBeenCalled();
+  });
+  it('retains the entire unresolved archive budget after corrupt retrieval', async () => {
+    const fixture = archiveFixture(),
+      created = await fixture.exports.create(account, fixture.request);
+    fixture.provider.retrieve = async () => Buffer.from('corrupt');
+    await expect(fixture.exports.reconcile(created.id)).rejects.toThrow('UPLOAD_PENDING');
+    const usage = await fixture.service.usage(account, fixture.dao.reference.daoId);
+    expect(usage.totalBytes).toBe(fixture.request.maximumStoredBytes);
+    expect(usage.verifiedBytes).toBe('0');
+    expect(await fixture.exports.status(account, created.id)).toMatchObject({
+      state: 'planned',
+      verifiedChunks: 0,
+      manifest: null,
+    });
+    await expect(
+      pool.query('UPDATE archive_storage_holds SET remaining_bytes=maximum_bytes+1 WHERE id=$1', [
+        created.id,
+      ]),
+    ).rejects.toMatchObject({ code: '23514' });
+    await expect(
+      pool.query('DELETE FROM archive_storage_holds WHERE id=$1', [created.id]),
+    ).rejects.toMatchObject({ code: '23514' });
+    expect(fixture.provider.remove).not.toHaveBeenCalled();
+  });
+  it('rejects changed export consent, insufficient capacity and unauthorized recovery before provider writes', async () => {
+    const fixture = archiveFixture(1n);
+    await expect(
+      fixture.exports.create(account, { ...fixture.request, selectionCommitment: '00'.repeat(32) }),
+    ).rejects.toThrow('ARCHIVE_PLAN_CHANGED');
+    await expect(fixture.exports.create(account, fixture.request)).rejects.toThrow('STORAGE_QUOTA');
+    const funded = archiveFixture(),
+      created = await funded.exports.create(account, funded.request);
+    await expect(
+      funded.exports.create(account, {
+        ...funded.request,
+        maximumStoredBytes: String(BigInt(funded.request.maximumStoredBytes) + 1n),
+      }),
+    ).rejects.toThrow('ARCHIVE_REQUEST_CONFLICT');
+    funded.chain.memberships = async () => [];
+    await expect(funded.exports.status(account, created.id)).rejects.toThrow(
+      'ARCHIVE_ADMIN_REQUIRED',
+    );
+    expect(await funded.exports.reconcile(created.id)).toBe('manual');
+    expect(funded.provider.upload).not.toHaveBeenCalled();
+    const client = await pool.connect();
+    try {
+      expect(await storageUsed(client, contentDaoKey(funded.dao.reference))).toBe(
+        BigInt(funded.request.maximumStoredBytes),
+      );
+    } finally {
+      client.release();
+    }
+  });
   it('reserves and verifies an archive asset, sharing document CID capacity and recovering an uncertain provider response', async () => {
     const fixture = setup(30n),
       doc = await fixture.service.upload(account, fixture.request());

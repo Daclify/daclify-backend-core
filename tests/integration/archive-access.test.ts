@@ -1,11 +1,14 @@
 import { beforeAll, afterAll, expect, it, vi } from 'vitest';
 import { Pool } from 'pg';
-import { generateKeyPairSync, randomUUID } from 'node:crypto';
+import { generateKeyPairSync, randomUUID, createHash } from 'node:crypto';
+import { CID } from 'multiformats/cid';
+import { create } from 'multiformats/hashes/digest';
 import { PrivateKey } from '@wharfkit/antelope';
 import {
   ArchiveRoutes,
   OrdinaryPollArchivePlanSchema,
   archiveSourceSchema,
+  archiveExportConsent,
 } from '@daclify/modules/archive';
 import {
   AccountSchema,
@@ -18,6 +21,7 @@ import { VERSION } from '../../protocol/base.js';
 import { createServer } from '../../services/api/src/server.js';
 import { migrate } from '../../services/api/src/store.js';
 import type { ChainGateway } from '../../services/api/src/chain.js';
+import { ContentService } from '../../services/api/src/content/service.js';
 const url = process.env.DATABASE_URL;
 if (
   !url ||
@@ -113,7 +117,34 @@ it('requires session/CSRF/current administrator and binds the readonly result to
     relay: unavailable,
   };
   const origin = 'http://localhost:5208',
-    app = await createServer(pool, chain, origin),
+    files = new Map<string, Uint8Array>(),
+    content = new ContentService(
+      pool,
+      chain,
+      {
+        upload: async (_id, bytes) => {
+          const cid = CID.createV1(
+            0x55,
+            create(0x12, createHash('sha256').update(bytes).digest()),
+          ).toString();
+          files.set(cid, bytes.slice());
+          return { id: randomUUID(), cid, size: bytes.length };
+        },
+        retrieve: async (cid) => {
+          const bytes = files.get(cid);
+          if (!bytes) throw new Error('Missing fixture file');
+          return bytes.slice();
+        },
+        find: async () => [],
+        remove: async () => {
+          throw new Error('Archive must not remove pins');
+        },
+      },
+      10_000n,
+      'local-fixture',
+      randomUUID(),
+    ),
+    app = await createServer(pool, chain, origin, { content }),
     payload = { dao, ballotIds: ['7'], retentionSeconds: 90 * 86400 },
     path = ArchiveRoutes.preview.path;
   try {
@@ -174,6 +205,64 @@ it('requires session/CSRF/current administrator and binds the readonly result to
     expect(read).toHaveBeenCalledTimes(1);
     read.mockImplementationOnce(async () => ({ ...plan, dao: { ...dao, daoId: '2' } }));
     expect((await app.inject(request)).statusCode).toBe(503);
+    const eligible = {
+        ...plan,
+        blocked: [],
+        families: [
+          { kind: 'ordinary-poll-votes' as const, parentId: '7', grossRamBytes: '0', chunks: [] },
+        ],
+      },
+      exportPayload = {
+        requestId: randomUUID(),
+        selection: payload,
+        ...archiveExportConsent(eligible),
+      },
+      exportRequest = {
+        method: 'POST' as const,
+        url: ArchiveRoutes.export.path,
+        payload: exportPayload,
+        headers,
+      };
+    expect((await app.inject({ ...exportRequest, headers: { origin } })).statusCode).toBe(401);
+    expect(
+      (await app.inject({ ...exportRequest, headers: { ...headers, 'x-csrf-token': '' } }))
+        .statusCode,
+    ).toBe(403);
+    admin = false;
+    expect((await app.inject(exportRequest)).statusCode).toBe(403);
+    admin = true;
+    read.mockImplementationOnce(async () => eligible);
+    const exported = await app.inject(exportRequest);
+    expect(exported.statusCode).toBe(200);
+    const status = ArchiveRoutes.export.response.parse(exported.json());
+    expect(status.pruningAuthorized).toBe(false);
+    const statusPath = ArchiveRoutes.status.path.replace(':id', status.id);
+    expect((await app.inject({ url: statusPath })).statusCode).toBe(401);
+    expect((await app.inject({ url: statusPath, headers })).statusCode).toBe(200);
+    const refresh = {
+      method: 'POST' as const,
+      url: ArchiveRoutes.reconcile.path.replace(':id', status.id),
+      payload: {},
+      headers,
+    };
+    expect(
+      (await app.inject({ ...refresh, headers: { ...headers, 'x-csrf-token': '' } })).statusCode,
+    ).toBe(403);
+    const ready = await app.inject(refresh);
+    expect(ready.statusCode).toBe(200);
+    expect(ArchiveRoutes.reconcile.response.parse(ready.json())).toMatchObject({
+      state: 'verified',
+      heldBytes: '0',
+      pruningAuthorized: false,
+    });
+    const download = await app.inject({
+      url: ArchiveRoutes.bundle.path.replace(':id', status.id),
+      headers,
+    });
+    expect(download.statusCode).toBe(200);
+    expect(ArchiveRoutes.bundle.response.parse(download.json()).manifest.families[0]?.records).toBe(
+      '0',
+    );
     delete chain.archivePreview;
     expect((await app.inject(request)).statusCode).toBe(503);
   } finally {

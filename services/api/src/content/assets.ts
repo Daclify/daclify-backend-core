@@ -40,6 +40,7 @@ const RowSchema = z.object({
   cid: HostedAssetReceiptSchema.shape.cid.nullable(),
   storage_object_id: z.uuid().nullable(),
   expires_at: z.date(),
+  archive_hold_id: z.uuid().nullable(),
 });
 type AssetRow = z.infer<typeof RowSchema>;
 const hash = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex');
@@ -68,19 +69,30 @@ export class HostedAssets {
     ProviderScopeSchema.parse(scope);
     if (freeBytes < 0n || freeBytes > (1n << 63n) - 1n) throw new Error('CONTENT_ALLOWANCE');
   }
-  async upload(account: Account, value: HostedAssetUpload): Promise<HostedAssetReceipt> {
+  async upload(
+    account: Account,
+    value: HostedAssetUpload,
+    archiveHoldId?: string,
+  ): Promise<HostedAssetReceipt> {
     const input = HostedAssetUploadSchema.parse(value),
       bytes = Buffer.from(input.content, 'base64');
     if (bytes.length !== input.bytes || hash(bytes) !== input.commitment)
       throw new ApiError('DOCUMENT_INTEGRITY');
     const requestHash = hash(JSON.stringify(HostedAssetIntentSchema.strip().parse(input)));
-    return this.uploadIntent(account, input, bytes, requestHash);
+    return this.uploadIntent(
+      account,
+      input,
+      bytes,
+      requestHash,
+      archiveHoldId === undefined ? null : z.uuid().parse(archiveHoldId),
+    );
   }
   private async uploadIntent(
     account: Account,
     input: HostedAssetUpload,
     bytes: Uint8Array,
     requestHash: string,
+    archiveHoldId: string | null,
   ): Promise<HostedAssetReceipt> {
     const network = await this.chain.network();
     if (
@@ -111,7 +123,11 @@ export class HostedAssets {
       );
       if (existing.rows[0]) {
         row = RowSchema.parse(existing.rows[0]);
-        if (row.request_hash !== requestHash || row.provider_scope !== this.scope)
+        if (
+          row.request_hash !== requestHash ||
+          row.provider_scope !== this.scope ||
+          row.archive_hold_id !== archiveHoldId
+        )
           throw new ApiError('UPLOAD_REQUEST_CONFLICT', 409);
         await client.query('COMMIT');
         if ((row.state === 'verified' || row.state === 'published') && row.cid)
@@ -122,10 +138,18 @@ export class HostedAssets {
       const reusable = await reusableObject(client, this.scope, input.commitment, input.bytes);
       const used = await storageUsed(client, key),
         charged = reusable && (await objectCharged(client, key, reusable.id));
-      if (used + (charged ? 0n : BigInt(input.bytes)) > BigInt(funding.uploadCapacityBytes))
+      const growth = charged ? 0n : BigInt(input.bytes);
+      if (archiveHoldId) {
+        if (input.kind !== 'archive') throw new ApiError('ARCHIVE_HOLD_INVALID', 409);
+        const debit = await client.query(
+          "UPDATE archive_storage_holds SET remaining_bytes=remaining_bytes-$1 WHERE id=$2 AND requested_by=$3 AND dao_key=$4 AND provider_scope=$5 AND state='held' AND remaining_bytes>=$1 RETURNING id",
+          [growth.toString(), archiveHoldId, account.id, key, this.scope],
+        );
+        if (!debit.rowCount) throw new ApiError('ARCHIVE_HOLD_INVALID', 409);
+      } else if (used + growth > BigInt(funding.uploadCapacityBytes))
         throw new ApiError('STORAGE_QUOTA', 403);
       const inserted = await client.query<Record<string, unknown>>(
-        `INSERT INTO asset_uploads(id,account_id,dao_key,provider_scope,import_profile,request_id,kind,reference_key,expected_bytes,commitment,request_hash,storage_object_id,provider_id,cid) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
+        `INSERT INTO asset_uploads(id,account_id,dao_key,provider_scope,import_profile,request_id,kind,reference_key,expected_bytes,commitment,request_hash,storage_object_id,provider_id,cid,archive_hold_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
         [
           randomUUID(),
           account.id,
@@ -141,6 +165,7 @@ export class HostedAssets {
           reusable?.id ?? null,
           reusable?.provider_id ?? null,
           reusable?.cid ?? null,
+          archiveHoldId,
         ],
       );
       row = RowSchema.parse(inserted.rows[0]);

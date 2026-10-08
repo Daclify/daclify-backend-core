@@ -24,6 +24,21 @@ async function enqueue(payload: unknown = { uploadId: randomUUID() }, module = '
   return id;
 }
 describe('bounded hosted-content jobs on PostgreSQL', () => {
+  it('drains archive jobs through the existing host while preserving a distinct namespace', async () => {
+    await enqueue(undefined, 'core-archive');
+    const documents = vi.fn(async () => 'completed' as const),
+      assets = vi.fn(async () => 'completed' as const),
+      archive = vi.fn(async () => 'completed' as const);
+    const worker = startContentWorker(pool, {
+      reconcile: documents,
+      assets: { reconcile: assets },
+      archive: { reconcile: archive },
+    });
+    await worker.stop();
+    expect(documents).not.toHaveBeenCalled();
+    expect(assets).not.toHaveBeenCalled();
+    expect(archive).toHaveBeenCalledOnce();
+  });
   it('drains asset jobs through the existing stoppable host loop', async () => {
     await enqueue(undefined, 'core-assets');
     const documents = vi.fn(async () => 'completed' as const),

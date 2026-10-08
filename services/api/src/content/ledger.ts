@@ -55,6 +55,7 @@ export async function storageUsed(client: PoolClient, daoKey: string): Promise<b
        + COALESCE((SELECT sum(expected_size) FROM uploads WHERE dao_key=$1 AND storage_object_id IS NULL
          AND (state<>'failed' OR provider_id IS NOT NULL)),0)
        + COALESCE((SELECT sum(expected_bytes) FROM asset_uploads WHERE dao_key=$1 AND storage_object_id IS NULL),0)
+       + COALESCE((SELECT sum(remaining_bytes) FROM archive_storage_holds WHERE dao_key=$1 AND state='held'),0)
      )::text AS used`,
     [daoKey],
   );

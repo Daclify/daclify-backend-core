@@ -21,6 +21,7 @@ import type { ContentProvider, PinnedFile } from './provider.js';
 import { ApiError } from '../errors.js';
 import { fundedStorage } from './capacity.js';
 import { HostedAssets } from './assets.js';
+import { ArchiveExports } from '../archive/exports.js';
 import { validateBrandImage } from './branding.js';
 import {
   CONTENT_IMPORT_PROFILE,
@@ -52,6 +53,7 @@ function hash(bytes: Uint8Array | string): string {
 }
 export class ContentService {
   readonly assets: HostedAssets;
+  readonly archive: ArchiveExports;
   constructor(
     private readonly pool: Pool,
     private readonly chain: ChainGateway,
@@ -63,6 +65,7 @@ export class ContentService {
     ProviderScopeSchema.parse(providerScope);
     if (allowance < 0n || allowance > (1n << 63n) - 1n) throw new Error('CONTENT_ALLOWANCE');
     this.assets = new HostedAssets(pool, chain, provider, allowance, providerScope);
+    this.archive = new ArchiveExports(pool, chain, this.assets, provider, allowance, providerScope);
   }
   get freeAllowance(): bigint {
     return this.allowance;

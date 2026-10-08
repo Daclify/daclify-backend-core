@@ -56,6 +56,7 @@ These record design decisions and acceptance criteria. They are not a substitute
 - [Module/login implementation plan](superpowers/plans/2026-10-07-modules-and-paired-login.md)
 - [Wallet recovery plan](superpowers/plans/2026-10-07-wallet-disaster-recovery.md)
 - [RAM, prepaid storage and archives plan](superpowers/plans/2026-10-08-resource-billing-and-archives.md)
+- [Archive export operations](archive-exports.md): reservations, restart recovery, standalone integrity verification and outstanding pruning/backup gates.
 - [Execution ledger](evidence/execution-ledger.json)
 
 ## Connected payments and hosting

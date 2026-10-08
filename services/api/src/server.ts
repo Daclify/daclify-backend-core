@@ -599,6 +599,54 @@ export async function createServer(
     if (!reports(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
     return archivePreview(chain, account, request.body);
   });
+  app.post(ArchiveRoutes.export.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    if (!reports(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    return contentService().archive.create(account, ArchiveRoutes.export.input.parse(request.body));
+  });
+  app.get<{ Querystring: { dao: string; cursor?: string } }>(
+    ArchiveRoutes.list.path,
+    async (request) => {
+      const account = await session(request.cookies[cookieName]);
+      if (!reports(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+      const query = z
+        .strictObject({ dao: z.string().max(2048), cursor: z.uuid().optional() })
+        .parse(request.query);
+      let dao: unknown;
+      try {
+        dao = JSON.parse(query.dao);
+      } catch {
+        throw new ApiError('DAO_REFERENCE');
+      }
+      return contentService().archive.list(account, {
+        dao,
+        ...(query.cursor ? { cursor: query.cursor } : {}),
+      });
+    },
+  );
+  app.get<{ Params: { id: string } }>(ArchiveRoutes.status.path, async (request) =>
+    contentService().archive.status(
+      await session(request.cookies[cookieName]),
+      z.uuid().parse(request.params.id),
+    ),
+  );
+  app.post<{ Params: { id: string } }>(ArchiveRoutes.reconcile.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    ArchiveRoutes.reconcile.input.parse(request.body);
+    if (!reports(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    return contentService().archive.refresh(account, z.uuid().parse(request.params.id));
+  });
+  app.get<{ Params: { id: string } }>(ArchiveRoutes.bundle.path, async (request) => {
+    const account = await session(request.cookies[cookieName]);
+    if (!reports(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    return contentService().archive.bundle(account, z.uuid().parse(request.params.id));
+  });
   app.post(ApiRoutes.upload.path, { bodyLimit: 8 * 1024 * 1024 }, async (request) => {
     const account = await session(
       request.cookies[cookieName],

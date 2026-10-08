@@ -10,7 +10,7 @@ export async function processContentJob(
   pool: Pool,
   service: Pick<ContentService, 'reconcile'>,
   owner: string,
-  moduleId: 'core-content' | 'core-assets' = 'core-content',
+  moduleId: 'core-content' | 'core-assets' | 'core-archive' = 'core-content',
 ): Promise<ContentJobResult> {
   z.uuid().parse(owner);
   const job = await leaseJob(pool, owner, { moduleId, kind: 'reconcile' });
@@ -21,7 +21,12 @@ export async function processContentJob(
   if (payload.success) {
     try {
       outcome = await service.reconcile(payload.data.uploadId);
-      error = outcome === 'manual' ? 'UPLOAD_REVIEW_REQUIRED' : null;
+      error =
+        outcome === 'manual'
+          ? moduleId === 'core-archive'
+            ? 'ARCHIVE_REVIEW_REQUIRED'
+            : 'UPLOAD_REVIEW_REQUIRED'
+          : null;
     } catch {
       outcome = 'retry';
       error = 'CONTENT_RECONCILE_PENDING';
@@ -44,12 +49,17 @@ export function startContentWorker(
   pool: Pool,
   service: Pick<ContentService, 'reconcile'> & {
     assets: Pick<ContentService['assets'], 'reconcile'>;
+    archive?: Pick<ContentService['archive'], 'reconcile'>;
   },
 ): { stop: () => Promise<void> } {
   const owner = randomUUID();
   return startPollingWorker(async () => {
     const documents = await processContentJob(pool, service, owner);
     const assets = await processContentJob(pool, service.assets, owner, 'core-assets');
+    if (service.archive) {
+      const archives = await processContentJob(pool, service.archive, owner, 'core-archive');
+      if (archives !== 'idle') return archives;
+    }
     return assets === 'idle' ? documents : assets;
   }, 'CONTENT_JOB_STORE_UNAVAILABLE');
 }

@@ -29,6 +29,7 @@
     "deploy": "tsx tools/deploy/deploy.ts",
     "price:tlos": "tsx tools/deploy/price.ts",
     "storage:claim": "tsx tools/content/reconcile.ts",
+    "archive:verify": "tsx tools/archive/verify.ts",
     "docs:generate": "tsx tools/docs/generate.ts",
     "docs:check": "tsx tools/docs/generate.ts --check",
     "bootstrap": "node tools/bootstrap.ts",
