@@ -1,6 +1,7 @@
 {
   "name": "@daclify/core-protocol",
   "version": "0.7.0-alpha.1",
+  "license": "AGPL-3.0-only",
   "type": "module",
   "description": "Daclify public protocol and generated contract SDK",
   "engines": {
@@ -36,7 +37,15 @@
       "import": "./dist/protocol/generated/help.js"
     }
   },
-  "files": ["dist/protocol", "dist/sdk", "docs/generated", "README.md", "contracts/common"],
+  "files": [
+    "dist/protocol",
+    "dist/sdk",
+    "docs/generated",
+    "README.md",
+    "contracts/common",
+    "LICENSE",
+    "LICENSING.md"
+  ],
   "dependencies": {
     "@noble/hashes": "2.4.0",
     "@wharfkit/antelope": "4.0.2",

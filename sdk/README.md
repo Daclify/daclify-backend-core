@@ -11,3 +11,10 @@ The development version is unreleased and its interfaces may change. Released co
 `@daclify/core-protocol/help` supplies the generated versioned guides and references; `@daclify/core-protocol/documentation` is the producer's build-time documentation generator. API routes and validators are exported from the protocol root. ABI reference hashes identify the source JSON bytes, not Antelope's separately encoded ABI hash. Generated JSON Schema describes structural constraints; contract rules and custom runtime refinements still require their validators and tests.
 
 New payment/hosting/Hub schemas and typed routes are producer-owned. Signing challenges bind their API issuer using v2 messages. `RuntimeCodeHash` and `RuntimeRawAbiHash` export the reviewed compiled WASM and binary-ABI pins; JSON ABI hashes are different and must not substitute for chain raw ABI verification. `CoreContextActions` includes new governed hosting/Connect permission links.
+
+## License
+
+This SDK, generated code, headers and documentation are **AGPL-3.0-only**.
+The package includes [LICENSE](LICENSE) and [licensing guidance](LICENSING.md).
+Dependencies retain their own licenses. Review copyleft compatibility before
+combining this SDK with proprietary code; there is no blanket module exception.

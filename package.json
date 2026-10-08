@@ -1,6 +1,7 @@
 {
   "name": "@daclify/backend-core",
   "version": "0.7.0-alpha.1",
+  "license": "AGPL-3.0-only",
   "type": "module",
   "description": "Daclify core services and Antelope runtime",
   "engines": {

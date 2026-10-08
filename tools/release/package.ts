@@ -38,6 +38,7 @@ try {
 }
 await writeFile(`${stage}/package.json`, JSON.stringify(manifest, null, 2) + '\n');
 await cp('sdk/README.md', `${stage}/README.md`);
+for (const name of ['LICENSE', 'LICENSING.md']) await cp(name, `${stage}/${name}`);
 execFileSync('npm', ['pack', stage, '--pack-destination', '.artifacts'], { stdio: 'inherit' });
 console.log(
   development

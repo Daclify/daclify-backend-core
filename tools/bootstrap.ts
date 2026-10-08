@@ -91,6 +91,7 @@ command(
 );
 await writeFile(join(stage, 'package.json'), JSON.stringify(publicManifest, null, 2) + '\n');
 await cp(join(core, 'sdk/README.md'), join(stage, 'README.md'));
+for (const name of ['LICENSE', 'LICENSING.md']) await cp(join(core, name), join(stage, name));
 npm(['pack', '--pack-destination', artifacts], stage);
 const coreTar = `../daclify-backend-core/.artifacts/daclify-core-protocol-${publicManifest.version}.tgz`;
 const moduleTar = `../daclify-backend-modules/.artifacts/daclify-modules-${moduleManifest.version}.tgz`;

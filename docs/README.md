@@ -61,3 +61,10 @@ These record design decisions and acceptance criteria. They are not a substitute
 See core [payment operations](../docs/operations/connected-payments.md) and app `/docs/shared-hosting`, `/docs/payments`, `/docs/independent-operators`. Independent API discovery now has issuer/code/ABI and current-registration checks; actual operator browser cookies and external providers still need qualification.
 
 [Connected payment verification](evidence/2026-10-08-connected-payments.md) records the current 0.7 local/native/PostgreSQL/browser checks and actual outstanding provider/deployment qualification.
+
+## Source and license
+
+The application, contract, SDK and first-party module repositories use
+[AGPL-3.0-only](../LICENSE). Read [licensing guidance](../LICENSING.md) before
+redistribution, hosting modified versions or combining modules. The app exposes
+this guidance at `/docs/license`; operators must offer their actual deployed source.

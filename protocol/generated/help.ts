@@ -254,6 +254,16 @@ export const CoreHelpBundle={
         "Fully standalone Stripe is for operators running both their own backend and frontend. Those credentials remain outside Daclify. The Hub presents public information and links to the portal; it cannot automatically take commission from payments it does not process.",
         "Do not transfer Daclify session cookies, social provider credentials, recovery kits or decrypted vault keys to another operator. Signing in to a different service is a separate audience-bound authentication step; current on-chain membership determines governance rights. Pairing records are local to that operator’s database and need its own backups."
       ]
+    },
+    {
+      "id": "license",
+      "title": "Source and license",
+      "paragraphs": [
+        "Copyright 2026 Daclify contributors. Daclify application code, smart contracts, SDKs and first-party modules are licensed under AGPL-3.0-only. You may use, modify and redistribute them under that license. The software comes without warranty; third-party files retain their own licenses.",
+        "If you distribute covered binaries, provide corresponding source. If you run a modified version that supports network interaction, prominently offer its corresponding source to those users. Provide the actual deployed version and relevant build and installation scripts; an upstream link alone does not cover local modifications. Keep private keys, provider secrets and user data out of source archives.",
+        "Fork improvements can be reused in Daclify under AGPL with their notices retained. Contributors keep their copyright; the license does not require a pull request or transfer ownership. Private changes with neither distribution nor network interaction need not be published.",
+        "Commercial hosting, subscriptions and paid services are allowed. Independently developed modules and services need a compatibility review; putting code in another repository does not automatically exempt a combined work. No trademark permission is granted to present a fork as the official Daclify service."
+      ]
     }
   ],
   "schemaVersion": 1,
