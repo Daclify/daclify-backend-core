@@ -1,6 +1,10 @@
 import { beforeAll, afterAll, expect, it, vi } from 'vitest';
 import { Pool } from 'pg';
-import { generateKeyPairSync, randomUUID, createHash } from 'node:crypto';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { EncryptedArchiveBackup } from '../../services/api/src/archive/backup.js';
+import { generateKeyPairSync, randomUUID, randomBytes, createHash } from 'node:crypto';
 import { CID } from 'multiformats/cid';
 import { create } from 'multiformats/hashes/digest';
 import { PrivateKey } from '@wharfkit/antelope';
@@ -52,10 +56,11 @@ const unavailable = async (): Promise<never> => {
   throw new Error('Not part of archive fixture');
 };
 it('requires session/CSRF/current administrator and binds the readonly result to the exact deployment', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'daclify-api-backup-'));
   const dao = {
     chainId: 'ef'.repeat(32),
     contract: 'daclifycore',
-    daoId: '1',
+    daoId: randomBytes(4).readUInt32BE().toString(),
     interfaceVersion: 1 as const,
   };
   let admin = true,
@@ -143,6 +148,12 @@ it('requires session/CSRF/current administrator and binds the readonly result to
       10_000n,
       'local-fixture',
       randomUUID(),
+      new EncryptedArchiveBackup({
+        directory,
+        key: randomBytes(32),
+        keyId: 'api-fixture-key',
+        storeId: 'api-fixture-backup',
+      }),
     ),
     app = await createServer(pool, chain, origin, { content }),
     payload = { dao, ballotIds: ['7'], retentionSeconds: 90 * 86400 },
@@ -263,9 +274,41 @@ it('requires session/CSRF/current administrator and binds the readonly result to
     expect(ArchiveRoutes.bundle.response.parse(download.json()).manifest.families[0]?.records).toBe(
       '0',
     );
+    const manifest = ArchiveRoutes.reconcile.response.parse(ready.json()).manifest;
+    if (!manifest) throw new Error('Archive fixture requires manifest');
+    const backupRequest = {
+      method: 'POST' as const,
+      url: ArchiveRoutes.backup.path.replace(':id', status.id),
+      headers,
+      payload: { expectedManifestCommitment: manifest.commitment },
+    };
+    expect((await app.inject({ ...backupRequest, headers: { origin } })).statusCode).toBe(401);
+    expect(
+      (await app.inject({ ...backupRequest, headers: { ...headers, 'x-csrf-token': '' } }))
+        .statusCode,
+    ).toBe(403);
+    admin = false;
+    expect((await app.inject(backupRequest)).statusCode).toBe(403);
+    admin = true;
+    expect(
+      (
+        await app.inject({
+          ...backupRequest,
+          payload: { expectedManifestCommitment: '00'.repeat(32) },
+        })
+      ).statusCode,
+    ).toBe(409);
+    const backupResponse = await app.inject(backupRequest);
+    expect(backupResponse.statusCode).toBe(200);
+    expect(ArchiveRoutes.backup.response.parse(backupResponse.json())).toMatchObject({
+      pruningAuthorized: false,
+      backupSupported: true,
+      backup: { manifestCommitment: manifest.commitment },
+    });
     delete chain.archivePreview;
     expect((await app.inject(request)).statusCode).toBe(503);
   } finally {
     await app.close();
+    await rm(directory, { recursive: true, force: true });
   }
 });

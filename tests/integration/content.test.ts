@@ -1,6 +1,6 @@
 import { beforeAll, afterAll, describe, it, expect, vi } from 'vitest';
 import { Pool } from 'pg';
-import { generateKeyPairSync, randomUUID, createHash } from 'node:crypto';
+import { generateKeyPairSync, randomUUID, randomBytes, createHash } from 'node:crypto';
 import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -24,6 +24,7 @@ import {
   contentDaoKey,
 } from '../../services/api/src/content/ledger.js';
 import { HostedAssets } from '../../services/api/src/content/assets.js';
+import { EncryptedArchiveBackup } from '../../services/api/src/archive/backup.js';
 import { ArchiveExports } from '../../services/api/src/archive/exports.js';
 import {
   archiveExportConsent,
@@ -332,6 +333,76 @@ describe('hosted upload transactions with a simulated provider', () => {
         chunks: 1,
         pruningAuthorized: false,
       });
+      const backupKey = randomBytes(32),
+        backupStore = new EncryptedArchiveBackup({
+          directory,
+          key: backupKey,
+          keyId: 'owned-fixture-key',
+          storeId: 'independent-owned-fixture',
+        }),
+        withBackup = new ArchiveExports(
+          pool,
+          fixture.chain,
+          fixture.service.assets,
+          fixture.provider,
+          10_000n,
+          fixture.service.providerScope,
+          backupStore,
+        );
+      await expect(withBackup.backup(account, created.id, '00'.repeat(32))).rejects.toThrow(
+        'ARCHIVE_MANIFEST_CHANGED',
+      );
+      const backed = await withBackup.backup(account, created.id, bundle.manifestFile.commitment);
+      expect(backed.backup).toMatchObject({
+        storeId: 'independent-owned-fixture',
+        manifestCommitment: bundle.manifestFile.commitment,
+      });
+      expect(
+        (await withBackup.backup(account, created.id, bundle.manifestFile.commitment)).backup,
+      ).toEqual(backed.backup);
+      await expect(
+        pool.query('DELETE FROM archive_backups WHERE export_id=$1', [created.id]),
+      ).rejects.toThrow('ARCHIVE_BACKUP_IMMUTABLE');
+      await expect(
+        pool.query('UPDATE archive_exports SET backup_verified_at=now() WHERE id=$1', [created.id]),
+      ).rejects.toThrow('ARCHIVE_BACKUP_IMMUTABLE');
+      const restored: unknown = JSON.parse(
+        execFileSync(
+          process.execPath,
+          [
+            '--import',
+            'tsx',
+            'tools/archive/verify.ts',
+            '--encrypted',
+            join(directory, created.id + '.daclify-archive.enc'),
+            bundle.manifestFile.commitment,
+          ],
+          {
+            encoding: 'utf8',
+            env: {
+              ...process.env,
+              DATABASE_URL: '',
+              ARCHIVE_BACKUP_KEY: backupKey.toString('hex'),
+            },
+          },
+        ),
+      );
+      expect(restored).toMatchObject({
+        id: created.id,
+        records: '1',
+        chunks: 1,
+        pruningAuthorized: false,
+      });
+      await expect(
+        restarted.backup(account, created.id, bundle.manifestFile.commitment),
+      ).rejects.toThrow('ARCHIVE_BACKUP_NOT_CONFIGURED');
+      const originalRetrieve = fixture.provider.retrieve;
+      fixture.provider.retrieve = async () => {
+        throw new Error('Primary provider lost');
+      };
+      expect(await withBackup.bundle(account, created.id)).toEqual(bundle);
+      fixture.provider.retrieve = originalRetrieve;
+
       expect(() =>
         execFileSync(
           process.execPath,
@@ -343,6 +414,7 @@ describe('hosted upload transactions with a simulated provider', () => {
       await rm(directory, { recursive: true, force: true });
     }
     fixture.provider.retrieve = async () => Buffer.from('corrupt');
+    // Without a configured backup, provider corruption remains explicit.
     await expect(restarted.bundle(account, created.id)).rejects.toThrow(
       'ARCHIVE_BUNDLE_UNAVAILABLE',
     );

@@ -22,6 +22,7 @@ import { ApiError } from '../errors.js';
 import { fundedStorage } from './capacity.js';
 import { HostedAssets } from './assets.js';
 import { ArchiveExports } from '../archive/exports.js';
+import type { EncryptedArchiveBackup } from '../archive/backup.js';
 import { validateBrandImage } from './branding.js';
 import {
   CONTENT_IMPORT_PROFILE,
@@ -61,11 +62,20 @@ export class ContentService {
     private readonly allowance: bigint,
     readonly providerName: z.infer<typeof StorageStatusSchema>['provider'] = 'pinata',
     readonly providerScope: string = providerName,
+    backup?: EncryptedArchiveBackup,
   ) {
     ProviderScopeSchema.parse(providerScope);
     if (allowance < 0n || allowance > (1n << 63n) - 1n) throw new Error('CONTENT_ALLOWANCE');
     this.assets = new HostedAssets(pool, chain, provider, allowance, providerScope);
-    this.archive = new ArchiveExports(pool, chain, this.assets, provider, allowance, providerScope);
+    this.archive = new ArchiveExports(
+      pool,
+      chain,
+      this.assets,
+      provider,
+      allowance,
+      providerScope,
+      backup,
+    );
   }
   get freeAllowance(): bigint {
     return this.allowance;

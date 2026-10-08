@@ -17,6 +17,7 @@ import {
   ArchiveExportListRequestSchema,
   ArchiveExportListSchema,
   verifyArchiveBundle,
+  ArchiveBackupReceiptSchema,
 } from '@daclify/modules/archive';
 import { AccountSchema, type Account } from '../../../../protocol/api.js';
 import { HostedAssetReceiptSchema, HostedAssetUploadSchema } from '../../../../protocol/storage.js';
@@ -27,6 +28,7 @@ import { contentDaoKey, storageUsed, ProviderScopeSchema } from '../content/ledg
 import { fundedStorage } from '../content/capacity.js';
 import { archivePreview } from './service.js';
 import { ApiError } from '../errors.js';
+import type { EncryptedArchiveBackup } from './backup.js';
 
 const hash = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
 const RowSchema = z.object({
@@ -66,6 +68,7 @@ export class ArchiveExports {
     private readonly provider: ContentProvider,
     private readonly freeBytes: bigint,
     private readonly scope: string,
+    private readonly backupStore?: EncryptedArchiveBackup,
   ) {
     ProviderScopeSchema.parse(scope);
   }
@@ -113,6 +116,10 @@ export class ArchiveExports {
         'SELECT remaining_bytes FROM archive_storage_holds WHERE id=$1',
         [row.id],
       );
+    const backup = await this.pool.query<{ receipt: unknown }>(
+      'SELECT receipt FROM archive_backups WHERE export_id=$1',
+      [row.id],
+    );
     return ArchiveExportStatusSchema.parse({
       id: row.id,
       dao: row.dao,
@@ -124,6 +131,8 @@ export class ArchiveExports {
       manifest: row.manifest_cid
         ? { cid: row.manifest_cid, bytes: row.manifest_bytes, commitment: row.manifest_commitment }
         : null,
+      backup: backup.rows[0] ? ArchiveBackupReceiptSchema.parse(backup.rows[0].receipt) : null,
+      backupSupported: !!this.backupStore,
       pruningAuthorized: false,
     });
   }
@@ -447,6 +456,41 @@ export class ArchiveExports {
       next: result.rows.length > 20 ? rows.at(-1)?.id : null,
     });
   }
+  async backup(account: Account, id: string, expected: string) {
+    const status = await this.status(account, id);
+    if (!this.backupStore) throw new ApiError('ARCHIVE_BACKUP_NOT_CONFIGURED', 503);
+    if (!status.manifest || status.manifest.commitment !== expected)
+      throw new ApiError('ARCHIVE_MANIFEST_CHANGED', 409);
+    const receipt = await this.backupStore.put(await this.bundle(account, id));
+    await this.authorize(account, status.dao);
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('SELECT id FROM archive_exports WHERE id=$1 FOR UPDATE', [id]);
+      await client.query(
+        'INSERT INTO archive_backups(export_id,receipt) VALUES($1,$2) ON CONFLICT(export_id) DO NOTHING',
+        [id, receipt],
+      );
+      const saved = await client.query<{ receipt: unknown }>(
+          'SELECT receipt FROM archive_backups WHERE export_id=$1',
+          [id],
+        ),
+        previous = ArchiveBackupReceiptSchema.parse(saved.rows[0]?.receipt);
+      if (JSON.stringify(previous) !== JSON.stringify(receipt))
+        throw new ApiError('ARCHIVE_BACKUP_CONFLICT', 409);
+      await client.query(
+        'UPDATE archive_exports SET backup_verified_at=$2 WHERE id=$1 AND backup_verified_at IS NULL',
+        [id, receipt.verifiedAt],
+      );
+      await client.query('COMMIT');
+    } catch (cause) {
+      await client.query('ROLLBACK');
+      throw cause;
+    } finally {
+      client.release();
+    }
+    return this.status(account, id);
+  }
   async bundle(account: Account, id: string) {
     const status = await this.status(account, id);
     if (status.state !== 'verified' || !status.manifest)
@@ -480,6 +524,17 @@ export class ArchiveExports {
         file.commitment,
       );
     } catch (cause) {
+      if (status.backup && this.backupStore) {
+        try {
+          return await this.backupStore.read(
+            id,
+            status.manifest.commitment,
+            status.backup.commitment,
+          );
+        } catch {
+          throw new ApiError('ARCHIVE_BUNDLE_UNAVAILABLE', 503);
+        }
+      }
       if (cause instanceof ApiError) throw cause;
       throw new ApiError('ARCHIVE_BUNDLE_UNAVAILABLE', 503);
     }

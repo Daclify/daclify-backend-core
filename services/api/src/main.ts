@@ -12,6 +12,7 @@ import { migrate } from './store.js';
 import { createServer } from './server.js';
 import { PinataStorage } from './content/pinata.js';
 import { ContentService } from './content/service.js';
+import { EncryptedArchiveBackup, readArchiveBackupConfig } from './archive/backup.js';
 import { ProviderScopeSchema } from './content/ledger.js';
 import { startContentWorker } from './content/jobs.js';
 import { Uint64Schema } from '../../../protocol/base.js';
@@ -98,6 +99,8 @@ const chain = new NativeChainGateway(
   },
   pool,
 );
+const archiveBackupConfig = readArchiveBackupConfig(process.env);
+if (archiveBackupConfig && !env.PINATA_JWT) throw new Error('ARCHIVE_BACKUP_CONTENT_REQUIRED');
 const content =
   env.PINATA_JWT && env.CONTENT_GATEWAY
     ? new ContentService(
@@ -107,6 +110,7 @@ const content =
         BigInt(env.CONTENT_FREE_STORAGE_BYTES),
         'pinata',
         env.PINATA_ACCOUNT_ID,
+        archiveBackupConfig ? new EncryptedArchiveBackup(archiveBackupConfig) : undefined,
       )
     : undefined;
 const providers: ProviderConfiguration = {};

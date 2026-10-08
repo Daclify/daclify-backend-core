@@ -19,3 +19,21 @@ npm run archive:verify -- /absolute/path/to/bundle.json <expected-manifest-sha25
 The command reads no application database and writes no blockchain/provider state. It bounds the input, checks the separately supplied manifest commitment, complete chunk coverage, roots, domains, qualified source schema and original packed rows. Output contains only public summary identifiers/counts. It cannot authenticate a supplied commitment against blockchain provenance until native anchors exist. A hash embedded in an editable file is not an independent trust source.
 
 This export contains ordinary-poll votes and their manifest, not account keys, login pairings, original document files or the complete service database. Continue per-user recovery-kit and PostgreSQL backups. Keep the qualified historical package with the bundle; the current unpublished development decoder supports its own compiled source schemas only. Download failures leave prior backups and all hosted/on-chain data intact.
+
+## Independent encrypted backup
+
+The optional Archive backup action creates an authenticated AES-256-GCM copy of the complete verified recovery bundle. It writes only ciphertext to an owner-only directory, syncs the file and directory, restores and verifies every bundled record, then saves an immutable receipt. A retry reads the original file; it does not overwrite it. File identity, full DAO domain, manifest SHA-256, store/key identifiers and timestamp are authenticated. The receipt additionally commits the exact encrypted file bytes.
+
+Configure all four `ARCHIVE_BACKUP_*` values or leave the feature off. The directory must be owned by the API user with no group/other permissions. Files use mode 0600 and symlinks are rejected. Mount a separate backup failure domain and qualify its durability, available disk space and restore procedures; a second folder on the API disk does not make an independent backup. The service cannot verify physical independence from a pathname. No new cloud backup provider or automatic pruning is implied.
+
+Keep the backup encryption key and its identifier offline, separately from the database/server and encrypted files. Keep older keys after rotation: existing backup files and receipts are immutable. Losing this operator backup key makes this additional copy unreadable. Member document-decryption keys and recovery kits remain separately required to open private document contents; this backup does not contain those keys, social pairings or original document file blobs.
+
+Resources → Archive shows backup configuration and the immutable verification receipt. An active administrator can request creation for the exact displayed manifest commitment. A stale manifest, changed authority, corrupt backup or uncertain filesystem result blocks the receipt. Unknown/lost SQL responses can be recovered from the exact existing encrypted file. Primary IPFS bundle retrieval can fall back to the configured backup only after matching the saved manifest and encrypted-file commitments. Both sources failing is explicit unavailability, never empty history.
+
+To independently verify an encrypted backup with no API or PostgreSQL, put its original key in private local environment configuration as `ARCHIVE_BACKUP_KEY`, then run:
+
+```sh
+npm run archive:verify -- --encrypted /path/export.daclify-archive.enc EXPECTED_MANIFEST_SHA256
+```
+
+Keep the expected manifest SHA-256 separately from the backup file. Do not put the key in command arguments, chat or source. The same command without `--encrypted` verifies the downloaded JSON bundle. Native approval/anchors, bounded source pruning, historic schema retention and complete index-loss rebuilding remain separate release gates. A backup receipt is evidence of the tested verification event, not a claim of current perpetual availability or pruning authority.

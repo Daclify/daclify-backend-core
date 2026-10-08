@@ -2,14 +2,28 @@ import { stat, readFile } from 'node:fs/promises';
 import { z } from 'zod';
 import { ChainIdSchema } from '../../protocol/base.js';
 import { verifyArchiveBundle } from '@daclify/modules/archive';
+import { decryptArchiveBackup } from '../../services/api/src/archive/backup.js';
 try {
+  const encrypted = process.argv[2] === '--encrypted';
   const [file, commitment] = z
     .tuple([z.string().min(1).max(4096), ChainIdSchema])
-    .parse(process.argv.slice(2));
+    .parse(process.argv.slice(encrypted ? 3 : 2));
   const info = await stat(file);
   if (!info.isFile() || info.size > 128 * 1024 * 1024) throw new Error('ARCHIVE_FILE_LIMIT');
-  const parsed: unknown = JSON.parse(await readFile(file, 'utf8')),
-    bundle = verifyArchiveBundle(parsed, commitment);
+  const bytes = await readFile(file);
+  const bundle = encrypted
+    ? decryptArchiveBackup(
+        bytes,
+        Buffer.from(
+          z
+            .string()
+            .regex(/^[a-f0-9]{64}$/)
+            .parse(process.env.ARCHIVE_BACKUP_KEY),
+          'hex',
+        ),
+        commitment,
+      )
+    : verifyArchiveBundle(JSON.parse(bytes.toString('utf8')), commitment);
   console.log(
     JSON.stringify({
       id: bundle.id,

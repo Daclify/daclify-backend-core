@@ -710,6 +710,19 @@ export async function createServer(
     if (!reports(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
     return contentService().archive.refresh(account, z.uuid().parse(request.params.id));
   });
+  app.post<{ Params: { id: string } }>(ArchiveRoutes.backup.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    if (!reports(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    const input = ArchiveRoutes.backup.input.parse(request.body);
+    return contentService().archive.backup(
+      account,
+      z.uuid().parse(request.params.id),
+      input.expectedManifestCommitment,
+    );
+  });
   app.get<{ Params: { id: string } }>(ArchiveRoutes.bundle.path, async (request) => {
     const account = await session(request.cookies[cookieName]);
     if (!reports(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
