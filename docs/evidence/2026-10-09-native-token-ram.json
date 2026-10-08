@@ -1,0 +1,50 @@
+{
+  "sourceCommit": "c526479a48370981a1e9f0ac6b3bb0e4f737afa2",
+  "codeHash": "ea1bd149e28f21420450b6c7b2c5be600ef9922e44c383fa4489b025aac0eb46",
+  "token": "rmtoknzhecvm",
+  "sender": "rmpayrzhecvm",
+  "receiver": "rmrcvrzhecvm",
+  "opened": "rmopenzhecvm",
+  "before": {
+    "rmpayrzhecvm": 2996,
+    "rmrcvrzhecvm": 2996,
+    "rmopenzhecvm": 2996,
+    "rmtoknzhecvm": 177727
+  },
+  "first": {
+    "rmpayrzhecvm": 3364,
+    "rmrcvrzhecvm": 2996,
+    "rmopenzhecvm": 2996,
+    "rmtoknzhecvm": 177727
+  },
+  "second": {
+    "rmpayrzhecvm": 3364,
+    "rmrcvrzhecvm": 2996,
+    "rmopenzhecvm": 2996,
+    "rmtoknzhecvm": 177727
+  },
+  "returned": {
+    "rmpayrzhecvm": 3236,
+    "rmrcvrzhecvm": 3124,
+    "rmopenzhecvm": 2996,
+    "rmtoknzhecvm": 177727
+  },
+  "closed": {
+    "rmpayrzhecvm": 3124,
+    "rmrcvrzhecvm": 2996,
+    "rmopenzhecvm": 2996,
+    "rmtoknzhecvm": 177727
+  },
+  "preopened": {
+    "rmpayrzhecvm": 3124,
+    "rmrcvrzhecvm": 2996,
+    "rmopenzhecvm": 3236,
+    "rmtoknzhecvm": 177727
+  },
+  "firstSenderDeltaBytes": 368,
+  "limits": [
+    "Owned native fixture and pinned official reference token; not Telos token code qualification.",
+    "Direct token actions calibrate external payer behavior; Daclify payout tracking/reserves still require integration.",
+    "Receiver transfer/close can move or release sender-paid bytes outside Daclify callbacks."
+  ]
+}

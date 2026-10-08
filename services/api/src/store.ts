@@ -61,13 +61,20 @@ export async function migrate(pool: Pool): Promise<void> {
 export async function leaseJob(
   pool: Pool,
   owner: string,
-  filter?: { moduleId: string; kind: string },
+  filter?: { moduleId: string; kind: string; providerScope?: string },
 ): Promise<Job | undefined> {
   const result = await pool.query<Job>(
     `UPDATE jobs SET state='running',lease_owner=$1,lease_until=now()+interval '60 seconds',attempts=attempts+1
-    WHERE id=(SELECT id FROM jobs WHERE due_at<=now() AND (state='pending' OR (state='running' AND lease_until<now())) ${filter ? 'AND module_id=$2 AND kind=$3' : ''} ORDER BY due_at,id FOR UPDATE SKIP LOCKED LIMIT 1)
+    WHERE id=(SELECT id FROM jobs WHERE due_at<=now() AND (state='pending' OR (state='running' AND lease_until<now())) ${filter ? 'AND module_id=$2 AND kind=$3' : ''} ${filter?.providerScope ? "AND payload->>'providerScope'=$4" : ''} ORDER BY due_at,id FOR UPDATE SKIP LOCKED LIMIT 1)
     RETURNING id,module_id,kind,job_key,payload,attempts`,
-    filter ? [owner, filter.moduleId, filter.kind] : [owner],
+    filter
+      ? [
+          owner,
+          filter.moduleId,
+          filter.kind,
+          ...(filter.providerScope ? [filter.providerScope] : []),
+        ]
+      : [owner],
   );
   return result.rows[0];
 }

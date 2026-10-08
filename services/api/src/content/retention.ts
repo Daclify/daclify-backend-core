@@ -5,6 +5,7 @@ import { DaoRefSchema, type DaoRef } from '../../../../protocol/base.js';
 import {
   StorageCurationRoutes,
   selectRetainedObjects,
+  StorageArchiveGroupSchema,
 } from '../../../../protocol/storage-retention.js';
 import type { Account } from '../../../../protocol/api.js';
 import type { ChainGateway } from '../chain.js';
@@ -83,20 +84,31 @@ export class StorageRetention {
     );
     return result.rows[0] ? CurationRow.parse(result.rows[0]) : { generation: '0', object_ids: [] };
   }
+  private async bundles(db: Pool | PoolClient, dao: DaoRef) {
+    const rows = await db.query<Record<string, unknown>>(
+      `SELECT bundle_key AS key,array_agg(object_id ORDER BY object_id) AS "objectIds" FROM hosted_archive_members WHERE dao_key=$1 AND provider_scope=$2 GROUP BY bundle_key ORDER BY bundle_key LIMIT 10001`,
+      [contentDaoKey(dao), this.scope],
+    );
+    if (rows.rows.length > 10000) throw new ApiError('STORAGE_CURATION_LIMIT', 409);
+    return rows.rows.map((row) => StorageArchiveGroupSchema.parse(row));
+  }
   private async decision(db: PoolClient, dao: DaoRef) {
     const funding = await fundedStorage(db, dao, this.scope, this.freeBytes),
       objects = await this.objects(db, dao),
-      curation = await this.curation(db, dao);
+      curation = await this.curation(db, dao),
+      bundles = await this.bundles(db, dao);
 
     const available = objects.filter((o) => o.state !== 'removed');
     const existing = new Set(available.map((o) => o.id)),
       priorities = curation.object_ids.filter((id) => existing.has(id));
     const kept = selectRetainedObjects(
-      available.map((o) => ({ id: o.id, bytes: o.bytes, createdAt: o.created_at.toISOString() })),
+      objects.map((o) => ({ id: o.id, bytes: o.bytes, createdAt: o.created_at.toISOString() })),
       funding.retainedCapacityBytes,
       priorities,
+      bundles.map((b) => b.objectIds),
+      objects.filter((o) => o.state === 'removed').map((o) => o.id),
     );
-    return { funding, objects, curation, kept: new Set(kept) };
+    return { funding, objects, curation, bundles, kept: new Set(kept) };
   }
   async status(account: Account, value: unknown) {
     const input = StorageCurationRoutes.curation.input.parse(value);
@@ -105,13 +117,14 @@ export class StorageRetention {
     try {
       await db.query('BEGIN');
       await this.lock(db, input.dao);
-      const { funding, objects, curation, kept } = await this.decision(db, input.dao);
+      const { funding, objects, curation, kept, bundles } = await this.decision(db, input.dao);
       await db.query('COMMIT');
       return StorageCurationRoutes.curation.response.parse({
         dao: input.dao,
         generation: curation.generation,
         funding,
         cleanup: this.cleanupEnabled ? 'qualified' : 'disabled',
+        bundles,
         objects: objects.map((o) => ({
           id: o.id,
           cid: o.cid,
@@ -137,15 +150,15 @@ export class StorageRetention {
     try {
       await db.query('BEGIN');
       await this.lock(db, input.dao);
-      const { funding, objects, curation } = await this.decision(db, input.dao);
+      const { funding, objects, curation, bundles } = await this.decision(db, input.dao);
       if (input.generation !== curation.generation)
         throw new ApiError('STORAGE_CURATION_CHANGED', 409);
       selectRetainedObjects(
-        objects
-          .filter((o) => o.state !== 'removed')
-          .map((o) => ({ id: o.id, bytes: o.bytes, createdAt: o.created_at.toISOString() })),
+        objects.map((o) => ({ id: o.id, bytes: o.bytes, createdAt: o.created_at.toISOString() })),
         funding.pricing.freeBytes,
         input.keep,
+        bundles.map((b) => b.objectIds),
+        objects.filter((o) => o.state === 'removed').map((o) => o.id),
       );
       await db.query(
         `INSERT INTO storage_curation(dao_key,provider_scope,generation,object_ids,updated_by) VALUES($1,$2,1,$3,$4) ON CONFLICT(dao_key,provider_scope) DO UPDATE SET generation=storage_curation.generation+1,object_ids=EXCLUDED.object_ids,updated_by=EXCLUDED.updated_by,updated_at=now()`,

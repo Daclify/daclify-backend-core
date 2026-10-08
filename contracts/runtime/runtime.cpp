@@ -6,6 +6,7 @@
 #include "telos_resources.hpp"
 #include "archive_state.hpp"
 #include "ram_capacity.hpp"
+#include "document_refs.hpp"
 #include <eosio/transaction.hpp>
 #define JSON_NOEXCEPTION
 #define JSON_HAS_FILESYSTEM 0
@@ -91,11 +92,67 @@ public:
     check(progress.archive_id==archive_id&&progress.chunk_ordinal==chunk_ordinal&&progress.pruned==start&&uint64_t(start)+count<=chunk.domain.leaf_count,"ARCHIVE_PROGRESS");
     positions.modify(progress,same_payer,[&](auto& r){r.pruned+=count;});
   }
+  ACTION docsrc(uint64_t dao_id,name source,std::vector<name> tables){
+    check_document_source(dao_id,source);check(tables.size()<=4,"DOCUMENT_SOURCE_TABLE");for(size_t i=0;i<tables.size();i++)check(tables[i].value&&(!i||tables[i].value>tables[i-1].value),"DOCUMENT_SOURCE_TABLE");
+    document_sources rows(get_self(),dao_id);auto prior=rows.find(source.value);const auto code=get_code_hash(source);
+    if(prior!=rows.end()){if(prior->code_hash==code){check(prior->tables==tables,"DOCUMENT_SOURCE_IMMUTABLE");return;}for(const auto& table:prior->tables)check(std::find(tables.begin(),tables.end(),table)!=tables.end(),"DOCUMENT_SOURCE_TABLE_REMOVED");rows.modify(prior,same_payer,[&](auto& r){r.code_hash=code;r.tables=tables;});}
+    else rows.emplace(get_self(),[&](auto& r){r.source=source;r.code_hash=code;r.tables=tables;});
+  }
+  ACTION docref(uint64_t dao_id,name source,name table,uint64_t source_id,uint8_t slot,uint64_t document_id,uint32_t version){
+    check_document_source(dao_id,source);require_document_table(dao_id,source,table);check(table.value&&source_id&&slot<=2,"DOCUMENT_REFERENCE_BOUNDS");check((document_id==0)==(version==0),"DOCUMENT_REFERENCE_BOUNDS");
+    document_references rows(get_self(),dao_id);auto index=rows.get_index<"bysource"_n>();auto data=pack(std::make_tuple(source,table,source_id,slot));auto found=index.find(sha256(data.data(),data.size()));
+    if(!document_id){if(found!=index.end())index.erase(found);return;}
+    documents docs(get_self(),dao_id);auto versions=docs.get_index<"byversion"_n>();versions.get((uint128_t(document_id)<<32)|version,"DOCUMENT_UNKNOWN");
+    if(found!=index.end()){if(found->document_id!=document_id||found->version!=version)index.modify(found,same_payer,[&](auto& r){r.document_id=document_id;r.version=version;});return;}
+    auto id=rows.available_primary_key();if(!id)id=1;check(id<std::numeric_limits<uint64_t>::max(),"DOCUMENT_REFERENCE_LIMIT");
+    rows.emplace(get_self(),[&](auto& r){r.id=id;r.source=source;r.table=table;r.source_id=source_id;r.slot=slot;r.document_id=document_id;r.version=version;});
+  }
+  ACTION docscanstep(uint64_t dao_id,name source,name table,uint64_t start,uint64_t next,bool complete,uint32_t scanned){
+    check_document_source(dao_id,source);require_document_table(dao_id,source,table);check(table.value&&scanned<=25&&next>=start&&(complete||next>start),"DOCUMENT_SCAN_BOUNDS");
+    document_scans rows(get_self(),dao_id);auto index=rows.get_index<"bysource"_n>();auto data=pack(std::make_tuple(source,table));auto found=index.find(sha256(data.data(),data.size()));const auto code=get_code_hash(source);
+    const bool current=found!=index.end()&&found->code_hash==code;check(start==(current?found->cursor:0),"DOCUMENT_SCAN_CURSOR");
+    if(current&&found->complete){check(complete&&next==start&&scanned==0,"DOCUMENT_SCAN_COMPLETE");return;}
+    if(found==index.end()){auto id=rows.available_primary_key();if(!id)id=1;check(id<std::numeric_limits<uint64_t>::max(),"DOCUMENT_SCAN_LIMIT");rows.emplace(get_self(),[&](auto& r){r.id=id;r.source=source;r.table=table;r.code_hash=code;r.cursor=next;r.complete=complete;});}
+    else index.modify(found,same_payer,[&](auto& r){r.code_hash=code;r.cursor=next;r.complete=complete;});
+  }
+  ACTION prunedocs(uint64_t dao_id,uint64_t archive_id,uint32_t chunk_ordinal,uint32_t start,std::vector<archive_prune_proof> proofs){
+    check(action_data_size()<=16384&&!proofs.empty()&&proofs.size()<=25,"ARCHIVE_PRUNE_BOUNDS");check(!dao_paused(get_self(),dao_id),"DAO_PAUSED");require_document_coverage(dao_id);
+    const auto anchor=approved_archive(get_self(),dao_id,archive_id,get_self());validate_archive_manifest(dao_id,anchor.manifest);const auto& family=anchor.manifest.families.front();check(family.kind=="document-versions"&&chunk_ordinal<family.chunks.size(),"ARCHIVE_FAMILY_PROTECTED");const auto& chunk=family.chunks[chunk_ordinal];
+    archive_positions positions(get_self(),dao_id);const auto& progress=positions.get(archive_id*archive_anchor_max_chunks+chunk_ordinal,"ARCHIVE_PROGRESS_UNKNOWN");check(uint64_t(start)+proofs.size()<=chunk.domain.leaf_count,"ARCHIVE_PRUNE_BOUNDS");if(uint64_t(start)+proofs.size()<=progress.pruned)return;check(start==progress.pruned,"ARCHIVE_PROGRESS");
+    documents rows(get_self(),dao_id);document_heads heads(get_self(),dao_id);document_clocks clocks(get_self(),dao_id);document_references refs(get_self(),dao_id);auto referenced=refs.get_index<"byversion"_n>();uint64_t previous=0;
+    for(uint32_t i=0;i<proofs.size();i++){const auto& proof=proofs[i];check(proof.primary_key>=chunk.first_key&&proof.primary_key<=chunk.last_key&&(!i||proof.primary_key>previous),"ARCHIVE_ROW_ORDER");auto found=rows.find(proof.primary_key);check(found!=rows.end()&&found->document_id==family.parent_id,"ARCHIVE_ROW_DOMAIN");
+      check(found->version<heads.get(found->document_id,"DOCUMENT_HEAD_UNKNOWN").version,"DOCUMENT_LATEST_PROTECTED");check(referenced.find(found->by_version())==referenced.end(),"DOCUMENT_REFERENCED");const auto& clock=clocks.get(found->id,"DOCUMENT_CLOCK_UNKNOWN");check(clock.row_hash==document_row_hash(*found)&&clock.document_id==found->document_id&&clock.version==found->version,"DOCUMENT_ID_REUSED");check(uint64_t(clock.created_at)+anchor.retention_seconds<=current_time_point().sec_since_epoch(),"ARCHIVE_RETENTION");
+      if(!found->cid.empty()){auto file=std::find_if(anchor.manifest.files.begin(),anchor.manifest.files.end(),[&](const auto& f){return f.document_id==found->document_id&&f.version==found->version;});check(file!=anchor.manifest.files.end()&&file->cid==found->cid&&file->bytes==found->bytes&&file->commitment==found->commitment&&file->envelope_version==found->envelope_version&&file->key_epoch==found->key_epoch,"ARCHIVE_FILE_COVERAGE");}
+      check(verify_archive_proof(chunk.domain,start+i,proof.primary_key,pack(*found),proof.siblings,chunk.root),"ARCHIVE_PROOF");previous=proof.primary_key;rows.erase(found);
+    }
+    positions.modify(progress,same_payer,[&](auto& r){r.pruned+=proofs.size();});
+  }
+  ACTION restoredoc(name runtime,uint64_t dao_id,uint64_t member_id,document_record original){
+    authorized_actor(runtime,dao_id,member_id,true);check(action_data_size()<=16384,"ARCHIVE_ACTION_SIZE");document_clocks clocks(get_self(),dao_id);const auto& clock=clocks.get(original.id,"DOCUMENT_CLOCK_UNKNOWN");check(clock.document_id==original.document_id&&clock.version==original.version&&clock.row_hash==document_row_hash(original),"DOCUMENT_RESTORE_COMMITMENT");
+    const auto head=document_heads(get_self(),dao_id).get(original.document_id,"DOCUMENT_HEAD_UNKNOWN");check(original.version<=head.version,"DOCUMENT_VERSION");documents rows(get_self(),dao_id);auto found=rows.find(original.id);if(found!=rows.end()){check(pack(*found)==pack(original),"DOCUMENT_RESTORE_CONFLICT");return;}auto versions=rows.get_index<"byversion"_n>();check(versions.find(original.by_version())==versions.end(),"DOCUMENT_RESTORE_CONFLICT");rows.emplace(get_self(),[&](auto& r){r=original;});
+  }
+  ACTION backfilldocs(uint64_t dao_id,uint32_t limit){
+    require_auth(get_self());dao_rows.get(dao_id,"DAO_UNKNOWN");check(limit>0&&limit<=25,"DOCUMENT_SCAN_BOUNDS");document_states state(get_self(),dao_id);auto found=state.find(0);auto progress=found==state.end()?document_state{}:*found;if(progress.complete)return;
+    documents rows(get_self(),dao_id);uint32_t count=0;auto it=rows.upper_bound(progress.cursor);
+    for(;it!=rows.end()&&count<limit;++it,++count){record_document(dao_id,*it,true);progress.cursor=it->id;progress.high_water=std::max(progress.high_water,it->id);}
+    progress.complete=it==rows.end();if(found==state.end())state.emplace(get_self(),[&](auto& r){r=progress;});else state.modify(found,same_payer,[&](auto& r){r=progress;});
+  }
   ACTION initramobs(){
     require_auth(get_self());check(dao_rows.begin()==dao_rows.end()&&!ram_reserve_settings(get_self(),get_self().value).exists(),"RAM_BACKFILL_REQUIRED");
     check(!fee_settings(get_self(),get_self().value).exists()&&!payment_settings(get_self(),get_self().value).exists()&&!market_settings(get_self(),get_self().value).exists()&&!creation_settings(get_self(),get_self().value).exists()&&!hosted_settings(get_self(),get_self().value).exists()&&!seat_settings(get_self(),get_self().value).exists()&&!resource_settings(get_self(),get_self().value).exists(),"RAM_BACKFILL_REQUIRED");
-    catalogue listed(get_self(),get_self().value);modpays payments(get_self(),get_self().value);modcopy copies(get_self(),get_self().value);creation_orders orders(get_self(),get_self().value);check(listed.begin()==listed.end()&&payments.begin()==payments.end()&&copies.begin()==copies.end()&&orders.begin()==orders.end(),"RAM_BACKFILL_REQUIRED");
+    catalogue listed(get_self(),get_self().value);modpays payments(get_self(),get_self().value);modcopy copies(get_self(),get_self().value);creation_orders orders(get_self(),get_self().value);check(listed.begin()==listed.end()&&payments.begin()==payments.end()&&copies.begin()==copies.end()&&orders.begin()==orders.end()&&!ram_auto_settings(get_self(),get_self().value).exists(),"RAM_BACKFILL_REQUIRED");
     ram_observer_settings saved(get_self(),get_self().value);check(!saved.exists(),"ALREADY_INITIALIZED");ram_observer_config cfg;cfg.runtime_hash=get_code_hash(get_self());cfg.meter_bytes=pack_size(cfg)+224;saved.set(cfg,get_self());
+  }
+  ACTION setramauto(bool enabled,std::vector<ram_offer> offers){
+    require_auth(get_self());check(offers.size()<=6&&(enabled||offers.empty()),"RAM_OFFER_BOUNDS");ram_auto_policy value;value.enabled=enabled;value.offers=offers;
+    if(enabled){
+      const auto policy=resource_settings(get_self(),get_self().value).get();value.policy_revision=policy.revision;uint64_t activity=0;bool core=false;
+      ram_pools pools(get_self(),get_self().value);
+      for(size_t i=0;i<offers.size();i++){const auto& offer=offers[i];check(offer.payer.value&&offer.completion>=32768,"RAM_OFFER_BOUNDS");for(size_t j=0;j<i;j++)check(offers[j].payer!=offer.payer,"RAM_OFFER_DUPLICATE");if(offer.payer!=get_self())check_ram_source(offer.payer,get_code_hash(offer.payer));check_ram_pool(get_self(),pools.get(offer.payer.value,"RAM_POOL_UNKNOWN"));activity=add64(activity,offer.activity);core|=offer.payer==get_self();}
+      check(core&&activity==policy.included_activity_bytes,"RAM_OFFER_POLICY");
+    }
+    ram_auto_settings(get_self(),get_self().value).set(value,get_self());
+    for(const auto& offer:offers)action(permission_level{get_self(),"active"_n},get_self(),"checkrampool"_n,std::make_tuple(offer.payer)).send();
   }
   ACTION setrampool(name payer,uint64_t expected_quota,uint64_t baseline_bytes,uint64_t platform_headroom){
     require_auth(get_self());ram_observer_settings observer(get_self(),get_self().value);check(observer.exists()&&observer.get().runtime_hash==get_code_hash(get_self()),"RAM_OBSERVER_REQUIRED");
@@ -164,6 +221,7 @@ private:
     check(is_account(owner),"OWNER_ACCOUNT"); check(token_contract.value>0&&token_symbol.is_valid(),"ASSET_IDENTITY");
     check(dao_rows.find(dao_id)==dao_rows.end(),"DAO_EXISTS"); validate_dao_metadata(metadata);
     dao_rows.emplace(get_self(),[&](auto& d){ d.id=dao_id; d.owner=owner; d.metadata=metadata; d.privacy=privacy; d.token_contract=token_contract; d.token_symbol=token_symbol; });
+    allocate_included_ram(dao_id);
   }
 public:
   ACTION setcreate(uint32_t shared_usd,uint32_t independent_usd,uint16_t premium_bps,name settler) {
@@ -207,6 +265,7 @@ public:
     dao_capacities rows(get_self(),get_self().value);auto it=rows.find(dao_id);
     if(it==rows.end())rows.emplace(get_self(),[&](auto& r){r.dao_id=dao_id;r.members=member_limit;r.expires=expires;r.receipt=receipt;});
     else if(expires>it->expires||(expires==it->expires&&member_limit>it->members))rows.modify(it,same_payer,[&](auto& r){r.members=member_limit;r.expires=expires;r.receipt=receipt;});
+    allocate_member_ram(dao_id,member_limit);
   }
   ACTION revokecap(uint64_t dao_id,checksum256 receipt) {
     auto cfg=hosted_settings(get_self(),get_self().value).get();require_auth(cfg.settler);capacity_receipts receipts(get_self(),get_self().value);auto index=receipts.get_index<"byreceipt"_n>();const auto& issued=index.get(receipt,"CAPACITY_RECEIPT");check(issued.dao_id==dao_id,"CAPACITY_RECEIPT");index.modify(issued,same_payer,[](auto& r){r.revoked=true;});dao_capacities rows(get_self(),get_self().value);auto cap=rows.find(dao_id);if(cap!=rows.end()&&cap->receipt==receipt)rows.modify(cap,same_payer,[](auto& r){r.expires=current_time_point().sec_since_epoch();});
@@ -626,14 +685,14 @@ private:
   daos dao_rows{get_self(),get_self().value};
   checksum256 current_transaction_id(){std::vector<char> bytes(transaction_size());check(read_transaction(bytes.data(),bytes.size())==bytes.size(),"TRANSACTION_BYTES");return sha256(bytes.data(),bytes.size());}
   void validate_archive_manifest(uint64_t dao_id,const archive_manifest_descriptor& manifest){
-    check(manifest.format_version==1&&manifest.chain_id==configuration().chain_id&&manifest.runtime==get_self()&&manifest.dao_id==dao_id&&manifest.source!=get_self(),"ARCHIVE_DOMAIN");
-    check(manifest.families.size()==1&&manifest.files.empty(),"ARCHIVE_FAMILY_PROTECTED");
+    check(manifest.format_version==1&&manifest.chain_id==configuration().chain_id&&manifest.runtime==get_self()&&manifest.dao_id==dao_id&&manifest.source.value,"ARCHIVE_DOMAIN");
+    check(manifest.families.size()==1&&manifest.files.size()<=archive_max_leaves,"ARCHIVE_FAMILY_PROTECTED");
     ram_observer_settings observer(get_self(),get_self().value);check(observer.exists()&&observer.get().runtime_hash==get_code_hash(get_self()),"RAM_OBSERVER_REQUIRED");
-    modules installed(get_self(),dao_id);const auto& source=installed.get(manifest.source.value,"MODULE_DISABLED");check_pinned(source,manifest.source);
-    check(manifest.code_hash==source.code_hash&&manifest.abi_hash!=checksum256{},"ARCHIVE_SOURCE_CODE");
+    if(manifest.source==get_self()){check(manifest.code_hash==get_code_hash(get_self()),"ARCHIVE_SOURCE_CODE");require_document_coverage(dao_id);}else{modules installed(get_self(),dao_id);const auto& source=installed.get(manifest.source.value,"MODULE_DISABLED");check_pinned(source,manifest.source);check(manifest.code_hash==source.code_hash,"ARCHIVE_SOURCE_CODE");}check(manifest.abi_hash!=checksum256{},"ARCHIVE_SOURCE_CODE");
     const auto block=manifest.block_id.extract_as_byte_array();const uint32_t number=(uint32_t(block[0])<<24)|(uint32_t(block[1])<<16)|(uint32_t(block[2])<<8)|uint32_t(block[3]);
     check(number==manifest.block_number&&number>0&&manifest.timestamp.size()>=20&&manifest.timestamp.size()<=32,"ARCHIVE_SNAPSHOT");
-    const auto& family=manifest.families.front();check(family.kind=="ordinary-poll-votes"&&family.parent_id>0&&family.table=="votes"_n&&family.scope==get_self().value&&family.schema_hash!=checksum256{},"ARCHIVE_FAMILY_PROTECTED");
+    const auto& family=manifest.families.front();check(family.parent_id>0&&family.schema_hash!=checksum256{},"ARCHIVE_FAMILY_PROTECTED");
+    if(manifest.source==get_self())check(family.kind=="document-versions"&&family.table=="documents"_n&&family.scope==dao_id,"ARCHIVE_FAMILY_PROTECTED");else check(family.kind=="ordinary-poll-votes"&&family.table=="votes"_n&&family.scope==get_self().value&&manifest.files.empty(),"ARCHIVE_FAMILY_PROTECTED");
     check(family.chunks.size()<=archive_anchor_max_chunks&&family.records<=archive_max_leaves,"ARCHIVE_CHUNK_COUNT");uint64_t count=0,last=0;bool first=true;
     for(uint32_t ordinal=0;ordinal<family.chunks.size();ordinal++){
       const auto& chunk=family.chunks[ordinal];const auto& d=chunk.domain;archive_domain_hash(d);
@@ -686,6 +745,23 @@ private:
     index.modify(order,same_payer,[&](auto& row){row.funded=true;row.received=quantity;row.purchases=purchases;});
     for(const auto& purchase:purchases)action(permission_level{get_self(),"active"_n},"eosio"_n,"buyram"_n,std::make_tuple(get_self(),purchase.receiver,purchase.quantity)).send();
     action(permission_level{get_self(),"active"_n},get_self(),"finishram"_n,std::make_tuple(reference)).send();
+  }
+  void allocate_ram(uint64_t dao_id,name payer,uint64_t activity,uint64_t identity,uint64_t completion){
+    ram_pools pools(get_self(),get_self().value);check_ram_pool(get_self(),pools.get(payer.value,"RAM_POOL_UNKNOWN"),dao_id,add64(add64(activity,identity),completion));
+    ram_limits rows(get_self(),dao_id);auto found=rows.find(payer.value);auto value=found==rows.end()?ram_dao_limit{}:*found;value.payer=payer;value.activity=add64(value.activity,activity);value.identity=add64(value.identity,identity);value.completion=add64(value.completion,completion);
+    if(found==rows.end())rows.emplace(get_self(),[&](auto& r){r=value;});else rows.modify(found,same_payer,[&](auto& r){r=value;});
+    action(permission_level{get_self(),"active"_n},get_self(),"checkrampool"_n,std::make_tuple(payer)).send();
+  }
+  void allocate_included_ram(uint64_t dao_id){
+    ram_auto_settings saved(get_self(),get_self().value);if(!saved.exists()||!saved.get().enabled)return;const auto cfg=saved.get();const auto policy=resource_settings(get_self(),get_self().value).get();check(cfg.policy_revision==policy.revision,"RAM_OFFER_POLICY_CHANGED");
+    ram_entitlements receipts(get_self(),dao_id);check(receipts.begin()==receipts.end(),"RAM_INCLUDED_EXISTS");hosted_settings hosted(get_self(),get_self().value);uint32_t slots=hosted.exists()?hosted.get().free_members:10;
+    for(const auto& offer:cfg.offers){const auto rate=offer.payer==get_self()?policy.identity_bytes_per_slot:0;check(!rate||slots<=std::numeric_limits<uint64_t>::max()/rate,"RAM_SIZE_OVERFLOW");
+      receipts.emplace(get_self(),[&](auto& r){r.payer=offer.payer;r.policy_revision=policy.revision;r.identity_per_slot=rate;r.slots=slots;});allocate_ram(dao_id,offer.payer,offer.activity,rate*slots,offer.completion);
+    }
+  }
+  void allocate_member_ram(uint64_t dao_id,uint32_t slots){
+    ram_entitlements receipts(get_self(),dao_id);auto found=receipts.find(get_self().value);if(found==receipts.end()||slots<=found->slots)return;const uint64_t added=slots-found->slots;check(!found->identity_per_slot||added<=std::numeric_limits<uint64_t>::max()/found->identity_per_slot,"RAM_SIZE_OVERFLOW");
+    allocate_ram(dao_id,get_self(),0,added*found->identity_per_slot,0);receipts.modify(found,same_payer,[&](auto& r){r.slots=slots;});
   }
   void save_resources(uint16_t native_ram_bps,uint16_t card_ram_bps,uint64_t included_activity_bytes,uint64_t identity_bytes_per_slot,uint32_t quote_lifetime_seconds,uint64_t storage_free_bytes,uint64_t storage_unit_bytes,uint32_t storage_monthly_usd){
     check(native_ram_bps<=10000&&card_ram_bps<=10000&&quote_lifetime_seconds>0&&quote_lifetime_seconds<=3600&&storage_unit_bytes>0&&storage_monthly_usd>0&&storage_monthly_usd<=99999999,"RESOURCE_POLICY");
@@ -809,13 +885,29 @@ private:
     pay_share(cfg.token_contract,item.publisher,publisher_share,"Daclify module payment");
   }
   void require_epoch(uint64_t dao_id,uint64_t epoch){epochs rows(get_self(),dao_id);check(rows.find(epoch)!=rows.end(),"EPOCH_UNCOMMITTED");}
+  void require_document_table(uint64_t dao_id,name source,name table){const auto value=document_sources(get_self(),dao_id).get(source.value,"DOCUMENT_SOURCE_UNKNOWN");check(value.code_hash==get_code_hash(source)&&std::find(value.tables.begin(),value.tables.end(),table)!=value.tables.end(),"DOCUMENT_SOURCE_TABLE");}
+  void require_document_coverage(uint64_t dao_id){
+    document_states states(get_self(),dao_id);check(states.get(0,"DOCUMENT_BACKFILL_REQUIRED").complete,"DOCUMENT_BACKFILL_REQUIRED");document_sources sources(get_self(),dao_id);modules installed(get_self(),dao_id);uint32_t count=0;
+    for(const auto& grant:installed){check(++count<=64,"DOCUMENT_SOURCE_LIMIT");if(!grant.actions.empty()){const auto& source=sources.get(grant.account.value,"DOCUMENT_SOURCE_UNKNOWN");check(source.code_hash==grant.code_hash&&source.code_hash==get_code_hash(grant.account),"DOCUMENT_SOURCE_CODE");}}
+    document_scans scans(get_self(),dao_id);auto index=scans.get_index<"bysource"_n>();count=0;for(const auto& source:sources){check(++count<=64,"DOCUMENT_SOURCE_LIMIT");check(source.code_hash==get_code_hash(source.source),"DOCUMENT_SOURCE_CODE");for(const auto& table:source.tables){auto data=pack(std::make_tuple(source.source,table));auto found=index.find(sha256(data.data(),data.size()));check(found!=index.end()&&found->complete&&found->code_hash==source.code_hash,"DOCUMENT_BACKFILL_REQUIRED");}}
+  }
+  void check_document_source(uint64_t dao_id,name source){
+    check(get_sender()==source,"DOCUMENT_SOURCE_SENDER");require_auth(source);dao_rows.get(dao_id,"DAO_UNKNOWN");modules installed(get_self(),dao_id);const auto& grant=installed.get(source.value,"MODULE_DISABLED");check(!grant.actions.empty(),"MODULE_DISABLED");check_pinned(grant,source);
+  }
+  void record_document(uint64_t dao_id,const document_record& value,bool legacy){
+    document_heads heads(get_self(),dao_id);auto head=heads.find(value.document_id);if(head==heads.end())heads.emplace(get_self(),[&](auto& r){r={value.document_id,value.version,value.author};});else if(value.version>head->version)heads.modify(head,same_payer,[&](auto& r){r.version=value.version;r.author=value.author;});
+    document_clocks clocks(get_self(),dao_id);auto prior=clocks.find(value.id);if(prior!=clocks.end()){check(prior->document_id==value.document_id&&prior->version==value.version&&prior->row_hash==document_row_hash(value),"DOCUMENT_ID_REUSED");return;}
+    clocks.emplace(get_self(),[&](auto& r){r={value.id,value.document_id,value.version,current_time_point().sec_since_epoch(),legacy,document_row_hash(value)};});
+  }
   void append_document(uint64_t dao_id,uint64_t member_id,uint64_t document_id,uint32_t version,const std::string& cid,const std::string& metadata,checksum256 commitment,uint32_t bytes,uint16_t envelope_version,uint64_t key_epoch) {
     documents rows(get_self(),dao_id);auto index=rows.get_index<"byversion"_n>();auto upper=index.upper_bound((uint128_t(document_id)<<32)|std::numeric_limits<uint32_t>::max());
     bool found=false;if(upper!=index.begin()){--upper;found=upper->document_id==document_id;}
     if(found){check(upper->version<std::numeric_limits<uint32_t>::max()&&version==upper->version+1,"DOCUMENT_VERSION");members people(get_self(),dao_id);check(upper->author==member_id||people.get(member_id).admin,"DOCUMENT_AUTHOR");}
     else check(version==1,"DOCUMENT_VERSION");
-    auto id=rows.available_primary_key();if(id==0)id=1;
-    rows.emplace(get_self(),[&](auto& r){r.id=id;r.document_id=document_id;r.version=version;r.author=member_id;r.cid=cid;r.metadata=metadata;r.commitment=commitment;r.bytes=bytes;r.envelope_version=envelope_version;r.key_epoch=key_epoch;});
+    document_heads heads(get_self(),dao_id);auto head=heads.find(document_id);if(head!=heads.end()){check(head->version<std::numeric_limits<uint32_t>::max()&&version==head->version+1,"DOCUMENT_VERSION");members people(get_self(),dao_id);check(head->author==member_id||people.get(member_id).admin,"DOCUMENT_AUTHOR");}
+    document_states state(get_self(),dao_id);auto progress=state.find(0);const auto high=std::max(progress==state.end()?0:progress->high_water,rows.available_primary_key()?rows.available_primary_key()-1:0);check(high<std::numeric_limits<uint64_t>::max()-1,"DOCUMENT_ID_LIMIT");const auto id=high+1;
+    const auto inserted=rows.emplace(get_self(),[&](auto& r){r.id=id;r.document_id=document_id;r.version=version;r.author=member_id;r.cid=cid;r.metadata=metadata;r.commitment=commitment;r.bytes=bytes;r.envelope_version=envelope_version;r.key_epoch=key_epoch;});record_document(dao_id,*inserted,false);
+    if(progress==state.end())state.emplace(get_self(),[&](auto& r){r.high_water=id;});else state.modify(progress,same_payer,[&](auto& r){r.high_water=id;});
   }
   void validate_envelope(const std::string& value) {
     const auto envelope=nlohmann::json::parse(value);
@@ -906,7 +998,7 @@ private:
     auto now=current_time_point().sec_since_epoch();check(r.expires>now&&uint64_t(r.expires)<=uint64_t(now)+900,"EXPIRED_OR_TOO_LONG");
     check(r.data.size()>=24&&r.data.size()<=16384,"PAYLOAD_SIZE");auto context=unpack<actor_context>(r.data);
     check(context.runtime==get_self()&&context.dao_id==r.dao_id&&context.member_id==r.member_id,"PAYLOAD_DOMAIN");
-    if(r.target==get_self())check(r.action=="archapprove"_n||r.action=="archrevoke"_n||r.action=="govresources"_n||r.action=="govhosted"_n||r.action=="govseatfee"_n||r.action=="govpayfees"_n||r.action=="govcreate"_n||r.action=="govlist"_n||r.action=="govunlist"_n||r.action=="govmodcopy"_n||r.action=="addmember"_n||r.action=="setadmit"_n||r.action=="setdaogov"_n||r.action=="addsession"_n||r.action=="delsession"_n||r.action=="setmeta"_n||r.action=="setprofile"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="unlinknat"_n||r.action=="linkevm"_n||r.action=="unlinkevm"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n||r.action=="govfees"_n,"ACTION_UNSUPPORTED");
+    if(r.target==get_self())check(r.action=="archapprove"_n||r.action=="archrevoke"_n||r.action=="govresources"_n||r.action=="govhosted"_n||r.action=="govseatfee"_n||r.action=="govpayfees"_n||r.action=="govcreate"_n||r.action=="govlist"_n||r.action=="govunlist"_n||r.action=="govmodcopy"_n||r.action=="addmember"_n||r.action=="setadmit"_n||r.action=="setdaogov"_n||r.action=="addsession"_n||r.action=="delsession"_n||r.action=="setmeta"_n||r.action=="setprofile"_n||r.action=="restoredoc"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="unlinknat"_n||r.action=="linkevm"_n||r.action=="unlinkevm"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n||r.action=="govfees"_n,"ACTION_UNSUPPORTED");
     else { modules rows(get_self(),r.dao_id);const auto& installed=rows.get(r.target.value,"MODULE_DISABLED");check(std::find(installed.actions.begin(),installed.actions.end(),r.action)!=installed.actions.end(),"ACTION_UNSUPPORTED");check_pinned(installed,r.target); }
   }
   void dispatch(const instruction& r) {
@@ -919,7 +1011,8 @@ private:
 extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
   if(code==receiver){switch(action_name){
     EOSIO_DISPATCH_HELPER(runtime,(authproof)(unlinknat)(linkevm)(unlinkevm)(submitevm)(setadmit)(admitfrom))
-    EOSIO_DISPATCH_HELPER(runtime,(setarchcfg)(archattest)(archapprove)(archrevoke)(archstep)(initramobs)(rebindramobs)(setrampool)(grantdaoram)(checkrampool)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram)(fulfilram))
+    EOSIO_DISPATCH_HELPER(runtime,(docsrc)(docref)(docscanstep)(backfilldocs)(prunedocs)(restoredoc))
+    EOSIO_DISPATCH_HELPER(runtime,(setarchcfg)(archattest)(archapprove)(archrevoke)(archstep)(initramobs)(rebindramobs)(setramauto)(setrampool)(grantdaoram)(checkrampool)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram)(fulfilram))
     EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(setprofile)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(confirmext)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))
     EOSIO_DISPATCH_HELPER(runtime,(sethosted)(govhosted)(govseatfee)(orderfree)(setcapacity)(revokecap)(resumecap))
     EOSIO_DISPATCH_HELPER(runtime,(enrollagent)(addmember)(initgov)(setdaogov)(addsession)(delsession)(guardpause)(guardrevoke)(guardrecover)(submitsess)(setfees)(listmod)(unlistmod)(setmodcopy)(setpolicy)(setgov)(setoracle)(govfees)(govpayfees)(setcreate)(govcreate)(setcrrate)(ordercreate)(cardcreate)(createpaid)(govlist)(govunlist)(govmodcopy))

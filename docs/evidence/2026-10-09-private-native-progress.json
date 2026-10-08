@@ -1,0 +1,49 @@
+{
+  "runtime": "ramobsu5dgyf",
+  "stages": [
+    {
+      "name": "started",
+      "elapsedMs": 0
+    },
+    {
+      "name": "private-original-published",
+      "elapsedMs": 261
+    },
+    {
+      "name": "ordinary-export-verified",
+      "elapsedMs": 2502
+    },
+    {
+      "name": "ordinary-pruned",
+      "elapsedMs": 56033
+    },
+    {
+      "name": "private-clocks-aged",
+      "elapsedMs": 57452
+    },
+    {
+      "name": "private-export-verified",
+      "elapsedMs": 59731
+    },
+    {
+      "name": "private-pruned",
+      "elapsedMs": 113746
+    },
+    {
+      "name": "database-recreated",
+      "elapsedMs": 113917
+    },
+    {
+      "name": "owned-file-ledger-reconstructed",
+      "elapsedMs": 122362
+    },
+    {
+      "name": "original-kit-decrypted",
+      "elapsedMs": 124837
+    },
+    {
+      "name": "exact-native-row-restored",
+      "elapsedMs": 125073
+    }
+  ]
+}

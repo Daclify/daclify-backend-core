@@ -312,17 +312,19 @@ Commercial hosting, subscriptions and paid services are allowed. Independently d
 
 Blockchain RAM holds live contract records; IPFS holds pinned files and archive bundles. They are separate resources. Resources shows exact DAO RAM counters and permanent purchased bytes by contract payer. Whole-account figures include other DAOs, code and permissions. An unavailable DAO total is not a zero-byte total.
 
-A visible payer allocation separates identity, activity and completion budgets. Manual grants are backed by the exact native payer account and replay safely. Allocations do not yet enforce growth limits or guarantee completion of outstanding work; those protections require the remaining reserve and migration qualification. Purchased bytes are shown separately from granted capacity.
+A visible payer allocation separates identity, activity and completion budgets. Issued grants are backed by the exact native payer account and replay safely. Allocations do not yet enforce growth limits or guarantee completion of outstanding work; those protections require the remaining reserve and migration qualification. Purchased bytes are shown separately from granted capacity.
 
 To buy RAM with TLOS, select a qualified contract payer and minimum byte increase, review native acquisition cost plus one operational fee (5% at launch), then approve the one-time wallet payment. Order and token payment share one transaction. Every actual quota increase is checked; an expired quote, changed policy or unmet minimum rolls the whole purchase back. Sponsoring RAM grants no membership or administration.
 
 Administrators can instead approve a card RAM order when the operator has configured Stripe and funded its separate native reserve. The card rail adds one operational markup (20% at launch), with a $5 minimum total. It does not add the native 5% markup or Connect commission. The exchange-rate observation, byte minimum and exact USD price are disclosed before fresh account-control approval. Complete Stripe checkout, then refresh the saved order. Payment must be verified and provisioning must finish before capacity is credited. An operator outage or low reserve needs reconciliation; checkout return alone proves nothing.
 
-Purchased RAM is permanent and reusable. A refund, dispute or hosting arrears does not automatically sell RAM or erase keys, memberships, nonces, balances or financial claims. Operator RAM reserve deposits are distinct from DAO treasury/stake/claim deposits. Quota enforcement, included pools and protected completion reserves are still being qualified.
+Purchased RAM is permanent and reusable. A refund, dispute or hosting arrears does not automatically sell RAM or erase keys, memberships, nonces, balances or financial claims. Operator RAM reserve deposits are distinct from DAO treasury/stake/claim deposits. Included payer offers require actual funded pools; quota enforcement and obligation-specific completion holds remain under qualification.
 
 Pinned hosting includes 100 MB (100,000,000 bytes). Each explicitly approved additional 1 GB costs $1 per calendar month at launch. Active files, old versions and archive bundles share this rate; the same CID counts once per DAO. Payment retries do not restart the original paid-term-end plus 30-day grace deadline. Automatic deletion is disabled until guarded cleanup and recovery qualify.
 
-Archive preview and resumable export cover qualified ordinary-poll vote records, at least 90 days after recorded terminal completion. Create and independently verify the encrypted backup, obtain a fresh native availability attestation, then sign approval binding the exact manifest, descriptor, backup and delay. Approval does not prune. Each permitted source-owned batch is a separate manual action; revocation stops subsequent batches. Members can browse verified anchored history merged with qualified live rows and recover bundles without the old SQL index. Exports contain no decryption kits, social pairings or original file blobs. A local native ordinary-vote database-loss drill and original-kit recovery of a retained private file passed. Protected document pruning, backed enforcement, legacy migration and live provider qualification still gate production release.
+Archive preview and resumable export cover qualified ordinary-poll votes and old unreferenced document versions, at least 90 days after recorded terminal completion or document creation/backfill. Create and independently verify the encrypted backup, obtain a fresh native availability attestation, then sign approval binding the exact manifest, descriptor, backup and delay. Approval does not prune. Each permitted source-owned batch is a separate manual action; revocation stops subsequent batches. Members can browse verified anchored history merged with qualified live rows and recover bundles without the old SQL index. Exports contain no decryption kits, social pairings or original file blobs. A local native ordinary-vote database-loss drill and original-kit recovery of a retained private file passed. A controlled native encrypted-document pruning, empty-database archive/file reconstruction, original-kit decryption and exact-row restore drill passed. Backed enforcement, general legacy migration and live provider qualification still gate production release.
+
+On qualified new deployments, the operator can enable a physically backed included RAM schedule split across core and module payer accounts. Identity capacity uses the DAO’s accepted per-slot rate and is granted only above its permanent maximum previously funded slot count. Monthly renewal, expiry and replacement members do not issue the same grant again. Resources shows these markers separately from current membership entitlement. Quota enforcement and obligation-specific completion holds remain under qualification.
 
 ## Keep files within your funded storage
 
@@ -334,9 +336,17 @@ The guarded cleanup implementation verifies payment, current references and the 
 
 Cleanup does not remove identities, social pairings, document decryption keys, signing nonces, balances, payment receipts or purchased RAM. Files whose hosting ends are explicitly unavailable; paying afterward does not promise recovery of deleted content. Live provider qualification and operational enablement are separate release gates.
 
+Archive manifests and chunks form one retention group. Selecting one includes all its dependencies and shared objects count once. A partial bundle is explicitly unavailable; original document files stay separately pinned and normally billed. Hosting recovery can reconstruct complete groups from verified surviving owned pins without inventing payment.
+
+Resources shows notices tied to the original paid/grace dates. Email requires explicit operator SMTP configuration and the current billing administrator’s paired email. Obsolete notices are canceled after renewed funding or administrator removal; a retry can duplicate an email and never resets grace. Missing contacts and delivery failures need operator review. Check Resources even if mail delivery is disabled.
+
+Operator recovery alerts can use a separately configured operations mailbox. They contain incident IDs, never recovery bytes or keys, and do not clear an incident. Email retries stop after 12 attempts for operator review. SMTP delivery and an operator response procedure require qualification before destructive cleanup.
+
+The backend can use a server-only dedicated-gateway key. The matching Pinata restriction must be configured and verified separately; alternative OR access controls can bypass it. Public IPFS ciphertext remains available through other providers. A funded gateway bandwidth allowance remains a launch gate; no unlimited access or unapproved bandwidth overage charge is promised.
+
 ## runtime contract
 
-Source ABI JSON SHA-256: `c9a01fd6b5d6aff698830955f310d377e2a319ad9e9e6abcdf27c5358563a840`.
+Source ABI JSON SHA-256: `7c27972fb5a349024396c29012f47453720cb66f99f602da285488fb1e3a9d8f`.
 
 ### Action: addmember
 
@@ -434,6 +444,13 @@ Source ABI JSON SHA-256: `c9a01fd6b5d6aff698830955f310d377e2a319ad9e9e6abcdf27c5
 | account | name |
 | intent | checksum256 |
 
+### Action: backfilldocs
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| limit | uint32 |
+
 ### Action: cancelob
 
 | Field | ABI type |
@@ -514,6 +531,38 @@ Source ABI JSON SHA-256: `c9a01fd6b5d6aff698830955f310d377e2a319ad9e9e6abcdf27c5
 | dao_id | uint64 |
 | member_id | uint64 |
 | session_id | uint64 |
+
+### Action: docref
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| source | name |
+| table | name |
+| source_id | uint64 |
+| slot | uint8 |
+| document_id | uint64 |
+| version | uint32 |
+
+### Action: docscanstep
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| source | name |
+| table | name |
+| start | uint64 |
+| next | uint64 |
+| complete | bool |
+| scanned | uint32 |
+
+### Action: docsrc
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| source | name |
+| tables | name[] |
 
 ### Action: enroll
 
@@ -831,6 +880,16 @@ Source ABI JSON SHA-256: `c9a01fd6b5d6aff698830955f310d377e2a319ad9e9e6abcdf27c5
 | source | name |
 | source_id | uint64 |
 
+### Action: prunedocs
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| archive_id | uint64 |
+| chunk_ordinal | uint32 |
+| start | uint32 |
+| proofs | archive_prune_proof[] |
+
 ### Action: putdoc
 
 | Field | ABI type |
@@ -887,6 +946,15 @@ Source ABI JSON SHA-256: `c9a01fd6b5d6aff698830955f310d377e2a319ad9e9e6abcdf27c5
 | recipient | uint64 |
 | quantity | asset |
 | due | uint32 |
+
+### Action: restoredoc
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| original | document_record |
 
 ### Action: resumecap
 
@@ -1071,6 +1139,13 @@ Source ABI JSON SHA-256: `c9a01fd6b5d6aff698830955f310d377e2a319ad9e9e6abcdf27c5
 | member_id | uint64 |
 | account_name | name |
 | profile | string |
+
+### Action: setramauto
+
+| Field | ABI type |
+| --- | --- |
+| enabled | bool |
+| offers | ram_offer[] |
 
 ### Action: setramcode
 
@@ -1347,6 +1422,65 @@ Source ABI JSON SHA-256: `c9a01fd6b5d6aff698830955f310d377e2a319ad9e9e6abcdf27c5
 | key_epoch | uint64 |
 | history_policy | uint8 |
 
+### Table: docclocks
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| document_id | uint64 |
+| version | uint32 |
+| created_at | uint32 |
+| legacy | bool |
+| row_hash | checksum256 |
+
+### Table: docheads
+
+| Field | ABI type |
+| --- | --- |
+| document_id | uint64 |
+| version | uint32 |
+| author | uint64 |
+
+### Table: docrefs
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| source | name |
+| table | name |
+| source_id | uint64 |
+| slot | uint8 |
+| document_id | uint64 |
+| version | uint32 |
+
+### Table: docscan
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| source | name |
+| table | name |
+| code_hash | checksum256 |
+| cursor | uint64 |
+| complete | bool |
+
+### Table: docsrcs
+
+| Field | ABI type |
+| --- | --- |
+| source | name |
+| code_hash | checksum256 |
+| tables | name[] |
+
+### Table: docstate
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| high_water | uint64 |
+| cursor | uint64 |
+| complete | bool |
+
 ### Table: documents
 
 | Field | ABI type |
@@ -1535,6 +1669,14 @@ Source ABI JSON SHA-256: `c9a01fd6b5d6aff698830955f310d377e2a319ad9e9e6abcdf27c5
 | payer | name |
 | purchased_bytes | uint64 |
 
+### Table: ramauto
+
+| Field | ABI type |
+| --- | --- |
+| enabled | bool |
+| policy_revision | uint64 |
+| offers | ram_offer[] |
+
 ### Table: ramcards
 
 | Field | ABI type |
@@ -1544,6 +1686,15 @@ Source ABI JSON SHA-256: `c9a01fd6b5d6aff698830955f310d377e2a319ad9e9e6abcdf27c5
 | reference | checksum256 |
 | operational_bps | uint16 |
 | fulfiller | name |
+
+### Table: ramentitle
+
+| Field | ABI type |
+| --- | --- |
+| payer | name |
+| policy_revision | uint64 |
+| identity_per_slot | uint64 |
+| slots | uint32 |
 
 ### Table: ramgrants
 
@@ -1935,6 +2086,36 @@ Response:
         "qualified"
       ]
     },
+    "bundles": {
+      "default": [],
+      "maxItems": 10000,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "objectIds": {
+            "minItems": 1,
+            "maxItems": 33,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "objectIds"
+        ],
+        "additionalProperties": false
+      }
+    },
     "objects": {
       "maxItems": 10000,
       "type": "array",
@@ -2011,6 +2192,7 @@ Response:
     "generation",
     "funding",
     "cleanup",
+    "bundles",
     "objects"
   ],
   "additionalProperties": false
@@ -2240,6 +2422,36 @@ Response:
         "qualified"
       ]
     },
+    "bundles": {
+      "default": [],
+      "maxItems": 10000,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "objectIds": {
+            "minItems": 1,
+            "maxItems": 33,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "objectIds"
+        ],
+        "additionalProperties": false
+      }
+    },
     "objects": {
       "maxItems": 10000,
       "type": "array",
@@ -2316,6 +2528,7 @@ Response:
     "generation",
     "funding",
     "cleanup",
+    "bundles",
     "objects"
   ],
   "additionalProperties": false
@@ -4716,6 +4929,38 @@ Response:
               }
             ]
           },
+          "entitlement": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "policy_revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "identity_per_slot": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "slots": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4294967295
+                  }
+                },
+                "required": [
+                  "policy_revision",
+                  "identity_per_slot",
+                  "slots"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "globalQuotaBytes": {
             "anyOf": [
               {
@@ -4739,6 +4984,7 @@ Response:
           "usage",
           "purchasedBytes",
           "allocation",
+          "entitlement",
           "globalQuotaBytes",
           "globalUsedBytes"
         ],
@@ -9898,7 +10144,7 @@ Response:
       "const": false
     },
     "objects": {
-      "maxItems": 33,
+      "maxItems": 58,
       "type": "array",
       "items": {
         "type": "object",
@@ -14164,6 +14410,64 @@ Response:
       ],
       "additionalProperties": false
     },
+    "notices": {
+      "default": [],
+      "maxItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "stage": {
+            "type": "string",
+            "enum": [
+              "renewal-due",
+              "grace-started",
+              "grace-ending",
+              "hosting-ended",
+              "billing-review"
+            ]
+          },
+          "paidThrough": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:Z))$"
+              },
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            ]
+          },
+          "graceEndsAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:Z))$"
+              },
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            ]
+          }
+        },
+        "required": [
+          "stage",
+          "paidThrough",
+          "graceEndsAt"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "noticeDelivery": {
+      "default": false,
+      "type": "boolean"
+    },
     "subscription": {
       "anyOf": [
         {
@@ -14371,6 +14675,8 @@ Response:
     "configured",
     "currentPricing",
     "funding",
+    "notices",
+    "noticeDelivery",
     "subscription"
   ],
   "additionalProperties": false
@@ -14654,6 +14960,64 @@ Response:
       ],
       "additionalProperties": false
     },
+    "notices": {
+      "default": [],
+      "maxItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "stage": {
+            "type": "string",
+            "enum": [
+              "renewal-due",
+              "grace-started",
+              "grace-ending",
+              "hosting-ended",
+              "billing-review"
+            ]
+          },
+          "paidThrough": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:Z))$"
+              },
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            ]
+          },
+          "graceEndsAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:Z))$"
+              },
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+              }
+            ]
+          }
+        },
+        "required": [
+          "stage",
+          "paidThrough",
+          "graceEndsAt"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "noticeDelivery": {
+      "default": false,
+      "type": "boolean"
+    },
     "subscription": {
       "anyOf": [
         {
@@ -14861,6 +15225,8 @@ Response:
     "configured",
     "currentPricing",
     "funding",
+    "notices",
+    "noticeDelivery",
     "subscription"
   ],
   "additionalProperties": false

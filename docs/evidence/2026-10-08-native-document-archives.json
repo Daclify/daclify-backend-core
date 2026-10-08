@@ -1,0 +1,37 @@
+{
+  "environment": "owned local Spring fixture",
+  "chainId": "d9f6e8c655703ba364f0ee82b4fd0631350475747b1924396c8fbef2558b8f51",
+  "runtime": "ramobsm2ozba",
+  "coreCodeHash": "9d05dbedf1fd8b81eb312bc33a16f0449afa1c0e2b7127cfc3dd3feb774277e0",
+  "coreRawAbiHash": "4ac41f5aa0178b751675f1c7239580cf9984f141361eb82269f149ddf32e9e8c",
+  "documentId": "90",
+  "prunedVersions": [
+    2,
+    3
+  ],
+  "retainedVersions": [
+    1,
+    4
+  ],
+  "restoredVersion": 2,
+  "freedNativeRamBytes": 2712,
+  "observedRamDecrease": 2712,
+  "originalRowCommitment": "470677fef737d7b8fa0f660aeb1209751474412a5f9f655701409429003ed81d",
+  "clockFixture": "Existing document clocks aged through temporary fixture code, then exact production WASM restored; production contains no age action.",
+  "qualified": [
+    "source-owned backfill",
+    "native reference callback rejection",
+    "bad-proof atomic rollback",
+    "irreversible API preview",
+    "replay",
+    "latest/referenced rows retained",
+    "original-row restoration",
+    "normal version continuation",
+    "native/counter conservation"
+  ],
+  "notQualified": [
+    "live provider availability",
+    "public Telos testnet",
+    "production pruning"
+  ]
+}

@@ -25,7 +25,8 @@ async function vendorJson(response: Response): Promise<unknown> {
 export class PinataStorage implements ContentProvider {
   #jwt: string;
   #gateway: string;
-  constructor(jwt: string, gateway: string) {
+  #gatewayKey: string | undefined;
+  constructor(jwt: string, gateway: string, gatewayKey?: string) {
     try {
       const url = new URL(gateway);
       if (
@@ -43,8 +44,11 @@ export class PinataStorage implements ContentProvider {
     }
     if (!jwt || /[\r\n]/.test(jwt)) throw new Error('PINATA_CONFIGURATION');
     this.#jwt = jwt;
+    if (gatewayKey !== undefined && !/^[\x21-\x7e]{1,4096}$/.test(gatewayKey))
+      throw new Error('CONTENT_GATEWAY_KEY');
+    this.#gatewayKey = gatewayKey;
   }
-  async #request(url: string, init: RequestInit = {}): Promise<Response> {
+  async #request(url: string, init: RequestInit = {}, allowNotFound = false): Promise<Response> {
     try {
       const response = await fetch(url, {
         ...init,
@@ -52,7 +56,8 @@ export class PinataStorage implements ContentProvider {
         redirect: 'error',
         signal: AbortSignal.timeout(12000),
       });
-      if (!response.ok) throw new ApiError('PINATA_UNAVAILABLE', 503);
+      if (!response.ok && !(allowNotFound && response.status === 404))
+        throw new ApiError('PINATA_UNAVAILABLE', 503);
       return response;
     } catch (cause) {
       if (cause instanceof ApiError) throw cause;
@@ -139,6 +144,7 @@ export class PinataStorage implements ContentProvider {
       throw new ApiError('CONTENT_SIZE');
     try {
       const response = await fetch(`${this.#gateway}/ipfs/${cid}`, {
+        headers: this.#gatewayKey ? { 'x-pinata-gateway-token': this.#gatewayKey } : {},
         redirect: 'error',
         signal: AbortSignal.timeout(12000),
       });
@@ -151,19 +157,27 @@ export class PinataStorage implements ContentProvider {
       throw new ApiError('CONTENT_UNAVAILABLE', 503);
     }
   }
+  async file(providerId: string): Promise<PinnedFile | null> {
+    z.uuid().parse(providerId);
+    const response = await this.#request(
+      `https://api.pinata.cloud/v3/files/public/${providerId}`,
+      {},
+      true,
+    );
+    if (response.status === 404) return null;
+    const parsed = z.object({ data: FileSchema }).safeParse(await vendorJson(response));
+    if (!parsed.success || parsed.data.data.id !== providerId)
+      throw new ApiError('PINATA_RESPONSE_INVALID', 502);
+    const file = parsed.data.data;
+    return { id: file.id, cid: file.cid, size: file.size };
+  }
   async remove(providerId: string): Promise<void> {
     z.uuid().parse(providerId);
-    try {
-      const response = await fetch(`https://api.pinata.cloud/v3/files/public/${providerId}`, {
-        method: 'DELETE',
-        headers: { authorization: `Bearer ${this.#jwt}` },
-        redirect: 'error',
-        signal: AbortSignal.timeout(12000),
-      });
-      if (!response.ok && response.status !== 404) throw new ApiError('PINATA_UNAVAILABLE', 503);
-    } catch (cause) {
-      if (cause instanceof ApiError) throw cause;
-      throw new ApiError('PINATA_UNAVAILABLE', 503);
-    }
+    await this.#request(
+      `https://api.pinata.cloud/v3/files/public/${providerId}`,
+      { method: 'DELETE' },
+      true,
+    );
+    if (await this.file(providerId)) throw new ApiError('PINATA_REMOVAL_PENDING', 503);
   }
 }

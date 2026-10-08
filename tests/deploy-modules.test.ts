@@ -120,6 +120,7 @@ it('limits the prepared runtime context permission to supported producer actions
       .every((link) => link.action in RuntimeActionSchemas),
   ).toBe(true);
   expect(plan.links).toContainEqual({ account: 'joinreview', action: 'admit' });
+  expect(plan.links).toContainEqual({ account: 'corefixture', action: 'restoredoc' });
   expect(
     plan.links.some((link) => ['admitfrom', 'reserve', 'transfer'].includes(link.action)),
   ).toBe(false);

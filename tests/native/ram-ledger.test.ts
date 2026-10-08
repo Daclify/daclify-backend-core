@@ -2,7 +2,7 @@ import { Pool } from 'pg';
 import { NativeChainGateway } from '../../services/api/src/native-chain.js';
 import { beforeAll, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
-import { readFileSync, copyFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, copyFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { randomBytes, createHash } from 'node:crypto';
 import { z } from 'zod';
 import {
@@ -23,6 +23,8 @@ import { unlockFixtureWallet } from '../../tools/native/wallet.js';
 import { executedChainResult } from '../../services/api/src/chain-result.js';
 import { configureFixtureContext } from '../../tools/native/permissions.js';
 import { ModulePermissions } from '@daclify/modules';
+import { buildArchiveTree } from '@daclify/modules/archive';
+import { RuntimeTableSchemas } from '../../sdk/index.js';
 import { DecideTableSchemas } from '@daclify/modules/sdk';
 const network = fixtureNetwork();
 if (network.container !== 'daclify-resources-native' || network.url !== 'http://127.0.0.1:20588')
@@ -702,4 +704,456 @@ it('reads irreversible live vote history without SQL and rejects another DAO bal
   } finally {
     await pool.end();
   }
+});
+
+it('backfills exact native module references without duplicating RAM and refuses forged coverage', async () => {
+  await push('backfilldocs', { dao_id: '1', limit: 25 }, runtime);
+  for (const [source, tables] of [
+    ['works', ['projects', 'milestones']],
+    ['grants', ['rounds', 'applications']],
+    ['decide', ['elections', 'terms']],
+    ['endorse', ['joinapps']],
+    ['payroll', []],
+  ] as const) {
+    if (!tables.length) await push('backfillrefs', { runtime, dao_id: '1' }, runtime, source);
+    for (const table of tables)
+      await push('backfillrefs', { runtime, dao_id: '1', table, limit: 25 }, runtime, source);
+  }
+  const before = await used();
+  for (const table of ['projects', 'milestones'])
+    await push('backfillrefs', { runtime, dao_id: '1', table, limit: 25 }, runtime, 'works');
+  expect(await used()).toBe(before);
+  const references = z
+    .object({
+      rows: z.array(
+        z.object({
+          source: z.string(),
+          table: z.string(),
+          document_id: count,
+          version: z.number(),
+        }),
+      ),
+      more: z.boolean(),
+    })
+    .parse(
+      await rpc('get_table_rows', {
+        json: true,
+        code: runtime,
+        scope: '1',
+        table: 'docrefs',
+        limit: 100,
+      }),
+    );
+  expect(references.more).toBe(false);
+  expect(references.rows).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ source: 'works', table: 'projects', document_id: 1n, version: 1 }),
+    ]),
+  );
+  await expect(
+    push(
+      'docref',
+      {
+        dao_id: '1',
+        source: 'works',
+        table: 'projects',
+        source_id: '1',
+        slot: 0,
+        document_id: '1',
+        version: 1,
+      },
+      'works',
+    ),
+  ).rejects.toThrow('DOCUMENT_SOURCE_SENDER');
+  await expect(
+    push('docsrc', { dao_id: '1', source: 'works', tables: ['projects'] }, 'works'),
+  ).rejects.toThrow('DOCUMENT_SOURCE_SENDER');
+  expect(BigInt((await used()) - baseline)).toBe(await accounted());
+});
+
+it('prunes only old unreferenced native documents and restores exact bytes without ID reuse', async () => {
+  for (const version of [1, 2, 3, 4])
+    await act(runtime, 'putjson', {
+      document_id: 90,
+      version,
+      value: JSON.stringify({ version, body: 'x'.repeat(1000) }),
+      envelope_version: 0,
+      key_epoch: 0,
+    });
+  const docs = await api.v1.chain.get_table_rows({
+    code: runtime,
+    scope: '1',
+    table: 'documents',
+    json: true,
+    limit: 100,
+  });
+  const originals = docs.rows
+    .map((r) => RuntimeTableSchemas.documents.parse(r))
+    .filter((r) => r.document_id === '90');
+  if (originals.length !== 4) throw new Error('NATIVE_DOCUMENT_FIXTURE_ROWS');
+  const agedAbi = ABI.from(readFileSync('.artifacts/document-aged/runtime.abi', 'utf8')),
+    productionHash = createHash('sha256')
+      .update(readFileSync('.artifacts/contracts/runtime.wasm'))
+      .digest('hex'),
+    seedHash = createHash('sha256')
+      .update(readFileSync('.artifacts/document-aged/runtime.wasm'))
+      .digest('hex');
+  const deploy = (directory: string) =>
+    cleos([
+      'set',
+      'contract',
+      runtime,
+      directory,
+      'runtime.wasm',
+      'runtime.abi',
+      '-p',
+      runtime + '@active',
+    ]);
+  let prior = await used();
+  deploy('/work/.artifacts/document-aged');
+  await push(
+    'rebindramobs',
+    { expected_old_hash: productionHash, expected_new_hash: seedHash },
+    runtime,
+  );
+  baseline += (await used()) - prior;
+  for (const original of originals)
+    cleos([
+      'push',
+      'action',
+      runtime,
+      'agedoc',
+      JSON.stringify({ dao_id: '1', id: original.id }),
+      '-p',
+      runtime + '@active',
+    ]);
+  prior = await used();
+  deploy('/work/.artifacts/contracts');
+  await push(
+    'rebindramobs',
+    { expected_old_hash: seedHash, expected_new_hash: productionHash },
+    runtime,
+  );
+  baseline += (await used()) - prior;
+  // The seed ABI exists solely to age clock rows; production has no such action.
+  expect(agedAbi.actions.some((a) => a.name.toString() === 'agedoc')).toBe(true);
+  expect(abi.actions.some((a) => a.name.toString() === 'agedoc')).toBe(false);
+  await act('works', 'propose', {
+    project_id: 88,
+    contributor: 1,
+    document_id: 90,
+    document_version: 1,
+    payments: ['1.0000 TLOS'],
+    dues: [0],
+  });
+  await push(
+    'setarchcfg',
+    { verifier: 'alice', minimum_retention_seconds: 7776000, pruning_enabled: true },
+    runtime,
+  );
+  const chosen = originals.filter((r) => r.version === 2 || r.version === 3),
+    records = chosen.map((r) => ({
+      primaryKey: r.id,
+      packed: Serializer.encode({ abi, type: 'document_record', object: r }).hexString,
+    }));
+  const first = chosen[0],
+    last = chosen.at(-1);
+  if (!first || !last) throw new Error('NATIVE_DOCUMENT_FIXTURE_ROWS');
+  const domain = {
+      format_version: 1 as const,
+      chain_id: network.chainId,
+      runtime,
+      dao_id: '1',
+      source: runtime,
+      code_hash: productionHash,
+      abi_hash: Checksum256.hash(Serializer.encode({ object: abi }).array).toString(),
+      schema_hash: 'ab'.repeat(32),
+      table: 'documents',
+      scope: '1',
+      chunk_ordinal: 0,
+      leaf_count: chosen.length,
+    },
+    tree = buildArchiveTree(domain, records),
+    info = await api.v1.chain.get_info();
+  const manifest = {
+      format_version: 1,
+      chain_id: network.chainId,
+      runtime,
+      dao_id: '1',
+      source: runtime,
+      code_hash: productionHash,
+      abi_hash: domain.abi_hash,
+      block_number: Number(info.last_irreversible_block_num),
+      block_id: info.last_irreversible_block_id.toString(),
+      timestamp: new Date(info.head_block_time.toMilliseconds()).toISOString(),
+      families: [
+        {
+          kind: 'document-versions',
+          parent_id: '90',
+          table: 'documents',
+          scope: '1',
+          schema_hash: domain.schema_hash,
+          records: String(chosen.length),
+          chunks: [
+            {
+              domain,
+              root: tree.root,
+              cid: 'bafkreiaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+              bytes: 3000,
+              commitment: 'ab'.repeat(32),
+              first_key: first.id,
+              last_key: last.id,
+            },
+          ],
+        },
+      ],
+      files: [],
+    },
+    manifestHash = 'ac'.repeat(32),
+    backup = 'ad'.repeat(32);
+  await push(
+    'archattest',
+    {
+      dao_id: '1',
+      manifest,
+      manifest_cid: 'bafkreiaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      manifest_bytes: 1000,
+      manifest_commitment: manifestHash,
+      backup_commitment: backup,
+      retention_seconds: 7776000,
+    },
+    'alice',
+  );
+  await act(runtime, 'archapprove', {
+    manifest_commitment: manifestHash,
+    descriptor_commitment: Checksum256.hash(
+      Serializer.encode({ abi, type: 'archive_manifest_descriptor', object: manifest }).array,
+    ).toString(),
+    backup_commitment: backup,
+    retention_seconds: 7776000,
+  });
+  const anchorRows = await api.v1.chain.get_table_rows({
+      code: runtime,
+      scope: '1',
+      table: 'archives',
+      json: true,
+      limit: 100,
+    }),
+    anchor = anchorRows.rows
+      .map((r) => RuntimeTableSchemas.archives.parse(r))
+      .find((a) => a.manifest_commitment === manifestHash);
+  if (!anchor) throw new Error('NATIVE_DOCUMENT_ANCHOR');
+  const proofs = chosen.map((r, i) => ({ primary_key: r.id, siblings: tree.proof(i) })),
+    input = { dao_id: '1', archive_id: anchor.id, chunk_ordinal: 0, start: 0, proofs };
+  const gateway = new NativeChainGateway({
+    rpcUrl: network.url,
+    chainId: network.chainId,
+    runtime,
+    hub: null,
+    environment: 'local',
+    relayActor: 'alice',
+    relayKey: key,
+    modules: modules.map(([id, account]) => ({ id, account })),
+  });
+  const preview = await gateway.archivePreview({
+    dao: { chainId: network.chainId, contract: runtime, daoId: '1', interfaceVersion: 1 },
+    documentRows: chosen.map((r) => r.id),
+    retentionSeconds: 7776000,
+  });
+  expect(preview.blocked).toEqual([]);
+  expect(preview.families[0]).toMatchObject({ kind: 'document-versions', parentId: '90' });
+  const before = await used(),
+    counted = await accounted();
+  await expect(
+    push(
+      'prunedocs',
+      { ...input, proofs: [proofs[0], { ...proofs[1], siblings: ['00'.repeat(32)] }] },
+      'alice',
+    ),
+  ).rejects.toThrow('ARCHIVE_PROOF');
+  expect(await used()).toBe(before);
+  await push('prunedocs', input, 'alice');
+  const removed = before - (await used());
+  expect(removed).toBeGreaterThan(2000);
+  expect(counted - (await accounted())).toBe(BigInt(removed));
+  await push('prunedocs', input, 'alice');
+  expect(before - (await used())).toBe(removed);
+  await expect(
+    act(runtime, 'restoredoc', { original: { ...first, metadata: '{}' } }),
+  ).rejects.toThrow('DOCUMENT_RESTORE_COMMITMENT');
+  await act(runtime, 'restoredoc', { original: first });
+  const restored = await used();
+  await act(runtime, 'restoredoc', { original: first });
+  expect(await used()).toBe(restored);
+  const after = await api.v1.chain.get_table_rows({
+      code: runtime,
+      scope: '1',
+      table: 'documents',
+      json: true,
+      limit: 100,
+    }),
+    rows = after.rows.map((r) => RuntimeTableSchemas.documents.parse(r));
+  expect(rows.find((r) => r.id === first.id)).toEqual(first);
+  expect(rows.some((r) => r.document_id === '90' && r.version === 1)).toBe(true);
+  expect(rows.some((r) => r.document_id === '90' && r.version === 4)).toBe(true);
+  await act(runtime, 'putjson', {
+    document_id: 90,
+    version: 5,
+    value: '{}',
+    envelope_version: 0,
+    key_epoch: 0,
+  });
+  writeFileSync(
+    'docs/evidence/2026-10-08-native-document-archives.json',
+    JSON.stringify(
+      {
+        environment: 'owned local Spring fixture',
+        chainId: network.chainId,
+        runtime,
+        coreCodeHash: productionHash,
+        coreRawAbiHash: domain.abi_hash,
+        documentId: '90',
+        prunedVersions: [2, 3],
+        retainedVersions: [1, 4],
+        restoredVersion: 2,
+        freedNativeRamBytes: removed,
+        observedRamDecrease: removed,
+        originalRowCommitment: Checksum256.hash(
+          Serializer.encode({ abi, type: 'document_record', object: first }).array,
+        ).toString(),
+        clockFixture:
+          'Existing document clocks aged through temporary fixture code, then exact production WASM restored; production contains no age action.',
+        qualified: [
+          'source-owned backfill',
+          'native reference callback rejection',
+          'bad-proof atomic rollback',
+          'irreversible API preview',
+          'replay',
+          'latest/referenced rows retained',
+          'original-row restoration',
+          'normal version continuation',
+          'native/counter conservation',
+        ],
+        notQualified: ['live provider availability', 'public Telos testnet', 'production pruning'],
+      },
+      null,
+      2,
+    ) + '\n',
+  );
+  expect(BigInt((await used()) - baseline)).toBe(await accounted());
+});
+
+it('grants included RAM once and only adds newly approved member slots across renewal and policy changes', async () => {
+  const quota = (await api.v1.chain.get_account(runtime)).ram_quota.toString();
+  await push(
+    'setrampool',
+    {
+      payer: runtime,
+      expected_quota: quota,
+      baseline_bytes: String(baseline),
+      platform_headroom: '131072',
+    },
+    runtime,
+  );
+  await push(
+    'setresources',
+    {
+      native_ram_bps: 500,
+      card_ram_bps: 2000,
+      included_activity_bytes: '262144',
+      identity_bytes_per_slot: '2048',
+      quote_lifetime_seconds: 300,
+      storage_free_bytes: '100000000',
+      storage_unit_bytes: '1000000000',
+      storage_monthly_usd: 100,
+    },
+    runtime,
+  );
+  await expect(
+    push(
+      'setramauto',
+      { enabled: true, offers: [{ payer: runtime, activity: '1', completion: '32768' }] },
+      runtime,
+    ),
+  ).rejects.toThrow('RAM_OFFER_POLICY');
+  await expect(
+    push(
+      'setramauto',
+      {
+        enabled: true,
+        offers: [
+          { payer: runtime, activity: '131072', completion: '32768' },
+          { payer: runtime, activity: '131072', completion: '32768' },
+        ],
+      },
+      runtime,
+    ),
+  ).rejects.toThrow('RAM_OFFER_DUPLICATE');
+  await push(
+    'setramauto',
+    { enabled: true, offers: [{ payer: runtime, activity: '262144', completion: '32768' }] },
+    runtime,
+  );
+  await push('createdao', {
+    dao_id: '3',
+    owner: 'alice',
+    metadata: '{}',
+    privacy: 0,
+    token_contract: 'eosio.token',
+    token_symbol: '4,TLOS',
+  });
+  daoScopes.push('3');
+  const limits = async () =>
+    RuntimeTableSchemas.ramlimits.parse(
+      (
+        await api.v1.chain.get_table_rows({
+          code: runtime,
+          scope: '3',
+          table: 'ramlimits',
+          json: true,
+        })
+      ).rows[0],
+    );
+  expect(await limits()).toMatchObject({
+    activity: '262144',
+    identity: '20480',
+    completion: '32768',
+  });
+  expect(BigInt(await used()) - BigInt(baseline)).toBe(await accounted());
+  await push('sethosted', { free_members: 10, settler: runtime }, runtime);
+  const expires = Math.floor(Date.now() / 1000) + 3600;
+  const capacity = { dao_id: '3', member_limit: 20, expires, receipt: 'a1'.repeat(32) };
+  await push('setcapacity', capacity, runtime);
+  const increased = await limits();
+  expect(increased.identity).toBe('40960');
+  await push('setcapacity', capacity, runtime);
+  await push(
+    'setcapacity',
+    { ...capacity, expires: expires + 1, receipt: 'a2'.repeat(32) },
+    runtime,
+  );
+  expect(await limits()).toEqual(increased);
+  await push(
+    'setresources',
+    {
+      native_ram_bps: 500,
+      card_ram_bps: 2000,
+      included_activity_bytes: '262144',
+      identity_bytes_per_slot: '4096',
+      quote_lifetime_seconds: 300,
+      storage_free_bytes: '100000000',
+      storage_unit_bytes: '1000000000',
+      storage_monthly_usd: 100,
+    },
+    runtime,
+  );
+  await push(
+    'setcapacity',
+    { ...capacity, member_limit: 21, expires: expires + 2, receipt: 'a3'.repeat(32) },
+    runtime,
+  );
+  expect((await limits()).identity).toBe('43008');
+  await push('revokecap', { dao_id: '3', receipt: 'a3'.repeat(32) }, runtime);
+  expect((await limits()).identity).toBe('43008');
+  expect(BigInt(await used()) - BigInt(baseline)).toBe(await accounted());
 });

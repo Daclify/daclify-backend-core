@@ -75,28 +75,37 @@ function fixture() {
             ]
           : body.table === 'ramalloc'
             ? [{ payer: 'decide', purchased_bytes: '4096' }]
-            : body.table === 'ramlimits'
+            : body.table === 'ramentitle'
               ? [
                   {
                     payer: 'daclifycore',
-                    activity: '262144',
-                    identity: '20480',
-                    completion: '32768',
+                    policy_revision: '1',
+                    identity_per_slot: '2048',
+                    slots: 10,
                   },
                 ]
-              : body.table === 'ramsources'
-                ? [{ account: 'decide', code_hash: 'cd'.repeat(32) }]
-                : body.table === 'modules'
-                  ? [
-                      {
-                        account: 'decide',
-                        version: 1,
-                        actions: [],
-                        grants: [],
-                        code_hash: 'cd'.repeat(32),
-                      },
-                    ]
-                  : [];
+              : body.table === 'ramlimits'
+                ? [
+                    {
+                      payer: 'daclifycore',
+                      activity: '262144',
+                      identity: '20480',
+                      completion: '32768',
+                    },
+                  ]
+                : body.table === 'ramsources'
+                  ? [{ account: 'decide', code_hash: 'cd'.repeat(32) }]
+                  : body.table === 'modules'
+                    ? [
+                        {
+                          account: 'decide',
+                          version: 1,
+                          actions: [],
+                          grants: [],
+                          code_hash: 'cd'.repeat(32),
+                        },
+                      ]
+                    : [];
     return Response.json({ rows, more: truncated && body.table === 'ramstats', next_key: '100' });
   });
   const gateway = new NativeChainGateway({
@@ -131,6 +140,11 @@ it('separates DAO counters/purchased credits from the whole payer account usage'
     globalQuotaBytes: '1000000',
     usage: { activity: '400' },
     purchasedBytes: '4096',
+  });
+  expect(result.payers.find((p) => p.payer === 'daclifycore')?.entitlement).toEqual({
+    policy_revision: '1',
+    identity_per_slot: '2048',
+    slots: 10,
   });
   expect(() => RamUsageSchema.parse({ ...result, totalObservedBytes: '1951' })).toThrow();
   expect(() => RamUsageSchema.parse({ ...result, observation: 'disabled' })).toThrow();

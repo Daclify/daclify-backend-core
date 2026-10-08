@@ -13,7 +13,12 @@ import type { ChainGateway } from '../chain.js';
 import type { ContentProvider } from './provider.js';
 import { ApiError } from '../errors.js';
 import { ArchiveHistory } from '../archive/history.js';
-import { contentDaoKey, recordVerifiedPin, CONTENT_IMPORT_PROFILE } from './ledger.js';
+import {
+  contentDaoKey,
+  recordVerifiedPin,
+  CONTENT_IMPORT_PROFILE,
+  recordArchiveGroup,
+} from './ledger.js';
 const ObjectState = z.object({
   bytes: z.coerce.number().int().positive(),
   commitment: z.string(),
@@ -46,7 +51,8 @@ export async function recoverStorageReferences(
     throw new ApiError('ADMIN_REQUIRED', 403);
   if (!provider.findCid) throw new ApiError('STORAGE_RECOVERY_UNSUPPORTED', 503);
   const candidates: { descriptor: HostedObjectDescriptor; reference: HostedReference }[] = [];
-  let next: string | null = null;
+  let next: string | null = null,
+    bundleKey: string | undefined;
   if (input.kind === 'document-version') {
     const content = await chain.content(input.dao.daoId, {
       documents: input.after,
@@ -111,6 +117,7 @@ export async function recoverStorageReferences(
       anchor = page.anchors[0];
     next = page.anchors.length > 1 && anchor ? (BigInt(anchor.id) + 1n).toString() : page.next;
     if (anchor) {
+      bundleKey = `chain:${anchor.id}`;
       const bundle = await history.recover(account, {
         dao: input.dao,
         manifestCommitment: anchor.manifest_commitment,
@@ -135,6 +142,21 @@ export async function recoverStorageReferences(
           reference: {
             kind: 'archive',
             referenceKey: `chain:${anchor.id}:chunk:${chunk.domain.chunk_ordinal}`,
+          },
+        });
+      // ponytail: first-party exports contain at most 25 document versions; add a file cursor before supporting wider hosted recovery.
+      if (bundle.manifest.files.length > 25) throw new ApiError('STORAGE_RECOVERY_COVERAGE', 503);
+      for (const file of bundle.manifest.files)
+        candidates.push({
+          descriptor: HostedObjectDescriptorSchema.parse({
+            dao: input.dao,
+            cid: file.cid,
+            bytes: Number(file.bytes),
+            commitment: file.commitment,
+          }),
+          reference: {
+            kind: 'document-version',
+            referenceKey: `archive:${anchor.id}:${file.document_id}:${file.version}`,
           },
         });
     }
@@ -199,6 +221,55 @@ export async function recoverStorageReferences(
       client.release();
     }
     objects.push({ referenceKey: reference.referenceKey, cid: descriptor.cid, state });
+  }
+  if (
+    bundleKey &&
+    candidates.length &&
+    objects
+      .filter((o) =>
+        candidates.some(
+          (c) => c.reference.kind === 'archive' && c.reference.referenceKey === o.referenceKey,
+        ),
+      )
+      .every((o) => o.state === 'tracked' || o.state === 'recovered')
+  ) {
+    if (
+      !(await chain.memberships(account)).some(
+        (m) => m.active && m.admin && contentDaoKey(m.dao) === daoKey,
+      )
+    )
+      throw new ApiError('ADMIN_REQUIRED', 403);
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const members = await client.query<{ id: string }>(
+        `SELECT id FROM hosted_objects WHERE provider_scope=$1 AND cid=ANY($2::text[]) AND state='pinned'`,
+        [
+          scope,
+          candidates.filter((c) => c.reference.kind === 'archive').map((c) => c.descriptor.cid),
+        ],
+      );
+      if (
+        members.rows.length !==
+        new Set(
+          candidates.filter((c) => c.reference.kind === 'archive').map((c) => c.descriptor.cid),
+        ).size
+      )
+        throw new ApiError('STORAGE_OBJECT_REVIEW', 409);
+      await recordArchiveGroup(
+        client,
+        scope,
+        input.dao,
+        bundleKey,
+        members.rows.map((r) => r.id),
+      );
+      await client.query('COMMIT');
+    } catch (cause) {
+      await client.query('ROLLBACK');
+      throw cause;
+    } finally {
+      client.release();
+    }
   }
   return StorageRecoveryPageSchema.parse({
     dao: input.dao,

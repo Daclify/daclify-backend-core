@@ -19,6 +19,8 @@ import {
   buildArchiveTree,
   archiveSourceSchema,
   archiveExportConsent,
+  verifyArchiveChunkDescriptor,
+  decodeReleasedArchiveRow,
 } from '@daclify/modules/archive';
 import { Pool } from 'pg';
 import { join, resolve } from 'node:path';
@@ -81,7 +83,7 @@ const privateDao = {
   interfaceVersion: 1 as const,
 };
 function privateClient(
-  mode: 'prepare' | 'sign' | 'verify',
+  mode: 'prepare' | 'sign' | 'verify' | 'file',
   input: Record<string, unknown> = {},
 ): unknown {
   try {
@@ -120,7 +122,10 @@ const privateFixture = z
     }),
   })
   .parse(privateClient('prepare'));
-async function privateCore<K extends 'commitepoch' | 'putdoc'>(action: K, data: RuntimeActions[K]) {
+async function privateCore<K extends 'commitepoch' | 'putdoc' | 'archapprove' | 'restoredoc'>(
+  action: K,
+  data: RuntimeActions[K],
+) {
   const member = RuntimeTableSchemas.members.parse((await rows(runtime, 'members', '2'))[0]);
   const now = Math.floor((await api.v1.chain.get_info()).head_block_time.toMilliseconds() / 1000);
   const request = makeInstruction(
@@ -782,6 +787,16 @@ it('exports, verifies, backs up, approves and prunes actual native votes, then r
   };
   try {
     await migrate(pool);
+    const started = Date.now(),
+      stages: { name: string; elapsedMs: number }[] = [];
+    const stage = (name: string) => {
+      stages.push({ name, elapsedMs: Date.now() - started });
+      writeFileSync(
+        '.artifacts/private-native-progress.json',
+        JSON.stringify({ runtime, stages }, null, 2),
+      );
+    };
+    stage('started');
     await register();
     const chain = gateway(),
       backup = new EncryptedArchiveBackup({
@@ -816,6 +831,7 @@ it('exports, verifies, backs up, approves and prunes actual native votes, then r
       envelope_version: 1,
       key_epoch: '1',
     });
+    stage('private-original-published');
     const originalPrivate = await chain.content('2'),
       originalVotes = await chain.archiveLiveVotes({ dao, parentId: '8' });
     expect(originalVotes).toHaveLength(1);
@@ -845,6 +861,7 @@ it('exports, verifies, backs up, approves and prunes actual native votes, then r
       }
     }
     expect(completed).toBe(true);
+    stage('ordinary-export-verified');
     const bundle = await content.archive.bundle(account, created.id),
       backed = await content.archive.backup(account, created.id, bundle.manifestFile.commitment);
     if (!backed.backup) throw new Error('EXPECTED_INDEPENDENT_BACKUP');
@@ -891,6 +908,136 @@ it('exports, verifies, backs up, approves and prunes actual native votes, then r
         BigInt((await api.v1.chain.get_account(source)).ram_usage.toString()),
     ).toBe(401n);
 
+    stage('ordinary-pruned');
+    const nextFile = HostedUploadSchema.pick({
+      content: true,
+      metadata: true,
+      bytes: true,
+      commitment: true,
+      envelopeVersion: true,
+    }).parse(
+      privateClient('file', {
+        epoch: originalPrivate.epochs[0],
+        grant: originalPrivate.keyGrants[0],
+        documentId: '7',
+        version: 2,
+      }),
+    );
+    const nextPin = await provider.upload(randomUUID(), Buffer.from(nextFile.content, 'base64'));
+    await privateCore('putdoc', {
+      runtime,
+      dao_id: '2',
+      member_id: '1',
+      document_id: '7',
+      version: 2,
+      cid: nextPin.cid,
+      metadata: '{}',
+      commitment: nextFile.commitment,
+      bytes: nextFile.bytes,
+      envelope_version: 1,
+      key_epoch: '1',
+    });
+    await act(runtime, 'backfilldocs', { dao_id: '2', limit: 25 });
+    const original = originalPrivate.documents[0];
+    if (!original) throw new Error('PRIVATE_ORIGINAL_MISSING');
+    const coreHash = hash('.artifacts/contracts/runtime.wasm'),
+      agedHash = hash('.artifacts/document-aged/runtime.wasm');
+    cleos([
+      'set',
+      'contract',
+      runtime,
+      '/work/.artifacts/document-aged',
+      'runtime.wasm',
+      'runtime.abi',
+      '-p',
+      runtime + '@active',
+    ]);
+    await act(runtime, 'rebindramobs', {
+      expected_old_hash: coreHash,
+      expected_new_hash: agedHash,
+    });
+    cleos([
+      'push',
+      'action',
+      runtime,
+      'agedoc',
+      JSON.stringify({ dao_id: '2', id: original.id }),
+      '-p',
+      runtime + '@active',
+      '--force-unique',
+    ]);
+    cleos([
+      'set',
+      'contract',
+      runtime,
+      '/work/.artifacts/contracts',
+      'runtime.wasm',
+      'runtime.abi',
+      '-p',
+      runtime + '@active',
+    ]);
+    await act(runtime, 'rebindramobs', {
+      expected_old_hash: agedHash,
+      expected_new_hash: coreHash,
+    });
+    stage('private-clocks-aged');
+    const privateSelection = {
+        dao: privateDao,
+        documentRows: [original.id],
+        retentionSeconds: 7776000,
+      },
+      privatePlan = await chain.archivePreview(privateSelection);
+    expect(privatePlan.blocked).toEqual([]);
+    const privateExport = await content.archive.create(privateAccount, {
+      requestId: randomUUID(),
+      selection: privateSelection,
+      ...archiveExportConsent(privatePlan),
+    });
+    for (let i = 0; i < 12; i++)
+      if ((await content.archive.reconcile(privateExport.id)) === 'completed') break;
+    stage('private-export-verified');
+    const privateBundle = await content.archive.bundle(privateAccount, privateExport.id),
+      privateBacked = await content.archive.backup(
+        privateAccount,
+        privateExport.id,
+        privateBundle.manifestFile.commitment,
+      );
+    if (!privateBacked.backup) throw new Error('PRIVATE_BACKUP_MISSING');
+    const privateAttested = await content.archive.attest(privateAccount, privateExport.id, {
+      manifestCommitment: privateBundle.manifestFile.commitment,
+      descriptorCommitment: privateBundle.manifest.descriptorCommitment,
+      backupCommitment: privateBacked.backup.commitment,
+      retentionSeconds: 7776000,
+    });
+    await privateCore('archapprove', {
+      runtime,
+      dao_id: '2',
+      member_id: '1',
+      manifest_commitment: privateBundle.manifestFile.commitment,
+      descriptor_commitment: privateBundle.manifest.descriptorCommitment,
+      backup_commitment: privateBacked.backup.commitment,
+      retention_seconds: 7776000,
+    });
+    await content.archive.prune(
+      privateAccount,
+      privateExport.id,
+      privateBundle.manifestFile.commitment,
+    );
+    expect(
+      (
+        await content.archive.prune(
+          privateAccount,
+          privateExport.id,
+          privateBundle.manifestFile.commitment,
+        )
+      ).state,
+    ).toBe('completed');
+    expect((await chain.content('2')).documents.map((row) => row.version)).toEqual([2]);
+    expect(await provider.retrieve(pin.cid, privateFixture.file.bytes)).toEqual(
+      Buffer.from(privateFixture.file.content, 'base64'),
+    );
+
+    stage('private-pruned');
     await pool.end();
     await coordinator.query(`DROP DATABASE "${database}"`);
     await coordinator.query(`CREATE DATABASE "${database}"`);
@@ -910,6 +1057,7 @@ it('exports, verifies, backs up, approves and prunes actual native votes, then r
       });
     // Re-import public account identity. No old pairing, invoice, export UUID or private key is supplied to the API.
     await register();
+    stage('database-recreated');
     const recoveredChain = gateway(),
       history = new ArchiveHistory(recoveredChain, provider),
       recoveredContent = new ContentService(
@@ -944,15 +1092,43 @@ it('exports, verifies, backs up, approves and prunes actual native votes, then r
     expect(archives.objects.every((o) => o.state === 'recovered')).toBe(true);
     const files = await recoveredContent.recoverStorage(privateAccount, {
       dao: privateDao,
-      kind: 'document-version',
+      kind: 'archive',
+      ...(privateAttested.anchor ? { after: privateAttested.anchor.id } : {}),
     });
-    expect(files.objects).toMatchObject([{ cid: pin.cid, state: 'recovered' }]);
+    expect(files.objects.some((row) => row.cid === pin.cid && row.state === 'recovered')).toBe(
+      true,
+    );
+    expect(files.billingRestored).toBe(false);
+    stage('owned-file-ledger-reconstructed');
+    const privateHistory = await history.list(privateAccount, { dao: privateDao }),
+      privateAnchor = privateHistory.anchors.find(
+        (anchor) => anchor.manifest_commitment === privateBundle.manifestFile.commitment,
+      );
+    if (!privateAnchor) throw new Error('PRIVATE_ARCHIVE_NOT_DISCOVERED');
+    const recoveredBundle = await history.recover(privateAccount, {
+      dao: privateDao,
+      manifestCommitment: privateAnchor.manifest_commitment,
+    });
+    const family = recoveredBundle.manifest.families[0],
+      chunk = family?.chunks[0],
+      chunkFile = recoveredBundle.chunks.find((file) => file.cid === chunk?.cid);
+    if (!family || !chunk || !chunkFile) throw new Error('PRIVATE_ARCHIVE_CHUNK_MISSING');
+    const originalRow = verifyArchiveChunkDescriptor(
+      chunk,
+      Buffer.from(chunkFile.content, 'base64'),
+    )[0];
+    if (!originalRow) throw new Error('PRIVATE_ARCHIVE_ROW_MISSING');
+    const decoded = decodeReleasedArchiveRow(chunk.domain, originalRow, family.parentId);
+    if (decoded.kind !== 'document-versions') throw new Error('PRIVATE_ARCHIVE_FAMILY');
+    const restoredOriginal = decoded.value;
+    expect(restoredOriginal).toEqual(original);
+    expect(recoveredBundle.manifest).toEqual(privateBundle.manifest);
     const recoveredPrivate = await recoveredChain.content('2');
-    expect(recoveredPrivate.documents).toEqual(originalPrivate.documents);
+    expect(recoveredPrivate.documents.map((row) => row.version)).toEqual([2]);
     expect(recoveredPrivate.epochs).toEqual(originalPrivate.epochs);
     expect(recoveredPrivate.keyGrants).toEqual(originalPrivate.keyGrants);
-    const bytes = await recoveredContent.retrieve('2', '7', 1);
-    expect(bytes).toEqual(Buffer.from(privateFixture.file.content, 'base64'));
+    const bytes = await provider.retrieve(pin.cid, privateFixture.file.bytes);
+    // Reading verified archived bytes needs no native restoration or new key grants.
     const client = z
       .object({
         originalKitDecrypted: z.literal(true),
@@ -961,15 +1137,24 @@ it('exports, verifies, backs up, approves and prunes actual native votes, then r
       })
       .parse(
         privateClient('verify', {
-          document: recoveredPrivate.documents[0],
+          document: restoredOriginal,
           epoch: recoveredPrivate.epochs[0],
           grant: recoveredPrivate.keyGrants[0],
           content: Buffer.from(bytes).toString('base64'),
         }),
       );
+    stage('original-kit-decrypted');
+    await privateCore('restoredoc', {
+      runtime,
+      dao_id: '2',
+      member_id: '1',
+      original: restoredOriginal,
+    });
+    expect((await recoveredChain.content('2')).documents).toContainEqual(original);
     expect(
       (await pool.query('SELECT count(*)::text AS count FROM storage_invoices')).rows[0],
     ).toEqual({ count: '0' });
+    stage('exact-native-row-restored');
     const retrieve = provider.retrieve.bind(provider);
     provider.retrieve = async () => {
       throw new Error('Synthetic primary loss');
@@ -996,11 +1181,15 @@ it('exports, verifies, backs up, approves and prunes actual native votes, then r
           freshDatabaseRecreated: true,
           archivePinsRecovered: archives.objects.length,
           privateFilePinsRecovered: files.objects.length,
+          privateDocumentPruned: true,
+          exactArchivedRowRestored: true,
+          originalEpochAndGrantPreserved: true,
           billingInvented: false,
           ...client,
           limits: [
             'Owned native system and local disk provider; no live Pinata/Stripe proof.',
-            'Private document, epoch and grant remain on chain; document pruning is still disabled.',
+            'Current document, original epoch/grant and private signing domains remain live. Only the exact archived old version is pruned/restored.',
+            'Production pruning, general legacy RAM migration and completion enforcement remain unqualified.',
           ],
         },
         null,
@@ -1012,4 +1201,4 @@ it('exports, verifies, backs up, approves and prunes actual native votes, then r
     await coordinator.query(`DROP DATABASE IF EXISTS "${database}"`);
     await coordinator.end();
   }
-}, 120000);
+}, 240000);

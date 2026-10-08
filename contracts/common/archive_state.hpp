@@ -40,7 +40,7 @@ inline archive_anchor approved_archive(eosio::name runtime,uint64_t dao_id,uint6
   eosio::check(anchor.attested_at<=now&&uint64_t(now)-anchor.attested_at<=archive_availability_lifetime,"ARCHIVE_AVAILABILITY_EXPIRED");
   eosio::check(anchor.manifest.code_hash==get_code_hash(source),"ARCHIVE_SOURCE_CODE");
   ram_observer_settings observer(runtime,runtime.value);eosio::check(observer.exists()&&observer.get().runtime_hash==get_code_hash(runtime),"RAM_OBSERVER_REQUIRED");
-  ram_sources sources(runtime,runtime.value);eosio::check(sources.get(source.value,"RAM_SOURCE_UNKNOWN").code_hash==anchor.manifest.code_hash,"RAM_SOURCE_CODE");
+  if(source!=runtime){ram_sources sources(runtime,runtime.value);eosio::check(sources.get(source.value,"RAM_SOURCE_UNKNOWN").code_hash==anchor.manifest.code_hash,"RAM_SOURCE_CODE");}
   return anchor;
 }
 }

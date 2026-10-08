@@ -1,0 +1,5678 @@
+{
+  "schemaVersion": 2,
+  "billingLayout": 1,
+  "nativeRuntime": "Spring 1.2.2",
+  "qualification": "Canonical current ABI coverage and source write candidates. Native conservation is separately measured; full lifecycle/enforcement/backfill qualification remains open.",
+  "limits": [
+    "Text matching is a review aid, not semantic C++ analysis. Container/string operations can appear as candidates.",
+    "Compiled shared declarations may be read-only in a producer. Inspect concrete constructors/callers before enabling quotas.",
+    "No static inventory demonstrates safe completion holds or legacy-state migration."
+  ],
+  "producerHashes": {
+    "runtime": "9d05dbedf1fd8b81eb312bc33a16f0449afa1c0e2b7127cfc3dd3feb774277e0",
+    "decide": "2543f510a1a8a6a76ebab92e1856bb6c639c486d52d83547588fa2bd8e9fb8ba",
+    "works": "0b62a222eaa6a44b6353e27173308206cc97f04b68a76576c1815baf04ee0f44",
+    "payroll": "678e2f93fbcf1e2ce42611df5a6701d715ab164e9927db79fd9a9991f5e96889",
+    "grants": "68bdcca441829bdf948444eb83442e5ad877b273becbf68b5daa117291da4835",
+    "endorse": "5d95e0013e0ae264159b4bf9607947956132b5d61bde7978e5df2256053bb9a1"
+  },
+  "sources": [
+    {
+      "path": "core/boot/boot.cpp",
+      "sha256": "6134c9e9faee03dfc761153a5d2bdd233325bbec8a3b7aade6e6735d550f005f"
+    },
+    {
+      "path": "core/common/admission.hpp",
+      "sha256": "74775c0f8c2ab635447780f96b88770f4a3e0a6d40e13f2e624a618708392f16"
+    },
+    {
+      "path": "core/common/archive.hpp",
+      "sha256": "c0c00837a0c1f83466d57e801318fe22686bbafbbb028b3575a00fb552a5901b"
+    },
+    {
+      "path": "core/common/archive_state.hpp",
+      "sha256": "25f954e42644defb507d12ec640e4619b9a54a0850a1536380b8ac1eaf189a60"
+    },
+    {
+      "path": "core/common/authority.hpp",
+      "sha256": "f7f099d5274fd4293ce707ea6fb823b4c9af920ae26cd76cbda027df89768dd8"
+    },
+    {
+      "path": "core/common/creation.hpp",
+      "sha256": "3026693292ca4673426796d2271f46b71c0d56ad05d7fc65c828af2effc321d7"
+    },
+    {
+      "path": "core/common/document_refs.hpp",
+      "sha256": "601e2969315a2fa158b98dd263b8311481f830f42e7587a0a6d1784328cea374"
+    },
+    {
+      "path": "core/common/evm_authorization.hpp",
+      "sha256": "310df802c1931493cbf78d77eccd4c44017988204c939fa7d6db5ed66e73ad5a"
+    },
+    {
+      "path": "core/common/governance.hpp",
+      "sha256": "56abd7c7051bba942c65910f3e5fff1ee8c4a4ee67fe6cf06b49687c75360d94"
+    },
+    {
+      "path": "core/common/ram.hpp",
+      "sha256": "8822e7fe546cdbebfabc9a9b9ba2ba8c8e13f0aa3a21b913e5514c8ea98e5bee"
+    },
+    {
+      "path": "core/common/ram_capacity.hpp",
+      "sha256": "4540a07a56ba0820c7d6c1bd6142ce4e2e28a4a343b41329c9f5122af66da364"
+    },
+    {
+      "path": "core/common/ram_table.hpp",
+      "sha256": "a70bfa1cce5aaf2d3b1238958f119e27818b81a46c2e4a31d4ec41977d0ee24a"
+    },
+    {
+      "path": "core/common/records.hpp",
+      "sha256": "88f3c07049fd3631e59907a7aaa5694051ac6af46382f8f67a60ff0b7d1af011"
+    },
+    {
+      "path": "core/common/resources.hpp",
+      "sha256": "ebf29dcffa12847bb2b601e526dcadad460179da68c9a14914eae60b31c474f6"
+    },
+    {
+      "path": "core/common/telos_resources.hpp",
+      "sha256": "9eb682185983a2d26bf36573a5fe48d2e38023ce0fe3a1e08b028845c4344b66"
+    },
+    {
+      "path": "core/eosstub/eosstub.cpp",
+      "sha256": "3c2f71dde70dc13a50f6b40f7be1b58ecf33b615f7b28e49cc3907ed4f140243"
+    },
+    {
+      "path": "core/hub/hub.cpp",
+      "sha256": "4cfc6d43c8bca7dd544df1895de3ebf2bf46239f71c5e6c986c2e26646b6670c"
+    },
+    {
+      "path": "core/modrelay/modrelay.cpp",
+      "sha256": "9665d8207b30358372b049bf4eadceeb85c61f0d541f876f85e708354b4d90ba"
+    },
+    {
+      "path": "core/names/names.cpp",
+      "sha256": "31c3c67d93ec4968bab839b657ad8d9cc04ca01da11c6620642cf7a47e124e46"
+    },
+    {
+      "path": "core/permprobe/permprobe.cpp",
+      "sha256": "c9511e687a4f8273a02b36e179a131b365498e93c4ecdae3aa9fe8f49afa096e"
+    },
+    {
+      "path": "core/ramprobe/ramprobe.cpp",
+      "sha256": "0d06e9b155fb8b14b3a13b3d0c38f5f9fa6aa4c5dbf03baeb4cac5efc2c630b5"
+    },
+    {
+      "path": "core/runtime/runtime.cpp",
+      "sha256": "ecc4d88b6b57d91d39ea161dc670f168138f382ea4f84be50e953606cf764f1f"
+    },
+    {
+      "path": "core/testtoken/testtoken.cpp",
+      "sha256": "4ae9ada28c3a4ca9eaf424659194669db89d22f72ea348e552f49ba44c13b59e"
+    },
+    {
+      "path": "modules/common/grants_records.hpp",
+      "sha256": "ea55d1b0743d639e423dedae3ca0f47c2ea8c80a9a04c7dd26f686aa18f37555"
+    },
+    {
+      "path": "modules/common/module.hpp",
+      "sha256": "cfa05b984c0f503d06a2e4390845f53e4aa447f72f8dc9921403e823567c25d2"
+    },
+    {
+      "path": "modules/common/works_records.hpp",
+      "sha256": "1163ca8fb198ef01c3f1ac6b6c67c49670d668abc9fa1c7ef51c314936dc93e8"
+    },
+    {
+      "path": "modules/decide/decide.cpp",
+      "sha256": "fcd24c8a246e4dec98238ac9e4d217137c48f5746be2170056ebcb5773b8a030"
+    },
+    {
+      "path": "modules/endorse/endorse.cpp",
+      "sha256": "7cd3f526d515926db4e613b6322488d61799fd62100fb4f4404feee2e31b81a5"
+    },
+    {
+      "path": "modules/grants/grants.cpp",
+      "sha256": "2b48ade56eb2bb1f3dd21e1535198fcae02646032d2acb9862e9629f9b872cfe"
+    },
+    {
+      "path": "modules/payroll/payroll.cpp",
+      "sha256": "a1681121536e69244cc21b73bb6bad6d01d83b6156919a95a8edda969c96ccb5"
+    },
+    {
+      "path": "modules/works/works.cpp",
+      "sha256": "397c4ccf507c7b969dcdf8b6388d7dd60a1282320dcab6b6c609fbee93d7b8a6"
+    }
+  ],
+  "tables": [
+    {
+      "producer": "runtime",
+      "table": "actors",
+      "rowType": "participant_record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "kind",
+          "type": "uint8"
+        },
+        {
+          "name": "operator_label",
+          "type": "string"
+        },
+        {
+          "name": "revoked",
+          "type": "bool"
+        },
+        {
+          "name": "credential_epoch",
+          "type": "uint64"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "DAO table scope",
+      "nativeScope": "DAO ID",
+      "category": "identity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/governance.hpp",
+          "line": 20,
+          "declaration": "ram_table<\"actors\"_n,participant_record>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "admpolicies",
+      "rowType": "admission_policy",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "revision",
+          "type": "uint64"
+        },
+        {
+          "name": "mode",
+          "type": "uint8"
+        },
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "threshold",
+          "type": "uint8"
+        },
+        {
+          "name": "allow_agents",
+          "type": "bool"
+        },
+        {
+          "name": "admin_override",
+          "type": "bool"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account (shared)",
+      "category": "activity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/admission.hpp",
+          "line": 9,
+          "declaration": "ram_table<\"admpolicies\"_n,admission_policy>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "archcfg",
+      "rowType": "archive_policy",
+      "fields": [
+        {
+          "name": "verifier",
+          "type": "name"
+        },
+        {
+          "name": "minimum_retention_seconds",
+          "type": "uint32"
+        },
+        {
+          "name": "pruning_enabled",
+          "type": "bool"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account (shared)",
+      "category": "platform",
+      "instrumentation": "shared metered wrapper",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 224,
+      "newScopeOverheadBytes": 0,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/archive_state.hpp",
+          "line": 12,
+          "declaration": "ram_singleton<\"archcfg\"_n,archive_policy>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "archives",
+      "rowType": "archive_anchor",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "manifest",
+          "type": "archive_manifest_descriptor"
+        },
+        {
+          "name": "manifest_cid",
+          "type": "string"
+        },
+        {
+          "name": "manifest_bytes",
+          "type": "uint32"
+        },
+        {
+          "name": "manifest_commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "descriptor_commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "backup_commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "verifier",
+          "type": "name"
+        },
+        {
+          "name": "attestation_transaction",
+          "type": "checksum256"
+        },
+        {
+          "name": "approval_transaction",
+          "type": "checksum256"
+        },
+        {
+          "name": "retention_seconds",
+          "type": "uint32"
+        },
+        {
+          "name": "attested_at",
+          "type": "uint32"
+        },
+        {
+          "name": "approved_by",
+          "type": "uint64"
+        },
+        {
+          "name": "approved_at",
+          "type": "uint32"
+        },
+        {
+          "name": "revoked",
+          "type": "bool"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "DAO ID",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/archive_state.hpp",
+          "line": 22,
+          "declaration": "ram_table<\"archives\"_n,archive_anchor,eosio::indexed_by<\"bymanifest\"_n,eosio::const_mem_fun<archive_anchor,eosio::checksum256,&archive_anchor::by_manifest>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "archpos",
+      "rowType": "archive_position",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "archive_id",
+          "type": "uint64"
+        },
+        {
+          "name": "chunk_ordinal",
+          "type": "uint32"
+        },
+        {
+          "name": "pruned",
+          "type": "uint32"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "DAO ID",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/archive_state.hpp",
+          "line": 28,
+          "declaration": "ram_table<\"archpos\"_n,archive_position>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "budgets",
+      "rowType": "budget_record",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "day",
+          "type": "uint32"
+        },
+        {
+          "name": "committed",
+          "type": "int64"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account (shared)",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/governance.hpp",
+          "line": 43,
+          "declaration": "ram_table<\"budgets\"_n,budget_record>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "capcfg",
+      "rowType": "hosted_policy",
+      "fields": [
+        {
+          "name": "free_members",
+          "type": "uint32"
+        },
+        {
+          "name": "settler",
+          "type": "name"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account (shared)",
+      "category": "platform",
+      "instrumentation": "shared metered wrapper",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 224,
+      "newScopeOverheadBytes": 0,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/creation.hpp",
+          "line": 21,
+          "declaration": "ram_singleton<\"capcfg\"_n,hosted_policy>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "capreceipts",
+      "rowType": "capacity_receipt",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "receipt",
+          "type": "checksum256"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "members",
+          "type": "uint32"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
+        },
+        {
+          "name": "revoked",
+          "type": "bool"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account (shared)",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        32
+      ],
+      "rowOverheadBytes": 272,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/creation.hpp",
+          "line": 38,
+          "declaration": "ram_table<\"capreceipts\"_n,capacity_receipt,indexed_by<\"byreceipt\"_n,const_mem_fun<capacity_receipt,checksum256,&capacity_receipt::by_receipt>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "catalogue",
+      "rowType": "catalogue_record",
+      "fields": [
+        {
+          "name": "account",
+          "type": "name"
+        },
+        {
+          "name": "publisher",
+          "type": "name"
+        },
+        {
+          "name": "party",
+          "type": "uint8"
+        },
+        {
+          "name": "complies",
+          "type": "uint8"
+        },
+        {
+          "name": "price",
+          "type": "asset"
+        },
+        {
+          "name": "code_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "title",
+          "type": "string"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account (shared)",
+      "category": "platform",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/records.hpp",
+          "line": 126,
+          "declaration": "ram_table<\"catalogue\"_n,catalogue_record>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "createcfg",
+      "rowType": "creation_policy",
+      "fields": [
+        {
+          "name": "shared_usd",
+          "type": "uint32"
+        },
+        {
+          "name": "independent_usd",
+          "type": "uint32"
+        },
+        {
+          "name": "premium_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "settler",
+          "type": "name"
+        },
+        {
+          "name": "median",
+          "type": "uint64"
+        },
+        {
+          "name": "precision",
+          "type": "uint8"
+        },
+        {
+          "name": "observed_at",
+          "type": "uint32"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account (shared)",
+      "category": "platform",
+      "instrumentation": "shared metered wrapper",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 224,
+      "newScopeOverheadBytes": 0,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/creation.hpp",
+          "line": 9,
+          "declaration": "ram_singleton<\"createcfg\"_n,creation_policy>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "createords",
+      "rowType": "creation_order",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "reference",
+          "type": "checksum256"
+        },
+        {
+          "name": "creator",
+          "type": "public_key"
+        },
+        {
+          "name": "deployment",
+          "type": "uint8"
+        },
+        {
+          "name": "method",
+          "type": "uint8"
+        },
+        {
+          "name": "usd_cents",
+          "type": "uint32"
+        },
+        {
+          "name": "tlos_due",
+          "type": "asset"
+        },
+        {
+          "name": "created_at",
+          "type": "uint32"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
+        },
+        {
+          "name": "paid",
+          "type": "bool"
+        },
+        {
+          "name": "used",
+          "type": "bool"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "card_reference",
+          "type": "checksum256"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account (shared)",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        32,
+        32
+      ],
+      "rowOverheadBytes": 432,
+      "newScopeOverheadBytes": 224,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/creation.hpp",
+          "line": 15,
+          "declaration": "ram_table<\"createords\"_n,creation_order,indexed_by<\"byref\"_n,const_mem_fun<creation_order,checksum256,&creation_order::by_ref>>,indexed_by<\"bycard\"_n,const_mem_fun<creation_order,checksum256,&creation_order::by_card>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "daocaps",
+      "rowType": "dao_capacity",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "members",
+          "type": "uint32"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
+        },
+        {
+          "name": "receipt",
+          "type": "checksum256"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account (shared)",
+      "category": "activity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/creation.hpp",
+          "line": 32,
+          "declaration": "ram_table<\"daocaps\"_n,dao_capacity>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "daos",
+      "rowType": "dao_record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "owner",
+          "type": "name"
+        },
+        {
+          "name": "metadata",
+          "type": "string"
+        },
+        {
+          "name": "privacy",
+          "type": "uint8"
+        },
+        {
+          "name": "token_contract",
+          "type": "name"
+        },
+        {
+          "name": "token_symbol",
+          "type": "symbol"
+        },
+        {
+          "name": "credit_supply",
+          "type": "uint64"
+        },
+        {
+          "name": "member_count",
+          "type": "uint64"
+        },
+        {
+          "name": "max_member",
+          "type": "uint64"
+        },
+        {
+          "name": "active_ballots",
+          "type": "uint32"
+        },
+        {
+          "name": "available",
+          "type": "int64"
+        },
+        {
+          "name": "reserved",
+          "type": "int64"
+        },
+        {
+          "name": "claims",
+          "type": "int64"
+        },
+        {
+          "name": "staked",
+          "type": "int64"
+        },
+        {
+          "name": "eligible_credits",
+          "type": "uint64"
+        },
+        {
+          "name": "eligible_stake",
+          "type": "int64"
+        },
+        {
+          "name": "admin_count",
+          "type": "uint32"
+        },
+        {
+          "name": "key_epoch",
+          "type": "uint64"
+        },
+        {
+          "name": "history_policy",
+          "type": "uint8"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.id",
+      "nativeScope": "runtime account (shared)",
+      "category": "activity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/records.hpp",
+          "line": 33,
+          "declaration": "ram_table<\"daos\"_n,dao_record>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "docclocks",
+      "rowType": "document_clock",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "document_id",
+          "type": "uint64"
+        },
+        {
+          "name": "version",
+          "type": "uint32"
+        },
+        {
+          "name": "created_at",
+          "type": "uint32"
+        },
+        {
+          "name": "legacy",
+          "type": "bool"
+        },
+        {
+          "name": "row_hash",
+          "type": "checksum256"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "DAO table scope",
+      "nativeScope": "DAO ID",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/document_refs.hpp",
+          "line": 23,
+          "declaration": "ram_table<\"docclocks\"_n,document_clock>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "docheads",
+      "rowType": "document_head",
+      "fields": [
+        {
+          "name": "document_id",
+          "type": "uint64"
+        },
+        {
+          "name": "version",
+          "type": "uint32"
+        },
+        {
+          "name": "author",
+          "type": "uint64"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "DAO table scope",
+      "nativeScope": "DAO ID",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/document_refs.hpp",
+          "line": 17,
+          "declaration": "ram_table<\"docheads\"_n,document_head>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "docrefs",
+      "rowType": "document_reference",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "table",
+          "type": "name"
+        },
+        {
+          "name": "source_id",
+          "type": "uint64"
+        },
+        {
+          "name": "slot",
+          "type": "uint8"
+        },
+        {
+          "name": "document_id",
+          "type": "uint64"
+        },
+        {
+          "name": "version",
+          "type": "uint32"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "DAO table scope",
+      "nativeScope": "DAO ID",
+      "category": "activity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        32,
+        16
+      ],
+      "rowOverheadBytes": 416,
+      "newScopeOverheadBytes": 224,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/document_refs.hpp",
+          "line": 11,
+          "declaration": "ram_table<\"docrefs\"_n,document_reference,indexed_by<\"bysource\"_n,const_mem_fun<document_reference,checksum256,&document_reference::by_source>>,indexed_by<\"byversion\"_n,const_mem_fun<document_reference,uint128_t,&document_reference::by_version>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "docscan",
+      "rowType": "document_scan",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "table",
+          "type": "name"
+        },
+        {
+          "name": "code_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "cursor",
+          "type": "uint64"
+        },
+        {
+          "name": "complete",
+          "type": "bool"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "DAO table scope",
+      "nativeScope": "DAO ID",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        32
+      ],
+      "rowOverheadBytes": 272,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/document_refs.hpp",
+          "line": 36,
+          "declaration": "ram_table<\"docscan\"_n,document_scan,indexed_by<\"bysource\"_n,const_mem_fun<document_scan,checksum256,&document_scan::by_source>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "docsrcs",
+      "rowType": "document_source",
+      "fields": [
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "code_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "tables",
+          "type": "name[]"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "DAO table scope",
+      "nativeScope": "DAO ID",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/document_refs.hpp",
+          "line": 42,
+          "declaration": "ram_table<\"docsrcs\"_n,document_source>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "docstate",
+      "rowType": "document_state",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "high_water",
+          "type": "uint64"
+        },
+        {
+          "name": "cursor",
+          "type": "uint64"
+        },
+        {
+          "name": "complete",
+          "type": "bool"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "DAO table scope",
+      "nativeScope": "DAO ID",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/document_refs.hpp",
+          "line": 29,
+          "declaration": "ram_table<\"docstate\"_n,document_state>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "documents",
+      "rowType": "document_record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "document_id",
+          "type": "uint64"
+        },
+        {
+          "name": "version",
+          "type": "uint32"
+        },
+        {
+          "name": "author",
+          "type": "uint64"
+        },
+        {
+          "name": "cid",
+          "type": "string"
+        },
+        {
+          "name": "metadata",
+          "type": "string"
+        },
+        {
+          "name": "commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "bytes",
+          "type": "uint32"
+        },
+        {
+          "name": "envelope_version",
+          "type": "uint16"
+        },
+        {
+          "name": "key_epoch",
+          "type": "uint64"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "DAO table scope",
+      "nativeScope": "DAO ID",
+      "category": "activity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        16
+      ],
+      "rowOverheadBytes": 256,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/records.hpp",
+          "line": 91,
+          "declaration": "ram_table<\"documents\"_n,document_record,indexed_by<\"byversion\"_n,const_mem_fun<document_record,uint128_t,&document_record::by_version>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "epochs",
+      "rowType": "epoch_record",
+      "fields": [
+        {
+          "name": "epoch",
+          "type": "uint64"
+        },
+        {
+          "name": "commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "creator",
+          "type": "uint64"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "DAO table scope",
+      "nativeScope": "DAO ID",
+      "category": "identity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/records.hpp",
+          "line": 97,
+          "declaration": "ram_table<\"epochs\"_n,epoch_record>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "evidence",
+      "rowType": "evidence_record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "obligation_id",
+          "type": "uint64"
+        },
+        {
+          "name": "recipient",
+          "type": "uint64"
+        },
+        {
+          "name": "quantity",
+          "type": "asset"
+        },
+        {
+          "name": "chain",
+          "type": "string"
+        },
+        {
+          "name": "payer",
+          "type": "string"
+        },
+        {
+          "name": "reference",
+          "type": "checksum256"
+        },
+        {
+          "name": "mode",
+          "type": "uint8"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account (shared)",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        32
+      ],
+      "rowOverheadBytes": 272,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/records.hpp",
+          "line": 83,
+          "declaration": "ram_table<\"evidence\"_n,evidence_record,indexed_by<\"byref\"_n,const_mem_fun<evidence_record,checksum256,&evidence_record::by_reference>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "evmbindings",
+      "rowType": "evm_binding_record",
+      "fields": [
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "chain_id",
+          "type": "uint64"
+        },
+        {
+          "name": "address",
+          "type": "checksum160"
+        },
+        {
+          "name": "epoch",
+          "type": "uint64"
+        },
+        {
+          "name": "active",
+          "type": "bool"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "DAO table scope",
+      "nativeScope": "DAO ID",
+      "category": "identity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        32
+      ],
+      "rowOverheadBytes": 272,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/records.hpp",
+          "line": 49,
+          "declaration": "ram_table<\"evmbindings\"_n,evm_binding_record,indexed_by<\"bywallet\"_n,const_mem_fun<evm_binding_record,checksum256,&evm_binding_record::by_wallet>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "feecfg",
+      "rowType": "fee_config",
+      "fields": [
+        {
+          "name": "third_party_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "first_party_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "treasury",
+          "type": "name"
+        },
+        {
+          "name": "token_contract",
+          "type": "name"
+        },
+        {
+          "name": "token_symbol",
+          "type": "symbol"
+        },
+        {
+          "name": "names",
+          "type": "name"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account (shared)",
+      "category": "platform",
+      "instrumentation": "shared metered wrapper",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 224,
+      "newScopeOverheadBytes": 0,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/records.hpp",
+          "line": 114,
+          "declaration": "ram_singleton<\"feecfg\"_n,fee_config>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "govlocks",
+      "rowType": "governance_lock",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "source_id",
+          "type": "uint64"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
+        },
+        {
+          "name": "active",
+          "type": "bool"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "DAO table scope",
+      "nativeScope": "DAO ID",
+      "category": "activity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        32
+      ],
+      "rowOverheadBytes": 272,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/records.hpp",
+          "line": 109,
+          "declaration": "ram_table<\"govlocks\"_n,governance_lock,indexed_by<\"bysource\"_n,const_mem_fun<governance_lock,checksum256,&governance_lock::by_source>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "govpolicies",
+      "rowType": "gov_policy_record",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "revision",
+          "type": "uint64"
+        },
+        {
+          "name": "config",
+          "type": "gov_settings"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account (shared)",
+      "category": "activity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/governance.hpp",
+          "line": 14,
+          "declaration": "ram_table<\"govpolicies\"_n,gov_policy_record>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "guards",
+      "rowType": "guardian_record",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "paused_until",
+          "type": "uint32"
+        },
+        {
+          "name": "reason",
+          "type": "checksum256"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account (shared)",
+      "category": "activity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/governance.hpp",
+          "line": 37,
+          "declaration": "ram_table<\"guards\"_n,guardian_record>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "keygrants",
+      "rowType": "key_grant_record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "epoch",
+          "type": "uint64"
+        },
+        {
+          "name": "recipient",
+          "type": "uint64"
+        },
+        {
+          "name": "grantor",
+          "type": "uint64"
+        },
+        {
+          "name": "envelope",
+          "type": "string"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "DAO table scope",
+      "nativeScope": "DAO ID",
+      "category": "identity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        16
+      ],
+      "rowOverheadBytes": 256,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/records.hpp",
+          "line": 103,
+          "declaration": "ram_table<\"keygrants\"_n,key_grant_record,indexed_by<\"bymember\"_n,const_mem_fun<key_grant_record,uint128_t,&key_grant_record::by_member>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "members",
+      "rowType": "member_record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "native_account",
+          "type": "name"
+        },
+        {
+          "name": "signing_key",
+          "type": "public_key"
+        },
+        {
+          "name": "encryption_key",
+          "type": "string"
+        },
+        {
+          "name": "custody",
+          "type": "uint8"
+        },
+        {
+          "name": "nonce",
+          "type": "uint64"
+        },
+        {
+          "name": "credits",
+          "type": "uint64"
+        },
+        {
+          "name": "active",
+          "type": "bool"
+        },
+        {
+          "name": "admin",
+          "type": "bool"
+        },
+        {
+          "name": "reviewer",
+          "type": "bool"
+        },
+        {
+          "name": "stake",
+          "type": "int64"
+        },
+        {
+          "name": "claim",
+          "type": "int64"
+        },
+        {
+          "name": "join_epoch",
+          "type": "uint64"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "DAO table scope",
+      "nativeScope": "DAO ID",
+      "category": "identity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        8,
+        32
+      ],
+      "rowOverheadBytes": 400,
+      "newScopeOverheadBytes": 224,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/records.hpp",
+          "line": 42,
+          "declaration": "ram_table<\"members\"_n,member_record,indexed_by<\"bynative\"_n,const_mem_fun<member_record,uint64_t,&member_record::by_native>>,indexed_by<\"bykey\"_n,const_mem_fun<member_record,checksum256,&member_record::by_key>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "mktcfg",
+      "rowType": "market_policy",
+      "fields": [
+        {
+          "name": "bump_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "quote_premium_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account (shared)",
+      "category": "activity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 224,
+      "newScopeOverheadBytes": 0,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/records.hpp",
+          "line": 145,
+          "declaration": "ram_singleton<\"mktcfg\"_n,market_policy>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "modcopy",
+      "rowType": "modcopy_record",
+      "fields": [
+        {
+          "name": "account",
+          "type": "name"
+        },
+        {
+          "name": "summary",
+          "type": "string"
+        },
+        {
+          "name": "detail",
+          "type": "string"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account (shared)",
+      "category": "platform",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/records.hpp",
+          "line": 139,
+          "declaration": "ram_table<\"modcopy\"_n,modcopy_record>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "modpays",
+      "rowType": "modpay_record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "modaccount",
+          "type": "name"
+        },
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "publisher",
+          "type": "name"
+        },
+        {
+          "name": "gross",
+          "type": "asset"
+        },
+        {
+          "name": "platform_fee",
+          "type": "asset"
+        },
+        {
+          "name": "publisher_share",
+          "type": "asset"
+        },
+        {
+          "name": "party",
+          "type": "uint8"
+        },
+        {
+          "name": "bps",
+          "type": "uint16"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account (shared)",
+      "category": "platform",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/records.hpp",
+          "line": 132,
+          "declaration": "ram_table<\"modpays\"_n,modpay_record>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "modules",
+      "rowType": "module_record",
+      "fields": [
+        {
+          "name": "account",
+          "type": "name"
+        },
+        {
+          "name": "version",
+          "type": "uint16"
+        },
+        {
+          "name": "actions",
+          "type": "name[]"
+        },
+        {
+          "name": "grants",
+          "type": "name[]"
+        },
+        {
+          "name": "code_hash",
+          "type": "checksum256"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "DAO table scope",
+      "nativeScope": "DAO ID",
+      "category": "activity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/records.hpp",
+          "line": 63,
+          "declaration": "ram_table<\"modules\"_n,module_record>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "obligations",
+      "rowType": "obligation_record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "source_id",
+          "type": "uint64"
+        },
+        {
+          "name": "recipient",
+          "type": "uint64"
+        },
+        {
+          "name": "quantity",
+          "type": "asset"
+        },
+        {
+          "name": "due",
+          "type": "uint32"
+        },
+        {
+          "name": "status",
+          "type": "uint8"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "DAO table scope",
+      "nativeScope": "DAO ID",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        32
+      ],
+      "rowOverheadBytes": 272,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/records.hpp",
+          "line": 70,
+          "declaration": "ram_table<\"obligations\"_n,obligation_record,indexed_by<\"bysource\"_n,const_mem_fun<obligation_record,checksum256,&obligation_record::by_source>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "paycfg",
+      "rowType": "payment_policy",
+      "fields": [
+        {
+          "name": "bps",
+          "type": "uint16"
+        },
+        {
+          "name": "revision",
+          "type": "uint64"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account (shared)",
+      "category": "platform",
+      "instrumentation": "shared metered wrapper",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 224,
+      "newScopeOverheadBytes": 0,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/records.hpp",
+          "line": 120,
+          "declaration": "ram_singleton<\"paycfg\"_n,payment_policy>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "profiles",
+      "rowType": "profile_record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "account_name",
+          "type": "name"
+        },
+        {
+          "name": "profile",
+          "type": "string"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account (shared)",
+      "category": "identity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        16,
+        8
+      ],
+      "rowOverheadBytes": 384,
+      "newScopeOverheadBytes": 224,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/records.hpp",
+          "line": 57,
+          "declaration": "ram_table<\"profiles\"_n,profile_record,indexed_by<\"bymember\"_n,const_mem_fun<profile_record,uint128_t,&profile_record::by_member>>,indexed_by<\"byname\"_n,const_mem_fun<profile_record,uint64_t,&profile_record::by_name>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "ramalloc",
+      "rowType": "ram_allocation",
+      "fields": [
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "purchased_bytes",
+          "type": "uint64"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "DAO table scope",
+      "nativeScope": "DAO ID",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/ram_capacity.hpp",
+          "line": 44,
+          "declaration": "ram_table<\"ramalloc\"_n,ram_allocation> bought(runtime,dao.id);"
+        },
+        {
+          "source": "core/runtime/runtime.cpp",
+          "line": 22,
+          "declaration": "ram_table<\"ramalloc\"_n,ram_allocation>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "ramauto",
+      "rowType": "ram_auto_policy",
+      "fields": [
+        {
+          "name": "enabled",
+          "type": "bool"
+        },
+        {
+          "name": "policy_revision",
+          "type": "uint64"
+        },
+        {
+          "name": "offers",
+          "type": "ram_offer[]"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account (shared)",
+      "category": "platform",
+      "instrumentation": "shared metered wrapper",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 224,
+      "newScopeOverheadBytes": 0,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/ram_capacity.hpp",
+          "line": 32,
+          "declaration": "ram_singleton<\"ramauto\"_n,ram_auto_policy>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "ramcards",
+      "rowType": "ram_card_receipt",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "reference",
+          "type": "checksum256"
+        },
+        {
+          "name": "operational_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "fulfiller",
+          "type": "name"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account (shared)",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/runtime/runtime.cpp",
+          "line": 30,
+          "declaration": "ram_table<\"ramcards\"_n,ram_card_receipt>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "ramentitle",
+      "rowType": "ram_entitlement",
+      "fields": [
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "policy_revision",
+          "type": "uint64"
+        },
+        {
+          "name": "identity_per_slot",
+          "type": "uint64"
+        },
+        {
+          "name": "slots",
+          "type": "uint32"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "DAO table scope",
+      "nativeScope": "DAO ID",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/ram_capacity.hpp",
+          "line": 38,
+          "declaration": "ram_table<\"ramentitle\"_n,ram_entitlement>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "ramgrants",
+      "rowType": "ram_grant_receipt",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "reference",
+          "type": "uint64"
+        },
+        {
+          "name": "activity",
+          "type": "uint64"
+        },
+        {
+          "name": "identity",
+          "type": "uint64"
+        },
+        {
+          "name": "completion",
+          "type": "uint64"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "DAO ID",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        32
+      ],
+      "rowOverheadBytes": 272,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/ram_capacity.hpp",
+          "line": 23,
+          "declaration": "ram_table<\"ramgrants\"_n,ram_grant_receipt,indexed_by<\"byreference\"_n,const_mem_fun<ram_grant_receipt,checksum256,&ram_grant_receipt::by_reference>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "ramintent",
+      "rowType": "ram_payment_intent",
+      "fields": [
+        {
+          "name": "order",
+          "type": "ram_order"
+        },
+        {
+          "name": "transaction_id",
+          "type": "checksum256"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account (shared)",
+      "category": "platform",
+      "instrumentation": "shared metered wrapper",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 224,
+      "newScopeOverheadBytes": 0,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/runtime/runtime.cpp",
+          "line": 23,
+          "declaration": "ram_singleton<\"ramintent\"_n,ram_payment_intent>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "ramlimits",
+      "rowType": "ram_dao_limit",
+      "fields": [
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "activity",
+          "type": "uint64"
+        },
+        {
+          "name": "identity",
+          "type": "uint64"
+        },
+        {
+          "name": "completion",
+          "type": "uint64"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "DAO table scope",
+      "nativeScope": "DAO ID",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/ram_capacity.hpp",
+          "line": 16,
+          "declaration": "ram_table<\"ramlimits\"_n,ram_dao_limit>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "ramobs",
+      "rowType": "ram_observer_config",
+      "fields": [
+        {
+          "name": "meter_bytes",
+          "type": "uint64"
+        },
+        {
+          "name": "runtime_hash",
+          "type": "checksum256"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account (shared)",
+      "category": "platform",
+      "instrumentation": "explicit observer/metadata path; inspect callers",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 224,
+      "newScopeOverheadBytes": 0,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/resources.hpp",
+          "line": 68,
+          "declaration": "eosio::singleton<\"ramobs\"_n,ram_observer_config>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "ramorders",
+      "rowType": "ram_order",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "reference",
+          "type": "checksum256"
+        },
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "treasury",
+          "type": "name"
+        },
+        {
+          "name": "policy_revision",
+          "type": "uint64"
+        },
+        {
+          "name": "fee_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
+        },
+        {
+          "name": "maximum",
+          "type": "asset"
+        },
+        {
+          "name": "spent",
+          "type": "asset"
+        },
+        {
+          "name": "platform_fee",
+          "type": "asset"
+        },
+        {
+          "name": "received",
+          "type": "asset"
+        },
+        {
+          "name": "purchases",
+          "type": "ram_acquisition[]"
+        },
+        {
+          "name": "funded",
+          "type": "bool"
+        },
+        {
+          "name": "settled",
+          "type": "bool"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account (shared)",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        32
+      ],
+      "rowOverheadBytes": 272,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/runtime/runtime.cpp",
+          "line": 21,
+          "declaration": "ram_table<\"ramorders\"_n,ram_order,indexed_by<\"byreference\"_n,const_mem_fun<ram_order,checksum256,&ram_order::by_reference>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "rampayer",
+      "rowType": "ram_payer_owner",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account (shared)",
+      "category": "platform",
+      "instrumentation": "explicit observer/metadata path; inspect callers",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 224,
+      "newScopeOverheadBytes": 0,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/resources.hpp",
+          "line": 14,
+          "declaration": "eosio::singleton<\"rampayer\"_n,ram_payer_owner>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "rampools",
+      "rowType": "ram_payer_pool",
+      "fields": [
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "quota_bytes",
+          "type": "uint64"
+        },
+        {
+          "name": "baseline_bytes",
+          "type": "uint64"
+        },
+        {
+          "name": "platform_headroom",
+          "type": "uint64"
+        },
+        {
+          "name": "source_hash",
+          "type": "checksum256"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account (shared)",
+      "category": "platform",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/ram_capacity.hpp",
+          "line": 10,
+          "declaration": "ram_table<\"rampools\"_n,ram_payer_pool>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "ramreserve",
+      "rowType": "ram_operator_reserve",
+      "fields": [
+        {
+          "name": "available",
+          "type": "asset"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account (shared)",
+      "category": "platform",
+      "instrumentation": "shared metered wrapper",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 224,
+      "newScopeOverheadBytes": 0,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/runtime/runtime.cpp",
+          "line": 29,
+          "declaration": "ram_singleton<\"ramreserve\"_n,ram_operator_reserve>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "ramsources",
+      "rowType": "ram_source",
+      "fields": [
+        {
+          "name": "account",
+          "type": "name"
+        },
+        {
+          "name": "code_hash",
+          "type": "checksum256"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account (shared)",
+      "category": "platform",
+      "instrumentation": "explicit observer/metadata path; inspect callers",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/resources.hpp",
+          "line": 74,
+          "declaration": "eosio::multi_index<\"ramsources\"_n,ram_source>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "ramstats",
+      "rowType": "ram_counter",
+      "fields": [
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "identity",
+          "type": "uint64"
+        },
+        {
+          "name": "activity",
+          "type": "uint64"
+        },
+        {
+          "name": "retained",
+          "type": "uint64"
+        },
+        {
+          "name": "platform",
+          "type": "uint64"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account (shared)",
+      "category": "platform",
+      "instrumentation": "explicit observer/metadata path; inspect callers",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/resources.hpp",
+          "line": 80,
+          "declaration": "eosio::multi_index<\"ramstats\"_n,ram_counter>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "receipts",
+      "rowType": "finance_receipt",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "kind",
+          "type": "uint8"
+        },
+        {
+          "name": "obligation_id",
+          "type": "uint64"
+        },
+        {
+          "name": "recipient",
+          "type": "uint64"
+        },
+        {
+          "name": "destination",
+          "type": "name"
+        },
+        {
+          "name": "token_contract",
+          "type": "name"
+        },
+        {
+          "name": "quantity",
+          "type": "asset"
+        },
+        {
+          "name": "at",
+          "type": "uint32"
+        },
+        {
+          "name": "transaction_id",
+          "type": "checksum256"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "DAO table scope",
+      "nativeScope": "DAO ID",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/records.hpp",
+          "line": 76,
+          "declaration": "ram_table<\"receipts\"_n,finance_receipt>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "resourcecfg",
+      "rowType": "resource_policy",
+      "fields": [
+        {
+          "name": "schema_version",
+          "type": "uint16"
+        },
+        {
+          "name": "revision",
+          "type": "uint64"
+        },
+        {
+          "name": "native_ram_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "card_ram_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "included_activity_bytes",
+          "type": "uint64"
+        },
+        {
+          "name": "identity_bytes_per_slot",
+          "type": "uint64"
+        },
+        {
+          "name": "quote_lifetime_seconds",
+          "type": "uint32"
+        },
+        {
+          "name": "grace_seconds",
+          "type": "uint32"
+        },
+        {
+          "name": "storage_free_bytes",
+          "type": "uint64"
+        },
+        {
+          "name": "storage_unit_bytes",
+          "type": "uint64"
+        },
+        {
+          "name": "storage_monthly_usd",
+          "type": "uint32"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account (shared)",
+      "category": "platform",
+      "instrumentation": "shared metered wrapper",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 224,
+      "newScopeOverheadBytes": 0,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/records.hpp",
+          "line": 10,
+          "declaration": "ram_singleton<\"resourcecfg\"_n,resource_policy>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "seatcfg",
+      "rowType": "seat_policy",
+      "fields": [
+        {
+          "name": "first_usd",
+          "type": "uint32"
+        },
+        {
+          "name": "next_usd",
+          "type": "uint32"
+        },
+        {
+          "name": "rest_usd",
+          "type": "uint32"
+        },
+        {
+          "name": "revision",
+          "type": "uint64"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account (shared)",
+      "category": "platform",
+      "instrumentation": "shared metered wrapper",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 224,
+      "newScopeOverheadBytes": 0,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/creation.hpp",
+          "line": 26,
+          "declaration": "ram_singleton<\"seatcfg\"_n,seat_policy>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "sessions",
+      "rowType": "session_record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "signing_key",
+          "type": "public_key"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
+        },
+        {
+          "name": "credential_epoch",
+          "type": "uint64"
+        },
+        {
+          "name": "permissions",
+          "type": "session_permission[]"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "DAO table scope",
+      "nativeScope": "DAO ID",
+      "category": "identity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        32,
+        8
+      ],
+      "rowOverheadBytes": 400,
+      "newScopeOverheadBytes": 224,
+      "sharedHeaderPolicy": "DAO",
+      "declarations": [
+        {
+          "source": "core/common/governance.hpp",
+          "line": 31,
+          "declaration": "ram_table<\"sessions\"_n,session_record,indexed_by<\"bykey\"_n,const_mem_fun<session_record,checksum256,&session_record::by_key>>,indexed_by<\"bymember\"_n,const_mem_fun<session_record,uint64_t,&session_record::by_member>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
+      "table": "settings",
+      "rowType": "settings",
+      "fields": [
+        {
+          "name": "chain_id",
+          "type": "checksum256"
+        },
+        {
+          "name": "interface_version",
+          "type": "uint16"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account (shared)",
+      "category": "platform",
+      "instrumentation": "shared metered wrapper",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 224,
+      "newScopeOverheadBytes": 0,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/runtime/runtime.cpp",
+          "line": 202,
+          "declaration": "ram_singleton<\"settings\"_n,settings>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "decide",
+      "table": "ballots",
+      "rowType": "ballot_record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "creator",
+          "type": "uint64"
+        },
+        {
+          "name": "kind",
+          "type": "uint8"
+        },
+        {
+          "name": "choices",
+          "type": "uint8"
+        },
+        {
+          "name": "closes",
+          "type": "uint32"
+        },
+        {
+          "name": "quorum",
+          "type": "uint16"
+        },
+        {
+          "name": "approval",
+          "type": "uint16"
+        },
+        {
+          "name": "denominator",
+          "type": "uint64"
+        },
+        {
+          "name": "max_member",
+          "type": "uint64"
+        },
+        {
+          "name": "cast",
+          "type": "uint64"
+        },
+        {
+          "name": "tallies",
+          "type": "uint64[]"
+        },
+        {
+          "name": "status",
+          "type": "uint8"
+        },
+        {
+          "name": "winner",
+          "type": "int16"
+        },
+        {
+          "name": "metadata",
+          "type": "string"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account on module payer",
+      "category": "activity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        8
+      ],
+      "rowOverheadBytes": 240,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "modules/decide/decide.cpp",
+          "line": 16,
+          "declaration": "ram_table<\"ballots\"_n,ballot_record,indexed_by<\"bydao\"_n,const_mem_fun<ballot_record,uint64_t,&ballot_record::by_dao>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "decide",
+      "table": "elections",
+      "rowType": "election_record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "creator",
+          "type": "uint64"
+        },
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "document_id",
+          "type": "uint64"
+        },
+        {
+          "name": "document_version",
+          "type": "uint32"
+        },
+        {
+          "name": "document_commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "policy_revision",
+          "type": "uint64"
+        },
+        {
+          "name": "nomination_close",
+          "type": "uint32"
+        },
+        {
+          "name": "term_start",
+          "type": "uint32"
+        },
+        {
+          "name": "term_end",
+          "type": "uint32"
+        },
+        {
+          "name": "seats",
+          "type": "uint8"
+        },
+        {
+          "name": "status",
+          "type": "uint8"
+        },
+        {
+          "name": "candidates",
+          "type": "uint64[]"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account on module payer",
+      "category": "activity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        8
+      ],
+      "rowOverheadBytes": 240,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "modules/decide/decide.cpp",
+          "line": 36,
+          "declaration": "ram_table<\"elections\"_n,election_record,indexed_by<\"bydao\"_n,const_mem_fun<election_record,uint64_t,&election_record::by_dao>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "decide",
+      "table": "executions",
+      "rowType": "work_execution_record",
+      "fields": [
+        {
+          "name": "ballot_id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "works",
+          "type": "name"
+        },
+        {
+          "name": "project_id",
+          "type": "uint64"
+        },
+        {
+          "name": "commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "works_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "policy_revision",
+          "type": "uint64"
+        },
+        {
+          "name": "deadline",
+          "type": "uint32"
+        },
+        {
+          "name": "executed",
+          "type": "bool"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account on module payer",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "modules/common/works_records.hpp",
+          "line": 27,
+          "declaration": "ram_table<\"executions\"_n,work_execution_record>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "decide",
+      "table": "grantplans",
+      "rowType": "grant_execution",
+      "fields": [
+        {
+          "name": "ballot_id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "grants",
+          "type": "name"
+        },
+        {
+          "name": "works",
+          "type": "name"
+        },
+        {
+          "name": "round_id",
+          "type": "uint64"
+        },
+        {
+          "name": "application_id",
+          "type": "uint64"
+        },
+        {
+          "name": "application_revision",
+          "type": "uint64"
+        },
+        {
+          "name": "project_id",
+          "type": "uint64"
+        },
+        {
+          "name": "commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "grants_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "works_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "policy_revision",
+          "type": "uint64"
+        },
+        {
+          "name": "deadline",
+          "type": "uint32"
+        },
+        {
+          "name": "executed",
+          "type": "bool"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account on module payer",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "modules/common/grants_records.hpp",
+          "line": 21,
+          "declaration": "ram_table<\"grantplans\"_n,grant_execution>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "decide",
+      "table": "nominations",
+      "rowType": "nomination_record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "election_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account on module payer",
+      "category": "activity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        16,
+        8
+      ],
+      "rowOverheadBytes": 384,
+      "newScopeOverheadBytes": 224,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "modules/decide/decide.cpp",
+          "line": 42,
+          "declaration": "ram_table<\"nominations\"_n,nomination_record,indexed_by<\"bymember\"_n,const_mem_fun<nomination_record,uint128_t,&nomination_record::by_member>>,indexed_by<\"byelection\"_n,const_mem_fun<nomination_record,uint64_t,&nomination_record::by_election>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "decide",
+      "table": "pollends",
+      "rowType": "poll_end",
+      "fields": [
+        {
+          "name": "ballot_id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "completed_at",
+          "type": "uint32"
+        },
+        {
+          "name": "legacy",
+          "type": "bool"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account on module payer",
+      "category": "activity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "modules/decide/decide.cpp",
+          "line": 24,
+          "declaration": "ram_table<\"pollends\"_n,poll_end>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "decide",
+      "table": "rampayer",
+      "rowType": "ram_payer_owner",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account on module payer",
+      "category": "platform",
+      "instrumentation": "explicit observer/metadata path; inspect callers",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 224,
+      "newScopeOverheadBytes": 0,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/resources.hpp",
+          "line": 14,
+          "declaration": "eosio::singleton<\"rampayer\"_n,ram_payer_owner>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "decide",
+      "table": "terms",
+      "rowType": "term_record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "election_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "starts",
+          "type": "uint32"
+        },
+        {
+          "name": "ends",
+          "type": "uint32"
+        },
+        {
+          "name": "recalled",
+          "type": "bool"
+        },
+        {
+          "name": "recalled_at",
+          "type": "uint32"
+        },
+        {
+          "name": "recall_doc",
+          "type": "uint64"
+        },
+        {
+          "name": "recall_version",
+          "type": "uint32"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account on module payer",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        8
+      ],
+      "rowOverheadBytes": 240,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "modules/decide/decide.cpp",
+          "line": 48,
+          "declaration": "ram_table<\"terms\"_n,term_record,indexed_by<\"bydao\"_n,const_mem_fun<term_record,uint64_t,&term_record::by_dao>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "decide",
+      "table": "voteids",
+      "rowType": "vote_identity",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "high_water",
+          "type": "uint64"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account on module payer",
+      "category": "activity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "modules/decide/decide.cpp",
+          "line": 30,
+          "declaration": "ram_table<\"voteids\"_n,vote_identity>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "decide",
+      "table": "votes",
+      "rowType": "vote_record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "ballot",
+          "type": "uint64"
+        },
+        {
+          "name": "member",
+          "type": "uint64"
+        },
+        {
+          "name": "weight",
+          "type": "uint64"
+        },
+        {
+          "name": "choice",
+          "type": "uint8"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account on module payer",
+      "category": "platform",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        16
+      ],
+      "rowOverheadBytes": 256,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "modules/decide/decide.cpp",
+          "line": 18,
+          "declaration": "ram_table<\"votes\"_n,vote_record,indexed_by<\"bymember\"_n,const_mem_fun<vote_record,uint128_t,&vote_record::by_member>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "works",
+      "table": "agreements",
+      "rowType": "agreement_record",
+      "fields": [
+        {
+          "name": "project_id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "schema_version",
+          "type": "uint16"
+        },
+        {
+          "name": "term_start",
+          "type": "uint32"
+        },
+        {
+          "name": "term_end",
+          "type": "uint32"
+        },
+        {
+          "name": "terms",
+          "type": "checksum256"
+        },
+        {
+          "name": "accepted",
+          "type": "bool"
+        },
+        {
+          "name": "accepted_at",
+          "type": "uint32"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account on module payer",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "modules/common/works_records.hpp",
+          "line": 21,
+          "declaration": "ram_table<\"agreements\"_n,agreement_record>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "works",
+      "table": "milestones",
+      "rowType": "milestone_record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "project_id",
+          "type": "uint64"
+        },
+        {
+          "name": "quantity",
+          "type": "asset"
+        },
+        {
+          "name": "due",
+          "type": "uint32"
+        },
+        {
+          "name": "status",
+          "type": "uint8"
+        },
+        {
+          "name": "submission_doc",
+          "type": "uint64"
+        },
+        {
+          "name": "submission_version",
+          "type": "uint32"
+        },
+        {
+          "name": "review_doc",
+          "type": "uint64"
+        },
+        {
+          "name": "review_version",
+          "type": "uint32"
+        },
+        {
+          "name": "reviewer",
+          "type": "uint64"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account on module payer",
+      "category": "activity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        8
+      ],
+      "rowOverheadBytes": 240,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "modules/common/works_records.hpp",
+          "line": 15,
+          "declaration": "ram_table<\"milestones\"_n,milestone_record,indexed_by<\"byproject\"_n,const_mem_fun<milestone_record,uint64_t,&milestone_record::by_project>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "works",
+      "table": "projects",
+      "rowType": "project_record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "creator",
+          "type": "uint64"
+        },
+        {
+          "name": "contributor",
+          "type": "uint64"
+        },
+        {
+          "name": "document_id",
+          "type": "uint64"
+        },
+        {
+          "name": "document_version",
+          "type": "uint32"
+        },
+        {
+          "name": "milestones",
+          "type": "uint64[]"
+        },
+        {
+          "name": "status",
+          "type": "uint8"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account on module payer",
+      "category": "activity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        8
+      ],
+      "rowOverheadBytes": 240,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "modules/common/works_records.hpp",
+          "line": 9,
+          "declaration": "ram_table<\"projects\"_n,project_record,indexed_by<\"bydao\"_n,const_mem_fun<project_record,uint64_t,&project_record::by_dao>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "works",
+      "table": "rampayer",
+      "rowType": "ram_payer_owner",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account on module payer",
+      "category": "platform",
+      "instrumentation": "explicit observer/metadata path; inspect callers",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 224,
+      "newScopeOverheadBytes": 0,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/resources.hpp",
+          "line": 14,
+          "declaration": "eosio::singleton<\"rampayer\"_n,ram_payer_owner>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "payroll",
+      "table": "controls",
+      "rowType": "control_record",
+      "fields": [
+        {
+          "name": "schedule_id",
+          "type": "uint64"
+        },
+        {
+          "name": "paused",
+          "type": "uint8"
+        },
+        {
+          "name": "last_payout",
+          "type": "uint32"
+        },
+        {
+          "name": "label",
+          "type": "string"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account on module payer",
+      "category": "platform",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "modules/payroll/payroll.cpp",
+          "line": 15,
+          "declaration": "ram_table<\"controls\"_n,control_record>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "payroll",
+      "table": "entries",
+      "rowType": "entry_record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "schedule_id",
+          "type": "uint64"
+        },
+        {
+          "name": "due",
+          "type": "uint32"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account on module payer",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        8
+      ],
+      "rowOverheadBytes": 240,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "modules/payroll/payroll.cpp",
+          "line": 13,
+          "declaration": "ram_table<\"entries\"_n,entry_record,indexed_by<\"byschedule\"_n,const_mem_fun<entry_record,uint64_t,&entry_record::by_schedule>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "payroll",
+      "table": "rampayer",
+      "rowType": "ram_payer_owner",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account on module payer",
+      "category": "platform",
+      "instrumentation": "explicit observer/metadata path; inspect callers",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 224,
+      "newScopeOverheadBytes": 0,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/resources.hpp",
+          "line": 14,
+          "declaration": "eosio::singleton<\"rampayer\"_n,ram_payer_owner>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "payroll",
+      "table": "schedules",
+      "rowType": "schedule_record",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "creator",
+          "type": "uint64"
+        },
+        {
+          "name": "recipient",
+          "type": "uint64"
+        },
+        {
+          "name": "quantity",
+          "type": "asset"
+        },
+        {
+          "name": "periods",
+          "type": "uint8"
+        },
+        {
+          "name": "interval",
+          "type": "uint32"
+        },
+        {
+          "name": "starts",
+          "type": "uint32"
+        },
+        {
+          "name": "entries",
+          "type": "uint64[]"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account on module payer",
+      "category": "retained",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        8
+      ],
+      "rowOverheadBytes": 240,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "modules/payroll/payroll.cpp",
+          "line": 11,
+          "declaration": "ram_table<\"schedules\"_n,schedule_record,indexed_by<\"bydao\"_n,const_mem_fun<schedule_record,uint64_t,&schedule_record::by_dao>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "grants",
+      "table": "applications",
+      "rowType": "grant_application",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "round_id",
+          "type": "uint64"
+        },
+        {
+          "name": "contributor",
+          "type": "uint64"
+        },
+        {
+          "name": "revision",
+          "type": "uint64"
+        },
+        {
+          "name": "document_id",
+          "type": "uint64"
+        },
+        {
+          "name": "document_version",
+          "type": "uint32"
+        },
+        {
+          "name": "payments",
+          "type": "asset[]"
+        },
+        {
+          "name": "dues",
+          "type": "uint32[]"
+        },
+        {
+          "name": "term_start",
+          "type": "uint32"
+        },
+        {
+          "name": "term_end",
+          "type": "uint32"
+        },
+        {
+          "name": "status",
+          "type": "uint8"
+        },
+        {
+          "name": "consent_at",
+          "type": "uint32"
+        },
+        {
+          "name": "decision_doc",
+          "type": "uint64"
+        },
+        {
+          "name": "decision_version",
+          "type": "uint32"
+        },
+        {
+          "name": "project_id",
+          "type": "uint64"
+        },
+        {
+          "name": "funding_ballot",
+          "type": "uint64"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account on module payer",
+      "category": "activity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        8,
+        8
+      ],
+      "rowOverheadBytes": 368,
+      "newScopeOverheadBytes": 224,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "modules/common/grants_records.hpp",
+          "line": 15,
+          "declaration": "ram_table<\"applications\"_n,grant_application,indexed_by<\"bydao\"_n,const_mem_fun<grant_application,uint64_t,&grant_application::by_dao>>,indexed_by<\"byround\"_n,const_mem_fun<grant_application,uint64_t,&grant_application::by_round>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "grants",
+      "table": "rampayer",
+      "rowType": "ram_payer_owner",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account on module payer",
+      "category": "platform",
+      "instrumentation": "explicit observer/metadata path; inspect callers",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 224,
+      "newScopeOverheadBytes": 0,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/resources.hpp",
+          "line": 14,
+          "declaration": "eosio::singleton<\"rampayer\"_n,ram_payer_owner>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "grants",
+      "table": "rounds",
+      "rowType": "grant_round",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "creator",
+          "type": "uint64"
+        },
+        {
+          "name": "document_id",
+          "type": "uint64"
+        },
+        {
+          "name": "document_version",
+          "type": "uint32"
+        },
+        {
+          "name": "rules_revision",
+          "type": "uint64"
+        },
+        {
+          "name": "applications_close",
+          "type": "uint32"
+        },
+        {
+          "name": "review_close",
+          "type": "uint32"
+        },
+        {
+          "name": "awards_close",
+          "type": "uint32"
+        },
+        {
+          "name": "maximum",
+          "type": "asset"
+        },
+        {
+          "name": "awarded",
+          "type": "int64"
+        },
+        {
+          "name": "allow_agents",
+          "type": "bool"
+        },
+        {
+          "name": "works",
+          "type": "name"
+        },
+        {
+          "name": "closed",
+          "type": "bool"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account on module payer",
+      "category": "activity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        8
+      ],
+      "rowOverheadBytes": 240,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "modules/common/grants_records.hpp",
+          "line": 9,
+          "declaration": "ram_table<\"rounds\"_n,grant_round,indexed_by<\"bydao\"_n,const_mem_fun<grant_round,uint64_t,&grant_round::by_dao>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "endorse",
+      "table": "joinapps",
+      "rowType": "admission_application",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "sponsor",
+          "type": "uint64"
+        },
+        {
+          "name": "revision",
+          "type": "uint64"
+        },
+        {
+          "name": "policy_revision",
+          "type": "uint64"
+        },
+        {
+          "name": "signing_key",
+          "type": "public_key"
+        },
+        {
+          "name": "encryption_key",
+          "type": "string"
+        },
+        {
+          "name": "custody",
+          "type": "uint8"
+        },
+        {
+          "name": "kind",
+          "type": "uint8"
+        },
+        {
+          "name": "operator_label",
+          "type": "string"
+        },
+        {
+          "name": "document_id",
+          "type": "uint64"
+        },
+        {
+          "name": "document_version",
+          "type": "uint32"
+        },
+        {
+          "name": "document_commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
+        },
+        {
+          "name": "witnesses",
+          "type": "uint64[]"
+        },
+        {
+          "name": "admitted",
+          "type": "bool"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account on module payer",
+      "category": "activity",
+      "instrumentation": "shared metered wrapper",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [
+        8
+      ],
+      "rowOverheadBytes": 240,
+      "newScopeOverheadBytes": 112,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/admission.hpp",
+          "line": 15,
+          "declaration": "ram_table<\"joinapps\"_n,admission_application,indexed_by<\"bydao\"_n,const_mem_fun<admission_application,uint64_t,&admission_application::by_dao>>>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "endorse",
+      "table": "rampayer",
+      "rowType": "ram_payer_owner",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account on module payer",
+      "category": "platform",
+      "instrumentation": "explicit observer/metadata path; inspect callers",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 224,
+      "newScopeOverheadBytes": 0,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/resources.hpp",
+          "line": 14,
+          "declaration": "eosio::singleton<\"rampayer\"_n,ram_payer_owner>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    }
+  ],
+  "writeCandidates": [
+    {
+      "source": "core/hub/hub.cpp",
+      "line": 17,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "regdeploy"
+    },
+    {
+      "source": "core/hub/hub.cpp",
+      "line": 18,
+      "receiver": "index",
+      "operation": "modify",
+      "precedingDeclaration": "regdeploy"
+    },
+    {
+      "source": "core/names/names.cpp",
+      "line": 103,
+      "receiver": "saved",
+      "operation": "set",
+      "precedingDeclaration": "init"
+    },
+    {
+      "source": "core/names/names.cpp",
+      "line": 145,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "settier"
+    },
+    {
+      "source": "core/names/names.cpp",
+      "line": 146,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "settier"
+    },
+    {
+      "source": "core/names/names.cpp",
+      "line": 165,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "regname"
+    },
+    {
+      "source": "core/names/names.cpp",
+      "line": 193,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "regsuffix"
+    },
+    {
+      "source": "core/names/names.cpp",
+      "line": 194,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "regsuffix"
+    },
+    {
+      "source": "core/names/names.cpp",
+      "line": 205,
+      "receiver": "saved",
+      "operation": "set",
+      "precedingDeclaration": "setpolicy"
+    },
+    {
+      "source": "core/names/names.cpp",
+      "line": 219,
+      "receiver": "saved",
+      "operation": "set",
+      "precedingDeclaration": "setoracle"
+    },
+    {
+      "source": "core/names/names.cpp",
+      "line": 235,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "intend"
+    },
+    {
+      "source": "core/names/names.cpp",
+      "line": 236,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "intend"
+    },
+    {
+      "source": "core/names/names.cpp",
+      "line": 267,
+      "receiver": "pending",
+      "operation": "erase",
+      "precedingDeclaration": "ontransfer"
+    },
+    {
+      "source": "core/names/names.cpp",
+      "line": 403,
+      "receiver": "sold",
+      "operation": "emplace",
+      "precedingDeclaration": "finish"
+    },
+    {
+      "source": "core/names/names.cpp",
+      "line": 420,
+      "receiver": "listed",
+      "operation": "modify",
+      "precedingDeclaration": "finish"
+    },
+    {
+      "source": "core/names/names.cpp",
+      "line": 429,
+      "receiver": "linked",
+      "operation": "modify",
+      "precedingDeclaration": "finish"
+    },
+    {
+      "source": "core/ramprobe/ramprobe.cpp",
+      "line": 37,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "put"
+    },
+    {
+      "source": "core/ramprobe/ramprobe.cpp",
+      "line": 38,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "put"
+    },
+    {
+      "source": "core/ramprobe/ramprobe.cpp",
+      "line": 42,
+      "receiver": "index",
+      "operation": "erase",
+      "precedingDeclaration": "remove"
+    },
+    {
+      "source": "core/ramprobe/ramprobe.cpp",
+      "line": 43,
+      "receiver": "rows",
+      "operation": "erase",
+      "precedingDeclaration": "remove"
+    },
+    {
+      "source": "core/ramprobe/ramprobe.cpp",
+      "line": 45,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "foreign"
+    },
+    {
+      "source": "core/ramprobe/ramprobe.cpp",
+      "line": 46,
+      "receiver": "rows",
+      "operation": "erase",
+      "precedingDeclaration": "foreignrm"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 36,
+      "receiver": "reserve",
+      "operation": "set",
+      "precedingDeclaration": "fulfilram"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 37,
+      "receiver": "orders",
+      "operation": "emplace",
+      "precedingDeclaration": "fulfilram"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 39,
+      "receiver": "receipts",
+      "operation": "emplace",
+      "precedingDeclaration": "fulfilram"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 49,
+      "receiver": "allocations",
+      "operation": "emplace",
+      "precedingDeclaration": "finishram"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 49,
+      "receiver": "allocations",
+      "operation": "modify",
+      "precedingDeclaration": "finishram"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 51,
+      "receiver": "index",
+      "operation": "modify",
+      "precedingDeclaration": "finishram"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 68,
+      "receiver": "index",
+      "operation": "modify",
+      "precedingDeclaration": "archattest"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 71,
+      "receiver": "anchors",
+      "operation": "emplace",
+      "precedingDeclaration": "archattest"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 73,
+      "receiver": "positions",
+      "operation": "emplace",
+      "precedingDeclaration": "archattest"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 82,
+      "receiver": "index",
+      "operation": "modify",
+      "precedingDeclaration": "archapprove"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 86,
+      "receiver": "index",
+      "operation": "modify",
+      "precedingDeclaration": "archrevoke"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 93,
+      "receiver": "positions",
+      "operation": "modify",
+      "precedingDeclaration": "archstep"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 98,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "docsrc"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 99,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "docsrc"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 104,
+      "receiver": "index",
+      "operation": "erase",
+      "precedingDeclaration": "docref"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 106,
+      "receiver": "index",
+      "operation": "modify",
+      "precedingDeclaration": "docref"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 108,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "docref"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 115,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "docscanstep"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 116,
+      "receiver": "index",
+      "operation": "modify",
+      "precedingDeclaration": "docscanstep"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 126,
+      "receiver": "rows",
+      "operation": "erase",
+      "precedingDeclaration": "prunedocs"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 128,
+      "receiver": "positions",
+      "operation": "modify",
+      "precedingDeclaration": "prunedocs"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 132,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "restoredoc"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 138,
+      "receiver": "state",
+      "operation": "emplace",
+      "precedingDeclaration": "backfilldocs"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 138,
+      "receiver": "state",
+      "operation": "modify",
+      "precedingDeclaration": "backfilldocs"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 144,
+      "receiver": "saved",
+      "operation": "set",
+      "precedingDeclaration": "initramobs"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 161,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "setrampool"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 161,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "setrampool"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 170,
+      "receiver": "limits",
+      "operation": "emplace",
+      "precedingDeclaration": "grantdaoram"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 170,
+      "receiver": "limits",
+      "operation": "modify",
+      "precedingDeclaration": "grantdaoram"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 171,
+      "receiver": "receipts",
+      "operation": "emplace",
+      "precedingDeclaration": "grantdaoram"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 185,
+      "receiver": "saved",
+      "operation": "set",
+      "precedingDeclaration": "rebindramobs"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 192,
+      "receiver": "sources",
+      "operation": "emplace",
+      "precedingDeclaration": "setramcode"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 192,
+      "receiver": "saved",
+      "operation": "set",
+      "precedingDeclaration": "setramcode"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 192,
+      "receiver": "sources",
+      "operation": "modify",
+      "precedingDeclaration": "setramcode"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 197,
+      "receiver": "saved",
+      "operation": "set",
+      "precedingDeclaration": "ramadjust"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 199,
+      "receiver": "counters",
+      "operation": "emplace",
+      "precedingDeclaration": "ramadjust"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 199,
+      "receiver": "counters",
+      "operation": "modify",
+      "precedingDeclaration": "ramadjust"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 205,
+      "receiver": "c",
+      "operation": "set",
+      "precedingDeclaration": "init"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 216,
+      "receiver": "index",
+      "operation": "modify",
+      "precedingDeclaration": "createpaid"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 223,
+      "receiver": "dao_rows",
+      "operation": "emplace",
+      "precedingDeclaration": "create_dao"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 235,
+      "receiver": "saved",
+      "operation": "set",
+      "precedingDeclaration": "setcrrate"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 244,
+      "receiver": "orders",
+      "operation": "emplace",
+      "precedingDeclaration": "ordercreate"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 250,
+      "receiver": "saved",
+      "operation": "set",
+      "precedingDeclaration": "govseatfee"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 256,
+      "receiver": "orders",
+      "operation": "emplace",
+      "precedingDeclaration": "orderfree"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 264,
+      "receiver": "receipts",
+      "operation": "emplace",
+      "precedingDeclaration": "setcapacity"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 266,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "setcapacity"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 267,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "setcapacity"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 271,
+      "receiver": "index",
+      "operation": "modify",
+      "precedingDeclaration": "revokecap"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 271,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "revokecap"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 276,
+      "receiver": "index",
+      "operation": "modify",
+      "precedingDeclaration": "resumecap"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 284,
+      "receiver": "index",
+      "operation": "modify",
+      "precedingDeclaration": "cardcreate"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 300,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "initgov"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 306,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "setdaogov"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 307,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "setdaogov"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 322,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "addsession"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 326,
+      "receiver": "rows",
+      "operation": "erase",
+      "precedingDeclaration": "delsession"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 331,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "guardpause"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 332,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "guardpause"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 336,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "guardrevoke"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 341,
+      "receiver": "people",
+      "operation": "modify",
+      "precedingDeclaration": "guardrecover"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 342,
+      "receiver": "bindings",
+      "operation": "modify",
+      "precedingDeclaration": "guardrecover"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 343,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "guardrecover"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 347,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "setadmit"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 347,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "setadmit"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 373,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "enroll_member"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 374,
+      "receiver": "dao_rows",
+      "operation": "modify",
+      "precedingDeclaration": "enroll_member"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 375,
+      "receiver": "actors",
+      "operation": "emplace",
+      "precedingDeclaration": "enroll_member"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 415,
+      "receiver": "dao_rows",
+      "operation": "modify",
+      "precedingDeclaration": "setmeta"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 421,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "setprofile"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 422,
+      "receiver": "members_index",
+      "operation": "modify",
+      "precedingDeclaration": "setprofile"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 427,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "grantcredit"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 428,
+      "receiver": "dao_rows",
+      "operation": "modify",
+      "precedingDeclaration": "grantcredit"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 452,
+      "receiver": "saved",
+      "operation": "set",
+      "precedingDeclaration": "setfees"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 514,
+      "receiver": "saved",
+      "operation": "set",
+      "precedingDeclaration": "govpayfees"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 524,
+      "receiver": "dao_rows",
+      "operation": "modify",
+      "precedingDeclaration": "setcredits"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 524,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "setcredits"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 534,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "reserve"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 535,
+      "receiver": "dao_rows",
+      "operation": "modify",
+      "precedingDeclaration": "reserve"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 540,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "approveob"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 545,
+      "receiver": "dao_rows",
+      "operation": "modify",
+      "precedingDeclaration": "cancelob"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 546,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "cancelob"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 556,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "confirmext"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 564,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "payob"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 565,
+      "receiver": "dao_rows",
+      "operation": "modify",
+      "precedingDeclaration": "payob"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 567,
+      "receiver": "people",
+      "operation": "modify",
+      "precedingDeclaration": "payob"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 582,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "commitepoch"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 587,
+      "receiver": "dao_rows",
+      "operation": "modify",
+      "precedingDeclaration": "rotateepoch"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 595,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "rotatekey"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 601,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "linknative"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 605,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "unlinknat"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 617,
+      "receiver": "bindings",
+      "operation": "emplace",
+      "precedingDeclaration": "linkevm"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 617,
+      "receiver": "bindings",
+      "operation": "modify",
+      "precedingDeclaration": "linkevm"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 620,
+      "receiver": "bindings",
+      "operation": "modify",
+      "precedingDeclaration": "unlinkevm"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 626,
+      "receiver": "dao_rows",
+      "operation": "modify",
+      "precedingDeclaration": "setactive"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 627,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "setactive"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 632,
+      "receiver": "dao_rows",
+      "operation": "modify",
+      "precedingDeclaration": "setroles"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 633,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "setroles"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 640,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "grantkey"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 645,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "govlock"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 645,
+      "receiver": "dao_rows",
+      "operation": "modify",
+      "precedingDeclaration": "govlock"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 650,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "govunlock"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 650,
+      "receiver": "dao_rows",
+      "operation": "modify",
+      "precedingDeclaration": "govunlock"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 654,
+      "receiver": "people",
+      "operation": "modify",
+      "precedingDeclaration": "withdraw"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 654,
+      "receiver": "dao_rows",
+      "operation": "modify",
+      "precedingDeclaration": "withdraw"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 660,
+      "receiver": "dao_rows",
+      "operation": "modify",
+      "precedingDeclaration": "unstake"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 660,
+      "receiver": "people",
+      "operation": "modify",
+      "precedingDeclaration": "unstake"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 671,
+      "receiver": "reserve",
+      "operation": "set",
+      "precedingDeclaration": "deposit"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 681,
+      "receiver": "people",
+      "operation": "modify",
+      "precedingDeclaration": "deposit"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 682,
+      "receiver": "dao_rows",
+      "operation": "modify",
+      "precedingDeclaration": "deposit"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 739,
+      "receiver": "intents",
+      "operation": "remove",
+      "precedingDeclaration": "ram_payment"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 739,
+      "receiver": "orders",
+      "operation": "emplace",
+      "precedingDeclaration": "ram_payment"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 745,
+      "receiver": "index",
+      "operation": "modify",
+      "precedingDeclaration": "buy_ram_order"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 752,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "allocate_ram"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 752,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "allocate_ram"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 759,
+      "receiver": "receipts",
+      "operation": "emplace",
+      "precedingDeclaration": "allocate_included_ram"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 764,
+      "receiver": "receipts",
+      "operation": "modify",
+      "precedingDeclaration": "allocate_member_ram"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 770,
+      "receiver": "saved",
+      "operation": "set",
+      "precedingDeclaration": "save_resources"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 787,
+      "receiver": "saved",
+      "operation": "set",
+      "precedingDeclaration": "save_creation"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 798,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "save_listing"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 798,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "save_listing"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 802,
+      "receiver": "rows",
+      "operation": "erase",
+      "precedingDeclaration": "remove_listing"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 803,
+      "receiver": "copy",
+      "operation": "erase",
+      "precedingDeclaration": "remove_listing"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 812,
+      "receiver": "copy",
+      "operation": "emplace",
+      "precedingDeclaration": "save_copy"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 812,
+      "receiver": "copy",
+      "operation": "modify",
+      "precedingDeclaration": "save_copy"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 820,
+      "receiver": "index",
+      "operation": "modify",
+      "precedingDeclaration": "creation_payment"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 841,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "bump_credentials"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 842,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "bump_credentials"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 851,
+      "receiver": "budgets",
+      "operation": "emplace",
+      "precedingDeclaration": "charge_commitment"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 852,
+      "receiver": "budgets",
+      "operation": "modify",
+      "precedingDeclaration": "charge_commitment"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 883,
+      "receiver": "payments",
+      "operation": "emplace",
+      "precedingDeclaration": "settle_module"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 898,
+      "receiver": "heads",
+      "operation": "emplace",
+      "precedingDeclaration": "record_document"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 898,
+      "receiver": "heads",
+      "operation": "modify",
+      "precedingDeclaration": "record_document"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 900,
+      "receiver": "clocks",
+      "operation": "emplace",
+      "precedingDeclaration": "record_document"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 909,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "append_document"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 910,
+      "receiver": "state",
+      "operation": "emplace",
+      "precedingDeclaration": "append_document"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 910,
+      "receiver": "state",
+      "operation": "modify",
+      "precedingDeclaration": "append_document"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 923,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "receipt"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 984,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "install_module"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 984,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "install_module"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 1005,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "dispatch"
+    },
+    {
+      "source": "core/testtoken/testtoken.cpp",
+      "line": 12,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "create"
+    },
+    {
+      "source": "core/testtoken/testtoken.cpp",
+      "line": 13,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "issue"
+    },
+    {
+      "source": "core/testtoken/testtoken.cpp",
+      "line": 14,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "transfer"
+    },
+    {
+      "source": "core/testtoken/testtoken.cpp",
+      "line": 16,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "add"
+    },
+    {
+      "source": "core/testtoken/testtoken.cpp",
+      "line": 16,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "add"
+    },
+    {
+      "source": "modules/common/module.hpp",
+      "line": 16,
+      "receiver": "binding",
+      "operation": "set",
+      "precedingDeclaration": "bind_ram_pool"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 56,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "newelect"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 60,
+      "receiver": "index",
+      "operation": "erase",
+      "precedingDeclaration": "nominate"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 61,
+      "receiver": "group",
+      "operation": "erase",
+      "precedingDeclaration": "nominate"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 61,
+      "receiver": "nominees",
+      "operation": "emplace",
+      "precedingDeclaration": "nominate"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 65,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "startelect"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 68,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "recall"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 80,
+      "receiver": "plans",
+      "operation": "emplace",
+      "precedingDeclaration": "openwork"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 88,
+      "receiver": "plans",
+      "operation": "modify",
+      "precedingDeclaration": "execute"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 96,
+      "receiver": "plans",
+      "operation": "emplace",
+      "precedingDeclaration": "openaward"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 101,
+      "receiver": "plans",
+      "operation": "modify",
+      "precedingDeclaration": "executeaward"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 114,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "start"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 115,
+      "receiver": "ends",
+      "operation": "emplace",
+      "precedingDeclaration": "start"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 121,
+      "receiver": "seats",
+      "operation": "emplace",
+      "precedingDeclaration": "finish_election"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 122,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "finish_election"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 122,
+      "receiver": "votes_table",
+      "operation": "modify",
+      "precedingDeclaration": "finish_election"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 136,
+      "receiver": "cast",
+      "operation": "erase",
+      "precedingDeclaration": "prunevotes"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 146,
+      "receiver": "cast",
+      "operation": "emplace",
+      "precedingDeclaration": "vote"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 146,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "vote"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 154,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "finalize"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 163,
+      "receiver": "ids",
+      "operation": "emplace",
+      "precedingDeclaration": "preserve_vote_ids"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 166,
+      "receiver": "ids",
+      "operation": "modify",
+      "precedingDeclaration": "preserve_vote_ids"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 173,
+      "receiver": "ends",
+      "operation": "modify",
+      "precedingDeclaration": "record_end"
+    },
+    {
+      "source": "modules/decide/decide.cpp",
+      "line": 174,
+      "receiver": "ends",
+      "operation": "emplace",
+      "precedingDeclaration": "record_end"
+    },
+    {
+      "source": "modules/endorse/endorse.cpp",
+      "line": 19,
+      "receiver": "apps",
+      "operation": "emplace",
+      "precedingDeclaration": "applyjoin"
+    },
+    {
+      "source": "modules/endorse/endorse.cpp",
+      "line": 19,
+      "receiver": "apps",
+      "operation": "modify",
+      "precedingDeclaration": "applyjoin"
+    },
+    {
+      "source": "modules/endorse/endorse.cpp",
+      "line": 22,
+      "receiver": "apps",
+      "operation": "modify",
+      "precedingDeclaration": "witness"
+    },
+    {
+      "source": "modules/endorse/endorse.cpp",
+      "line": 25,
+      "receiver": "apps",
+      "operation": "modify",
+      "precedingDeclaration": "unwitness"
+    },
+    {
+      "source": "modules/endorse/endorse.cpp",
+      "line": 25,
+      "receiver": "witnesses",
+      "operation": "erase",
+      "precedingDeclaration": "unwitness"
+    },
+    {
+      "source": "modules/endorse/endorse.cpp",
+      "line": 30,
+      "receiver": "apps",
+      "operation": "modify",
+      "precedingDeclaration": "admit"
+    },
+    {
+      "source": "modules/grants/grants.cpp",
+      "line": 16,
+      "receiver": "rounds",
+      "operation": "emplace",
+      "precedingDeclaration": "newround"
+    },
+    {
+      "source": "modules/grants/grants.cpp",
+      "line": 20,
+      "receiver": "apps",
+      "operation": "emplace",
+      "precedingDeclaration": "applygrant"
+    },
+    {
+      "source": "modules/grants/grants.cpp",
+      "line": 24,
+      "receiver": "apps",
+      "operation": "modify",
+      "precedingDeclaration": "amend"
+    },
+    {
+      "source": "modules/grants/grants.cpp",
+      "line": 27,
+      "receiver": "apps",
+      "operation": "modify",
+      "precedingDeclaration": "submitapp"
+    },
+    {
+      "source": "modules/grants/grants.cpp",
+      "line": 30,
+      "receiver": "apps",
+      "operation": "modify",
+      "precedingDeclaration": "reviewapp"
+    },
+    {
+      "source": "modules/grants/grants.cpp",
+      "line": 33,
+      "receiver": "apps",
+      "operation": "modify",
+      "precedingDeclaration": "closeapp"
+    },
+    {
+      "source": "modules/grants/grants.cpp",
+      "line": 36,
+      "receiver": "rounds",
+      "operation": "modify",
+      "precedingDeclaration": "closeround"
+    },
+    {
+      "source": "modules/grants/grants.cpp",
+      "line": 42,
+      "receiver": "rounds",
+      "operation": "modify",
+      "precedingDeclaration": "govaward"
+    },
+    {
+      "source": "modules/grants/grants.cpp",
+      "line": 42,
+      "receiver": "apps",
+      "operation": "modify",
+      "precedingDeclaration": "govaward"
+    },
+    {
+      "source": "modules/payroll/payroll.cpp",
+      "line": 19,
+      "receiver": "items",
+      "operation": "emplace",
+      "precedingDeclaration": "commit"
+    },
+    {
+      "source": "modules/payroll/payroll.cpp",
+      "line": 20,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "commit"
+    },
+    {
+      "source": "modules/payroll/payroll.cpp",
+      "line": 26,
+      "receiver": "flags",
+      "operation": "emplace",
+      "precedingDeclaration": "edit"
+    },
+    {
+      "source": "modules/payroll/payroll.cpp",
+      "line": 26,
+      "receiver": "flags",
+      "operation": "modify",
+      "precedingDeclaration": "edit"
+    },
+    {
+      "source": "modules/payroll/payroll.cpp",
+      "line": 36,
+      "receiver": "flags",
+      "operation": "emplace",
+      "precedingDeclaration": "settle"
+    },
+    {
+      "source": "modules/payroll/payroll.cpp",
+      "line": 36,
+      "receiver": "flags",
+      "operation": "modify",
+      "precedingDeclaration": "settle"
+    },
+    {
+      "source": "modules/works/works.cpp",
+      "line": 25,
+      "receiver": "items",
+      "operation": "emplace",
+      "precedingDeclaration": "create_project"
+    },
+    {
+      "source": "modules/works/works.cpp",
+      "line": 26,
+      "receiver": "rows",
+      "operation": "emplace",
+      "precedingDeclaration": "create_project"
+    },
+    {
+      "source": "modules/works/works.cpp",
+      "line": 36,
+      "receiver": "agreements",
+      "operation": "emplace",
+      "precedingDeclaration": "offeragr"
+    },
+    {
+      "source": "modules/works/works.cpp",
+      "line": 40,
+      "receiver": "agreements",
+      "operation": "modify",
+      "precedingDeclaration": "acceptagr"
+    },
+    {
+      "source": "modules/works/works.cpp",
+      "line": 54,
+      "receiver": "agreements",
+      "operation": "emplace",
+      "precedingDeclaration": "grantwork"
+    },
+    {
+      "source": "modules/works/works.cpp",
+      "line": 60,
+      "receiver": "items",
+      "operation": "modify",
+      "precedingDeclaration": "accept_project"
+    },
+    {
+      "source": "modules/works/works.cpp",
+      "line": 60,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "accept_project"
+    },
+    {
+      "source": "modules/works/works.cpp",
+      "line": 64,
+      "receiver": "items",
+      "operation": "modify",
+      "precedingDeclaration": "submitwork"
+    },
+    {
+      "source": "modules/works/works.cpp",
+      "line": 68,
+      "receiver": "items",
+      "operation": "modify",
+      "precedingDeclaration": "review"
+    },
+    {
+      "source": "modules/works/works.cpp",
+      "line": 72,
+      "receiver": "items",
+      "operation": "modify",
+      "precedingDeclaration": "cancel"
+    },
+    {
+      "source": "modules/works/works.cpp",
+      "line": 72,
+      "receiver": "rows",
+      "operation": "modify",
+      "precedingDeclaration": "cancel"
+    }
+  ]
+}

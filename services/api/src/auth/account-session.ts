@@ -22,6 +22,14 @@ function accountFromRow(row: AccountRow): Account {
   });
 }
 
+export async function readAccount(db: Pool | PoolClient, id: string): Promise<Account | null> {
+  const result = await db.query<AccountRow>(
+    'SELECT id,signing_key,custody,encryption_key FROM accounts WHERE id=$1',
+    [z.uuid().parse(id)],
+  );
+  return result.rows[0] ? accountFromRow(result.rows[0]) : null;
+}
+
 export function uniqueViolation(error: unknown): boolean {
   return z.object({ code: z.literal('23505') }).safeParse(error).success;
 }

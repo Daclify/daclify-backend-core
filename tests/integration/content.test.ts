@@ -5,7 +5,7 @@ import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { PrivateKey } from '@wharfkit/antelope';
+import { PrivateKey, ABI, Serializer, Checksum256 } from '@wharfkit/antelope';
 import { CID } from 'multiformats/cid';
 import { create } from 'multiformats/hashes/digest';
 import {
@@ -16,27 +16,40 @@ import {
 } from '../../protocol/api.js';
 import { DaoContentSchema } from '../../protocol/content.js';
 import { HostedUploadSchema, HostedAssetUploadSchema } from '../../protocol/storage.js';
-import { RuntimeTableSchemas } from '../../sdk/index.js';
+import { RuntimeTableSchemas, runtimeAbi } from '../../sdk/index.js';
 import { ContentService } from '../../services/api/src/content/service.js';
 import {
   recordVerifiedPin,
   storageUsed,
   contentDaoKey,
+  recordArchiveGroup,
 } from '../../services/api/src/content/ledger.js';
 import { HostedAssets } from '../../services/api/src/content/assets.js';
 import { EncryptedArchiveBackup } from '../../services/api/src/archive/backup.js';
 import { StorageRetention } from '../../services/api/src/content/retention.js';
-import { DEFAULT_STORAGE_PRICING, storagePricingHash } from '../../protocol/storage.js';
+import {
+  DEFAULT_STORAGE_PRICING,
+  storagePricingHash,
+  storageNotices,
+  StorageBillingStatusSchema,
+} from '../../protocol/storage.js';
 import { ArchiveHistory } from '../../services/api/src/archive/history.js';
 import { ArchiveExports } from '../../services/api/src/archive/exports.js';
 import {
   archiveExportConsent,
+  planDocumentArchive,
+  encodeArchiveChunk,
+  archiveManifestForPlan,
+  encodeArchiveManifest,
+  archiveAttestation,
   planOrdinaryPollArchive,
   archiveSourceSchema,
 } from '@daclify/modules/archive';
 import { claimLegacyUpload } from '../../services/api/src/content/migrate.js';
 import type { ContentProvider, PinnedFile } from '../../services/api/src/content/provider.js';
 import type { ChainGateway } from '../../services/api/src/chain.js';
+import { StorageNotices } from '../../services/api/src/billing/storage-notices.js';
+import { storageFunding } from '../../services/api/src/billing/storage-state.js';
 import { migrate } from '../../services/api/src/store.js';
 
 const url = process.env.DATABASE_URL;
@@ -1901,4 +1914,338 @@ describe('hosted upload transactions with a simulated provider', () => {
     );
     expect(fixture.provider.remove).not.toHaveBeenCalled();
   });
+});
+
+it('keeps archive manifests and chunks together after nonpayment, including removal retries', async () => {
+  const fixture = setup(100n);
+  await storageTerm(fixture);
+  const objects = await storageObjects(fixture),
+    a = objects[0],
+    b = objects[1];
+  if (!a || !b) throw new Error('Retention fixture missing');
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await recordArchiveGroup(
+      client,
+      fixture.providerScope,
+      fixture.dao.reference,
+      'fixture:bundle',
+      [a.id, b.id],
+    );
+    await client.query('COMMIT');
+  } finally {
+    client.release();
+  }
+  const retention = new StorageRetention(
+    pool,
+    fixture.chain,
+    fixture.provider,
+    100n,
+    fixture.providerScope,
+    async () => {},
+    true,
+  );
+  const status = await retention.status(account, { dao: fixture.dao.reference });
+  expect(status.bundles).toEqual([{ key: 'fixture:bundle', objectIds: [a.id, b.id].sort() }]);
+  expect(status.objects.filter((o) => o.retained)).toHaveLength(1);
+  await expect(
+    retention.retain(account, { dao: fixture.dao.reference, generation: '0', keep: [a.id] }),
+  ).rejects.toThrow('STORAGE_KEEP_CAPACITY');
+  const first = await retention.prepare(fixture.dao.reference);
+  expect([a.id, b.id]).toContain(first);
+  if (!first) throw new Error('No archive removal');
+  expect(await retention.remove(first)).toBe('removed');
+  const second = await retention.prepare(fixture.dao.reference);
+  expect([a.id, b.id]).toContain(second);
+  expect(second).not.toBe(first);
+  if (!second) throw new Error('No remaining archive removal');
+  expect(await retention.remove(second)).toBe('removed');
+  expect(await retention.prepare(fixture.dao.reference)).toBeNull();
+});
+
+it('recovers archived original file references with complete bundle groups and no fabricated payment', async () => {
+  const fixture = setup(100000n),
+    file = await fixture.provider.upload(
+      randomUUID(),
+      new TextEncoder().encode('Original archived file'),
+    );
+  const original = RuntimeTableSchemas.documents.parse({
+      id: '1',
+      document_id: '7',
+      version: 1,
+      author: '1',
+      cid: file.cid,
+      metadata: '{}',
+      commitment: createHash('sha256').update('Original archived file').digest('hex'),
+      bytes: file.size,
+      envelope_version: 0,
+      key_epoch: '0',
+    }),
+    schema = archiveSourceSchema('document-versions');
+  const packed = Serializer.encode({
+    abi: ABI.from(runtimeAbi),
+    type: 'document_record',
+    object: original,
+  }).array;
+  const plan = planDocumentArchive({
+      dao: fixture.dao.reference,
+      source: {
+        account: fixture.dao.reference.contract,
+        codeHash: schema.codeHash,
+        abiHash: schema.rawAbiHash,
+      },
+      snapshot: {
+        blockNumber: 1,
+        blockId: '00000001' + 'ab'.repeat(28),
+        timestamp: '2026-10-08T00:00:00Z',
+      },
+      sourceUpdatedAt: '2026-01-01T00:00:00Z',
+      retentionSeconds: 7776000,
+      coverageComplete: true,
+      documents: [original],
+      heads: [{ document_id: '7', version: 2, author: '1' }],
+      clocks: [
+        {
+          id: '1',
+          document_id: '7',
+          version: 1,
+          created_at: 1,
+          legacy: false,
+          row_hash: Checksum256.hash(packed).toString(),
+        },
+      ],
+      references: [],
+    }),
+    chunk = plan.families[0]?.chunks[0];
+  if (!chunk) throw new Error('Archive fixture chunk');
+  const chunkBytes = encodeArchiveChunk(chunk.domain, chunk.rows),
+    pin = await fixture.provider.upload(randomUUID(), chunkBytes),
+    manifest = archiveManifestForPlan(plan, [
+      { cid: pin.cid, bytes: pin.size, commitment: Checksum256.hash(chunkBytes).toString() },
+    ]),
+    manifestBytes = encodeArchiveManifest(manifest),
+    manifestPin = await fixture.provider.upload(randomUUID(), manifestBytes),
+    commitment = Checksum256.hash(manifestBytes).toString(),
+    bundle = {
+      id: randomUUID(),
+      manifest,
+      manifestFile: {
+        cid: manifestPin.cid,
+        bytes: manifestPin.size,
+        commitment,
+        content: Buffer.from(manifestBytes).toString('base64'),
+      },
+      chunks: [{ cid: pin.cid, content: Buffer.from(chunkBytes).toString('base64') }],
+    },
+    attested = archiveAttestation(
+      bundle,
+      {
+        formatVersion: 1,
+        storeId: 'fixture',
+        keyId: 'fixture',
+        commitment: 'cd'.repeat(32),
+        manifestCommitment: commitment,
+        bytes: '4096',
+        verifiedAt: '2026-10-08T12:00:00Z',
+      },
+      7776000,
+    );
+  const anchor = RuntimeTableSchemas.archives.parse({
+    id: '1',
+    dao_id: fixture.dao.reference.daoId,
+    manifest: attested.manifest,
+    manifest_cid: manifestPin.cid,
+    manifest_bytes: manifestPin.size,
+    manifest_commitment: commitment,
+    descriptor_commitment: manifest.descriptorCommitment,
+    backup_commitment: 'cd'.repeat(32),
+    verifier: 'relay',
+    attested_at: 1,
+    approved_by: '1',
+    approved_at: 1,
+    retention_seconds: 7776000,
+    revoked: false,
+    attestation_transaction: 'ab'.repeat(32),
+    approval_transaction: 'cd'.repeat(32),
+  });
+  fixture.chain.archiveHistory = async () => ({
+    dao: fixture.dao.reference,
+    anchors: [anchor],
+    next: null,
+  });
+  fixture.chain.archiveAnchor = async () => anchor;
+  const recovered = await fixture.service.recoverStorage(account, {
+    dao: fixture.dao.reference,
+    kind: 'archive',
+  });
+  expect(recovered.objects).toHaveLength(3);
+  expect(recovered.objects.every((r) => r.state === 'recovered')).toBe(true);
+  expect(recovered.billingRestored).toBe(false);
+  const rows = await pool.query<{ kind: string; reference_key: string }>(
+    'SELECT kind,reference_key FROM hosted_references WHERE dao_key=$1 ORDER BY kind,reference_key',
+    [contentDaoKey(fixture.dao.reference)],
+  );
+  expect(rows.rows).toContainEqual({ kind: 'document-version', reference_key: 'archive:1:7:1' });
+  const group = await pool.query<{ count: string }>(
+    'SELECT count(*)::text AS count FROM hosted_archive_members WHERE dao_key=$1',
+    [contentDaoKey(fixture.dao.reference)],
+  );
+  expect(group.rows[0]?.count).toBe('2');
+  expect(
+    (
+      await fixture.service.recoverStorage(account, { dao: fixture.dao.reference, kind: 'archive' })
+    ).objects.every((r) => r.state === 'tracked'),
+  ).toBe(true);
+  expect(fixture.provider.remove).not.toHaveBeenCalled();
+});
+
+it('releases only expired unverified holds with a known provider ID and direct absence proof, preserving uncertainty and audit IDs', async () => {
+  const fixture = setup(100n),
+    input = fixture.request();
+  vi.mocked(fixture.provider.retrieve).mockRejectedValueOnce(new Error('Fixture outage'));
+  await expect(fixture.service.upload(account, input)).rejects.toThrow('UPLOAD_PENDING');
+  const row = await pool.query<{ id: string; provider_id: string }>(
+    'SELECT id,provider_id FROM uploads WHERE request_id=$1',
+    [input.requestId],
+  );
+  const original = row.rows[0];
+  if (!original) throw new Error('Upload missing');
+  await pool.query("UPDATE uploads SET expires_at=now()-interval '1 hour' WHERE id=$1", [
+    original.id,
+  ]);
+  fixture.provider.file = vi.fn(async () => {
+    throw new Error('Fixture provider unavailable');
+  });
+  await expect(fixture.service.reconcile(original.id)).rejects.toThrow();
+  expect((await fixture.service.usage(account, fixture.dao.reference.daoId)).reservedBytes).toBe(
+    String(input.bytes),
+  );
+  vi.mocked(fixture.provider.file).mockResolvedValue(null);
+  expect(await fixture.service.reconcile(original.id)).toBe('completed');
+  expect((await fixture.service.usage(account, fixture.dao.reference.daoId)).reservedBytes).toBe(
+    '0',
+  );
+  expect(await fixture.service.reconcile(original.id)).toBe('completed');
+  expect(
+    (
+      await pool.query(
+        'SELECT provider_id,state,last_error_code,storage_released_at FROM uploads WHERE id=$1',
+        [original.id],
+      )
+    ).rows[0],
+  ).toMatchObject({
+    provider_id: original.provider_id,
+    state: 'failed',
+    last_error_code: 'UPLOAD_PROVIDER_ABSENT',
+    storage_released_at: expect.any(Date),
+  });
+  expect(fixture.provider.remove).not.toHaveBeenCalled();
+});
+
+it('queues one notice per original period/stage, retries delivery and cancels it on payment or loss of admin access', async () => {
+  const fixture = setup(),
+    end = new Date(Date.now() - 86400000).toISOString(),
+    term = await storageTerm(fixture, '100', end),
+    mail = 'email:storage-' + randomUUID() + '@example.test';
+  await pool.query('INSERT INTO credentials(provider_key,account_id) VALUES($1,$2)', [
+    mail,
+    account.id,
+  ]);
+  const send = vi.fn<import('../../services/api/src/auth/mail.js').MailSender>(async () => {}),
+    storage = {
+      status: async () => {
+        const funding = await storageFunding(
+          pool,
+          fixture.dao.reference,
+          fixture.providerScope,
+          term.price,
+          new Date(),
+        );
+        return StorageBillingStatusSchema.parse({
+          dao: fixture.dao.reference,
+          configured: true,
+          currentPricing: term.price,
+          funding,
+          notices: storageNotices(funding),
+          noticeDelivery: true,
+          subscription: null,
+        });
+      },
+    },
+    notices = new StorageNotices(
+      pool,
+      fixture.chain,
+      storage,
+      fixture.providerScope,
+      term.price,
+      send,
+    ),
+    owner = randomUUID();
+  try {
+    await notices.queue();
+    await pool.query('UPDATE storage_subscriptions SET notice_checked_at=NULL WHERE id=$1', [
+      term.id,
+    ]);
+    await notices.queue();
+    expect(
+      (
+        await pool.query(
+          "SELECT count(*)::int AS n FROM jobs WHERE module_id='core-storage-notices' AND payload->>'subscriptionId'=$1",
+          [term.id],
+        )
+      ).rows[0]?.n,
+    ).toBe(1);
+    send.mockRejectedValueOnce(new Error('SMTP fixture unavailable'));
+    expect(await notices.process(owner)).toBe('retry');
+    await pool.query(
+      "UPDATE jobs SET due_at=now() WHERE module_id='core-storage-notices' AND payload->>'subscriptionId'=$1",
+      [term.id],
+    );
+    expect(await notices.process(owner)).toBe('completed');
+    expect(send.mock.calls[1]?.[0]).toMatchObject({
+      to: mail.slice(6),
+      subject: 'Daclify storage payment and retention reminder',
+      messageId: expect.stringMatching(/^<storage-/),
+    });
+    expect(await notices.process(owner)).toBe('idle');
+    expect(send).toHaveBeenCalledTimes(2);
+    // Simulate the final allowed attempt without eleven real backoff waits.
+    await pool.query(
+      "UPDATE jobs SET state='pending',attempts=11,due_at=now() WHERE module_id='core-storage-notices' AND payload->>'subscriptionId'=$1",
+      [term.id],
+    );
+    send.mockRejectedValueOnce(new Error('SMTP fixture remains unavailable'));
+    expect(await notices.process(owner)).toBe('manual');
+    expect(
+      (
+        await pool.query(
+          "SELECT state,last_error_code FROM jobs WHERE module_id='core-storage-notices' AND payload->>'subscriptionId'=$1",
+          [term.id],
+        )
+      ).rows[0],
+    ).toMatchObject({ state: 'failed', last_error_code: 'STORAGE_NOTICE_DELIVERY_PENDING' });
+    expect(await notices.process(owner)).toBe('idle');
+    // A second queued stage becomes obsolete when fresh billing reports a funded renewal.
+    await pool.query('UPDATE storage_subscriptions SET notice_checked_at=NULL WHERE id=$1', [
+      term.id,
+    ]);
+    await notices.queue(new Date(Date.parse(end) + 25 * 86400000));
+    const current = storage.status;
+    storage.status = async () => {
+      const value = await current();
+      return { ...value, notices: [] };
+    };
+    expect(await notices.process(owner)).toBe('completed');
+    expect(send).toHaveBeenCalledTimes(3);
+    await pool.query('UPDATE storage_subscriptions SET notice_checked_at=NULL WHERE id=$1', [
+      term.id,
+    ]);
+    await notices.queue(new Date(Date.parse(end) + 31 * 86400000));
+    fixture.chain.memberships = async () => [];
+    expect(await notices.process(owner)).toBe('completed');
+    expect(send).toHaveBeenCalledTimes(3);
+  } finally {
+    await pool.query('DELETE FROM credentials WHERE provider_key=$1', [mail]);
+  }
 });

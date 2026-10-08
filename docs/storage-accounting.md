@@ -91,3 +91,34 @@ There is an external-provider visibility window: PostgreSQL, Stripe and Pinata c
 `DACLIFY_STORAGE_CLEANUP_ENABLED=false` is the default. Setting it to `true` explicitly starts the existing bounded, stoppable retention worker and injects the hosted-billing provider's current-payment reconciliation before removal. Startup rejects malformed values and enabled cleanup without both content ownership and storage billing configuration. Resources/Status report this actual operator setting. The setting is permission to execute, not evidence of provider health or qualification.
 
 Keep it false until the intended separate Pinata account and Stripe test/live mode have passed controlled upload/retrieve/unpin/repin and payment-race checks, global pin references and payment receipts are recovered, staged-copy recovery and monitoring are reviewed, and the operator approves execution. A lost database starts with no trustworthy global payment/reference inventory: rebuild it before enabling cleanup. This development work leaves all private env files and live cleanup settings unchanged.
+
+
+Archive retention groups use host migration 029 and module migration 005. A manifest and its verified chunks fit or leave the allowance together. Overlapping groups count shared CIDs once. Curation shows the complete retention plan, including dependencies, and rejects a selected bundle that exceeds the free allowance. A removed member makes the remaining bundle incomplete; retries can finish eligible removal without retaining a misleading partial archive. Original file blobs remain separately pinned/billed. Recovery groups only verified surviving owned archive objects, and does not infer paid service from any CID.
+
+
+## Failed uploads and provider absence
+
+A missing entry in a provider listing never releases an upload reservation. For an expired, unverified upload with a recorded provider ID, the worker can check that exact ID on the same configured provider account. Only confirmed absence releases that unfinished reservation. The DAO lock and conditional update fence concurrent verification; the original provider ID/scope and release timestamp remain in SQL audit state. A provider error, an unknown ID, a verified object, a published native reference or an Archive-owned hold stays held for reconciliation. This path does not delete a file or alter a native document.
+
+Pinata removal now requires a direct follow-up read confirming the recorded ID is absent. An acknowledgment with the file still present returns `PINATA_REMOVAL_PENDING`; cleanup retains its staged recovery data and retries. Authentication, throttling, network and malformed responses do not establish absence. These HTTP contract tests are not live Pinata account/absence qualification; credential/account binding remains an operator release gate. Endpoint reference: https://docs.pinata.cloud/api-reference/endpoint/get-file-by-id .
+
+
+## Storage reminders
+
+Resources shows period-bound renewal, grace and billing-review notices. The original paid-through/grace dates do not change on a retry. Email is an explicit operator opt-in through `DACLIFY_STORAGE_NOTICES_ENABLED`; complete SMTP and storage billing configuration are required. The leased worker queues at most one job per agreement, original period and stage, rechecks fresh billing and current administration before delivery, and uses the current billing administrator’s paired email. Delivery retries stop after 12 attempts for operator review. Missing contact/failure is visible in failed/pending jobs and needs operator review; in-app notices remain readable. Stage reminders are scheduled within seven days of renewal, at grace start, within seven days of the original deadline, after hosting grace ends, or when billing needs review. The worker scans bounded batches with persisted check times.
+
+Renewal and revoked administrator access cancel an obsolete delivery. SMTP can accept a message before a response is lost; retries can send a duplicate even with a stable Message-ID. Notification failure does not reset grace or invent paid capacity. Mail configuration does not certify deliverability, nor does enabling a reminder worker qualify destructive cleanup. Live SMTP/Pinata/payment verification remains required.
+
+## Dedicated gateway access and bandwidth gate
+
+`CONTENT_GATEWAY_KEY` sends the server-only key in `x-pinata-gateway-token` during bounded content retrieval. It never uses a query parameter and never sends the Pinata API JWT to the gateway. Existing unkeyed local/provider setups remain compatible; setting this variable does not configure or qualify the provider account.
+
+Configure a matching gateway-key restriction separately for each mainnet/testnet account. Pinata combines multiple access controls with OR: adding a permissive origin/IP rule can bypass the key restriction. Verify unauthenticated requests to a known owned CID fail, authenticated server retrieval succeeds, redirects are refused, and the API/frontend never expose the key. See [official access-control behavior](https://docs.pinata.cloud/gateways/gateway-access-controls). Public encrypted IPFS remains retrievable through other providers; this protects the paid gateway, not secrecy or deletion of IPFS copies.
+
+A funded, enforceable bandwidth allowance and verified provider spending cap remain launch gates. There is no configured per-DAO bandwidth charge or a claim that application request limits prevent direct gateway billing. Do not advertise unlimited access.
+
+## Operator removal/recovery alerts
+
+`DACLIFY_STORAGE_ALERT_EMAIL` opts a configured operations mailbox into scope-bound removal/recovery incident notifications. Complete SMTP and Pinata content configuration are required. The existing job worker queues one alert per object/generation, checks the current incident before sending, retries at most 12 times and cancels only a terminal removed/canceled incident. A temporary in-flight recovery defers delivery; it does not declare the incident resolved. Status shows whether the worker is configured.
+
+Alerts contain only incident IDs and public operating instructions, never staged file bytes, grants, signing keys or provider credentials. They neither delete the protected staged copy nor acknowledge/clear a removal incident. Delivery can duplicate after an ambiguous SMTP response. Failed delivery remains visible in the private jobs table for operator review; SMTP qualification and monitored operator response are required before enabling destructive cleanup.

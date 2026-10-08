@@ -36,7 +36,14 @@ export function mailConfiguration(input: Record<string, string | undefined>) {
     throw new Error('MAIL_CONFIGURATION_INVALID');
   return { ...value, SMTP_FROM: normalizeMailbox(value.SMTP_FROM) };
 }
-export function readMailDelivery(input: Record<string, string | undefined>) {
+export interface MailMessage {
+  to: string;
+  subject: string;
+  text: string;
+  messageId?: string;
+}
+export type MailSender = (message: MailMessage) => Promise<void>;
+export function readMailSender(input: Record<string, string | undefined>): MailSender | undefined {
   const config = mailConfiguration(input);
   if (!config) return undefined;
   const transport = createTransport({
@@ -56,18 +63,44 @@ export function readMailDelivery(input: Record<string, string | undefined>) {
     logger: false,
     debug: false,
   });
-  return async (to: string, code: string): Promise<void> => {
-    if (!/^\d{8}$/.test(code)) throw new ApiError('EMAIL_INVALID', 400);
+  return async (message): Promise<void> => {
     try {
       const result = await transport.sendMail({
         from: config.SMTP_FROM,
-        to: normalizeMailbox(to),
-        subject: 'Your Daclify sign-in code',
-        text: `Your Daclify code is ${code}. It expires in 10 minutes. If you did not request it, ignore this email.`,
+        to: normalizeMailbox(message.to),
+        subject: z
+          .string()
+          .min(1)
+          .max(160)
+          .regex(/^[^\r\n]+$/)
+          .parse(message.subject),
+        text: z.string().min(1).max(8192).parse(message.text),
+        ...(message.messageId
+          ? {
+              messageId: z
+                .string()
+                .regex(/^<[A-Za-z0-9@.-]+>$/)
+                .max(128)
+                .parse(message.messageId),
+            }
+          : {}),
       });
       if (result.rejected.length > 0) throw new Error('Recipient rejected');
     } catch {
       throw new ApiError('EMAIL_DELIVERY_FAILED', 503);
     }
+  };
+}
+
+export function readMailDelivery(input: Record<string, string | undefined>) {
+  const send = readMailSender(input);
+  if (!send) return undefined;
+  return async (to: string, code: string): Promise<void> => {
+    if (!/^\d{8}$/.test(code)) throw new ApiError('EMAIL_INVALID', 400);
+    await send({
+      to,
+      subject: 'Your Daclify sign-in code',
+      text: `Your Daclify code is ${code}. It expires in 10 minutes. If you did not request it, ignore this email.`,
+    });
   };
 }

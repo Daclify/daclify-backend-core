@@ -5,7 +5,7 @@ import { PrivateKey } from '@wharfkit/antelope';
 import { importJWK } from 'jose';
 import { z } from 'zod';
 import type { ProviderConfiguration } from './auth/linking.js';
-import { readMailDelivery } from './auth/mail.js';
+import { readMailDelivery, readMailSender } from './auth/mail.js';
 import { readTelegramOidc } from './auth/telegram-oidc.js';
 import { NativeChainGateway } from './native-chain.js';
 import { migrate } from './store.js';
@@ -16,6 +16,16 @@ import { EncryptedArchiveBackup, readArchiveBackupConfig } from './archive/backu
 import { ProviderScopeSchema } from './content/ledger.js';
 import { startContentWorker } from './content/jobs.js';
 import { startRetentionWorker } from './content/retention.js';
+import {
+  StorageAlerts,
+  readStorageAlertEmail,
+  startStorageAlertsWorker,
+} from './content/storage-alerts.js';
+import {
+  StorageNotices,
+  readStorageNoticesEnabled,
+  startStorageNoticesWorker,
+} from './billing/storage-notices.js';
 import { readRetentionEnabled } from './content/retention-config.js';
 import { Uint64Schema } from '../../../protocol/base.js';
 import { parseFrontendOrigins, parseModuleDeployments } from './deployment-config.js';
@@ -53,6 +63,10 @@ const configuration = z
     PINATA_JWT: z.string().min(1).optional(),
     PINATA_ACCOUNT_ID: ProviderScopeSchema.optional(),
     CONTENT_GATEWAY: z.url().optional(),
+    CONTENT_GATEWAY_KEY: z
+      .string()
+      .regex(/^[\x21-\x7e]{1,4096}$/)
+      .optional(),
     CONTENT_FREE_STORAGE_BYTES: Uint64Schema.default('0'),
     GOOGLE_CLIENT_ID: z.string().min(1).max(256).optional(),
     GOOGLE_PUBLIC_JWK: z.string().min(1).max(8192).optional(),
@@ -74,6 +88,7 @@ if (!!env.BOOTSTRAP_OWNER !== !!env.BOOTSTRAP_PRIVATE_KEY)
   throw new Error('Bootstrap owner and key must be configured together');
 if (!!env.PINATA_JWT !== !!env.CONTENT_GATEWAY || !!env.PINATA_JWT !== !!env.PINATA_ACCOUNT_ID)
   throw new Error('PINATA_CONFIGURATION_INVALID');
+if (env.CONTENT_GATEWAY_KEY && !env.PINATA_JWT) throw new Error('PINATA_CONFIGURATION_INVALID');
 if (!!env.GOOGLE_CLIENT_ID !== !!env.GOOGLE_PUBLIC_JWK)
   throw new Error('GOOGLE_CONFIGURATION_INVALID');
 function privateKey(value: string): PrivateKey {
@@ -153,7 +168,7 @@ const content =
     ? new ContentService(
         pool,
         chain,
-        new PinataStorage(env.PINATA_JWT, env.CONTENT_GATEWAY),
+        new PinataStorage(env.PINATA_JWT, env.CONTENT_GATEWAY, env.CONTENT_GATEWAY_KEY),
         BigInt(env.CONTENT_FREE_STORAGE_BYTES),
         'pinata',
         env.PINATA_ACCOUNT_ID,
@@ -173,9 +188,32 @@ if (operatorConfig && (connectConfig || hostingConfig || storageConfig || ramCar
 const docs = readDocsAgent(process.env);
 const creation = new CreationService(pool, chain);
 const deliverEmail = readMailDelivery(process.env);
+const noticeMail = readMailSender(process.env);
+const alertEmail = readStorageAlertEmail(
+  process.env,
+  !!noticeMail && !!content && !!env.PINATA_ACCOUNT_ID,
+);
+const storageAlerts =
+  alertEmail && noticeMail && env.PINATA_ACCOUNT_ID
+    ? new StorageAlerts(pool, env.PINATA_ACCOUNT_ID, alertEmail, noticeMail)
+    : undefined;
+const noticeEnabled = readStorageNoticesEnabled(process.env, !!noticeMail && !!hostedStorage);
+if (hostedStorage) hostedStorage.noticeDelivery = noticeEnabled;
+const storageNotices =
+  noticeEnabled && noticeMail && hostedStorage
+    ? new StorageNotices(
+        pool,
+        chain,
+        hostedStorage,
+        hostedStorage.config.providerScope,
+        { ...DEFAULT_STORAGE_PRICING, freeBytes: env.CONTENT_FREE_STORAGE_BYTES },
+        noticeMail,
+      )
+    : undefined;
 const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
   origins,
   creation,
+  ...(storageAlerts ? { storageAlerts: true } : {}),
   ...(process.env.API_PUBLIC_ORIGIN ? { apiOrigin: process.env.API_PUBLIC_ORIGIN } : {}),
   ...(hosting ? { hosting } : {}),
   ...(hostedStorage ? { hostedStorage } : {}),
@@ -197,6 +235,8 @@ const worker = content ? startContentWorker(pool, content) : undefined;
 const hostingWorker = hosting ? startHostingWorker(pool, hosting) : undefined;
 const storageWorker = hostedStorage ? startStorageWorker(pool, hostedStorage) : undefined;
 const ramWorker = ramCards ? startRamWorker(pool, ramCards) : undefined;
+const noticeWorker = storageNotices ? startStorageNoticesWorker(storageNotices) : undefined;
+const alertWorker = storageAlerts ? startStorageAlertsWorker(storageAlerts) : undefined;
 const retentionWorker = content?.retention.cleanupEnabled
   ? startRetentionWorker(content.retention)
   : undefined;
@@ -206,6 +246,8 @@ async function shutdown() {
   await hostingWorker?.stop();
   await storageWorker?.stop();
   await ramWorker?.stop();
+  await noticeWorker?.stop();
+  await alertWorker?.stop();
   await retentionWorker?.stop();
   await pool.end();
 }

@@ -114,6 +114,28 @@ describe('Pinata adapter fault fixtures (not live provider evidence)', () => {
     expect(fetcher.mock.calls[0]?.[0]).toBe(`https://example.mypinata.cloud/ipfs/${cid}`);
     expect(fetcher.mock.calls[0]?.[1]?.redirect).toBe('error');
   });
+  it('keeps a gateway key in the server header and never sends the API JWT to the gateway', async () => {
+    const guarded = new PinataStorage(
+      'api-fixture-only',
+      'https://example.mypinata.cloud',
+      'gateway-fixture-only',
+    );
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockImplementation(async () => new Response(Uint8Array.from(bytes)));
+    vi.stubGlobal('fetch', fetcher);
+    expect(await guarded.retrieve(cid, bytes.length)).toEqual(bytes);
+    expect(fetcher.mock.calls[0]?.[0]).toBe(`https://example.mypinata.cloud/ipfs/${cid}`);
+    expect(fetcher.mock.calls[0]?.[1]?.headers).toEqual({
+      'x-pinata-gateway-token': 'gateway-fixture-only',
+    });
+    for (const key of ['', 'bad\r\nheader', 'with space', 'x'.repeat(4097)])
+      expect(
+        () => new PinataStorage('api-fixture-only', 'https://example.mypinata.cloud', key),
+      ).toThrow('CONTENT_GATEWAY_KEY');
+    fetcher.mockResolvedValueOnce(new Response('private gateway key detail', { status: 401 }));
+    await expect(guarded.retrieve(cid, bytes.length)).rejects.toThrow(/^CONTENT_UNAVAILABLE$/);
+  });
   it('bounds gateway reads even when content length is omitted or inaccurate', async () => {
     vi.stubGlobal(
       'fetch',
@@ -134,4 +156,34 @@ describe('Pinata adapter fault fixtures (not live provider evidence)', () => {
     );
     await expect(provider.upload(uploadId, bytes)).rejects.toThrow(/^PINATA_UNAVAILABLE$/);
   });
+});
+
+it('confirms a provider ID directly and requires absence after a delete acknowledgment', async () => {
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(
+      Response.json({ data: { id: providerId, cid, size: bytes.length, number_of_files: 1 } }),
+    );
+  vi.stubGlobal('fetch', fetcher);
+  expect(await provider.file(providerId)).toEqual({ id: providerId, cid, size: bytes.length });
+  fetcher.mockResolvedValueOnce(new Response(null, { status: 404 }));
+  expect(await provider.file(providerId)).toBeNull();
+  for (const code of [401, 403, 429, 500]) {
+    fetcher.mockResolvedValueOnce(new Response('private provider detail', { status: code }));
+    await expect(provider.file(providerId)).rejects.toThrow('PINATA_UNAVAILABLE');
+  }
+  fetcher
+    .mockResolvedValueOnce(Response.json({ data: null }))
+    .mockResolvedValueOnce(
+      Response.json({ data: { id: providerId, cid, size: bytes.length, number_of_files: 1 } }),
+    );
+  await expect(provider.remove(providerId)).rejects.toThrow('PINATA_REMOVAL_PENDING');
+  fetcher
+    .mockResolvedValueOnce(Response.json({ data: null }))
+    .mockResolvedValueOnce(new Response(null, { status: 404 }));
+  await provider.remove(providerId);
+  expect(fetcher.mock.calls.at(-1)?.[0]).toBe(
+    'https://api.pinata.cloud/v3/files/public/' + providerId,
+  );
+  expect(fetcher.mock.calls.at(-1)?.[1]?.method).toBeUndefined();
 });

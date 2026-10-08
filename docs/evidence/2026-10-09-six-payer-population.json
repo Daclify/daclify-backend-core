@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 2,
+  "runtime": "ramobscgjeme",
+  "chainId": "d9f6e8c655703ba364f0ee82b4fd0631350475747b1924396c8fbef2558b8f51",
+  "coreCodeHash": "9d05dbedf1fd8b81eb312bc33a16f0449afa1c0e2b7127cfc3dd3feb774277e0",
+  "moduleCodeHashes": {
+    "decide": "2543f510a1a8a6a76ebab92e1856bb6c639c486d52d83547588fa2bd8e9fb8ba",
+    "works": "0b62a222eaa6a44b6353e27173308206cc97f04b68a76576c1815baf04ee0f44",
+    "payroll": "678e2f93fbcf1e2ce42611df5a6701d715ab164e9927db79fd9a9991f5e96889",
+    "grants-rounds": "68bdcca441829bdf948444eb83442e5ad877b273becbf68b5daa117291da4835",
+    "endorsement-admission": "5d95e0013e0ae264159b4bf9607947956132b5d61bde7978e5df2256053bb9a1"
+  },
+  "population": {
+    "daos": 200,
+    "membersPerDao": 200
+  },
+  "membershipCount": 40000,
+  "measurements": [
+    {
+      "payer": "ramobscgjeme",
+      "baselineBytes": "7448289",
+      "usedBytes": "34279403",
+      "quotaBytes": "268436401",
+      "allocatedBytes": "114688000",
+      "nativeDeltaBytes": "26831114",
+      "accountedDeltaBytes": "26831114"
+    },
+    {
+      "payer": "rdecidcgjeme",
+      "baselineBytes": "2286287",
+      "usedBytes": "2435703",
+      "quotaBytes": "33555430",
+      "allocatedBytes": "13107200",
+      "nativeDeltaBytes": "149416",
+      "accountedDeltaBytes": "149416"
+    },
+    {
+      "payer": "rworkscgjeme",
+      "baselineBytes": "1026764",
+      "usedBytes": "1149420",
+      "quotaBytes": "33555401",
+      "allocatedBytes": "13107200",
+      "nativeDeltaBytes": "122656",
+      "accountedDeltaBytes": "122656"
+    },
+    {
+      "payer": "rpayrlcgjeme",
+      "baselineBytes": "591475",
+      "usedBytes": "787443",
+      "quotaBytes": "33555544",
+      "allocatedBytes": "9830400",
+      "nativeDeltaBytes": "195968",
+      "accountedDeltaBytes": "195968"
+    },
+    {
+      "payer": "rgrantcgjeme",
+      "baselineBytes": "912611",
+      "usedBytes": "978955",
+      "quotaBytes": "33555520",
+      "allocatedBytes": "13107200",
+      "nativeDeltaBytes": "66344",
+      "accountedDeltaBytes": "66344"
+    },
+    {
+      "payer": "rendorcgjeme",
+      "baselineBytes": "662865",
+      "usedBytes": "740609",
+      "quotaBytes": "33555426",
+      "allocatedBytes": "9830400",
+      "nativeDeltaBytes": "77744",
+      "accountedDeltaBytes": "77744"
+    }
+  ],
+  "samples": [
+    {
+      "stage": "rdecidcgjeme:exclusive-code-binding-baseline",
+      "bytes": "2286287"
+    },
+    {
+      "stage": "rworkscgjeme:exclusive-code-binding-baseline",
+      "bytes": "1026764"
+    },
+    {
+      "stage": "rpayrlcgjeme:exclusive-code-binding-baseline",
+      "bytes": "591475"
+    },
+    {
+      "stage": "rgrantcgjeme:exclusive-code-binding-baseline",
+      "bytes": "912611"
+    },
+    {
+      "stage": "rendorcgjeme:exclusive-code-binding-baseline",
+      "bytes": "662865"
+    },
+    {
+      "stage": "ramobscgjeme:code-permissions-initial-settings",
+      "bytes": "7448289"
+    },
+    {
+      "stage": "ramobscgjeme:200-daos-and-automatic-six-payer-allocations",
+      "bytes": "8291891"
+    },
+    {
+      "stage": "ramobscgjeme:40000-active-memberships",
+      "bytes": "33176691"
+    },
+    {
+      "stage": "ramobscgjeme:all-module-mutations-complete",
+      "bytes": "34279403"
+    },
+    {
+      "stage": "rdecidcgjeme:all-module-mutations-complete",
+      "bytes": "2435703"
+    },
+    {
+      "stage": "rworkscgjeme:all-module-mutations-complete",
+      "bytes": "1149420"
+    },
+    {
+      "stage": "rpayrlcgjeme:all-module-mutations-complete",
+      "bytes": "787443"
+    },
+    {
+      "stage": "rgrantcgjeme:all-module-mutations-complete",
+      "bytes": "978955"
+    },
+    {
+      "stage": "rendorcgjeme:all-module-mutations-complete",
+      "bytes": "740609"
+    }
+  ],
+  "representativeOperationsPerDao": 10,
+  "limits": [
+    "200 disposable identities reused across DAOs model memberships, not 40000 distinct people.",
+    "One representative workflow per DAO; not throughput, complete lifecycle or projected activity volumes.",
+    "No enforcement, completion holds, legacy backfill or live billing qualification.",
+    "Free capacity, included payer split and market supply are synthetic owned-fixture settings."
+  ],
+  "runtimeScope": "13377172902029993120"
+}

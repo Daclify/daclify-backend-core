@@ -65,8 +65,10 @@ import {
   OrdinaryPollArchiveInputSchema,
   archiveSourceSchema,
   planOrdinaryPollArchive,
+  planDocumentArchive,
+  DocumentArchiveInputSchema,
   MAX_ARCHIVE_LEAVES,
-  type ArchivePreviewRequest,
+  type ArchiveSelection,
 } from '@daclify/modules/archive';
 import {
   HubDeploymentRowSchema,
@@ -385,7 +387,14 @@ export class NativeChainGateway implements ChainGateway {
     await this.reviewedRuntime(this.config.runtime);
     const read = async <
       K extends
-        'ramobs' | 'ramstats' | 'ramalloc' | 'ramlimits' | 'ramsources' | 'resourcecfg' | 'modules',
+        | 'ramobs'
+        | 'ramstats'
+        | 'ramalloc'
+        | 'ramlimits'
+        | 'ramentitle'
+        | 'ramsources'
+        | 'resourcecfg'
+        | 'modules',
     >(
       table: K,
       scope: string,
@@ -395,17 +404,17 @@ export class NativeChainGateway implements ChainGateway {
         throw new ApiError('RESOURCE_SCOPE_LIMIT', 503);
       return page.rows;
     };
-    const [observers, stats, allocations, limits, sources, policies, installed] = await Promise.all(
-      [
+    const [observers, stats, allocations, limits, entitlements, sources, policies, installed] =
+      await Promise.all([
         read('ramobs', this.config.runtime),
         read('ramstats', id),
         read('ramalloc', id),
         read('ramlimits', id),
+        read('ramentitle', id),
         read('ramsources', this.config.runtime),
         read('resourcecfg', this.config.runtime),
         read('modules', id),
-      ],
-    );
+      ]);
     const observer = observers[0];
     if (observer && observer.runtime_hash !== RuntimeCodeHash)
       throw new ApiError('RESOURCE_UNQUALIFIED', 503);
@@ -415,6 +424,7 @@ export class NativeChainGateway implements ChainGateway {
         ...stats.map((r) => r.payer),
         ...allocations.map((r) => r.payer),
         ...limits.map((r) => r.payer),
+        ...entitlements.map((r) => r.payer),
         ...installed.map((r) => r.account),
       ]),
     ];
@@ -469,6 +479,16 @@ export class NativeChainGateway implements ChainGateway {
             const limit = limits.find((r) => r.payer === payer);
             return limit
               ? { activity: limit.activity, identity: limit.identity, completion: limit.completion }
+              : null;
+          })(),
+          entitlement: (() => {
+            const value = entitlements.find((r) => r.payer === payer);
+            return value
+              ? {
+                  policy_revision: value.policy_revision,
+                  identity_per_slot: value.identity_per_slot,
+                  slots: value.slots,
+                }
               : null;
           })(),
           globalQuotaBytes:
@@ -771,6 +791,30 @@ export class NativeChainGateway implements ChainGateway {
     if (progress.pruned >= end) return;
     if (input.start !== progress.pruned) throw new ApiError('ARCHIVE_PROGRESS_CHANGED', 409);
     const account = before.anchor.manifest.source;
+    const documentSource =
+      account === dao.contract && before.anchor.manifest.families[0]?.kind === 'document-versions';
+    if (documentSource) {
+      if (before.anchor.manifest.code_hash !== RuntimeCodeHash)
+        throw new ApiError('ARCHIVE_SCHEMA_UNSUPPORTED', 409);
+      const { runtime: _runtime, ...data } = input;
+      try {
+        await this.pushEncoded(
+          account,
+          'prunedocs',
+          encodeAction('prunedocs', data),
+          this.config.relayActor,
+          this.config.relayKey,
+        );
+      } catch (cause) {
+        const current = await this.archiveProgress(dao, commitment);
+        if ((current.positions[input.chunk_ordinal]?.pruned ?? 0) >= end) return;
+        throw cause;
+      }
+      const after = await this.archiveProgress(dao, commitment);
+      if ((after.positions[input.chunk_ordinal]?.pruned ?? 0) < end)
+        throw new ApiError('ARCHIVE_PROGRESS_INVALID', 503);
+      return;
+    }
     const source = this.config.modules?.find((m) => m.id === 'decide' && m.account === account);
     if (!source || ModuleCodeHashes.decide !== before.anchor.manifest.code_hash)
       throw new ApiError('MODULE_UNVERIFIED', 409);
@@ -882,8 +926,225 @@ export class NativeChainGateway implements ChainGateway {
     }
     return row;
   }
-  async archivePreview(value: ArchivePreviewRequest) {
+  private async documentArchivePreview(
+    input: z.infer<typeof ArchiveRoutes.preview.input> & { documentRows: string[] },
+  ) {
+    const dao = input.dao,
+      source = archiveSourceSchema('document-versions');
+    await this.reviewedRuntime(dao.contract);
+    const raw = await this.api.v1.chain.get_raw_abi(dao.contract);
+    if (
+      raw.code_hash.toString() !== source.codeHash ||
+      raw.abi_hash.toString() !== source.rawAbiHash
+    )
+      throw new ApiError('ARCHIVE_SCHEMA_UNSUPPORTED', 409);
+    const read = async () => {
+      const [statePage, installedPage, sourcesPage, scansPage] = await Promise.all([
+        this.moduleRows(
+          dao.contract,
+          'docstate',
+          RuntimeTableSchemas.docstate,
+          '0',
+          '0',
+          1,
+          'i64',
+          1,
+          dao.daoId,
+        ),
+        this.moduleRows(
+          dao.contract,
+          'modules',
+          RuntimeTableSchemas.modules,
+          '0',
+          '18446744073709551615',
+          1,
+          'i64',
+          65,
+          dao.daoId,
+        ),
+        this.moduleRows(
+          dao.contract,
+          'docsrcs',
+          RuntimeTableSchemas.docsrcs,
+          '0',
+          '18446744073709551615',
+          1,
+          'i64',
+          65,
+          dao.daoId,
+        ),
+        this.moduleRows(
+          dao.contract,
+          'docscan',
+          RuntimeTableSchemas.docscan,
+          '0',
+          '18446744073709551615',
+          1,
+          'i64',
+          257,
+          dao.daoId,
+        ),
+      ]);
+      if (
+        [statePage, installedPage, sourcesPage, scansPage].some((p) => p.more) ||
+        installedPage.rows.length > 64 ||
+        sourcesPage.rows.length > 64 ||
+        scansPage.rows.length > 256
+      )
+        throw new ApiError('ARCHIVE_COVERAGE_INCOMPLETE', 409);
+      let complete = statePage.rows[0]?.complete === true;
+      for (const grant of installedPage.rows.filter((r) => r.actions.length > 0))
+        if (
+          !sourcesPage.rows.some(
+            (s) => s.source === grant.account && s.code_hash === grant.code_hash,
+          )
+        )
+          complete = false;
+      const sourcePins = [];
+      for (const entry of sourcesPage.rows) {
+        const response = await fetch(this.config.rpcUrl + '/v1/chain/get_code_hash', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ account_name: entry.source }),
+          signal: AbortSignal.timeout(10000),
+        });
+        if (!response.ok) throw new ApiError('CHAIN_UNAVAILABLE', 503);
+        const current = z.object({ code_hash: ChainIdSchema }).parse(await response.json());
+        sourcePins.push({ source: entry.source, codeHash: current.code_hash });
+        if (
+          current.code_hash !== entry.code_hash ||
+          entry.tables.some(
+            (table) =>
+              !scansPage.rows.some(
+                (scan) =>
+                  scan.source === entry.source &&
+                  scan.table === table &&
+                  scan.complete &&
+                  scan.code_hash === entry.code_hash,
+              ),
+          )
+        )
+          complete = false;
+      }
+      const documents = [],
+        heads = [],
+        clocks = [],
+        references = [];
+      for (const id of input.documentRows) {
+        const page = await this.moduleRows(
+            dao.contract,
+            'documents',
+            RuntimeTableSchemas.documents,
+            id,
+            id,
+            1,
+            'i64',
+            1,
+            dao.daoId,
+          ),
+          document = page.rows[0];
+        if (!document || document.id !== id) throw new ApiError('DOCUMENT_UNKNOWN', 404);
+        const index = ((BigInt(document.document_id) << 32n) | BigInt(document.version)).toString();
+        const [head, clock, ref] = await Promise.all([
+          this.moduleRows(
+            dao.contract,
+            'docheads',
+            RuntimeTableSchemas.docheads,
+            document.document_id,
+            document.document_id,
+            1,
+            'i64',
+            1,
+            dao.daoId,
+          ),
+          this.moduleRows(
+            dao.contract,
+            'docclocks',
+            RuntimeTableSchemas.docclocks,
+            id,
+            id,
+            1,
+            'i64',
+            1,
+            dao.daoId,
+          ),
+          this.moduleRows(
+            dao.contract,
+            'docrefs',
+            RuntimeTableSchemas.docrefs,
+            index,
+            index,
+            3,
+            'i128',
+            1,
+            dao.daoId,
+          ),
+        ]);
+        documents.push(document);
+        heads.push(...head.rows);
+        clocks.push(...clock.rows);
+        references.push(
+          ...ref.rows.map((r) => ({ document_id: r.document_id, version: r.version })),
+        );
+      }
+      return {
+        state: {
+          coverageComplete: complete,
+          documents,
+          heads: [...new Map(heads.map((h) => [h.document_id, h])).values()],
+          clocks,
+          references,
+        },
+        sourcePins,
+        installed: installedPage.rows,
+        sources: sourcesPage.rows,
+        scans: scansPage.rows,
+      };
+    };
+    const first = await read(),
+      info = await this.api.v1.chain.get_info();
+    await this.confirmBlock(Number(info.head_block_num));
+    const current = await read();
+    if (JSON.stringify(first) !== JSON.stringify(current))
+      throw new ApiError('ARCHIVE_ANCHOR_PENDING', 503);
+    const head = await this.api.v1.chain.get_info(),
+      [block, account] = await Promise.all([
+        this.api.v1.chain.get_block(head.last_irreversible_block_num),
+        this.api.v1.chain.get_account(dao.contract),
+      ]);
+    if (
+      head.chain_id.toString() !== dao.chainId ||
+      block.id.toString() !== head.last_irreversible_block_id.toString() ||
+      Number(block.block_num) !== Number(head.last_irreversible_block_num)
+    )
+      throw new ApiError('ARCHIVE_SNAPSHOT_UNQUALIFIED', 503);
+    await this.reviewedRuntime(dao.contract);
+    return planDocumentArchive(
+      DocumentArchiveInputSchema.parse({
+        dao,
+        source: { account: dao.contract, codeHash: source.codeHash, abiHash: source.rawAbiHash },
+        snapshot: {
+          blockNumber: Number(block.block_num),
+          blockId: block.id.toString(),
+          timestamp: new Date(block.timestamp.toMilliseconds()).toISOString(),
+        },
+        sourceUpdatedAt: new Date(account.last_code_update.toMilliseconds()).toISOString(),
+        retentionSeconds: input.retentionSeconds,
+        ...current.state,
+      }),
+    );
+  }
+  async archivePreview(value: ArchiveSelection) {
     const input = ArchiveRoutes.preview.input.parse(value);
+    if ('documentRows' in input) {
+      if (
+        input.dao.chainId !== this.config.chainId ||
+        input.dao.contract !== this.config.runtime ||
+        input.dao.interfaceVersion !== 1
+      )
+        throw new ApiError('DAO_REFERENCE');
+      return this.documentArchivePreview(input);
+    }
     if (
       input.dao.chainId !== this.config.chainId ||
       input.dao.contract !== this.config.runtime ||
@@ -2005,6 +2266,7 @@ export class NativeChainGateway implements ChainGateway {
     index = 1,
     keyType = 'i64',
     limit = 200,
+    scope = this.config.runtime,
   ): Promise<{ rows: T[]; more: boolean }> {
     const response = await fetch(`${this.config.rpcUrl}/v1/chain/get_table_rows`, {
       method: 'POST',
@@ -2012,7 +2274,7 @@ export class NativeChainGateway implements ChainGateway {
       body: JSON.stringify({
         code: account,
         table,
-        scope: this.config.runtime,
+        scope,
         json: true,
         limit,
         index_position: index,

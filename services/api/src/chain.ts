@@ -32,7 +32,7 @@ import type {
 import type { HostingChain } from '../../../protocol/hosting.js';
 import type { HubDirectorySchema } from '../../../protocol/directory.js';
 import type {
-  ArchivePreviewRequest,
+  ArchiveSelection,
   OrdinaryPollArchivePlan,
   ArchivePruneBatch,
   ArchiveProgressSchema,
@@ -56,7 +56,7 @@ export interface ChainGateway {
     manifestCommitment: string,
   ): Promise<z.infer<typeof ArchiveProgressSchema>>;
   pruneArchive?(dao: DaoRef, manifestCommitment: string, input: ArchivePruneBatch): Promise<void>;
-  archivePreview?(input: ArchivePreviewRequest): Promise<OrdinaryPollArchivePlan>;
+  archivePreview?(input: ArchiveSelection): Promise<OrdinaryPollArchivePlan>;
   resourcePolicy?(): Promise<ResourcePolicy | null>;
   ramUsage?(daoId: string): Promise<RamUsage>;
   ramQuote?(input: RamQuoteRequest): Promise<RamQuote>;

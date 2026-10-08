@@ -10,6 +10,7 @@ import {
   StorageBillingStatusSchema,
   StorageSubscriptionStateSchema,
   storagePricingHash,
+  storageNotices,
   monthlyStorageUsdCents,
   validateStorageApproval,
   type StoragePricing,
@@ -81,6 +82,7 @@ function invoicePortal(value: string | null): string | null {
 }
 export class HostedStorage {
   private readonly stripe: Stripe;
+  noticeDelivery = false;
   constructor(
     private readonly pool: Pool,
     private readonly chain: ChainGateway,
@@ -150,17 +152,20 @@ export class HostedStorage {
       : undefined;
     const pending = row ? await this.pending(row) : undefined;
     const next = pending ? await this.approval(pending.request_id) : undefined;
+    const funding = await storageFunding(
+      this.pool,
+      dao,
+      this.config.providerScope,
+      this.fallback,
+      new Date(),
+    );
     return StorageBillingStatusSchema.parse({
       dao,
       configured: true,
       currentPricing: current,
-      funding: await storageFunding(
-        this.pool,
-        dao,
-        this.config.providerScope,
-        this.fallback,
-        new Date(),
-      ),
+      funding,
+      notices: storageNotices(funding),
+      noticeDelivery: this.noticeDelivery,
       subscription:
         row && approval
           ? {

@@ -22,6 +22,7 @@ import { Uint64Schema } from '../../../../protocol/base.js';
 import type { ChainGateway } from '../chain.js';
 import type { ContentProvider, PinnedFile } from './provider.js';
 import { ApiError } from '../errors.js';
+import { releaseAbsentUpload } from './orphans.js';
 import { fundedStorage } from './capacity.js';
 import { HostedAssets } from './assets.js';
 import { StorageRetention } from './retention.js';
@@ -390,7 +391,8 @@ export class ContentService {
       if (
         currentRow.provider_id !== providerId ||
         currentRow.cid !== file.cid ||
-        currentRow.request_hash !== row.request_hash
+        currentRow.request_hash !== row.request_hash ||
+        currentRow.storage_released_at !== null
       )
         throw new ApiError('STORAGE_OBJECT_REVIEW', 409);
       await recordVerifiedObject(client, this.providerScope, row.id, document, file);
@@ -483,7 +485,7 @@ export class ContentService {
     const value = result.rows[0];
     if (!value) return 'completed';
     const row = RowSchema.parse(value);
-    if (row.state === 'failed') return 'completed';
+    if (row.state === 'failed' || row.storage_released_at) return 'completed';
     if (row.provider_scope !== this.providerScope || row.import_profile !== CONTENT_IMPORT_PROFILE)
       return 'manual';
     if (row.state === 'published') return 'completed';
@@ -517,6 +519,17 @@ export class ContentService {
       );
       return 'completed';
     }
+    if (
+      !published &&
+      (await releaseAbsentUpload(
+        this.pool,
+        this.provider,
+        'uploads',
+        row,
+        contentDaoKey(row.intent.dao),
+      ))
+    )
+      return 'completed';
     if (row.state === 'reserved' || row.state === 'uploaded') {
       const files =
         row.storage_object_id && row.provider_id && row.cid

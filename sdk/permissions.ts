@@ -11,6 +11,7 @@ export const CoreContextActions = [
   'setprofile',
   'putdoc',
   'putjson',
+  'restoredoc',
   'commitepoch',
   'rotateepoch',
   'linknative',

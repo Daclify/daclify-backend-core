@@ -541,3 +541,12 @@ Before implementation delivery:
 - [ ] No mainnet deployment, production deletion, authority change or asset movement was inferred from approval of this plan.
 
 Current implementation and all open gates are tracked in the [execution ledger](../../evidence/2026-10-08-resource-execution.md). A checked supported-family requirement does not enable protected document pruning, production cleanup or immutable release qualification.
+
+
+## Execution refinement: automatic included allocations
+
+The user approved continuing the full plan. Implement included grants without a second billing service: an opt-in native `setramauto` policy declares at most six core/module payer offers. Their activity bytes must sum to the current governed included activity allowance; identity growth is billed to the core payer. Every offered payer must have a current, qualified, exclusive backed pool. New DAO creation atomically issues these allocations or rolls back; configuration alone cannot grant capacity. Each DAO retains its accepted identity rate and a permanent maximum funded slot count. Verified member-capacity increases allocate only the newly funded slots; renewals, decreases and revocations neither mint bytes nor reclaim occupied/purchased capacity. A changed global policy requires an operator-reviewed offer update for new DAOs and leaves existing accepted rates unchanged. Legacy adoption, obligation-specific holds, quota enforcement and emergency withdrawal policy are not inferred from this step.
+
+## Confirmed emergency withdrawal policy — 2026-10-09
+
+The user selected full-claim emergency withdrawals when ordinary DAO RAM is exhausted. Partial withdrawals remain supported only with sufficient ordinary RAM. Each accepted future claim must reserve enough bounded completion capacity for its payout/receipt and the full-claim exit path. Do not enable quotas until native tests prove settlement, full-claim exit, recovery and cleanup still work at exhaustion and that another DAO retains its own capacity. Existing serialized rows and approved liabilities retain their rights; legacy work must be backfilled/drained before enforcement. A full-balance UI shortcut is not proof of contract emergency enforcement.

@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = 'c9a01fd6b5d6aff698830955f310d377e2a319ad9e9e6abcdf27c5358563a840';
+export const runtimeAbiHash = '7c27972fb5a349024396c29012f47453720cb66f99f602da285488fb1e3a9d8f';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -544,6 +544,20 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "archive_prune_proof",
+      "base": "",
+      "fields": [
+        {
+          "name": "primary_key",
+          "type": "uint64"
+        },
+        {
+          "name": "siblings",
+          "type": "checksum256[]"
+        }
+      ]
+    },
+    {
       "name": "archrevoke",
       "base": "",
       "fields": [
@@ -618,6 +632,20 @@ export const runtimeAbi = {
         {
           "name": "intent",
           "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "backfilldocs",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "limit",
+          "type": "uint32"
         }
       ]
     },
@@ -1112,6 +1140,140 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "docref",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "table",
+          "type": "name"
+        },
+        {
+          "name": "source_id",
+          "type": "uint64"
+        },
+        {
+          "name": "slot",
+          "type": "uint8"
+        },
+        {
+          "name": "document_id",
+          "type": "uint64"
+        },
+        {
+          "name": "version",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "docscanstep",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "table",
+          "type": "name"
+        },
+        {
+          "name": "start",
+          "type": "uint64"
+        },
+        {
+          "name": "next",
+          "type": "uint64"
+        },
+        {
+          "name": "complete",
+          "type": "bool"
+        },
+        {
+          "name": "scanned",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "docsrc",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "tables",
+          "type": "name[]"
+        }
+      ]
+    },
+    {
+      "name": "document_clock",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "document_id",
+          "type": "uint64"
+        },
+        {
+          "name": "version",
+          "type": "uint32"
+        },
+        {
+          "name": "created_at",
+          "type": "uint32"
+        },
+        {
+          "name": "legacy",
+          "type": "bool"
+        },
+        {
+          "name": "row_hash",
+          "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "document_head",
+      "base": "",
+      "fields": [
+        {
+          "name": "document_id",
+          "type": "uint64"
+        },
+        {
+          "name": "version",
+          "type": "uint32"
+        },
+        {
+          "name": "author",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
       "name": "document_record",
       "base": "",
       "fields": [
@@ -1154,6 +1316,110 @@ export const runtimeAbi = {
         {
           "name": "key_epoch",
           "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "document_reference",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "table",
+          "type": "name"
+        },
+        {
+          "name": "source_id",
+          "type": "uint64"
+        },
+        {
+          "name": "slot",
+          "type": "uint8"
+        },
+        {
+          "name": "document_id",
+          "type": "uint64"
+        },
+        {
+          "name": "version",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "document_scan",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "table",
+          "type": "name"
+        },
+        {
+          "name": "code_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "cursor",
+          "type": "uint64"
+        },
+        {
+          "name": "complete",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "document_source",
+      "base": "",
+      "fields": [
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "code_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "tables",
+          "type": "name[]"
+        }
+      ]
+    },
+    {
+      "name": "document_state",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "high_water",
+          "type": "uint64"
+        },
+        {
+          "name": "cursor",
+          "type": "uint64"
+        },
+        {
+          "name": "complete",
+          "type": "bool"
         }
       ]
     },
@@ -2583,6 +2849,32 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "prunedocs",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "archive_id",
+          "type": "uint64"
+        },
+        {
+          "name": "chunk_ordinal",
+          "type": "uint32"
+        },
+        {
+          "name": "start",
+          "type": "uint32"
+        },
+        {
+          "name": "proofs",
+          "type": "archive_prune_proof[]"
+        }
+      ]
+    },
+    {
       "name": "putdoc",
       "base": "",
       "fields": [
@@ -2711,6 +3003,24 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "ram_auto_policy",
+      "base": "",
+      "fields": [
+        {
+          "name": "enabled",
+          "type": "bool"
+        },
+        {
+          "name": "policy_revision",
+          "type": "uint64"
+        },
+        {
+          "name": "offers",
+          "type": "ram_offer[]"
+        }
+      ]
+    },
+    {
       "name": "ram_card_receipt",
       "base": "",
       "fields": [
@@ -2785,6 +3095,28 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "ram_entitlement",
+      "base": "",
+      "fields": [
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "policy_revision",
+          "type": "uint64"
+        },
+        {
+          "name": "identity_per_slot",
+          "type": "uint64"
+        },
+        {
+          "name": "slots",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
       "name": "ram_grant_receipt",
       "base": "",
       "fields": [
@@ -2829,6 +3161,24 @@ export const runtimeAbi = {
         {
           "name": "runtime_hash",
           "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "ram_offer",
+      "base": "",
+      "fields": [
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "activity",
+          "type": "uint64"
+        },
+        {
+          "name": "completion",
+          "type": "uint64"
         }
       ]
     },
@@ -3107,6 +3457,28 @@ export const runtimeAbi = {
         {
           "name": "storage_monthly_usd",
           "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "restoredoc",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "original",
+          "type": "document_record"
         }
       ]
     },
@@ -3623,6 +3995,20 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "setramauto",
+      "base": "",
+      "fields": [
+        {
+          "name": "enabled",
+          "type": "bool"
+        },
+        {
+          "name": "offers",
+          "type": "ram_offer[]"
+        }
+      ]
+    },
+    {
       "name": "setramcode",
       "base": "",
       "fields": [
@@ -3954,6 +4340,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "backfilldocs",
+      "type": "backfilldocs",
+      "ricardian_contract": ""
+    },
+    {
       "name": "cancelob",
       "type": "cancelob",
       "ricardian_contract": ""
@@ -3991,6 +4382,21 @@ export const runtimeAbi = {
     {
       "name": "delsession",
       "type": "delsession",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "docref",
+      "type": "docref",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "docscanstep",
+      "type": "docscanstep",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "docsrc",
+      "type": "docsrc",
       "ricardian_contract": ""
     },
     {
@@ -4154,6 +4560,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "prunedocs",
+      "type": "prunedocs",
+      "ricardian_contract": ""
+    },
+    {
       "name": "putdoc",
       "type": "putdoc",
       "ricardian_contract": ""
@@ -4176,6 +4587,11 @@ export const runtimeAbi = {
     {
       "name": "reserve",
       "type": "reserve",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "restoredoc",
+      "type": "restoredoc",
       "ricardian_contract": ""
     },
     {
@@ -4281,6 +4697,11 @@ export const runtimeAbi = {
     {
       "name": "setprofile",
       "type": "setprofile",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "setramauto",
+      "type": "setramauto",
       "ricardian_contract": ""
     },
     {
@@ -4442,6 +4863,48 @@ export const runtimeAbi = {
       "key_types": []
     },
     {
+      "name": "docclocks",
+      "type": "document_clock",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "docheads",
+      "type": "document_head",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "docrefs",
+      "type": "document_reference",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "docscan",
+      "type": "document_scan",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "docsrcs",
+      "type": "document_source",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "docstate",
+      "type": "document_state",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "documents",
       "type": "document_record",
       "index_type": "i64",
@@ -4568,8 +5031,22 @@ export const runtimeAbi = {
       "key_types": []
     },
     {
+      "name": "ramauto",
+      "type": "ram_auto_policy",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "ramcards",
       "type": "ram_card_receipt",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "ramentitle",
+      "type": "ram_entitlement",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -4826,6 +5303,10 @@ export interface archive_position {
   chunk_ordinal: number;
   pruned: number;
 }
+export interface archive_prune_proof {
+  primary_key: string;
+  siblings: string[];
+}
 export interface archrevoke {
   runtime: string;
   dao_id: string;
@@ -4846,6 +5327,10 @@ export interface archstep {
 export interface authproof {
   account: string;
   intent: string;
+}
+export interface backfilldocs {
+  dao_id: string;
+  limit: number;
 }
 export interface budget_record {
   dao_id: string;
@@ -4977,6 +5462,42 @@ export interface delsession {
   member_id: string;
   session_id: string;
 }
+export interface docref {
+  dao_id: string;
+  source: string;
+  table: string;
+  source_id: string;
+  slot: number;
+  document_id: string;
+  version: number;
+}
+export interface docscanstep {
+  dao_id: string;
+  source: string;
+  table: string;
+  start: string;
+  next: string;
+  complete: boolean;
+  scanned: number;
+}
+export interface docsrc {
+  dao_id: string;
+  source: string;
+  tables: string[];
+}
+export interface document_clock {
+  id: string;
+  document_id: string;
+  version: number;
+  created_at: number;
+  legacy: boolean;
+  row_hash: string;
+}
+export interface document_head {
+  document_id: string;
+  version: number;
+  author: string;
+}
 export interface document_record {
   id: string;
   document_id: string;
@@ -4988,6 +5509,34 @@ export interface document_record {
   bytes: number;
   envelope_version: number;
   key_epoch: string;
+}
+export interface document_reference {
+  id: string;
+  source: string;
+  table: string;
+  source_id: string;
+  slot: number;
+  document_id: string;
+  version: number;
+}
+export interface document_scan {
+  id: string;
+  source: string;
+  table: string;
+  code_hash: string;
+  cursor: string;
+  complete: boolean;
+}
+export interface document_source {
+  source: string;
+  code_hash: string;
+  tables: string[];
+}
+export interface document_state {
+  id: string;
+  high_water: string;
+  cursor: string;
+  complete: boolean;
 }
 export interface enroll {
   dao_id: string;
@@ -5373,6 +5922,13 @@ export interface profile_record {
   account_name: string;
   profile: string;
 }
+export interface prunedocs {
+  dao_id: string;
+  archive_id: string;
+  chunk_ordinal: number;
+  start: number;
+  proofs: archive_prune_proof[];
+}
 export interface putdoc {
   runtime: string;
   dao_id: string;
@@ -5407,6 +5963,11 @@ export interface ram_allocation {
   payer: string;
   purchased_bytes: string;
 }
+export interface ram_auto_policy {
+  enabled: boolean;
+  policy_revision: string;
+  offers: ram_offer[];
+}
 export interface ram_card_receipt {
   id: string;
   dao_id: string;
@@ -5427,6 +5988,12 @@ export interface ram_dao_limit {
   identity: string;
   completion: string;
 }
+export interface ram_entitlement {
+  payer: string;
+  policy_revision: string;
+  identity_per_slot: string;
+  slots: number;
+}
 export interface ram_grant_receipt {
   id: string;
   dao_id: string;
@@ -5439,6 +6006,11 @@ export interface ram_grant_receipt {
 export interface ram_observer_config {
   meter_bytes: string;
   runtime_hash: string;
+}
+export interface ram_offer {
+  payer: string;
+  activity: string;
+  completion: string;
 }
 export interface ram_operator_reserve {
   available: string;
@@ -5514,6 +6086,12 @@ export interface resource_policy {
   storage_free_bytes: string;
   storage_unit_bytes: string;
   storage_monthly_usd: number;
+}
+export interface restoredoc {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  original: document_record;
 }
 export interface resumecap {
   dao_id: string;
@@ -5655,6 +6233,10 @@ export interface setprofile {
   account_name: string;
   profile: string;
 }
+export interface setramauto {
+  enabled: boolean;
+  offers: ram_offer[];
+}
 export interface setramcode {
   account: string;
   code_hash: string;
@@ -5743,6 +6325,7 @@ export interface RuntimeActions {
   archrevoke: archrevoke;
   archstep: archstep;
   authproof: authproof;
+  backfilldocs: backfilldocs;
   cancelob: cancelob;
   cardcreate: cardcreate;
   checkrampool: checkrampool;
@@ -5751,6 +6334,9 @@ export interface RuntimeActions {
   createdao: createdao;
   createpaid: createpaid;
   delsession: delsession;
+  docref: docref;
+  docscanstep: docscanstep;
+  docsrc: docsrc;
   enroll: enroll;
   enrollagent: enrollagent;
   finishram: finishram;
@@ -5783,11 +6369,13 @@ export interface RuntimeActions {
   orderfree: orderfree;
   orderram: orderram;
   payob: payob;
+  prunedocs: prunedocs;
   putdoc: putdoc;
   putjson: putjson;
   ramadjust: ramadjust;
   rebindramobs: rebindramobs;
   reserve: reserve;
+  restoredoc: restoredoc;
   resumecap: resumecap;
   revokecap: revokecap;
   rotateepoch: rotateepoch;
@@ -5809,6 +6397,7 @@ export interface RuntimeActions {
   setoracle: setoracle;
   setpolicy: setpolicy;
   setprofile: setprofile;
+  setramauto: setramauto;
   setramcode: setramcode;
   setrampool: setrampool;
   setresources: setresources;

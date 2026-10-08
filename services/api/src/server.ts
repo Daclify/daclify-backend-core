@@ -79,6 +79,7 @@ export async function createServer(
   origin: string,
   options: {
     content?: ContentService;
+    storageAlerts?: boolean;
     providers?: ProviderConfiguration;
     billing?: StripeBilling;
     hosting?: HostedSubscriptions;
@@ -335,6 +336,18 @@ export async function createServer(
         'Guarded storage retention',
         !!options.content?.retention.cleanupEnabled,
         'Operator-enabled cleanup requires separate live-provider qualification and complete pin/payment recovery. It never erases native identities, claims or purchased RAM.',
+      ],
+      [
+        'storage-notices',
+        'Storage reminders',
+        !!options.hostedStorage?.noticeDelivery,
+        'Current administrator and paired email are checked before a period-bound reminder. Retries can duplicate an email; in-app notices remain available.',
+      ],
+      [
+        'storage-alerts',
+        'Storage operator alerts',
+        !!options.storageAlerts,
+        'Scope-bound removal/recovery incidents notify the configured operator. Staged bytes remain protected; mail delivery needs separate qualification.',
       ],
       [
         'storage-billing',

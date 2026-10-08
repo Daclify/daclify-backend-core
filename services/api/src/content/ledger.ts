@@ -1,6 +1,6 @@
 import type { PoolClient } from 'pg';
 import { z } from 'zod';
-import { CidSchema, Uint64Schema } from '../../../../protocol/base.js';
+import { CidSchema, Uint64Schema, type DaoRef } from '../../../../protocol/base.js';
 import {
   HostedObjectDescriptorSchema,
   HostedReferenceSchema,
@@ -52,9 +52,9 @@ export async function storageUsed(client: PoolClient, daoKey: string): Promise<b
        UNION SELECT storage_object_id FROM asset_uploads WHERE dao_key=$1 AND storage_object_id IS NOT NULL AND storage_released_at IS NULL
      ) SELECT (
        COALESCE((SELECT sum(verified_bytes) FROM hosted_objects WHERE id IN (SELECT id FROM objects)),0)
-       + COALESCE((SELECT sum(expected_size) FROM uploads WHERE dao_key=$1 AND storage_object_id IS NULL
+       + COALESCE((SELECT sum(expected_size) FROM uploads WHERE dao_key=$1 AND storage_object_id IS NULL AND storage_released_at IS NULL
          AND (state<>'failed' OR provider_id IS NOT NULL)),0)
-       + COALESCE((SELECT sum(expected_bytes) FROM asset_uploads WHERE dao_key=$1 AND storage_object_id IS NULL),0)
+       + COALESCE((SELECT sum(expected_bytes) FROM asset_uploads WHERE dao_key=$1 AND storage_object_id IS NULL AND storage_released_at IS NULL),0)
        + COALESCE((SELECT sum(remaining_bytes) FROM archive_storage_holds WHERE dao_key=$1 AND state='held'),0)
      )::text AS used`,
     [daoKey],
@@ -158,4 +158,37 @@ export async function recordVerifiedPin(
   );
   if (retained.rowCount !== 1) throw new ApiError('STORAGE_OBJECT_REVIEW', 409);
   return objectId.data;
+}
+
+export async function recordArchiveGroup(
+  client: PoolClient,
+  scope: string,
+  dao: DaoRef,
+  key: string,
+  values: string[],
+): Promise<void> {
+  scope = ProviderScopeSchema.parse(scope);
+  key = z.string().min(1).max(256).parse(key);
+  const objects = z.array(z.uuid()).min(1).max(33).parse(values),
+    ids = [...new Set(objects)].sort(),
+    daoKey = contentDaoKey(dao);
+  await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`upload-dao:${daoKey}`]);
+  const known = await client.query<{ id: string }>(
+    `SELECT DISTINCT o.id FROM hosted_objects o JOIN hosted_references r ON r.object_id=o.id WHERE r.dao_key=$1 AND o.provider_scope=$2 AND o.id=ANY($3::uuid[])`,
+    [daoKey, scope, ids],
+  );
+  if (known.rows.length !== ids.length) throw new ApiError('STORAGE_DEPENDENCY_UNKNOWN', 409);
+  const prior = await client.query<{ object_id: string }>(
+    'SELECT object_id FROM hosted_archive_members WHERE dao_key=$1 AND provider_scope=$2 AND bundle_key=$3 ORDER BY object_id',
+    [daoKey, scope, key],
+  );
+  if (prior.rows.length) {
+    if (JSON.stringify(prior.rows.map((r) => r.object_id)) !== JSON.stringify(ids))
+      throw new ApiError('STORAGE_DEPENDENCY_IMMUTABLE', 409);
+    return;
+  }
+  await client.query(
+    'INSERT INTO hosted_archive_members(dao_key,provider_scope,bundle_key,object_id) SELECT $1,$2,$3,unnest($4::uuid[])',
+    [daoKey, scope, key, ids],
+  );
 }

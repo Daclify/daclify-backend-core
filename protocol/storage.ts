@@ -118,7 +118,7 @@ export const StorageRecoveryPageSchema = StorageRecoveryRequestSchema.pick({
         state: z.enum(['recovered', 'tracked', 'external', 'unavailable', 'released']),
       }),
     )
-    .max(33),
+    .max(58),
 });
 export type HostedUpload = z.infer<typeof HostedUploadSchema>;
 export type HostedDocument = z.infer<typeof HostedDocumentSchema>;
@@ -245,11 +245,59 @@ export const StorageFundingSchema = z.strictObject({
   uploadCapacityBytes: Uint64Schema,
   retainedCapacityBytes: Uint64Schema,
 });
+export const StorageNoticeSchema = z.strictObject({
+  stage: z.enum([
+    'renewal-due',
+    'grace-started',
+    'grace-ending',
+    'hosting-ended',
+    'billing-review',
+  ]),
+  paidThrough: StorageInstantSchema,
+  graceEndsAt: StorageInstantSchema,
+});
+export function storageNotices(
+  value: z.infer<typeof StorageFundingSchema>,
+  now = new Date(),
+): z.infer<typeof StorageNoticeSchema>[] {
+  const funding = StorageFundingSchema.parse(value);
+  if (!Number.isFinite(now.getTime())) throw new RangeError('STORAGE_PERIOD_RANGE');
+  if (
+    !funding.paidThrough ||
+    !funding.graceEndsAt ||
+    funding.state === 'free' ||
+    funding.state === 'pending'
+  )
+    return [];
+  const stage =
+    funding.state === 'review'
+      ? 'billing-review'
+      : funding.state === 'overdue'
+        ? 'hosting-ended'
+        : funding.state === 'grace'
+          ? Date.parse(funding.graceEndsAt) - now.getTime() <= 7 * 86400000
+            ? 'grace-ending'
+            : 'grace-started'
+          : Date.parse(funding.paidThrough) - now.getTime() <= 7 * 86400000
+            ? 'renewal-due'
+            : null;
+  return stage
+    ? [
+        StorageNoticeSchema.parse({
+          stage,
+          paidThrough: funding.paidThrough,
+          graceEndsAt: funding.graceEndsAt,
+        }),
+      ]
+    : [];
+}
 export const StorageBillingStatusSchema = z.strictObject({
   dao: DaoRefSchema,
   configured: z.boolean(),
   currentPricing: StoragePricingSchema.nullable(),
   funding: StorageFundingSchema,
+  notices: z.array(StorageNoticeSchema).max(1).default([]),
+  noticeDelivery: z.boolean().default(false),
   subscription: z
     .strictObject({
       id: z.uuid(),

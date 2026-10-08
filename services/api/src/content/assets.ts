@@ -22,6 +22,7 @@ import {
   reusableObject,
   recordVerifiedPin,
 } from './ledger.js';
+import { releaseAbsentUpload } from './orphans.js';
 import { fundedStorage } from './capacity.js';
 const RowSchema = z.object({
   id: z.uuid(),
@@ -214,7 +215,7 @@ export class HostedAssets {
     )
       throw new ApiError('STORAGE_OBJECT_REVIEW', 409);
     const stage = await this.pool.query(
-      `UPDATE asset_uploads SET provider_id=$1,cid=$2,state='uploaded' WHERE id=$3 AND state IN ('reserved','uploaded','review') AND (provider_id IS NULL OR provider_id=$1) AND (cid IS NULL OR cid=$2) RETURNING id`,
+      `UPDATE asset_uploads SET provider_id=$1,cid=$2,state='uploaded' WHERE id=$3 AND state IN ('reserved','uploaded','review') AND storage_released_at IS NULL AND (provider_id IS NULL OR provider_id=$1) AND (cid IS NULL OR cid=$2) RETURNING id`,
       [pin.id, pin.cid, row.id],
     );
     if (!stage.rowCount) {
@@ -250,7 +251,8 @@ export class HostedAssets {
         current.request_hash !== row.request_hash ||
         current.provider_id !== pin.id ||
         current.cid !== pin.cid ||
-        current.provider_scope !== this.scope
+        current.provider_scope !== this.scope ||
+        current.storage_released_at !== null
       )
         throw new ApiError('STORAGE_OBJECT_REVIEW', 409);
       const objectId = await recordVerifiedPin(
@@ -286,7 +288,13 @@ export class HostedAssets {
     if (!found.rows[0]) return 'completed';
     const row = RowSchema.parse(found.rows[0]);
     if (row.provider_scope !== this.scope) return 'manual';
+    if (row.storage_released_at) return 'completed';
     if (['verified', 'published'].includes(row.state)) return 'completed';
+    if (
+      !row.archive_hold_id &&
+      (await releaseAbsentUpload(this.pool, this.provider, 'asset_uploads', row, row.dao_key))
+    )
+      return 'completed';
     if (row.provider_id && row.cid) {
       await this.verify(row, { id: row.provider_id, cid: row.cid, size: row.expected_bytes });
       return 'completed';

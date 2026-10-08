@@ -21,6 +21,21 @@ struct [[eosio::table("ramgrants"),eosio::contract("runtime")]] ram_grant_receip
  EOSLIB_SERIALIZE(ram_grant_receipt,(id)(dao_id)(payer)(reference)(activity)(identity)(completion))
 };
 using ram_grants=ram_table<"ramgrants"_n,ram_grant_receipt,indexed_by<"byreference"_n,const_mem_fun<ram_grant_receipt,checksum256,&ram_grant_receipt::by_reference>>>;
+struct ram_offer {
+ name payer;uint64_t activity,completion;
+ EOSLIB_SERIALIZE(ram_offer,(payer)(activity)(completion))
+};
+struct [[eosio::table("ramauto"),eosio::contract("runtime")]] ram_auto_policy {
+ bool enabled=false;uint64_t policy_revision=0;std::vector<ram_offer> offers;
+ EOSLIB_SERIALIZE(ram_auto_policy,(enabled)(policy_revision)(offers))
+};
+using ram_auto_settings=ram_singleton<"ramauto"_n,ram_auto_policy>;
+struct [[eosio::table("ramentitle"),eosio::contract("runtime")]] ram_entitlement {
+ name payer;uint64_t policy_revision,identity_per_slot;uint32_t slots;
+ uint64_t primary_key()const{return payer.value;}
+ EOSLIB_SERIALIZE(ram_entitlement,(payer)(policy_revision)(identity_per_slot)(slots))
+};
+using ram_entitlements=ram_table<"ramentitle"_n,ram_entitlement>;
 inline uint64_t ram_used(const ram_counter& row){return add64(add64(row.identity,row.activity),add64(row.retained,row.platform));}
 inline uint64_t ram_limit_bytes(const ram_dao_limit& value){return add64(add64(value.activity,value.identity),value.completion);}
 inline uint64_t committed_ram(name runtime,name payer,uint64_t target_dao=0,uint64_t extra=0){

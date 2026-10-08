@@ -27,7 +27,12 @@ import { HostedAssetReceiptSchema, HostedAssetUploadSchema } from '../../../../p
 import type { ChainGateway } from '../chain.js';
 import type { ContentProvider } from '../content/provider.js';
 import type { HostedAssets } from '../content/assets.js';
-import { contentDaoKey, storageUsed, ProviderScopeSchema } from '../content/ledger.js';
+import {
+  contentDaoKey,
+  storageUsed,
+  ProviderScopeSchema,
+  recordArchiveGroup,
+} from '../content/ledger.js';
 import { fundedStorage } from '../content/capacity.js';
 import { archivePreview } from './service.js';
 import { ApiError } from '../errors.js';
@@ -395,6 +400,17 @@ export class ArchiveExports {
           receipt.commitment,
           manifest.descriptorCommitment,
         ],
+      );
+      const members = await client.query<{ id: string }>(
+        `SELECT storage_object_id AS id FROM asset_uploads WHERE account_id=$1 AND request_id=$2 AND storage_object_id IS NOT NULL UNION SELECT storage_object_id AS id FROM archive_chunks WHERE export_id=$3 AND state='verified' AND storage_object_id IS NOT NULL`,
+        [account.id, row.manifest_request_id, id],
+      );
+      await recordArchiveGroup(
+        client,
+        this.scope,
+        row.dao,
+        `export:${id}`,
+        members.rows.map((r) => r.id),
       );
       await client.query(
         "UPDATE archive_storage_holds SET remaining_bytes=0,state='released' WHERE id=$1",
