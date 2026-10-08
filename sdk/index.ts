@@ -1,4 +1,5 @@
-import { ABI, Serializer, Checksum256 } from '@wharfkit/antelope';
+import { ABI, Serializer, Checksum256, Action } from '@wharfkit/antelope';
+import { RamQuoteSchema, type RamQuote } from '../protocol/resources.js';
 import {
   type DaoRef,
   DaoRefSchema,
@@ -20,6 +21,48 @@ export {
   type EvmBinding,
 } from './evm.js';
 const abi = ABI.from(runtimeAbi);
+export function nativeRamActions(value: RamQuote): Action[] {
+  const quote = RamQuoteSchema.parse(value),
+    authorization = [{ actor: quote.order.payer, permission: 'active' }];
+  const transferAbi = ABI.from({
+    version: 'eosio::abi/1.2',
+    structs: [
+      {
+        name: 'transfer',
+        base: '',
+        fields: [
+          { name: 'from', type: 'name' },
+          { name: 'to', type: 'name' },
+          { name: 'quantity', type: 'asset' },
+          { name: 'memo', type: 'string' },
+        ],
+      },
+    ],
+    actions: [{ name: 'transfer', type: 'transfer', ricardian_contract: '' }],
+  });
+  return [
+    Action.from({
+      account: quote.dao.contract,
+      name: 'orderram',
+      authorization,
+      data: encodeAction('orderram', quote.order),
+    }),
+    Action.from(
+      {
+        account: 'eosio.token',
+        name: 'transfer',
+        authorization,
+        data: {
+          from: quote.order.payer,
+          to: quote.dao.contract,
+          quantity: quote.order.maximum,
+          memo: 'ram:' + quote.order.reference,
+        },
+      },
+      transferAbi,
+    ),
+  ];
+}
 export function encodeAction<K extends keyof RuntimeActions>(
   name: K,
   args: RuntimeActions[K],

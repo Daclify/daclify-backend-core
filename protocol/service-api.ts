@@ -399,6 +399,33 @@ export const ServiceResponseRoutes = [
 }[];
 
 export const ContractFailureMessages = {
+  RAM_PURCHASE_TRANSACTION:
+    'Prepare the RAM order and its TLOS transfer together in one wallet transaction.',
+  RAM_ORDER_UNKNOWN: 'This RAM order was not found on the selected operator.',
+  RAM_BILLING_UNCONFIGURED: 'Card RAM purchases are not configured on this operator.',
+  RAM_CARD_AMOUNT_RANGE:
+    'Card RAM orders require a total of at least $5. Select a larger byte amount or pay with TLOS.',
+  RAM_APPROVAL_CHANGED:
+    'The RAM quote or exchange rate changed. Refresh and approve the new exact price.',
+  RAM_RATE_UNAVAILABLE:
+    'A current USD/TLOS rate and resource policy are required before card RAM checkout.',
+  RAM_RESERVE_INSUFFICIENT:
+    'The operator RAM reserve needs funding. Your order remains pending; DAO treasury and member claims cannot fund it.',
+  RAM_RECEIPT_INVALID:
+    'The payment or native resource receipt needs review before capacity can be provisioned.',
+  RAM_PAYMENT_REVIEW: 'A RAM payment for this DAO needs operator review before another card order.',
+  RAM_BILLING_AUTHORITY_UNCONFIGURED:
+    'The operator must configure its billing authority before card RAM provisioning.',
+  RAM_SYSTEM_UNQUALIFIED: 'This system contract or ABI has not been qualified for RAM purchases.',
+  RAM_RECEIVER_UNQUALIFIED: 'This contract payer has no qualified finite RAM allocation.',
+  RAM_RESOURCE_MODE_UNSUPPORTED:
+    'This account uses a resource mode that cannot verify RAM acquisition.',
+  RAM_RECEIVER_UNINSTALLED: 'Install and qualify this module before buying RAM for it.',
+  RAM_QUOTE_EXPIRED: 'This RAM quote expired. Request and approve a new quote.',
+  RAM_ACQUISITION_MINIMUM:
+    'The RAM market moved beyond your approved minimum. The whole payment was rolled back.',
+  RAM_PAYMENT_RANGE: 'The payment does not match the approved RAM price ceiling.',
+  RAM_SOURCE_CODE: 'The payer contract changed. Request a new qualified quote.',
   RESOURCE_POLICY_CHANGED:
     'The resource policy changed. Refresh and review the current values before signing.',
   RESOURCE_POLICY:

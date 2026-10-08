@@ -1,6 +1,13 @@
 import { z } from 'zod';
-import { checkedAdd, Uint64Schema, DaoRefSchema, NativeAccountSchema } from './base.js';
-import { RuntimeTableSchemas } from '../sdk/generated/schemas.js';
+import {
+  checkedAdd,
+  Uint64Schema,
+  DaoRefSchema,
+  NativeAccountSchema,
+  IdSchema,
+  MAX_ASSET_UNITS,
+} from './base.js';
+import { RuntimeTableSchemas, RuntimeActionSchemas } from '../sdk/generated/schemas.js';
 import { DEFAULT_STORAGE_PRICING, StoragePricingSchema, STORAGE_GRACE_SECONDS } from './storage.js';
 import { SpendingReportSchema } from './reporting.js';
 
@@ -69,6 +76,133 @@ export const RamUsageSchema = z
       context.addIssue({ code: 'custom', message: 'RESOURCE_RESPONSE_INCONSISTENT' });
   });
 export type RamUsage = z.infer<typeof RamUsageSchema>;
+export const RamQuoteRequestSchema = z.strictObject({
+  dao: DaoRefSchema,
+  payer: NativeAccountSchema,
+  allocations: z
+    .array(z.strictObject({ receiver: NativeAccountSchema, minimumBytes: IdSchema }))
+    .min(1)
+    .max(6)
+    .refine((rows) => new Set(rows.map((r) => r.receiver)).size === rows.length),
+});
+export type RamQuoteRequest = z.infer<typeof RamQuoteRequestSchema>;
+export const RamQuoteSchema = z
+  .strictObject({
+    dao: DaoRefSchema,
+    rail: z.literal('tlos'),
+    baseUnits: IdSchema,
+    feeUnits: Uint64Schema,
+    totalUnits: IdSchema,
+    feeBps: z.int().min(0).max(10000),
+    order: RuntimeActionSchemas.orderram,
+    systemCodeHash: z.string().regex(/^[0-9a-f]{64}$/),
+    systemRawAbiHash: z.string().regex(/^[0-9a-f]{64}$/),
+    quotedAt: z.iso.datetime(),
+  })
+  .superRefine((v, ctx) => {
+    const base = BigInt(v.baseUnits),
+      fee = (base * BigInt(v.feeBps) + 9999n) / 10000n;
+    let valid = false;
+    try {
+      valid =
+        v.order.dao_id === v.dao.daoId &&
+        v.order.payer !== v.dao.contract &&
+        v.feeUnits === fee.toString() &&
+        v.totalUnits === (base + fee).toString() &&
+        v.order.maximum === tlosAsset(base + fee) &&
+        v.order.purchases.length > 0 &&
+        v.order.purchases.length <= 6 &&
+        new Set(v.order.purchases.map((p) => p.receiver)).size === v.order.purchases.length &&
+        v.order.purchases.every((p) => BigInt(p.minimum_bytes) > 0n) &&
+        v.order.purchases.reduce((n, p) => n + tlosUnits(p.quantity), 0n) === base &&
+        v.order.expires > Date.parse(v.quotedAt) / 1000 &&
+        v.order.expires <= Date.parse(v.quotedAt) / 1000 + 3600;
+    } catch {
+      valid = false;
+    }
+    if (!valid) ctx.addIssue({ code: 'custom', message: 'RAM_QUOTE_INCONSISTENT' });
+  });
+export type RamQuote = z.infer<typeof RamQuoteSchema>;
+export const CardRamTermsSchema = z.strictObject({
+  quote: RamQuoteSchema,
+  policy: ResourcePolicySchema,
+  oracle: RuntimeTableSchemas.createcfg.pick({ median: true, precision: true, observed_at: true }),
+  baseUsdCents: z.int().positive().max(99999999),
+  feeUsdCents: z.int().nonnegative().max(99999999),
+  totalUsdCents: z.int().min(500).max(99999999),
+});
+export const CardRamApprovalSchema = CardRamTermsSchema.extend({
+  requestId: z.uuid(),
+  consent: z.literal(true),
+}).superRefine((v, ctx) => {
+  try {
+    const expected = cardRamPrice(
+      BigInt(v.quote.baseUnits),
+      v.oracle.median,
+      v.oracle.precision,
+      v.policy,
+    );
+    if (
+      v.quote.order.policy_revision !== v.policy.revision ||
+      expected.base !== BigInt(v.baseUsdCents) ||
+      expected.fee !== BigInt(v.feeUsdCents) ||
+      expected.total !== BigInt(v.totalUsdCents)
+    )
+      throw new Error('price');
+  } catch {
+    ctx.addIssue({ code: 'custom', message: 'RAM_APPROVAL_INCONSISTENT' });
+  }
+});
+export type CardRamApproval = z.infer<typeof CardRamApprovalSchema>;
+export const CardRamOrderSchema = z.strictObject({
+  id: z.uuid(),
+  dao: DaoRefSchema,
+  state: z.enum(['pending', 'paid', 'provisioning', 'settled', 'review']),
+  approval: CardRamApprovalSchema,
+  checkoutUrl: z.url().nullable(),
+  acquiredBytes: Uint64Schema.nullable(),
+  settledAt: z.iso.datetime().nullable(),
+});
+export function cardRamPrice(
+  nativeBase: bigint,
+  median: string,
+  precision: number,
+  policy: ResourcePolicy,
+) {
+  const rate = BigInt(Uint64Schema.parse(median));
+  if (
+    rate <= 0n ||
+    nativeBase <= 0n ||
+    nativeBase > MAX_ASSET_UNITS ||
+    !Number.isInteger(precision) ||
+    precision < 0 ||
+    precision > 18
+  )
+    throw new RangeError('RAM_RATE_RANGE');
+  const divisor = 10000n * 10n ** BigInt(precision),
+    numerator = nativeBase * rate * 100n;
+  const base = (numerator + divisor - 1n) / divisor;
+  return ramPurchasePrice(base, 'card', policy);
+}
+function tlosUnits(value: string): bigint {
+  if (!/^(0|[1-9][0-9]*)\.[0-9]{4} TLOS$/.test(value)) throw new RangeError('RAM_AMOUNT_RANGE');
+  const amount = BigInt(value.replace('.', '').split(' ')[0] ?? '');
+  if (amount <= 0n || amount > MAX_ASSET_UNITS) throw new RangeError('RAM_AMOUNT_RANGE');
+  return amount;
+}
+export function tlosAsset(units: bigint): string {
+  if (units < 0n || units > MAX_ASSET_UNITS) throw new RangeError('RAM_AMOUNT_RANGE');
+  return `${units / 10000n}.${(units % 10000n).toString().padStart(4, '0')} TLOS`;
+}
+// This is a bounded estimate; the native minimum check is the authority on actual acquired bytes.
+export function ramMarketCost(bytes: bigint, ramReserve: bigint, tokenReserve: bigint): bigint {
+  if (bytes <= 0n || bytes >= ramReserve || tokenReserve <= 0n)
+    throw new RangeError('RAM_MARKET_RANGE');
+  const net = (tokenReserve * bytes + ramReserve - bytes - 1n) / (ramReserve - bytes);
+  const cost = (net * 200n + 198n) / 199n + 2n;
+  if (cost > MAX_ASSET_UNITS) throw new RangeError('RAM_AMOUNT_RANGE');
+  return cost;
+}
 export const DEFAULT_RESOURCE_POLICY: ResourcePolicy = ResourcePolicySchema.parse({
   schemaVersion: 1,
   revision: '0',

@@ -263,5 +263,17 @@
       "Fork improvements can be reused in Daclify under AGPL with their notices retained. Contributors keep their copyright; the license does not require a pull request or transfer ownership. Private changes with neither distribution nor network interaction need not be published.",
       "Commercial hosting, subscriptions and paid services are allowed. Independently developed modules and services need a compatibility review; putting code in another repository does not automatically exempt a combined work. No trademark permission is granted to present a fork as the official Daclify service."
     ]
+  },
+  {
+    "id": "resources-and-retention",
+    "title": "RAM, hosted storage and archive recovery",
+    "paragraphs": [
+      "Blockchain RAM holds live contract records; IPFS holds pinned files and archive bundles. They are separate resources. Resources shows exact DAO RAM counters and permanent purchased bytes by contract payer. Whole-account figures include other DAOs, code and permissions. An unavailable DAO total is not a zero-byte total.",
+      "To buy RAM with TLOS, select a qualified contract payer and minimum byte increase, review native acquisition cost plus one operational fee (5% at launch), then approve the one-time wallet payment. Order and token payment share one transaction. Every actual quota increase is checked; an expired quote, changed policy or unmet minimum rolls the whole purchase back. Sponsoring RAM grants no membership or administration.",
+      "Administrators can instead approve a card RAM order when the operator has configured Stripe and funded its separate native reserve. The card rail adds one operational markup (20% at launch), with a $5 minimum total. It does not add the native 5% markup or Connect commission. The exchange-rate observation, byte minimum and exact USD price are disclosed before fresh account-control approval. Complete Stripe checkout, then refresh the saved order. Payment must be verified and provisioning must finish before capacity is credited. An operator outage or low reserve needs reconciliation; checkout return alone proves nothing.",
+      "Purchased RAM is permanent and reusable. A refund, dispute or hosting arrears does not automatically sell RAM or erase keys, memberships, nonces, balances or financial claims. Operator RAM reserve deposits are distinct from DAO treasury/stake/claim deposits. Quota enforcement, included pools and protected completion reserves are still being qualified.",
+      "Pinned hosting includes 100 MB (100,000,000 bytes). Each explicitly approved additional 1 GB costs $1 per calendar month at launch. Active files, old versions and archive bundles share this rate; the same CID counts once per DAO. Payment retries do not restart the original paid-term-end plus 30-day grace deadline. Automatic deletion is disabled until guarded cleanup and recovery qualify.",
+      "Archive preview and resumable export are available for qualified ordinary-poll vote records, at least 90 days after recorded terminal completion. Download and independently verify a bundle against its separately saved manifest hash. The current hash is not yet a native archive anchor. Exports contain original records, not private decryption keys or social-login pairings; retain recovery kits and original file pins separately. Exporting never itself approves pruning. Native archive approvals, source-owned pruning and empty-database history restoration remain qualification work."
+    ]
   }
 ]

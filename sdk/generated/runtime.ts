@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = '413286a8a0fc4247235584ae484abae501b251c0b1d11c0123e93fc623d826bf';
+export const runtimeAbiHash = '33252c0538af6dd9291388abdca057a42885b831fabc3d48f8a24f783a89f740';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -920,6 +920,36 @@ export const runtimeAbi = {
         {
           "name": "reference",
           "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "fulfilram",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "reference",
+          "type": "checksum256"
+        },
+        {
+          "name": "policy_revision",
+          "type": "uint64"
+        },
+        {
+          "name": "maximum",
+          "type": "asset"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
+        },
+        {
+          "name": "purchases",
+          "type": "ram_purchase[]"
         }
       ]
     },
@@ -2185,6 +2215,32 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "ram_card_receipt",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "reference",
+          "type": "checksum256"
+        },
+        {
+          "name": "operational_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "fulfiller",
+          "type": "name"
+        }
+      ]
+    },
+    {
       "name": "ram_counter",
       "base": "",
       "fields": [
@@ -2221,6 +2277,16 @@ export const runtimeAbi = {
         {
           "name": "runtime_hash",
           "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "ram_operator_reserve",
+      "base": "",
+      "fields": [
+        {
+          "name": "available",
+          "type": "asset"
         }
       ]
     },
@@ -2287,6 +2353,20 @@ export const runtimeAbi = {
         {
           "name": "settled",
           "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "ram_payment_intent",
+      "base": "",
+      "fields": [
+        {
+          "name": "order",
+          "type": "ram_order"
+        },
+        {
+          "name": "transaction_id",
+          "type": "checksum256"
         }
       ]
     },
@@ -3276,6 +3356,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "fulfilram",
+      "type": "fulfilram",
+      "ricardian_contract": ""
+    },
+    {
       "name": "govcreate",
       "type": "govcreate",
       "ricardian_contract": ""
@@ -3794,6 +3879,20 @@ export const runtimeAbi = {
       "key_types": []
     },
     {
+      "name": "ramcards",
+      "type": "ram_card_receipt",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "ramintent",
+      "type": "ram_payment_intent",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "ramobs",
       "type": "ram_observer_config",
       "index_type": "i64",
@@ -3803,6 +3902,13 @@ export const runtimeAbi = {
     {
       "name": "ramorders",
       "type": "ram_order",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "ramreserve",
+      "type": "ram_operator_reserve",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -4104,6 +4210,14 @@ export interface finance_receipt {
 }
 export interface finishram {
   reference: string;
+}
+export interface fulfilram {
+  dao_id: string;
+  reference: string;
+  policy_revision: string;
+  maximum: string;
+  expires: number;
+  purchases: ram_purchase[];
 }
 export interface gov_policy_record {
   dao_id: string;
@@ -4445,6 +4559,13 @@ export interface ram_allocation {
   payer: string;
   purchased_bytes: string;
 }
+export interface ram_card_receipt {
+  id: string;
+  dao_id: string;
+  reference: string;
+  operational_bps: number;
+  fulfiller: string;
+}
 export interface ram_counter {
   payer: string;
   identity: string;
@@ -4455,6 +4576,9 @@ export interface ram_counter {
 export interface ram_observer_config {
   meter_bytes: string;
   runtime_hash: string;
+}
+export interface ram_operator_reserve {
+  available: string;
 }
 export interface ram_order {
   id: string;
@@ -4472,6 +4596,10 @@ export interface ram_order {
   purchases: ram_acquisition[];
   funded: boolean;
   settled: boolean;
+}
+export interface ram_payment_intent {
+  order: ram_order;
+  transaction_id: string;
 }
 export interface ram_purchase {
   receiver: string;
@@ -4737,6 +4865,7 @@ export interface RuntimeActions {
   enroll: enroll;
   enrollagent: enrollagent;
   finishram: finishram;
+  fulfilram: fulfilram;
   govcreate: govcreate;
   govfees: govfees;
   govhosted: govhosted;

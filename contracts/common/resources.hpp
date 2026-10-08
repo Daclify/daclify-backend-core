@@ -4,6 +4,15 @@
 #include <eosio/crypto.hpp>
 #include <eosio/asset.hpp>
 namespace daclify {
+struct [[eosio::table("ramreserve"),eosio::contract("runtime")]] ram_operator_reserve {
+  eosio::asset available=eosio::asset(0,eosio::symbol("TLOS",4));
+  EOSLIB_SERIALIZE(ram_operator_reserve,(available))
+};
+struct [[eosio::table("ramcards"),eosio::contract("runtime")]] ram_card_receipt {
+  uint64_t id,dao_id;eosio::checksum256 reference;uint16_t operational_bps;eosio::name fulfiller;
+  uint64_t primary_key()const{return id;}
+  EOSLIB_SERIALIZE(ram_card_receipt,(id)(dao_id)(reference)(operational_bps)(fulfiller))
+};
 struct ram_purchase {
   eosio::name receiver;eosio::asset quantity;uint64_t minimum_bytes;
   EOSLIB_SERIALIZE(ram_purchase,(receiver)(quantity)(minimum_bytes))
@@ -25,6 +34,10 @@ struct [[eosio::table("ramalloc"),eosio::contract("runtime")]] ram_allocation {
   eosio::name payer;uint64_t purchased_bytes=0;
   uint64_t primary_key()const{return payer.value;}
   EOSLIB_SERIALIZE(ram_allocation,(payer)(purchased_bytes))
+};
+struct [[eosio::table("ramintent"),eosio::contract("runtime")]] ram_payment_intent {
+  ram_order order;eosio::checksum256 transaction_id;
+  EOSLIB_SERIALIZE(ram_payment_intent,(order)(transaction_id))
 };
 struct [[eosio::table("resourcecfg"),eosio::contract("runtime")]] resource_policy {
   uint16_t schema_version=1;uint64_t revision=0;
@@ -57,7 +70,7 @@ inline uint8_t ram_category(eosio::name table,uint64_t dao_id){
   if(!dao_id)return 3;
   switch(table.value){
     case "members"_n.value:case "actors"_n.value:case "sessions"_n.value:case "evmbindings"_n.value:case "profiles"_n.value:case "epochs"_n.value:case "keygrants"_n.value:return 0;
-    case "ramorders"_n.value:case "ramalloc"_n.value:case "receipts"_n.value:case "evidence"_n.value:case "capreceipts"_n.value:case "createords"_n.value:case "obligations"_n.value:case "budgets"_n.value:case "executions"_n.value:case "grantplans"_n.value:case "agreements"_n.value:case "controls"_n.value:case "entries"_n.value:case "schedules"_n.value:case "terms"_n.value:return 2;
+    case "ramcards"_n.value:case "ramorders"_n.value:case "ramalloc"_n.value:case "receipts"_n.value:case "evidence"_n.value:case "capreceipts"_n.value:case "createords"_n.value:case "obligations"_n.value:case "budgets"_n.value:case "executions"_n.value:case "grantplans"_n.value:case "agreements"_n.value:case "controls"_n.value:case "entries"_n.value:case "schedules"_n.value:case "terms"_n.value:return 2;
     default:return 1;
   }
 }

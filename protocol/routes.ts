@@ -30,19 +30,59 @@ import { TreasurySchema, SettlementRequestSchema, SettlementResultSchema } from 
 import { Uint64Schema } from './base.js';
 import { PlatformRoutes } from './platform.js';
 import { SpendingReportSchema } from './reporting.js';
-import { RamUsageSchema } from './resources.js';
+import {
+  RamUsageSchema,
+  RamQuoteRequestSchema,
+  RamQuoteSchema,
+  CardRamTermsSchema,
+  CardRamApprovalSchema,
+  CardRamOrderSchema,
+} from './resources.js';
 export const ApiRoutes = {
+  ramCardQuote: {
+    method: 'POST',
+    path: '/v1/resources/ram/card/quote',
+    input: RamQuoteRequestSchema.omit({ payer: true }),
+    response: CardRamTermsSchema,
+    helpTopic: 'resources-and-retention',
+  },
+  ramCardCheckout: {
+    method: 'POST',
+    path: '/v1/resources/ram/card/checkout',
+    input: CardRamApprovalSchema,
+    response: CardRamOrderSchema,
+    helpTopic: 'resources-and-retention',
+  },
+  ramCardStatus: {
+    method: 'GET',
+    path: '/v1/resources/ram/card/orders/:id',
+    response: CardRamOrderSchema,
+    helpTopic: 'resources-and-retention',
+  },
+  ramCardReconcile: {
+    method: 'POST',
+    path: '/v1/resources/ram/card/orders/:id/reconcile',
+    response: CardRamOrderSchema,
+    helpTopic: 'resources-and-retention',
+  },
+  ramQuote: {
+    method: 'POST',
+    path: '/v1/resources/ram/quote',
+    input: RamQuoteRequestSchema,
+    response: RamQuoteSchema,
+    helpTopic: 'resources-and-retention',
+  },
   ramUsage: {
     method: 'GET',
     path: '/v1/daos/:id/ram',
     response: RamUsageSchema,
-    helpTopic: 'documents',
+    helpTopic: 'resources-and-retention',
   },
   storageUsage: {
     method: 'GET',
     path: '/v1/daos/:id/storage',
     response: HostedStorageUsageSchema,
-    helpTopic: 'documents',
+    helpTopic: 'resources-and-retention',
   },
   vaultAttachChallenge: {
     method: 'POST',
@@ -118,7 +158,7 @@ export const ApiRoutes = {
     path: '/v1/daos/:id/content',
     query: ContentPageQuerySchema,
     response: DaoContentSchema,
-    helpTopic: 'documents',
+    helpTopic: 'resources-and-retention',
   },
   dao: {
     method: 'GET',
@@ -150,26 +190,26 @@ export const ApiRoutes = {
     path: '/v1/uploads',
     input: HostedUploadSchema,
     response: HostedDocumentSchema,
-    helpTopic: 'documents',
+    helpTopic: 'resources-and-retention',
   },
   uploadStatus: {
     method: 'GET',
     path: '/v1/uploads/:requestId',
     response: UploadStatusSchema,
-    helpTopic: 'documents',
+    helpTopic: 'resources-and-retention',
   },
   uploadReconcile: {
     method: 'POST',
     path: '/v1/uploads/:requestId/reconcile',
     input: z.strictObject({}).default({}),
     response: UploadStatusSchema,
-    helpTopic: 'documents',
+    helpTopic: 'resources-and-retention',
   },
   documentBytes: {
     method: 'GET',
     path: '/v1/daos/:id/documents/:documentId/:version/content',
     response: z.strictObject({ content: HostedBytesSchema }),
-    helpTopic: 'documents',
+    helpTopic: 'resources-and-retention',
   },
   challenge: {
     method: 'POST',

@@ -72,3 +72,6 @@ The application, contract, SDK and first-party module repositories use
 [AGPL-3.0-only](../LICENSE). Read [licensing guidance](../LICENSING.md) before
 redistribution, hosting modified versions or combining modules. The app exposes
 this guidance at `/docs/license`; operators must offer their actual deployed source.
+
+
+Resource checkpoint: [RAM accounting, native/card purchases and operator reserve](ram-accounting.md) describes the current implementation and launch gates. DAO Resources exposes native one-time purchases and optional exact-price card checkout, prepaid pinned-storage capacity and verified archive exports. Included pools, completion reserves, safe backfill, native archive approval/pruning, guarded cleanup and full empty-database history recovery remain open; automatic deletion and release packaging stay disabled.

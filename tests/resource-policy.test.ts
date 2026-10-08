@@ -6,6 +6,8 @@ import {
   ramPurchasePrice,
   ramRowBytes,
   ramScopeBytes,
+  ramMarketCost,
+  tlosAsset,
 } from '../protocol/resources.js';
 import { MAX_ASSET_UNITS } from '../protocol/base.js';
 
@@ -62,4 +64,23 @@ describe('RAM purchase policy', () => {
       { seed: 20261008 },
     );
   });
+});
+
+it('prices acquisition with the native system fee included and handles integer boundaries', () => {
+  expect(tlosAsset(123n)).toBe('0.0123 TLOS');
+  expect(tlosAsset(10000n)).toBe('1.0000 TLOS');
+  for (const bytes of [0n, -1n, 1000000n])
+    expect(() => ramMarketCost(bytes, 1000000n, 10000n)).toThrow();
+  fc.assert(
+    fc.property(fc.bigInt({ min: 1n, max: 999999n }), (bytes) => {
+      const cost = ramMarketCost(bytes, 1000000n, 10000n);
+      const nativeFee = (cost + 199n) / 200n;
+      const net = cost - nativeFee;
+      expect((net * 1000000n) / (10000n + net)).toBeGreaterThanOrEqual(bytes);
+      expect(ramPurchasePrice(cost, 'tlos', DEFAULT_RESOURCE_POLICY).total).toBe(
+        cost + (cost * 500n + 9999n) / 10000n,
+      );
+    }),
+    { seed: 20261008 },
+  );
 });

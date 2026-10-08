@@ -16,6 +16,8 @@ import { fixtureNetwork } from '../../tools/native/network.js';
 import { fixtureKey } from '../../tools/native/keys.js';
 import { unlockFixtureWallet } from '../../tools/native/wallet.js';
 import { executedChainResult } from '../../services/api/src/chain-result.js';
+import { RamUsageSchema, resourcePolicyFromRow } from '../../protocol/resources.js';
+import { nativeRamQuote } from '../../services/api/src/resources/native-quote.js';
 import { RuntimeTableSchemas } from '../../sdk/generated/schemas.js';
 const network = fixtureNetwork();
 if (network.container !== 'daclify-resources-native' || network.url !== 'http://127.0.0.1:20588')
@@ -75,7 +77,17 @@ async function push(actions: Action[]) {
     const result = await api.v1.chain.push_transaction(
       SignedTransaction.from({
         ...tx,
-        signatures: [key.signDigest(tx.signingDigest(network.chainId))],
+        signatures: [
+          ...new Map(
+            actions
+              .flatMap((a) =>
+                a.authorization.map((auth) =>
+                  auth.actor.toString() === 'bob' ? fixtureKey('bob') : key,
+                ),
+              )
+              .map((k) => [k.toPublic().toString(), k]),
+          ).values(),
+        ].map((k) => k.signDigest(tx.signingDigest(network.chainId))),
       }),
     );
     executedChainResult(result, tx.id.toString());
@@ -294,16 +306,21 @@ it('rejects stale policies, expiries, wrong tokens and payment ceilings without 
   await expect(push([await order(ref(), '1', '0')])).rejects.toThrow('RESOURCE_POLICY_CHANGED');
   await expect(push([await order(ref(), '1', '1', now)])).rejects.toThrow('RAM_QUOTE_EXPIRED');
   const reference = ref();
-  await push([await order(reference)]);
   const before = await Promise.all([
     quota(runtime),
     quota(receiver),
     balance('alice'),
     balance('bob'),
   ]);
-  await expect(push([transfer(reference, '3.0000 TLOS')])).rejects.toThrow('RAM_PAYMENT_RANGE');
-  await expect(push([transfer(reference, '0.0100 TLOS')])).rejects.toThrow('RAM_PAYMENT_RANGE');
-  await expect(push([transfer(reference, '2.0000 TLOS', 'testtoken')])).rejects.toThrow();
+  await expect(push([await order(reference), transfer(reference, '3.0000 TLOS')])).rejects.toThrow(
+    'RAM_PAYMENT_RANGE',
+  );
+  await expect(push([await order(reference), transfer(reference, '0.0100 TLOS')])).rejects.toThrow(
+    'RAM_PAYMENT_RANGE',
+  );
+  await expect(
+    push([await order(reference), transfer(reference, '2.0000 TLOS', 'testtoken')]),
+  ).rejects.toThrow();
   expect(
     await Promise.all([quota(runtime), quota(receiver), balance('alice'), balance('bob')]),
   ).toEqual(before);
@@ -347,7 +364,6 @@ it('rejects unapproved receivers, duplicate legs and a stale policy after order 
       ),
     ]),
   ).rejects.toThrow('RAM_RECEIVER_ORDER');
-  await push([await order(reference)]);
   const before = await Promise.all([
     quota(runtime),
     quota(receiver),
@@ -355,19 +371,19 @@ it('rejects unapproved receivers, duplicate legs and a stale policy after order 
     balance('bob'),
     rows('ramalloc', '1'),
   ]);
-  await push([
-    action('setresources', {
-      native_ram_bps: 1000,
-      card_ram_bps: 2000,
-      included_activity_bytes: '262144',
-      identity_bytes_per_slot: '2048',
-      quote_lifetime_seconds: 300,
-      storage_free_bytes: '100000000',
-      storage_unit_bytes: '1000000000',
-      storage_monthly_usd: 100,
-    }),
-  ]);
-  await expect(push([transfer(reference)])).rejects.toThrow('RESOURCE_POLICY_CHANGED');
+  const policyChange = action('setresources', {
+    native_ram_bps: 1000,
+    card_ram_bps: 2000,
+    included_activity_bytes: '262144',
+    identity_bytes_per_slot: '2048',
+    quote_lifetime_seconds: 300,
+    storage_free_bytes: '100000000',
+    storage_unit_bytes: '1000000000',
+    storage_monthly_usd: 100,
+  });
+  await expect(push([await order(reference), policyChange, transfer(reference)])).rejects.toThrow(
+    'RESOURCE_POLICY_CHANGED',
+  );
   expect(
     await Promise.all([
       quota(runtime),
@@ -377,9 +393,214 @@ it('rejects unapproved receivers, duplicate legs and a stale policy after order 
       rows('ramalloc', '1'),
     ]),
   ).toEqual(before);
+  await push([policyChange]);
   evidence.receiverAndRevisionBoundaries = true;
   writeFileSync(
     'docs/evidence/2026-10-08-ram-purchase.json',
     JSON.stringify(evidence, null, 2) + '\n',
   );
+});
+
+it('quotes and atomically pays two real contract payers from the pinned RAM market', async () => {
+  const counters = z.array(RuntimeTableSchemas.ramstats).parse(await rows('ramstats', '1'));
+  const policy = resourcePolicyFromRow((await rows('resourcecfg'))[0]);
+  const payers = await Promise.all(
+    [runtime, receiver].map(async (payer) => {
+      const account = await api.v1.chain.get_account(payer),
+        usage = counters.find((r) => r.payer === payer);
+      return {
+        payer,
+        moduleId: null,
+        sourceVerified: true,
+        usage: usage
+          ? {
+              identity: usage.identity,
+              activity: usage.activity,
+              retained: usage.retained,
+              platform: usage.platform,
+            }
+          : { identity: '0', activity: '0', retained: '0', platform: '0' },
+        purchasedBytes: '0',
+        globalQuotaBytes: account.ram_quota.toString(),
+        globalUsedBytes: account.ram_usage.toString(),
+      };
+    }),
+  );
+  const at = new Date().toISOString();
+  const usage = RamUsageSchema.parse({
+    dao: { chainId: network.chainId, contract: runtime, daoId: '1', interfaceVersion: 1 },
+    observation: 'active',
+    enforcement: 'disabled',
+    policy,
+    read: { startedAt: at, completedAt: at, atomic: false },
+    totalObservedBytes: payers
+      .reduce((n, p) => n + Object.values(p.usage).reduce((t, b) => t + BigInt(b), 0n), 0n)
+      .toString(),
+    purchasedBytes: '0',
+    payers,
+  });
+  const input = {
+    dao: usage.dao,
+    payer: 'alice',
+    allocations: [
+      { receiver: runtime, minimumBytes: '4096' },
+      { receiver, minimumBytes: '8192' },
+    ],
+  };
+  const quote = await nativeRamQuote(api, input, usage);
+  const before = await Promise.all([
+    quota(runtime),
+    quota(receiver),
+    balance('alice'),
+    balance('bob'),
+  ]);
+  await push([
+    action('orderram', quote.order, 'alice'),
+    transfer(quote.order.reference, quote.order.maximum),
+  ]);
+  const after = await Promise.all([
+    quota(runtime),
+    quota(receiver),
+    balance('alice'),
+    balance('bob'),
+  ]);
+  expect(BigInt(after[0] ?? '') - BigInt(before[0] ?? '')).toBeGreaterThanOrEqual(4096n);
+  expect(BigInt(after[1] ?? '') - BigInt(before[1] ?? '')).toBeGreaterThanOrEqual(8192n);
+  expect(BigInt(before[2] ?? '') - BigInt(after[2] ?? '')).toBe(BigInt(quote.totalUnits));
+  expect(BigInt(after[3] ?? '') - BigInt(before[3] ?? '')).toBe(BigInt(quote.feeUnits));
+  await expect(
+    nativeRamQuote(api, input, {
+      ...usage,
+      payers: payers.map((p) => ({ ...p, globalQuotaBytes: null })),
+    }),
+  ).rejects.toThrow('RAM_RECEIVER_UNQUALIFIED');
+});
+
+it('fulfills card orders only from a separately funded operator reserve with no native markup', async () => {
+  expect(abi.actions.some((a) => a.name.toString() === 'fulfilram')).toBe(true);
+  await push([
+    action('setcreate', {
+      shared_usd: 0,
+      independent_usd: 5000,
+      premium_bps: 2000,
+      settler: 'bob',
+    }),
+  ]);
+  const reserve = (quantity: string) =>
+    Action.from(
+      {
+        account: 'eosio.token',
+        name: 'transfer',
+        authorization: [{ actor: 'alice', permission: 'active' }],
+        data: { from: 'alice', to: runtime, quantity, memo: 'ramreserve' },
+      },
+      tokenAbi,
+    );
+  const now = Math.floor((await api.v1.chain.get_info()).head_block_time.toMilliseconds() / 1000);
+  const reference = ref();
+  const intent = {
+    dao_id: '1',
+    reference,
+    policy_revision: RuntimeTableSchemas.resourcecfg.parse((await rows('resourcecfg'))[0]).revision,
+    maximum: '0.1500 TLOS',
+    expires: now + 120,
+    purchases: [
+      { receiver: runtime, quantity: '0.1000 TLOS', minimum_bytes: '1' },
+      { receiver, quantity: '0.0500 TLOS', minimum_bytes: '1' },
+    ].sort(byAccount),
+  };
+  const fulfil = () => action('fulfilram', intent, 'bob');
+  const measured = async () => {
+    const account = await api.v1.chain.get_account(runtime);
+    const counters = z
+      .array(RuntimeTableSchemas.ramstats)
+      .parse([...(await rows('ramstats', '0')), ...(await rows('ramstats', '1'))]);
+    const observer = RuntimeTableSchemas.ramobs.parse((await rows('ramobs'))[0]);
+    return {
+      native: BigInt(account.ram_usage.toString()),
+      ledger:
+        BigInt(observer.meter_bytes) +
+        counters.reduce(
+          (n, r) =>
+            n + BigInt(r.identity) + BigInt(r.activity) + BigInt(r.retained) + BigInt(r.platform),
+          0n,
+        ),
+    };
+  };
+  const initialMeter = await measured();
+  const liabilities = await rows('daos');
+  await expect(push([fulfil()])).rejects.toThrow('RAM_RESERVE_INSUFFICIENT');
+  await push([reserve('1.0000 TLOS')]);
+  const before = await Promise.all([
+    quota(runtime),
+    quota(receiver),
+    balance(runtime),
+    balance('bob'),
+  ]);
+  await expect(push([action('fulfilram', intent, 'alice')])).rejects.toThrow();
+  await push([fulfil()]);
+  const after = await Promise.all([
+    quota(runtime),
+    quota(receiver),
+    balance(runtime),
+    balance('bob'),
+  ]);
+  expect(BigInt(after[0] ?? '')).toBeGreaterThan(BigInt(before[0] ?? ''));
+  expect(BigInt(after[1] ?? '')).toBeGreaterThan(BigInt(before[1] ?? ''));
+  expect(BigInt(before[2] ?? '') - BigInt(after[2] ?? '')).toBe(1500n);
+  expect(after[3]).toBe(before[3]);
+  expect(await rows('ramreserve')).toMatchObject([{ available: '0.8500 TLOS' }]);
+  expect(await rows('daos')).toEqual(liabilities);
+  const finalMeter = await measured();
+  expect(finalMeter.native - initialMeter.native).toBe(finalMeter.ledger - initialMeter.ledger);
+  const snapshot = await Promise.all([
+    quota(runtime),
+    quota(receiver),
+    balance(runtime),
+    rows('ramreserve'),
+    rows('ramalloc', '1'),
+  ]);
+  await expect(push([fulfil()])).rejects.toThrow('RAM_ORDER_EXISTS');
+  await expect(push([action('finishram', { reference })])).rejects.toThrow('RAM_PURCHASE_SENDER');
+  const invalid = {
+    ...intent,
+    reference: ref(),
+    purchases: intent.purchases.map((p) => ({ ...p, minimum_bytes: '18446744073709551615' })),
+  };
+  await expect(push([action('fulfilram', invalid, 'bob')])).rejects.toThrow(
+    'RAM_ACQUISITION_MINIMUM',
+  );
+  expect(
+    await Promise.all([
+      quota(runtime),
+      quota(receiver),
+      balance(runtime),
+      rows('ramreserve'),
+      rows('ramalloc', '1'),
+    ]),
+  ).toEqual(snapshot);
+});
+
+it('bounds unpaid sponsor intents and refuses payment from a separate transaction', async () => {
+  const reference = ref(),
+    count = (await rows('ramorders')).length;
+  await push([
+    await order(
+      reference,
+      '1',
+      RuntimeTableSchemas.resourcecfg.parse((await rows('resourcecfg'))[0]).revision,
+    ),
+  ]);
+  expect((await rows('ramorders')).length).toBe(count);
+  await expect(push([transfer(reference)])).rejects.toThrow('RAM_PURCHASE_TRANSACTION');
+  for (let i = 0; i < 3; i++)
+    await push([
+      await order(
+        ref(),
+        '1',
+        RuntimeTableSchemas.resourcecfg.parse((await rows('resourcecfg'))[0]).revision,
+      ),
+    ]);
+  expect((await rows('ramintent')).length).toBe(1);
+  expect((await rows('ramorders')).length).toBe(count);
 });

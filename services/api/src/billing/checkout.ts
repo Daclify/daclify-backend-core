@@ -37,7 +37,13 @@ export function checkoutSessionParams(input: {
 export function requireCheckoutUrl(value: string | null): string {
   if (!value) throw new Error('CHECKOUT_URL');
   const url = new URL(value);
-  if (url.protocol !== 'https:' || url.hostname !== 'checkout.stripe.com') {
+  if (
+    url.protocol !== 'https:' ||
+    url.hostname !== 'checkout.stripe.com' ||
+    url.username ||
+    url.password ||
+    url.port
+  ) {
     throw new Error('CHECKOUT_URL');
   }
   return url.toString();

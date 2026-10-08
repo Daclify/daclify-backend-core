@@ -17,25 +17,26 @@ public:
   using contract::contract;
   using ram_orders=ram_table<"ramorders"_n,ram_order,indexed_by<"byreference"_n,const_mem_fun<ram_order,checksum256,&ram_order::by_reference>>>;
   using ram_allocations=ram_table<"ramalloc"_n,ram_allocation>;
+  using ram_intent_settings=ram_singleton<"ramintent"_n,ram_payment_intent>;
   ACTION orderram(uint64_t dao_id,name payer,checksum256 reference,uint64_t policy_revision,asset maximum,uint32_t expires,std::vector<ram_purchase> purchases){
-    require_auth(payer);check(payer!=get_self(),"RAM_PAYER");dao_rows.get(dao_id,"DAO_UNKNOWN");
-    check(ram_observer_settings(get_self(),get_self().value).exists(),"RAM_OBSERVER_REQUIRED");
-    auto cfg=resource_settings(get_self(),get_self().value).get();check(cfg.revision==policy_revision,"RESOURCE_POLICY_CHANGED");
-    auto fees=fee_configuration();check(fees.token_contract=="eosio.token"_n&&fees.token_symbol==symbol("TLOS",4),"RAM_TOKEN_IDENTITY");
-    const auto now=current_time_point().sec_since_epoch();check(expires>now&&uint64_t(expires)<=uint64_t(now)+cfg.quote_lifetime_seconds,"RAM_QUOTE_EXPIRED");
-    check(reference!=checksum256{}&&maximum.is_valid()&&maximum.symbol==fees.token_symbol&&maximum.amount>0&&purchases.size()>0&&purchases.size()<=6,"RAM_PURCHASE_RANGE");
-    ram_orders orders(get_self(),get_self().value);auto index=orders.get_index<"byreference"_n>();check(index.find(reference)==index.end(),"RAM_ORDER_EXISTS");
-    ram_order value;value.dao_id=dao_id;value.reference=reference;value.payer=payer;value.treasury=fees.treasury;value.policy_revision=policy_revision;value.fee_bps=cfg.native_ram_bps;value.expires=expires;value.maximum=maximum;
-    int64_t total=0;name previous;
-    for(const auto& purchase:purchases){
-      check(purchase.receiver.value>previous.value,"RAM_RECEIVER_ORDER");previous=purchase.receiver;validate_ram_receiver(dao_id,purchase.receiver);
-      check(purchase.quantity.is_valid()&&purchase.quantity.symbol==fees.token_symbol&&purchase.quantity.amount>0&&purchase.minimum_bytes>0,"RAM_PURCHASE_RANGE");
-      total=add_amount(total,purchase.quantity.amount);value.purchases.push_back(ram_acquisition{purchase.receiver,purchase.quantity,purchase.minimum_bytes,0,0});
-    }
-    const __int128 markup=(__int128(total)*cfg.native_ram_bps+9999)/10000;check(markup<=asset::max_amount,"RAM_PURCHASE_RANGE");
-    value.spent=asset(total,fees.token_symbol);value.platform_fee=asset(int64_t(markup),fees.token_symbol);value.received=asset(0,fees.token_symbol);check(add_amount(total,int64_t(markup))<=maximum.amount,"RAM_PAYMENT_RANGE");
-    auto id=orders.available_primary_key();if(!id)id=1;check(id<std::numeric_limits<uint64_t>::max(),"RAM_ORDER_LIMIT");value.id=id;orders.emplace(get_self(),[&](auto& row){row=value;});
+    require_auth(payer);check(payer!=get_self(),"RAM_PAYER");
+    const auto order=prepare_ram_order(dao_id,payer,reference,policy_revision,maximum,expires,purchases,resource_settings(get_self(),get_self().value).get().native_ram_bps);
+    ram_intent_settings(get_self(),get_self().value).set(ram_payment_intent{order,current_transaction_id()},get_self());
   }
+  using ram_reserve_settings=ram_singleton<"ramreserve"_n,ram_operator_reserve>;
+  using ram_cards=ram_table<"ramcards"_n,ram_card_receipt>;
+  ACTION fulfilram(uint64_t dao_id,checksum256 reference,uint64_t policy_revision,asset maximum,uint32_t expires,std::vector<ram_purchase> purchases){
+    const auto authority=creation_settings(get_self(),get_self().value).get().settler;require_auth(authority);
+    const auto order=prepare_ram_order(dao_id,get_self(),reference,policy_revision,maximum,expires,purchases,0);
+    ram_reserve_settings reserve(get_self(),get_self().value);auto funds=reserve.exists()?reserve.get():ram_operator_reserve{};
+    check(funds.available.symbol==order.spent.symbol&&funds.available.amount>=order.spent.amount,"RAM_RESERVE_INSUFFICIENT");
+    funds.available.amount-=order.spent.amount;reserve.set(funds,get_self());
+    ram_orders orders(get_self(),get_self().value);orders.emplace(get_self(),[&](auto& row){row=order;});
+    const auto cfg=resource_settings(get_self(),get_self().value).get();
+    ram_cards receipts(get_self(),get_self().value);receipts.emplace(get_self(),[&](auto& row){row.id=order.id;row.dao_id=dao_id;row.reference=reference;row.operational_bps=cfg.card_ram_bps;row.fulfiller=authority;});
+    buy_ram_order(reference,order.spent);
+  }
+
   ACTION finishram(checksum256 reference){
     check(get_sender()==get_self(),"RAM_PURCHASE_SENDER");require_auth(get_self());
     ram_orders orders(get_self(),get_self().value);auto index=orders.get_index<"byreference"_n>();const auto& order=index.get(reference,"RAM_ORDER_UNKNOWN");check(order.funded&&!order.settled,"RAM_ORDER_SETTLED");
@@ -48,7 +49,7 @@ public:
     pay_share("eosio.token"_n,treasury,fee,"Daclify RAM operational fee");pay_share("eosio.token"_n,payer,refund,"Daclify RAM purchase change");
   }
   ACTION initramobs(){
-    require_auth(get_self());check(dao_rows.begin()==dao_rows.end(),"RAM_BACKFILL_REQUIRED");
+    require_auth(get_self());check(dao_rows.begin()==dao_rows.end()&&!ram_reserve_settings(get_self(),get_self().value).exists(),"RAM_BACKFILL_REQUIRED");
     check(!fee_settings(get_self(),get_self().value).exists()&&!payment_settings(get_self(),get_self().value).exists()&&!market_settings(get_self(),get_self().value).exists()&&!creation_settings(get_self(),get_self().value).exists()&&!hosted_settings(get_self(),get_self().value).exists()&&!seat_settings(get_self(),get_self().value).exists()&&!resource_settings(get_self(),get_self().value).exists(),"RAM_BACKFILL_REQUIRED");
     catalogue listed(get_self(),get_self().value);modpays payments(get_self(),get_self().value);modcopy copies(get_self(),get_self().value);creation_orders orders(get_self(),get_self().value);check(listed.begin()==listed.end()&&payments.begin()==payments.end()&&copies.begin()==copies.end()&&orders.begin()==orders.end(),"RAM_BACKFILL_REQUIRED");
     ram_observer_settings saved(get_self(),get_self().value);check(!saved.exists(),"ALREADY_INITIALIZED");ram_observer_config cfg;cfg.runtime_hash=get_code_hash(get_self());cfg.meter_bytes=pack_size(cfg)+224;saved.set(cfg,get_self());
@@ -539,6 +540,12 @@ public:
     if(to!=get_self()||from==get_self())return;
     check(quantity.is_valid()&&quantity.amount>0,"ASSET_QUANTITY");
     if(memo.rfind("create:",0)==0){creation_payment(quantity,memo);return;}
+    if(memo=="ramreserve"){
+      check(get_first_receiver()=="eosio.token"_n&&quantity.symbol==symbol("TLOS",4),"RAM_TOKEN_IDENTITY");
+      check(ram_observer_settings(get_self(),get_self().value).exists(),"RAM_OBSERVER_REQUIRED");
+      ram_reserve_settings reserve(get_self(),get_self().value);auto funds=reserve.exists()?reserve.get():ram_operator_reserve{};
+      funds.available.amount=add_amount(funds.available.amount,quantity.amount);reserve.set(funds,get_self());return;
+    }
     if(memo.rfind("ram:",0)==0){ram_payment(from,quantity,memo);return;}
     if(memo.rfind("mod:",0)==0){settle_module(from,quantity,memo);return;}
     check(memo.size()<=64,"DEPOSIT_REFERENCE");
@@ -552,6 +559,26 @@ public:
   }
 private:
   daos dao_rows{get_self(),get_self().value};
+  checksum256 current_transaction_id(){std::vector<char> bytes(transaction_size());check(read_transaction(bytes.data(),bytes.size())==bytes.size(),"TRANSACTION_BYTES");return sha256(bytes.data(),bytes.size());}
+  ram_order prepare_ram_order(uint64_t dao_id,name payer,checksum256 reference,uint64_t policy_revision,asset maximum,uint32_t expires,const std::vector<ram_purchase>& purchases,uint16_t fee_bps){
+    dao_rows.get(dao_id,"DAO_UNKNOWN");
+    check(ram_observer_settings(get_self(),get_self().value).exists(),"RAM_OBSERVER_REQUIRED");
+    auto cfg=resource_settings(get_self(),get_self().value).get();check(cfg.revision==policy_revision,"RESOURCE_POLICY_CHANGED");
+    auto fees=fee_configuration();check(fees.token_contract=="eosio.token"_n&&fees.token_symbol==symbol("TLOS",4),"RAM_TOKEN_IDENTITY");
+    const auto now=current_time_point().sec_since_epoch();check(expires>now&&uint64_t(expires)<=uint64_t(now)+cfg.quote_lifetime_seconds,"RAM_QUOTE_EXPIRED");
+    check(reference!=checksum256{}&&maximum.is_valid()&&maximum.symbol==fees.token_symbol&&maximum.amount>0&&purchases.size()>0&&purchases.size()<=6,"RAM_PURCHASE_RANGE");
+    ram_orders orders(get_self(),get_self().value);auto index=orders.get_index<"byreference"_n>();check(index.find(reference)==index.end(),"RAM_ORDER_EXISTS");
+    ram_order value;value.dao_id=dao_id;value.reference=reference;value.payer=payer;value.treasury=fees.treasury;value.policy_revision=policy_revision;value.fee_bps=fee_bps;value.expires=expires;value.maximum=maximum;
+    int64_t total=0;name previous;
+    for(const auto& purchase:purchases){
+      check(purchase.receiver.value>previous.value,"RAM_RECEIVER_ORDER");previous=purchase.receiver;validate_ram_receiver(dao_id,purchase.receiver);
+      check(purchase.quantity.is_valid()&&purchase.quantity.symbol==fees.token_symbol&&purchase.quantity.amount>0&&purchase.minimum_bytes>0,"RAM_PURCHASE_RANGE");
+      total=add_amount(total,purchase.quantity.amount);value.purchases.push_back(ram_acquisition{purchase.receiver,purchase.quantity,purchase.minimum_bytes,0,0});
+    }
+    const __int128 markup=(__int128(total)*fee_bps+9999)/10000;check(markup<=asset::max_amount,"RAM_PURCHASE_RANGE");
+    value.spent=asset(total,fees.token_symbol);value.platform_fee=asset(int64_t(markup),fees.token_symbol);value.received=asset(0,fees.token_symbol);check(add_amount(total,int64_t(markup))<=maximum.amount,"RAM_PAYMENT_RANGE");
+    auto id=orders.available_primary_key();if(!id)id=1;check(id<std::numeric_limits<uint64_t>::max(),"RAM_ORDER_LIMIT");value.id=id;return value;
+  }
   void validate_ram_receiver(uint64_t dao_id,name receiver){
     ram_observer_settings saved(get_self(),get_self().value);const auto cfg=saved.get();
     if(receiver==get_self())check(get_code_hash(receiver)==cfg.runtime_hash,"RAM_SOURCE_CODE");
@@ -562,10 +589,16 @@ private:
     check(get_first_receiver()=="eosio.token"_n&&quantity.symbol==symbol("TLOS",4),"RAM_TOKEN_IDENTITY");check(memo.size()==68,"RAM_PAYMENT_REFERENCE");
     std::array<uint8_t,32> bytes{};auto nibble=[](char c)->uint8_t{check((c>='0'&&c<='9')||(c>='a'&&c<='f'),"RAM_PAYMENT_REFERENCE");return c<='9'?c-'0':c-'a'+10;};
     for(size_t i=0;i<32;i++)bytes[i]=(nibble(memo[4+i*2])<<4)|nibble(memo[5+i*2]);
-    const auto reference=checksum256(bytes);ram_orders orders(get_self(),get_self().value);auto index=orders.get_index<"byreference"_n>();const auto& order=index.get(reference,"RAM_ORDER_UNKNOWN");
+    const auto reference=checksum256(bytes);ram_orders orders(get_self(),get_self().value);auto index=orders.get_index<"byreference"_n>();check(index.find(reference)==index.end(),"RAM_ORDER_SETTLED");
+    ram_intent_settings intents(get_self(),get_self().value);check(intents.exists(),"RAM_ORDER_UNKNOWN");const auto intent=intents.get();check(intent.order.reference==reference,"RAM_ORDER_UNKNOWN");check(intent.transaction_id==current_transaction_id(),"RAM_PURCHASE_TRANSACTION");const auto order=intent.order;
     check(!order.funded&&!order.settled,"RAM_ORDER_SETTLED");check(order.payer==from,"RAM_PAYER");check(order.expires>current_time_point().sec_since_epoch(),"RAM_QUOTE_EXPIRED");
     auto cfg=resource_settings(get_self(),get_self().value).get();check(cfg.revision==order.policy_revision&&cfg.native_ram_bps==order.fee_bps,"RESOURCE_POLICY_CHANGED");const auto fees=fee_configuration();check(fees.treasury==order.treasury&&fees.token_contract==get_first_receiver()&&fees.token_symbol==quantity.symbol,"RAM_TOKEN_IDENTITY");
-    check(quantity.amount>=add_amount(order.spent.amount,order.platform_fee.amount)&&quantity.amount<=order.maximum.amount,"RAM_PAYMENT_RANGE");auto purchases=order.purchases;
+    check(quantity.amount>=add_amount(order.spent.amount,order.platform_fee.amount)&&quantity.amount<=order.maximum.amount,"RAM_PAYMENT_RANGE");
+    intents.remove();orders.emplace(get_self(),[&](auto& row){row=order;});buy_ram_order(reference,quantity);
+  }
+  void buy_ram_order(checksum256 reference,asset quantity){
+    ram_orders orders(get_self(),get_self().value);auto index=orders.get_index<"byreference"_n>();const auto& order=index.get(reference,"RAM_ORDER_UNKNOWN");check(!order.funded&&!order.settled,"RAM_ORDER_SETTLED");
+    auto purchases=order.purchases;
     for(auto& purchase:purchases){validate_ram_receiver(order.dao_id,purchase.receiver);purchase.before_bytes=telos_unmanaged_ram(purchase.receiver);}
     index.modify(order,same_payer,[&](auto& row){row.funded=true;row.received=quantity;row.purchases=purchases;});
     for(const auto& purchase:purchases)action(permission_level{get_self(),"active"_n},"eosio"_n,"buyram"_n,std::make_tuple(get_self(),purchase.receiver,purchase.quantity)).send();
@@ -711,7 +744,7 @@ private:
   void validate_metadata(const std::string& metadata) { check(metadata.size()>0&&metadata.size()<=4096,"METADATA_SIZE"); check(nlohmann::json::accept(metadata),"METADATA_JSON"); }
   void receipt(uint64_t dao_id,uint8_t kind,uint64_t obligation,uint64_t recipient,name destination,name token_contract,asset quantity){
     finance_receipts rows(get_self(),dao_id);auto id=rows.available_primary_key();if(!id)id=1;check(id<std::numeric_limits<uint64_t>::max(),"RECEIPT_LIMIT");
-    std::vector<char> bytes(transaction_size());check(read_transaction(bytes.data(),bytes.size())==bytes.size(),"TRANSACTION_BYTES");const auto tx=sha256(bytes.data(),bytes.size());
+    const auto tx=current_transaction_id();
     rows.emplace(get_self(),[&](auto& r){r.id=id;r.kind=kind;r.obligation_id=obligation;r.recipient=recipient;r.destination=destination;r.token_contract=token_contract;r.quantity=quantity;r.at=current_time_point().sec_since_epoch();r.transaction_id=tx;});
   }
   void validate_dao_metadata(const std::string& metadata){
@@ -803,7 +836,7 @@ private:
 extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
   if(code==receiver){switch(action_name){
     EOSIO_DISPATCH_HELPER(runtime,(authproof)(unlinknat)(linkevm)(unlinkevm)(submitevm)(setadmit)(admitfrom))
-    EOSIO_DISPATCH_HELPER(runtime,(initramobs)(rebindramobs)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram))
+    EOSIO_DISPATCH_HELPER(runtime,(initramobs)(rebindramobs)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram)(fulfilram))
     EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(setprofile)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(confirmext)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))
     EOSIO_DISPATCH_HELPER(runtime,(sethosted)(govhosted)(govseatfee)(orderfree)(setcapacity)(revokecap)(resumecap))
     EOSIO_DISPATCH_HELPER(runtime,(enrollagent)(addmember)(initgov)(setdaogov)(addsession)(delsession)(guardpause)(guardrevoke)(guardrecover)(submitsess)(setfees)(listmod)(unlistmod)(setmodcopy)(setpolicy)(setgov)(setoracle)(govfees)(govpayfees)(setcreate)(govcreate)(setcrrate)(ordercreate)(cardcreate)(createpaid)(govlist)(govunlist)(govmodcopy))

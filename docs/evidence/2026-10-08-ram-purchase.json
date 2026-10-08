@@ -1,39 +1,51 @@
 {
   "chainId": "d9f6e8c655703ba364f0ee82b4fd0631350475747b1924396c8fbef2558b8f51",
   "systemCodeHash": "48d74c3df9f5c9952c0f87ab6c01e1c6dfe621429f59932ecf609b5d81e668e4",
-  "runtimeCodeHash": "0a037d6ef881a225342879d94578979ebd6777e7f5d3a977a43567f5a655c1f8",
+  "runtimeCodeHash": "42f5f60ed58fcc1ae973ddb4fddd4f22776c6ff4a8b27770ea77022c0de2db1f",
   "success": {
-    "runtime": "rambuycb3rl3",
-    "receiver": "rammodfghwgq",
-    "before": ["8350915", "8347049", "8214121", "3000", "0"],
-    "after": ["222741981", "97245540", "8198371", "3750", "0"],
+    "runtime": "rambuyryefvl",
+    "receiver": "rammodmpafhx",
+    "before": [
+      "8385776",
+      "8385135",
+      "7209104",
+      "8257",
+      "0"
+    ],
+    "after": [
+      "31822419",
+      "19386343",
+      "7193354",
+      "9007",
+      "0"
+    ],
     "receipt": {
       "id": "1",
       "dao_id": "1",
-      "reference": "6aa66b2e0dbda1c151a770cfad313070e628264a04fa018c1d2ee584514fc5f7",
+      "reference": "e094b293305a44e8c06e8447847369d75e3423897ec5322f497fb75b5ff5e42e",
       "payer": "alice",
       "treasury": "bob",
       "policy_revision": "1",
       "fee_bps": 500,
-      "expires": 1791474702,
+      "expires": 1791484720,
       "maximum": "2.0000 TLOS",
       "spent": "1.5000 TLOS",
       "platform_fee": "0.0750 TLOS",
       "received": "2.0000 TLOS",
       "purchases": [
         {
-          "receiver": "rambuycb3rl3",
+          "receiver": "rambuyryefvl",
           "quantity": "1.0000 TLOS",
           "minimum_bytes": "1",
-          "before_bytes": "8350915",
-          "acquired_bytes": "214391066"
+          "before_bytes": "8385776",
+          "acquired_bytes": "23436643"
         },
         {
-          "receiver": "rammodfghwgq",
+          "receiver": "rammodmpafhx",
           "quantity": "0.5000 TLOS",
           "minimum_bytes": "1",
-          "before_bytes": "8347049",
-          "acquired_bytes": "88898491"
+          "before_bytes": "8385135",
+          "acquired_bytes": "11001208"
         }
       ],
       "funded": true,
@@ -41,12 +53,12 @@
     },
     "actualCredits": [
       {
-        "payer": "rambuycb3rl3",
-        "purchased_bytes": "214391066"
+        "payer": "rambuyryefvl",
+        "purchased_bytes": "23436643"
       },
       {
-        "payer": "rammodfghwgq",
-        "purchased_bytes": "88898491"
+        "payer": "rammodmpafhx",
+        "purchased_bytes": "11001208"
       }
     ]
   },

@@ -222,3 +222,38 @@ Independent backup attestation, authenticated native anchors/approval/pruning, h
 - Checks passed: **74 core unit files / 456 tests**, **23 PostgreSQL files / 164 tests**, **18 module files / 113 tests**, **27 frontend files / 110 tests**, native readout, lint/typechecks/generated docs/builds. Four desktop/mobile browser cases passed again with active/disabled RAM presentation, archive recovery, storage consent, axe and overflow checks. Browser display responses are labelled HTTP fixtures; native account equality is separately measured. The owned browser API is stopped.
 
 Backed pools, migrated-state overlays, bounded completion reserves, RAM quote/card/purchase UI, independently verified archive backup/anchors/pruning and safe hosted retention are still outstanding. No public provider/deployment, enforcement, main merge or push was enabled.
+
+
+## Native quote and wallet purchase checkpoint
+
+- Added producer-owned typed quote request/response, fee/payment/domain consistency validation, bounded exact integer market estimates, current installed-payer/system qualification and active exact-DAO membership checks. Quotes carry the actual system ABI hash and exact native order parameters.
+- The public SDK encodes one atomic native order plus token payment. Vue Resources shows payer, byte minimum, acquisition cost, one operational fee, ceiling/expiry and explicit one-time consent. Wallet changes, changed context, extra actions and revoked consent are rejected before broadcast. Native broadcast must report the exact transaction executed.
+- Native purchase suite: **5 cases passed**, including a real two-payer market quote/payment with verified minimum quota deltas, payer debit and treasury fee. The imported source ABI and its cleos re-encoding have identical decoded contents; their explicit hashes are pinned.
+- Core focused quote/arithmetic/usage checks: **3 files / 11 tests passed**. Core unit **75 files / 459 tests passed**, core typecheck/lint passed. Further consumer/browser and full final checks are recorded below after they run.
+- Included pools, protected completion reserves, backfill and card provisioning remain separate tasks; this purchase flow does not claim those features are complete. No public-chain funding or production change occurred.
+
+
+## Segregated card RAM implementation checkpoint
+
+- Added additive `ramreserve`/`ramcards` native state and restricted `fulfilram`, reusing actual acquisition verification. No existing native row was changed. Reserve funding accepts only actual eosio.token TLOS via its dedicated memo. Card acquisitions add no native operational fee; the accepted card policy markup has a separate immutable receipt.
+- **6 native purchase cases passed**, including operator-reserve/liability conservation, authorization, replay, slippage rollback and full measured native/observer byte reconciliation. A failed measurement initially read the wrong platform scope; the corrected test reads scope 0. It did not require suppressing a counter mismatch.
+- Migration 026 adds immutable card approvals, provider/payment references and permanent capacity receipts. Core mounts explicit typed quote/checkout/status/reconcile routes and a signature-checked separate webhook in the existing host. Live configuration stays off by default. A stoppable namespaced polling worker reuses existing SQL leases; webhook generations survive an active lease.
+- **6 PostgreSQL/Stripe-SDK integration cases passed**: checkout alone grants nothing, exact consent/immutable state, lost native response once-only recovery, transient provider failure, wrong currency, partial refund review, lost checkout recovery and a webhook while the worker is leased. The API test also requires session, CSRF, fresh account-control proof/current admin and rejects an invalid webhook signature. These use synthetic provider HTTP, not real card charges.
+- Consumer packets, browser checks and final full verification are recorded next. Remaining Tasks 3/4/9/11–13/16 still gate enforcement, pruning, cleanup and production release.
+
+
+## Quote/card checkpoint verification and review
+
+- Final core checks: **77 unit files / 462 tests**, **24 PostgreSQL integration files / 171 tests**, typecheck, lint, build, docs check and development protocol packaging passed. Migration 026 was applied on the owned PG fixture; earlier migrations remain hash-unchanged.
+- Native checks: **4 files / 11 tests** for actual purchases (including card reserve), all-source ledger accounting, observer upgrade preservation and native geometry passed. The subsequent native RAM/archive reader case passed without writes. All prior ABI structs, action signatures and table descriptors compare unchanged to the previous branch checkpoint; native additions are parallel/additive.
+- Modules consumer: **18 files / 113 tests**, typecheck/build passed with the new exact local producer packet and restored semantic peer declaration. Frontend: **27 files / 115 tests**, typecheck/lint/build passed; **6 desktop/mobile Playwright cases** passed for storage consent, archive export/recovery and one-time card RAM consent/order reload with axe/no overflow.
+- The browser test first blocked approval correctly because its hard navigation locked the vault. It now uses normal SPA navigation for signing and separately checks reload of a saved readonly order. No signer/authorization check was removed to pass the test.
+- Internal Ponytail full review checked payment/provider domains, actor scope, once-only native references, ambiguous-response recovery, transaction rollback, permanent receipts, mainnet/test-mode isolation and caller changes. It tightened hosted checkout URLs, preserves signed-event audit/outbox atomicity, fences webhook generations during leases, refuses known unfunded reserve quotes, and leaves deletion/enforcement/pruning disabled.
+- These artifacts remain unpublished development packets. Public-chain/real-provider proof, included/backed pools, completion reserves, legacy backfill, archive attestation/anchors/pruning, full index-loss restore and guarded cleanup still gate release. Main checkouts, production systems and external payment/provider accounts were not changed.
+
+## Bounded unpaid native intent regression
+
+- Review identified that separately prepared unpaid orders could append unfunded permanent rows at the shared runtime payer. A native regression failed on the previous binary (one extra permanent order).
+- Preparation now overwrites one bounded intent with the exact transaction ID. A funding notification must match that same transaction. Only successfully funded acquisition creates a permanent order; existing funded receipt references remain unchanged. Card fulfilment uses the same validated preparation without a public unpaid record.
+- Actual native qualification passed **4 files / 12 tests**: purchases (7 cases), source ledger, observer rebind and billing geometry. The new case proves standalone preparations cannot grow permanent orders and separate payment is rejected. Stale-policy and token/ceiling cases now test the supported atomic action pair. Generated SDK/typecheck passed.
+- Enforcement, legacy backfill, protected completion capacity, archive pruning and hosted cleanup remain disabled pending their independent implementation and qualification.

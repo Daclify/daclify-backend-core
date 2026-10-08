@@ -22,7 +22,12 @@ import type { GovernanceState } from '../../../protocol/dao.js';
 import type { ExecutionRequest, ExecutionResult } from '@daclify/modules';
 import type { DaoRef } from '../../../protocol/base.js';
 import type { PaymentPolicy } from '../../../protocol/payments.js';
-import type { ResourcePolicy, RamUsage } from '../../../protocol/resources.js';
+import type {
+  ResourcePolicy,
+  RamUsage,
+  RamQuote,
+  RamQuoteRequest,
+} from '../../../protocol/resources.js';
 import type { HostingChain } from '../../../protocol/hosting.js';
 import type { HubDirectorySchema } from '../../../protocol/directory.js';
 import type { ArchivePreviewRequest, OrdinaryPollArchivePlan } from '@daclify/modules/archive';
@@ -30,6 +35,7 @@ export interface ChainGateway {
   archivePreview?(input: ArchivePreviewRequest): Promise<OrdinaryPollArchivePlan>;
   resourcePolicy?(): Promise<ResourcePolicy | null>;
   ramUsage?(daoId: string): Promise<RamUsage>;
+  ramQuote?(input: RamQuoteRequest): Promise<RamQuote>;
   hosting?(dao: DaoRef): Promise<HostingChain>;
   attestCapacity?(dao: DaoRef, members: number, expires: number, receipt: string): Promise<void>;
   restoreCapacity?(dao: DaoRef, receipt: string): Promise<void>;

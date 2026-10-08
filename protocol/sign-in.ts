@@ -45,6 +45,7 @@ export const AccountControlProofSchema = z.discriminatedUnion('kind', [
 export type AccountControlProof = z.infer<typeof AccountControlProofSchema>;
 
 export const AccountControlPaths = Object.freeze([
+  '/v1/resources/ram/card/checkout',
   '/v1/hosting/change',
   '/v1/storage/approve',
   '/v1/payments/onboard',

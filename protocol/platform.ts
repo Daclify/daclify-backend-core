@@ -65,6 +65,7 @@ export const ChainPlatformSchema = z.strictObject({
   seatPricing: RuntimeTableSchemas.seatcfg.nullable().default(null),
   paymentPolicy: RuntimeTableSchemas.paycfg.nullable().default(null),
   resourcePolicy: ResourcePolicySchema.nullable().default(null),
+  ramReserve: RuntimeTableSchemas.ramreserve.nullable().default(null),
   runtimeSettings: RuntimeTableSchemas.settings.nullable(),
   rateFresh: z.boolean(),
   platformDao: DaoRefSchema.nullable(),

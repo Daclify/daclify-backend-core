@@ -18,7 +18,8 @@ import { ApiRoutes } from '../../../protocol/routes.js';
 import { ModuleApiRoutes } from '@daclify/modules';
 import { ArchiveRoutes } from '@daclify/modules/archive';
 import { archivePreview } from './archive/service.js';
-import { ramUsage } from './resources/service.js';
+import { ramUsage, ramQuote } from './resources/service.js';
+import type { CardRam } from './resources/card.js';
 import Fastify, { type FastifyReply, errorCodes } from 'fastify';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
@@ -69,6 +70,7 @@ import {
 const webhookPath = '/v1/billing/stripe/webhook';
 const hostingWebhookPath = '/v1/hosting/stripe/webhook';
 const storageWebhookPath = '/v1/storage/stripe/webhook';
+const ramWebhookPath = '/v1/resources/ram/stripe/webhook';
 const rawJsonBodies = new WeakMap<object, Buffer>();
 
 export async function createServer(
@@ -81,6 +83,7 @@ export async function createServer(
     billing?: StripeBilling;
     hosting?: HostedSubscriptions;
     hostedStorage?: HostedStorage;
+    ramCards?: CardRam;
     signIn?: SignInConfiguration;
     origins?: string[];
     docs?: DocsAgentConfiguration;
@@ -173,6 +176,7 @@ export async function createServer(
       path === webhookPath ||
       path === hostingWebhookPath ||
       path === storageWebhookPath ||
+      path === ramWebhookPath ||
       path === CONNECT_WEBHOOK ||
       BROKER_PATHS.some((route) => route === path)
     )
@@ -302,6 +306,12 @@ export async function createServer(
       /* no connection strings or raw database failures in public status */
     }
     const services = [
+      [
+        'card-ram',
+        'Card RAM provisioning',
+        !!options.ramCards,
+        'Dedicated verified payments and a segregated operator reserve; live qualification is separate.',
+      ],
       [
         'hosting',
         'Shared hosting subscriptions',
@@ -592,6 +602,58 @@ export async function createServer(
       IdSchema.parse(request.params.id),
     ),
   );
+  app.post(ApiRoutes.ramCardQuote.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    if (!options.ramCards) throw new ApiError('RAM_BILLING_UNCONFIGURED', 503);
+    if (!reports(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    return options.ramCards.offer(account, request.body);
+  });
+  app.post(ApiRoutes.ramCardCheckout.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    if (!options.ramCards) throw new ApiError('RAM_BILLING_UNCONFIGURED', 503);
+    if (!admitCheckout(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    return options.ramCards.checkout(account, request.body);
+  });
+  app.get<{ Params: { id: string } }>(ApiRoutes.ramCardStatus.path, async (request) => {
+    const account = await session(request.cookies[cookieName]);
+    if (!options.ramCards) throw new ApiError('RAM_BILLING_UNCONFIGURED', 503);
+    if (!reports(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    return options.ramCards.status(account, z.uuid().parse(request.params.id));
+  });
+  app.post<{ Params: { id: string } }>(ApiRoutes.ramCardReconcile.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    if (!options.ramCards) throw new ApiError('RAM_BILLING_UNCONFIGURED', 503);
+    if (!admitCheckout(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    const id = z.uuid().parse(request.params.id);
+    await options.ramCards.status(account, id);
+    await options.ramCards.reconcile(id);
+    return options.ramCards.status(account, id);
+  });
+  app.post(ramWebhookPath, { bodyLimit: 1024 * 1024 }, async (request) => {
+    if (!options.ramCards) throw new ApiError('RAM_BILLING_UNCONFIGURED', 503);
+    const signature = request.headers['stripe-signature'],
+      raw = rawJsonBodies.get(request);
+    if (!raw || typeof signature !== 'string') throw new ApiError('SIGNATURE_INVALID');
+    await options.ramCards.webhook(raw, signature);
+    return { ok: true };
+  });
+  app.post(ApiRoutes.ramQuote.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    if (!reports(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    return ramQuote(chain, account, request.body);
+  });
   app.get<{ Params: { id: string } }>(ApiRoutes.ramUsage.path, async (request) => {
     const account = await session(request.cookies[cookieName]);
     if (!reports(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);

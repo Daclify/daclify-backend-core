@@ -22,6 +22,7 @@ import {
   Transaction,
   SignedTransaction,
   PrivateKey,
+  Checksum256,
   Signature,
   PublicKey,
   Name,
@@ -116,6 +117,8 @@ import {
   RamPayerUsageSchema,
 } from '../../../protocol/resources.js';
 import { ApiError, contractError } from './errors.js';
+import { nativeRamQuote } from './resources/native-quote.js';
+import type { RamQuoteRequest } from '../../../protocol/resources.js';
 import {
   ChainPlatformSchema,
   ContractStatusSchema,
@@ -489,6 +492,70 @@ export class NativeChainGateway implements ChainGateway {
       payers,
     });
   }
+  async ramQuote(input: RamQuoteRequest) {
+    const installed = await this.table('modules', input.dao.daoId);
+    if (
+      input.allocations.some(
+        (a) =>
+          a.receiver !== this.config.runtime && !installed.some((m) => m.account === a.receiver),
+      )
+    )
+      throw new ApiError('RAM_RECEIVER_UNINSTALLED');
+    const result = await nativeRamQuote(this.api, input, await this.ramUsage(input.dao.daoId));
+    await this.reviewedRuntime(this.config.runtime);
+    return result;
+  }
+  async ramOrder(reference: string) {
+    ChainIdSchema.parse(reference);
+    await this.reviewedRuntime(this.config.runtime);
+    const read = async () => {
+      const page = await this.api.v1.chain.get_table_rows({
+        code: this.config.runtime,
+        scope: this.config.runtime,
+        table: 'ramorders',
+        json: true,
+        index_position: 'secondary',
+        key_type: 'sha256',
+        lower_bound: Checksum256.from(reference),
+        upper_bound: Checksum256.from(reference),
+        limit: 2,
+      });
+      const rows = z.array(RuntimeTableSchemas.ramorders).max(1).parse(page.rows);
+      if (page.more || rows.some((r) => r.reference !== reference))
+        throw new ApiError('RAM_RECEIPT_INVALID', 503);
+      return rows[0] ?? null;
+    };
+    const first = await read();
+    if (!first) return null;
+    const info = await this.api.v1.chain.get_info();
+    if (info.chain_id.toString() !== this.config.chainId) throw new ApiError('DAO_REFERENCE');
+    await this.confirmBlock(Number(info.head_block_num));
+    const current = await read();
+    if (JSON.stringify(first) !== JSON.stringify(current))
+      throw new ApiError('RAM_ORDER_PENDING', 503);
+    await this.reviewedRuntime(this.config.runtime);
+    return current;
+  }
+  async fulfilRam(input: RuntimeActions['fulfilram']) {
+    await this.reviewedRuntime(this.config.runtime);
+    const config = (await this.table('createcfg', this.config.runtime))[0];
+    if (config?.settler !== this.config.relayActor)
+      throw new ApiError('RAM_BILLING_AUTHORITY_UNCONFIGURED', 503);
+    const info = await this.api.v1.chain.get_info();
+    const policy = await this.resourcePolicy();
+    if (!policy || policy.revision !== input.policy_revision)
+      throw new ApiError('RESOURCE_POLICY_CHANGED', 409);
+    return this.push(
+      'fulfilram',
+      {
+        ...input,
+        expires:
+          Math.floor(info.head_block_time.toMilliseconds() / 1000) + policy.quoteLifetimeSeconds,
+      },
+      this.config.relayActor,
+      this.config.relayKey,
+    );
+  }
   async archivePreview(value: ArchivePreviewRequest) {
     const input = ArchiveRoutes.preview.input.parse(value);
     if (
@@ -642,6 +709,7 @@ export class NativeChainGateway implements ChainGateway {
       seatPricing,
       paymentPolicy,
       resourcePolicy,
+      ramReserve,
     ] = await Promise.all([
       optional(this, 'feecfg'),
       optional(this, 'mktcfg'),
@@ -654,6 +722,7 @@ export class NativeChainGateway implements ChainGateway {
       optional(this, 'seatcfg'),
       optional(this, 'paycfg'),
       optional(this, 'resourcecfg'),
+      optional(this, 'ramreserve'),
     ]);
     const contracts = await Promise.all(
       [
@@ -728,6 +797,7 @@ export class NativeChainGateway implements ChainGateway {
       seatPricing,
       paymentPolicy,
       resourcePolicy: resourcePolicy ? resourcePolicyFromRow(resourcePolicy) : null,
+      ramReserve,
       runtimeSettings,
       rateFresh:
         !!creation &&

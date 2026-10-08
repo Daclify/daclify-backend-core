@@ -26,6 +26,9 @@ import { readStorageConfig } from './billing/storage-config.js';
 import { startStorageWorker } from './billing/storage-jobs.js';
 import { HostedStorage } from './billing/storage.js';
 import { DEFAULT_STORAGE_PRICING } from '../../../protocol/storage.js';
+import { readRamCardConfig } from './resources/card-config.js';
+import { CardRam } from './resources/card.js';
+import { startRamWorker } from './resources/jobs.js';
 import { readHostingConfig } from './billing/hosting-config.js';
 import { HostedSubscriptions } from './billing/hosting.js';
 import { startHostingWorker } from './billing/hosting-jobs.js';
@@ -150,7 +153,9 @@ const hostedStorage = storageConfig
       freeBytes: env.CONTENT_FREE_STORAGE_BYTES,
     })
   : undefined;
-if (operatorConfig && (connectConfig || hostingConfig || storageConfig))
+const ramCardConfig = readRamCardConfig(process.env, env.NETWORK_ENVIRONMENT, env.FRONTEND_ORIGIN);
+const ramCards = ramCardConfig ? new CardRam(pool, chain, ramCardConfig) : undefined;
+if (operatorConfig && (connectConfig || hostingConfig || storageConfig || ramCardConfig))
   throw new Error('PAYMENT_OPERATOR_CONFIGURATION_INVALID');
 const docs = readDocsAgent(process.env);
 const creation = new CreationService(pool, chain);
@@ -161,6 +166,7 @@ const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
   ...(process.env.API_PUBLIC_ORIGIN ? { apiOrigin: process.env.API_PUBLIC_ORIGIN } : {}),
   ...(hosting ? { hosting } : {}),
   ...(hostedStorage ? { hostedStorage } : {}),
+  ...(ramCards ? { ramCards } : {}),
   ...(operatorConfig
     ? { operatorPayments: new OperatorPayments(pool, chain, operatorConfig) }
     : {}),
@@ -177,11 +183,13 @@ await app.listen({ host: '127.0.0.1', port: env.API_PORT });
 const worker = content ? startContentWorker(pool, content) : undefined;
 const hostingWorker = hosting ? startHostingWorker(pool, hosting) : undefined;
 const storageWorker = hostedStorage ? startStorageWorker(pool, hostedStorage) : undefined;
+const ramWorker = ramCards ? startRamWorker(pool, ramCards) : undefined;
 async function shutdown() {
   await app.close();
   await worker?.stop();
   await hostingWorker?.stop();
   await storageWorker?.stop();
+  await ramWorker?.stop();
   await pool.end();
 }
 process.on('SIGTERM', () => {

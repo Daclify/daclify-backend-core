@@ -304,9 +304,23 @@ Fork improvements can be reused in Daclify under AGPL with their notices retaine
 
 Commercial hosting, subscriptions and paid services are allowed. Independently developed modules and services need a compatibility review; putting code in another repository does not automatically exempt a combined work. No trademark permission is granted to present a fork as the official Daclify service.
 
+## RAM, hosted storage and archive recovery
+
+Blockchain RAM holds live contract records; IPFS holds pinned files and archive bundles. They are separate resources. Resources shows exact DAO RAM counters and permanent purchased bytes by contract payer. Whole-account figures include other DAOs, code and permissions. An unavailable DAO total is not a zero-byte total.
+
+To buy RAM with TLOS, select a qualified contract payer and minimum byte increase, review native acquisition cost plus one operational fee (5% at launch), then approve the one-time wallet payment. Order and token payment share one transaction. Every actual quota increase is checked; an expired quote, changed policy or unmet minimum rolls the whole purchase back. Sponsoring RAM grants no membership or administration.
+
+Administrators can instead approve a card RAM order when the operator has configured Stripe and funded its separate native reserve. The card rail adds one operational markup (20% at launch), with a $5 minimum total. It does not add the native 5% markup or Connect commission. The exchange-rate observation, byte minimum and exact USD price are disclosed before fresh account-control approval. Complete Stripe checkout, then refresh the saved order. Payment must be verified and provisioning must finish before capacity is credited. An operator outage or low reserve needs reconciliation; checkout return alone proves nothing.
+
+Purchased RAM is permanent and reusable. A refund, dispute or hosting arrears does not automatically sell RAM or erase keys, memberships, nonces, balances or financial claims. Operator RAM reserve deposits are distinct from DAO treasury/stake/claim deposits. Quota enforcement, included pools and protected completion reserves are still being qualified.
+
+Pinned hosting includes 100 MB (100,000,000 bytes). Each explicitly approved additional 1 GB costs $1 per calendar month at launch. Active files, old versions and archive bundles share this rate; the same CID counts once per DAO. Payment retries do not restart the original paid-term-end plus 30-day grace deadline. Automatic deletion is disabled until guarded cleanup and recovery qualify.
+
+Archive preview and resumable export are available for qualified ordinary-poll vote records, at least 90 days after recorded terminal completion. Download and independently verify a bundle against its separately saved manifest hash. The current hash is not yet a native archive anchor. Exports contain original records, not private decryption keys or social-login pairings; retain recovery kits and original file pins separately. Exporting never itself approves pruning. Native archive approvals, source-owned pruning and empty-database history restoration remain qualification work.
+
 ## runtime contract
 
-Source ABI JSON SHA-256: `413286a8a0fc4247235584ae484abae501b251c0b1d11c0123e93fc623d826bf`.
+Source ABI JSON SHA-256: `33252c0538af6dd9291388abdca057a42885b831fabc3d48f8a24f783a89f740`.
 
 ### Action: addmember
 
@@ -460,6 +474,17 @@ Source ABI JSON SHA-256: `413286a8a0fc4247235584ae484abae501b251c0b1d11c0123e93f
 | Field | ABI type |
 | --- | --- |
 | reference | checksum256 |
+
+### Action: fulfilram
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| reference | checksum256 |
+| policy_revision | uint64 |
+| maximum | asset |
+| expires | uint32 |
+| purchases | ram_purchase[] |
 
 ### Action: govcreate
 
@@ -1374,6 +1399,23 @@ Source ABI JSON SHA-256: `413286a8a0fc4247235584ae484abae501b251c0b1d11c0123e93f
 | payer | name |
 | purchased_bytes | uint64 |
 
+### Table: ramcards
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| dao_id | uint64 |
+| reference | checksum256 |
+| operational_bps | uint16 |
+| fulfiller | name |
+
+### Table: ramintent
+
+| Field | ABI type |
+| --- | --- |
+| order | ram_order |
+| transaction_id | checksum256 |
+
 ### Table: ramobs
 
 | Field | ABI type |
@@ -1400,6 +1442,12 @@ Source ABI JSON SHA-256: `413286a8a0fc4247235584ae484abae501b251c0b1d11c0123e93f
 | purchases | ram_acquisition[] |
 | funded | bool |
 | settled | bool |
+
+### Table: ramreserve
+
+| Field | ABI type |
+| --- | --- |
+| available | asset |
 
 ### Table: ramsources
 
@@ -1506,9 +1554,2122 @@ Source ABI JSON SHA-256: `ae70e5f0f7af1f1a9ded1b8ce193c5e6cab1808799f4e11c7e9ad1
 | metadata | string |
 | listed | bool |
 
+## POST /v1/resources/ram/card/quote
+
+Guide: resources-and-retention.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "dao": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "contract": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "daoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "interfaceVersion": {
+          "type": "number",
+          "const": 1
+        }
+      },
+      "required": [
+        "chainId",
+        "contract",
+        "daoId",
+        "interfaceVersion"
+      ],
+      "additionalProperties": false
+    },
+    "allocations": {
+      "minItems": 1,
+      "maxItems": 6,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "receiver": {
+            "type": "string",
+            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+          },
+          "minimumBytes": {
+            "type": "string",
+            "maxLength": 20
+          }
+        },
+        "required": [
+          "receiver",
+          "minimumBytes"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "dao",
+    "allocations"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "quote": {
+      "type": "object",
+      "properties": {
+        "dao": {
+          "type": "object",
+          "properties": {
+            "chainId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "contract": {
+              "type": "string",
+              "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+            },
+            "daoId": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "interfaceVersion": {
+              "type": "number",
+              "const": 1
+            }
+          },
+          "required": [
+            "chainId",
+            "contract",
+            "daoId",
+            "interfaceVersion"
+          ],
+          "additionalProperties": false
+        },
+        "rail": {
+          "type": "string",
+          "const": "tlos"
+        },
+        "baseUnits": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "feeUnits": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "totalUnits": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "feeBps": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "order": {
+          "type": "object",
+          "properties": {
+            "dao_id": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "payer": {
+              "type": "string",
+              "maxLength": 13
+            },
+            "reference": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "policy_revision": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "maximum": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)? [A-Z]{1,7}$"
+            },
+            "expires": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "purchases": {
+              "maxItems": 64,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "receiver": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "quantity": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)? [A-Z]{1,7}$"
+                  },
+                  "minimum_bytes": {
+                    "type": "string",
+                    "maxLength": 20
+                  }
+                },
+                "required": [
+                  "receiver",
+                  "quantity",
+                  "minimum_bytes"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "dao_id",
+            "payer",
+            "reference",
+            "policy_revision",
+            "maximum",
+            "expires",
+            "purchases"
+          ],
+          "additionalProperties": false
+        },
+        "systemCodeHash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "systemRawAbiHash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "quotedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        }
+      },
+      "required": [
+        "dao",
+        "rail",
+        "baseUnits",
+        "feeUnits",
+        "totalUnits",
+        "feeBps",
+        "order",
+        "systemCodeHash",
+        "systemRawAbiHash",
+        "quotedAt"
+      ],
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "type": "number",
+          "const": 1
+        },
+        "revision": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "nativeRamBps": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "cardRamBps": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "includedActivityBytes": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "identityBytesPerSlot": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "quoteLifetimeSeconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600
+        },
+        "graceSeconds": {
+          "type": "number",
+          "const": 2592000
+        },
+        "storage": {
+          "type": "object",
+          "properties": {
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "revision": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "freeBytes": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "unitBytes": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "monthlyUnitUsdCents": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 99999999
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "revision",
+            "freeBytes",
+            "unitBytes",
+            "monthlyUnitUsdCents"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "revision",
+        "nativeRamBps",
+        "cardRamBps",
+        "includedActivityBytes",
+        "identityBytesPerSlot",
+        "quoteLifetimeSeconds",
+        "graceSeconds",
+        "storage"
+      ],
+      "additionalProperties": false
+    },
+    "oracle": {
+      "type": "object",
+      "properties": {
+        "median": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "precision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "observed_at": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        }
+      },
+      "required": [
+        "median",
+        "precision",
+        "observed_at"
+      ],
+      "additionalProperties": false
+    },
+    "baseUsdCents": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 99999999
+    },
+    "feeUsdCents": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 99999999
+    },
+    "totalUsdCents": {
+      "type": "integer",
+      "minimum": 500,
+      "maximum": 99999999
+    }
+  },
+  "required": [
+    "quote",
+    "policy",
+    "oracle",
+    "baseUsdCents",
+    "feeUsdCents",
+    "totalUsdCents"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/resources/ram/card/checkout
+
+Guide: resources-and-retention.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "quote": {
+      "type": "object",
+      "properties": {
+        "dao": {
+          "type": "object",
+          "properties": {
+            "chainId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "contract": {
+              "type": "string",
+              "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+            },
+            "daoId": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "interfaceVersion": {
+              "type": "number",
+              "const": 1
+            }
+          },
+          "required": [
+            "chainId",
+            "contract",
+            "daoId",
+            "interfaceVersion"
+          ],
+          "additionalProperties": false
+        },
+        "rail": {
+          "type": "string",
+          "const": "tlos"
+        },
+        "baseUnits": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "feeUnits": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "totalUnits": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "feeBps": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "order": {
+          "type": "object",
+          "properties": {
+            "dao_id": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "payer": {
+              "type": "string",
+              "maxLength": 13
+            },
+            "reference": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "policy_revision": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "maximum": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)? [A-Z]{1,7}$"
+            },
+            "expires": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "purchases": {
+              "maxItems": 64,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "receiver": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "quantity": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)? [A-Z]{1,7}$"
+                  },
+                  "minimum_bytes": {
+                    "type": "string",
+                    "maxLength": 20
+                  }
+                },
+                "required": [
+                  "receiver",
+                  "quantity",
+                  "minimum_bytes"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "dao_id",
+            "payer",
+            "reference",
+            "policy_revision",
+            "maximum",
+            "expires",
+            "purchases"
+          ],
+          "additionalProperties": false
+        },
+        "systemCodeHash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "systemRawAbiHash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "quotedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        }
+      },
+      "required": [
+        "dao",
+        "rail",
+        "baseUnits",
+        "feeUnits",
+        "totalUnits",
+        "feeBps",
+        "order",
+        "systemCodeHash",
+        "systemRawAbiHash",
+        "quotedAt"
+      ],
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "type": "number",
+          "const": 1
+        },
+        "revision": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "nativeRamBps": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "cardRamBps": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "includedActivityBytes": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "identityBytesPerSlot": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "quoteLifetimeSeconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600
+        },
+        "graceSeconds": {
+          "type": "number",
+          "const": 2592000
+        },
+        "storage": {
+          "type": "object",
+          "properties": {
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "revision": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "freeBytes": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "unitBytes": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "monthlyUnitUsdCents": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 99999999
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "revision",
+            "freeBytes",
+            "unitBytes",
+            "monthlyUnitUsdCents"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "revision",
+        "nativeRamBps",
+        "cardRamBps",
+        "includedActivityBytes",
+        "identityBytesPerSlot",
+        "quoteLifetimeSeconds",
+        "graceSeconds",
+        "storage"
+      ],
+      "additionalProperties": false
+    },
+    "oracle": {
+      "type": "object",
+      "properties": {
+        "median": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "precision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "observed_at": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        }
+      },
+      "required": [
+        "median",
+        "precision",
+        "observed_at"
+      ],
+      "additionalProperties": false
+    },
+    "baseUsdCents": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 99999999
+    },
+    "feeUsdCents": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 99999999
+    },
+    "totalUsdCents": {
+      "type": "integer",
+      "minimum": 500,
+      "maximum": 99999999
+    },
+    "requestId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "consent": {
+      "type": "boolean",
+      "const": true
+    }
+  },
+  "required": [
+    "quote",
+    "policy",
+    "oracle",
+    "baseUsdCents",
+    "feeUsdCents",
+    "totalUsdCents",
+    "requestId",
+    "consent"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "dao": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "contract": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "daoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "interfaceVersion": {
+          "type": "number",
+          "const": 1
+        }
+      },
+      "required": [
+        "chainId",
+        "contract",
+        "daoId",
+        "interfaceVersion"
+      ],
+      "additionalProperties": false
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "paid",
+        "provisioning",
+        "settled",
+        "review"
+      ]
+    },
+    "approval": {
+      "type": "object",
+      "properties": {
+        "quote": {
+          "type": "object",
+          "properties": {
+            "dao": {
+              "type": "object",
+              "properties": {
+                "chainId": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "contract": {
+                  "type": "string",
+                  "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                },
+                "daoId": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "interfaceVersion": {
+                  "type": "number",
+                  "const": 1
+                }
+              },
+              "required": [
+                "chainId",
+                "contract",
+                "daoId",
+                "interfaceVersion"
+              ],
+              "additionalProperties": false
+            },
+            "rail": {
+              "type": "string",
+              "const": "tlos"
+            },
+            "baseUnits": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "feeUnits": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "totalUnits": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "feeBps": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "order": {
+              "type": "object",
+              "properties": {
+                "dao_id": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "payer": {
+                  "type": "string",
+                  "maxLength": 13
+                },
+                "reference": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "policy_revision": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "maximum": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)? [A-Z]{1,7}$"
+                },
+                "expires": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                },
+                "purchases": {
+                  "maxItems": 64,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "receiver": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "quantity": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)? [A-Z]{1,7}$"
+                      },
+                      "minimum_bytes": {
+                        "type": "string",
+                        "maxLength": 20
+                      }
+                    },
+                    "required": [
+                      "receiver",
+                      "quantity",
+                      "minimum_bytes"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "dao_id",
+                "payer",
+                "reference",
+                "policy_revision",
+                "maximum",
+                "expires",
+                "purchases"
+              ],
+              "additionalProperties": false
+            },
+            "systemCodeHash": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "systemRawAbiHash": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "quotedAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            }
+          },
+          "required": [
+            "dao",
+            "rail",
+            "baseUnits",
+            "feeUnits",
+            "totalUnits",
+            "feeBps",
+            "order",
+            "systemCodeHash",
+            "systemRawAbiHash",
+            "quotedAt"
+          ],
+          "additionalProperties": false
+        },
+        "policy": {
+          "type": "object",
+          "properties": {
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "revision": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "nativeRamBps": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "cardRamBps": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "includedActivityBytes": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "identityBytesPerSlot": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "quoteLifetimeSeconds": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3600
+            },
+            "graceSeconds": {
+              "type": "number",
+              "const": 2592000
+            },
+            "storage": {
+              "type": "object",
+              "properties": {
+                "schemaVersion": {
+                  "type": "number",
+                  "const": 1
+                },
+                "revision": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "freeBytes": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "unitBytes": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "monthlyUnitUsdCents": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 99999999
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "revision",
+                "freeBytes",
+                "unitBytes",
+                "monthlyUnitUsdCents"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "revision",
+            "nativeRamBps",
+            "cardRamBps",
+            "includedActivityBytes",
+            "identityBytesPerSlot",
+            "quoteLifetimeSeconds",
+            "graceSeconds",
+            "storage"
+          ],
+          "additionalProperties": false
+        },
+        "oracle": {
+          "type": "object",
+          "properties": {
+            "median": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "precision": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "observed_at": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            }
+          },
+          "required": [
+            "median",
+            "precision",
+            "observed_at"
+          ],
+          "additionalProperties": false
+        },
+        "baseUsdCents": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 99999999
+        },
+        "feeUsdCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99999999
+        },
+        "totalUsdCents": {
+          "type": "integer",
+          "minimum": 500,
+          "maximum": 99999999
+        },
+        "requestId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "consent": {
+          "type": "boolean",
+          "const": true
+        }
+      },
+      "required": [
+        "quote",
+        "policy",
+        "oracle",
+        "baseUsdCents",
+        "feeUsdCents",
+        "totalUsdCents",
+        "requestId",
+        "consent"
+      ],
+      "additionalProperties": false
+    },
+    "checkoutUrl": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uri"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "acquiredBytes": {
+      "anyOf": [
+        {
+          "type": "string",
+          "maxLength": 20
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "settledAt": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "dao",
+    "state",
+    "approval",
+    "checkoutUrl",
+    "acquiredBytes",
+    "settledAt"
+  ],
+  "additionalProperties": false
+}
+```
+
+## GET /v1/resources/ram/card/orders/:id
+
+Guide: resources-and-retention.
+
+No request body.
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "dao": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "contract": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "daoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "interfaceVersion": {
+          "type": "number",
+          "const": 1
+        }
+      },
+      "required": [
+        "chainId",
+        "contract",
+        "daoId",
+        "interfaceVersion"
+      ],
+      "additionalProperties": false
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "paid",
+        "provisioning",
+        "settled",
+        "review"
+      ]
+    },
+    "approval": {
+      "type": "object",
+      "properties": {
+        "quote": {
+          "type": "object",
+          "properties": {
+            "dao": {
+              "type": "object",
+              "properties": {
+                "chainId": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "contract": {
+                  "type": "string",
+                  "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                },
+                "daoId": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "interfaceVersion": {
+                  "type": "number",
+                  "const": 1
+                }
+              },
+              "required": [
+                "chainId",
+                "contract",
+                "daoId",
+                "interfaceVersion"
+              ],
+              "additionalProperties": false
+            },
+            "rail": {
+              "type": "string",
+              "const": "tlos"
+            },
+            "baseUnits": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "feeUnits": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "totalUnits": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "feeBps": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "order": {
+              "type": "object",
+              "properties": {
+                "dao_id": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "payer": {
+                  "type": "string",
+                  "maxLength": 13
+                },
+                "reference": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "policy_revision": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "maximum": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)? [A-Z]{1,7}$"
+                },
+                "expires": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                },
+                "purchases": {
+                  "maxItems": 64,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "receiver": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "quantity": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)? [A-Z]{1,7}$"
+                      },
+                      "minimum_bytes": {
+                        "type": "string",
+                        "maxLength": 20
+                      }
+                    },
+                    "required": [
+                      "receiver",
+                      "quantity",
+                      "minimum_bytes"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "dao_id",
+                "payer",
+                "reference",
+                "policy_revision",
+                "maximum",
+                "expires",
+                "purchases"
+              ],
+              "additionalProperties": false
+            },
+            "systemCodeHash": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "systemRawAbiHash": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "quotedAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            }
+          },
+          "required": [
+            "dao",
+            "rail",
+            "baseUnits",
+            "feeUnits",
+            "totalUnits",
+            "feeBps",
+            "order",
+            "systemCodeHash",
+            "systemRawAbiHash",
+            "quotedAt"
+          ],
+          "additionalProperties": false
+        },
+        "policy": {
+          "type": "object",
+          "properties": {
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "revision": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "nativeRamBps": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "cardRamBps": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "includedActivityBytes": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "identityBytesPerSlot": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "quoteLifetimeSeconds": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3600
+            },
+            "graceSeconds": {
+              "type": "number",
+              "const": 2592000
+            },
+            "storage": {
+              "type": "object",
+              "properties": {
+                "schemaVersion": {
+                  "type": "number",
+                  "const": 1
+                },
+                "revision": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "freeBytes": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "unitBytes": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "monthlyUnitUsdCents": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 99999999
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "revision",
+                "freeBytes",
+                "unitBytes",
+                "monthlyUnitUsdCents"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "revision",
+            "nativeRamBps",
+            "cardRamBps",
+            "includedActivityBytes",
+            "identityBytesPerSlot",
+            "quoteLifetimeSeconds",
+            "graceSeconds",
+            "storage"
+          ],
+          "additionalProperties": false
+        },
+        "oracle": {
+          "type": "object",
+          "properties": {
+            "median": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "precision": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "observed_at": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            }
+          },
+          "required": [
+            "median",
+            "precision",
+            "observed_at"
+          ],
+          "additionalProperties": false
+        },
+        "baseUsdCents": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 99999999
+        },
+        "feeUsdCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99999999
+        },
+        "totalUsdCents": {
+          "type": "integer",
+          "minimum": 500,
+          "maximum": 99999999
+        },
+        "requestId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "consent": {
+          "type": "boolean",
+          "const": true
+        }
+      },
+      "required": [
+        "quote",
+        "policy",
+        "oracle",
+        "baseUsdCents",
+        "feeUsdCents",
+        "totalUsdCents",
+        "requestId",
+        "consent"
+      ],
+      "additionalProperties": false
+    },
+    "checkoutUrl": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uri"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "acquiredBytes": {
+      "anyOf": [
+        {
+          "type": "string",
+          "maxLength": 20
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "settledAt": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "dao",
+    "state",
+    "approval",
+    "checkoutUrl",
+    "acquiredBytes",
+    "settledAt"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/resources/ram/card/orders/:id/reconcile
+
+Guide: resources-and-retention.
+
+Request fields are not included in this response reference; consult the endpoint implementation.
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "dao": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "contract": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "daoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "interfaceVersion": {
+          "type": "number",
+          "const": 1
+        }
+      },
+      "required": [
+        "chainId",
+        "contract",
+        "daoId",
+        "interfaceVersion"
+      ],
+      "additionalProperties": false
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "paid",
+        "provisioning",
+        "settled",
+        "review"
+      ]
+    },
+    "approval": {
+      "type": "object",
+      "properties": {
+        "quote": {
+          "type": "object",
+          "properties": {
+            "dao": {
+              "type": "object",
+              "properties": {
+                "chainId": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "contract": {
+                  "type": "string",
+                  "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                },
+                "daoId": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "interfaceVersion": {
+                  "type": "number",
+                  "const": 1
+                }
+              },
+              "required": [
+                "chainId",
+                "contract",
+                "daoId",
+                "interfaceVersion"
+              ],
+              "additionalProperties": false
+            },
+            "rail": {
+              "type": "string",
+              "const": "tlos"
+            },
+            "baseUnits": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "feeUnits": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "totalUnits": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "feeBps": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "order": {
+              "type": "object",
+              "properties": {
+                "dao_id": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "payer": {
+                  "type": "string",
+                  "maxLength": 13
+                },
+                "reference": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "policy_revision": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "maximum": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)? [A-Z]{1,7}$"
+                },
+                "expires": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                },
+                "purchases": {
+                  "maxItems": 64,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "receiver": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "quantity": {
+                        "type": "string",
+                        "maxLength": 64,
+                        "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)? [A-Z]{1,7}$"
+                      },
+                      "minimum_bytes": {
+                        "type": "string",
+                        "maxLength": 20
+                      }
+                    },
+                    "required": [
+                      "receiver",
+                      "quantity",
+                      "minimum_bytes"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "dao_id",
+                "payer",
+                "reference",
+                "policy_revision",
+                "maximum",
+                "expires",
+                "purchases"
+              ],
+              "additionalProperties": false
+            },
+            "systemCodeHash": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "systemRawAbiHash": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "quotedAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            }
+          },
+          "required": [
+            "dao",
+            "rail",
+            "baseUnits",
+            "feeUnits",
+            "totalUnits",
+            "feeBps",
+            "order",
+            "systemCodeHash",
+            "systemRawAbiHash",
+            "quotedAt"
+          ],
+          "additionalProperties": false
+        },
+        "policy": {
+          "type": "object",
+          "properties": {
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "revision": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "nativeRamBps": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "cardRamBps": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "includedActivityBytes": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "identityBytesPerSlot": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "quoteLifetimeSeconds": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3600
+            },
+            "graceSeconds": {
+              "type": "number",
+              "const": 2592000
+            },
+            "storage": {
+              "type": "object",
+              "properties": {
+                "schemaVersion": {
+                  "type": "number",
+                  "const": 1
+                },
+                "revision": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "freeBytes": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "unitBytes": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "monthlyUnitUsdCents": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 99999999
+                }
+              },
+              "required": [
+                "schemaVersion",
+                "revision",
+                "freeBytes",
+                "unitBytes",
+                "monthlyUnitUsdCents"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "revision",
+            "nativeRamBps",
+            "cardRamBps",
+            "includedActivityBytes",
+            "identityBytesPerSlot",
+            "quoteLifetimeSeconds",
+            "graceSeconds",
+            "storage"
+          ],
+          "additionalProperties": false
+        },
+        "oracle": {
+          "type": "object",
+          "properties": {
+            "median": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "precision": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "observed_at": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            }
+          },
+          "required": [
+            "median",
+            "precision",
+            "observed_at"
+          ],
+          "additionalProperties": false
+        },
+        "baseUsdCents": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 99999999
+        },
+        "feeUsdCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 99999999
+        },
+        "totalUsdCents": {
+          "type": "integer",
+          "minimum": 500,
+          "maximum": 99999999
+        },
+        "requestId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "consent": {
+          "type": "boolean",
+          "const": true
+        }
+      },
+      "required": [
+        "quote",
+        "policy",
+        "oracle",
+        "baseUsdCents",
+        "feeUsdCents",
+        "totalUsdCents",
+        "requestId",
+        "consent"
+      ],
+      "additionalProperties": false
+    },
+    "checkoutUrl": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uri"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "acquiredBytes": {
+      "anyOf": [
+        {
+          "type": "string",
+          "maxLength": 20
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "settledAt": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "dao",
+    "state",
+    "approval",
+    "checkoutUrl",
+    "acquiredBytes",
+    "settledAt"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/resources/ram/quote
+
+Guide: resources-and-retention.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "dao": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "contract": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "daoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "interfaceVersion": {
+          "type": "number",
+          "const": 1
+        }
+      },
+      "required": [
+        "chainId",
+        "contract",
+        "daoId",
+        "interfaceVersion"
+      ],
+      "additionalProperties": false
+    },
+    "payer": {
+      "type": "string",
+      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+    },
+    "allocations": {
+      "minItems": 1,
+      "maxItems": 6,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "receiver": {
+            "type": "string",
+            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+          },
+          "minimumBytes": {
+            "type": "string",
+            "maxLength": 20
+          }
+        },
+        "required": [
+          "receiver",
+          "minimumBytes"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "dao",
+    "payer",
+    "allocations"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "dao": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "contract": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "daoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "interfaceVersion": {
+          "type": "number",
+          "const": 1
+        }
+      },
+      "required": [
+        "chainId",
+        "contract",
+        "daoId",
+        "interfaceVersion"
+      ],
+      "additionalProperties": false
+    },
+    "rail": {
+      "type": "string",
+      "const": "tlos"
+    },
+    "baseUnits": {
+      "type": "string",
+      "maxLength": 20
+    },
+    "feeUnits": {
+      "type": "string",
+      "maxLength": 20
+    },
+    "totalUnits": {
+      "type": "string",
+      "maxLength": 20
+    },
+    "feeBps": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10000
+    },
+    "order": {
+      "type": "object",
+      "properties": {
+        "dao_id": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "payer": {
+          "type": "string",
+          "maxLength": 13
+        },
+        "reference": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "policy_revision": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "maximum": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)? [A-Z]{1,7}$"
+        },
+        "expires": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "purchases": {
+          "maxItems": 64,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "receiver": {
+                "type": "string",
+                "maxLength": 13
+              },
+              "quantity": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)? [A-Z]{1,7}$"
+              },
+              "minimum_bytes": {
+                "type": "string",
+                "maxLength": 20
+              }
+            },
+            "required": [
+              "receiver",
+              "quantity",
+              "minimum_bytes"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "dao_id",
+        "payer",
+        "reference",
+        "policy_revision",
+        "maximum",
+        "expires",
+        "purchases"
+      ],
+      "additionalProperties": false
+    },
+    "systemCodeHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "systemRawAbiHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "quotedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+    }
+  },
+  "required": [
+    "dao",
+    "rail",
+    "baseUnits",
+    "feeUnits",
+    "totalUnits",
+    "feeBps",
+    "order",
+    "systemCodeHash",
+    "systemRawAbiHash",
+    "quotedAt"
+  ],
+  "additionalProperties": false
+}
+```
+
 ## GET /v1/daos/:id/ram
 
-Guide: documents.
+Guide: resources-and-retention.
 
 No request body.
 
@@ -1801,7 +3962,7 @@ Response:
 
 ## GET /v1/daos/:id/storage
 
-Guide: documents.
+Guide: resources-and-retention.
 
 No request body.
 
@@ -2752,6 +4913,28 @@ Response:
                 }
               ]
             },
+            "ramReserve": {
+              "default": null,
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "available": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)? [A-Z]{1,7}$"
+                    }
+                  },
+                  "required": [
+                    "available"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "runtimeSettings": {
               "anyOf": [
                 {
@@ -2840,6 +5023,7 @@ Response:
             "seatPricing",
             "paymentPolicy",
             "resourcePolicy",
+            "ramReserve",
             "runtimeSettings",
             "rateFresh",
             "platformDao",
@@ -7526,7 +9710,7 @@ Response:
 
 ## GET /v1/daos/:id/content
 
-Guide: documents.
+Guide: resources-and-retention.
 
 No request body.
 
@@ -8585,7 +10769,7 @@ Response:
 
 ## POST /v1/uploads
 
-Guide: documents.
+Guide: resources-and-retention.
 
 Request:
 
@@ -8798,7 +10982,7 @@ Response:
 
 ## GET /v1/uploads/:requestId
 
-Guide: documents.
+Guide: resources-and-retention.
 
 No request body.
 
@@ -8933,7 +11117,7 @@ Response:
 
 ## POST /v1/uploads/:requestId/reconcile
 
-Guide: documents.
+Guide: resources-and-retention.
 
 Request:
 
@@ -9078,7 +11262,7 @@ Response:
 
 ## GET /v1/daos/:id/documents/:documentId/:version/content
 
-Guide: documents.
+Guide: resources-and-retention.
 
 No request body.
 
@@ -15593,6 +17777,7 @@ Request:
     "path": {
       "type": "string",
       "enum": [
+        "/v1/resources/ram/card/checkout",
         "/v1/hosting/change",
         "/v1/storage/approve",
         "/v1/payments/onboard",
