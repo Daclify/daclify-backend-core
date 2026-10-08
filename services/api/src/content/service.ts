@@ -9,6 +9,7 @@ import {
   UploadStatusSchema,
   StorageStatusSchema,
   HostedStorageUsageSchema,
+  DEFAULT_STORAGE_PRICING,
   MAX_HOSTED_CONTENT_BYTES,
   FileMetadataSchema,
   type HostedUpload,
@@ -19,6 +20,7 @@ import { Uint64Schema } from '../../../../protocol/base.js';
 import type { ChainGateway } from '../chain.js';
 import type { ContentProvider, PinnedFile } from './provider.js';
 import { ApiError } from '../errors.js';
+import { storageFunding } from '../billing/storage-state.js';
 import { validateBrandImage } from './branding.js';
 import {
   CONTENT_IMPORT_PROFILE,
@@ -60,6 +62,9 @@ export class ContentService {
     ProviderScopeSchema.parse(providerScope);
     if (allowance < 0n || allowance > (1n << 63n) - 1n) throw new Error('CONTENT_ALLOWANCE');
   }
+  get freeAllowance(): bigint {
+    return this.allowance;
+  }
   configuration(): z.infer<typeof StorageStatusSchema> {
     return { provider: this.providerName, configured: true, uploadLimit: MAX_HOSTED_CONTENT_BYTES };
   }
@@ -89,9 +94,17 @@ export class ContentService {
         "SELECT storage_limit::text FROM entitlements WHERE dao_key=$1 AND (tier='free' OR expires_at IS NULL OR expires_at>now())",
         [key],
       );
-      const capacity = entitlement.rows[0]
+      const legacyCapacity = entitlement.rows[0]
         ? Uint64Schema.parse(entitlement.rows[0].storage_limit)
         : this.allowance.toString();
+      const funded = await storageFunding(
+        client,
+        dao.reference,
+        this.providerScope,
+        { ...DEFAULT_STORAGE_PRICING, freeBytes: legacyCapacity },
+        new Date(),
+      );
+      const capacity = funded.uploadCapacityBytes;
       const total = await storageUsed(client, key);
       const measured = await client.query<{ bytes: string; objects: number; references: number }>(
         `SELECT COALESCE(sum(o.verified_bytes),0)::text AS bytes,count(o.id)::integer AS objects,
@@ -170,9 +183,17 @@ export class ContentService {
         "SELECT storage_limit::text FROM entitlements WHERE dao_key=$1 AND (tier='free' OR expires_at IS NULL OR expires_at>now())",
         [key],
       );
-      const budget = entitlement.rows[0]
+      const legacyBudget = entitlement.rows[0]
         ? BigInt(Uint64Schema.parse(entitlement.rows[0].storage_limit))
         : this.allowance;
+      const funded = await storageFunding(
+        client,
+        input.dao,
+        this.providerScope,
+        { ...DEFAULT_STORAGE_PRICING, freeBytes: legacyBudget.toString() },
+        new Date(),
+      );
+      const budget = BigInt(funded.uploadCapacityBytes);
       const reusable = await reusableObject(
         client,
         this.providerScope,

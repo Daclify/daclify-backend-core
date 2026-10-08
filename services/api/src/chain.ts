@@ -22,9 +22,11 @@ import type { GovernanceState } from '../../../protocol/dao.js';
 import type { ExecutionRequest, ExecutionResult } from '@daclify/modules';
 import type { DaoRef } from '../../../protocol/base.js';
 import type { PaymentPolicy } from '../../../protocol/payments.js';
+import type { ResourcePolicy } from '../../../protocol/resources.js';
 import type { HostingChain } from '../../../protocol/hosting.js';
 import type { HubDirectorySchema } from '../../../protocol/directory.js';
 export interface ChainGateway {
+  resourcePolicy?(): Promise<ResourcePolicy | null>;
   hosting?(dao: DaoRef): Promise<HostingChain>;
   attestCapacity?(dao: DaoRef, members: number, expires: number, receipt: string): Promise<void>;
   restoreCapacity?(dao: DaoRef, receipt: string): Promise<void>;

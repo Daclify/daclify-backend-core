@@ -1,6 +1,9 @@
 import type { CreationService } from './creation.js';
 import type { ConnectedPayments } from './payments/service.js';
 import type { OperatorPayments } from './payments/operator.js';
+import type { HostedStorage } from './billing/storage.js';
+import { storageFunding } from './billing/storage-state.js';
+import { DEFAULT_STORAGE_PRICING, StorageBillingRoutes } from '../../../protocol/storage.js';
 import type { HostedSubscriptions } from './billing/hosting.js';
 import { HostingRoutes, HostingStatusSchema } from '../../../protocol/hosting.js';
 import { daoPaymentKey } from '../../../protocol/payments.js';
@@ -62,6 +65,7 @@ import {
 
 const webhookPath = '/v1/billing/stripe/webhook';
 const hostingWebhookPath = '/v1/hosting/stripe/webhook';
+const storageWebhookPath = '/v1/storage/stripe/webhook';
 const rawJsonBodies = new WeakMap<object, Buffer>();
 
 export async function createServer(
@@ -73,6 +77,7 @@ export async function createServer(
     providers?: ProviderConfiguration;
     billing?: StripeBilling;
     hosting?: HostedSubscriptions;
+    hostedStorage?: HostedStorage;
     signIn?: SignInConfiguration;
     origins?: string[];
     docs?: DocsAgentConfiguration;
@@ -164,6 +169,7 @@ export async function createServer(
     if (
       path === webhookPath ||
       path === hostingWebhookPath ||
+      path === storageWebhookPath ||
       path === CONNECT_WEBHOOK ||
       BROKER_PATHS.some((route) => route === path)
     )
@@ -312,6 +318,12 @@ export async function createServer(
         'Configured storage does not prove Pinata credentials or availability.',
       ],
       [
+        'storage-billing',
+        'Prepaid pinned storage',
+        !!options.hostedStorage,
+        'Separate monthly capacity with exact recurring approval; live qualification and cleanup are separate.',
+      ],
+      [
         'card',
         'Card payments',
         !!options.billing,
@@ -367,6 +379,58 @@ export async function createServer(
       })),
       defaults: { sharedUsdCents: 0, independentUsdCents: 5000, tlosPremiumBps: 2000 },
     });
+  });
+  app.get(StorageBillingRoutes.storageBillingStatus.path, async (request) => {
+    const account = await session(request.cookies[cookieName]);
+    const { dao } = StorageBillingRoutes.storageBillingStatus.query.parse(request.query);
+    if (options.hostedStorage) return options.hostedStorage.status(account, dao);
+    const network = await chain.network();
+    if (
+      network.chainId !== dao.chainId ||
+      network.runtime !== dao.contract ||
+      network.interfaceVersion !== dao.interfaceVersion
+    )
+      throw new ApiError('DAO_REFERENCE');
+    if (
+      !(await chain.memberships(account)).some(
+        (member) =>
+          daoPaymentKey(member.dao) === daoPaymentKey(dao) && member.active && member.admin,
+      )
+    )
+      throw new ApiError('STORAGE_ADMIN_REQUIRED', 403);
+    return StorageBillingRoutes.storageBillingStatus.response.parse({
+      dao,
+      configured: false,
+      currentPricing: null,
+      subscription: null,
+      funding: await storageFunding(
+        pool,
+        dao,
+        options.content?.providerScope ?? 'unconfigured',
+        { ...DEFAULT_STORAGE_PRICING, freeBytes: options.content?.freeAllowance.toString() ?? '0' },
+        new Date(),
+      ),
+    });
+  });
+  app.post(StorageBillingRoutes.storageApprove.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    if (!options.hostedStorage) throw new ApiError('STORAGE_BILLING_UNCONFIGURED', 503);
+    if (!admitPayment(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    return options.hostedStorage.approve(
+      account,
+      StorageBillingRoutes.storageApprove.input.parse(request.body),
+    );
+  });
+  app.post(storageWebhookPath, { bodyLimit: 1024 * 1024 }, async (request) => {
+    const signature = request.headers['stripe-signature'],
+      raw = rawJsonBodies.get(request);
+    if (typeof signature !== 'string' || !raw) throw new ApiError('SIGNATURE_INVALID', 400);
+    if (!options.hostedStorage) throw new ApiError('STORAGE_BILLING_UNCONFIGURED', 503);
+    await options.hostedStorage.webhook(raw, signature);
+    return { received: true };
   });
   app.get(HostingRoutes.hostingStatus.path, async (request) => {
     const account = await session(request.cookies[cookieName]);

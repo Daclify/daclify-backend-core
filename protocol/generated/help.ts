@@ -98,7 +98,7 @@ export const CoreHelpBundle={
         "Download checks the recorded byte count and commitment before opening a file. A private download also checks the DAO epoch commitment and decrypts in your browser. Previous file versions remain downloadable from version history. A saved plaintext download is not erased when your vault locks. The local disk fixture is labelled explicitly and does not establish live Pinata or public IPFS availability.",
         "Changing DAO deployment, account, member identity or privacy clears document drafts and decrypted views. Late responses from a previous context are discarded. Content histories are read in scoped pages with advancing cursors; a large DAO does not fail merely because it exceeds the former row ceiling.",
         "Development resource accounting counts each verified CID once per DAO, including hosted versions, branding and archive references. Uncertain uploads still reserve their bytes. Active members can inspect verified and reserved usage; automatic deletion and paid storage subscriptions are not enabled yet. Mainnet and testnet use separate Pinata accounts and ownership ledgers.",
-        "Planned storage terms are prepaid calendar months, independent of member-slot subscriptions. A January 31 anniversary uses February’s last day and returns to March 31. An unpaid paid term receives thirty exact days from its original end; retries do not restart that deadline. A future prepaid term does not grant capacity before its start. Recurring paid capacity requires an administrator to approve the exact units, pricing snapshot and monthly amount. The tested period/consent helpers are not a completed payment or deletion service."
+        "Storage terms are prepaid calendar months, independent of member-slot subscriptions. A January 31 anniversary uses February’s last day and returns to March 31. An unpaid paid term receives thirty exact days from its original end; retries do not restart that deadline. A future prepaid term does not grant capacity before its start. Recurring paid capacity requires an administrator to approve the exact units, pricing snapshot and monthly amount. Open Resources from DAO Settings or Documents to see measured usage, accepted pricing, paid-through and the original grace deadline. Only current administrators with fresh signing control can approve recurring units. Paid capacity requires authoritative Stripe invoice/payment/charge verification, independently of membership. Reductions begin next period; increases need verified payment and a funded base. Automatic deletion is still disabled, and live provider qualification remains required."
       ]
     },
     {
@@ -11710,6 +11710,909 @@ export const CoreHelpBundle={
     },
     {
       "method": "GET",
+      "path": "/v1/storage/billing",
+      "query": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        },
+        "required": [
+          "dao"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "currentPricing": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "schemaVersion": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "freeBytes": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "unitBytes": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "monthlyUnitUsdCents": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 99999999
+                  }
+                },
+                "required": [
+                  "schemaVersion",
+                  "revision",
+                  "freeBytes",
+                  "unitBytes",
+                  "monthlyUnitUsdCents"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "funding": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "enum": [
+                  "free",
+                  "pending",
+                  "active",
+                  "grace",
+                  "overdue",
+                  "review"
+                ]
+              },
+              "pricing": {
+                "type": "object",
+                "properties": {
+                  "schemaVersion": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "freeBytes": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "unitBytes": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "monthlyUnitUsdCents": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 99999999
+                  }
+                },
+                "required": [
+                  "schemaVersion",
+                  "revision",
+                  "freeBytes",
+                  "unitBytes",
+                  "monthlyUnitUsdCents"
+                ],
+                "additionalProperties": false
+              },
+              "units": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 999999
+              },
+              "paidThrough": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:Z))$"
+                      },
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "graceEndsAt": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:Z))$"
+                      },
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "uploadCapacityBytes": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "retainedCapacityBytes": {
+                "type": "string",
+                "maxLength": 20
+              }
+            },
+            "required": [
+              "state",
+              "pricing",
+              "units",
+              "paidThrough",
+              "graceEndsAt",
+              "uploadCapacityBytes",
+              "retainedCapacityBytes"
+            ],
+            "additionalProperties": false
+          },
+          "subscription": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "requestId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "state": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "active",
+                      "past-due",
+                      "canceling",
+                      "ended",
+                      "review"
+                    ]
+                  },
+                  "pricing": {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "freeBytes": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "unitBytes": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "monthlyUnitUsdCents": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 99999999
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "revision",
+                      "freeBytes",
+                      "unitBytes",
+                      "monthlyUnitUsdCents"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "units": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 999999
+                  },
+                  "monthlyUsdCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 99999999
+                  },
+                  "checkoutUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "invoiceUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "pending": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "requestId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "pricing": {
+                            "type": "object",
+                            "properties": {
+                              "schemaVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "revision": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "freeBytes": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "unitBytes": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "monthlyUnitUsdCents": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 99999999
+                              }
+                            },
+                            "required": [
+                              "schemaVersion",
+                              "revision",
+                              "freeBytes",
+                              "unitBytes",
+                              "monthlyUnitUsdCents"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "units": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 999999
+                          },
+                          "monthlyUsdCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 99999999
+                          },
+                          "effectiveAt": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:Z))$"
+                                  },
+                                  {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "requestId",
+                          "pricing",
+                          "units",
+                          "monthlyUsdCents",
+                          "effectiveAt"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "requestId",
+                  "state",
+                  "pricing",
+                  "units",
+                  "monthlyUsdCents",
+                  "checkoutUrl",
+                  "invoiceUrl",
+                  "pending"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "dao",
+          "configured",
+          "currentPricing",
+          "funding",
+          "subscription"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/storage/approve",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "number",
+            "const": 1
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "units": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 999999
+          },
+          "pricingHash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "monthlyUsdCents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 99999999
+          },
+          "recurringConsent": {
+            "type": "boolean"
+          },
+          "acceptCurrentPricing": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "requestId",
+          "dao",
+          "units",
+          "pricingHash",
+          "monthlyUsdCents",
+          "recurringConsent"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "currentPricing": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "schemaVersion": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "freeBytes": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "unitBytes": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "monthlyUnitUsdCents": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 99999999
+                  }
+                },
+                "required": [
+                  "schemaVersion",
+                  "revision",
+                  "freeBytes",
+                  "unitBytes",
+                  "monthlyUnitUsdCents"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "funding": {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "enum": [
+                  "free",
+                  "pending",
+                  "active",
+                  "grace",
+                  "overdue",
+                  "review"
+                ]
+              },
+              "pricing": {
+                "type": "object",
+                "properties": {
+                  "schemaVersion": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "freeBytes": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "unitBytes": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "monthlyUnitUsdCents": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 99999999
+                  }
+                },
+                "required": [
+                  "schemaVersion",
+                  "revision",
+                  "freeBytes",
+                  "unitBytes",
+                  "monthlyUnitUsdCents"
+                ],
+                "additionalProperties": false
+              },
+              "units": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 999999
+              },
+              "paidThrough": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:Z))$"
+                      },
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "graceEndsAt": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:Z))$"
+                      },
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "uploadCapacityBytes": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "retainedCapacityBytes": {
+                "type": "string",
+                "maxLength": 20
+              }
+            },
+            "required": [
+              "state",
+              "pricing",
+              "units",
+              "paidThrough",
+              "graceEndsAt",
+              "uploadCapacityBytes",
+              "retainedCapacityBytes"
+            ],
+            "additionalProperties": false
+          },
+          "subscription": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "requestId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "state": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "active",
+                      "past-due",
+                      "canceling",
+                      "ended",
+                      "review"
+                    ]
+                  },
+                  "pricing": {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "freeBytes": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "unitBytes": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "monthlyUnitUsdCents": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 99999999
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "revision",
+                      "freeBytes",
+                      "unitBytes",
+                      "monthlyUnitUsdCents"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "units": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 999999
+                  },
+                  "monthlyUsdCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 99999999
+                  },
+                  "checkoutUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "invoiceUrl": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "pending": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "requestId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "pricing": {
+                            "type": "object",
+                            "properties": {
+                              "schemaVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "revision": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "freeBytes": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "unitBytes": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "monthlyUnitUsdCents": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 99999999
+                              }
+                            },
+                            "required": [
+                              "schemaVersion",
+                              "revision",
+                              "freeBytes",
+                              "unitBytes",
+                              "monthlyUnitUsdCents"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "units": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 999999
+                          },
+                          "monthlyUsdCents": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 99999999
+                          },
+                          "effectiveAt": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:Z))$"
+                                  },
+                                  {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "requestId",
+                          "pricing",
+                          "units",
+                          "monthlyUsdCents",
+                          "effectiveAt"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "requestId",
+                  "state",
+                  "pricing",
+                  "units",
+                  "monthlyUsdCents",
+                  "checkoutUrl",
+                  "invoiceUrl",
+                  "pending"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "dao",
+          "configured",
+          "currentPricing",
+          "funding",
+          "subscription"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "GET",
       "path": "/v1/hosting/status",
       "query": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -15506,6 +16409,7 @@ export const CoreHelpBundle={
             "type": "string",
             "enum": [
               "/v1/hosting/change",
+              "/v1/storage/approve",
               "/v1/payments/onboard",
               "/v1/payments/product",
               "/v1/payments/refund",

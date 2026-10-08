@@ -88,7 +88,7 @@ const content = new ContentService(
   pool,
   chain,
   new LocalContentFixture('.artifacts/native/content'),
-  50n * 1024n * 1024n,
+  100_000_000n,
   'local-fixture',
 );
 const docs = readDocsAgent(process.env);

@@ -46,6 +46,7 @@ export type AccountControlProof = z.infer<typeof AccountControlProofSchema>;
 
 export const AccountControlPaths = Object.freeze([
   '/v1/hosting/change',
+  '/v1/storage/approve',
   '/v1/payments/onboard',
   '/v1/payments/product',
   '/v1/payments/refund',

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PaymentQuerySchema } from './payments.js';
 import { Checksum256 } from '@wharfkit/antelope';
 import { DaoRefSchema, IdSchema, Uint64Schema, ChainIdSchema, CidSchema } from './base.js';
 export const MAX_HOSTED_CONTENT_BYTES = 5 * 1024 * 1024;
@@ -166,3 +167,64 @@ export const StoragePeriodSchema = z
     path: ['endsAt'],
     message: 'A paid period must end after its start',
   });
+
+export const StorageSubscriptionStateSchema = z.enum([
+  'pending',
+  'active',
+  'past-due',
+  'canceling',
+  'ended',
+  'review',
+]);
+export const StorageFundingSchema = z.strictObject({
+  state: z.enum(['free', 'pending', 'active', 'grace', 'overdue', 'review']),
+  pricing: StoragePricingSchema,
+  units: StorageUnitsSchema,
+  paidThrough: StorageInstantSchema.nullable(),
+  graceEndsAt: StorageInstantSchema.nullable(),
+  uploadCapacityBytes: Uint64Schema,
+  retainedCapacityBytes: Uint64Schema,
+});
+export const StorageBillingStatusSchema = z.strictObject({
+  dao: DaoRefSchema,
+  configured: z.boolean(),
+  currentPricing: StoragePricingSchema.nullable(),
+  funding: StorageFundingSchema,
+  subscription: z
+    .strictObject({
+      id: z.uuid(),
+      requestId: z.uuid(),
+      state: StorageSubscriptionStateSchema,
+      pricing: StoragePricingSchema,
+      units: StorageUnitsSchema,
+      monthlyUsdCents: z.int().min(0).max(99_999_999),
+      checkoutUrl: z.url().nullable(),
+      invoiceUrl: z.url().nullable(),
+      pending: z
+        .strictObject({
+          requestId: z.uuid(),
+          pricing: StoragePricingSchema,
+          units: StorageUnitsSchema,
+          monthlyUsdCents: z.int().min(0).max(99_999_999),
+          effectiveAt: StorageInstantSchema.nullable(),
+        })
+        .nullable(),
+    })
+    .nullable(),
+});
+export const StorageBillingRoutes = {
+  storageBillingStatus: {
+    method: 'GET',
+    path: '/v1/storage/billing',
+    query: PaymentQuerySchema,
+    response: StorageBillingStatusSchema,
+    helpTopic: 'documents',
+  },
+  storageApprove: {
+    method: 'POST',
+    path: '/v1/storage/approve',
+    input: StorageApprovalSchema,
+    response: StorageBillingStatusSchema,
+    helpTopic: 'documents',
+  },
+} as const;

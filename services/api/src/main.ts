@@ -22,6 +22,10 @@ import { readDocsAgent } from './docs/config.js';
 import { readConnectConfig } from './payments/config.js';
 import { ConnectedPayments } from './payments/service.js';
 import { readOperatorPayments, OperatorPayments } from './payments/operator.js';
+import { readStorageConfig } from './billing/storage-config.js';
+import { startStorageWorker } from './billing/storage-jobs.js';
+import { HostedStorage } from './billing/storage.js';
+import { DEFAULT_STORAGE_PRICING } from '../../../protocol/storage.js';
 import { readHostingConfig } from './billing/hosting-config.js';
 import { HostedSubscriptions } from './billing/hosting.js';
 import { startHostingWorker } from './billing/hosting-jobs.js';
@@ -133,7 +137,20 @@ const connectConfig = readConnectConfig(process.env, env.NETWORK_ENVIRONMENT, en
 const hostingConfig = readHostingConfig(process.env, env.NETWORK_ENVIRONMENT, env.FRONTEND_ORIGIN);
 const hosting = hostingConfig ? new HostedSubscriptions(pool, chain, hostingConfig) : undefined;
 const operatorConfig = readOperatorPayments(process.env.DACLIFY_CONNECT_OPERATOR);
-if (operatorConfig && (connectConfig || hostingConfig))
+const storageConfig = readStorageConfig(
+  process.env,
+  env.NETWORK_ENVIRONMENT,
+  env.FRONTEND_ORIGIN,
+  content?.providerScope ?? 'unconfigured',
+);
+if (storageConfig && !content) throw new Error('STORAGE_CONFIGURATION_INVALID');
+const hostedStorage = storageConfig
+  ? new HostedStorage(pool, chain, storageConfig, {
+      ...DEFAULT_STORAGE_PRICING,
+      freeBytes: env.CONTENT_FREE_STORAGE_BYTES,
+    })
+  : undefined;
+if (operatorConfig && (connectConfig || hostingConfig || storageConfig))
   throw new Error('PAYMENT_OPERATOR_CONFIGURATION_INVALID');
 const docs = readDocsAgent(process.env);
 const creation = new CreationService(pool, chain);
@@ -143,6 +160,7 @@ const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
   creation,
   ...(process.env.API_PUBLIC_ORIGIN ? { apiOrigin: process.env.API_PUBLIC_ORIGIN } : {}),
   ...(hosting ? { hosting } : {}),
+  ...(hostedStorage ? { hostedStorage } : {}),
   ...(operatorConfig
     ? { operatorPayments: new OperatorPayments(pool, chain, operatorConfig) }
     : {}),
@@ -158,10 +176,12 @@ const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
 await app.listen({ host: '127.0.0.1', port: env.API_PORT });
 const worker = content ? startContentWorker(pool, content) : undefined;
 const hostingWorker = hosting ? startHostingWorker(pool, hosting) : undefined;
+const storageWorker = hostedStorage ? startStorageWorker(pool, hostedStorage) : undefined;
 async function shutdown() {
   await app.close();
   await worker?.stop();
   await hostingWorker?.stop();
+  await storageWorker?.stop();
   await pool.end();
 }
 process.on('SIGTERM', () => {

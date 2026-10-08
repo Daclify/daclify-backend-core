@@ -339,6 +339,24 @@ export class NativeChainGateway implements ChainGateway {
       ],
     });
   }
+  async resourcePolicy() {
+    const response = await fetch(this.config.rpcUrl + '/v1/chain/get_code_hash', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ account_name: this.config.runtime }),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (
+      !response.ok ||
+      z.object({ code_hash: ChainIdSchema }).parse(await response.json()).code_hash !==
+        RuntimeCodeHash
+    )
+      throw new ApiError('RESOURCE_UNQUALIFIED', 503);
+    const setting = (await this.table('settings', this.config.runtime))[0];
+    if (setting?.chain_id !== this.config.chainId) throw new ApiError('DAO_REFERENCE');
+    const row = (await this.table('resourcecfg', this.config.runtime))[0];
+    return row ? resourcePolicyFromRow(row) : null;
+  }
   async platform(): Promise<ChainPlatform> {
     const [network, info, abi] = await Promise.all([
       this.network(),

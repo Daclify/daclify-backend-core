@@ -17,6 +17,7 @@ import { daoPaymentKey } from '../../../../protocol/payments.js';
 import type { ChainGateway } from '../chain.js';
 import { ApiError } from '../errors.js';
 import { createStripeClient, readStripeEvent } from './stripe.js';
+import { verifiedRecurringInvoice } from './recurring-invoice.js';
 import { requireCheckoutUrl } from './checkout.js';
 import type { HostingConfig } from './hosting-config.js';
 const hash = (value: string | Buffer) => createHash('sha256').update(value).digest();
@@ -373,75 +374,13 @@ export class HostedSubscriptions {
     return this.view(input.dao);
   }
   private async invoicePaid(invoice: Stripe.Invoice, subscriptionId: string) {
-    const parent = invoice.parent?.subscription_details?.subscription;
-    if (
-      invoice.livemode !== this.config.livemode ||
-      invoice.currency !== 'usd' ||
-      (typeof parent === 'string' ? parent : parent?.id) !== subscriptionId
-    )
-      throw new ApiError('HOSTING_RECEIPT_INVALID', 409);
-    if (invoice.status !== 'paid' || invoice.amount_remaining !== 0 || invoice.amount_paid <= 0)
-      return false;
-    const payments = await this.stripe.invoicePayments.list(
-      { invoice: invoice.id, status: 'paid', limit: 100 },
-      { timeout: 15000 },
+    return verifiedRecurringInvoice(
+      this.stripe,
+      invoice,
+      subscriptionId,
+      this.config.livemode,
+      'HOSTING',
     );
-    if (payments.has_more) throw new ApiError('HOSTING_RECEIPT_INVALID', 409);
-    let paid = 0;
-    for (const payment of payments.data) {
-      const invoiceId = typeof payment.invoice === 'string' ? payment.invoice : payment.invoice.id;
-      const intentId =
-        typeof payment.payment.payment_intent === 'string'
-          ? payment.payment.payment_intent
-          : payment.payment.payment_intent?.id;
-      if (
-        payment.livemode !== this.config.livemode ||
-        payment.currency !== 'usd' ||
-        invoiceId !== invoice.id ||
-        payment.payment.type !== 'payment_intent' ||
-        !intentId ||
-        payment.amount_paid === null ||
-        !Number.isSafeInteger(payment.amount_paid) ||
-        payment.amount_paid < 0
-      )
-        throw new ApiError('HOSTING_RECEIPT_INVALID', 409);
-      const intent = await this.stripe.paymentIntents.retrieve(
-        intentId,
-        { expand: ['latest_charge'] },
-        { timeout: 15000 },
-      );
-      if (
-        intent.livemode !== this.config.livemode ||
-        intent.currency !== 'usd' ||
-        intent.status !== 'succeeded' ||
-        intent.amount_received < payment.amount_paid
-      )
-        throw new ApiError('HOSTING_RECEIPT_INVALID', 409);
-      const charge = intent.latest_charge;
-      if (
-        !charge ||
-        typeof charge === 'string' ||
-        !charge.paid ||
-        charge.livemode !== this.config.livemode ||
-        charge.currency !== 'usd' ||
-        (typeof charge.payment_intent === 'string'
-          ? charge.payment_intent
-          : charge.payment_intent?.id) !== intentId ||
-        charge.amount < payment.amount_paid
-      )
-        throw new ApiError('HOSTING_RECEIPT_INVALID', 409);
-      if (charge.amount_refunded >= charge.amount) return false;
-      if (charge.disputed) {
-        const disputes = await this.stripe.disputes.list(
-          { payment_intent: intentId, limit: 1 },
-          { timeout: 15000 },
-        );
-        if (disputes.data[0]?.status !== 'won') return false;
-      }
-      paid += payment.amount_paid;
-    }
-    if (paid !== invoice.amount_paid) throw new ApiError('HOSTING_RECEIPT_INVALID', 409);
-    return true;
   }
   private async reconcile(
     row: SubscriptionRow,

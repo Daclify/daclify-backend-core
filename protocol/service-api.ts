@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { PaymentRoutes, BrokerRoutes } from './payments.js';
+import { StorageBillingRoutes } from './storage.js';
 import { HostingRoutes } from './hosting.js';
 import { DirectoryRoutes } from './directory.js';
 import { SessionSchema, ProviderLinkResultSchema } from './api.js';
@@ -198,6 +199,7 @@ export const DocsAnswerSchema = z.strictObject({
 });
 
 export const ServiceResponseRoutes = [
+  ...Object.values(StorageBillingRoutes),
   ...Object.values(HostingRoutes),
   ...Object.values(PaymentRoutes),
   ...Object.values(BrokerRoutes),
