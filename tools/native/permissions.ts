@@ -10,7 +10,10 @@ export function configureFixtureContext(
   > = {},
 ): void {
   FixtureContainerSchema.parse(container);
-  z.enum(['daclifycore', 'daclifytwo', 'upgcore']).parse(runtime);
+  z.union([
+    z.enum(['daclifycore', 'daclifytwo', 'upgcore']),
+    z.string().regex(/^ramobs[1-5]{6}$/),
+  ]).parse(runtime);
   function cleos(args: string[]): string {
     try {
       return execFileSync(

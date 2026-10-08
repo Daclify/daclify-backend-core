@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = '1e574fd67ef49834f47df21f59025862eeb5c69e20dd7c11ff0b10cd14a7d08c';
+export const runtimeAbiHash = '6773df839f6a21a75bc13a8d7f6ad74dce5c1f78334477e6c7b74f6310fe5651';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -1430,6 +1430,11 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "initramobs",
+      "base": "",
+      "fields": []
+    },
+    {
       "name": "instruction",
       "base": "",
       "fields": [
@@ -2042,6 +2047,86 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "ram_counter",
+      "base": "",
+      "fields": [
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "identity",
+          "type": "uint64"
+        },
+        {
+          "name": "activity",
+          "type": "uint64"
+        },
+        {
+          "name": "retained",
+          "type": "uint64"
+        },
+        {
+          "name": "platform",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "ram_observer_config",
+      "base": "",
+      "fields": [
+        {
+          "name": "meter_bytes",
+          "type": "uint64"
+        },
+        {
+          "name": "runtime_hash",
+          "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "ram_source",
+      "base": "",
+      "fields": [
+        {
+          "name": "account",
+          "type": "name"
+        },
+        {
+          "name": "code_hash",
+          "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "ramadjust",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "category",
+          "type": "uint8"
+        },
+        {
+          "name": "added",
+          "type": "uint64"
+        },
+        {
+          "name": "removed",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
       "name": "reserve",
       "base": "",
       "fields": [
@@ -2566,6 +2651,20 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "setramcode",
+      "base": "",
+      "fields": [
+        {
+          "name": "account",
+          "type": "name"
+        },
+        {
+          "name": "code_hash",
+          "type": "checksum256"
+        }
+      ]
+    },
+    {
       "name": "setroles",
       "base": "",
       "fields": [
@@ -2933,6 +3032,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "initramobs",
+      "type": "initramobs",
+      "ricardian_contract": ""
+    },
+    {
       "name": "linkevm",
       "type": "linkevm",
       "ricardian_contract": ""
@@ -2975,6 +3079,11 @@ export const runtimeAbi = {
     {
       "name": "putjson",
       "type": "putjson",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "ramadjust",
+      "type": "ramadjust",
       "ricardian_contract": ""
     },
     {
@@ -3080,6 +3189,11 @@ export const runtimeAbi = {
     {
       "name": "setprofile",
       "type": "setprofile",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "setramcode",
+      "type": "setramcode",
       "ricardian_contract": ""
     },
     {
@@ -3319,6 +3433,27 @@ export const runtimeAbi = {
     {
       "name": "profiles",
       "type": "profile_record",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "ramobs",
+      "type": "ram_observer_config",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "ramsources",
+      "type": "ram_source",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "ramstats",
+      "type": "ram_counter",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -3737,6 +3872,9 @@ export interface initgov {
   dao_id: string;
   settings: gov_settings;
 }
+export interface initramobs {
+
+}
 export interface instruction {
   version: number;
   chain_id: string;
@@ -3900,6 +4038,28 @@ export interface putjson {
   envelope_version: number;
   key_epoch: string;
 }
+export interface ram_counter {
+  payer: string;
+  identity: string;
+  activity: string;
+  retained: string;
+  platform: string;
+}
+export interface ram_observer_config {
+  meter_bytes: string;
+  runtime_hash: string;
+}
+export interface ram_source {
+  account: string;
+  code_hash: string;
+}
+export interface ramadjust {
+  dao_id: string;
+  payer: string;
+  category: number;
+  added: string;
+  removed: string;
+}
 export interface reserve {
   dao_id: string;
   source: string;
@@ -4043,6 +4203,10 @@ export interface setprofile {
   account_name: string;
   profile: string;
 }
+export interface setramcode {
+  account: string;
+  code_hash: string;
+}
 export interface setroles {
   runtime: string;
   dao_id: string;
@@ -4133,6 +4297,7 @@ export interface RuntimeActions {
   guardrevoke: guardrevoke;
   init: init;
   initgov: initgov;
+  initramobs: initramobs;
   linkevm: linkevm;
   linknative: linknative;
   listmod: listmod;
@@ -4142,6 +4307,7 @@ export interface RuntimeActions {
   payob: payob;
   putdoc: putdoc;
   putjson: putjson;
+  ramadjust: ramadjust;
   reserve: reserve;
   resumecap: resumecap;
   revokecap: revokecap;
@@ -4163,6 +4329,7 @@ export interface RuntimeActions {
   setoracle: setoracle;
   setpolicy: setpolicy;
   setprofile: setprofile;
+  setramcode: setramcode;
   setroles: setroles;
   submit: submit;
   submitevm: submitevm;

@@ -19,7 +19,7 @@ Plan: [RAM, prepaid storage and archives](../superpowers/plans/2026-10-08-resour
 | ------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------ |
 | 1 Policy definitions                 | Complete    | Checked integer fees, approved storage units and pricing snapshot hashes; unchanged membership pricing |
 | 2 Native write inventory/calibration | In progress | Enforcement unavailable until payer reconciliation is demonstrated                                     |
-| 3 Backed allowances/metering         | Pending     | No capacity granted by configuration alone                                                             |
+| 3 Backed allowances/metering         | In progress | Opt-in counters implemented; no funded allocation or enforcement                                       |
 | 4 Existing-state migration           | Pending     | Existing row layouts and rights must survive                                                           |
 | 5 Atomic TLOS RAM purchases          | Pending     | Must prove actual system RAM acquisition                                                               |
 | 6 Card RAM provisioning              | Pending     | Segregated operator reserve; no simulated funding                                                      |
@@ -57,3 +57,18 @@ Source: [Spring billing definitions](https://github.com/AntelopeIO/spring/blob/v
 - [Write inventory](2026-10-08-ram-write-inventory.json) records 47 compiled owned tables and 137 source write candidates, with DAO bindings and aligned cost recipes. This is the instrumentation inventory, not proof that per-DAO counters already exist or every callback is reconciled.
 
 Remaining Task 2/3 gate: implement all write hooks and prove per-DAO/payer conservation on the actual native runtime before enabling quota enforcement. Native purchases above are standalone market qualification, not implemented Daclify RAM-order settlement.
+
+## Observer checkpoint
+
+- Added opt-in native counters by DAO, RAM payer and identity/activity/retained/platform category. Existing serialized rows, member IDs, nonce domains and interface version remain unchanged. Shared table headers belong to platform; DAO-scoped headers belong to that DAO. Observer metadata is recorded separately and included in conservation.
+- Core and all five module table aliases use the metered writes, including secondary-index modification and erasure. Platform singleton writes also participate. Modules resolve legacy vote/control ownership through their existing parent rows rather than changing serialization.
+- Counter callbacks require the executing source as native sender, its authority and its currently deployed approved code hash. A directly signed account-key callback is rejected. Module installation/dispatch requires the registered code pin when observation is enabled.
+- Observation must start before any tracked state exists. Existing DAO or platform settings require the pending backfill; this checkpoint does not enable observation on an old deployment. Core-code rebinding/migration is not implemented, so do not enable the observer in a production upgrade.
+- The initial real-system account-creation setup failed because a separate newaccount transaction had no allocated RAM. The owned fixture now creates, buys RAM and stakes CPU/NET atomically. No public-chain transaction was sent.
+- Native conservation passed after each selected transition for core and each module payer: DAO/member creation, platform settings, UTF-8 profile insert/grow/shrink through a secondary index, nonce changes, session insert/last-row deletion, private epoch/key-grant records, documents, Works proposals/milestones, Grants rounds, Payroll entries/reserves/controls, endorsement applications, Decide ballots/votes and core governance locks. A DAO ID equal to the runtime's encoded account name also reconciled. Code/ABI/permission overhead was measured as platform baseline; it was not charged to a DAO.
+- The first singleton conservation regression failed by 260 bytes before metering that write; the corrected native sequence passed. The pre-existing-settings regression also failed before the initialization guard and passed after it.
+- [ABI compatibility evidence](2026-10-08-observer-abi-compatibility.json): all existing ABI structures and table definitions unchanged against each repository's baseline HEAD. This is layout evidence, not the pending supported-release migration/recovery drill.
+- Fresh checks after rebuilding and installing local development artifacts: core 70 files / 440 tests; modules 14 files / 83 tests; frontend 24 files / 101 tests; focused native RAM suites 3 files / 6 tests. All passed. Core typecheck/lint/docs check, module verify and frontend typecheck also passed.
+- npm audit still reports the existing VERT development-tool dependency advisories (elliptic and lodash.set; no fix offered). They are not new runtime dependencies. The harness remains a local disposable-fixture tool, and its results do not replace native authorization or cryptography qualification.
+
+Task 2/3 remain in progress: not every lifecycle/table has a native transition vector yet. Physically backed allocations, completion reserves, purchase settlement, legacy backfill, storage billing and Archive are not enabled or release-certified by this checkpoint. No main checkout, external provider data or live funds were changed.

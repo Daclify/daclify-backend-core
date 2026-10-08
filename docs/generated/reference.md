@@ -296,7 +296,7 @@ Commercial hosting, subscriptions and paid services are allowed. Independently d
 
 ## runtime contract
 
-Source ABI JSON SHA-256: `1e574fd67ef49834f47df21f59025862eeb5c69e20dd7c11ff0b10cd14a7d08c`.
+Source ABI JSON SHA-256: `6773df839f6a21a75bc13a8d7f6ad74dce5c1f78334477e6c7b74f6310fe5651`.
 
 ### Action: addmember
 
@@ -603,6 +603,12 @@ Source ABI JSON SHA-256: `1e574fd67ef49834f47df21f59025862eeb5c69e20dd7c11ff0b10
 | dao_id | uint64 |
 | settings | gov_settings |
 
+### Action: initramobs
+
+| Field | ABI type |
+| --- | --- |
+
+
 ### Action: linkevm
 
 | Field | ABI type |
@@ -703,6 +709,16 @@ Source ABI JSON SHA-256: `1e574fd67ef49834f47df21f59025862eeb5c69e20dd7c11ff0b10
 | value | string |
 | envelope_version | uint16 |
 | key_epoch | uint64 |
+
+### Action: ramadjust
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| payer | name |
+| category | uint8 |
+| added | uint64 |
+| removed | uint64 |
 
 ### Action: reserve
 
@@ -890,6 +906,13 @@ Source ABI JSON SHA-256: `1e574fd67ef49834f47df21f59025862eeb5c69e20dd7c11ff0b10
 | member_id | uint64 |
 | account_name | name |
 | profile | string |
+
+### Action: setramcode
+
+| Field | ABI type |
+| --- | --- |
+| account | name |
+| code_hash | checksum256 |
 
 ### Action: setroles
 
@@ -1278,6 +1301,30 @@ Source ABI JSON SHA-256: `1e574fd67ef49834f47df21f59025862eeb5c69e20dd7c11ff0b10
 | member_id | uint64 |
 | account_name | name |
 | profile | string |
+
+### Table: ramobs
+
+| Field | ABI type |
+| --- | --- |
+| meter_bytes | uint64 |
+| runtime_hash | checksum256 |
+
+### Table: ramsources
+
+| Field | ABI type |
+| --- | --- |
+| account | name |
+| code_hash | checksum256 |
+
+### Table: ramstats
+
+| Field | ABI type |
+| --- | --- |
+| payer | name |
+| identity | uint64 |
+| activity | uint64 |
+| retained | uint64 |
+| platform | uint64 |
 
 ### Table: receipts
 

@@ -271,7 +271,7 @@ export const CoreHelpBundle={
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "1e574fd67ef49834f47df21f59025862eeb5c69e20dd7c11ff0b10cd14a7d08c",
+      "sourceAbiHash": "6773df839f6a21a75bc13a8d7f6ad74dce5c1f78334477e6c7b74f6310fe5651",
       "actions": [
         {
           "name": "addmember",
@@ -1029,6 +1029,10 @@ export const CoreHelpBundle={
           ]
         },
         {
+          "name": "initramobs",
+          "fields": []
+        },
+        {
           "name": "linkevm",
           "fields": [
             {
@@ -1293,6 +1297,31 @@ export const CoreHelpBundle={
             },
             {
               "name": "key_epoch",
+              "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "ramadjust",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "payer",
+              "type": "name"
+            },
+            {
+              "name": "category",
+              "type": "uint8"
+            },
+            {
+              "name": "added",
+              "type": "uint64"
+            },
+            {
+              "name": "removed",
               "type": "uint64"
             }
           ]
@@ -1727,6 +1756,19 @@ export const CoreHelpBundle={
             {
               "name": "profile",
               "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "setramcode",
+          "fields": [
+            {
+              "name": "account",
+              "type": "name"
+            },
+            {
+              "name": "code_hash",
+              "type": "checksum256"
             }
           ]
         },
@@ -2726,6 +2768,57 @@ export const CoreHelpBundle={
             {
               "name": "profile",
               "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "ramobs",
+          "fields": [
+            {
+              "name": "meter_bytes",
+              "type": "uint64"
+            },
+            {
+              "name": "runtime_hash",
+              "type": "checksum256"
+            }
+          ]
+        },
+        {
+          "name": "ramsources",
+          "fields": [
+            {
+              "name": "account",
+              "type": "name"
+            },
+            {
+              "name": "code_hash",
+              "type": "checksum256"
+            }
+          ]
+        },
+        {
+          "name": "ramstats",
+          "fields": [
+            {
+              "name": "payer",
+              "type": "name"
+            },
+            {
+              "name": "identity",
+              "type": "uint64"
+            },
+            {
+              "name": "activity",
+              "type": "uint64"
+            },
+            {
+              "name": "retained",
+              "type": "uint64"
+            },
+            {
+              "name": "platform",
+              "type": "uint64"
             }
           ]
         },

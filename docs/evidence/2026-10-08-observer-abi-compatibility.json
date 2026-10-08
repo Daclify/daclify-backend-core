@@ -1,0 +1,50 @@
+[
+  {
+    "contract": "runtime",
+    "existingStructs": 105,
+    "existingTables": 31,
+    "unchanged": true,
+    "baselineAbiSourceHash": "85792f25f395dc89f03fe430a4a403675f47f14a63ddfaba4afe58bb286288c6",
+    "currentCodeHash": "c0beb659ca4d00faafad73868e8fc595e2a785db2d6c84b72865afc13ac2cb68"
+  },
+  {
+    "contract": "decide",
+    "existingStructs": 18,
+    "existingTables": 7,
+    "unchanged": true,
+    "baselineAbiSourceHash": "40f8de89ad5ee9defa3c8c4d21cf828acbe0fde2a850a93ad75ea8cd0e509f60",
+    "currentCodeHash": "9f3512f832aafcfed993e1b89681a16df8af50b6a84eecdca156d26e7be67df9"
+  },
+  {
+    "contract": "works",
+    "existingStructs": 13,
+    "existingTables": 3,
+    "unchanged": true,
+    "baselineAbiSourceHash": "efc124f110a665acc9c5b89dd7b278f965a706415e5746f1578a4bb68c04627e",
+    "currentCodeHash": "a32a23b832290583aed78920b064ef0645fc01a869eb573ba9d625cd2c22482a"
+  },
+  {
+    "contract": "payroll",
+    "existingStructs": 6,
+    "existingTables": 3,
+    "unchanged": true,
+    "baselineAbiSourceHash": "12237c92c6102fd614e1ebdab7e6a45c6af340f94b6ff5807fd512d6cb49ac41",
+    "currentCodeHash": "b0a83442527d117f857124b6f093272a1e20f6ac4fdf21facdfbf7065d9d4576"
+  },
+  {
+    "contract": "grants",
+    "existingStructs": 10,
+    "existingTables": 2,
+    "unchanged": true,
+    "baselineAbiSourceHash": "a49f2fc78c5f6a7b608f619371218000fe07facb6929e3b548c71cbabffee7c3",
+    "currentCodeHash": "8bf8738d07434c576ced882a3f969adb38228a90b3042fff3513a4ea5efdcd4f"
+  },
+  {
+    "contract": "endorse",
+    "existingStructs": 5,
+    "existingTables": 1,
+    "unchanged": true,
+    "baselineAbiSourceHash": "64226a91df8077897ead4f011cefc34214a7dc2dc82fe1415b73e3f725a95781",
+    "currentCodeHash": "179ca9ee94c155e94b4f4a0c77911d937b9e2e158c4bc4b89f78ec18f59610dc"
+  }
+]

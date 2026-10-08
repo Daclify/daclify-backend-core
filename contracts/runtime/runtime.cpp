@@ -14,8 +14,25 @@ public:
   // Off-chain login signs this inert action. Accidental broadcast grants no rights.
   ACTION authproof(name account,checksum256 intent) { require_auth(account);check(intent!=checksum256{},"AUTH_INTENT"); }
   using contract::contract;
+  ACTION initramobs(){
+    require_auth(get_self());check(dao_rows.begin()==dao_rows.end(),"RAM_BACKFILL_REQUIRED");
+    check(!fee_settings(get_self(),get_self().value).exists()&&!payment_settings(get_self(),get_self().value).exists()&&!market_settings(get_self(),get_self().value).exists()&&!creation_settings(get_self(),get_self().value).exists()&&!hosted_settings(get_self(),get_self().value).exists()&&!seat_settings(get_self(),get_self().value).exists(),"RAM_BACKFILL_REQUIRED");
+    catalogue listed(get_self(),get_self().value);modpays payments(get_self(),get_self().value);modcopy copies(get_self(),get_self().value);creation_orders orders(get_self(),get_self().value);check(listed.begin()==listed.end()&&payments.begin()==payments.end()&&copies.begin()==copies.end()&&orders.begin()==orders.end(),"RAM_BACKFILL_REQUIRED");
+    ram_observer_settings saved(get_self(),get_self().value);check(!saved.exists(),"ALREADY_INITIALIZED");ram_observer_config cfg;cfg.runtime_hash=get_code_hash(get_self());cfg.meter_bytes=pack_size(cfg)+224;saved.set(cfg,get_self());
+  }
+  ACTION setramcode(name account,checksum256 code_hash){
+    require_auth(get_self());check(account!=get_self()&&code_hash!=checksum256{}&&get_code_hash(account)==code_hash,"RAM_SOURCE_CODE");ram_observer_settings saved(get_self(),get_self().value);auto cfg=saved.get();ram_sources sources(get_self(),get_self().value);auto found=sources.find(account.value);
+    if(found==sources.end()){bool empty=sources.begin()==sources.end();ram_source r{account,code_hash};cfg.meter_bytes=add64(cfg.meter_bytes,pack_size(r)+112+(empty?112:0));sources.emplace(get_self(),[&](auto& row){row=r;});saved.set(cfg,get_self());}else sources.modify(found,same_payer,[&](auto& row){row.code_hash=code_hash;});
+  }
+  ACTION ramadjust(uint64_t dao_id,name payer,uint8_t category,uint64_t added,uint64_t removed){
+    check(get_sender()==payer,"RAM_SOURCE_SENDER");require_auth(payer);check(category<=3&&(dao_id||category==3),"RAM_CATEGORY");if(dao_id)dao_rows.get(dao_id,"DAO_UNKNOWN");ram_observer_settings saved(get_self(),get_self().value);auto cfg=saved.get();
+    if(payer==get_self())check(get_code_hash(payer)==cfg.runtime_hash,"RAM_SOURCE_CODE");else{ram_sources sources(get_self(),get_self().value);const auto& source=sources.get(payer.value,"RAM_SOURCE_UNKNOWN");check(get_code_hash(payer)==source.code_hash,"RAM_SOURCE_CODE");}
+    ram_counters counters(get_self(),dao_id);auto found=counters.find(payer.value);ram_counter value;if(found!=counters.end())value=*found;else{value.payer=payer;cfg.meter_bytes=add64(cfg.meter_bytes,pack_size(value)+112+(counters.begin()==counters.end()?112:0));saved.set(cfg,get_self());}
+    auto& bytes=category==0?value.identity:category==1?value.activity:category==2?value.retained:value.platform;check(removed<=bytes,"RAM_COUNTER_UNDERFLOW");bytes=add64(bytes-removed,added);
+    if(found==counters.end())counters.emplace(get_self(),[&](auto& r){r=value;});else counters.modify(found,same_payer,[&](auto& r){r=value;});
+  }
   TABLE settings { checksum256 chain_id; uint16_t interface_version=1; EOSLIB_SERIALIZE(settings,(chain_id)(interface_version)) };
-  using config = singleton<"settings"_n,settings>;
+  using config = ram_singleton<"settings"_n,settings>;
   ACTION init(checksum256 chain_id) {
     require_auth(get_self()); config c(get_self(),get_self().value);
     check(!c.exists(),"ALREADY_INITIALIZED"); c.set(settings{chain_id,1},get_self());
@@ -683,11 +700,13 @@ private:
       check(code_hash!=checksum256(),"MODULE_CODE");check(get_code_hash(account)==code_hash,"MODULE_CODE");pinned=code_hash;
       catalogue listed(get_self(),get_self().value);const auto& item=listed.get(account.value,"MODULE_UNLISTED");
       check(item.complies==1,"FEE_RULE");check(item.code_hash==code_hash,"MODULE_CODE");
+      check_ram_source(account,code_hash);
     }
     modules rows(get_self(),dao_id);auto it=rows.find(account.value);
     if(it==rows.end())rows.emplace(get_self(),[&](auto& r){r.account=account;r.version=version;r.actions=actions;r.grants=grants;r.code_hash=pinned;});else rows.modify(it,same_payer,[&](auto& r){r.version=version;r.actions=actions;r.grants=grants;r.code_hash=pinned;});
   }
-  void check_pinned(const module_record& installed,name account){check(installed.code_hash!=checksum256()&&get_code_hash(account)==installed.code_hash,"MODULE_CODE");}
+  void check_ram_source(name account,checksum256 code_hash){ram_observer_settings observer(get_self(),get_self().value);if(observer.exists()){ram_sources sources(get_self(),get_self().value);const auto& source=sources.get(account.value,"RAM_SOURCE_UNKNOWN");check(source.code_hash==code_hash,"RAM_SOURCE_CODE");}}
+  void check_pinned(const module_record& installed,name account){check(installed.code_hash!=checksum256()&&get_code_hash(account)==installed.code_hash,"MODULE_CODE");check_ram_source(account,installed.code_hash);}
   // The module account key satisfies require_auth on a direct action. Only that
   // account's executing contract sets get_sender, so the key cannot skip the module.
   // The stored hash must still match that contract, so replacing its code drops the grant.
@@ -714,6 +733,7 @@ private:
 extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
   if(code==receiver){switch(action_name){
     EOSIO_DISPATCH_HELPER(runtime,(authproof)(unlinknat)(linkevm)(unlinkevm)(submitevm)(setadmit)(admitfrom))
+    EOSIO_DISPATCH_HELPER(runtime,(initramobs)(setramcode)(ramadjust))
     EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(setprofile)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(confirmext)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))
     EOSIO_DISPATCH_HELPER(runtime,(sethosted)(govhosted)(govseatfee)(orderfree)(setcapacity)(revokecap)(resumecap))
     EOSIO_DISPATCH_HELPER(runtime,(enrollagent)(addmember)(initgov)(setdaogov)(addsession)(delsession)(guardpause)(guardrevoke)(guardrecover)(submitsess)(setfees)(listmod)(unlistmod)(setmodcopy)(setpolicy)(setgov)(setoracle)(govfees)(govpayfees)(setcreate)(govcreate)(setcrrate)(ordercreate)(cardcreate)(createpaid)(govlist)(govunlist)(govmodcopy))
