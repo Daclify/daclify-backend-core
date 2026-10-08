@@ -7,6 +7,7 @@ for (const contract of [
   'runtime',
   'hub',
   'permprobe',
+  'ramprobe',
   'testtoken',
   'boot',
   'modrelay',

@@ -1,0 +1,1538 @@
+{
+  "schemaVersion": 1,
+  "billingLayout": 1,
+  "nativeRuntime": "Spring 1.2.2",
+  "qualification": "generic billing geometry qualified; per-table ownership/hooks and live counter reconciliation pending",
+  "sharedHeaderPolicy": "DAO-scoped headers are charged to that DAO. Shared runtime-scoped headers are platform overhead; do not assign them arbitrarily to the first DAO.",
+  "tables": [
+    {
+      "producer": "runtime",
+      "table": "actors",
+      "rowType": "participant_record",
+      "daoBinding": "table scope",
+      "nativeScope": "DAO ID",
+      "category": "identity",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "participants",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "source": "core/contracts/common/governance.hpp",
+      "line": 20
+    },
+    {
+      "producer": "runtime",
+      "table": "admpolicies",
+      "rowType": "admission_policy",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name (shared table)",
+      "category": "activity",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "admission_policies",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "source": "core/contracts/common/admission.hpp",
+      "line": 9
+    },
+    {
+      "producer": "runtime",
+      "table": "budgets",
+      "rowType": "budget_record",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name (shared table)",
+      "category": "retained",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "commitment_budgets",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "source": "core/contracts/common/governance.hpp",
+      "line": 43
+    },
+    {
+      "producer": "runtime",
+      "table": "capcfg",
+      "rowType": "hosted_policy",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account name (shared table)",
+      "category": "platform",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "hosted_settings",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "source": "core/contracts/common/creation.hpp",
+      "line": 21
+    },
+    {
+      "producer": "runtime",
+      "table": "capreceipts",
+      "rowType": "capacity_receipt",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name (shared table)",
+      "category": "retained",
+      "rowOverheadBytes": 272,
+      "newScopeOverheadBytes": 112,
+      "alias": "capacity_receipts",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [32],
+      "source": "core/contracts/common/creation.hpp",
+      "line": 38
+    },
+    {
+      "producer": "runtime",
+      "table": "catalogue",
+      "rowType": "catalogue_record",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account name (shared table)",
+      "category": "platform",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "catalogue",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "source": "core/contracts/common/records.hpp",
+      "line": 124
+    },
+    {
+      "producer": "runtime",
+      "table": "createcfg",
+      "rowType": "creation_policy",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account name (shared table)",
+      "category": "platform",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "creation_settings",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "source": "core/contracts/common/creation.hpp",
+      "line": 9
+    },
+    {
+      "producer": "runtime",
+      "table": "createords",
+      "rowType": "creation_order",
+      "daoBinding": "row.dao_id (zero means unassigned platform state)",
+      "nativeScope": "runtime account name (shared table)",
+      "category": "retained",
+      "rowOverheadBytes": 432,
+      "newScopeOverheadBytes": 224,
+      "alias": "creation_orders",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [32, 32],
+      "source": "core/contracts/common/creation.hpp",
+      "line": 15
+    },
+    {
+      "producer": "runtime",
+      "table": "daocaps",
+      "rowType": "dao_capacity",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name (shared table)",
+      "category": "activity",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "dao_capacities",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "source": "core/contracts/common/creation.hpp",
+      "line": 32
+    },
+    {
+      "producer": "runtime",
+      "table": "daos",
+      "rowType": "dao_record",
+      "daoBinding": "row.id",
+      "nativeScope": "runtime account name (shared table)",
+      "category": "activity",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "daos",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "source": "core/contracts/common/records.hpp",
+      "line": 31
+    },
+    {
+      "producer": "runtime",
+      "table": "documents",
+      "rowType": "document_record",
+      "daoBinding": "table scope",
+      "nativeScope": "DAO ID",
+      "category": "activity",
+      "rowOverheadBytes": 256,
+      "newScopeOverheadBytes": 112,
+      "alias": "documents",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [16],
+      "source": "core/contracts/common/records.hpp",
+      "line": 89
+    },
+    {
+      "producer": "runtime",
+      "table": "epochs",
+      "rowType": "epoch_record",
+      "daoBinding": "table scope",
+      "nativeScope": "DAO ID",
+      "category": "identity",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "epochs",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "source": "core/contracts/common/records.hpp",
+      "line": 95
+    },
+    {
+      "producer": "runtime",
+      "table": "evidence",
+      "rowType": "evidence_record",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name (shared table)",
+      "category": "retained",
+      "rowOverheadBytes": 272,
+      "newScopeOverheadBytes": 112,
+      "alias": "evidence",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [32],
+      "source": "core/contracts/common/records.hpp",
+      "line": 81
+    },
+    {
+      "producer": "runtime",
+      "table": "evmbindings",
+      "rowType": "evm_binding_record",
+      "daoBinding": "table scope",
+      "nativeScope": "DAO ID",
+      "category": "identity",
+      "rowOverheadBytes": 272,
+      "newScopeOverheadBytes": 112,
+      "alias": "evm_bindings",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [32],
+      "source": "core/contracts/common/records.hpp",
+      "line": 47
+    },
+    {
+      "producer": "runtime",
+      "table": "feecfg",
+      "rowType": "fee_config",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account name (shared table)",
+      "category": "platform",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "fee_settings",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "source": "core/contracts/common/records.hpp",
+      "line": 112
+    },
+    {
+      "producer": "runtime",
+      "table": "govlocks",
+      "rowType": "governance_lock",
+      "daoBinding": "table scope",
+      "nativeScope": "DAO ID",
+      "category": "activity",
+      "rowOverheadBytes": 272,
+      "newScopeOverheadBytes": 112,
+      "alias": "governance_locks",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [32],
+      "source": "core/contracts/common/records.hpp",
+      "line": 107
+    },
+    {
+      "producer": "runtime",
+      "table": "govpolicies",
+      "rowType": "gov_policy_record",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name (shared table)",
+      "category": "activity",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "gov_policies",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "source": "core/contracts/common/governance.hpp",
+      "line": 14
+    },
+    {
+      "producer": "runtime",
+      "table": "guards",
+      "rowType": "guardian_record",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name (shared table)",
+      "category": "activity",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "guardian_states",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "source": "core/contracts/common/governance.hpp",
+      "line": 37
+    },
+    {
+      "producer": "runtime",
+      "table": "keygrants",
+      "rowType": "key_grant_record",
+      "daoBinding": "table scope",
+      "nativeScope": "DAO ID",
+      "category": "identity",
+      "rowOverheadBytes": 256,
+      "newScopeOverheadBytes": 112,
+      "alias": "key_grants",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [16],
+      "source": "core/contracts/common/records.hpp",
+      "line": 101
+    },
+    {
+      "producer": "runtime",
+      "table": "members",
+      "rowType": "member_record",
+      "daoBinding": "table scope",
+      "nativeScope": "DAO ID",
+      "category": "identity",
+      "rowOverheadBytes": 400,
+      "newScopeOverheadBytes": 224,
+      "alias": "members",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [8, 32],
+      "source": "core/contracts/common/records.hpp",
+      "line": 40
+    },
+    {
+      "producer": "runtime",
+      "table": "mktcfg",
+      "rowType": "market_policy",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name (shared table)",
+      "category": "activity",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "market_settings",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "source": "core/contracts/common/records.hpp",
+      "line": 143
+    },
+    {
+      "producer": "runtime",
+      "table": "modcopy",
+      "rowType": "modcopy_record",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account name (shared table)",
+      "category": "platform",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "modcopy",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "source": "core/contracts/common/records.hpp",
+      "line": 137
+    },
+    {
+      "producer": "runtime",
+      "table": "modpays",
+      "rowType": "modpay_record",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account name (shared table)",
+      "category": "platform",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "modpays",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "source": "core/contracts/common/records.hpp",
+      "line": 130
+    },
+    {
+      "producer": "runtime",
+      "table": "modules",
+      "rowType": "module_record",
+      "daoBinding": "table scope",
+      "nativeScope": "DAO ID",
+      "category": "activity",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "modules",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "source": "core/contracts/common/records.hpp",
+      "line": 61
+    },
+    {
+      "producer": "runtime",
+      "table": "obligations",
+      "rowType": "obligation_record",
+      "daoBinding": "table scope",
+      "nativeScope": "DAO ID",
+      "category": "retained",
+      "rowOverheadBytes": 272,
+      "newScopeOverheadBytes": 112,
+      "alias": "obligations",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [32],
+      "source": "core/contracts/common/records.hpp",
+      "line": 68
+    },
+    {
+      "producer": "runtime",
+      "table": "paycfg",
+      "rowType": "payment_policy",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account name (shared table)",
+      "category": "platform",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "payment_settings",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "source": "core/contracts/common/records.hpp",
+      "line": 118
+    },
+    {
+      "producer": "runtime",
+      "table": "profiles",
+      "rowType": "profile_record",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name (shared table)",
+      "category": "identity",
+      "rowOverheadBytes": 384,
+      "newScopeOverheadBytes": 224,
+      "alias": "profiles",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [16, 8],
+      "source": "core/contracts/common/records.hpp",
+      "line": 55
+    },
+    {
+      "producer": "runtime",
+      "table": "receipts",
+      "rowType": "finance_receipt",
+      "daoBinding": "table scope",
+      "nativeScope": "DAO ID",
+      "category": "retained",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "finance_receipts",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "source": "core/contracts/common/records.hpp",
+      "line": 74
+    },
+    {
+      "producer": "runtime",
+      "table": "seatcfg",
+      "rowType": "seat_policy",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account name (shared table)",
+      "category": "platform",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "seat_settings",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "source": "core/contracts/common/creation.hpp",
+      "line": 26
+    },
+    {
+      "producer": "runtime",
+      "table": "sessions",
+      "rowType": "session_record",
+      "daoBinding": "table scope",
+      "nativeScope": "DAO ID",
+      "category": "identity",
+      "rowOverheadBytes": 400,
+      "newScopeOverheadBytes": 224,
+      "alias": "scoped_sessions",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [32, 8],
+      "source": "core/contracts/common/governance.hpp",
+      "line": 31
+    },
+    {
+      "producer": "runtime",
+      "table": "settings",
+      "rowType": "settings",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account name (shared table)",
+      "category": "platform",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "config",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 18
+    },
+    {
+      "producer": "decide",
+      "table": "ballots",
+      "rowType": "ballot_record",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name",
+      "category": "activity",
+      "rowOverheadBytes": 240,
+      "newScopeOverheadBytes": 112,
+      "alias": "ballots",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [8],
+      "source": "modules/contracts/decide/decide.cpp",
+      "line": 12
+    },
+    {
+      "producer": "decide",
+      "table": "elections",
+      "rowType": "election_record",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name",
+      "category": "activity",
+      "rowOverheadBytes": 240,
+      "newScopeOverheadBytes": 112,
+      "alias": "elections",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [8],
+      "source": "modules/contracts/decide/decide.cpp",
+      "line": 20
+    },
+    {
+      "producer": "decide",
+      "table": "executions",
+      "rowType": "work_execution_record",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name",
+      "category": "retained",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "work_executions",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "source": "modules/contracts/common/works_records.hpp",
+      "line": 27
+    },
+    {
+      "producer": "decide",
+      "table": "grantplans",
+      "rowType": "grant_execution",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name",
+      "category": "retained",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "grant_executions",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "source": "modules/contracts/common/grants_records.hpp",
+      "line": 21
+    },
+    {
+      "producer": "decide",
+      "table": "nominations",
+      "rowType": "nomination_record",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name",
+      "category": "activity",
+      "rowOverheadBytes": 384,
+      "newScopeOverheadBytes": 224,
+      "alias": "nominations",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [16, 8],
+      "source": "modules/contracts/decide/decide.cpp",
+      "line": 26
+    },
+    {
+      "producer": "decide",
+      "table": "terms",
+      "rowType": "term_record",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name",
+      "category": "retained",
+      "rowOverheadBytes": 240,
+      "newScopeOverheadBytes": 112,
+      "alias": "terms",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [8],
+      "source": "modules/contracts/decide/decide.cpp",
+      "line": 32
+    },
+    {
+      "producer": "decide",
+      "table": "votes",
+      "rowType": "vote_record",
+      "daoBinding": "ballots[row.ballot].dao_id",
+      "nativeScope": "runtime account name",
+      "category": "activity",
+      "rowOverheadBytes": 256,
+      "newScopeOverheadBytes": 112,
+      "alias": "votes",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [16],
+      "source": "modules/contracts/decide/decide.cpp",
+      "line": 14
+    },
+    {
+      "producer": "works",
+      "table": "agreements",
+      "rowType": "agreement_record",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name",
+      "category": "retained",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "works_agreements",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "source": "modules/contracts/common/works_records.hpp",
+      "line": 21
+    },
+    {
+      "producer": "works",
+      "table": "milestones",
+      "rowType": "milestone_record",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name",
+      "category": "activity",
+      "rowOverheadBytes": 240,
+      "newScopeOverheadBytes": 112,
+      "alias": "works_milestones",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [8],
+      "source": "modules/contracts/common/works_records.hpp",
+      "line": 15
+    },
+    {
+      "producer": "works",
+      "table": "projects",
+      "rowType": "project_record",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name",
+      "category": "activity",
+      "rowOverheadBytes": 240,
+      "newScopeOverheadBytes": 112,
+      "alias": "works_projects",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [8],
+      "source": "modules/contracts/common/works_records.hpp",
+      "line": 9
+    },
+    {
+      "producer": "payroll",
+      "table": "controls",
+      "rowType": "control_record",
+      "daoBinding": "schedules[row.schedule_id].dao_id",
+      "nativeScope": "runtime account name",
+      "category": "retained",
+      "rowOverheadBytes": 112,
+      "newScopeOverheadBytes": 112,
+      "alias": "controls",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [],
+      "source": "modules/contracts/payroll/payroll.cpp",
+      "line": 11
+    },
+    {
+      "producer": "payroll",
+      "table": "entries",
+      "rowType": "entry_record",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name",
+      "category": "retained",
+      "rowOverheadBytes": 240,
+      "newScopeOverheadBytes": 112,
+      "alias": "entries",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [8],
+      "source": "modules/contracts/payroll/payroll.cpp",
+      "line": 9
+    },
+    {
+      "producer": "payroll",
+      "table": "schedules",
+      "rowType": "schedule_record",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name",
+      "category": "retained",
+      "rowOverheadBytes": 240,
+      "newScopeOverheadBytes": 112,
+      "alias": "schedules",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [8],
+      "source": "modules/contracts/payroll/payroll.cpp",
+      "line": 7
+    },
+    {
+      "producer": "grants",
+      "table": "applications",
+      "rowType": "grant_application",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name",
+      "category": "activity",
+      "rowOverheadBytes": 368,
+      "newScopeOverheadBytes": 224,
+      "alias": "grant_applications",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [8, 8],
+      "source": "modules/contracts/common/grants_records.hpp",
+      "line": 15
+    },
+    {
+      "producer": "grants",
+      "table": "rounds",
+      "rowType": "grant_round",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name",
+      "category": "activity",
+      "rowOverheadBytes": 240,
+      "newScopeOverheadBytes": 112,
+      "alias": "grant_rounds",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [8],
+      "source": "modules/contracts/common/grants_records.hpp",
+      "line": 9
+    },
+    {
+      "producer": "endorse",
+      "table": "joinapps",
+      "rowType": "admission_application",
+      "daoBinding": "row.dao_id",
+      "nativeScope": "runtime account name",
+      "category": "activity",
+      "rowOverheadBytes": 240,
+      "newScopeOverheadBytes": 112,
+      "alias": "admission_applications",
+      "kind": "multi_index",
+      "secondaryKeyBytes": [8],
+      "source": "core/contracts/common/admission.hpp",
+      "line": 15
+    }
+  ],
+  "writeCandidates": [
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 21,
+      "receiver": "c",
+      "operation": "set"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 32,
+      "receiver": "index",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 39,
+      "receiver": "dao_rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 50,
+      "receiver": "saved",
+      "operation": "set"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 59,
+      "receiver": "orders",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 65,
+      "receiver": "saved",
+      "operation": "set"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 71,
+      "receiver": "orders",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 79,
+      "receiver": "receipts",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 81,
+      "receiver": "rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 82,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 85,
+      "receiver": "index",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 85,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 90,
+      "receiver": "index",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 98,
+      "receiver": "index",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 114,
+      "receiver": "rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 120,
+      "receiver": "rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 121,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 136,
+      "receiver": "rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 140,
+      "receiver": "rows",
+      "operation": "erase"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 145,
+      "receiver": "rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 146,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 150,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 155,
+      "receiver": "people",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 156,
+      "receiver": "bindings",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 157,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 161,
+      "receiver": "rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 161,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 187,
+      "receiver": "rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 188,
+      "receiver": "dao_rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 189,
+      "receiver": "actors",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 229,
+      "receiver": "dao_rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 235,
+      "receiver": "rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 236,
+      "receiver": "members_index",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 241,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 242,
+      "receiver": "dao_rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 266,
+      "receiver": "saved",
+      "operation": "set"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 328,
+      "receiver": "saved",
+      "operation": "set"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 338,
+      "receiver": "dao_rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 338,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 348,
+      "receiver": "rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 349,
+      "receiver": "dao_rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 354,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 359,
+      "receiver": "dao_rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 360,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 370,
+      "receiver": "rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 378,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 379,
+      "receiver": "dao_rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 381,
+      "receiver": "people",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 396,
+      "receiver": "rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 401,
+      "receiver": "dao_rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 409,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 415,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 419,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 431,
+      "receiver": "bindings",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 431,
+      "receiver": "bindings",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 434,
+      "receiver": "bindings",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 440,
+      "receiver": "dao_rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 441,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 446,
+      "receiver": "dao_rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 447,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 454,
+      "receiver": "rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 459,
+      "receiver": "rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 459,
+      "receiver": "dao_rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 464,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 464,
+      "receiver": "dao_rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 468,
+      "receiver": "people",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 468,
+      "receiver": "dao_rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 474,
+      "receiver": "dao_rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 474,
+      "receiver": "people",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 488,
+      "receiver": "people",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 489,
+      "receiver": "dao_rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 508,
+      "receiver": "saved",
+      "operation": "set"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 519,
+      "receiver": "rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 519,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 523,
+      "receiver": "rows",
+      "operation": "erase"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 524,
+      "receiver": "copy",
+      "operation": "erase"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 533,
+      "receiver": "copy",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 533,
+      "receiver": "copy",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 541,
+      "receiver": "index",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 562,
+      "receiver": "rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 563,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 572,
+      "receiver": "budgets",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 573,
+      "receiver": "budgets",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 604,
+      "receiver": "payments",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 615,
+      "receiver": "rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 628,
+      "receiver": "rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 688,
+      "receiver": "rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 688,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "core/contracts/runtime/runtime.cpp",
+      "line": 708,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/decide/decide.cpp",
+      "line": 36,
+      "receiver": "rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "modules/contracts/decide/decide.cpp",
+      "line": 40,
+      "receiver": "index",
+      "operation": "erase"
+    },
+    {
+      "source": "modules/contracts/decide/decide.cpp",
+      "line": 41,
+      "receiver": "group",
+      "operation": "erase"
+    },
+    {
+      "source": "modules/contracts/decide/decide.cpp",
+      "line": 41,
+      "receiver": "nominees",
+      "operation": "emplace"
+    },
+    {
+      "source": "modules/contracts/decide/decide.cpp",
+      "line": 45,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/decide/decide.cpp",
+      "line": 48,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/decide/decide.cpp",
+      "line": 60,
+      "receiver": "plans",
+      "operation": "emplace"
+    },
+    {
+      "source": "modules/contracts/decide/decide.cpp",
+      "line": 68,
+      "receiver": "plans",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/decide/decide.cpp",
+      "line": 76,
+      "receiver": "plans",
+      "operation": "emplace"
+    },
+    {
+      "source": "modules/contracts/decide/decide.cpp",
+      "line": 81,
+      "receiver": "plans",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/decide/decide.cpp",
+      "line": 91,
+      "receiver": "rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "modules/contracts/decide/decide.cpp",
+      "line": 97,
+      "receiver": "seats",
+      "operation": "emplace"
+    },
+    {
+      "source": "modules/contracts/decide/decide.cpp",
+      "line": 98,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/decide/decide.cpp",
+      "line": 98,
+      "receiver": "votes_table",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/decide/decide.cpp",
+      "line": 104,
+      "receiver": "cast",
+      "operation": "emplace"
+    },
+    {
+      "source": "modules/contracts/decide/decide.cpp",
+      "line": 104,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/decide/decide.cpp",
+      "line": 112,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/works/works.cpp",
+      "line": 15,
+      "receiver": "items",
+      "operation": "emplace"
+    },
+    {
+      "source": "modules/contracts/works/works.cpp",
+      "line": 16,
+      "receiver": "rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "modules/contracts/works/works.cpp",
+      "line": 26,
+      "receiver": "agreements",
+      "operation": "emplace"
+    },
+    {
+      "source": "modules/contracts/works/works.cpp",
+      "line": 30,
+      "receiver": "agreements",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/works/works.cpp",
+      "line": 44,
+      "receiver": "agreements",
+      "operation": "emplace"
+    },
+    {
+      "source": "modules/contracts/works/works.cpp",
+      "line": 50,
+      "receiver": "items",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/works/works.cpp",
+      "line": 50,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/works/works.cpp",
+      "line": 54,
+      "receiver": "items",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/works/works.cpp",
+      "line": 58,
+      "receiver": "items",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/works/works.cpp",
+      "line": 62,
+      "receiver": "items",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/works/works.cpp",
+      "line": 62,
+      "receiver": "rows",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/payroll/payroll.cpp",
+      "line": 15,
+      "receiver": "items",
+      "operation": "emplace"
+    },
+    {
+      "source": "modules/contracts/payroll/payroll.cpp",
+      "line": 16,
+      "receiver": "rows",
+      "operation": "emplace"
+    },
+    {
+      "source": "modules/contracts/payroll/payroll.cpp",
+      "line": 22,
+      "receiver": "flags",
+      "operation": "emplace"
+    },
+    {
+      "source": "modules/contracts/payroll/payroll.cpp",
+      "line": 22,
+      "receiver": "flags",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/payroll/payroll.cpp",
+      "line": 32,
+      "receiver": "flags",
+      "operation": "emplace"
+    },
+    {
+      "source": "modules/contracts/payroll/payroll.cpp",
+      "line": 32,
+      "receiver": "flags",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/grants/grants.cpp",
+      "line": 9,
+      "receiver": "rounds",
+      "operation": "emplace"
+    },
+    {
+      "source": "modules/contracts/grants/grants.cpp",
+      "line": 13,
+      "receiver": "apps",
+      "operation": "emplace"
+    },
+    {
+      "source": "modules/contracts/grants/grants.cpp",
+      "line": 17,
+      "receiver": "apps",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/grants/grants.cpp",
+      "line": 20,
+      "receiver": "apps",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/grants/grants.cpp",
+      "line": 23,
+      "receiver": "apps",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/grants/grants.cpp",
+      "line": 26,
+      "receiver": "apps",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/grants/grants.cpp",
+      "line": 29,
+      "receiver": "rounds",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/grants/grants.cpp",
+      "line": 35,
+      "receiver": "rounds",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/grants/grants.cpp",
+      "line": 35,
+      "receiver": "apps",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/endorse/endorse.cpp",
+      "line": 13,
+      "receiver": "apps",
+      "operation": "emplace"
+    },
+    {
+      "source": "modules/contracts/endorse/endorse.cpp",
+      "line": 13,
+      "receiver": "apps",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/endorse/endorse.cpp",
+      "line": 16,
+      "receiver": "apps",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/endorse/endorse.cpp",
+      "line": 19,
+      "receiver": "apps",
+      "operation": "modify"
+    },
+    {
+      "source": "modules/contracts/endorse/endorse.cpp",
+      "line": 24,
+      "receiver": "apps",
+      "operation": "modify"
+    }
+  ]
+}

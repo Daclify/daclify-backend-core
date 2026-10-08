@@ -4,6 +4,8 @@ import {
   DEFAULT_RESOURCE_POLICY,
   ResourcePolicySchema,
   ramPurchasePrice,
+  ramRowBytes,
+  ramScopeBytes,
 } from '../protocol/resources.js';
 import { MAX_ASSET_UNITS } from '../protocol/base.js';
 
@@ -20,6 +22,21 @@ describe('RAM purchase policy', () => {
       total: 120n,
     });
     expect(ramPurchasePrice(101n, 'tlos', DEFAULT_RESOURCE_POLICY).fee).toBe(6n);
+  });
+  it('includes aligned native row/index/header costs rather than JSON character count', () => {
+    expect(ramRowBytes(33, [16])).toBe(289n);
+    expect(ramRowBytes(144, [8, 16, 32])).toBe(688n);
+    expect(ramScopeBytes(0)).toBe(112n);
+    expect(ramScopeBytes(1)).toBe(112n);
+    expect(ramScopeBytes(3)).toBe(336n);
+    for (const [bytes, widths] of [
+      [-1, [8]],
+      [1.5, [8]],
+      [1, [12]],
+      [1, Array(17).fill(8)],
+    ] as const)
+      expect(() => ramRowBytes(bytes, widths)).toThrow();
+    expect(() => ramScopeBytes(17)).toThrow();
   });
   it('rejects nonpositive, out-of-range and overflowing native amounts', () => {
     for (const amount of [-1n, 0n, MAX_ASSET_UNITS, MAX_ASSET_UNITS + 1n])

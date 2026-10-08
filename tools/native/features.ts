@@ -4,6 +4,7 @@ import { z } from 'zod';
 const SupportedSchema = z.array(
   z.object({
     feature_digest: z.string().regex(/^[0-9a-f]{64}$/),
+    dependencies: z.array(z.string().regex(/^[0-9a-f]{64}$/)),
     specification: z.array(z.object({ name: z.string(), value: z.string() })),
   }),
 );
@@ -23,6 +24,9 @@ async function rpc(url: string, path: string, body: object): Promise<unknown> {
 export async function activateFixtureFeatures(
   container: string,
   endpoint = 'http://127.0.0.1:18888',
+  extraFeatures: readonly (
+    'BLOCKCHAIN_PARAMETERS' | 'CONFIGURABLE_WASM_LIMITS2' | 'SAVANNA'
+  )[] = [],
 ): Promise<void> {
   FixtureContainerSchema.parse(container);
   const url = z
@@ -63,10 +67,27 @@ export async function activateFixtureFeatures(
     });
     await wait(preactivate);
   }
-  const pending = [];
+  const pending: string[] = [];
   if (!(await activated(sender))) pending.push(sender);
   if (!(await activated(codeHash))) pending.push(codeHash);
   if (!(await activated(crypto))) pending.push(crypto);
+  const required = new Map(supported.map((feature) => [feature.feature_digest, feature]));
+  const visiting = new Set<string>();
+  async function queue(digest: string): Promise<void> {
+    if (pending.includes(digest) || (await activated(digest))) return;
+    if (visiting.has(digest)) throw new Error('System protocol feature dependency cycle');
+    const feature = required.get(digest);
+    if (!feature) throw new Error('System protocol feature dependency unavailable');
+    visiting.add(digest);
+    for (const dependency of feature.dependencies) await queue(dependency);
+    visiting.delete(digest);
+    pending.push(digest);
+  }
+  for (const feature of extraFeatures) {
+    const digest = features.get(feature);
+    if (!digest) throw new Error('Required system protocol feature unavailable');
+    await queue(digest);
+  }
   if (pending.length === 0) return;
   function cleos(args: string[]) {
     try {

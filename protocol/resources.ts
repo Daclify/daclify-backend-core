@@ -39,3 +39,18 @@ export function ramPurchasePrice(base: bigint, rail: RamPaymentRail, value: Reso
   const fee = numerator / 10_000n + (numerator % 10_000n === 0n ? 0n : 1n);
   return { base, fee, total: checkedAdd(base, fee) };
 }
+
+const PackedRowBytesSchema = z.int().min(0).max(4_294_967_295);
+const IndexWidthsSchema = z.array(z.union([z.literal(8), z.literal(16), z.literal(32)])).max(16);
+// Spring 1.2.2 billing layout 1; target-chain qualification is required before enforcement.
+export function ramRowBytes(packedBytes: number, indexWidths: readonly number[]): bigint {
+  const widths = IndexWidthsSchema.parse(indexWidths);
+  return (
+    BigInt(PackedRowBytesSchema.parse(packedBytes)) +
+    112n +
+    widths.reduce((sum, width) => sum + BigInt(Math.ceil((24 + width + 96) / 16) * 16), 0n)
+  );
+}
+export function ramScopeBytes(indexCount: number): bigint {
+  return BigInt(Math.max(1, z.int().min(0).max(16).parse(indexCount))) * 112n;
+}
