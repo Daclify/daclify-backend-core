@@ -1,0 +1,172 @@
+{
+  "population": {
+    "daos": 200,
+    "membersPerDao": 200
+  },
+  "samples": {
+    "daoMetadataBytes": 193,
+    "memberEncryptionKeyBytes": 126,
+    "epochEnvelopeBytes": 364,
+    "documentMetadataBytes": 172,
+    "ballotMetadataBytes": 173,
+    "additionalRuntimeCodeBytes": 4840287
+  },
+  "measurements": [
+    {
+      "stage": "deployed_code_and_fixture_permissions",
+      "ramBytes": {
+        "daclifycore": 4852261,
+        "daclifyhub": 607759,
+        "decide": 1642625,
+        "works": 799533,
+        "payroll": 426568,
+        "grants": 672480,
+        "endorse": 464304
+      }
+    },
+    {
+      "stage": "200_daos_orders_and_capacity",
+      "ramBytes": {
+        "daclifycore": 5152772,
+        "daclifyhub": 608288,
+        "decide": 1642625,
+        "works": 799533,
+        "payroll": 426568,
+        "grants": 672480,
+        "endorse": 464304
+      }
+    },
+    {
+      "stage": "40000_active_memberships",
+      "ramBytes": {
+        "daclifycore": 30037572,
+        "daclifyhub": 608288,
+        "decide": 1642625,
+        "works": 799533,
+        "payroll": 426568,
+        "grants": 672480,
+        "endorse": 464304
+      }
+    },
+    {
+      "stage": "sample_200_profiles_512_bytes",
+      "ramBytes": {
+        "daclifycore": 30223796,
+        "daclifyhub": 608288,
+        "decide": 1642625,
+        "works": 799533,
+        "payroll": 426568,
+        "grants": 672480,
+        "endorse": 464304
+      }
+    },
+    {
+      "stage": "sample_private_epoch_and_founder_grant",
+      "ramBytes": {
+        "daclifycore": 30224834,
+        "daclifyhub": 608288,
+        "decide": 1642625,
+        "works": 799533,
+        "payroll": 426568,
+        "grants": 672480,
+        "endorse": 464304
+      }
+    },
+    {
+      "stage": "sample_200_private_epoch_grants",
+      "ramBytes": {
+        "daclifycore": 30354980,
+        "daclifyhub": 608288,
+        "decide": 1642625,
+        "works": 799533,
+        "payroll": 426568,
+        "grants": 672480,
+        "endorse": 464304
+      }
+    },
+    {
+      "stage": "sample_100_ipfs_document_records",
+      "ramBytes": {
+        "daclifycore": 30411492,
+        "daclifyhub": 608288,
+        "decide": 1642625,
+        "works": 799533,
+        "payroll": 426568,
+        "grants": 672480,
+        "endorse": 464304
+      }
+    },
+    {
+      "stage": "200_decide_installations",
+      "ramBytes": {
+        "daclifycore": 30479789,
+        "daclifyhub": 608288,
+        "decide": 1642625,
+        "works": 799533,
+        "payroll": 426568,
+        "grants": 672480,
+        "endorse": 464304
+      }
+    },
+    {
+      "stage": "sample_one_open_ballot",
+      "ramBytes": {
+        "daclifycore": 30480202,
+        "daclifyhub": 608288,
+        "decide": 1643230,
+        "works": 799533,
+        "payroll": 426568,
+        "grants": 672480,
+        "endorse": 464304
+      }
+    },
+    {
+      "stage": "sample_200_votes",
+      "ramBytes": {
+        "daclifycore": 30480202,
+        "daclifyhub": 608288,
+        "decide": 1701142,
+        "works": 799533,
+        "payroll": 426568,
+        "grants": 672480,
+        "endorse": 464304
+      }
+    },
+    {
+      "stage": "sample_finalized_ballot_keeps_200_votes",
+      "ramBytes": {
+        "daclifycore": 30480202,
+        "daclifyhub": 608288,
+        "decide": 1701142,
+        "works": 799533,
+        "payroll": 426568,
+        "grants": 672480,
+        "endorse": 464304
+      }
+    },
+    {
+      "stage": "sample_100_inline_json_1024_bytes",
+      "ramBytes": {
+        "daclifycore": 30615902,
+        "daclifyhub": 608288,
+        "decide": 1701142,
+        "works": 799533,
+        "payroll": 426568,
+        "grants": 672480,
+        "endorse": 464304
+      }
+    },
+    {
+      "stage": "additional_runtime_code_measured_separately",
+      "ramBytes": {
+        "daclifycore": 30615902,
+        "daclifyhub": 608288,
+        "decide": 1701142,
+        "works": 799533,
+        "payroll": 426568,
+        "grants": 672480,
+        "endorse": 464304
+      }
+    }
+  ]
+}

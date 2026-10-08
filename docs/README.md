@@ -32,6 +32,7 @@ Stable topic IDs are UI routes and contextual links. `release-0.5` is retained a
 
 ## Evidence and unresolved qualification
 
+- [Native RAM and history simulation](evidence/2026-10-08-ram-history-simulation.md): measured 200 shared DAOs/40,000 active memberships, growth projections and proposed archive-before-prune safeguards.
 - [Recovery documentation checks](evidence/2026-10-07-recovery-documentation.md): regenerated handbook, README/runbook consistency and the current documentation verification.
 - [Wallet recovery evidence](evidence/2026-10-07-wallet-recovery.md): actual empty-database access, original-key decryption, archive restore, local native behavior and read-only Telos testnet proof.
 - [Research implementation evidence](evidence/2026-10-07-research-execution.md): paired login, governance, grants, endorsements, elections and reporting.
@@ -54,6 +55,7 @@ These record design decisions and acceptance criteria. They are not a substitute
 - [Versioning, documentation, Pinata and test policy](superpowers/plans/2026-10-05-daclify-v2-release-docs-test-policy.md)
 - [Module/login implementation plan](superpowers/plans/2026-10-07-modules-and-paired-login.md)
 - [Wallet recovery plan](superpowers/plans/2026-10-07-wallet-disaster-recovery.md)
+- [RAM, prepaid storage and archives plan](superpowers/plans/2026-10-08-resource-billing-and-archives.md)
 - [Execution ledger](evidence/execution-ledger.json)
 
 ## Connected payments and hosting
