@@ -112,6 +112,8 @@ Download checks the recorded byte count and commitment before opening a file. A 
 
 Changing DAO deployment, account, member identity or privacy clears document drafts and decrypted views. Late responses from a previous context are discarded. Content histories are read in scoped pages with advancing cursors; a large DAO does not fail merely because it exceeds the former row ceiling.
 
+Development resource accounting counts each verified CID once per DAO, including hosted versions, branding and archive references. Uncertain uploads still reserve their bytes. Active members can inspect verified and reserved usage; automatic deletion and paid storage subscriptions are not enabled yet. Mainnet and testnet use separate Pinata accounts and ownership ledgers.
+
 ## Stable members, explicit roles
 
 Each DAO records internal members with separate signing and encryption keys. A linked native account is a credential of the existing member rather than a second voting identity.
@@ -1397,6 +1399,92 @@ Source ABI JSON SHA-256: `ae70e5f0f7af1f1a9ded1b8ce193c5e6cab1808799f4e11c7e9ad1
 | abi_hash | checksum256 |
 | metadata | string |
 | listed | bool |
+
+## GET /v1/daos/:id/storage
+
+Guide: documents.
+
+No request body.
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "dao": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "contract": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "daoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "interfaceVersion": {
+          "type": "number",
+          "const": 1
+        }
+      },
+      "required": [
+        "chainId",
+        "contract",
+        "daoId",
+        "interfaceVersion"
+      ],
+      "additionalProperties": false
+    },
+    "capacityBytes": {
+      "type": "string",
+      "maxLength": 20
+    },
+    "verifiedBytes": {
+      "type": "string",
+      "maxLength": 20
+    },
+    "reservedBytes": {
+      "type": "string",
+      "maxLength": 20
+    },
+    "totalBytes": {
+      "type": "string",
+      "maxLength": 20
+    },
+    "objects": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "references": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "cleanup": {
+      "type": "string",
+      "const": "disabled"
+    }
+  },
+  "required": [
+    "dao",
+    "capacityBytes",
+    "verifiedBytes",
+    "reservedBytes",
+    "totalBytes",
+    "objects",
+    "references",
+    "cleanup"
+  ],
+  "additionalProperties": false
+}
+```
 
 ## POST /v1/account/vault/challenge
 

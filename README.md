@@ -28,7 +28,7 @@ The runtime owns DAO identity, roles, governance credits, one native treasury as
 
 The API serves the versioned routes in `protocol/routes.ts`, with additional provider/billing response references in `protocol/service-api.ts`. PostgreSQL migrations 001–021 include content/payments, account-control intents, paired native/EOA sign-in, Telegram OIDC, credential provenance/history, return destinations and wallet-only accounts. Applied migration bytes are immutable. The actual seven-migration schema is exercised by the upgrade test before current migrations are applied.
 
-User-controlled accounts keep signing and decryption keys in the browser. Managed recovery is an OpenBao development boundary, not a production custody operation. Hosted files can use Pinata when `PINATA_JWT` and `CONTENT_GATEWAY` are set in the gitignored environment file. The uploader uses the public network and does not send a group id.
+User-controlled accounts keep signing and decryption keys in the browser. Managed recovery is an OpenBao development boundary, not a production custody operation. Hosted files can use Pinata when `PINATA_JWT`, `PINATA_ACCOUNT_ID` and `CONTENT_GATEWAY` are set in the gitignored environment file. The uploader uses the public network and does not send a group id.
 
 ## What survives a server failure
 
@@ -90,3 +90,5 @@ Secrets stay in the gitignored environment files. Use `.env.testnet` for the tes
 First-party code, contracts, SDKs and documentation are licensed under
 **AGPL-3.0-only**. See [LICENSE](LICENSE) and [licensing and source obligations](LICENSING.md).
 Third-party files retain their own licenses. Contributions remain owned by their authors.
+
+Hosted storage development accounting now deduplicates verified CIDs per DAO and retains uncertain upload reservations. Mainnet/testnet use separate Pinata accounts. Legacy upload ownership requires explicit provider/byte verification; see [storage accounting](docs/storage-accounting.md). Monthly storage billing and automatic deletion remain unavailable on this branch.

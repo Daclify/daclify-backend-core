@@ -4,11 +4,17 @@ import { generateKeyPairSync, randomUUID, createHash } from 'node:crypto';
 import { PrivateKey } from '@wharfkit/antelope';
 import { CID } from 'multiformats/cid';
 import { create } from 'multiformats/hashes/digest';
-import { AccountSchema, DaoSummarySchema, NetworkSchema } from '../../protocol/api.js';
+import {
+  AccountSchema,
+  DaoSummarySchema,
+  NetworkSchema,
+  UserMembershipSchema,
+} from '../../protocol/api.js';
 import { DaoContentSchema } from '../../protocol/content.js';
 import { HostedUploadSchema } from '../../protocol/storage.js';
 import { RuntimeTableSchemas } from '../../sdk/index.js';
 import { ContentService } from '../../services/api/src/content/service.js';
+import { claimLegacyUpload } from '../../services/api/src/content/migrate.js';
 import type { ContentProvider } from '../../services/api/src/content/provider.js';
 import type { ChainGateway } from '../../services/api/src/chain.js';
 import { migrate } from '../../services/api/src/store.js';
@@ -56,7 +62,7 @@ const member = RuntimeTableSchemas.members.parse({
   join_epoch: '1',
 });
 const stored = new Map<string, Uint8Array>();
-function setup(allowance = 1000n) {
+function setup(allowance = 1000n, providerScope = randomUUID()) {
   const daoId = BigInt(`0x${randomUUID().replaceAll('-', '').slice(0, 16)}`).toString();
   const dao = DaoSummarySchema.parse({
     reference: { chainId: network.chainId, contract: network.runtime, daoId, interfaceVersion: 1 },
@@ -98,7 +104,25 @@ function setup(allowance = 1000n) {
     dao: async () => dao,
     content: async () => content,
     listDaos: async () => [dao],
-    memberships: async () => [],
+    memberships: async (user) =>
+      user.signingKey === member.signing_key && content.members[0]?.active
+        ? [
+            UserMembershipSchema.parse({
+              dao: dao.reference,
+              memberId: member.id,
+              nonce: member.nonce,
+              active: true,
+              admin: member.admin,
+              reviewer: member.reviewer,
+              credits: member.credits,
+              claim: member.claim,
+              stake: member.stake,
+              nativeAccount: '',
+              custody: 'user-controlled',
+              signingKey: member.signing_key,
+            }),
+          ]
+        : [],
     memberProfile: async () => ({ accountName: null, profile: null }),
     moduleState: async () => {
       throw new Error('Not part of this fixture');
@@ -127,7 +151,14 @@ function setup(allowance = 1000n) {
     find: async () => [],
     remove: vi.fn(async () => {}),
   };
-  const service = new ContentService(pool, chain, provider, allowance);
+  const service = new ContentService(
+    pool,
+    chain,
+    provider,
+    allowance,
+    'local-fixture',
+    providerScope,
+  );
   function request(text = 'Synthetic hosted bytes') {
     const bytes = Buffer.from(text);
     return HostedUploadSchema.parse({
@@ -164,6 +195,60 @@ describe('hosted upload transactions with a simulated provider', () => {
     expect(first.commitment).toBe(request.commitment);
     expect(fixture.provider.upload).toHaveBeenCalledTimes(1);
   });
+  it('charges one verified CID once per DAO and reuses its owned pin', async () => {
+    const fixture = setup(30n);
+    const first = await fixture.service.upload(account, fixture.request());
+    const second = await fixture.service.upload(account, { ...fixture.request(), documentId: '8' });
+    expect(second.cid).toBe(first.cid);
+    expect(fixture.provider.upload).toHaveBeenCalledTimes(1);
+    const objects = await pool.query<{ bytes: string; references: string }>(
+      `SELECT o.verified_bytes::text AS bytes,count(r.id)::text AS references
+       FROM hosted_objects o JOIN hosted_references r ON r.object_id=o.id
+       WHERE r.dao_key=$1 GROUP BY o.id`,
+      [
+        JSON.stringify([
+          fixture.dao.reference.chainId,
+          fixture.dao.reference.contract,
+          fixture.dao.reference.daoId,
+        ]),
+      ],
+    );
+    expect(objects.rows).toEqual([{ bytes: String(first.bytes), references: '2' }]);
+    await expect(
+      fixture.service.upload(
+        account,
+        fixture.request('A distinct file that exceeds the remaining capacity'),
+      ),
+    ).rejects.toThrow('STORAGE_QUOTA');
+  });
+  it('holds each DAO accountable for the same CID while sharing provider ownership', async () => {
+    const scope = randomUUID();
+    const first = setup(30n, scope),
+      second = setup(30n, scope);
+    const uploaded = await first.service.upload(account, first.request());
+    await second.service.upload(account, second.request());
+    expect(second.provider.upload).not.toHaveBeenCalled();
+    const usage = await pool.query<{ dao_key: string; used: string }>(
+      `SELECT r.dao_key,sum(o.verified_bytes)::text AS used FROM
+       (SELECT DISTINCT dao_key,object_id FROM hosted_references) r
+       JOIN hosted_objects o ON o.id=r.object_id WHERE o.cid=$1 AND o.provider_scope=$2 GROUP BY r.dao_key`,
+      [uploaded.cid, scope],
+    );
+    expect(usage.rows).toHaveLength(2);
+    expect(usage.rows.map((row) => row.used)).toEqual([
+      String(uploaded.bytes),
+      String(uploaded.bytes),
+    ]);
+    expect(second.provider.remove).not.toHaveBeenCalled();
+  });
+  it('binds pins to their provider account instead of reusing another environment', async () => {
+    const first = setup(30n, randomUUID()),
+      second = setup(30n, randomUUID());
+    await first.service.upload(account, first.request());
+    await second.service.upload(account, second.request());
+    expect(first.provider.upload).toHaveBeenCalledOnce();
+    expect(second.provider.upload).toHaveBeenCalledOnce();
+  });
   it('binds a request ID to one exact content intent', async () => {
     const fixture = setup();
     const first = fixture.request();
@@ -176,14 +261,166 @@ describe('hosted upload transactions with a simulated provider', () => {
     ).rejects.toThrow('UPLOAD_REQUEST_CONFLICT');
     expect(fixture.provider.upload).toHaveBeenCalledTimes(1);
   });
-  it('reserves quota once under concurrent requests', async () => {
+  it('does not lend uncertain upload reservations to concurrent requests', async () => {
     const fixture = setup(30n);
-    const result = await Promise.allSettled([
-      fixture.service.upload(account, fixture.request()),
-      fixture.service.upload(account, fixture.request()),
-    ]);
-    expect(result.filter((item) => item.status === 'fulfilled')).toHaveLength(1);
+    const upload = vi.mocked(fixture.provider.upload).getMockImplementation();
+    if (!upload) throw new Error('Provider fixture missing');
+    const gate = { started: () => {}, finish: () => {} };
+    const started = new Promise<void>((resolve) => {
+      gate.started = resolve;
+    });
+    const finish = new Promise<void>((resolve) => {
+      gate.finish = resolve;
+    });
+    vi.mocked(fixture.provider.upload).mockImplementation(async (id, bytes) => {
+      gate.started();
+      await finish;
+      return upload(id, bytes);
+    });
+    const first = fixture.service.upload(account, fixture.request());
+    await started;
+    try {
+      await expect(fixture.service.upload(account, fixture.request())).rejects.toThrow(
+        'STORAGE_QUOTA',
+      );
+    } finally {
+      gate.finish();
+    }
+    await first;
     expect(fixture.provider.upload).toHaveBeenCalledTimes(1);
+  });
+  it('counts document, branding and archive references together without multiplying logical bytes', async () => {
+    const fixture = setup(100n);
+    const document = await fixture.service.upload(account, fixture.request());
+    const key = JSON.stringify([document.dao.chainId, document.dao.contract, document.dao.daoId]);
+    await pool.query(
+      `INSERT INTO hosted_references(object_id,dao_key,kind,reference_key)
+      SELECT object_id,dao_key,role,role FROM hosted_references CROSS JOIN unnest(ARRAY['branding','archive','media']) role WHERE dao_key=$1`,
+      [key],
+    );
+    expect(await fixture.service.usage(account, document.dao.daoId)).toMatchObject({
+      verifiedBytes: String(document.bytes),
+      totalBytes: String(document.bytes),
+      reservedBytes: '0',
+      objects: 1,
+      references: 4,
+      capacityBytes: '100',
+      cleanup: 'disabled',
+    });
+    vi.mocked(fixture.provider.upload).mockRejectedValue(new Error('Uncertain provider upload'));
+    const other = fixture.request('An unresolved upload');
+    await expect(fixture.service.upload(account, other)).rejects.toThrow('UPLOAD_PENDING');
+    expect(await fixture.service.usage(account, document.dao.daoId)).toMatchObject({
+      verifiedBytes: String(document.bytes),
+      reservedBytes: String(other.bytes),
+      totalBytes: String(document.bytes + other.bytes),
+    });
+    fixture.content.members[0] = { ...member, active: false };
+    await expect(fixture.service.usage(account, document.dao.daoId)).rejects.toThrow(
+      'MEMBER_REQUIRED',
+    );
+  });
+  it('retains all duplicate provider IDs but charges their common CID only once', async () => {
+    const fixture = setup();
+    const upload = vi.mocked(fixture.provider.upload).getMockImplementation();
+    if (!upload) throw new Error('Provider fixture missing');
+    let waiting = 0;
+    const gate = { release: () => {} };
+    const ready = new Promise<void>((resolve) => {
+      gate.release = resolve;
+    });
+    vi.mocked(fixture.provider.upload).mockImplementation(async (id, bytes) => {
+      if (++waiting === 2) gate.release();
+      await ready;
+      return upload(id, bytes);
+    });
+    const results = await Promise.all([
+      fixture.service.upload(account, fixture.request()),
+      fixture.service.upload(account, { ...fixture.request(), documentId: '8' }),
+    ]);
+    expect(results[0]?.cid).toBe(results[1]?.cid);
+    const measured = await fixture.service.usage(account, fixture.dao.reference.daoId);
+    expect(measured).toMatchObject({
+      objects: 1,
+      references: 2,
+      verifiedBytes: '22',
+      totalBytes: '22',
+    });
+    const pins = await pool.query<{ count: string }>(
+      'SELECT count(*)::text FROM hosted_pins WHERE provider_scope=$1',
+      [fixture.service.providerScope],
+    );
+    expect(pins.rows[0]?.count).toBe('2');
+    expect(fixture.provider.remove).not.toHaveBeenCalled();
+  });
+  it('blocks new verified references while an object is being removed', async () => {
+    const fixture = setup();
+    await fixture.service.upload(account, fixture.request());
+    await pool.query(
+      "UPDATE hosted_objects SET state='removing',generation=generation+1 WHERE provider_scope=$1",
+      [fixture.service.providerScope],
+    );
+    const request = { ...fixture.request(), documentId: '8' };
+    await expect(fixture.service.upload(account, request)).rejects.toThrow('UPLOAD_PENDING');
+    expect((await fixture.service.status(account, request.requestId)).state).toBe('uploaded');
+    expect((await fixture.service.usage(account, fixture.dao.reference.daoId)).references).toBe(1);
+    expect(fixture.provider.remove).not.toHaveBeenCalled();
+  });
+  it('keeps migrated ownership unclaimed until the operator verifies its provider listing and bytes', async () => {
+    const fixture = setup(30n);
+    const request = fixture.request();
+    const pin = await fixture.provider.upload(randomUUID(), Buffer.from(request.content, 'base64'));
+    const uploadId = randomUUID();
+    const { content: _content, ...intent } = request;
+    await pool.query(
+      `INSERT INTO uploads(id,account_id,dao_key,expected_size,privacy,state,provider_id,cid,commitment,expires_at,request_id,intent,request_hash,member_id)
+      VALUES($1,$2,$3,$4,'public','verified',$5,$6,$7,now(),$8,$9,$10,1)`,
+      [
+        uploadId,
+        account.id,
+        JSON.stringify([request.dao.chainId, request.dao.contract, request.dao.daoId]),
+        request.bytes,
+        pin.id,
+        pin.cid,
+        request.commitment,
+        request.requestId,
+        intent,
+        createHash('sha256').update(JSON.stringify(intent)).digest('hex'),
+      ],
+    );
+    expect(await fixture.service.reconcile(uploadId)).toBe('manual');
+    await expect(fixture.service.upload(account, fixture.request())).rejects.toThrow(
+      'STORAGE_QUOTA',
+    );
+    await expect(
+      claimLegacyUpload(pool, fixture.provider, fixture.service.providerScope, uploadId),
+    ).rejects.toThrow('STORAGE_OWNERSHIP_REVIEW');
+    fixture.provider.find = async () => [pin];
+    vi.mocked(fixture.provider.retrieve).mockResolvedValueOnce(new Uint8Array(request.bytes));
+    await expect(
+      claimLegacyUpload(pool, fixture.provider, fixture.service.providerScope, uploadId),
+    ).rejects.toThrow('DOCUMENT_INTEGRITY');
+    await claimLegacyUpload(pool, fixture.provider, fixture.service.providerScope, uploadId);
+    await fixture.service.upload(account, { ...fixture.request(), documentId: '8' });
+    expect(fixture.provider.upload).toHaveBeenCalledOnce();
+    await expect(claimLegacyUpload(pool, fixture.provider, randomUUID(), uploadId)).rejects.toThrow(
+      'STORAGE_OWNERSHIP_REVIEW',
+    );
+    expect(fixture.provider.remove).not.toHaveBeenCalled();
+  });
+  it('holds corrupt reused objects without granting another verified reference', async () => {
+    const fixture = setup(30n);
+    await fixture.service.upload(account, fixture.request());
+    vi.mocked(fixture.provider.retrieve).mockResolvedValue(new Uint8Array(22));
+    const request = { ...fixture.request(), documentId: '8' };
+    await expect(fixture.service.upload(account, request)).rejects.toThrow('UPLOAD_PENDING');
+    expect((await fixture.service.status(account, request.requestId)).state).toBe('uploaded');
+    const result = await pool.query<{ count: string }>(
+      'SELECT count(*)::text FROM hosted_references WHERE dao_key=$1',
+      [JSON.stringify([request.dao.chainId, request.dao.contract, request.dao.daoId])],
+    );
+    expect(result.rows[0]?.count).toBe('1');
+    expect(fixture.provider.remove).not.toHaveBeenCalled();
   });
   it('holds a reservation when provider completion is uncertain', async () => {
     const fixture = setup(30n);

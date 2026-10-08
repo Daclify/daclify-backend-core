@@ -8,6 +8,7 @@ import {
   HostedDocumentSchema,
   UploadStatusSchema,
   StorageStatusSchema,
+  HostedStorageUsageSchema,
   MAX_HOSTED_CONTENT_BYTES,
   FileMetadataSchema,
   type HostedUpload,
@@ -19,6 +20,15 @@ import type { ChainGateway } from '../chain.js';
 import type { ContentProvider, PinnedFile } from './provider.js';
 import { ApiError } from '../errors.js';
 import { validateBrandImage } from './branding.js';
+import {
+  CONTENT_IMPORT_PROFILE,
+  ProviderScopeSchema,
+  contentDaoKey,
+  objectCharged,
+  recordVerifiedObject,
+  reusableObject,
+  storageUsed,
+} from './ledger.js';
 const RowSchema = z.object({
   id: z.uuid(),
   account_id: z.uuid(),
@@ -30,13 +40,13 @@ const RowSchema = z.object({
   provider_id: z.uuid().nullable(),
   cid: z.string().nullable(),
   expires_at: z.date(),
+  provider_scope: z.string().nullable(),
+  import_profile: z.string().nullable(),
+  storage_object_id: z.uuid().nullable(),
 });
 type UploadRow = z.infer<typeof RowSchema>;
 function hash(bytes: Uint8Array | string): string {
   return createHash('sha256').update(bytes).digest('hex');
-}
-function daoKey(input: HostedUpload['dao']): string {
-  return JSON.stringify([input.chainId, input.contract, input.daoId]);
 }
 export class ContentService {
   constructor(
@@ -45,11 +55,69 @@ export class ContentService {
     private readonly provider: ContentProvider,
     private readonly allowance: bigint,
     readonly providerName: z.infer<typeof StorageStatusSchema>['provider'] = 'pinata',
+    readonly providerScope: string = providerName,
   ) {
+    ProviderScopeSchema.parse(providerScope);
     if (allowance < 0n || allowance > (1n << 63n) - 1n) throw new Error('CONTENT_ALLOWANCE');
   }
   configuration(): z.infer<typeof StorageStatusSchema> {
     return { provider: this.providerName, configured: true, uploadLimit: MAX_HOSTED_CONTENT_BYTES };
+  }
+  async usage(account: Account, daoId: string): Promise<z.infer<typeof HostedStorageUsageSchema>> {
+    const dao = await this.chain.dao(daoId);
+    const network = await this.chain.network();
+    if (
+      dao.reference.chainId !== network.chainId ||
+      dao.reference.contract !== network.runtime ||
+      dao.reference.daoId !== daoId ||
+      dao.reference.interfaceVersion !== network.interfaceVersion
+    )
+      throw new ApiError('DAO_REFERENCE');
+    const member = (await this.chain.memberships(account)).find(
+      (membership) =>
+        contentDaoKey(membership.dao) === contentDaoKey(dao.reference) &&
+        membership.dao.interfaceVersion === dao.reference.interfaceVersion &&
+        membership.active,
+    );
+    if (!member) throw new ApiError('MEMBER_REQUIRED', 403);
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const key = contentDaoKey(dao.reference);
+      await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`upload-dao:${key}`]);
+      const entitlement = await client.query<{ storage_limit: string }>(
+        "SELECT storage_limit::text FROM entitlements WHERE dao_key=$1 AND (tier='free' OR expires_at IS NULL OR expires_at>now())",
+        [key],
+      );
+      const capacity = entitlement.rows[0]
+        ? Uint64Schema.parse(entitlement.rows[0].storage_limit)
+        : this.allowance.toString();
+      const total = await storageUsed(client, key);
+      const measured = await client.query<{ bytes: string; objects: number; references: number }>(
+        `SELECT COALESCE(sum(o.verified_bytes),0)::text AS bytes,count(o.id)::integer AS objects,
+          (SELECT count(*)::integer FROM hosted_references WHERE dao_key=$1) AS references
+         FROM hosted_objects o WHERE o.id IN (SELECT object_id FROM hosted_references WHERE dao_key=$1)`,
+        [key],
+      );
+      const verified = BigInt(Uint64Schema.parse(measured.rows[0]?.bytes));
+      const response = HostedStorageUsageSchema.parse({
+        dao: dao.reference,
+        capacityBytes: capacity,
+        verifiedBytes: verified.toString(),
+        reservedBytes: (total - verified).toString(),
+        totalBytes: total.toString(),
+        objects: measured.rows[0]?.objects,
+        references: measured.rows[0]?.references,
+        cleanup: 'disabled',
+      });
+      await client.query('COMMIT');
+      return response;
+    } catch (cause) {
+      await client.query('ROLLBACK');
+      throw cause;
+    } finally {
+      client.release();
+    }
   }
   async brandingBytes(daoId: string, slot: 'logo' | 'cover') {
     const dao = await this.chain.dao(daoId),
@@ -82,7 +150,7 @@ export class ContentService {
     requestHash: string,
   ): Promise<{ row: UploadRow; created: boolean }> {
     const client = await this.pool.connect();
-    const key = daoKey(input.dao);
+    const key = contentDaoKey(input.dao);
     try {
       await client.query('BEGIN');
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
@@ -105,17 +173,20 @@ export class ContentService {
       const budget = entitlement.rows[0]
         ? BigInt(Uint64Schema.parse(entitlement.rows[0].storage_limit))
         : this.allowance;
-      // Expired reservations remain charged until reconciliation establishes their pin state.
-      const usage = await client.query<{ used: string }>(
-        'SELECT COALESCE(sum(expected_size),0)::text AS used FROM uploads WHERE dao_key=$1 AND (state<>$2 OR provider_id IS NOT NULL)',
-        [key, 'failed'],
+      const reusable = await reusableObject(
+        client,
+        this.providerScope,
+        input.commitment,
+        input.bytes,
       );
-      const used = BigInt(Uint64Schema.parse(usage.rows[0]?.used));
-      if (used + BigInt(input.bytes) > budget) throw new ApiError('STORAGE_QUOTA', 403);
+      const used = await storageUsed(client, key);
+      const charged = reusable && (await objectCharged(client, key, reusable.id));
+      if (used + (charged ? 0n : BigInt(input.bytes)) > budget)
+        throw new ApiError('STORAGE_QUOTA', 403);
       const id = randomUUID();
       const intent = HostedIntentSchema.strip().parse(input);
       const inserted = await client.query<Record<string, unknown>>(
-        "INSERT INTO uploads(id,account_id,dao_key,expected_size,privacy,expires_at,request_id,intent,request_hash,member_id,commitment) VALUES($1,$2,$3,$4,$5,now()+interval '1 hour',$6,$7,$8,$9,$10) RETURNING *",
+        "INSERT INTO uploads(id,account_id,dao_key,expected_size,privacy,expires_at,request_id,intent,request_hash,member_id,commitment,provider_scope,import_profile,storage_object_id,provider_id,cid) VALUES($1,$2,$3,$4,$5,now()+interval '1 hour',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *",
         [
           id,
           account.id,
@@ -127,6 +198,11 @@ export class ContentService {
           requestHash,
           memberId,
           input.commitment,
+          this.providerScope,
+          CONTENT_IMPORT_PROFILE,
+          reusable?.id ?? null,
+          reusable?.provider_id ?? null,
+          reusable?.cid ?? null,
         ],
       );
       const row = RowSchema.parse(inserted.rows[0]);
@@ -218,11 +294,15 @@ export class ContentService {
     return member.id;
   }
   async #verify(row: UploadRow, file: PinnedFile): Promise<HostedDocument> {
+    if (row.provider_scope !== this.providerScope || row.import_profile !== CONTENT_IMPORT_PROFILE)
+      throw new ApiError('STORAGE_OWNERSHIP_REVIEW', 409);
     const providerId = z.uuid().parse(file.id);
     const document = HostedDocumentSchema.parse({ ...row.intent, cid: file.cid });
+    if ((row.provider_id && row.provider_id !== providerId) || (row.cid && row.cid !== file.cid))
+      throw new ApiError('STORAGE_OBJECT_REVIEW', 409);
     if (file.size !== document.bytes) throw new ApiError('CONTENT_SIZE', 502);
     await this.pool.query(
-      "UPDATE uploads SET provider_id=$1,cid=$2,state='uploaded' WHERE id=$3 AND state IN ('reserved','uploaded')",
+      "UPDATE uploads SET provider_id=$1,cid=$2,state='uploaded' WHERE id=$3 AND state IN ('reserved','uploaded') AND (provider_id IS NULL OR provider_id=$1) AND (cid IS NULL OR cid=$2)",
       [providerId, file.cid, row.id],
     );
     const retrieved = await this.provider.retrieve(file.cid, document.bytes);
@@ -231,6 +311,21 @@ export class ContentService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
+      await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
+        `upload-dao:${contentDaoKey(document.dao)}`,
+      ]);
+      const snapshot = await client.query<Record<string, unknown>>(
+        'SELECT * FROM uploads WHERE id=$1 FOR UPDATE',
+        [row.id],
+      );
+      const currentRow = RowSchema.parse(snapshot.rows[0]);
+      if (
+        currentRow.provider_id !== providerId ||
+        currentRow.cid !== file.cid ||
+        currentRow.request_hash !== row.request_hash
+      )
+        throw new ApiError('STORAGE_OBJECT_REVIEW', 409);
+      await recordVerifiedObject(client, this.providerScope, row.id, document, file);
       const result = await client.query(
         "UPDATE uploads SET state='verified',last_error_code=NULL WHERE id=$1 AND state='uploaded' RETURNING id",
         [row.id],
@@ -286,7 +381,11 @@ export class ContentService {
     const reserved = await this.#reserve(account, input, memberId, requestHash);
     if (!reserved.created) return this.#reuse(reserved.row, requestHash);
     try {
-      return await this.#verify(reserved.row, await this.provider.upload(reserved.row.id, bytes));
+      const pin =
+        reserved.row.storage_object_id && reserved.row.provider_id && reserved.row.cid
+          ? { id: reserved.row.provider_id, cid: reserved.row.cid, size: input.bytes }
+          : await this.provider.upload(reserved.row.id, bytes);
+      return await this.#verify(reserved.row, pin);
     } catch {
       await this.pool
         .query('UPDATE uploads SET last_error_code=$1 WHERE id=$2', [
@@ -316,7 +415,10 @@ export class ContentService {
     const value = result.rows[0];
     if (!value) return 'completed';
     const row = RowSchema.parse(value);
-    if (row.state === 'published' || row.state === 'failed') return 'completed';
+    if (row.state === 'failed') return 'completed';
+    if (row.provider_scope !== this.providerScope || row.import_profile !== CONTENT_IMPORT_PROFILE)
+      return 'manual';
+    if (row.state === 'published') return 'completed';
     const network = await this.chain.network();
     if (network.chainId !== row.intent.dao.chainId || network.runtime !== row.intent.dao.contract)
       throw new ApiError('DAO_REFERENCE');
@@ -348,7 +450,10 @@ export class ContentService {
       return 'completed';
     }
     if (row.state === 'reserved' || row.state === 'uploaded') {
-      const files = await this.provider.find(row.id);
+      const files =
+        row.storage_object_id && row.provider_id && row.cid
+          ? [{ id: row.provider_id, cid: row.cid, size: row.intent.bytes }]
+          : await this.provider.find(row.id);
       if (files.length === 1 && files[0]) {
         await this.#verify(row, files[0]);
         return 'retry';

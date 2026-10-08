@@ -94,7 +94,8 @@
         "Private documents use a committed key for each DAO epoch. Initialization stores the commitment and the creator’s encrypted grant atomically. An administrator can grant that epoch to admitted members. Different recipients, DAO deployments and document versions have distinct encryption domains.",
         "Changing membership or rotating an epoch protects future content after the next key is initialized. Old grants and disclosed plaintext remain accessible to anyone who kept the old key. A client checks content integrity and the epoch commitment before decryption.",
         "Download checks the recorded byte count and commitment before opening a file. A private download also checks the DAO epoch commitment and decrypts in your browser. Previous file versions remain downloadable from version history. A saved plaintext download is not erased when your vault locks. The local disk fixture is labelled explicitly and does not establish live Pinata or public IPFS availability.",
-        "Changing DAO deployment, account, member identity or privacy clears document drafts and decrypted views. Late responses from a previous context are discarded. Content histories are read in scoped pages with advancing cursors; a large DAO does not fail merely because it exceeds the former row ceiling."
+        "Changing DAO deployment, account, member identity or privacy clears document drafts and decrypted views. Late responses from a previous context are discarded. Content histories are read in scoped pages with advancing cursors; a large DAO does not fail merely because it exceeds the former row ceiling.",
+        "Development resource accounting counts each verified CID once per DAO, including hosted versions, branding and archive references. Uncertain uploads still reserve their bytes. Active members can inspect verified and reserved usage; automatic deletion and paid storage subscriptions are not enabled yet. Mainnet and testnet use separate Pinata accounts and ownership ledgers."
       ]
     },
     {
@@ -3015,6 +3016,86 @@
     }
   ],
   "api": [
+    {
+      "method": "GET",
+      "path": "/v1/daos/:id/storage",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "capacityBytes": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "verifiedBytes": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "reservedBytes": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "totalBytes": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "objects": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "references": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "cleanup": {
+            "type": "string",
+            "const": "disabled"
+          }
+        },
+        "required": [
+          "dao",
+          "capacityBytes",
+          "verifiedBytes",
+          "reservedBytes",
+          "totalBytes",
+          "objects",
+          "references",
+          "cleanup"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "documents"
+    },
     {
       "method": "POST",
       "path": "/v1/account/vault/challenge",

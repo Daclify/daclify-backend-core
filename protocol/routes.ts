@@ -20,6 +20,7 @@ import { RuntimeActionSchemas } from '../sdk/generated/schemas.js';
 import { DaoPresetSchema, GovernanceStateSchema } from './dao.js';
 import {
   StorageStatusSchema,
+  HostedStorageUsageSchema,
   HostedUploadSchema,
   HostedDocumentSchema,
   UploadStatusSchema,
@@ -30,6 +31,12 @@ import { Uint64Schema } from './base.js';
 import { PlatformRoutes } from './platform.js';
 import { SpendingReportSchema } from './reporting.js';
 export const ApiRoutes = {
+  storageUsage: {
+    method: 'GET',
+    path: '/v1/daos/:id/storage',
+    response: HostedStorageUsageSchema,
+    helpTopic: 'documents',
+  },
   vaultAttachChallenge: {
     method: 'POST',
     path: '/v1/account/vault/challenge',

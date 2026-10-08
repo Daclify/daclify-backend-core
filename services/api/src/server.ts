@@ -519,6 +519,12 @@ export async function createServer(
       z.enum(['logo', 'cover']).parse(request.params.slot),
     );
   });
+  app.get<{ Params: { id: string } }>(ApiRoutes.storageUsage.path, async (request) =>
+    contentService().usage(
+      await session(request.cookies[cookieName]),
+      IdSchema.parse(request.params.id),
+    ),
+  );
   app.post(ApiRoutes.upload.path, { bodyLimit: 8 * 1024 * 1024 }, async (request) => {
     const account = await session(
       request.cookies[cookieName],

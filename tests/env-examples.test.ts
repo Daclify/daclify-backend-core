@@ -49,6 +49,7 @@ it('documents complete API settings separately from deployment credentials', () 
     'BOOTSTRAP_OWNER',
     'BOOTSTRAP_PRIVATE_KEY',
     'PINATA_JWT',
+    'PINATA_ACCOUNT_ID',
     'CONTENT_GATEWAY',
     'STRIPE_SECRET_KEY',
     'STRIPE_WEBHOOK_SECRET',

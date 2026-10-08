@@ -12,6 +12,7 @@ import { migrate } from './store.js';
 import { createServer } from './server.js';
 import { PinataStorage } from './content/pinata.js';
 import { ContentService } from './content/service.js';
+import { ProviderScopeSchema } from './content/ledger.js';
 import { startContentWorker } from './content/jobs.js';
 import { Uint64Schema } from '../../../protocol/base.js';
 import { parseFrontendOrigins, parseModuleDeployments } from './deployment-config.js';
@@ -40,6 +41,7 @@ const configuration = z
     NETWORK_ENVIRONMENT: z.enum(['local', 'testnet', 'mainnet']),
     API_PORT: z.coerce.number().int().min(1).max(65535).default(3008),
     PINATA_JWT: z.string().min(1).optional(),
+    PINATA_ACCOUNT_ID: ProviderScopeSchema.optional(),
     CONTENT_GATEWAY: z.url().optional(),
     CONTENT_FREE_STORAGE_BYTES: Uint64Schema.default('0'),
     GOOGLE_CLIENT_ID: z.string().min(1).max(256).optional(),
@@ -60,7 +62,8 @@ const env = configuration.data;
 const origins = parseFrontendOrigins(env.FRONTEND_ORIGIN, env.FRONTEND_ADDITIONAL_ORIGINS);
 if (!!env.BOOTSTRAP_OWNER !== !!env.BOOTSTRAP_PRIVATE_KEY)
   throw new Error('Bootstrap owner and key must be configured together');
-if (!!env.PINATA_JWT !== !!env.CONTENT_GATEWAY) throw new Error('PINATA_CONFIGURATION_INVALID');
+if (!!env.PINATA_JWT !== !!env.CONTENT_GATEWAY || !!env.PINATA_JWT !== !!env.PINATA_ACCOUNT_ID)
+  throw new Error('PINATA_CONFIGURATION_INVALID');
 if (!!env.GOOGLE_CLIENT_ID !== !!env.GOOGLE_PUBLIC_JWK)
   throw new Error('GOOGLE_CONFIGURATION_INVALID');
 function privateKey(value: string): PrivateKey {
@@ -95,6 +98,8 @@ const content =
         chain,
         new PinataStorage(env.PINATA_JWT, env.CONTENT_GATEWAY),
         BigInt(env.CONTENT_FREE_STORAGE_BYTES),
+        'pinata',
+        env.PINATA_ACCOUNT_ID,
       )
     : undefined;
 const providers: ProviderConfiguration = {};

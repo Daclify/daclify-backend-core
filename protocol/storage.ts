@@ -109,3 +109,20 @@ export function storagePricingHash(value: StoragePricing): string {
     new TextEncoder().encode(JSON.stringify(StoragePricingSchema.parse(value))),
   ).toString();
 }
+
+export const HostedReferenceKindSchema = z.enum([
+  'document-version',
+  'branding',
+  'media',
+  'archive',
+]);
+export const HostedStorageUsageSchema = z.strictObject({
+  dao: DaoRefSchema,
+  capacityBytes: Uint64Schema,
+  verifiedBytes: Uint64Schema,
+  reservedBytes: Uint64Schema,
+  totalBytes: Uint64Schema,
+  objects: z.int().nonnegative(),
+  references: z.int().nonnegative(),
+  cleanup: z.literal('disabled'),
+});

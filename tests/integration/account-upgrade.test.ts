@@ -58,12 +58,51 @@ it('upgrades the actual seven-migration schema, preserving identities and forcin
       account,
       '0x' + '11'.repeat(20),
     ]);
+    const oldUpload = randomUUID(),
+      providerId = randomUUID();
+    await pool.query(
+      `INSERT INTO uploads(id,account_id,dao_key,expected_size,privacy,state,provider_id,cid,commitment,expires_at)
+      VALUES($1,$2,$3,42,'encrypted','verified',$4,'legacy-cid',$5,now())`,
+      [
+        oldUpload,
+        account,
+        JSON.stringify(['22'.repeat(32), 'daclifycore', '1']),
+        providerId,
+        '33'.repeat(32),
+      ],
+    );
     await migrate(pool);
     await migrate(pool);
     expect(
       (await pool.query<{ count: string }>('SELECT count(*)::text AS count FROM schema_migrations'))
         .rows[0]?.count,
-    ).toBe('21');
+    ).toBe(
+      String(
+        (await readdir('migrations')).filter((name) => /^\d{3}_[a-z_]+\.sql$/.test(name)).length,
+      ),
+    );
+    expect(
+      (
+        await pool.query<{
+          provider_id: string;
+          expected_size: string;
+          provider_scope: string | null;
+          storage_object_id: string | null;
+        }>(
+          'SELECT provider_id,expected_size::text,provider_scope,storage_object_id FROM uploads WHERE id=$1',
+          [oldUpload],
+        )
+      ).rows[0],
+    ).toEqual({
+      provider_id: providerId,
+      expected_size: '42',
+      provider_scope: null,
+      storage_object_id: null,
+    });
+    expect(
+      (await pool.query<{ count: string }>('SELECT count(*)::text FROM hosted_objects')).rows[0]
+        ?.count,
+    ).toBe('0');
     expect(
       (
         await pool.query<{ signing_key: string }>('SELECT signing_key FROM accounts WHERE id=$1', [
