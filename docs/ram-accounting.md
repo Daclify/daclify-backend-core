@@ -1,0 +1,11 @@
+# RAM observation and purchased credits — development
+
+An authenticated active member can read `GET /v1/daos/:id/ram` for the exact configured deployment. Core/module rows come from the producer-owned `ramstats` and `ramalloc` schemas. Resources displays those per-payer counters and permanent settled purchase credits, alongside separately labelled whole-account quota/usage.
+
+The reader pins the qualified runtime code/raw ABI and chain, reads complete bounded ledger/source/installed tables and checks each payer's current source code twice. Unknown/truncated coverage fails closed. Disabled observation never returns a zero-byte DAO estimate. A missing/mismatched approved payer source leaves the complete DAO total unknown. The public schema checks unique payers, aggregate counts and observation consistency; byte counts remain decimal strings through the UI.
+
+Counters include instrumented core and module records in identity/recovery, activity, retained and platform categories. Shared meter metadata and other infrastructure are tracked separately; account-wide native usage also includes other DAOs, code, permissions and external system/token rows. A negative native quota is displayed as no finite reported quota, not free available capacity. These are live non-atomic reads with explicit start/end times, not billing snapshots or physical allocation attestations.
+
+Purchased credits come only from permanent native `ramalloc` records created after actual verified quota acquisition. They do not expire with hosting arrears, and pruning does not sell them. The configured policy's included activity and member-slot budgets are shown as budgets only. Funded per-payer pools, completion reserves, migrated-state backfill and quota enforcement remain unfinished. The current screen cannot buy RAM. Card fulfillment, public-chain qualification and release/upgrade gates remain separate.
+
+The owned Spring fixture tests reconcile instrumented native billing across core and all five modules. The reader's native test compares all six payer figures directly with `get_account` and verifies unchanged RAM usage/quota after the read. This qualifies the tested local observations, not a production allowance or public-chain deployment.

@@ -18,6 +18,7 @@ import { ApiRoutes } from '../../../protocol/routes.js';
 import { ModuleApiRoutes } from '@daclify/modules';
 import { ArchiveRoutes } from '@daclify/modules/archive';
 import { archivePreview } from './archive/service.js';
+import { ramUsage } from './resources/service.js';
 import Fastify, { type FastifyReply, errorCodes } from 'fastify';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
@@ -591,6 +592,11 @@ export async function createServer(
       IdSchema.parse(request.params.id),
     ),
   );
+  app.get<{ Params: { id: string } }>(ApiRoutes.ramUsage.path, async (request) => {
+    const account = await session(request.cookies[cookieName]);
+    if (!reports(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    return ramUsage(chain, account, IdSchema.parse(request.params.id));
+  });
   app.post(ArchiveRoutes.preview.path, async (request) => {
     const account = await session(
       request.cookies[cookieName],

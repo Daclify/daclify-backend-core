@@ -30,7 +30,14 @@ import { TreasurySchema, SettlementRequestSchema, SettlementResultSchema } from 
 import { Uint64Schema } from './base.js';
 import { PlatformRoutes } from './platform.js';
 import { SpendingReportSchema } from './reporting.js';
+import { RamUsageSchema } from './resources.js';
 export const ApiRoutes = {
+  ramUsage: {
+    method: 'GET',
+    path: '/v1/daos/:id/ram',
+    response: RamUsageSchema,
+    helpTopic: 'documents',
+  },
   storageUsage: {
     method: 'GET',
     path: '/v1/daos/:id/storage',

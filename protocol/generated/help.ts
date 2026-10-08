@@ -97,9 +97,10 @@ export const CoreHelpBundle={
         "Changing membership or rotating an epoch protects future content after the next key is initialized. Old grants and disclosed plaintext remain accessible to anyone who kept the old key. A client checks content integrity and the epoch commitment before decryption.",
         "Download checks the recorded byte count and commitment before opening a file. A private download also checks the DAO epoch commitment and decrypts in your browser. Previous file versions remain downloadable from version history. A saved plaintext download is not erased when your vault locks. The local disk fixture is labelled explicitly and does not establish live Pinata or public IPFS availability.",
         "Changing DAO deployment, account, member identity or privacy clears document drafts and decrypted views. Late responses from a previous context are discarded. Content histories are read in scoped pages with advancing cursors; a large DAO does not fail merely because it exceeds the former row ceiling.",
-        "Development resource accounting counts each verified CID once per DAO, including hosted versions, branding and archive references. Uncertain uploads still reserve their bytes. Active members can inspect verified and reserved usage; automatic deletion and paid storage subscriptions are not enabled yet. Mainnet and testnet use separate Pinata accounts and ownership ledgers.",
+        "Development resource accounting counts each verified CID once per DAO, including hosted versions, branding and archive references. Uncertain uploads and complete unfinished archive exports reserve their bytes. Active members can inspect verified and reserved usage; configured paid subscriptions grant capacity only after verified payment. Automatic deletion remains disabled. Mainnet and testnet use separate Pinata accounts and ownership ledgers.",
         "Storage terms are prepaid calendar months, independent of member-slot subscriptions. A January 31 anniversary uses February’s last day and returns to March 31. An unpaid paid term receives thirty exact days from its original end; retries do not restart that deadline. A future prepaid term does not grant capacity before its start. Recurring paid capacity requires an administrator to approve the exact units, pricing snapshot and monthly amount. Open Resources from DAO Settings or Documents to see measured usage, accepted pricing, paid-through and the original grace deadline. Only current administrators with fresh signing control can approve recurring units. Paid capacity requires authoritative Stripe invoice/payment/charge verification, independently of membership. Reductions begin next period; increases need verified payment and a funded base. Automatic deletion is still disabled, and live provider qualification remains required.",
-        "Native RAM orders on this development branch atomically acquire and verify quota for approved core/module payers, charge the accepted 5% TLOS markup and refund change. This contract path is qualified only on the owned local system fixture. Included allowances, payer pools, completion reserves, card fulfillment and the purchase screen remain unfinished; paid hosted RAM must wait for those gates."
+        "Native RAM orders on this development branch atomically acquire and verify quota for approved core/module payers, charge the accepted 5% TLOS markup and refund change. This contract path is qualified only on the owned local system fixture. Included allowances, payer pools, completion reserves, card fulfillment and the purchase screen remain unfinished; paid hosted RAM must wait for those gates.",
+        "Resources shows DAO RAM counters by payer across core and supported modules, separated into identity/recovery, activity, retained and platform categories, plus permanent settled purchase credits. Whole-account usage/quota also includes other DAOs and shared infrastructure; it is not the DAO's remaining allowance. Disabled observation or mismatched source code leaves the total unknown. Reads are bounded, source-checked live views, not atomic billing snapshots. Configured included budgets do not prove funded allocations; quota enforcement remains disabled."
       ]
     },
     {
@@ -3293,6 +3294,293 @@ export const CoreHelpBundle={
     }
   ],
   "api": [
+    {
+      "method": "GET",
+      "path": "/v1/daos/:id/ram",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "observation": {
+            "type": "string",
+            "enum": [
+              "active",
+              "disabled"
+            ]
+          },
+          "enforcement": {
+            "type": "string",
+            "const": "disabled"
+          },
+          "policy": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "schemaVersion": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "nativeRamBps": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 10000
+                  },
+                  "cardRamBps": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 10000
+                  },
+                  "includedActivityBytes": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "identityBytesPerSlot": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "quoteLifetimeSeconds": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 3600
+                  },
+                  "graceSeconds": {
+                    "type": "number",
+                    "const": 2592000
+                  },
+                  "storage": {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "freeBytes": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "unitBytes": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "monthlyUnitUsdCents": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 99999999
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "revision",
+                      "freeBytes",
+                      "unitBytes",
+                      "monthlyUnitUsdCents"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "schemaVersion",
+                  "revision",
+                  "nativeRamBps",
+                  "cardRamBps",
+                  "includedActivityBytes",
+                  "identityBytesPerSlot",
+                  "quoteLifetimeSeconds",
+                  "graceSeconds",
+                  "storage"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "read": {
+            "type": "object",
+            "properties": {
+              "startedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              "completedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              "atomic": {
+                "type": "boolean",
+                "const": false
+              }
+            },
+            "required": [
+              "startedAt",
+              "completedAt",
+              "atomic"
+            ],
+            "additionalProperties": false
+          },
+          "totalObservedBytes": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "purchasedBytes": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "payers": {
+            "minItems": 1,
+            "maxItems": 64,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "payer": {
+                  "type": "string",
+                  "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                },
+                "moduleId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "sourceVerified": {
+                  "type": "boolean"
+                },
+                "usage": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "identity": {
+                          "type": "string",
+                          "maxLength": 20
+                        },
+                        "activity": {
+                          "type": "string",
+                          "maxLength": 20
+                        },
+                        "retained": {
+                          "type": "string",
+                          "maxLength": 20
+                        },
+                        "platform": {
+                          "type": "string",
+                          "maxLength": 20
+                        }
+                      },
+                      "required": [
+                        "identity",
+                        "activity",
+                        "retained",
+                        "platform"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "purchasedBytes": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "globalQuotaBytes": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "globalUsedBytes": {
+                  "type": "string",
+                  "maxLength": 20
+                }
+              },
+              "required": [
+                "payer",
+                "moduleId",
+                "sourceVerified",
+                "usage",
+                "purchasedBytes",
+                "globalQuotaBytes",
+                "globalUsedBytes"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "dao",
+          "observation",
+          "enforcement",
+          "policy",
+          "read",
+          "totalObservedBytes",
+          "purchasedBytes",
+          "payers"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "documents"
+    },
     {
       "method": "GET",
       "path": "/v1/daos/:id/storage",

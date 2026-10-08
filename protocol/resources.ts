@@ -1,7 +1,8 @@
 import { z } from 'zod';
-import { checkedAdd, Uint64Schema } from './base.js';
+import { checkedAdd, Uint64Schema, DaoRefSchema, NativeAccountSchema } from './base.js';
 import { RuntimeTableSchemas } from '../sdk/generated/schemas.js';
 import { DEFAULT_STORAGE_PRICING, StoragePricingSchema, STORAGE_GRACE_SECONDS } from './storage.js';
+import { SpendingReportSchema } from './reporting.js';
 
 export const RamPaymentRailSchema = z.enum(['tlos', 'card']);
 export type RamPaymentRail = z.infer<typeof RamPaymentRailSchema>;
@@ -17,6 +18,57 @@ export const ResourcePolicySchema = z.strictObject({
   storage: StoragePricingSchema,
 });
 export type ResourcePolicy = z.infer<typeof ResourcePolicySchema>;
+export const RamPayerUsageSchema = z.strictObject({
+  payer: NativeAccountSchema,
+  moduleId: z.string().min(1).max(64).nullable(),
+  sourceVerified: z.boolean(),
+  usage: RuntimeTableSchemas.ramstats
+    .pick({ identity: true, activity: true, retained: true, platform: true })
+    .nullable(),
+  purchasedBytes: Uint64Schema,
+  globalQuotaBytes: Uint64Schema.nullable(),
+  globalUsedBytes: Uint64Schema,
+});
+export const RamUsageSchema = z
+  .strictObject({
+    dao: DaoRefSchema,
+    observation: z.enum(['active', 'disabled']),
+    enforcement: z.literal('disabled'),
+    policy: ResourcePolicySchema.nullable(),
+    read: SpendingReportSchema.shape.read,
+    totalObservedBytes: Uint64Schema.nullable(),
+    purchasedBytes: Uint64Schema,
+    payers: z
+      .array(RamPayerUsageSchema)
+      .min(1)
+      .max(64)
+      .refine((rows) => new Set(rows.map((r) => r.payer)).size === rows.length),
+  })
+  .superRefine((value, context) => {
+    const valid =
+        value.observation === 'active' &&
+        value.payers.every((p) => p.sourceVerified && p.usage !== null),
+      observed = value.payers.reduce(
+        (n, p) =>
+          n +
+          (p.usage
+            ? BigInt(p.usage.identity) +
+              BigInt(p.usage.activity) +
+              BigInt(p.usage.retained) +
+              BigInt(p.usage.platform)
+            : 0n),
+        0n,
+      ),
+      purchased = value.payers.reduce((n, p) => n + BigInt(p.purchasedBytes), 0n);
+    if (
+      value.totalObservedBytes !== (valid ? observed.toString() : null) ||
+      value.purchasedBytes !== purchased.toString() ||
+      value.payers.some((p) => (value.observation === 'active') === (p.usage === null)) ||
+      Date.parse(value.read.completedAt) < Date.parse(value.read.startedAt)
+    )
+      context.addIssue({ code: 'custom', message: 'RESOURCE_RESPONSE_INCONSISTENT' });
+  });
+export type RamUsage = z.infer<typeof RamUsageSchema>;
 export const DEFAULT_RESOURCE_POLICY: ResourcePolicy = ResourcePolicySchema.parse({
   schemaVersion: 1,
   revision: '0',

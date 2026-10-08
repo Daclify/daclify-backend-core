@@ -110,7 +110,11 @@ import type { EvmRelay } from '../../../protocol/evm-wallet.js';
 import type { Pool } from 'pg';
 import { canonicalEvmSignature, evmTypedDigest, governanceTypedData } from '../../../sdk/evm.js';
 import { recoverEvmDigest } from './auth/evm-proof.js';
-import { resourcePolicyFromRow } from '../../../protocol/resources.js';
+import {
+  resourcePolicyFromRow,
+  RamUsageSchema,
+  RamPayerUsageSchema,
+} from '../../../protocol/resources.js';
 import { ApiError, contractError } from './errors.js';
 import {
   ChainPlatformSchema,
@@ -364,6 +368,126 @@ export class NativeChainGateway implements ChainGateway {
     if (setting?.chain_id !== this.config.chainId) throw new ApiError('DAO_REFERENCE');
     const row = (await this.table('resourcecfg', this.config.runtime))[0];
     return row ? resourcePolicyFromRow(row) : null;
+  }
+  async ramUsage(id: string) {
+    IdSchema.parse(id);
+    const startedAt = new Date().toISOString();
+    await this.reviewedRuntime(this.config.runtime);
+    const read = async <
+      K extends 'ramobs' | 'ramstats' | 'ramalloc' | 'ramsources' | 'resourcecfg' | 'modules',
+    >(
+      table: K,
+      scope: string,
+    ) => {
+      const page = await this.tablePage(table, scope, '0', 65);
+      if (page.next !== null || page.rows.length > 64)
+        throw new ApiError('RESOURCE_SCOPE_LIMIT', 503);
+      return page.rows;
+    };
+    const [observers, stats, allocations, sources, policies, installed] = await Promise.all([
+      read('ramobs', this.config.runtime),
+      read('ramstats', id),
+      read('ramalloc', id),
+      read('ramsources', this.config.runtime),
+      read('resourcecfg', this.config.runtime),
+      read('modules', id),
+    ]);
+    const observer = observers[0];
+    if (observer && observer.runtime_hash !== RuntimeCodeHash)
+      throw new ApiError('RESOURCE_UNQUALIFIED', 503);
+    const accounts = [
+      ...new Set([
+        this.config.runtime,
+        ...stats.map((r) => r.payer),
+        ...allocations.map((r) => r.payer),
+        ...installed.map((r) => r.account),
+      ]),
+    ];
+    if (accounts.length > 64) throw new ApiError('RESOURCE_SCOPE_LIMIT', 503);
+    const code = async (account: string) => {
+      const response = await fetch(this.config.rpcUrl + '/v1/chain/get_code_hash', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ account_name: account }),
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!response.ok) throw new ApiError('CHAIN_UNAVAILABLE', 503);
+      return z.object({ code_hash: ChainIdSchema }).parse(await response.json()).code_hash;
+    };
+    const payers = await Promise.all(
+      accounts.map(async (payer) => {
+        NativeAccountSchema.parse(payer);
+        const [account, hash] = await Promise.all([
+            this.api.v1.chain.get_account(payer),
+            code(payer),
+          ]),
+          expected =
+            payer === this.config.runtime
+              ? RuntimeCodeHash
+              : sources.find((r) => r.account === payer)?.code_hash,
+          recorded = stats.find((r) => r.payer === payer),
+          usage = observer
+            ? (recorded ??
+              RuntimeTableSchemas.ramstats.parse({
+                payer,
+                identity: '0',
+                activity: '0',
+                retained: '0',
+                platform: '0',
+              }))
+            : null;
+        if ((await code(payer)) !== hash) throw new ApiError('RESOURCE_SOURCE_CHANGED', 503);
+        return RamPayerUsageSchema.parse({
+          payer,
+          moduleId: this.config.modules?.find((m) => m.account === payer)?.id ?? null,
+          sourceVerified: expected !== undefined && expected === hash,
+          usage: usage
+            ? {
+                identity: usage.identity,
+                activity: usage.activity,
+                retained: usage.retained,
+                platform: usage.platform,
+              }
+            : null,
+          purchasedBytes: allocations.find((r) => r.payer === payer)?.purchased_bytes ?? '0',
+          globalQuotaBytes:
+            BigInt(account.ram_quota.toString()) < 0n ? null : account.ram_quota.toString(),
+          globalUsedBytes: account.ram_usage.toString(),
+        });
+      }),
+    );
+    await this.reviewedRuntime(this.config.runtime);
+    const total =
+      observer && payers.every((p) => p.sourceVerified)
+        ? payers
+            .reduce(
+              (n, p) =>
+                n +
+                (p.usage
+                  ? BigInt(p.usage.identity) +
+                    BigInt(p.usage.activity) +
+                    BigInt(p.usage.retained) +
+                    BigInt(p.usage.platform)
+                  : 0n),
+              0n,
+            )
+            .toString()
+        : null;
+    return RamUsageSchema.parse({
+      dao: {
+        chainId: this.config.chainId,
+        contract: this.config.runtime,
+        daoId: id,
+        interfaceVersion: 1,
+      },
+      observation: observer ? 'active' : 'disabled',
+      enforcement: 'disabled',
+      read: { startedAt, completedAt: new Date().toISOString(), atomic: false },
+      policy: policies[0] ? resourcePolicyFromRow(policies[0]) : null,
+      totalObservedBytes: total,
+      purchasedBytes: payers.reduce((n, p) => n + BigInt(p.purchasedBytes), 0n).toString(),
+      payers,
+    });
   }
   async archivePreview(value: ArchivePreviewRequest) {
     const input = ArchiveRoutes.preview.input.parse(value);
