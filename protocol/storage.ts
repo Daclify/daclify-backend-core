@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Checksum256 } from '@wharfkit/antelope';
 import { DaoRefSchema, IdSchema, Uint64Schema, ChainIdSchema, CidSchema } from './base.js';
 export const MAX_HOSTED_CONTENT_BYTES = 5 * 1024 * 1024;
 const MAX_ENCODED_BYTES = Math.ceil(MAX_HOSTED_CONTENT_BYTES / 3) * 4;
@@ -71,3 +72,40 @@ export const UploadStatusSchema = z.strictObject({
   state: z.enum(['reserved', 'uploaded', 'verified', 'published', 'failed']),
   document: HostedDocumentSchema.optional(),
 });
+
+export const StorageUnitsSchema = z.int().min(0).max(999_999);
+export const StoragePricingSchema = z.strictObject({
+  schemaVersion: z.literal(1),
+  revision: Uint64Schema,
+  freeBytes: Uint64Schema,
+  unitBytes: Uint64Schema.refine((value) => value !== '0'),
+  monthlyUnitUsdCents: z.int().min(1).max(99_999_999),
+});
+export type StoragePricing = z.infer<typeof StoragePricingSchema>;
+export const DEFAULT_STORAGE_PRICING: StoragePricing = StoragePricingSchema.parse({
+  schemaVersion: 1,
+  revision: '0',
+  freeBytes: '100000000',
+  unitBytes: '1000000000',
+  monthlyUnitUsdCents: 100,
+});
+
+export function storageCapacity(units: number, value: StoragePricing): bigint {
+  const pricing = StoragePricingSchema.parse(value);
+  const bytes =
+    BigInt(pricing.freeBytes) + BigInt(StorageUnitsSchema.parse(units)) * BigInt(pricing.unitBytes);
+  Uint64Schema.parse(bytes.toString());
+  return bytes;
+}
+export function monthlyStorageUsdCents(units: number, value: StoragePricing): number {
+  const pricing = StoragePricingSchema.parse(value);
+  const cents = StorageUnitsSchema.parse(units) * pricing.monthlyUnitUsdCents;
+  if (!Number.isSafeInteger(cents) || cents > 99_999_999)
+    throw new RangeError('STORAGE_AMOUNT_RANGE');
+  return cents;
+}
+export function storagePricingHash(value: StoragePricing): string {
+  return Checksum256.hash(
+    new TextEncoder().encode(JSON.stringify(StoragePricingSchema.parse(value))),
+  ).toString();
+}

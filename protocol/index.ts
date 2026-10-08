@@ -9,6 +9,7 @@ export * from './content.js';
 export * from './docs.js';
 export * from './routes.js';
 export * from './storage.js';
+export * from './resources.js';
 export * from './treasury.js';
 export * from './reporting.js';
 export * from './platform.js';
