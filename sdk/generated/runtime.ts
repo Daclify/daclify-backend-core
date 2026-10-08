@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = 'db8bef39613ab6082e15a902ede8f5a4e99a507804f9c07ed29d9567d26969e7';
+export const runtimeAbiHash = 'd9514086bea8d9dfe35307c3d932e31a6f383668d5ac9ade56627419c36c30fb';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -573,6 +573,36 @@ export const runtimeAbi = {
         },
         {
           "name": "retention_seconds",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "archstep",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "archive_id",
+          "type": "uint64"
+        },
+        {
+          "name": "chunk_ordinal",
+          "type": "uint32"
+        },
+        {
+          "name": "start",
+          "type": "uint32"
+        },
+        {
+          "name": "count",
           "type": "uint32"
         }
       ]
@@ -3760,6 +3790,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "archstep",
+      "type": "archstep",
+      "ricardian_contract": ""
+    },
+    {
       "name": "authproof",
       "type": "authproof",
       "ricardian_contract": ""
@@ -4602,6 +4637,14 @@ export interface archrevoke {
   descriptor_commitment: string;
   backup_commitment: string;
   retention_seconds: number;
+}
+export interface archstep {
+  dao_id: string;
+  source: string;
+  archive_id: string;
+  chunk_ordinal: number;
+  start: number;
+  count: number;
 }
 export interface authproof {
   account: string;
@@ -5459,6 +5502,7 @@ export interface RuntimeActions {
   archapprove: archapprove;
   archattest: archattest;
   archrevoke: archrevoke;
+  archstep: archstep;
   authproof: authproof;
   cancelob: cancelob;
   cardcreate: cardcreate;

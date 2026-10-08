@@ -20,6 +20,7 @@ import {
   ArchiveBackupReceiptSchema,
   ArchiveRoutes,
   archiveAttestation,
+  archivePruneBatch,
 } from '@daclify/modules/archive';
 import { AccountSchema, type Account } from '../../../../protocol/api.js';
 import { HostedAssetReceiptSchema, HostedAssetUploadSchema } from '../../../../protocol/storage.js';
@@ -31,6 +32,7 @@ import { fundedStorage } from '../content/capacity.js';
 import { archivePreview } from './service.js';
 import { ApiError } from '../errors.js';
 import type { EncryptedArchiveBackup } from './backup.js';
+import { ArchiveHistory } from './history.js';
 import { RuntimeTableSchemas } from '../../../../sdk/index.js';
 
 const hash = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
@@ -67,6 +69,7 @@ const ChunkSchema = z.object({
 type ChunkRow = z.infer<typeof ChunkSchema>;
 
 export class ArchiveExports {
+  readonly history: ArchiveHistory;
   constructor(
     private readonly pool: Pool,
     private readonly chain: ChainGateway,
@@ -77,6 +80,7 @@ export class ArchiveExports {
     private readonly backupStore?: EncryptedArchiveBackup,
   ) {
     ProviderScopeSchema.parse(scope);
+    this.history = new ArchiveHistory(chain, provider);
   }
 
   private async authorize(account: Account, dao: ExportRow['dao']) {
@@ -157,7 +161,14 @@ export class ArchiveExports {
         : null,
       backup: backup.rows[0] ? ArchiveBackupReceiptSchema.parse(backup.rows[0].receipt) : null,
       backupSupported: !!this.backupStore,
-      pruningAuthorized: false,
+      pruningAuthorized: !!(
+        anchor &&
+        !anchor.revoked &&
+        anchor.approved_by !== '0' &&
+        this.chain.pruneArchive &&
+        this.chain.archiveProgress &&
+        (await this.chain.archiveProgress(row.dao, anchor.manifest_commitment)).enabled
+      ),
     });
   }
   async create(account: Account, value: ArchiveExportRequest) {
@@ -522,6 +533,47 @@ export class ArchiveExports {
       'UPDATE archive_exports SET anchor_id=$2,anchor_transaction=COALESCE(anchor_transaction,$3) WHERE id=$1 AND (anchor_id IS NULL OR anchor_id=$2)',
       [id, anchor.id, anchor.attestation_transaction],
     );
+    return this.status(account, id);
+  }
+  async prune(account: Account, id: string, expected: string) {
+    const status = await this.status(account, id);
+    if (
+      !this.chain.archiveProgress ||
+      !this.chain.pruneArchive ||
+      !status.manifest ||
+      status.manifest.commitment !== expected
+    )
+      throw new ApiError('ARCHIVE_PRUNING_DISABLED', 409);
+    if (
+      !status.anchor ||
+      status.anchor.revoked ||
+      status.anchor.approved_by === '0' ||
+      !status.backup
+    )
+      throw new ApiError('ARCHIVE_APPROVAL_REQUIRED', 409);
+    // Every bounded batch revalidates both providers and preserves the administrator's exact approval.
+    await this.attest(account, id, {
+      manifestCommitment: expected,
+      descriptorCommitment: status.anchor.descriptor_commitment,
+      backupCommitment: status.backup.commitment,
+      retentionSeconds: status.retentionSeconds,
+    });
+    const progress = await this.chain.archiveProgress(status.dao, expected);
+    if (!progress.enabled) throw new ApiError('ARCHIVE_PRUNING_DISABLED', 409);
+    const bundle = await this.bundle(account, id, false);
+    let pending = false;
+    for (const position of progress.positions) {
+      const batch = archivePruneBatch(bundle, progress.anchor, position);
+      if (!batch) continue;
+      await this.authorize(account, status.dao);
+      await this.chain.pruneArchive(status.dao, expected, batch);
+      pending = true;
+      break;
+    }
+    await this.pool.query('UPDATE archive_exports SET state=$2 WHERE id=$1', [
+      id,
+      pending ? 'pruning' : 'completed',
+    ]);
     return this.status(account, id);
   }
   async backup(account: Account, id: string, expected: string) {

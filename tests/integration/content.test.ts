@@ -25,6 +25,9 @@ import {
 } from '../../services/api/src/content/ledger.js';
 import { HostedAssets } from '../../services/api/src/content/assets.js';
 import { EncryptedArchiveBackup } from '../../services/api/src/archive/backup.js';
+import { StorageRetention } from '../../services/api/src/content/retention.js';
+import { DEFAULT_STORAGE_PRICING, storagePricingHash } from '../../protocol/storage.js';
+import { ArchiveHistory } from '../../services/api/src/archive/history.js';
 import { ArchiveExports } from '../../services/api/src/archive/exports.js';
 import {
   archiveExportConsent,
@@ -192,7 +195,74 @@ function setup(allowance = 1000n, providerScope = randomUUID()) {
       content: bytes.toString('base64'),
     });
   }
-  return { dao, content, provider, service, request, chain };
+  return { dao, content, provider, service, request, chain, providerScope };
+}
+async function storageTerm(
+  fixture: ReturnType<typeof setup>,
+  freeBytes = '100',
+  periodEnd = '2026-08-01T00:00:00Z',
+) {
+  const id = randomUUID(),
+    approval = randomUUID(),
+    price = { ...DEFAULT_STORAGE_PRICING, freeBytes },
+    pricingHash = storagePricingHash(price),
+    invoice = 'in_' + randomUUID().replaceAll('-', '');
+  await pool.query(
+    'INSERT INTO storage_prices(policy_key,pricing) VALUES($1,$2) ON CONFLICT DO NOTHING',
+    [pricingHash, price],
+  );
+  await pool.query(
+    "INSERT INTO storage_subscriptions(id,dao_key,dao,provider_scope,created_by,initial_request,state) VALUES($1,$2,$3,$4,$5,$6,'active')",
+    [
+      id,
+      contentDaoKey(fixture.dao.reference),
+      fixture.dao.reference,
+      fixture.providerScope,
+      account.id,
+      approval,
+    ],
+  );
+  await pool.query(
+    'INSERT INTO storage_approvals(request_id,subscription_id,approved_by,pricing,pricing_hash,price_key,units,monthly_usd_cents,recurring_consent) VALUES($1,$2,$3,$4,$5,$5,1,100,true)',
+    [approval, id, account.id, price, pricingHash],
+  );
+  await pool.query(
+    "INSERT INTO storage_invoices(invoice_id,subscription_id,approval_id,period_start,period_end,state,verified_at) VALUES($1,$2,$3,$4,$5,'verified',now())",
+    [invoice, id, approval, '2026-07-01T00:00:00Z', periodEnd],
+  );
+  return { id, approval, invoice, price };
+}
+async function storageObjects(fixture: ReturnType<typeof setup>) {
+  const objects = [];
+  for (const [i, size] of [60, 60, 40].entries()) {
+    const bytes = Buffer.from(String(i).repeat(size)),
+      pin = await fixture.provider.upload(randomUUID(), bytes),
+      db = await pool.connect();
+    try {
+      await db.query('BEGIN');
+      const id = await recordVerifiedPin(
+        db,
+        fixture.providerScope,
+        { kind: 'media', referenceKey: 'retention-fixture-' + i },
+        {
+          dao: fixture.dao.reference,
+          cid: pin.cid,
+          bytes: pin.size,
+          commitment: createHash('sha256').update(bytes).digest('hex'),
+        },
+        pin,
+      );
+      await db.query('UPDATE hosted_references SET created_at=$2 WHERE object_id=$1', [
+        id,
+        new Date(Date.UTC(2026, i, 1)),
+      ]);
+      await db.query('COMMIT');
+      objects.push({ id, pin, bytes });
+    } finally {
+      db.release();
+    }
+  }
+  return objects;
 }
 beforeAll(async () => {
   await migrate(pool);
@@ -203,6 +273,209 @@ beforeAll(async () => {
 });
 afterAll(() => pool.end());
 describe('hosted upload transactions with a simulated provider', () => {
+  it('curates whole files with generation checks, preserves shared references and clears bounded removal staging', async () => {
+    const fixture = setup(100n),
+      term = await storageTerm(fixture),
+      objects = await storageObjects(fixture),
+      retention = new StorageRetention(
+        pool,
+        fixture.chain,
+        fixture.provider,
+        100n,
+        fixture.providerScope,
+        async () => {},
+        true,
+      );
+    const first = objects[0];
+    if (!first) throw new Error('No retention object');
+    const initial = await retention.status(account, { dao: fixture.dao.reference });
+    expect(initial.funding.state).toBe('overdue');
+    expect(initial.objects.filter((o) => o.retained).map((o) => o.id)).not.toContain(first.id);
+    await expect(
+      retention.retain(account, { dao: fixture.dao.reference, generation: '1', keep: [first.id] }),
+    ).rejects.toThrow('STORAGE_CURATION_CHANGED');
+    const saved = await retention.retain(account, {
+      dao: fixture.dao.reference,
+      generation: '0',
+      keep: [first.id],
+    });
+    expect(saved.generation).toBe('1');
+    await retention.retain(account, { dao: fixture.dao.reference, generation: '1', keep: [] });
+    const foreign = setup(100n, fixture.providerScope),
+      db = await pool.connect();
+    try {
+      await db.query('BEGIN');
+      await recordVerifiedPin(
+        db,
+        fixture.providerScope,
+        { kind: 'media', referenceKey: 'shared-foreign' },
+        {
+          dao: foreign.dao.reference,
+          cid: first.pin.cid,
+          bytes: first.pin.size,
+          commitment: createHash('sha256').update(first.bytes).digest('hex'),
+        },
+        first.pin,
+      );
+      await db.query('COMMIT');
+    } finally {
+      db.release();
+    }
+    expect(await retention.prepare(fixture.dao.reference)).toBeNull();
+    expect(fixture.provider.remove).not.toHaveBeenCalled();
+    expect(
+      (
+        await pool.query(
+          'SELECT released_at FROM hosted_references WHERE object_id=$1 AND dao_key=$2',
+          [first.id, contentDaoKey(foreign.dao.reference)],
+        )
+      ).rows[0]?.released_at,
+    ).toBeNull();
+    await storageTerm(foreign);
+    await storageObjects(foreign);
+    await pool.query(
+      'UPDATE hosted_references SET created_at=$3 WHERE object_id=$1 AND dao_key=$2',
+      [first.id, contentDaoKey(foreign.dao.reference), new Date('2025-01-01T00:00:00Z')],
+    );
+    await pool.query('UPDATE hosted_references SET released_at=now() WHERE object_id=$1', [
+      first.id,
+    ]);
+    // An already released orphan is recovered by the same bounded prepare path on a retry.
+    await pool.query(
+      'UPDATE hosted_references SET released_at=NULL WHERE object_id=$1 AND dao_key=$2',
+      [first.id, contentDaoKey(fixture.dao.reference)],
+    );
+    const removal = await retention.prepare(fixture.dao.reference);
+    expect(removal).toBe(first.id);
+    if (!removal) throw new Error('No removal');
+    expect(await retention.remove(removal)).toBe('removed');
+    expect(await retention.remove(removal)).toBe('idle');
+    const audit = (
+      await pool.query('SELECT state,staged_bytes FROM hosted_removals WHERE object_id=$1', [
+        first.id,
+      ])
+    ).rows[0];
+    expect(audit).toMatchObject({ state: 'removed', staged_bytes: null });
+    expect((await fixture.service.usage(account, fixture.dao.reference.daoId)).totalBytes).toBe(
+      '100',
+    );
+    await expect(
+      pool.query("UPDATE hosted_removals SET state='removing' WHERE object_id=$1", [first.id]),
+    ).rejects.toThrow('STORAGE_REMOVAL_TERMINAL');
+    expect(term.invoice).toMatch(/^in_/);
+  });
+  it('compensates a payment arriving during unpin, fences concurrent removal and retains failed recovery for review', async () => {
+    const fixture = setup(100n),
+      term = await storageTerm(fixture),
+      objects = await storageObjects(fixture),
+      retention = new StorageRetention(
+        pool,
+        fixture.chain,
+        fixture.provider,
+        100n,
+        fixture.providerScope,
+        async () => {},
+        true,
+      ),
+      first = objects[0];
+    if (!first) throw new Error('No retention object');
+    const id = await retention.prepare(fixture.dao.reference);
+    expect(id).toBe(first.id);
+    if (!id) throw new Error('No removal');
+    let entered: () => void = () => {},
+      release: () => void = () => {};
+    const started = new Promise<void>((resolve) => {
+        entered = resolve;
+      }),
+      gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+    fixture.provider.remove = vi.fn(async () => {
+      entered();
+      await gate;
+      await pool.query(
+        "INSERT INTO storage_invoices(invoice_id,subscription_id,approval_id,period_start,period_end,state,verified_at) VALUES($1,$2,$3,'2026-10-01','2026-11-01','verified',now())",
+        ['in_' + randomUUID().replaceAll('-', ''), term.id, term.approval],
+      );
+    });
+    const running = retention.remove(id);
+    await started;
+    expect(await retention.remove(id)).toBe('idle');
+    release();
+    expect(await running).toBe('compensated');
+    const status = await retention.status(account, { dao: fixture.dao.reference });
+    expect(status.funding.state).toBe('active');
+    expect(status.objects.find((o) => o.id === id)?.releasedAt).toBeNull();
+    expect(fixture.provider.upload).toHaveBeenCalledTimes(4);
+  });
+  it('pauses uncertain staging and payment reconciliation, then resumes after failed compensation without deleting the recovery copy', async () => {
+    const fixture = setup(100n),
+      term = await storageTerm(fixture),
+      objects = await storageObjects(fixture),
+      first = objects[0];
+    if (!first) throw new Error('Missing object');
+    const retention = new StorageRetention(
+        pool,
+        fixture.chain,
+        fixture.provider,
+        100n,
+        fixture.providerScope,
+        async () => {},
+        true,
+      ),
+      originalRetrieve = fixture.provider.retrieve;
+    fixture.provider.retrieve = async () => Buffer.from('corrupt');
+    await expect(retention.prepare(fixture.dao.reference)).rejects.toThrow('STORAGE_OBJECT_REVIEW');
+    expect(
+      (await pool.query('SELECT released_at FROM hosted_references WHERE object_id=$1', [first.id]))
+        .rows[0]?.released_at,
+    ).toBeNull();
+    expect(fixture.provider.remove).not.toHaveBeenCalled();
+    fixture.provider.retrieve = originalRetrieve;
+    const blocked = new StorageRetention(
+      pool,
+      fixture.chain,
+      fixture.provider,
+      100n,
+      fixture.providerScope,
+      async () => {
+        throw new Error('Payment provider unknown');
+      },
+      true,
+    );
+    await expect(blocked.prepare(fixture.dao.reference)).rejects.toThrow(
+      'Payment provider unknown',
+    );
+    const id = await retention.prepare(fixture.dao.reference);
+    if (!id) throw new Error('Missing removal');
+    fixture.provider.remove = vi.fn(async () => {
+      await pool.query(
+        "INSERT INTO storage_invoices(invoice_id,subscription_id,approval_id,period_start,period_end,state,verified_at) VALUES($1,$2,$3,'2026-10-01','2026-11-01','verified',now()) ON CONFLICT DO NOTHING",
+        ['in_resume' + first.id.replaceAll('-', ''), term.id, term.approval],
+      );
+    });
+    const upload = fixture.provider.upload;
+    fixture.provider.upload = async () => {
+      throw new Error('Re-pin provider unavailable');
+    };
+    await expect(retention.remove(id)).rejects.toThrow('STORAGE_REMOVAL_REVIEW');
+    const held = (
+      await pool.query('SELECT state,staged_bytes FROM hosted_removals WHERE object_id=$1', [id])
+    ).rows[0];
+    expect(held?.state).toBe('review');
+    expect(held?.staged_bytes).toEqual(first.bytes);
+    expect(
+      (await pool.query('SELECT released_at FROM hosted_references WHERE object_id=$1', [id]))
+        .rows[0]?.released_at,
+    ).not.toBeNull();
+    fixture.provider.upload = upload;
+    await pool.query('UPDATE hosted_removals SET lease_until=now() WHERE object_id=$1', [id]);
+    expect(await retention.remove(id)).toBe('compensated');
+    expect(
+      (await pool.query('SELECT state,staged_bytes FROM hosted_removals WHERE object_id=$1', [id]))
+        .rows[0],
+    ).toMatchObject({ state: 'canceled', staged_bytes: null });
+  });
   function archiveFixture(allowance = 10_000n) {
     const fixture = setup(allowance),
       schema = archiveSourceSchema('ordinary-poll-votes');
@@ -411,9 +684,9 @@ describe('hosted upload transactions with a simulated provider', () => {
           verifier: 'relay',
           retention_seconds: input.retention_seconds,
           attested_at: 1700000000,
-          approved_by: '0',
-          approved_at: 0,
-          revoked: false,
+          approved_by: anchor?.approved_by ?? '0',
+          approved_at: anchor?.approved_at ?? 0,
+          revoked: anchor?.revoked ?? false,
           attestation_transaction: 'cd'.repeat(32),
           approval_transaction: '00'.repeat(32),
         });
@@ -452,6 +725,93 @@ describe('hosted upload transactions with a simulated provider', () => {
         'ARCHIVE_BUNDLE_UNAVAILABLE',
       );
       fixture.provider.retrieve = originalRetrieve;
+      await expect(
+        withBackup.prune(account, created.id, bundle.manifestFile.commitment),
+      ).rejects.toThrow('ARCHIVE_PRUNING_DISABLED');
+      if (!anchor) throw new Error('Missing anchor fixture');
+      anchor = RuntimeTableSchemas.archives.parse({
+        ...RuntimeTableSchemas.archives.parse(anchor),
+        approved_by: '1',
+        approved_at: 1700000001,
+      });
+      let pruned = 0;
+      fixture.chain.archiveProgress = async () => {
+        if (!anchor) throw new Error('Missing anchor fixture');
+        return {
+          anchor,
+          enabled: true,
+          positions: [
+            {
+              id: '32',
+              dao_id: fixture.dao.reference.daoId,
+              archive_id: '1',
+              chunk_ordinal: 0,
+              pruned,
+            },
+          ],
+        };
+      };
+      fixture.chain.pruneArchive = async (_dao, _commitment, batch) => {
+        expect(batch).toMatchObject({
+          archive_id: '1',
+          start: 0,
+          proofs: [{ primary_key: '1', siblings: [] }],
+        });
+        pruned += batch.proofs.length;
+      };
+      expect(
+        (await withBackup.prune(account, created.id, bundle.manifestFile.commitment)).state,
+      ).toBe('pruning');
+      expect(
+        (await withBackup.prune(account, created.id, bundle.manifestFile.commitment)).state,
+      ).toBe('completed');
+      expect(pruned).toBe(1);
+      fixture.chain.archiveHistory = async (input) => ({
+        dao: input.dao,
+        anchors: [RuntimeTableSchemas.archives.parse(anchor)],
+        next: null,
+      });
+      // Construct a reader with no Pool capability: a lost SQL history index cannot be consulted.
+      const history = new ArchiveHistory(fixture.chain, fixture.provider);
+      const discovered = await history.list(account, { dao: fixture.dao.reference });
+      expect(discovered.anchors[0]?.manifest_commitment).toBe(bundle.manifestFile.commitment);
+      const recovered = await history.recover(account, {
+        dao: fixture.dao.reference,
+        manifestCommitment: bundle.manifestFile.commitment,
+      });
+      expect(recovered.manifest).toEqual(bundle.manifest);
+      const page = await history.page(account, {
+        dao: fixture.dao.reference,
+        manifestCommitment: bundle.manifestFile.commitment,
+      });
+      expect(page).toMatchObject({
+        parentId: '7',
+        records: [{ id: '1', ballot: '7', member: '1', weight: '1', choice: 0 }],
+        coverage: 'verified-archive',
+        liveRowsIncluded: false,
+        next: null,
+      });
+      await expect(
+        history.list(account, { dao: { ...fixture.dao.reference, daoId: '999' } }),
+      ).rejects.toThrow('MEMBER_REQUIRED');
+      fixture.provider.retrieve = async () => {
+        throw new Error('Missing primary and SQL index');
+      };
+      await expect(
+        history.recover(account, {
+          dao: fixture.dao.reference,
+          manifestCommitment: bundle.manifestFile.commitment,
+        }),
+      ).rejects.toThrow('ARCHIVE_BUNDLE_UNAVAILABLE');
+      fixture.provider.retrieve = originalRetrieve;
+
+      anchor = RuntimeTableSchemas.archives.parse({
+        ...RuntimeTableSchemas.archives.parse(anchor),
+        revoked: true,
+      });
+      await expect(
+        withBackup.prune(account, created.id, bundle.manifestFile.commitment),
+      ).rejects.toThrow('ARCHIVE_APPROVAL_REQUIRED');
 
       expect(() =>
         execFileSync(

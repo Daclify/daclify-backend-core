@@ -38,7 +38,6 @@ The separate `resourcecfg` contract table records the Daclify DAO’s revisioned
 
 The platform screen signs exact decimal inputs and shows that policies alone do not fund capacity or start billing. Approved monthly units bind the full immutable pricing hash, amount and recurring consent. Calendar/grace helpers are tested with January 31, leap February, month-end recovery, UTC daylight saving boundaries, future prepayment and the exact thirty-day deadline. Migration 023 records immutable approvals and invoice domains. Stripe reconciliation verifies the subscription, agreed product/quantity/price, full calendar period, paid invoice, invoice-payment records, matching succeeded PaymentIntents and paid charges. Checkout completion alone grants nothing. Refunded storage payments revoke funding while retaining the original grace deadline. Upgrades require a still-paid base period; reductions/newly accepted pricing begin next period. These checks have PostgreSQL and synthetic Stripe SDK coverage; they are not live provider certification.
 
-
 ## Storage billing configuration and user flow
 
 Use a dedicated monthly storage Product in the environment’s Stripe account and configure `STRIPE_SECRET_KEY`, `DACLIFY_STORAGE_STRIPE_PRODUCT_ID` and `DACLIFY_STORAGE_WEBHOOK_SECRET` in the private API environment. The API creates immutable monthly USD per-unit Prices from accepted contract policy. Mainnet live charging additionally requires `DACLIFY_STORAGE_LIVE_PAYMENTS=true`; keep it false until sandbox qualification. Testnet accepts test keys only. Content hosting and its separate Pinata ownership scope must be configured first.
@@ -49,13 +48,11 @@ In DAO Settings, open **Storage and blockchain resources**. Active members can r
 
 Cancellation stops renewal at period end and does not revoke the paid term. A renewal failure does not remove membership or reset retention. Provider/network ambiguity never authorizes deletion. The Resources screen explicitly labels automatic cleanup and RAM purchases as unfinished. Database backups must preserve agreements, invoices, pending changes, ownership records and jobs; chain-only recovery does not reconstruct Stripe or Pinata ownership.
 
-
 ## Observer runtime upgrades
 
 An enabled observer rejects callbacks after runtime code changes until its native authority calls `rebindramobs` with both the expected previous observer hash and the exact reviewed newly deployed runtime hash. The action changes only that code pin; it does not reset counters, rewrite DAO/member/document rows, allocate RAM or enable the observer on old untracked state. It is native maintenance authority, outside signed DAO member actions. Plan a reviewed maintenance window: writes to an enabled observer deployment are held between code replacement and successful rebinding. Native code/ABI overhead remains a platform provisioning responsibility.
 
 The owned regression reproduces commit 81afcba with `npm exec -- tsx tools/build/upgrade.ts --observer`, upgrades a disposable initialized observer with existing DAO/member/document state, rejects unauthorized/stale/wrong-code/replayed rebinding, verifies unchanged counters/state and resumes metered writes. This qualifies that tested observer upgrade; legacy backfill, physically funded allocations, all-source upgrade conformance and public deployment remain pending.
-
 
 ## Native acquisition checkpoint
 
@@ -80,3 +77,11 @@ Migration 024 adds immutable asset request/ownership domains and durable provide
 Every new artifact reserves bytes before provider upload. A known CID already charged to that DAO can be reused without charging it twice, but its bytes are retrieved and checked again. An unknown upload holds all expected bytes even after expiration or an empty provider listing. Reconciliation can recover a verified provider response; ambiguous/corrupt responses go to retry/review without removal. Asset jobs use a separate namespace in the existing stoppable host polling loop, not a new server or queue fleet.
 
 This is internal transport for the upcoming publication/export handlers. It does not publish branding, certify an archive manifest, verify an independent backup, approve pruning or expose a public asset upload endpoint. Those callers must validate their payload-specific format and publication authority. No IPFS file or contract row is deleted by the transport.
+
+## Retention selection and guarded cleanup — development
+
+Resources lets administrators prioritize whole verified objects within the free allowance. Selections use a generation check so concurrent administrators cannot silently overwrite each other. Newest whole objects fill remaining capacity; a CID counts once for a DAO across roles. Missing provider results retain their holds and pause removal. A 30-day deadline uses the original verified term, independently of membership invoices; current funded capacity and reduction grace remain protected.
+
+The cleanup engine uses existing SQL jobs, per-DAO/object locks, generation-fenced leases and an immutable removal audit. It verifies the original bytes and stages at most 5 MiB per removal in PostgreSQL before provider deletion. Shared references and unfinished object reservations prevent unpinning. New references are blocked while an object is being removed. Payment is freshly reconciled before removal and afterward. If payment invalidates removal, the worker re-pins and verifies the staged bytes before restoring availability. Uncertain providers, lost leases and failed compensation pause for review; failed jobs back off without resetting the original grace deadline. Terminal staging is cleared, not retained as an undeclared backup service.
+
+There is an external-provider visibility window: PostgreSQL, Stripe and Pinata cannot commit atomically. The operator must qualify compensating re-pin behavior and review monitoring before enabling the worker. The application does not start destructive retention; default cleanup remains disabled. No existing user/provider files have been removed.

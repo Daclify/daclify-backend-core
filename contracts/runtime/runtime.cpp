@@ -83,6 +83,13 @@ public:
     check(get_sender()==get_self(),"ACTOR_SENDER");authorized_actor(runtime,dao_id,member_id,true);archive_anchors anchors(get_self(),dao_id);auto index=anchors.get_index<"bymanifest"_n>();const auto& anchor=index.get(manifest_commitment,"ARCHIVE_ANCHOR_UNKNOWN");
     check(anchor.retention_seconds==retention_seconds&&anchor.descriptor_commitment==descriptor_commitment&&anchor.backup_commitment==backup_commitment,"ARCHIVE_COMMITMENT");if(!anchor.revoked)index.modify(anchor,same_payer,[](auto& r){r.revoked=true;});
   }
+  ACTION archstep(uint64_t dao_id,name source,uint64_t archive_id,uint32_t chunk_ordinal,uint32_t start,uint32_t count){
+    check(get_sender()==source,"ARCHIVE_SOURCE_SENDER");require_auth(source);const auto anchor=approved_archive(get_self(),dao_id,archive_id,source);validate_archive_manifest(dao_id,anchor.manifest);
+    check(count>0&&count<=25&&chunk_ordinal<anchor.manifest.families.front().chunks.size(),"ARCHIVE_PRUNE_BOUNDS");const auto& chunk=anchor.manifest.families.front().chunks[chunk_ordinal];
+    archive_positions positions(get_self(),dao_id);const auto& progress=positions.get(archive_id*archive_anchor_max_chunks+chunk_ordinal,"ARCHIVE_PROGRESS_UNKNOWN");
+    check(progress.archive_id==archive_id&&progress.chunk_ordinal==chunk_ordinal&&progress.pruned==start&&uint64_t(start)+count<=chunk.domain.leaf_count,"ARCHIVE_PROGRESS");
+    positions.modify(progress,same_payer,[&](auto& r){r.pruned+=count;});
+  }
   ACTION initramobs(){
     require_auth(get_self());check(dao_rows.begin()==dao_rows.end()&&!ram_reserve_settings(get_self(),get_self().value).exists(),"RAM_BACKFILL_REQUIRED");
     check(!fee_settings(get_self(),get_self().value).exists()&&!payment_settings(get_self(),get_self().value).exists()&&!market_settings(get_self(),get_self().value).exists()&&!creation_settings(get_self(),get_self().value).exists()&&!hosted_settings(get_self(),get_self().value).exists()&&!seat_settings(get_self(),get_self().value).exists()&&!resource_settings(get_self(),get_self().value).exists(),"RAM_BACKFILL_REQUIRED");
@@ -889,7 +896,7 @@ private:
 extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
   if(code==receiver){switch(action_name){
     EOSIO_DISPATCH_HELPER(runtime,(authproof)(unlinknat)(linkevm)(unlinkevm)(submitevm)(setadmit)(admitfrom))
-    EOSIO_DISPATCH_HELPER(runtime,(setarchcfg)(archattest)(archapprove)(archrevoke)(initramobs)(rebindramobs)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram)(fulfilram))
+    EOSIO_DISPATCH_HELPER(runtime,(setarchcfg)(archattest)(archapprove)(archrevoke)(archstep)(initramobs)(rebindramobs)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram)(fulfilram))
     EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(setprofile)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(confirmext)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))
     EOSIO_DISPATCH_HELPER(runtime,(sethosted)(govhosted)(govseatfee)(orderfree)(setcapacity)(revokecap)(resumecap))
     EOSIO_DISPATCH_HELPER(runtime,(enrollagent)(addmember)(initgov)(setdaogov)(addsession)(delsession)(guardpause)(guardrevoke)(guardrecover)(submitsess)(setfees)(listmod)(unlistmod)(setmodcopy)(setpolicy)(setgov)(setoracle)(govfees)(govpayfees)(setcreate)(govcreate)(setcrrate)(ordercreate)(cardcreate)(createpaid)(govlist)(govunlist)(govmodcopy))

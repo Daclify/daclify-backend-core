@@ -659,6 +659,58 @@ export async function createServer(
     if (!reports(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
     return ramUsage(chain, account, IdSchema.parse(request.params.id));
   });
+  app.get<{ Querystring: { dao: string; cursor?: string } }>(
+    ArchiveRoutes.history.path,
+    async (request) => {
+      const account = await session(request.cookies[cookieName]);
+      if (!reports(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+      let dao: unknown;
+      try {
+        dao = JSON.parse(z.string().min(2).max(1024).parse(request.query.dao));
+      } catch {
+        throw new ApiError('ARCHIVE_QUERY');
+      }
+      return contentService().archive.history.list(account, {
+        dao,
+        ...(request.query.cursor ? { cursor: request.query.cursor } : {}),
+      });
+    },
+  );
+  app.post(ArchiveRoutes.recover.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    if (!reports(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    return contentService().archive.history.recover(account, request.body);
+  });
+  app.post(ArchiveRoutes.historyPage.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    if (!reports(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    return contentService().archive.history.page(account, request.body);
+  });
+  app.get<{ Querystring: { dao: string } }>(ApiRoutes.curation.path, async (request) => {
+    const account = await session(request.cookies[cookieName]);
+    if (!reports(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    let dao: unknown;
+    try {
+      dao = JSON.parse(z.string().max(1024).parse(request.query.dao));
+    } catch {
+      throw new ApiError('DAO_REFERENCE');
+    }
+    return contentService().retention.status(account, { dao });
+  });
+  app.post(ApiRoutes.retain.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    if (!reports(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    return contentService().retention.retain(account, request.body);
+  });
   app.post(ArchiveRoutes.preview.path, async (request) => {
     const account = await session(
       request.cookies[cookieName],
@@ -730,6 +782,19 @@ export async function createServer(
     if (!reports(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
     const input = ArchiveRoutes.backup.input.parse(request.body);
     return contentService().archive.backup(
+      account,
+      z.uuid().parse(request.params.id),
+      input.expectedManifestCommitment,
+    );
+  });
+  app.post<{ Params: { id: string } }>(ArchiveRoutes.prune.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    if (!reports(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    const input = ArchiveRoutes.prune.input.parse(request.body);
+    return contentService().archive.prune(
       account,
       z.uuid().parse(request.params.id),
       input.expectedManifestCommitment,

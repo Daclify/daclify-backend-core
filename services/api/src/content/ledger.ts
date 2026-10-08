@@ -46,10 +46,10 @@ export async function storageUsed(client: PoolClient, daoKey: string): Promise<b
   // Unknown results remain separate holds. Known objects count once, including unfinished reuse attempts.
   const result = await client.query<{ used: string }>(
     `WITH objects AS (
-       SELECT object_id AS id FROM hosted_references WHERE dao_key=$1
-       UNION SELECT storage_object_id FROM uploads WHERE dao_key=$1 AND storage_object_id IS NOT NULL
+       SELECT object_id AS id FROM hosted_references WHERE dao_key=$1 AND released_at IS NULL
+       UNION SELECT storage_object_id FROM uploads WHERE dao_key=$1 AND storage_object_id IS NOT NULL AND storage_released_at IS NULL
          AND (state<>'failed' OR provider_id IS NOT NULL)
-       UNION SELECT storage_object_id FROM asset_uploads WHERE dao_key=$1 AND storage_object_id IS NOT NULL
+       UNION SELECT storage_object_id FROM asset_uploads WHERE dao_key=$1 AND storage_object_id IS NOT NULL AND storage_released_at IS NULL
      ) SELECT (
        COALESCE((SELECT sum(verified_bytes) FROM hosted_objects WHERE id IN (SELECT id FROM objects)),0)
        + COALESCE((SELECT sum(expected_size) FROM uploads WHERE dao_key=$1 AND storage_object_id IS NULL
@@ -67,10 +67,10 @@ export async function objectCharged(
   objectId: string,
 ): Promise<boolean> {
   const result = await client.query<{ charged: boolean }>(
-    `SELECT EXISTS(SELECT 1 FROM hosted_references WHERE dao_key=$1 AND object_id=$2
-       UNION ALL SELECT 1 FROM uploads WHERE dao_key=$1 AND storage_object_id=$2
+    `SELECT EXISTS(SELECT 1 FROM hosted_references WHERE dao_key=$1 AND object_id=$2 AND released_at IS NULL
+       UNION ALL SELECT 1 FROM uploads WHERE dao_key=$1 AND storage_object_id=$2 AND storage_released_at IS NULL
          AND (state<>'failed' OR provider_id IS NOT NULL)
-       UNION ALL SELECT 1 FROM asset_uploads WHERE dao_key=$1 AND storage_object_id=$2) AS charged`,
+       UNION ALL SELECT 1 FROM asset_uploads WHERE dao_key=$1 AND storage_object_id=$2 AND storage_released_at IS NULL) AS charged`,
     [daoKey, objectId],
   );
   return z.boolean().parse(result.rows[0]?.charged);
@@ -147,9 +147,13 @@ export async function recordVerifiedPin(
      VALUES($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING`,
     [objectId.data, daoKey, reference.kind, reference.referenceKey, reference.uploadId ?? null],
   );
+  await client.query(
+    'UPDATE hosted_references SET released_at=NULL,generation=generation+1 WHERE object_id=$1 AND dao_key=$2 AND kind=$3 AND reference_key=$4 AND upload_id IS NOT DISTINCT FROM $5::uuid AND released_at IS NOT NULL',
+    [objectId.data, daoKey, reference.kind, reference.referenceKey, reference.uploadId ?? null],
+  );
   const retained = await client.query(
     `SELECT id FROM hosted_references WHERE object_id=$1 AND dao_key=$2 AND kind=$3 AND reference_key=$4
-       AND upload_id IS NOT DISTINCT FROM $5::uuid`,
+       AND released_at IS NULL AND upload_id IS NOT DISTINCT FROM $5::uuid`,
     [objectId.data, daoKey, reference.kind, reference.referenceKey, reference.uploadId ?? null],
   );
   if (retained.rowCount !== 1) throw new ApiError('STORAGE_OBJECT_REVIEW', 409);

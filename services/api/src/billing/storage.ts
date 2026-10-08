@@ -533,6 +533,10 @@ export class HostedStorage {
     await this.reconcile(row);
     return this.view(input.dao);
   }
+  async reconcileRetention(dao: DaoRef) {
+    const row = await this.row(dao);
+    if (row) await this.reconcile(row);
+  }
   private async reconcile(
     row: SubscriptionRow,
     checkoutHint?: string,

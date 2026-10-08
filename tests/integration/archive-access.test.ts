@@ -21,6 +21,7 @@ import {
   NetworkSchema,
   UserMembershipSchema,
 } from '../../protocol/api.js';
+import { ApiRoutes } from '../../protocol/routes.js';
 import { VERSION } from '../../protocol/base.js';
 import { createServer } from '../../services/api/src/server.js';
 import { migrate } from '../../services/api/src/store.js';
@@ -189,6 +190,28 @@ it('requires session/CSRF/current administrator and binds the readonly result to
       'x-csrf-token': session.csrfToken,
     };
     const request = { method: 'POST' as const, url: path, payload, headers };
+    const curationPath =
+      ApiRoutes.curation.path + '?dao=' + encodeURIComponent(JSON.stringify(dao));
+    expect(
+      (await app.inject({ method: 'GET', url: curationPath, headers: { origin } })).statusCode,
+    ).toBe(401);
+    const curation = await app.inject({ method: 'GET', url: curationPath, headers });
+    expect(curation.statusCode).toBe(200);
+    expect(ApiRoutes.curation.response.parse(curation.json()).cleanup).toBe('disabled');
+    expect(
+      (
+        await app.inject({
+          method: 'POST',
+          url: ApiRoutes.retain.path,
+          payload: { dao, generation: '0', keep: [] },
+          headers: { ...headers, 'x-csrf-token': '' },
+        })
+      ).statusCode,
+    ).toBe(403);
+    admin = false;
+    expect((await app.inject({ method: 'GET', url: curationPath, headers })).statusCode).toBe(403);
+    admin = true;
+
     expect(
       (await app.inject({ ...request, headers: { ...headers, 'x-csrf-token': '' } })).statusCode,
     ).toBe(403);

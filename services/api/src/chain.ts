@@ -31,8 +31,16 @@ import type {
 } from '../../../protocol/resources.js';
 import type { HostingChain } from '../../../protocol/hosting.js';
 import type { HubDirectorySchema } from '../../../protocol/directory.js';
-import type { ArchivePreviewRequest, OrdinaryPollArchivePlan } from '@daclify/modules/archive';
+import type {
+  ArchivePreviewRequest,
+  OrdinaryPollArchivePlan,
+  ArchivePruneBatch,
+  ArchiveProgressSchema,
+} from '@daclify/modules/archive';
 export interface ChainGateway {
+  archiveHistory?(
+    input: z.infer<typeof import('@daclify/modules/archive').ArchiveHistoryRequestSchema>,
+  ): Promise<z.infer<typeof import('@daclify/modules/archive').ArchiveHistoryListSchema>>;
   archiveAnchor?(
     dao: DaoRef,
     manifestCommitment: string,
@@ -40,6 +48,11 @@ export interface ChainGateway {
   attestArchive?(
     input: RuntimeActions['archattest'],
   ): Promise<z.infer<typeof RuntimeTableSchemas.archives>>;
+  archiveProgress?(
+    dao: DaoRef,
+    manifestCommitment: string,
+  ): Promise<z.infer<typeof ArchiveProgressSchema>>;
+  pruneArchive?(dao: DaoRef, manifestCommitment: string, input: ArchivePruneBatch): Promise<void>;
   archivePreview?(input: ArchivePreviewRequest): Promise<OrdinaryPollArchivePlan>;
   resourcePolicy?(): Promise<ResourcePolicy | null>;
   ramUsage?(daoId: string): Promise<RamUsage>;

@@ -318,9 +318,19 @@ Pinned hosting includes 100 MB (100,000,000 bytes). Each explicitly approved add
 
 Archive preview and resumable export are available for qualified ordinary-poll vote records, at least 90 days after recorded terminal completion. Download and independently verify a bundle against its separately saved manifest hash. The current hash is not yet a native archive anchor. Exports contain original records, not private decryption keys or social-login pairings; retain recovery kits and original file pins separately. Exporting never itself approves pruning. Native archive approvals, source-owned pruning and empty-database history restoration remain qualification work.
 
+## Keep files within your funded storage
+
+Storage is prepaid separately from membership. An unpaid term keeps its original 30-day grace deadline; payment retries do not restart the clock. During grace, reading and export remain available. No automatic cleanup is enabled in this development build.
+
+DAO administrators can choose whole verified objects to prioritize within the free allowance. A CID counts once for that DAO even when several document versions, media or archives reference it. Newest objects fill any remaining allowance deterministically. A file retained by another DAO is not unpinned.
+
+The guarded cleanup implementation verifies payment, current references and the original bytes before provider removal. A bounded staging copy permits compensation if payment arrives during removal. Provider uncertainty, lost leases and failed compensation pause cleanup for operator review. Daclify cannot erase blockchain history, third-party IPFS copies or members’ saved plaintext.
+
+Cleanup does not remove identities, social pairings, document decryption keys, signing nonces, balances, payment receipts or purchased RAM. Files whose hosting ends are explicitly unavailable; paying afterward does not promise recovery of deleted content. Live provider qualification and operational enablement are separate release gates.
+
 ## runtime contract
 
-Source ABI JSON SHA-256: `db8bef39613ab6082e15a902ede8f5a4e99a507804f9c07ed29d9567d26969e7`.
+Source ABI JSON SHA-256: `d9514086bea8d9dfe35307c3d932e31a6f383668d5ac9ade56627419c36c30fb`.
 
 ### Action: addmember
 
@@ -399,6 +409,17 @@ Source ABI JSON SHA-256: `db8bef39613ab6082e15a902ede8f5a4e99a507804f9c07ed29d95
 | descriptor_commitment | checksum256 |
 | backup_commitment | checksum256 |
 | retention_seconds | uint32 |
+
+### Action: archstep
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| source | name |
+| archive_id | uint64 |
+| chunk_ordinal | uint32 |
+| start | uint32 |
+| count | uint32 |
 
 ### Action: authproof
 
@@ -1636,6 +1657,601 @@ Source ABI JSON SHA-256: `ae70e5f0f7af1f1a9ded1b8ce193c5e6cab1808799f4e11c7e9ad1
 | abi_hash | checksum256 |
 | metadata | string |
 | listed | bool |
+
+## GET /v1/storage/curation
+
+Guide: retention.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "dao": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "contract": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "daoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "interfaceVersion": {
+          "type": "number",
+          "const": 1
+        }
+      },
+      "required": [
+        "chainId",
+        "contract",
+        "daoId",
+        "interfaceVersion"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "dao"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "dao": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "contract": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "daoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "interfaceVersion": {
+          "type": "number",
+          "const": 1
+        }
+      },
+      "required": [
+        "chainId",
+        "contract",
+        "daoId",
+        "interfaceVersion"
+      ],
+      "additionalProperties": false
+    },
+    "generation": {
+      "type": "string",
+      "maxLength": 20
+    },
+    "funding": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "free",
+            "pending",
+            "active",
+            "grace",
+            "overdue",
+            "review"
+          ]
+        },
+        "pricing": {
+          "type": "object",
+          "properties": {
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "revision": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "freeBytes": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "unitBytes": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "monthlyUnitUsdCents": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 99999999
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "revision",
+            "freeBytes",
+            "unitBytes",
+            "monthlyUnitUsdCents"
+          ],
+          "additionalProperties": false
+        },
+        "units": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 999999
+        },
+        "paidThrough": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:Z))$"
+                },
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "graceEndsAt": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:Z))$"
+                },
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "uploadCapacityBytes": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "retainedCapacityBytes": {
+          "type": "string",
+          "maxLength": 20
+        }
+      },
+      "required": [
+        "state",
+        "pricing",
+        "units",
+        "paidThrough",
+        "graceEndsAt",
+        "uploadCapacityBytes",
+        "retainedCapacityBytes"
+      ],
+      "additionalProperties": false
+    },
+    "cleanup": {
+      "type": "string",
+      "enum": [
+        "disabled",
+        "qualified"
+      ]
+    },
+    "objects": {
+      "maxItems": 10000,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "bytes": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "cid": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "kinds": {
+            "minItems": 1,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "document-version",
+                "branding",
+                "media",
+                "archive"
+              ]
+            }
+          },
+          "selected": {
+            "type": "boolean"
+          },
+          "retained": {
+            "type": "boolean"
+          },
+          "releasedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "bytes",
+          "createdAt",
+          "cid",
+          "kinds",
+          "selected",
+          "retained",
+          "releasedAt"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "dao",
+    "generation",
+    "funding",
+    "cleanup",
+    "objects"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/storage/retain
+
+Guide: retention.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "dao": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "contract": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "daoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "interfaceVersion": {
+          "type": "number",
+          "const": 1
+        }
+      },
+      "required": [
+        "chainId",
+        "contract",
+        "daoId",
+        "interfaceVersion"
+      ],
+      "additionalProperties": false
+    },
+    "generation": {
+      "type": "string",
+      "maxLength": 20
+    },
+    "keep": {
+      "maxItems": 10000,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      }
+    }
+  },
+  "required": [
+    "dao",
+    "generation",
+    "keep"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "dao": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "contract": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "daoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "interfaceVersion": {
+          "type": "number",
+          "const": 1
+        }
+      },
+      "required": [
+        "chainId",
+        "contract",
+        "daoId",
+        "interfaceVersion"
+      ],
+      "additionalProperties": false
+    },
+    "generation": {
+      "type": "string",
+      "maxLength": 20
+    },
+    "funding": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "free",
+            "pending",
+            "active",
+            "grace",
+            "overdue",
+            "review"
+          ]
+        },
+        "pricing": {
+          "type": "object",
+          "properties": {
+            "schemaVersion": {
+              "type": "number",
+              "const": 1
+            },
+            "revision": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "freeBytes": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "unitBytes": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "monthlyUnitUsdCents": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 99999999
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "revision",
+            "freeBytes",
+            "unitBytes",
+            "monthlyUnitUsdCents"
+          ],
+          "additionalProperties": false
+        },
+        "units": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 999999
+        },
+        "paidThrough": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:Z))$"
+                },
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "graceEndsAt": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:Z))$"
+                },
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "uploadCapacityBytes": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "retainedCapacityBytes": {
+          "type": "string",
+          "maxLength": 20
+        }
+      },
+      "required": [
+        "state",
+        "pricing",
+        "units",
+        "paidThrough",
+        "graceEndsAt",
+        "uploadCapacityBytes",
+        "retainedCapacityBytes"
+      ],
+      "additionalProperties": false
+    },
+    "cleanup": {
+      "type": "string",
+      "enum": [
+        "disabled",
+        "qualified"
+      ]
+    },
+    "objects": {
+      "maxItems": 10000,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "bytes": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "cid": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "kinds": {
+            "minItems": 1,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "document-version",
+                "branding",
+                "media",
+                "archive"
+              ]
+            }
+          },
+          "selected": {
+            "type": "boolean"
+          },
+          "retained": {
+            "type": "boolean"
+          },
+          "releasedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "bytes",
+          "createdAt",
+          "cid",
+          "kinds",
+          "selected",
+          "retained",
+          "releasedAt"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "dao",
+    "generation",
+    "funding",
+    "cleanup",
+    "objects"
+  ],
+  "additionalProperties": false
+}
+```
 
 ## POST /v1/resources/ram/card/quote
 

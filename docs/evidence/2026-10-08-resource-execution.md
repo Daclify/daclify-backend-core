@@ -15,24 +15,24 @@ Plan: [RAM, prepaid storage and archives](../superpowers/plans/2026-10-08-resour
 
 ## Task status
 
-| Task                                 | State       | Evidence / boundary                                                                                                                 |
-| ------------------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| 1 Policy definitions                 | Complete    | Checked integer fees, approved storage units and pricing snapshot hashes; unchanged membership pricing                              |
-| 2 Native write inventory/calibration | In progress | Enforcement unavailable until payer reconciliation is demonstrated                                                                  |
-| 3 Backed allowances/metering         | In progress | Opt-in counters implemented; no funded allocation or enforcement                                                                    |
-| 4 Existing-state migration           | In progress | Observer code rebind preserves rows/counters; legacy backfill pending                                                               |
-| 5 Atomic TLOS RAM purchases          | Implemented | Atomic actual quota acquisition, typed quotes/API/wallet UI and bounded same-transaction intent; public-chain qualification pending |
-| 6 Card RAM provisioning              | Implemented | Segregated native reserve, immutable consent/provider proofs, leased retry/UI; live sandbox qualification pending                   |
-| 7 Hosted-object ledger               | In progress | Verified unique-CID accounting and legacy ownership checks; cleanup/lifecycle integrations pending                                  |
-| 8 Monthly storage                    | In progress | Immutable agreements, verified invoice projection, jobs/API/Resources UI; live provider and retention gates pending                 |
-| 9 Grace/retention                    | Pending     | No destructive cleanup enabled                                                                                                      |
-| 10 Archive format/package            | In progress | Bounded formats, installed migration, terminal markers and ordinary-poll planner; host service pending                              |
-| 11 Export/verification/approval      | Pending     | Live records remain until verification                                                                                              |
-| 12 Source pruning/references         | Pending     | Financial/key state excluded                                                                                                        |
-| 13 History/recovery                  | Pending     | Empty-database and original-key restore drill                                                                                       |
-| 14 Resources/Archive UI              | In progress | Storage counters and platform policy controls; funded purchase/Archive journeys pending                                             |
-| 15 Documentation                     | Pending     | Qualified feature descriptions only                                                                                                 |
-| 16 Release/qualification             | Pending     | Native/provider/browser results recorded separately                                                                                 |
+| Task                                 | State       | Evidence / boundary                                                                                                                   |
+| ------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 Policy definitions                 | Complete    | Checked integer fees, approved storage units and pricing snapshot hashes; unchanged membership pricing                                |
+| 2 Native write inventory/calibration | In progress | Enforcement unavailable until payer reconciliation is demonstrated                                                                    |
+| 3 Backed allowances/metering         | In progress | Opt-in counters implemented; no funded allocation or enforcement                                                                      |
+| 4 Existing-state migration           | In progress | Observer code rebind preserves rows/counters; legacy backfill pending                                                                 |
+| 5 Atomic TLOS RAM purchases          | Implemented | Atomic actual quota acquisition, typed quotes/API/wallet UI and bounded same-transaction intent; public-chain qualification pending   |
+| 6 Card RAM provisioning              | Implemented | Segregated native reserve, immutable consent/provider proofs, leased retry/UI; live sandbox qualification pending                     |
+| 7 Hosted-object ledger               | In progress | Verified unique-CID accounting and legacy ownership checks; cleanup/lifecycle integrations pending                                    |
+| 8 Monthly storage                    | In progress | Immutable agreements, verified invoice projection, jobs/API/Resources UI; live provider and retention gates pending                   |
+| 9 Grace/retention                    | In progress | Curation, fenced staging/removal/compensation and local race tests; startup disabled, live/operator gates pending                     |
+| 10 Archive format/package            | In progress | Bounded codec/manifest/proofs, packaged namespaced migrations and retained trusted prior schema snapshots                             |
+| 11 Export/verification/approval      | In progress | Resumable export, encrypted backup, exact native attestation/approval/revocation; cleanup reserve qualification pending               |
+| 12 Source pruning/references         | In progress | Native ordinary-poll proof deletion and monotonic vote IDs; document references/backfill/pruning remain disabled                      |
+| 13 History/recovery                  | In progress | Anchor discovery/verified vote browsing without SQL; merged live/private-document/full restore drill pending                          |
+| 14 Resources/Archive UI              | In progress | Native/card purchases, storage consent/curation, Archive backup/approval/batches/history; remaining full restoration journeys pending |
+| 15 Documentation                     | In progress | Producer references/help and operations/evidence updated; final full release runbooks pending                                         |
+| 16 Release/qualification             | Pending     | Native/provider/browser results recorded separately                                                                                   |
 
 This is a progress ledger, not a release certification. Live Stripe, Pinata and Telos testnet qualification has not been performed for these features.
 
@@ -267,3 +267,14 @@ Backed pools, migrated-state overlays, bounded completion reserves, RAM quote/ca
 
 - Final native authorization checks passed **5 files / 15 tests**, modules **19 files / 115 tests**, frontend **28 files / 117 tests**, and **6 desktop/mobile browser cases**. Native tests prove actual permission separation, transaction IDs and RAM conservation; browser/provider fixtures are not live-provider evidence.
 - A new regression first failed because availability attestation accepted backup-only recovery during a primary outage. Attestation now freshly verifies both primary assets and the independently encrypted backup; download recovery still permits the saved backup. The corrected focused integration suite passed **32 tests**.
+
+## Source pruning, on-chain history and retention checkpoint
+
+- Source-owned Decide pruning validates the actual packed vote proof, immutable anchor/domain, current code/observer/admin/verifier, terminal retention and exact progress. The runtime accepts progress only from the native source sender. Ballots/tallies remain; a permanent vote allocator prevents high-ID reuse. Corrupt later proofs roll back earlier erasures in a batch. Global pruning is disabled in ordinary fixtures.
+- Real owned-native production-WASM pruning passed **1 test**, with fixture-only terminal aging explicitly labelled. The observed release was **401 native RAM bytes = 289 vote/index + 112 empty-table header**, consistent with metering. Replay released zero. Max-batch native CPU qualification remains open.
+- Retained trusted prior source schemas permit original vote decoding after a source build update. On-chain anchor discovery and verified vote browsing/recovery need no SQL export-index capability; public/provider retrieval remains a trust/availability boundary. Live/archive merged browsing and full private document recovery remain open.
+- Additive core migrations **027–028** implement whole-object priorities, released-reference accounting, generation-fenced removal audit and bounded worker staging. Applied SQL bytes remain immutable. Guarded cleanup handles shared references, concurrent workers, corrupt staging, payment during unpin, failed compensation and retry. Production startup does not enable it.
+- Fresh core full unit checks passed **80 files / 474 tests**; full PostgreSQL checks passed **24 files / 174 tests**, then the corrected focused retention/content suite passed **35 tests**. Fresh frontend typecheck/lint/build/unit checks passed **28 files / 117 tests**.
+- **8 desktop/mobile browser cases passed** for exact storage consent, archive export/backup/approval/revocation/recovery browsing/download, card RAM consent, whole-file selection/capacity/reload, Axe and no horizontal overflow. HTTP provider/authority fixtures are not live provider proof.
+- The owned browser runtime and all five module contracts were explicitly upgraded after code-hash mismatches correctly prevented registration. Its separate browser database applied core 28 / Archive 4. No public contracts, user services, live provider objects, real funds or main checkouts were changed.
+- Unfinished plan gates: physically backed all-payer allocations/completion reserves and quota enforcement; safe legacy backfill/overlays and old-work draining; full branding/media/orphan publication and gateway qualification; reminder/operator readiness and live guarded-unpin qualification; document reference/backfill/pruning/restore; merged history/private recovery; 0.8 release/upgrade/40,000-member/provider packet. Do not describe the whole plan as complete.

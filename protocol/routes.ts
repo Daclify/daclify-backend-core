@@ -38,7 +38,9 @@ import {
   CardRamApprovalSchema,
   CardRamOrderSchema,
 } from './resources.js';
+import { StorageCurationRoutes } from './storage-retention.js';
 export const ApiRoutes = {
+  ...StorageCurationRoutes,
   ramCardQuote: {
     method: 'POST',
     path: '/v1/resources/ram/card/quote',

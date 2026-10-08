@@ -21,6 +21,7 @@ import type { ContentProvider, PinnedFile } from './provider.js';
 import { ApiError } from '../errors.js';
 import { fundedStorage } from './capacity.js';
 import { HostedAssets } from './assets.js';
+import { StorageRetention } from './retention.js';
 import { ArchiveExports } from '../archive/exports.js';
 import type { EncryptedArchiveBackup } from '../archive/backup.js';
 import { validateBrandImage } from './branding.js';
@@ -47,6 +48,7 @@ const RowSchema = z.object({
   provider_scope: z.string().nullable(),
   import_profile: z.string().nullable(),
   storage_object_id: z.uuid().nullable(),
+  storage_released_at: z.date().nullable(),
 });
 type UploadRow = z.infer<typeof RowSchema>;
 function hash(bytes: Uint8Array | string): string {
@@ -55,6 +57,7 @@ function hash(bytes: Uint8Array | string): string {
 export class ContentService {
   readonly assets: HostedAssets;
   readonly archive: ArchiveExports;
+  readonly retention: StorageRetention;
   constructor(
     private readonly pool: Pool,
     private readonly chain: ChainGateway,
@@ -65,6 +68,16 @@ export class ContentService {
     backup?: EncryptedArchiveBackup,
   ) {
     ProviderScopeSchema.parse(providerScope);
+    this.retention = new StorageRetention(
+      pool,
+      chain,
+      provider,
+      allowance,
+      providerScope,
+      async () => {
+        throw new ApiError('STORAGE_PAYMENT_RECONCILIATION_REQUIRED', 503);
+      },
+    );
     if (allowance < 0n || allowance > (1n << 63n) - 1n) throw new Error('CONTENT_ALLOWANCE');
     this.assets = new HostedAssets(pool, chain, provider, allowance, providerScope);
     this.archive = new ArchiveExports(
@@ -110,8 +123,8 @@ export class ContentService {
       const total = await storageUsed(client, key);
       const measured = await client.query<{ bytes: string; objects: number; references: number }>(
         `SELECT COALESCE(sum(o.verified_bytes),0)::text AS bytes,count(o.id)::integer AS objects,
-          (SELECT count(*)::integer FROM hosted_references WHERE dao_key=$1) AS references
-         FROM hosted_objects o WHERE o.id IN (SELECT object_id FROM hosted_references WHERE dao_key=$1)`,
+          (SELECT count(*)::integer FROM hosted_references WHERE dao_key=$1 AND released_at IS NULL) AS references
+         FROM hosted_objects o WHERE o.id IN (SELECT object_id FROM hosted_references WHERE dao_key=$1 AND released_at IS NULL)`,
         [key],
       );
       const verified = BigInt(Uint64Schema.parse(measured.rows[0]?.bytes));
@@ -143,6 +156,7 @@ export class ContentService {
     return { content: Buffer.from(bytes).toString('base64'), mediaType: reference.mediaType };
   }
   #receipt(row: UploadRow): HostedDocument {
+    if (row.storage_released_at) throw new ApiError('CONTENT_HOSTING_ENDED', 410);
     if (!row.cid) throw new ApiError('UPLOAD_PENDING', 409);
     return HostedDocumentSchema.parse({ ...row.intent, cid: row.cid });
   }

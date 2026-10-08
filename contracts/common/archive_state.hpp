@@ -26,4 +26,21 @@ struct [[eosio::table("archpos"),eosio::contract("runtime")]] archive_position {
   EOSLIB_SERIALIZE(archive_position,(id)(dao_id)(archive_id)(chunk_ordinal)(pruned))
 };
 using archive_positions=ram_table<"archpos"_n,archive_position>;
+struct archive_prune_proof {
+  uint64_t primary_key;std::vector<eosio::checksum256> siblings;
+  EOSLIB_SERIALIZE(archive_prune_proof,(primary_key)(siblings))
+};
+inline archive_anchor approved_archive(eosio::name runtime,uint64_t dao_id,uint64_t id,eosio::name source){
+  const auto policy=archive_settings(runtime,runtime.value).get();eosio::check(policy.pruning_enabled,"ARCHIVE_PRUNING_DISABLED");
+  const auto anchor=archive_anchors(runtime,dao_id).get(id,"ARCHIVE_ANCHOR_UNKNOWN");
+  eosio::check(anchor.dao_id==dao_id&&anchor.manifest.runtime==runtime&&anchor.manifest.dao_id==dao_id&&anchor.manifest.source==source,"ARCHIVE_DOMAIN");
+  eosio::check(anchor.approved_by&&!anchor.revoked,"ARCHIVE_APPROVAL");
+  members people(runtime,dao_id);const auto& approver=people.get(anchor.approved_by,"ARCHIVE_APPROVER_UNKNOWN");eosio::check(approver.active&&approver.admin,"ARCHIVE_APPROVAL");
+  eosio::check(anchor.verifier==policy.verifier,"ARCHIVE_VERIFIER_CHANGED");const uint32_t now=eosio::current_time_point().sec_since_epoch();
+  eosio::check(anchor.attested_at<=now&&uint64_t(now)-anchor.attested_at<=archive_availability_lifetime,"ARCHIVE_AVAILABILITY_EXPIRED");
+  eosio::check(anchor.manifest.code_hash==get_code_hash(source),"ARCHIVE_SOURCE_CODE");
+  ram_observer_settings observer(runtime,runtime.value);eosio::check(observer.exists()&&observer.get().runtime_hash==get_code_hash(runtime),"RAM_OBSERVER_REQUIRED");
+  ram_sources sources(runtime,runtime.value);eosio::check(sources.get(source.value,"RAM_SOURCE_UNKNOWN").code_hash==anchor.manifest.code_hash,"RAM_SOURCE_CODE");
+  return anchor;
+}
 }

@@ -26,6 +26,7 @@ import {
   Signature,
   PublicKey,
   Name,
+  UInt64,
 } from '@wharfkit/antelope';
 import {
   Catalog,
@@ -56,6 +57,9 @@ import { AccountResourceSchema, resourcesAcceptable } from './deployment-check.j
 import { randomBytes } from 'node:crypto';
 import {
   ArchiveRoutes,
+  ArchiveProgressSchema,
+  ArchivePruneBatchSchema,
+  type ArchivePruneBatch,
   OrdinaryPollArchiveInputSchema,
   archiveSourceSchema,
   planOrdinaryPollArchive,
@@ -556,6 +560,138 @@ export class NativeChainGateway implements ChainGateway {
       this.config.relayActor,
       this.config.relayKey,
     );
+  }
+  async archiveHistory(value: z.infer<typeof ArchiveRoutes.history.input>) {
+    const input = ArchiveRoutes.history.input.parse(value),
+      dao = input.dao;
+    if (
+      dao.chainId !== this.config.chainId ||
+      dao.contract !== this.config.runtime ||
+      dao.interfaceVersion !== 1
+    )
+      throw new ApiError('DAO_REFERENCE');
+    await this.reviewedRuntime(dao.contract);
+    const read = async () => {
+      const page = await this.api.v1.chain.get_table_rows({
+        code: dao.contract,
+        scope: dao.daoId,
+        table: 'archives',
+        json: true,
+        lower_bound: UInt64.from(input.cursor ?? '0'),
+        limit: 20,
+      });
+      const anchors = z.array(RuntimeTableSchemas.archives).max(20).parse(page.rows);
+      if (
+        anchors.some(
+          (a) =>
+            a.dao_id !== dao.daoId ||
+            a.manifest.runtime !== dao.contract ||
+            a.manifest.chain_id !== dao.chainId,
+        )
+      )
+        throw new ApiError('ARCHIVE_ANCHOR_INVALID', 503);
+      return ArchiveRoutes.history.response.parse({
+        dao,
+        anchors,
+        next: page.more ? page.next_key : null,
+      });
+    };
+    const first = await read(),
+      info = await this.api.v1.chain.get_info();
+    if (info.chain_id.toString() !== dao.chainId) throw new ApiError('DAO_REFERENCE');
+    await this.confirmBlock(Number(info.head_block_num));
+    const current = await read();
+    await this.reviewedRuntime(dao.contract);
+    if (JSON.stringify(first) !== JSON.stringify(current))
+      throw new ApiError('ARCHIVE_ANCHOR_PENDING', 503);
+    return current;
+  }
+  async archiveProgress(dao: DaoRef, commitment: string) {
+    const anchor = await this.archiveAnchor(dao, commitment);
+    if (!anchor) throw new ApiError('ARCHIVE_ANCHOR_INVALID', 503);
+    const read = async () => {
+      const settings = await this.api.v1.chain.get_table_rows({
+        code: dao.contract,
+        scope: dao.contract,
+        table: 'archcfg',
+        json: true,
+        limit: 2,
+      });
+      const cfg = z.array(RuntimeTableSchemas.archcfg).max(1).parse(settings.rows)[0];
+      if (settings.more || !cfg) throw new ApiError('ARCHIVE_PRUNING_DISABLED', 503);
+      const page = await this.api.v1.chain.get_table_rows({
+        code: dao.contract,
+        scope: dao.daoId,
+        table: 'archpos',
+        json: true,
+        lower_bound: UInt64.from((BigInt(anchor.id) * 32n).toString()),
+        upper_bound: UInt64.from((BigInt(anchor.id) * 32n + 31n).toString()),
+        limit: 33,
+      });
+      const positions = z.array(RuntimeTableSchemas.archpos).max(32).parse(page.rows);
+      if (
+        page.more ||
+        positions.length !== anchor.manifest.families[0]?.chunks.length ||
+        positions.some(
+          (r, i) =>
+            r.dao_id !== dao.daoId ||
+            r.archive_id !== anchor.id ||
+            r.chunk_ordinal !== i ||
+            BigInt(r.id) !== BigInt(anchor.id) * 32n + BigInt(i),
+        )
+      )
+        throw new ApiError('ARCHIVE_PROGRESS_INVALID', 503);
+      return ArchiveProgressSchema.parse({ anchor, positions, enabled: cfg.pruning_enabled });
+    };
+    const first = await read();
+    const info = await this.api.v1.chain.get_info();
+    await this.confirmBlock(Number(info.head_block_num));
+    const current = await read();
+    if (JSON.stringify(first) !== JSON.stringify(current))
+      throw new ApiError('ARCHIVE_ANCHOR_PENDING', 503);
+    return current;
+  }
+  async pruneArchive(dao: DaoRef, commitment: string, value: ArchivePruneBatch) {
+    const input = ArchivePruneBatchSchema.parse(value),
+      before = await this.archiveProgress(dao, commitment);
+    if (
+      !before.enabled ||
+      before.anchor.revoked ||
+      !before.anchor.approved_by ||
+      before.anchor.approved_by === '0'
+    )
+      throw new ApiError('ARCHIVE_PRUNING_DISABLED', 409);
+    if (
+      input.runtime !== dao.contract ||
+      input.dao_id !== dao.daoId ||
+      input.archive_id !== before.anchor.id
+    )
+      throw new ApiError('DAO_REFERENCE');
+    const progress = before.positions[input.chunk_ordinal];
+    if (!progress) throw new ApiError('ARCHIVE_PROGRESS_INVALID', 503);
+    const end = input.start + input.proofs.length;
+    if (progress.pruned >= end) return;
+    if (input.start !== progress.pruned) throw new ApiError('ARCHIVE_PROGRESS_CHANGED', 409);
+    const account = before.anchor.manifest.source;
+    const source = this.config.modules?.find((m) => m.id === 'decide' && m.account === account);
+    if (!source || ModuleCodeHashes.decide !== before.anchor.manifest.code_hash)
+      throw new ApiError('MODULE_UNVERIFIED', 409);
+    try {
+      await this.pushEncoded(
+        account,
+        'prunevotes',
+        encodeDecide('prunevotes', input),
+        this.config.relayActor,
+        this.config.relayKey,
+      );
+    } catch (cause) {
+      const current = await this.archiveProgress(dao, commitment);
+      if ((current.positions[input.chunk_ordinal]?.pruned ?? 0) >= end) return;
+      throw cause;
+    }
+    const after = await this.archiveProgress(dao, commitment);
+    if ((after.positions[input.chunk_ordinal]?.pruned ?? 0) < end)
+      throw new ApiError('ARCHIVE_PRUNE_PENDING', 503);
   }
   async archiveAnchor(dao: DaoRef, manifestCommitment: string) {
     ChainIdSchema.parse(manifestCommitment);
