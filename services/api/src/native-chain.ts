@@ -63,6 +63,7 @@ import type { DaoRef } from '../../../protocol/base.js';
 import { RuntimeCodeHash, RuntimeRawAbiHash } from '../../../sdk/generated/releases.js';
 import { parseModuleDeployments } from './deployment-config.js';
 import { z } from 'zod';
+import { executedChainResult } from './chain-result.js';
 import {
   DaoSummarySchema,
   NetworkSchema,
@@ -994,14 +995,12 @@ export class NativeChainGateway implements ChainGateway {
       signatures: [key.signDigest(transaction.signingDigest(info.chain_id))],
     });
     try {
-      const result = await this.api.v1.chain.push_transaction(signed);
-      await this.confirmBlock(result.processed.block_num);
-      return {
-        transactionId: z
-          .string()
-          .regex(/^[0-9a-f]{64}$/)
-          .parse(result.transaction_id),
-      };
+      const result = executedChainResult(
+        await this.api.v1.chain.push_transaction(signed),
+        transaction.id.toString(),
+      );
+      await this.confirmBlock(result.blockNum);
+      return { transactionId: result.transactionId };
     } catch (cause) {
       throw contractError(cause);
     }
@@ -1269,7 +1268,7 @@ export class NativeChainGateway implements ChainGateway {
           ],
         }),
       );
-      await this.confirmBlock(result.processed.block_num);
+      await this.confirmBlock(executedChainResult(result, transaction.id.toString()).blockNum);
     } catch (cause) {
       throw contractError(cause);
     }

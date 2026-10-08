@@ -12,6 +12,7 @@ import {
 } from '@wharfkit/antelope';
 import { IdSchema } from '../../protocol/base.js';
 import { fixtureKey } from './keys.js';
+import { executedChainResult } from '../../services/api/src/chain-result.js';
 const daoId = IdSchema.parse(process.argv[2]);
 if (process.argv.length !== 3) throw new Error('Expected one local fixture DAO ID');
 const network = z
@@ -40,10 +41,11 @@ const transaction = Transaction.from({
     }),
   ],
 });
-await api.v1.chain.push_transaction(
+const result = await api.v1.chain.push_transaction(
   SignedTransaction.from({
     ...transaction,
     signatures: [fixtureKey('alice').signDigest(transaction.signingDigest(info.chain_id))],
   }),
 );
+executedChainResult(result, transaction.id.toString());
 console.log('Funded a DAO with synthetic tokens on the disposable local chain.');

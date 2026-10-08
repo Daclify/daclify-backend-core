@@ -9,6 +9,7 @@ import { encodeAction } from '../../sdk/index.js';
 import { fixtureKey } from './keys.js';
 import { unlockFixtureWallet } from './wallet.js';
 import { configureFixtureContext } from './permissions.js';
+import { executedChainResult } from '../../services/api/src/chain-result.js';
 const input = z
   .strictObject({
     daoId: IdSchema,
@@ -47,12 +48,13 @@ const transaction = Transaction.from({
     }),
   ],
 });
-await api.v1.chain.push_transaction(
+const result = await api.v1.chain.push_transaction(
   SignedTransaction.from({
     ...transaction,
     signatures: [fixtureKey('alice').signDigest(transaction.signingDigest(info.chain_id))],
   }),
 );
+executedChainResult(result, transaction.id.toString());
 unlockFixtureWallet(network.container);
 configureFixtureContext(network.container);
 console.log(

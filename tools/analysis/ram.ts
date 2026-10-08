@@ -24,6 +24,7 @@ import {
 import { ModuleCodeHashes } from '@daclify/modules/sdk';
 import { ModulePermissions } from '@daclify/modules';
 import { fixtureKey } from '../native/keys.js';
+import { executedChainResult } from '../../services/api/src/chain-result.js';
 
 const network = z
   .object({
@@ -61,12 +62,13 @@ async function push(actions: Action[], actor = 'alice') {
   const info = await api.v1.chain.get_info();
   assert.equal(info.chain_id.toString(), network.chainId);
   const tx = Transaction.from({ ...info.getTransactionHeader(300), actions });
-  await api.v1.chain.push_transaction(
+  const result = await api.v1.chain.push_transaction(
     SignedTransaction.from({
       ...tx,
       signatures: [fixtureKey(actor).signDigest(tx.signingDigest(network.chainId))],
     }),
   );
+  executedChainResult(result, tx.id.toString());
 }
 async function batches(actions: Action[], actor = 'alice') {
   for (let i = 0; i < actions.length; i += 25) await push(actions.slice(i, i + 25), actor);

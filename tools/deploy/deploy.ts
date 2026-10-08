@@ -17,6 +17,7 @@ import { contextPermissionPlan } from './permissions.js';
 import { planDeployment, type AccountView } from './plan.js';
 import { deploymentSend } from './send.js';
 import { waitForIrreversibleBlock } from '../../services/api/src/chain-confirmation.js';
+import { executedChainResult } from '../../services/api/src/chain-result.js';
 
 const usage = `Usage: npm run deploy -- <develop|production|testnet> [--set-contract] [--commit|--confirm]
 
@@ -316,12 +317,13 @@ async function pushActions(
       signatures: [key.signDigest(transaction.signingDigest(info.chain_id))],
     }),
   );
+  const executed = executedChainResult(result, transaction.id.toString());
   console.log(
-    `Accepted ${result.transaction_id}; waiting for block ${result.processed.block_num} to be irreversible.`,
+    `Accepted ${executed.transactionId}; waiting for block ${executed.blockNum} to be irreversible.`,
   );
   await waitForIrreversibleBlock(
     async () => Number((await api.v1.chain.get_info()).last_irreversible_block_num),
-    result.processed.block_num,
+    executed.blockNum,
   );
-  return z.string().parse(String(result.transaction_id));
+  return executed.transactionId;
 }
