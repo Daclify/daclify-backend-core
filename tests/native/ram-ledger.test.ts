@@ -1,3 +1,5 @@
+import { Pool } from 'pg';
+import { NativeChainGateway } from '../../services/api/src/native-chain.js';
 import { beforeAll, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, copyFileSync, mkdirSync } from 'node:fs';
@@ -568,3 +570,136 @@ it('reconciles core and all five module payers against actual native RAM', async
   expect(await terminal()).toEqual(completed);
   await check();
 }, 120000);
+
+it('backs included DAO grants against actual payer quota, protects platform headroom and never duplicates a grant', async () => {
+  for (let i = 0; i < 10; i++)
+    await act(runtime, 'putjson', {
+      runtime,
+      dao_id: '1',
+      member_id: '1',
+      document_id: String(100 + i),
+      version: 1,
+      value: JSON.stringify({ text: 'x'.repeat(4000) }),
+      envelope_version: 0,
+      key_epoch: '0',
+    });
+  const account = await api.v1.chain.get_account(runtime),
+    quota = BigInt(account.ram_quota.toString()),
+    base = BigInt(await used()) - (await accounted());
+  await push(
+    'setrampool',
+    {
+      payer: runtime,
+      expected_quota: quota.toString(),
+      baseline_bytes: base.toString(),
+      platform_headroom: '131072',
+    },
+    runtime,
+  );
+  await push(
+    'setrampool',
+    {
+      payer: runtime,
+      expected_quota: quota.toString(),
+      baseline_bytes: (quota - (await accounted()) - 32768n).toString(),
+      platform_headroom: '32768',
+    },
+    runtime,
+  );
+  const beforeTightGrant = await used();
+  await expect(
+    push(
+      'grantdaoram',
+      {
+        dao_id: '1',
+        payer: runtime,
+        reference: '99',
+        activity: '0',
+        identity: '0',
+        completion: '32768',
+      },
+      runtime,
+    ),
+  ).rejects.toThrow('RAM_POOL_EXHAUSTED');
+  expect(await used()).toBe(beforeTightGrant);
+  await push(
+    'setrampool',
+    {
+      payer: runtime,
+      expected_quota: quota.toString(),
+      baseline_bytes: base.toString(),
+      platform_headroom: '131072',
+    },
+    runtime,
+  );
+  const input = {
+    dao_id: '1',
+    payer: runtime,
+    reference: '1',
+    activity: '262144',
+    identity: '20480',
+    completion: '32768',
+  };
+  await push('grantdaoram', input, runtime);
+  const read = async () =>
+    z
+      .object({
+        rows: z.array(
+          z.object({ payer: z.string(), activity: count, identity: count, completion: count }),
+        ),
+      })
+      .parse(
+        await rpc('get_table_rows', {
+          json: true,
+          code: runtime,
+          scope: '1',
+          table: 'ramlimits',
+          limit: 2,
+        }),
+      );
+  const saved = await read();
+  expect(saved.rows).toEqual([
+    { payer: runtime, activity: 262144n, identity: 20480n, completion: 32768n },
+  ]);
+  await push('grantdaoram', input, runtime);
+  expect(await read()).toEqual(saved);
+  await expect(push('grantdaoram', { ...input, activity: '262145' }, runtime)).rejects.toThrow(
+    'RAM_GRANT_IMMUTABLE',
+  );
+  await expect(
+    push('grantdaoram', { ...input, reference: '2', activity: quota.toString() }, runtime),
+  ).rejects.toThrow('RAM_POOL_EXHAUSTED');
+  await expect(push('grantdaoram', { ...input, payer: 'decide' }, runtime)).rejects.toThrow(
+    'RAM_POOL_UNKNOWN',
+  );
+  expect(await read()).toEqual(saved);
+  expect(BigInt(await used()) - BigInt(baseline)).toBe(await accounted());
+});
+
+it('reads irreversible live vote history without SQL and rejects another DAO ballot', async () => {
+  const pool = new Pool({ connectionString: 'postgres://unused:unused@127.0.0.1:1/unused' });
+  const gateway = new NativeChainGateway(
+      {
+        rpcUrl: network.url,
+        chainId: network.chainId,
+        runtime,
+        hub: null,
+        environment: 'local',
+        relayActor: 'alice',
+        relayKey: key,
+        modules: [{ id: 'decide', account: 'decide' }],
+      },
+      pool,
+    ),
+    dao = { chainId: network.chainId, contract: runtime, daoId: '1', interfaceVersion: 1 as const };
+  try {
+    const rows = await gateway.archiveLiveVotes({ dao, parentId: '1' });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ ballot: '1', member: '1', choice: 0 });
+    await expect(
+      gateway.archiveLiveVotes({ dao: { ...dao, daoId: '2' }, parentId: '1' }),
+    ).rejects.toThrow('BALLOT_UNKNOWN');
+  } finally {
+    await pool.end();
+  }
+});

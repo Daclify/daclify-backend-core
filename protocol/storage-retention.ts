@@ -1,7 +1,11 @@
 import { z } from 'zod';
 import { DaoRefSchema, Uint64Schema } from './base.js';
 import { CidSchema } from './base.js';
-import { HostedReferenceKindSchema, StorageFundingSchema } from './storage.js';
+import {
+  HostedReferenceKindSchema,
+  StorageFundingSchema,
+  StorageCleanupSchema,
+} from './storage.js';
 const StoredObjectSchema = z.strictObject({
   id: z.uuid(),
   bytes: Uint64Schema.refine((v) => BigInt(v) > 0n),
@@ -51,7 +55,7 @@ export const StorageCurationStatusSchema = z.strictObject({
   dao: DaoRefSchema,
   generation: Uint64Schema,
   funding: StorageFundingSchema,
-  cleanup: z.enum(['disabled', 'qualified']),
+  cleanup: StorageCleanupSchema,
   objects: z
     .array(
       StoredObjectSchema.extend({

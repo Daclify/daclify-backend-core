@@ -1,5 +1,6 @@
 import type { Pool } from 'pg';
 import type { Account } from '../../../../protocol/api.js';
+import type { DaoRef } from '../../../../protocol/base.js';
 import { z } from 'zod';
 import { createHash, randomUUID } from 'node:crypto';
 import {
@@ -11,6 +12,8 @@ import {
   HostedStorageUsageSchema,
   MAX_HOSTED_CONTENT_BYTES,
   FileMetadataSchema,
+  BrandingUploadSchema,
+  BrandingReceiptSchema,
   type HostedUpload,
   type HostedDocument,
 } from '../../../../protocol/storage.js';
@@ -24,7 +27,8 @@ import { HostedAssets } from './assets.js';
 import { StorageRetention } from './retention.js';
 import { ArchiveExports } from '../archive/exports.js';
 import type { EncryptedArchiveBackup } from '../archive/backup.js';
-import { validateBrandImage } from './branding.js';
+import { validateBrandImage, validateBrandImagePayload } from './branding.js';
+import { recoverStorageReferences } from './recovery.js';
 import {
   CONTENT_IMPORT_PROFILE,
   ProviderScopeSchema,
@@ -66,6 +70,7 @@ export class ContentService {
     readonly providerName: z.infer<typeof StorageStatusSchema>['provider'] = 'pinata',
     readonly providerScope: string = providerName,
     backup?: EncryptedArchiveBackup,
+    retention?: { enabled: boolean; reconcilePayment: (dao: DaoRef) => Promise<void> },
   ) {
     ProviderScopeSchema.parse(providerScope);
     this.retention = new StorageRetention(
@@ -74,9 +79,11 @@ export class ContentService {
       provider,
       allowance,
       providerScope,
-      async () => {
-        throw new ApiError('STORAGE_PAYMENT_RECONCILIATION_REQUIRED', 503);
-      },
+      retention?.reconcilePayment ??
+        (async () => {
+          throw new ApiError('STORAGE_PAYMENT_RECONCILIATION_REQUIRED', 503);
+        }),
+      retention?.enabled ?? false,
     );
     if (allowance < 0n || allowance > (1n << 63n) - 1n) throw new Error('CONTENT_ALLOWANCE');
     this.assets = new HostedAssets(pool, chain, provider, allowance, providerScope);
@@ -136,7 +143,7 @@ export class ContentService {
         totalBytes: total.toString(),
         objects: measured.rows[0]?.objects,
         references: measured.rows[0]?.references,
-        cleanup: 'disabled',
+        cleanup: this.retention.cleanupEnabled ? 'qualified' : 'disabled',
       });
       await client.query('COMMIT');
       return response;
@@ -154,6 +161,43 @@ export class ContentService {
     const bytes = await this.provider.retrieve(reference.cid, reference.bytes);
     validateBrandImage(reference, bytes);
     return { content: Buffer.from(bytes).toString('base64'), mediaType: reference.mediaType };
+  }
+  async uploadBranding(account: Account, value: unknown) {
+    const input = BrandingUploadSchema.parse(value);
+    validateBrandImagePayload(
+      { bytes: input.bytes, commitment: input.commitment, mediaType: input.mediaType },
+      Buffer.from(input.content, 'base64'),
+    );
+    const receipt = await this.assets.upload(account, {
+      dao: input.dao,
+      requestId: input.requestId,
+      kind: 'branding',
+      referenceKey: `${input.slot}:${input.requestId}`,
+      bytes: input.bytes,
+      commitment: input.commitment,
+      content: input.content,
+    });
+    return BrandingReceiptSchema.parse({
+      dao: receipt.dao,
+      requestId: receipt.requestId,
+      slot: input.slot,
+      image: {
+        cid: receipt.cid,
+        bytes: receipt.bytes,
+        commitment: receipt.commitment,
+        mediaType: input.mediaType,
+      },
+    });
+  }
+  recoverStorage(account: Account, value: unknown) {
+    return recoverStorageReferences(
+      this.pool,
+      this.chain,
+      this.provider,
+      this.providerScope,
+      account,
+      value,
+    );
   }
   #receipt(row: UploadRow): HostedDocument {
     if (row.storage_released_at) throw new ApiError('CONTENT_HOSTING_ENDED', 410);

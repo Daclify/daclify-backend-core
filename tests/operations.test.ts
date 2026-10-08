@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createWindowLimiter } from '../services/api/src/limits.js';
 import {
+  AccountResourceSchema,
   assessDeployment,
   collectDeployment,
   GET_CODE_HASH_FEATURE,
@@ -12,6 +13,43 @@ import { payrollSettlementAccount } from '../services/api/src/native-chain.js';
 const unlimited = { cpuAvailable: -1, netAvailable: -1, ramQuota: -1, ramUsage: 2724 };
 
 describe('sponsored resource limits', () => {
+  it('reads native decimal-string limits exactly and distinguishes exhausted availability from unlimited limits', () => {
+    const raw = {
+      cpu_limit: { available: '201303395336', max: '201303461118' },
+      net_limit: { available: '4712455799574', max: '4712455989596' },
+      ram_quota: 8387700,
+      ram_usage: 6773534,
+    };
+    const row = AccountResourceSchema.parse(raw);
+    expect(
+      resourcesAcceptable({
+        cpuAvailable: row.cpu_limit.available,
+        netAvailable: row.net_limit.available,
+        ramQuota: row.ram_quota,
+        ramUsage: row.ram_usage,
+      }),
+    ).toBe(true);
+    expect(
+      resourcesAcceptable({
+        cpuAvailable: -1,
+        cpuMax: 1000,
+        netAvailable: -1,
+        netMax: -1,
+        ramQuota: -1,
+        ramUsage: 1,
+      }),
+    ).toBe(false);
+    expect(resourcesAcceptable({ ...unlimited, cpuAvailable: -2 })).toBe(false);
+    const huge = AccountResourceSchema.parse({
+      ...raw,
+      cpu_limit: { available: '9223372036854775807' },
+      ram_quota: '9007199254742016',
+      ram_usage: '9007199254740992',
+    });
+    expect(huge.ram_quota - huge.ram_usage).toBe(1024n);
+    for (const invalid of ['1e3', '01', '9223372036854775808', Number.MAX_SAFE_INTEGER + 1])
+      expect(AccountResourceSchema.safeParse({ ...raw, ram_usage: invalid }).success).toBe(false);
+  });
   it('treats a negative chain limit as unlimited and refuses an exhausted account', () => {
     expect(resourcesAcceptable(unlimited)).toBe(true);
     expect(

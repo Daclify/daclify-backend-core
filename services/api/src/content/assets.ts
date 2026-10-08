@@ -131,9 +131,10 @@ export class HostedAssets {
         )
           throw new ApiError('UPLOAD_REQUEST_CONFLICT', 409);
         await client.query('COMMIT');
-        if ((row.state === 'verified' || row.state === 'published') && row.cid)
+        if ((row.state === 'verified' || row.state === 'published') && row.cid) {
           if (row.storage_released_at) throw new ApiError('CONTENT_HOSTING_ENDED', 410);
-        return HostedAssetReceiptSchema.parse({ ...intent(row), cid: row.cid });
+          return HostedAssetReceiptSchema.parse({ ...intent(row), cid: row.cid });
+        }
         throw new ApiError('UPLOAD_PENDING', 409);
       }
       const funding = await fundedStorage(client, input.dao, this.scope, this.freeBytes);

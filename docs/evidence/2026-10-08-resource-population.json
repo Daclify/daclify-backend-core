@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "runtime": "ramobsy5oloi",
+  "chainId": "d9f6e8c655703ba364f0ee82b4fd0631350475747b1924396c8fbef2558b8f51",
+  "coreCodeHash": "5a7d037c3e9557b123edfaedbc1248b9a01f8c27f85c11f99d1e63acd5dd3c1a",
+  "population": {
+    "daos": 200,
+    "membersPerDao": 200
+  },
+  "membershipCount": 40000,
+  "actualQuotaBytes": "268436217",
+  "allocatedCoreBytes": "140902400",
+  "nativeDeltaBytes": "25241703",
+  "accountedDeltaBytes": "25241703",
+  "samples": [
+    {
+      "stage": "code-permissions-initial-settings",
+      "bytes": "6762632"
+    },
+    {
+      "stage": "200-daos-and-funded-core-allocations",
+      "bytes": "7119535"
+    },
+    {
+      "stage": "40000-active-memberships",
+      "bytes": "32004335"
+    },
+    {
+      "stage": "replayed-200-grants",
+      "bytes": "32004335"
+    }
+  ],
+  "limits": [
+    "Core payer only; five-module mutation conservation has separate native tests.",
+    "200 disposable identities reused across DAOs model memberships, not 40000 distinct people.",
+    "No enforcement, completion holds, legacy backfill or live billing qualification.",
+    "Free capacity and market RAM supply are overridden only on this owned local fixture."
+  ],
+  "runtimeScope": "13377172913726449888"
+}

@@ -35,7 +35,7 @@ import {
   archiveSourceSchema,
 } from '@daclify/modules/archive';
 import { claimLegacyUpload } from '../../services/api/src/content/migrate.js';
-import type { ContentProvider } from '../../services/api/src/content/provider.js';
+import type { ContentProvider, PinnedFile } from '../../services/api/src/content/provider.js';
 import type { ChainGateway } from '../../services/api/src/chain.js';
 import { migrate } from '../../services/api/src/store.js';
 
@@ -83,6 +83,7 @@ const member = RuntimeTableSchemas.members.parse({
 });
 const stored = new Map<string, Uint8Array>();
 function setup(allowance = 1000n, providerScope = randomUUID()) {
+  const inventory = new Map<string, PinnedFile>();
   const daoId = BigInt(`0x${randomUUID().replaceAll('-', '').slice(0, 16)}`).toString();
   const dao = DaoSummarySchema.parse({
     reference: { chainId: network.chainId, contract: network.runtime, daoId, interfaceVersion: 1 },
@@ -161,7 +162,9 @@ function setup(allowance = 1000n, providerScope = randomUUID()) {
         create(0x12, createHash('sha256').update(bytes).digest()),
       ).toString();
       stored.set(cid, bytes.slice());
-      return { id: randomUUID(), cid, size: bytes.length };
+      const pin = { id: randomUUID(), cid, size: bytes.length };
+      inventory.set(pin.id, pin);
+      return pin;
     }),
     retrieve: vi.fn(async (cid: string) => {
       const bytes = stored.get(cid);
@@ -169,6 +172,7 @@ function setup(allowance = 1000n, providerScope = randomUUID()) {
       return bytes.slice();
     }),
     find: async () => [],
+    findCid: async (cid) => [...inventory.values()].filter((pin) => pin.cid === cid),
     remove: vi.fn(async () => {}),
   };
   const service = new ContentService(
@@ -363,6 +367,32 @@ describe('hosted upload transactions with a simulated provider', () => {
       pool.query("UPDATE hosted_removals SET state='removing' WHERE object_id=$1", [first.id]),
     ).rejects.toThrow('STORAGE_REMOVAL_TERMINAL');
     expect(term.invoice).toMatch(/^in_/);
+  });
+  it('wires retention reconciliation through the content host and reports its actual enabled state', async () => {
+    const fixture = setup(30n),
+      reconcile = vi.fn(async () => {});
+    const content = new ContentService(
+      pool,
+      fixture.chain,
+      fixture.provider,
+      30n,
+      'local-fixture',
+      fixture.providerScope,
+      undefined,
+      { enabled: true, reconcilePayment: reconcile },
+    );
+    expect((await content.usage(account, fixture.dao.reference.daoId)).cleanup).toBe('qualified');
+    expect((await content.retention.status(account, { dao: fixture.dao.reference })).cleanup).toBe(
+      'qualified',
+    );
+    await expect(content.retention.prepare(fixture.dao.reference)).rejects.toThrow(
+      'STORAGE_GRACE_ACTIVE',
+    );
+    expect(reconcile).toHaveBeenCalledWith(fixture.dao.reference);
+    expect(fixture.provider.remove).not.toHaveBeenCalled();
+    expect((await fixture.service.usage(account, fixture.dao.reference.daoId)).cleanup).toBe(
+      'disabled',
+    );
   });
   it('compensates a payment arriving during unpin, fences concurrent removal and retains failed recovery for review', async () => {
     const fixture = setup(100n),
@@ -791,6 +821,25 @@ describe('hosted upload transactions with a simulated provider', () => {
         liveRowsIncluded: false,
         next: null,
       });
+      fixture.chain.archiveLiveVotes = async () => [
+        { id: '1', ballot: '7', member: '1', weight: '1', choice: 0 },
+        { id: '2', ballot: '7', member: '2', weight: '1', choice: 1 },
+      ];
+      const merged = await history.page(account, {
+        dao: fixture.dao.reference,
+        manifestCommitment: bundle.manifestFile.commitment,
+      });
+      expect(merged.liveRowsIncluded).toBe(true);
+      expect(merged.records.map((r) => r.id)).toEqual(['1', '2']);
+      fixture.chain.archiveLiveVotes = async () => [
+        { id: '1', ballot: '7', member: '1', weight: '2', choice: 0 },
+      ];
+      await expect(
+        history.page(account, {
+          dao: fixture.dao.reference,
+          manifestCommitment: bundle.manifestFile.commitment,
+        }),
+      ).rejects.toThrow('ARCHIVE_HISTORY_CONFLICT');
       await expect(
         history.list(account, { dao: { ...fixture.dao.reference, daoId: '999' } }),
       ).rejects.toThrow('MEMBER_REQUIRED');
@@ -1000,6 +1049,8 @@ describe('hosted upload transactions with a simulated provider', () => {
       throw new Error('Unknown provider outcome');
     });
     await expect(secondAssets.upload(account, unknown)).rejects.toThrow('UPLOAD_PENDING');
+    await expect(secondAssets.upload(account, unknown)).rejects.toThrow('UPLOAD_PENDING');
+    expect(second.provider.upload).toHaveBeenCalledTimes(1);
     await expect(
       secondAssets.upload(account, { ...unknown, requestId: randomUUID() }),
     ).rejects.toThrow('STORAGE_QUOTA');
@@ -1025,6 +1076,164 @@ describe('hosted upload transactions with a simulated provider', () => {
       totalBytes: String(intent.bytes),
       references: 1,
     });
+  });
+  it('verifies public branding uploads for private DAOs before pinning and charges a shared image only once', async () => {
+    const fixture = setup(8n);
+    fixture.dao.privacy = 'encrypted-user-controlled';
+    const bytes = Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10]);
+    const input = {
+      requestId: randomUUID(),
+      dao: fixture.dao.reference,
+      slot: 'logo',
+      bytes: bytes.length,
+      commitment: createHash('sha256').update(bytes).digest('hex'),
+      mediaType: 'image/png',
+      content: Buffer.from(bytes).toString('base64'),
+      publicConsent: true,
+    };
+    const uploaded = await fixture.service.uploadBranding(account, input);
+    expect(uploaded.image).toMatchObject({
+      bytes: 8,
+      commitment: input.commitment,
+      mediaType: 'image/png',
+    });
+    expect(await fixture.service.uploadBranding(account, input)).toEqual(uploaded);
+    const cover = await fixture.service.uploadBranding(account, {
+      ...input,
+      requestId: randomUUID(),
+      slot: 'cover',
+    });
+    expect(cover.image.cid).toBe(uploaded.image.cid);
+    expect(await fixture.service.usage(account, input.dao.daoId)).toMatchObject({
+      totalBytes: '8',
+      references: 2,
+    });
+    expect(fixture.provider.upload).toHaveBeenCalledTimes(1);
+    for (const change of [
+      { publicConsent: false },
+      { bytes: 9 },
+      { mediaType: 'image/jpeg' },
+      { commitment: '00'.repeat(32) },
+    ])
+      await expect(
+        fixture.service.uploadBranding(account, { ...input, ...change, requestId: randomUUID() }),
+      ).rejects.toThrow();
+    const memberships = fixture.chain.memberships;
+    fixture.chain.memberships = async (user) =>
+      (await memberships(user)).map((row) => ({ ...row, admin: false }));
+    await expect(
+      fixture.service.uploadBranding(account, { ...input, requestId: randomUUID() }),
+    ).rejects.toThrow('ADMIN_REQUIRED');
+    expect(fixture.provider.upload).toHaveBeenCalledTimes(1);
+  });
+  it('rebuilds hosted references in a genuinely empty database from surviving chain rows and provider inventory without inventing billing', async () => {
+    const fixture = setup(30n),
+      uploaded = await fixture.service.upload(account, fixture.request());
+    fixture.content.documents.push(
+      RuntimeTableSchemas.documents.parse({
+        id: '1',
+        document_id: uploaded.documentId,
+        version: uploaded.version,
+        author: '1',
+        cid: uploaded.cid,
+        metadata: uploaded.metadata,
+        commitment: uploaded.commitment,
+        bytes: uploaded.bytes,
+        envelope_version: uploaded.envelopeVersion,
+        key_epoch: uploaded.keyEpoch,
+      }),
+    );
+    const database = 'daclify_restore_' + randomUUID().replaceAll('-', '') + '_test';
+    if (!/^daclify_restore_[a-f0-9]{32}_test$/.test(database))
+      throw new Error('Owned restore database required');
+    await pool.query(`CREATE DATABASE "${database}"`);
+    const restoredUrl = new URL(url ?? '');
+    restoredUrl.pathname = '/' + database;
+    const empty = new Pool({ connectionString: restoredUrl.toString() });
+    try {
+      await migrate(empty);
+      const restored = new ContentService(
+        empty,
+        fixture.chain,
+        fixture.provider,
+        30n,
+        'local-fixture',
+        fixture.providerScope,
+      );
+      expect((await empty.query('SELECT count(*)::text AS count FROM uploads')).rows[0]).toEqual({
+        count: '0',
+      });
+      expect(
+        await restored.retrieve(uploaded.dao.daoId, uploaded.documentId, uploaded.version),
+      ).toEqual(Buffer.from('Synthetic hosted bytes'));
+      const result = await restored.recoverStorage(account, {
+        dao: uploaded.dao,
+        kind: 'document-version',
+      });
+      expect(result).toMatchObject({
+        next: null,
+        billingRestored: false,
+        objects: [{ cid: uploaded.cid, state: 'recovered' }],
+      });
+      expect(await restored.usage(account, uploaded.dao.daoId)).toMatchObject({
+        totalBytes: String(uploaded.bytes),
+        objects: 1,
+        references: 1,
+      });
+      expect(
+        (await restored.recoverStorage(account, { dao: uploaded.dao, kind: 'document-version' }))
+          .objects[0]?.state,
+      ).toBe('tracked');
+      fixture.dao.branding = {
+        logo: {
+          cid: uploaded.cid,
+          bytes: uploaded.bytes,
+          commitment: uploaded.commitment,
+          mediaType: 'image/png',
+        },
+      };
+      expect(
+        (await restored.recoverStorage(account, { dao: uploaded.dao, kind: 'branding' })).objects[0]
+          ?.state,
+      ).toBe('recovered');
+      expect(await restored.usage(account, uploaded.dao.daoId)).toMatchObject({
+        totalBytes: String(uploaded.bytes),
+        objects: 1,
+        references: 2,
+      });
+      expect(
+        (await empty.query('SELECT count(*)::text AS count FROM storage_invoices')).rows[0],
+      ).toEqual({ count: '0' });
+      const adminMemberships = fixture.chain.memberships;
+      fixture.chain.memberships = async (user) =>
+        (await adminMemberships(user)).map((m) => ({ ...m, admin: false }));
+      await expect(
+        restored.recoverStorage(account, { dao: uploaded.dao, kind: 'document-version' }),
+      ).rejects.toThrow('ADMIN_REQUIRED');
+      fixture.chain.memberships = adminMemberships;
+      const original = fixture.content.documents[0];
+      if (!original) throw new Error('Missing restored document');
+      fixture.content.documents.push({
+        ...original,
+        id: '2',
+        document_id: '8',
+        cid: 'bafkreiaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      });
+      expect(
+        (await restored.recoverStorage(account, { dao: uploaded.dao, kind: 'document-version' }))
+          .objects[1]?.state,
+      ).toBe('external');
+      await empty.query('UPDATE hosted_references SET released_at=now()');
+      expect(
+        (await restored.recoverStorage(account, { dao: uploaded.dao, kind: 'document-version' }))
+          .objects[0]?.state,
+      ).toBe('released');
+      expect(fixture.provider.upload).toHaveBeenCalledTimes(1);
+      expect(fixture.provider.remove).not.toHaveBeenCalled();
+    } finally {
+      await empty.end();
+      await pool.query(`DROP DATABASE "${database}"`);
+    }
   });
   it('fences concurrent asset growth and rejects invalid authority/content before provider calls', async () => {
     const fixture = setup(23n),

@@ -13,6 +13,49 @@ const uploadId = randomUUID();
 const provider = new PinataStorage('fixture-token-only', 'https://example.mypinata.cloud');
 afterEach(() => vi.unstubAllGlobals());
 describe('Pinata adapter fault fixtures (not live provider evidence)', () => {
+  it('finds only Daclify-owned pins for an exact CID and rejects truncated or mismatched inventory', async () => {
+    const response = {
+      data: {
+        files: [
+          {
+            id: providerId,
+            cid,
+            size: bytes.length,
+            number_of_files: 1,
+            keyvalues: { daclify_upload: uploadId },
+          },
+        ],
+        next_page_token: null,
+      },
+    };
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify(response)));
+    vi.stubGlobal('fetch', fetcher);
+    expect(await provider.findCid(cid)).toEqual([{ id: providerId, cid, size: bytes.length }]);
+    expect(new URL(String(fetcher.mock.calls[0]?.[0])).searchParams.get('cid')).toBe(cid);
+    for (const data of [
+      { ...response.data, next_page_token: 'more' },
+      {
+        ...response.data,
+        files: [
+          {
+            ...response.data.files[0],
+            cid: 'bafkreiaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          },
+        ],
+      },
+    ]) {
+      fetcher.mockResolvedValueOnce(new Response(JSON.stringify({ data })));
+      await expect(provider.findCid(cid)).rejects.toThrow('PINATA_RESPONSE_INVALID');
+    }
+    fetcher.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          data: { ...response.data, files: [{ ...response.data.files[0], keyvalues: {} }] },
+        }),
+      ),
+    );
+    expect(await provider.findCid(cid)).toEqual([]);
+  });
   it('uploads portable public bytes with a fixed CID profile and generic metadata', async () => {
     const fetcher = vi
       .fn<typeof fetch>()

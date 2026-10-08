@@ -24,27 +24,47 @@ const FeatureResponseSchema = z.object({
   ),
   more: z.boolean().optional(),
 });
+const NativeInteger = z
+  .union([z.number().int(), z.string().regex(/^(?:0|-?[1-9][0-9]*)$/)])
+  .transform((value) => BigInt(value))
+  .refine((value) => value >= -(1n << 63n) && value < 1n << 63n);
 export const AccountResourceSchema = z.object({
-  cpu_limit: z.object({ available: z.number().int() }),
-  net_limit: z.object({ available: z.number().int() }),
-  ram_quota: z.number().int(),
-  ram_usage: z.number().int(),
+  cpu_limit: z.object({ available: NativeInteger, max: NativeInteger.optional() }),
+  net_limit: z.object({ available: NativeInteger, max: NativeInteger.optional() }),
+  ram_quota: NativeInteger,
+  ram_usage: NativeInteger.refine((value) => value >= 0n),
 });
 const CodeHashSchema = z.object({ code_hash: z.string().regex(/^[0-9a-f]{64}$/) });
 
 export interface ResourceReading {
-  cpuAvailable: number;
-  netAvailable: number;
-  ramQuota: number;
-  ramUsage: number;
+  cpuAvailable: number | bigint;
+  netAvailable: number | bigint;
+  cpuMax?: number | bigint;
+  netMax?: number | bigint;
+  ramQuota: number | bigint;
+  ramUsage: number | bigint;
 }
 
 export function resourcesAcceptable(account: ResourceReading): boolean {
-  const cpuOk = account.cpuAvailable < 0 || account.cpuAvailable >= RESOURCE_CPU_FLOOR_USEC;
-  const netOk = account.netAvailable < 0 || account.netAvailable >= RESOURCE_NET_FLOOR_BYTES;
-  const ramAvailable =
-    account.ramQuota < 0 ? Number.POSITIVE_INFINITY : account.ramQuota - account.ramUsage;
-  return cpuOk && netOk && ramAvailable >= RESOURCE_RAM_FLOOR_BYTES;
+  const enough = (
+    available: number | bigint,
+    maximum: number | bigint | undefined,
+    floor: number,
+  ) => {
+    const value = BigInt(available);
+    return (
+      value >= BigInt(floor) ||
+      (value === -1n && (maximum === undefined || BigInt(maximum) === -1n))
+    );
+  };
+  const quota = BigInt(account.ramQuota),
+    used = BigInt(account.ramUsage);
+  return (
+    enough(account.cpuAvailable, account.cpuMax, RESOURCE_CPU_FLOOR_USEC) &&
+    enough(account.netAvailable, account.netMax, RESOURCE_NET_FLOOR_BYTES) &&
+    used >= 0n &&
+    (quota === -1n || quota - used >= BigInt(RESOURCE_RAM_FLOOR_BYTES))
+  );
 }
 
 export interface DeploymentAssessment {
@@ -129,6 +149,8 @@ export async function collectDeployment(
     const reading = {
       cpuAvailable: resources.cpu_limit.available,
       netAvailable: resources.net_limit.available,
+      ...(resources.cpu_limit.max === undefined ? {} : { cpuMax: resources.cpu_limit.max }),
+      ...(resources.net_limit.max === undefined ? {} : { netMax: resources.net_limit.max }),
       ramQuota: resources.ram_quota,
       ramUsage: resources.ram_usage,
     };

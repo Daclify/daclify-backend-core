@@ -471,7 +471,7 @@ it('quotes and atomically pays two real contract payers from the pinned RAM mark
   await expect(
     nativeRamQuote(api, input, {
       ...usage,
-      payers: payers.map((p) => ({ ...p, globalQuotaBytes: null })),
+      payers: payers.map((p) => ({ ...p, allocation: null, globalQuotaBytes: null })),
     }),
   ).rejects.toThrow('RAM_RECEIVER_UNQUALIFIED');
 });

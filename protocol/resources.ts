@@ -33,6 +33,10 @@ export const RamPayerUsageSchema = z.strictObject({
     .pick({ identity: true, activity: true, retained: true, platform: true })
     .nullable(),
   purchasedBytes: Uint64Schema,
+  allocation: RuntimeTableSchemas.ramlimits
+    .pick({ activity: true, identity: true, completion: true })
+    .nullable()
+    .default(null),
   globalQuotaBytes: Uint64Schema.nullable(),
   globalUsedBytes: Uint64Schema,
 });

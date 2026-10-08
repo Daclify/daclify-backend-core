@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { PaymentQuerySchema } from './payments.js';
+import { BrandImageSchema } from './dao.js';
 import { Checksum256 } from '@wharfkit/antelope';
 import { DaoRefSchema, IdSchema, Uint64Schema, ChainIdSchema, CidSchema } from './base.js';
 export const MAX_HOSTED_CONTENT_BYTES = 5 * 1024 * 1024;
@@ -85,6 +86,40 @@ export const HostedAssetUploadSchema = HostedAssetIntentSchema.extend({
 export const HostedAssetReceiptSchema = HostedAssetIntentSchema.extend({ cid: CidSchema });
 export type HostedAssetUpload = z.infer<typeof HostedAssetUploadSchema>;
 export type HostedAssetReceipt = z.infer<typeof HostedAssetReceiptSchema>;
+export const BrandingUploadSchema = BrandImageSchema.omit({ cid: true }).extend({
+  dao: DaoRefSchema,
+  requestId: z.uuid(),
+  slot: z.enum(['logo', 'cover']),
+  content: HostedBytesSchema,
+  publicConsent: z.literal(true),
+});
+export const BrandingReceiptSchema = BrandingUploadSchema.pick({
+  dao: true,
+  requestId: true,
+  slot: true,
+}).extend({ image: BrandImageSchema });
+export type BrandingUpload = z.infer<typeof BrandingUploadSchema>;
+export const StorageRecoveryRequestSchema = z.strictObject({
+  dao: DaoRefSchema,
+  kind: z.enum(['document-version', 'branding', 'archive']),
+  after: Uint64Schema.default('0'),
+});
+export const StorageRecoveryPageSchema = StorageRecoveryRequestSchema.pick({
+  dao: true,
+  kind: true,
+}).extend({
+  next: Uint64Schema.nullable(),
+  billingRestored: z.literal(false),
+  objects: z
+    .array(
+      z.strictObject({
+        referenceKey: HostedReferenceSchema.shape.referenceKey,
+        cid: CidSchema,
+        state: z.enum(['recovered', 'tracked', 'external', 'unavailable', 'released']),
+      }),
+    )
+    .max(33),
+});
 export type HostedUpload = z.infer<typeof HostedUploadSchema>;
 export type HostedDocument = z.infer<typeof HostedDocumentSchema>;
 export const StorageStatusSchema = z.strictObject({
@@ -142,6 +177,7 @@ export const HostedReferenceKindSchema = z.enum([
   'media',
   'archive',
 ]);
+export const StorageCleanupSchema = z.enum(['disabled', 'qualified']);
 export const HostedStorageUsageSchema = z.strictObject({
   dao: DaoRefSchema,
   capacityBytes: Uint64Schema,
@@ -150,7 +186,7 @@ export const HostedStorageUsageSchema = z.strictObject({
   totalBytes: Uint64Schema,
   objects: z.int().nonnegative(),
   references: z.int().nonnegative(),
-  cleanup: z.literal('disabled'),
+  cleanup: StorageCleanupSchema,
 });
 
 export const StorageApprovalSchema = z

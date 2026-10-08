@@ -1,0 +1,17 @@
+{
+  "runtime": "ramobs1f3oxs",
+  "source": "arcsrcktamkx",
+  "votes": 1,
+  "freedBytes": "401",
+  "freshDatabaseRecreated": true,
+  "archivePinsRecovered": 2,
+  "privateFilePinsRecovered": 1,
+  "billingInvented": false,
+  "originalKitDecrypted": true,
+  "replacementKitRejected": true,
+  "plaintextBytes": 39,
+  "limits": [
+    "Owned native system and local disk provider; no live Pinata/Stripe proof.",
+    "Private document, epoch and grant remain on chain; document pruning is still disabled."
+  ]
+}

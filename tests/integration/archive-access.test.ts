@@ -190,6 +190,48 @@ it('requires session/CSRF/current administrator and binds the readonly result to
       'x-csrf-token': session.csrfToken,
     };
     const request = { method: 'POST' as const, url: path, payload, headers };
+    const recover = {
+      method: 'POST' as const,
+      url: ApiRoutes.storageRecover.path,
+      headers,
+      payload: { dao, kind: 'document-version' },
+    };
+    expect((await app.inject({ ...recover, headers: { origin } })).statusCode).toBe(401);
+    expect(
+      (await app.inject({ ...recover, headers: { ...headers, 'x-csrf-token': '' } })).statusCode,
+    ).toBe(403);
+    admin = false;
+    expect((await app.inject(recover)).statusCode).toBe(403);
+    admin = true;
+    const brand = {
+      method: 'POST' as const,
+      url: ApiRoutes.brandingUpload.path,
+      headers,
+      payload: {
+        dao,
+        requestId: randomUUID(),
+        slot: 'logo',
+        bytes: 8,
+        mediaType: 'image/png',
+        content: 'iVBORw0KGgo=',
+        commitment: createHash('sha256')
+          .update(Buffer.from('iVBORw0KGgo=', 'base64'))
+          .digest('hex'),
+        publicConsent: true,
+      },
+    };
+    expect((await app.inject({ ...brand, headers: { origin } })).statusCode).toBe(401);
+    expect(
+      (await app.inject({ ...brand, headers: { ...headers, 'x-csrf-token': '' } })).statusCode,
+    ).toBe(403);
+    admin = false;
+    expect((await app.inject(brand)).statusCode).toBe(403);
+    admin = true;
+    expect(
+      (await app.inject({ ...brand, payload: { ...brand.payload, publicConsent: false } }))
+        .statusCode,
+    ).toBe(400);
+    expect((await app.inject(brand)).statusCode).toBe(200);
     const curationPath =
       ApiRoutes.curation.path + '?dao=' + encodeURIComponent(JSON.stringify(dao));
     expect(

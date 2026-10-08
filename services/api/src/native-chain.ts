@@ -58,6 +58,8 @@ import { randomBytes } from 'node:crypto';
 import {
   ArchiveRoutes,
   ArchiveProgressSchema,
+  ArchiveLiveVotesRequestSchema,
+  ArchiveLiveVotesSchema,
   ArchivePruneBatchSchema,
   type ArchivePruneBatch,
   OrdinaryPollArchiveInputSchema,
@@ -382,7 +384,8 @@ export class NativeChainGateway implements ChainGateway {
     const startedAt = new Date().toISOString();
     await this.reviewedRuntime(this.config.runtime);
     const read = async <
-      K extends 'ramobs' | 'ramstats' | 'ramalloc' | 'ramsources' | 'resourcecfg' | 'modules',
+      K extends
+        'ramobs' | 'ramstats' | 'ramalloc' | 'ramlimits' | 'ramsources' | 'resourcecfg' | 'modules',
     >(
       table: K,
       scope: string,
@@ -392,14 +395,17 @@ export class NativeChainGateway implements ChainGateway {
         throw new ApiError('RESOURCE_SCOPE_LIMIT', 503);
       return page.rows;
     };
-    const [observers, stats, allocations, sources, policies, installed] = await Promise.all([
-      read('ramobs', this.config.runtime),
-      read('ramstats', id),
-      read('ramalloc', id),
-      read('ramsources', this.config.runtime),
-      read('resourcecfg', this.config.runtime),
-      read('modules', id),
-    ]);
+    const [observers, stats, allocations, limits, sources, policies, installed] = await Promise.all(
+      [
+        read('ramobs', this.config.runtime),
+        read('ramstats', id),
+        read('ramalloc', id),
+        read('ramlimits', id),
+        read('ramsources', this.config.runtime),
+        read('resourcecfg', this.config.runtime),
+        read('modules', id),
+      ],
+    );
     const observer = observers[0];
     if (observer && observer.runtime_hash !== RuntimeCodeHash)
       throw new ApiError('RESOURCE_UNQUALIFIED', 503);
@@ -408,6 +414,7 @@ export class NativeChainGateway implements ChainGateway {
         this.config.runtime,
         ...stats.map((r) => r.payer),
         ...allocations.map((r) => r.payer),
+        ...limits.map((r) => r.payer),
         ...installed.map((r) => r.account),
       ]),
     ];
@@ -458,6 +465,12 @@ export class NativeChainGateway implements ChainGateway {
               }
             : null,
           purchasedBytes: allocations.find((r) => r.payer === payer)?.purchased_bytes ?? '0',
+          allocation: (() => {
+            const limit = limits.find((r) => r.payer === payer);
+            return limit
+              ? { activity: limit.activity, identity: limit.identity, completion: limit.completion }
+              : null;
+          })(),
           globalQuotaBytes:
             BigInt(account.ram_quota.toString()) < 0n ? null : account.ram_quota.toString(),
           globalUsedBytes: account.ram_usage.toString(),
@@ -560,6 +573,91 @@ export class NativeChainGateway implements ChainGateway {
       this.config.relayActor,
       this.config.relayKey,
     );
+  }
+  async archiveLiveVotes(value: z.infer<typeof ArchiveLiveVotesRequestSchema>) {
+    const input = ArchiveLiveVotesRequestSchema.parse(value),
+      dao = input.dao;
+    if (
+      dao.chainId !== this.config.chainId ||
+      dao.contract !== this.config.runtime ||
+      dao.interfaceVersion !== 1
+    )
+      throw new ApiError('DAO_REFERENCE');
+    await this.reviewedRuntime(dao.contract);
+    const deployment = this.config.modules?.find((m) => m.id === 'decide');
+    if (!deployment) throw new ApiError('ARCHIVE_SOURCE_UNCONFIGURED', 503);
+    const schema = archiveSourceSchema('ordinary-poll-votes');
+    const review = async () => {
+      const raw = await this.api.v1.chain.get_raw_abi(deployment.account);
+      if (
+        raw.code_hash.toString() !== schema.codeHash ||
+        raw.abi_hash.toString() !== schema.rawAbiHash
+      )
+        throw new ApiError('ARCHIVE_SCHEMA_UNSUPPORTED', 409);
+    };
+    await review();
+    const ballot = await this.moduleRows(
+      deployment.account,
+      'ballots',
+      DecideTableSchemas.ballots,
+      input.parentId,
+      input.parentId,
+      1,
+      'i64',
+      2,
+    );
+    const parent = ballot.rows[0];
+    if (
+      ballot.more ||
+      ballot.rows.length !== 1 ||
+      !parent ||
+      parent.dao_id !== dao.daoId ||
+      parent.id !== input.parentId
+    )
+      throw new ApiError('BALLOT_UNKNOWN', 404);
+    const read = async () => {
+      const rows: z.infer<typeof ArchiveLiveVotesSchema> = [];
+      let cursor = BigInt(input.parentId) << 64n;
+      const upper = cursor | ((1n << 64n) - 1n);
+      for (;;) {
+        const page = await this.moduleRows(
+          deployment.account,
+          'votes',
+          DecideTableSchemas.votes,
+          cursor.toString(),
+          upper.toString(),
+          2,
+          'i128',
+          Math.min(256, MAX_ARCHIVE_LEAVES - rows.length + 1),
+        );
+        if (
+          page.rows.some(
+            (r) =>
+              r.ballot !== input.parentId ||
+              ((BigInt(r.ballot) << 64n) | BigInt(r.member)) < cursor,
+          ) ||
+          rows.length + page.rows.length > MAX_ARCHIVE_LEAVES
+        )
+          throw new ApiError('ARCHIVE_COVERAGE_INCOMPLETE', 409);
+        rows.push(...page.rows);
+        if (!page.more) break;
+        const last = page.rows.at(-1);
+        if (!last || BigInt(last.member) === (1n << 64n) - 1n)
+          throw new ApiError('ARCHIVE_COVERAGE_INCOMPLETE', 409);
+        cursor = (BigInt(input.parentId) << 64n) | (BigInt(last.member) + 1n);
+      }
+      return ArchiveLiveVotesSchema.parse(rows);
+    };
+    const first = await read(),
+      info = await this.api.v1.chain.get_info();
+    if (info.chain_id.toString() !== dao.chainId) throw new ApiError('DAO_REFERENCE');
+    await this.confirmBlock(Number(info.head_block_num));
+    const current = await read();
+    await review();
+    await this.reviewedRuntime(dao.contract);
+    if (JSON.stringify(first) !== JSON.stringify(current))
+      throw new ApiError('ARCHIVE_HISTORY_PENDING', 503);
+    return current;
   }
   async archiveHistory(value: z.infer<typeof ArchiveRoutes.history.input>) {
     const input = ArchiveRoutes.history.input.parse(value),
@@ -1587,7 +1685,6 @@ export class NativeChainGateway implements ChainGateway {
     }
   }
   private async confirmBlock(block: number): Promise<void> {
-    if (this.config.environment === 'local') return;
     try {
       await waitForIrreversibleBlock(
         async () => {
@@ -2307,6 +2404,8 @@ export class NativeChainGateway implements ChainGateway {
       !resourcesAcceptable({
         cpuAvailable: parsed.data.cpu_limit.available,
         netAvailable: parsed.data.net_limit.available,
+        ...(parsed.data.cpu_limit.max === undefined ? {} : { cpuMax: parsed.data.cpu_limit.max }),
+        ...(parsed.data.net_limit.max === undefined ? {} : { netMax: parsed.data.net_limit.max }),
         ramQuota: parsed.data.ram_quota,
         ramUsage: parsed.data.ram_usage,
       })

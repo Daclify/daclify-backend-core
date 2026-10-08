@@ -91,6 +91,16 @@ export class ArchiveHistory {
   }
   async page(account: Account, value: unknown) {
     const input = ArchiveRoutes.historyPage.input.parse(value);
-    return archiveHistoryPage(await this.recover(account, input), input);
+    const bundle = await this.recover(account, input),
+      parent = bundle.manifest.families[0]?.parentId;
+    const live =
+      parent && this.chain.archiveLiveVotes
+        ? await this.chain.archiveLiveVotes({ dao: input.dao, parentId: parent })
+        : undefined;
+    try {
+      return archiveHistoryPage(bundle, input, live);
+    } catch {
+      throw new ApiError('ARCHIVE_HISTORY_CONFLICT', 503);
+    }
   }
 }

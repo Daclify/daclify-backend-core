@@ -94,6 +94,8 @@ Wallet-only profiles must retain a blockchain control credential. Removing the l
 
 Operators need encrypted off-host PostgreSQL backups, a separate secret/configuration backup, retained provider and IPFS credentials, and tested restore drills. Revoke all restored sessions and pending login/control challenges before exposing a restored API. A stale backup can restore removed social pairings; reconfirm them if revocation history is uncertain. Jobs and payment records need reconciliation with the chain and provider before workers resume.
 
+After recovering current administrator access, Resources can rebuild hosted document, public-card and Archive references in bounded batches from surviving chain references and Daclify-owned provider inventory. Every imported object needs verified size and committed bytes. Repeated CIDs count once per DAO; released hosting is not silently resumed. This restores neither Stripe payments nor social pairings and never uploads or deletes a file. Missing original file pins still need your independent copies.
+
 Managed signing and decryption recovery remain unqualified and unavailable. OpenBao is a candidate, not a working production recovery guarantee. If every wallet key, vault recovery path and independent backup is lost, Daclify cannot manufacture the missing secrets.
 
 ## Documents that survive transaction history gaps
@@ -114,7 +116,7 @@ Changing DAO deployment, account, member identity or privacy clears document dra
 
 Development resource accounting counts each verified CID once per DAO, including hosted versions, branding and archive references. Uncertain uploads and complete unfinished archive exports reserve their bytes. Active members can inspect verified and reserved usage; configured paid subscriptions grant capacity only after verified payment. Automatic deletion remains disabled. Mainnet and testnet use separate Pinata accounts and ownership ledgers.
 
-Storage terms are prepaid calendar months, independent of member-slot subscriptions. A January 31 anniversary uses February’s last day and returns to March 31. An unpaid paid term receives thirty exact days from its original end; retries do not restart that deadline. A future prepaid term does not grant capacity before its start. Recurring paid capacity requires an administrator to approve the exact units, pricing snapshot and monthly amount. Open Resources from DAO Settings or Documents to see measured usage, accepted pricing, paid-through and the original grace deadline. Only current administrators with fresh signing control can approve recurring units. Paid capacity requires authoritative Stripe invoice/payment/charge verification, independently of membership. Reductions begin next period; increases need verified payment and a funded base. Automatic deletion is still disabled, and live provider qualification remains required.
+Storage terms are prepaid calendar months, independent of member-slot subscriptions. A January 31 anniversary uses February’s last day and returns to March 31. An unpaid paid term receives thirty exact days from its original end; retries do not restart that deadline. A future prepaid term does not grant capacity before its start. Recurring paid capacity requires an administrator to approve the exact units, pricing snapshot and monthly amount. Open Resources from DAO Settings or Documents to see measured usage, accepted pricing, paid-through and the original grace deadline. Only current administrators with fresh signing control can approve recurring units. Paid capacity requires authoritative Stripe invoice/payment/charge verification, independently of membership. Reductions begin next period; increases need verified payment and a funded base. Cleanup is disabled by default; Resources reports explicit operator enablement. Live provider qualification remains required.
 
 Native RAM orders on this development branch atomically acquire and verify quota for approved core/module payers, charge the accepted 5% TLOS markup and refund change. This contract path is qualified only on the owned local system fixture. Included allowances, payer pools, completion reserves, card fulfillment and the purchase screen remain unfinished; paid hosted RAM must wait for those gates.
 
@@ -226,6 +228,8 @@ The directory covers the configured native runtime. Search, purpose, membership 
 
 Display metadata version 3 adds a brief public summary and optional public PNG/JPEG/WebP logo and cover references. Images are capped at 2 MiB each and include their CID, MIME, byte size and SHA-256 commitment. Hosted retrieval validates the bytes; unavailable images fall back to the original Daclify card.
 
+In Settings, an active administrator can upload and verify a public logo or cover directly. Confirm that the image is public and unencrypted, even for a private DAO. Verified uploads count toward the DAO's storage allowance immediately. Uploading does not change the on-chain card: review the selection, then sign its update with an authorized signer. An uncertain upload keeps its request ID; retry that request rather than creating another upload.
+
 DAO purpose and original setup remain immutable. All directory text and image references are public, including a DAO with encrypted document contents. Choose a sparse listing if needed. Deployment labels describe configuration; they are not audit certifications.
 
 ## Reconcile spending and export records
@@ -308,6 +312,8 @@ Commercial hosting, subscriptions and paid services are allowed. Independently d
 
 Blockchain RAM holds live contract records; IPFS holds pinned files and archive bundles. They are separate resources. Resources shows exact DAO RAM counters and permanent purchased bytes by contract payer. Whole-account figures include other DAOs, code and permissions. An unavailable DAO total is not a zero-byte total.
 
+A visible payer allocation separates identity, activity and completion budgets. Manual grants are backed by the exact native payer account and replay safely. Allocations do not yet enforce growth limits or guarantee completion of outstanding work; those protections require the remaining reserve and migration qualification. Purchased bytes are shown separately from granted capacity.
+
 To buy RAM with TLOS, select a qualified contract payer and minimum byte increase, review native acquisition cost plus one operational fee (5% at launch), then approve the one-time wallet payment. Order and token payment share one transaction. Every actual quota increase is checked; an expired quote, changed policy or unmet minimum rolls the whole purchase back. Sponsoring RAM grants no membership or administration.
 
 Administrators can instead approve a card RAM order when the operator has configured Stripe and funded its separate native reserve. The card rail adds one operational markup (20% at launch), with a $5 minimum total. It does not add the native 5% markup or Connect commission. The exchange-rate observation, byte minimum and exact USD price are disclosed before fresh account-control approval. Complete Stripe checkout, then refresh the saved order. Payment must be verified and provisioning must finish before capacity is credited. An operator outage or low reserve needs reconciliation; checkout return alone proves nothing.
@@ -316,11 +322,11 @@ Purchased RAM is permanent and reusable. A refund, dispute or hosting arrears do
 
 Pinned hosting includes 100 MB (100,000,000 bytes). Each explicitly approved additional 1 GB costs $1 per calendar month at launch. Active files, old versions and archive bundles share this rate; the same CID counts once per DAO. Payment retries do not restart the original paid-term-end plus 30-day grace deadline. Automatic deletion is disabled until guarded cleanup and recovery qualify.
 
-Archive preview and resumable export are available for qualified ordinary-poll vote records, at least 90 days after recorded terminal completion. Download and independently verify a bundle against its separately saved manifest hash. The current hash is not yet a native archive anchor. Exports contain original records, not private decryption keys or social-login pairings; retain recovery kits and original file pins separately. Exporting never itself approves pruning. Native archive approvals, source-owned pruning and empty-database history restoration remain qualification work.
+Archive preview and resumable export cover qualified ordinary-poll vote records, at least 90 days after recorded terminal completion. Create and independently verify the encrypted backup, obtain a fresh native availability attestation, then sign approval binding the exact manifest, descriptor, backup and delay. Approval does not prune. Each permitted source-owned batch is a separate manual action; revocation stops subsequent batches. Members can browse verified anchored history merged with qualified live rows and recover bundles without the old SQL index. Exports contain no decryption kits, social pairings or original file blobs. A local native ordinary-vote database-loss drill and original-kit recovery of a retained private file passed. Protected document pruning, backed enforcement, legacy migration and live provider qualification still gate production release.
 
 ## Keep files within your funded storage
 
-Storage is prepaid separately from membership. An unpaid term keeps its original 30-day grace deadline; payment retries do not restart the clock. During grace, reading and export remain available. No automatic cleanup is enabled in this development build.
+Storage is prepaid separately from membership. An unpaid term keeps its original 30-day grace deadline; payment retries do not restart the clock. During grace, reading and export remain available. Cleanup is disabled by default. Resources and Status show whether this operator explicitly enabled guarded cleanup; configuration does not prove provider qualification.
 
 DAO administrators can choose whole verified objects to prioritize within the free allowance. A CID counts once for that DAO even when several document versions, media or archives reference it. Newest objects fill any remaining allowance deterministically. A file retained by another DAO is not unpinned.
 
@@ -330,7 +336,7 @@ Cleanup does not remove identities, social pairings, document decryption keys, s
 
 ## runtime contract
 
-Source ABI JSON SHA-256: `d9514086bea8d9dfe35307c3d932e31a6f383668d5ac9ade56627419c36c30fb`.
+Source ABI JSON SHA-256: `c9a01fd6b5d6aff698830955f310d377e2a319ad9e9e6abcdf27c5358563a840`.
 
 ### Action: addmember
 
@@ -444,6 +450,12 @@ Source ABI JSON SHA-256: `d9514086bea8d9dfe35307c3d932e31a6f383668d5ac9ade566274
 | usd_cents | uint32 |
 | checkout_reference | checksum256 |
 | paid_at | uint32 |
+
+### Action: checkrampool
+
+| Field | ABI type |
+| --- | --- |
+| payer | name |
 
 ### Action: commitepoch
 
@@ -670,6 +682,17 @@ Source ABI JSON SHA-256: `d9514086bea8d9dfe35307c3d932e31a6f383668d5ac9ade566274
 | dao_id | uint64 |
 | member_id | uint64 |
 | quantity | uint64 |
+
+### Action: grantdaoram
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| payer | name |
+| reference | uint64 |
+| activity | uint64 |
+| identity | uint64 |
+| completion | uint64 |
 
 ### Action: grantkey
 
@@ -1055,6 +1078,15 @@ Source ABI JSON SHA-256: `d9514086bea8d9dfe35307c3d932e31a6f383668d5ac9ade566274
 | --- | --- |
 | account | name |
 | code_hash | checksum256 |
+
+### Action: setrampool
+
+| Field | ABI type |
+| --- | --- |
+| payer | name |
+| expected_quota | uint64 |
+| baseline_bytes | uint64 |
+| platform_headroom | uint64 |
 
 ### Action: setresources
 
@@ -1513,12 +1545,33 @@ Source ABI JSON SHA-256: `d9514086bea8d9dfe35307c3d932e31a6f383668d5ac9ade566274
 | operational_bps | uint16 |
 | fulfiller | name |
 
+### Table: ramgrants
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| dao_id | uint64 |
+| payer | name |
+| reference | uint64 |
+| activity | uint64 |
+| identity | uint64 |
+| completion | uint64 |
+
 ### Table: ramintent
 
 | Field | ABI type |
 | --- | --- |
 | order | ram_order |
 | transaction_id | checksum256 |
+
+### Table: ramlimits
+
+| Field | ABI type |
+| --- | --- |
+| payer | name |
+| activity | uint64 |
+| identity | uint64 |
+| completion | uint64 |
 
 ### Table: ramobs
 
@@ -1546,6 +1599,22 @@ Source ABI JSON SHA-256: `d9514086bea8d9dfe35307c3d932e31a6f383668d5ac9ade566274
 | purchases | ram_acquisition[] |
 | funded | bool |
 | settled | bool |
+
+### Table: rampayer
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+
+### Table: rampools
+
+| Field | ABI type |
+| --- | --- |
+| payer | name |
+| quota_bytes | uint64 |
+| baseline_bytes | uint64 |
+| platform_headroom | uint64 |
+| source_hash | checksum256 |
 
 ### Table: ramreserve
 
@@ -4616,6 +4685,37 @@ Response:
             "type": "string",
             "maxLength": 20
           },
+          "allocation": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "activity": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "identity": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "completion": {
+                    "type": "string",
+                    "maxLength": 20
+                  }
+                },
+                "required": [
+                  "activity",
+                  "identity",
+                  "completion"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "globalQuotaBytes": {
             "anyOf": [
               {
@@ -4638,6 +4738,7 @@ Response:
           "sourceVerified",
           "usage",
           "purchasedBytes",
+          "allocation",
           "globalQuotaBytes",
           "globalUsedBytes"
         ],
@@ -4728,7 +4829,10 @@ Response:
     },
     "cleanup": {
       "type": "string",
-      "const": "disabled"
+      "enum": [
+        "disabled",
+        "qualified"
+      ]
     }
   },
   "required": [
@@ -9486,6 +9590,353 @@ Response:
   "required": [
     "content",
     "mediaType"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/branding/uploads
+
+Guide: dao-discovery.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2097152
+    },
+    "mediaType": {
+      "type": "string",
+      "enum": [
+        "image/png",
+        "image/jpeg",
+        "image/webp"
+      ]
+    },
+    "commitment": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "dao": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "contract": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "daoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "interfaceVersion": {
+          "type": "number",
+          "const": 1
+        }
+      },
+      "required": [
+        "chainId",
+        "contract",
+        "daoId",
+        "interfaceVersion"
+      ],
+      "additionalProperties": false
+    },
+    "requestId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "slot": {
+      "type": "string",
+      "enum": [
+        "logo",
+        "cover"
+      ]
+    },
+    "content": {
+      "type": "string",
+      "minLength": 4,
+      "maxLength": 6990508
+    },
+    "publicConsent": {
+      "type": "boolean",
+      "const": true
+    }
+  },
+  "required": [
+    "bytes",
+    "mediaType",
+    "commitment",
+    "dao",
+    "requestId",
+    "slot",
+    "content",
+    "publicConsent"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "dao": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "contract": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "daoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "interfaceVersion": {
+          "type": "number",
+          "const": 1
+        }
+      },
+      "required": [
+        "chainId",
+        "contract",
+        "daoId",
+        "interfaceVersion"
+      ],
+      "additionalProperties": false
+    },
+    "requestId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "slot": {
+      "type": "string",
+      "enum": [
+        "logo",
+        "cover"
+      ]
+    },
+    "image": {
+      "type": "object",
+      "properties": {
+        "cid": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2097152
+        },
+        "mediaType": {
+          "type": "string",
+          "enum": [
+            "image/png",
+            "image/jpeg",
+            "image/webp"
+          ]
+        },
+        "commitment": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "cid",
+        "bytes",
+        "mediaType",
+        "commitment"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "dao",
+    "requestId",
+    "slot",
+    "image"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/storage/recover
+
+Guide: recovery.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "dao": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "contract": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "daoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "interfaceVersion": {
+          "type": "number",
+          "const": 1
+        }
+      },
+      "required": [
+        "chainId",
+        "contract",
+        "daoId",
+        "interfaceVersion"
+      ],
+      "additionalProperties": false
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "document-version",
+        "branding",
+        "archive"
+      ]
+    },
+    "after": {
+      "default": "0",
+      "type": "string",
+      "maxLength": 20
+    }
+  },
+  "required": [
+    "dao",
+    "kind"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "dao": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "contract": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "daoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "interfaceVersion": {
+          "type": "number",
+          "const": 1
+        }
+      },
+      "required": [
+        "chainId",
+        "contract",
+        "daoId",
+        "interfaceVersion"
+      ],
+      "additionalProperties": false
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "document-version",
+        "branding",
+        "archive"
+      ]
+    },
+    "next": {
+      "anyOf": [
+        {
+          "type": "string",
+          "maxLength": 20
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "billingRestored": {
+      "type": "boolean",
+      "const": false
+    },
+    "objects": {
+      "maxItems": 33,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "referenceKey": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9:._-]{0,255}$"
+          },
+          "cid": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "recovered",
+              "tracked",
+              "external",
+              "unavailable",
+              "released"
+            ]
+          }
+        },
+        "required": [
+          "referenceKey",
+          "cid",
+          "state"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "dao",
+    "kind",
+    "next",
+    "billingRestored",
+    "objects"
   ],
   "additionalProperties": false
 }

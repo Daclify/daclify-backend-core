@@ -15,6 +15,8 @@ import { ContentService } from './content/service.js';
 import { EncryptedArchiveBackup, readArchiveBackupConfig } from './archive/backup.js';
 import { ProviderScopeSchema } from './content/ledger.js';
 import { startContentWorker } from './content/jobs.js';
+import { startRetentionWorker } from './content/retention.js';
+import { readRetentionEnabled } from './content/retention-config.js';
 import { Uint64Schema } from '../../../protocol/base.js';
 import { parseFrontendOrigins, parseModuleDeployments } from './deployment-config.js';
 import { readStripeConfig } from './billing/config.js';
@@ -101,18 +103,6 @@ const chain = new NativeChainGateway(
 );
 const archiveBackupConfig = readArchiveBackupConfig(process.env);
 if (archiveBackupConfig && !env.PINATA_JWT) throw new Error('ARCHIVE_BACKUP_CONTENT_REQUIRED');
-const content =
-  env.PINATA_JWT && env.CONTENT_GATEWAY
-    ? new ContentService(
-        pool,
-        chain,
-        new PinataStorage(env.PINATA_JWT, env.CONTENT_GATEWAY),
-        BigInt(env.CONTENT_FREE_STORAGE_BYTES),
-        'pinata',
-        env.PINATA_ACCOUNT_ID,
-        archiveBackupConfig ? new EncryptedArchiveBackup(archiveBackupConfig) : undefined,
-      )
-    : undefined;
 const providers: ProviderConfiguration = {};
 const telegramOidc = readTelegramOidc(process.env);
 if (env.GOOGLE_CLIENT_ID && env.GOOGLE_PUBLIC_JWK) {
@@ -148,15 +138,34 @@ const storageConfig = readStorageConfig(
   process.env,
   env.NETWORK_ENVIRONMENT,
   env.FRONTEND_ORIGIN,
-  content?.providerScope ?? 'unconfigured',
+  env.PINATA_ACCOUNT_ID ?? 'unconfigured',
 );
-if (storageConfig && !content) throw new Error('STORAGE_CONFIGURATION_INVALID');
+if (storageConfig && !env.PINATA_JWT) throw new Error('STORAGE_CONFIGURATION_INVALID');
 const hostedStorage = storageConfig
   ? new HostedStorage(pool, chain, storageConfig, {
       ...DEFAULT_STORAGE_PRICING,
       freeBytes: env.CONTENT_FREE_STORAGE_BYTES,
     })
   : undefined;
+const retentionEnabled = readRetentionEnabled(process.env, !!env.PINATA_JWT, !!hostedStorage);
+const content =
+  env.PINATA_JWT && env.CONTENT_GATEWAY
+    ? new ContentService(
+        pool,
+        chain,
+        new PinataStorage(env.PINATA_JWT, env.CONTENT_GATEWAY),
+        BigInt(env.CONTENT_FREE_STORAGE_BYTES),
+        'pinata',
+        env.PINATA_ACCOUNT_ID,
+        archiveBackupConfig ? new EncryptedArchiveBackup(archiveBackupConfig) : undefined,
+        hostedStorage
+          ? {
+              enabled: retentionEnabled,
+              reconcilePayment: (dao) => hostedStorage.reconcileRetention(dao),
+            }
+          : undefined,
+      )
+    : undefined;
 const ramCardConfig = readRamCardConfig(process.env, env.NETWORK_ENVIRONMENT, env.FRONTEND_ORIGIN);
 const ramCards = ramCardConfig ? new CardRam(pool, chain, ramCardConfig) : undefined;
 if (operatorConfig && (connectConfig || hostingConfig || storageConfig || ramCardConfig))
@@ -188,12 +197,16 @@ const worker = content ? startContentWorker(pool, content) : undefined;
 const hostingWorker = hosting ? startHostingWorker(pool, hosting) : undefined;
 const storageWorker = hostedStorage ? startStorageWorker(pool, hostedStorage) : undefined;
 const ramWorker = ramCards ? startRamWorker(pool, ramCards) : undefined;
+const retentionWorker = content?.retention.cleanupEnabled
+  ? startRetentionWorker(content.retention)
+  : undefined;
 async function shutdown() {
   await app.close();
   await worker?.stop();
   await hostingWorker?.stop();
   await storageWorker?.stop();
   await ramWorker?.stop();
+  await retentionWorker?.stop();
   await pool.end();
 }
 process.on('SIGTERM', () => {

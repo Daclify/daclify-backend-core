@@ -5,6 +5,7 @@
 #include "evm_authorization.hpp"
 #include "telos_resources.hpp"
 #include "archive_state.hpp"
+#include "ram_capacity.hpp"
 #include <eosio/transaction.hpp>
 #define JSON_NOEXCEPTION
 #define JSON_HAS_FILESYSTEM 0
@@ -95,6 +96,28 @@ public:
     check(!fee_settings(get_self(),get_self().value).exists()&&!payment_settings(get_self(),get_self().value).exists()&&!market_settings(get_self(),get_self().value).exists()&&!creation_settings(get_self(),get_self().value).exists()&&!hosted_settings(get_self(),get_self().value).exists()&&!seat_settings(get_self(),get_self().value).exists()&&!resource_settings(get_self(),get_self().value).exists(),"RAM_BACKFILL_REQUIRED");
     catalogue listed(get_self(),get_self().value);modpays payments(get_self(),get_self().value);modcopy copies(get_self(),get_self().value);creation_orders orders(get_self(),get_self().value);check(listed.begin()==listed.end()&&payments.begin()==payments.end()&&copies.begin()==copies.end()&&orders.begin()==orders.end(),"RAM_BACKFILL_REQUIRED");
     ram_observer_settings saved(get_self(),get_self().value);check(!saved.exists(),"ALREADY_INITIALIZED");ram_observer_config cfg;cfg.runtime_hash=get_code_hash(get_self());cfg.meter_bytes=pack_size(cfg)+224;saved.set(cfg,get_self());
+  }
+  ACTION setrampool(name payer,uint64_t expected_quota,uint64_t baseline_bytes,uint64_t platform_headroom){
+    require_auth(get_self());ram_observer_settings observer(get_self(),get_self().value);check(observer.exists()&&observer.get().runtime_hash==get_code_hash(get_self()),"RAM_OBSERVER_REQUIRED");
+    if(payer!=get_self()){ram_sources sources(get_self(),get_self().value);check(sources.get(payer.value,"RAM_SOURCE_UNKNOWN").code_hash==get_code_hash(payer),"RAM_SOURCE_CODE");}
+    check(telos_unmanaged_ram(payer)==expected_quota&&platform_headroom>=32768,"RAM_POOL_BACKING");ram_payer_pool value{payer,expected_quota,baseline_bytes,platform_headroom,get_code_hash(payer)};check_ram_pool(get_self(),value);
+    ram_pools rows(get_self(),get_self().value);auto found=rows.find(payer.value);if(found==rows.end())rows.emplace(get_self(),[&](auto& r){r=value;});else rows.modify(found,same_payer,[&](auto& r){r=value;});
+    action(permission_level{get_self(),"active"_n},get_self(),"checkrampool"_n,std::make_tuple(payer)).send();
+  }
+  ACTION grantdaoram(uint64_t dao_id,name payer,uint64_t reference,uint64_t activity,uint64_t identity,uint64_t completion){
+    require_auth(get_self());dao_rows.get(dao_id,"DAO_UNKNOWN");ram_pools pools(get_self(),get_self().value);const auto& pool=pools.get(payer.value,"RAM_POOL_UNKNOWN");check(reference&&completion>=32768,"RAM_GRANT_BOUNDS");
+    ram_grants receipts(get_self(),dao_id);auto index=receipts.get_index<"byreference"_n>();auto packed=pack(std::make_tuple(payer,reference));auto prior=index.find(sha256(packed.data(),packed.size()));
+    if(prior!=index.end()){check(prior->activity==activity&&prior->identity==identity&&prior->completion==completion,"RAM_GRANT_IMMUTABLE");return;}
+    const auto total=add64(add64(activity,identity),completion);check_ram_pool(get_self(),pool,dao_id,total);
+    ram_limits limits(get_self(),dao_id);auto found=limits.find(payer.value);ram_dao_limit value;if(found!=limits.end())value=*found;value.payer=payer;value.activity=add64(value.activity,activity);value.identity=add64(value.identity,identity);value.completion=add64(value.completion,completion);
+    if(found==limits.end())limits.emplace(get_self(),[&](auto& r){r=value;});else limits.modify(found,same_payer,[&](auto& r){r=value;});
+    auto id=receipts.available_primary_key();if(!id)id=1;check(id<std::numeric_limits<uint64_t>::max(),"RAM_GRANT_LIMIT");receipts.emplace(get_self(),[&](auto& r){r.id=id;r.dao_id=dao_id;r.payer=payer;r.reference=reference;r.activity=activity;r.identity=identity;r.completion=completion;});
+    // Meter callbacks precede this final check, including the grant's own permanent metadata.
+    action(permission_level{get_self(),"active"_n},get_self(),"checkrampool"_n,std::make_tuple(payer)).send();
+  }
+  ACTION checkrampool(name payer){
+    check(get_sender()==get_self(),"RAM_POOL_SENDER");require_auth(get_self());
+    ram_pools pools(get_self(),get_self().value);check_ram_pool(get_self(),pools.get(payer.value,"RAM_POOL_UNKNOWN"));
   }
   ACTION setresources(uint16_t native_ram_bps,uint16_t card_ram_bps,uint64_t included_activity_bytes,uint64_t identity_bytes_per_slot,uint32_t quote_lifetime_seconds,uint64_t storage_free_bytes,uint64_t storage_unit_bytes,uint32_t storage_monthly_usd){
     require_auth(get_self());save_resources(native_ram_bps,card_ram_bps,included_activity_bytes,identity_bytes_per_slot,quote_lifetime_seconds,storage_free_bytes,storage_unit_bytes,storage_monthly_usd);
@@ -896,7 +919,7 @@ private:
 extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
   if(code==receiver){switch(action_name){
     EOSIO_DISPATCH_HELPER(runtime,(authproof)(unlinknat)(linkevm)(unlinkevm)(submitevm)(setadmit)(admitfrom))
-    EOSIO_DISPATCH_HELPER(runtime,(setarchcfg)(archattest)(archapprove)(archrevoke)(archstep)(initramobs)(rebindramobs)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram)(fulfilram))
+    EOSIO_DISPATCH_HELPER(runtime,(setarchcfg)(archattest)(archapprove)(archrevoke)(archstep)(initramobs)(rebindramobs)(setrampool)(grantdaoram)(checkrampool)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram)(fulfilram))
     EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(setprofile)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(confirmext)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))
     EOSIO_DISPATCH_HELPER(runtime,(sethosted)(govhosted)(govseatfee)(orderfree)(setcapacity)(revokecap)(resumecap))
     EOSIO_DISPATCH_HELPER(runtime,(enrollagent)(addmember)(initgov)(setdaogov)(addsession)(delsession)(guardpause)(guardrevoke)(guardrecover)(submitsess)(setfees)(listmod)(unlistmod)(setmodcopy)(setpolicy)(setgov)(setoracle)(govfees)(govpayfees)(setcreate)(govcreate)(setcrrate)(ordercreate)(cardcreate)(createpaid)(govlist)(govunlist)(govmodcopy))

@@ -47,6 +47,19 @@ export class LocalContentFixture implements ContentProvider {
     if (bytes.length !== expectedBytes) throw new Error('CONTENT_SIZE');
     return bytes;
   }
+  async findCid(cid: string): Promise<PinnedFile[]> {
+    CidSchema.parse(cid);
+    const found: PinnedFile[] = [];
+    for (const filename of await readdir(this.directory)) {
+      if (!filename.endsWith('.json')) continue;
+      const record = RecordSchema.parse(
+        JSON.parse(await readFile(join(this.directory, filename), 'utf8')),
+      );
+      if (record.cid === cid) found.push({ id: record.id, cid, size: record.size });
+      if (found.length > 10) throw new Error('CONTENT_INVENTORY_LIMIT');
+    }
+    return found;
+  }
   async remove(providerId: string): Promise<void> {
     z.uuid().parse(providerId);
     for (const filename of await readdir(this.directory)) {

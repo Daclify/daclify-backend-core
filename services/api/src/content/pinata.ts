@@ -106,6 +106,29 @@ export class PinataStorage implements ContentProvider {
       throw new ApiError('PINATA_RESPONSE_INVALID', 502);
     return parsed.data.data.files.map((file) => ({ id: file.id, cid: file.cid, size: file.size }));
   }
+  async findCid(cid: string): Promise<PinnedFile[]> {
+    CidSchema.parse(cid);
+    const params = new URLSearchParams({ cid, limit: '10' });
+    const parsed = z
+      .object({
+        data: z.object({
+          files: z.array(ListedFileSchema).max(10),
+          next_page_token: z.string().nullable().optional(),
+        }),
+      })
+      .safeParse(
+        await vendorJson(await this.#request(`https://api.pinata.cloud/v3/files/public?${params}`)),
+      );
+    if (
+      !parsed.success ||
+      parsed.data.data.next_page_token ||
+      parsed.data.data.files.some((file) => file.cid !== cid)
+    )
+      throw new ApiError('PINATA_RESPONSE_INVALID', 502);
+    return parsed.data.data.files
+      .filter((file) => z.uuid().safeParse(file.keyvalues.daclify_upload).success)
+      .map((file) => ({ id: file.id, cid: file.cid, size: file.size }));
+  }
   async retrieve(cid: string, expectedBytes: number): Promise<Uint8Array> {
     CidSchema.parse(cid);
     if (

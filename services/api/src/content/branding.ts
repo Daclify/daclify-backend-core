@@ -7,6 +7,17 @@ export function validateBrandImage(
   bytes: Uint8Array,
 ): void {
   BrandImageSchema.parse(reference);
+  validateBrandImagePayload(reference, bytes);
+}
+export function validateBrandImagePayload(
+  reference: Pick<z.infer<typeof BrandImageSchema>, 'bytes' | 'mediaType' | 'commitment'>,
+  bytes: Uint8Array,
+): void {
+  BrandImageSchema.omit({ cid: true }).parse({
+    bytes: reference.bytes,
+    mediaType: reference.mediaType,
+    commitment: reference.commitment,
+  });
   if (bytes.length !== reference.bytes) throw new ApiError('CONTENT_SIZE', 502);
   if (createHash('sha256').update(bytes).digest('hex') !== reference.commitment)
     throw new ApiError('CONTENT_INTEGRITY', 502);

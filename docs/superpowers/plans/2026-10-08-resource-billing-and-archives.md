@@ -231,24 +231,24 @@ Every task follows: create the listed meaningful failing cases; run the focused 
 
 **Files:** core protocol/resources.ts, protocol/storage.ts, protocol/service-api.ts, protocol/index.ts; module protocol/archive.ts; tests/resource-policy.test.ts, tests/storage-pricing.test.ts.
 
-- [ ] Encode the confirmed prices, distinct rail markups, decimal units, monthly terms and 30-day grace as versioned policy schemas.
-- [ ] Implement the integer functions in section 2 with boundary validation and derive API/schema types; retain existing hosting pricing.
-- [ ] Add tests: base 100 native units produces fee 5/total 105; base USD 100 cents produces card markup 20; no compound 5% plus 20%; one storage unit produces 1,100,000,000 bytes/$1 monthly.
-- [ ] Add zero/maximum/overflow/bad-divisor/negative/Unicode payload-size tests; a pending checkout cannot grant capacity.
-- [ ] Run: npx vitest run tests/resource-policy.test.ts tests/storage-pricing.test.ts tests/hosting-pricing.test.ts.
-- [ ] Commit the schema/pricing task after the actual green result.
+- [x] Encode the confirmed prices, distinct rail markups, decimal units, monthly terms and 30-day grace as versioned policy schemas.
+- [x] Implement the integer functions in section 2 with boundary validation and derive API/schema types; retain existing hosting pricing.
+- [x] Add tests: base 100 native units produces fee 5/total 105; base USD 100 cents produces card markup 20; no compound 5% plus 20%; one storage unit produces 1,100,000,000 bytes/$1 monthly.
+- [x] Add zero/maximum/overflow/bad-divisor/negative/Unicode payload-size tests; a pending checkout cannot grant capacity.
+- [x] Run: npx vitest run tests/resource-policy.test.ts tests/storage-pricing.test.ts tests/hosting-pricing.test.ts.
+- [x] Commit the schema/pricing task after the actual green result.
 
 ### Task 2 — Inventory native billable writes and qualify metering recipes
 
 **Files:** core contracts/common/ram.hpp, tools/analysis/ram.ts; module contracts/common/module.hpp and all five C++ contracts; core tests/native/ram-accounting.test.ts; module tests/ram-accounting.test.ts.
 
 - [ ] Enumerate every emplace/modify/erase, including profiles, credentials, sessions, admission, branding, documents, grants, locks, receipts, elections, agreements and execution plans. Record payer/scope/index/lifecycle and growth path.
-- [ ] Derive row size from producer-owned packed types and native billing constants; assign shared headers once under a declared allocation policy.
-- [ ] Measure insert/grow/shrink/delete/last-row scope effects against native get_account deltas, including 127→128-byte serialization boundaries and multi-byte UTF-8.
+- [x] Derive row size from producer-owned packed types and native billing constants; assign shared headers once under a declared allocation policy.
+- [x] Measure insert/grow/shrink/delete/last-row scope effects against native get_account deltas, including 127→128-byte serialization boundaries and multi-byte UTF-8.
 - [ ] Include identity/nonce changes, inactive members, all module tables and meter rows themselves. Platform permissions/code/ABI overhead remains separately visible.
 - [ ] Add negative conformance cases for skipped hooks, double charges, forged negative deltas and a malicious module charging a foreign payer.
-- [ ] Run native accounting on an explicitly owned fixture; emulator results do not establish billable RAM.
-- [ ] Keep enforcement disabled until the ledger/native conservation equation holds. A mismatch blocks release, not just a dashboard warning.
+- [x] Run native accounting on an explicitly owned fixture; emulator results do not establish billable RAM.
+- [x] Keep enforcement disabled until the ledger/native conservation equation holds. A mismatch blocks release, not just a dashboard warning.
 
 ### Task 3 — Backed allowances, all-module counters and completion reserves
 
@@ -349,15 +349,15 @@ Every task follows: create the listed meaningful failing cases; run the focused 
 
 **Files:** modules archive/{index,format,planner,restore}.ts, protocol/archive.ts, package.json, docs/archive.md; tests/archive-format.test.ts; core contracts/common/archive.hpp; core store.ts.
 
-- [ ] Export ArchiveManifest/config/format/planner/restore through @daclify/modules/archive. Use existing dependencies and core's public SDK; no imports from private core services.
-- [ ] Add dist/archive and migrations/archive to the producer package files list, plus the ./archive types/import exports. Verify the packed tarball contains the migration bytes and consumers can import the public subpath; source-checkout success alone is insufficient.
-- [ ] Register it as a service module explicitly in core/UI, without adding a fake native module deployment or another contract account.
-- [ ] Add archive-owned, namespace/hash-tracked SQL migration discovery to core's existing coordinator; do not rename or rewrite old core migrations.
+- [x] Export ArchiveManifest/config/format/planner/restore through @daclify/modules/archive. Use existing dependencies and core's public SDK; no imports from private core services.
+- [x] Add dist/archive and migrations/archive to the producer package files list, plus the ./archive types/import exports. Verify the packed tarball contains the migration bytes and consumers can import the public subpath; source-checkout success alone is insufficient.
+- [x] Register it as a service module explicitly in core/UI, without adding a fake native module deployment or another contract account.
+- [x] Add archive-owned, namespace/hash-tracked SQL migration discovery to core's existing coordinator; do not rename or rewrite old core migrations.
 - [ ] Define manifest schema version 1: full domain; source code/ABI/schema hashes; irreversible block number/ID; eligible families; chunks/CIDs/byte counts/commitments; ordered record counts/roots; existing file references.
-- [ ] Implement the exact domain, canonical row encoding, leaf/node prefixes, ordering and odd-leaf rules in section 6; implement independent fixed C++/TypeScript vectors using existing SHA256/WharfKit.
-- [ ] The manifest contains chunk descriptors, not its own CID/hash. Hash its final uploaded bytes; approval/anchor binds that hash and CID plus the canonical descriptor commitment. Both administrator approval and retrieval/backup attestation must bind the same immutable payload before pruning becomes eligible.
-- [ ] Bound final chunk bytes to 5 MiB, leaves to 65,536, depth to 16 and decoded structures to known released schemas. Reject duplicates, missing ordinals, malformed encodings and unsupported historical ABI.
-- [ ] Test zero/one/odd/even/boundary-size bundles, wrong domain/source, modified row bytes, excessive proof depth, bad manifest and tampered imported ABI.
+- [x] Implement the exact domain, canonical row encoding, leaf/node prefixes, ordering and odd-leaf rules in section 6; implement independent fixed C++/TypeScript vectors using existing SHA256/WharfKit.
+- [x] The manifest contains chunk descriptors, not its own CID/hash. Hash its final uploaded bytes; approval/anchor binds that hash and CID plus the canonical descriptor commitment. Both administrator approval and retrieval/backup attestation must bind the same immutable payload before pruning becomes eligible.
+- [x] Bound final chunk bytes to 5 MiB, leaves to 65,536, depth to 16 and decoded structures to known released schemas. Reject duplicates, missing ordinals, malformed encodings and unsupported historical ABI.
+- [x] Test zero/one/odd/even/boundary-size bundles, wrong domain/source, modified row bytes, excessive proof depth, bad manifest and tampered imported ABI.
 - [ ] Archive original private ciphertext and encrypted grants without plaintext transformation. Keep private titles/filenames/provider identities out of provider labels and public manifests.
 
 ### Task 11 — Resumable export, integrity/backup verification and manual approval
@@ -377,13 +377,13 @@ Every task follows: create the listed meaningful failing cases; run the focused 
 
 **Files:** core contracts/runtime/runtime.cpp, contracts/common/archive.hpp, contracts/common/resources.hpp; modules contracts/decide/decide.cpp and source reference hooks in contracts/{works,payroll,grants,endorse} and contracts/common/module.hpp; tests/archive-pruning.test.ts, tests/document-archive.test.ts; core tests/native/archive-pruning.test.ts.
 
-- [ ] First qualify ordinary finalized-poll vote pruning. Retain ballot identity/result/tallies and execution/election protections; exclude elections/award/work execution plans initially.
-- [ ] Verify leaf proofs against actual current packed rows and approved anchor/source/retention markers. Prune only the next bounded ordinal batch; repeat calls are harmless.
-- [ ] Apply the RAM decrement and archive progress in the same transaction; retain permanent ballot identity so old IDs cannot be reused.
+- [x] First qualify ordinary finalized-poll vote pruning. Retain ballot identity/result/tallies and execution/election protections; exclude elections/award/work execution plans initially.
+- [x] Verify leaf proofs against actual current packed rows and approved anchor/source/retention markers. Prune only the next bounded ordinal batch; repeat calls are harmless.
+- [x] Apply the RAM decrement and archive progress in the same transaction; retain permanent ballot identity so old IDs cannot be reused.
 - [ ] Add document reference tracking for every authoritative first-party document/version consumer, including amendments, elections/terms/recalls, agreements and grants. Legacy references are backfilled before document pruning is enabled.
 - [ ] Retain latest versions and required author/version high-water information. Prune an old version only when supported reference protection establishes it is not required on chain.
 - [ ] Archived old documents can be restored on chain from verified original bytes/commitment under ordinary RAM limits before they are referenced by new governance. Do not fabricate a missing old row from unverified indexer JSON.
-- [ ] Keep member records, epoch commitments, key grants, outstanding obligations and once-only financial receipts/proofs on chain.
+- [x] Keep member records, epoch commitments, key grants, outstanding obligations and once-only financial receipts/proofs on chain.
 - [ ] Test nonterminal/too-young/referenced records, incorrect source/current hash, forged approval/availability attestation, stale row proofs, last-row/ID reuse, partial batches, replay and atomic failure mid-batch.
 - [ ] No generic erase-table action. Each source owns eligibility. If a family cannot satisfy these tests, keep its pruning disabled and offer export/read support.
 - [ ] Run real native permission/pruning tests and compare measured freed bytes against the ledger.
@@ -392,14 +392,14 @@ Every task follows: create the listed meaningful failing cases; run the focused 
 
 **Files:** modules archive/restore.ts; core archive routes/store; core content/service.ts and native-chain.ts; frontend src/content/archive.ts; tests/integration/archive-recovery.test.ts; frontend tests/unit/archive.test.ts.
 
-- [ ] Merge live and verified archive history with stable IDs, coverage markers, cursor pagination and deduplication. Unknown/missing coverage returns an explicit unavailable state.
-- [ ] Rebuild an empty history index from on-chain archive anchors, retained schema releases and surviving pins/backups; no original PostgreSQL archive index required.
+- [x] Merge live and verified archive history with stable IDs, coverage markers, cursor pagination and deduplication. Unknown/missing coverage returns an explicit unavailable state.
+- [x] Rebuild an empty history index from on-chain archive anchors, retained schema releases and surviving pins/backups; no original PostgreSQL archive index required.
 - [ ] Preserve the existing encrypted document/key-grant domain and client decryption path. Recovered original keys decrypt archived private JSON/files through retained epoch grants.
 - [ ] Test newly joined future-only members, former members retaining old keys, replacement keys failing old decryption, tampered ciphertext and absent archive providers.
-- [ ] Reconstruct pin/reference billing only from verified chain references, provider inventory and restored receipts; never infer a Stripe payment from a document CID.
-- [ ] Keep service/social pairing recovery in the separate PostgreSQL backup runbook.
+- [x] Reconstruct pin/reference billing only from verified chain references, provider inventory and restored receipts; never infer a Stripe payment from a document CID.
+- [x] Keep service/social pairing recovery in the separate PostgreSQL backup runbook.
 - [ ] Restore indexes/history without repopulating every pruned row into RAM. Only explicit selective document restoration does so.
-- [ ] Run a full drill: export→verify→approve→prune→drop owned test index/database→rebuild→browse/decrypt→compare with the original verified dataset.
+- [x] Run a full drill: export→verify→approve→prune→drop owned test index/database→rebuild→browse/decrypt→compare with the original verified dataset.
 
 ### Task 14 — Resources/Archive UI, clear consent and access
 
@@ -539,3 +539,5 @@ Before implementation delivery:
 - [ ] Generated public types/help and independent operator instructions match the exact release.
 - [ ] Local full checks, native/provider/browser evidence and remaining gates are reported truthfully.
 - [ ] No mainnet deployment, production deletion, authority change or asset movement was inferred from approval of this plan.
+
+Current implementation and all open gates are tracked in the [execution ledger](../../evidence/2026-10-08-resource-execution.md). A checked supported-family requirement does not enable protected document pruning, production cleanup or immutable release qualification.

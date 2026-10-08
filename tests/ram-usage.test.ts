@@ -75,19 +75,28 @@ function fixture() {
             ]
           : body.table === 'ramalloc'
             ? [{ payer: 'decide', purchased_bytes: '4096' }]
-            : body.table === 'ramsources'
-              ? [{ account: 'decide', code_hash: 'cd'.repeat(32) }]
-              : body.table === 'modules'
-                ? [
-                    {
-                      account: 'decide',
-                      version: 1,
-                      actions: [],
-                      grants: [],
-                      code_hash: 'cd'.repeat(32),
-                    },
-                  ]
-                : [];
+            : body.table === 'ramlimits'
+              ? [
+                  {
+                    payer: 'daclifycore',
+                    activity: '262144',
+                    identity: '20480',
+                    completion: '32768',
+                  },
+                ]
+              : body.table === 'ramsources'
+                ? [{ account: 'decide', code_hash: 'cd'.repeat(32) }]
+                : body.table === 'modules'
+                  ? [
+                      {
+                        account: 'decide',
+                        version: 1,
+                        actions: [],
+                        grants: [],
+                        code_hash: 'cd'.repeat(32),
+                      },
+                    ]
+                  : [];
     return Response.json({ rows, more: truncated && body.table === 'ramstats', next_key: '100' });
   });
   const gateway = new NativeChainGateway({
@@ -126,6 +135,11 @@ it('separates DAO counters/purchased credits from the whole payer account usage'
   expect(() => RamUsageSchema.parse({ ...result, totalObservedBytes: '1951' })).toThrow();
   expect(() => RamUsageSchema.parse({ ...result, observation: 'disabled' })).toThrow();
   expect(() => RamUsageSchema.parse({ ...result, purchasedBytes: '4097' })).toThrow();
+  expect(result.payers.find((p) => p.payer === 'daclifycore')?.allocation).toEqual({
+    activity: '262144',
+    identity: '20480',
+    completion: '32768',
+  });
 });
 it('requires active membership of the exact DAO before reading resource details', async () => {
   const fixtureData = fixture(),

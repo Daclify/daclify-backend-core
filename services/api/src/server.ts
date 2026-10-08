@@ -331,6 +331,12 @@ export async function createServer(
         'Configured storage does not prove Pinata credentials or availability.',
       ],
       [
+        'storage-retention',
+        'Guarded storage retention',
+        !!options.content?.retention.cleanupEnabled,
+        'Operator-enabled cleanup requires separate live-provider qualification and complete pin/payment recovery. It never erases native identities, claims or purchased RAM.',
+      ],
+      [
         'storage-billing',
         'Prepaid pinned storage',
         !!options.hostedStorage,
@@ -589,6 +595,23 @@ export async function createServer(
     };
   });
   const images = createWindowLimiter(100, 60_000, 4000);
+  const assetWrites = createWindowLimiter(20, 60_000, 2000);
+  app.post(ApiRoutes.storageRecover.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    if (!assetWrites(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    return contentService().recoverStorage(account, request.body);
+  });
+  app.post(ApiRoutes.brandingUpload.path, { bodyLimit: 3 * 1024 * 1024 }, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    if (!assetWrites(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    return contentService().uploadBranding(account, request.body);
+  });
   app.get<{ Params: { id: string; slot: string } }>(ApiRoutes.branding.path, async (request) => {
     if (!images(request.ip, Date.now())) throw new ApiError('RATE_LIMIT', 429);
     return contentService().brandingBytes(

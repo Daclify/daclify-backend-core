@@ -1,0 +1,11 @@
+{
+  "runtime": "ramobs1f3oxs",
+  "source": "arcsrcktamkx",
+  "rows": 25,
+  "proofDepth": 16,
+  "actionBytes": 13058,
+  "cpuMicroseconds": 16929,
+  "freedBytes": "7225",
+  "unusedLeaves": "synthetic padding",
+  "replayFreedBytes": "0"
+}

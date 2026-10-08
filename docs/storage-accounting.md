@@ -6,7 +6,7 @@ Files count at their final stored size: private files include the encrypted enve
 
 An upload whose provider outcome is unknown still holds its expected bytes. Expiration or an empty provider listing cannot release that reservation. Externally supplied on-chain CIDs do not create Pinata ownership or storage charges. Archived content, versions, branding and media share normal storage pricing when they have hosted references; the Archive lifecycle is still being implemented.
 
-`GET /v1/daos/:id/storage` requires an authenticated active member of that exact deployment. It returns configured capacity, unique verified bytes, unresolved held bytes, object/reference counts and the disabled cleanup state. No filenames or provider credentials are returned. Upload capacity is projected from the configured free allowance and immutable verified prepaid storage terms, independently of membership billing.
+`GET /v1/daos/:id/storage` requires an authenticated active member of that exact deployment. It returns configured capacity, unique verified bytes, unresolved held bytes, object/reference counts and the actual operator cleanup setting. No filenames or provider credentials are returned. Upload capacity is projected from the configured free allowance and immutable verified prepaid storage terms, independently of membership billing.
 
 ## Provider ownership
 
@@ -30,7 +30,7 @@ This is an explicit operator write for one selected upload. It requires exactly 
 
 ## Retention boundary
 
-Automatic unpinning is disabled. Object generations and `removing` state prepare the reference fence: verification rejects a new reference to an object being removed. Billing projects the original thirty-day grace deadline. Staged ciphertext backup, provider leases and compensation are still required before removal can be enabled. No file is deleted because of an expired upload reservation or unpaid membership subscription in this checkpoint.
+Automatic unpinning is disabled. Object generations and `removing` state fence references while guarded staging, leased provider removal and compensation have local regression coverage, described below. Billing projects the original thirty-day grace deadline. Provider qualification and operational enablement are still required. No file is deleted because of an expired upload reservation or unpaid membership subscription in this checkpoint.
 
 ## Governed resource policy and prepaid period helpers
 
@@ -46,7 +46,7 @@ Create a separate webhook endpoint at `/v1/storage/stripe/webhook`. Deliver `che
 
 In DAO Settings, open **Storage and blockchain resources**. Active members can read usage; only current administrators can approve units or stop renewal. A fresh root/linked-wallet account-control signature covers the exact approval body in addition to session/CSRF protection. At launch, 100 MB is included and each approved extra 1 GB costs $1 per calendar month. No upload triggers an automatic overage charge. Administrators see the exact total, accepted pricing, payment state, paid-through date and original grace deadline before authorizing recurring billing. Existing subscriptions keep accepted prices unless an administrator explicitly switches. Retained files can exceed the upload allowance during grace; further unfunded growth is blocked.
 
-Cancellation stops renewal at period end and does not revoke the paid term. A renewal failure does not remove membership or reset retention. Provider/network ambiguity never authorizes deletion. The Resources screen explicitly labels automatic cleanup and RAM purchases as unfinished. Database backups must preserve agreements, invoices, pending changes, ownership records and jobs; chain-only recovery does not reconstruct Stripe or Pinata ownership.
+Cancellation stops renewal at period end and does not revoke the paid term. A renewal failure does not remove membership or reset retention. Provider/network ambiguity never authorizes deletion. Resources separates implemented purchases/configured cleanup from outstanding production qualification. Database backups must preserve agreements, invoices, pending changes, ownership records and jobs; chain-only recovery does not reconstruct Stripe or Pinata ownership.
 
 ## Observer runtime upgrades
 
@@ -76,7 +76,7 @@ Migration 024 adds immutable asset request/ownership domains and durable provide
 
 Every new artifact reserves bytes before provider upload. A known CID already charged to that DAO can be reused without charging it twice, but its bytes are retrieved and checked again. An unknown upload holds all expected bytes even after expiration or an empty provider listing. Reconciliation can recover a verified provider response; ambiguous/corrupt responses go to retry/review without removal. Asset jobs use a separate namespace in the existing stoppable host polling loop, not a new server or queue fleet.
 
-This is internal transport for the upcoming publication/export handlers. It does not publish branding, certify an archive manifest, verify an independent backup, approve pruning or expose a public asset upload endpoint. Those callers must validate their payload-specific format and publication authority. No IPFS file or contract row is deleted by the transport.
+Archive transport uses this internal API. The narrow authenticated `POST /v1/branding/uploads` route additionally permits current administrators to upload PNG/JPEG/WebP public logos or covers up to 2 MiB with explicit public consent. It validates size, commitment and format before pinning. Uploading is separate from the ordinary signed metadata update and immediately consumes hosting capacity. General document/media files use the existing document upload/publish flow; there is no arbitrary public Archive-asset uploader. No IPFS file or contract row is deleted by the transport.
 
 ## Retention selection and guarded cleanup — development
 
@@ -84,4 +84,10 @@ Resources lets administrators prioritize whole verified objects within the free 
 
 The cleanup engine uses existing SQL jobs, per-DAO/object locks, generation-fenced leases and an immutable removal audit. It verifies the original bytes and stages at most 5 MiB per removal in PostgreSQL before provider deletion. Shared references and unfinished object reservations prevent unpinning. New references are blocked while an object is being removed. Payment is freshly reconciled before removal and afterward. If payment invalidates removal, the worker re-pins and verifies the staged bytes before restoring availability. Uncertain providers, lost leases and failed compensation pause for review; failed jobs back off without resetting the original grace deadline. Terminal staging is cleared, not retained as an undeclared backup service.
 
-There is an external-provider visibility window: PostgreSQL, Stripe and Pinata cannot commit atomically. The operator must qualify compensating re-pin behavior and review monitoring before enabling the worker. The application does not start destructive retention; default cleanup remains disabled. No existing user/provider files have been removed.
+There is an external-provider visibility window: PostgreSQL, Stripe and Pinata cannot commit atomically. The operator must qualify compensating re-pin behavior and review monitoring before enabling the worker. Startup leaves cleanup disabled by default and requires an explicit operator setting to start it. No existing user/provider files have been removed.
+
+## Worker enablement
+
+`DACLIFY_STORAGE_CLEANUP_ENABLED=false` is the default. Setting it to `true` explicitly starts the existing bounded, stoppable retention worker and injects the hosted-billing provider's current-payment reconciliation before removal. Startup rejects malformed values and enabled cleanup without both content ownership and storage billing configuration. Resources/Status report this actual operator setting. The setting is permission to execute, not evidence of provider health or qualification.
+
+Keep it false until the intended separate Pinata account and Stripe test/live mode have passed controlled upload/retrieve/unpin/repin and payment-race checks, global pin references and payment receipts are recovered, staged-copy recovery and monitoring are reviewed, and the operator approves execution. A lost database starts with no trustworthy global payment/reference inventory: rebuild it before enabling cleanup. This development work leaves all private env files and live cleanup settings unchanged.

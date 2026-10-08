@@ -25,6 +25,10 @@ import {
   HostedDocumentSchema,
   UploadStatusSchema,
   HostedBytesSchema,
+  BrandingUploadSchema,
+  BrandingReceiptSchema,
+  StorageRecoveryRequestSchema,
+  StorageRecoveryPageSchema,
 } from './storage.js';
 import { TreasurySchema, SettlementRequestSchema, SettlementResultSchema } from './treasury.js';
 import { Uint64Schema } from './base.js';
@@ -126,6 +130,20 @@ export const ApiRoutes = {
       mediaType: z.enum(['image/png', 'image/jpeg', 'image/webp']),
     }),
     helpTopic: 'dao-discovery',
+  },
+  brandingUpload: {
+    method: 'POST',
+    path: '/v1/branding/uploads',
+    input: BrandingUploadSchema,
+    response: BrandingReceiptSchema,
+    helpTopic: 'dao-discovery',
+  },
+  storageRecover: {
+    method: 'POST',
+    path: '/v1/storage/recover',
+    input: StorageRecoveryRequestSchema,
+    response: StorageRecoveryPageSchema,
+    helpTopic: 'recovery',
   },
   presets: {
     method: 'GET',

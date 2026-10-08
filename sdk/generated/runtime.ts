@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = 'd9514086bea8d9dfe35307c3d932e31a6f383668d5ac9ade56627419c36c30fb';
+export const runtimeAbiHash = 'c9a01fd6b5d6aff698830955f310d377e2a319ad9e9e6abcdf27c5358563a840';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -740,6 +740,16 @@ export const runtimeAbi = {
         {
           "name": "title",
           "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "checkrampool",
+      "base": "",
+      "fields": [
+        {
+          "name": "payer",
+          "type": "name"
         }
       ]
     },
@@ -1844,6 +1854,36 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "grantdaoram",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "reference",
+          "type": "uint64"
+        },
+        {
+          "name": "activity",
+          "type": "uint64"
+        },
+        {
+          "name": "identity",
+          "type": "uint64"
+        },
+        {
+          "name": "completion",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
       "name": "grantkey",
       "base": "",
       "fields": [
@@ -2723,6 +2763,62 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "ram_dao_limit",
+      "base": "",
+      "fields": [
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "activity",
+          "type": "uint64"
+        },
+        {
+          "name": "identity",
+          "type": "uint64"
+        },
+        {
+          "name": "completion",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "ram_grant_receipt",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "reference",
+          "type": "uint64"
+        },
+        {
+          "name": "activity",
+          "type": "uint64"
+        },
+        {
+          "name": "identity",
+          "type": "uint64"
+        },
+        {
+          "name": "completion",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
       "name": "ram_observer_config",
       "base": "",
       "fields": [
@@ -2809,6 +2905,42 @@ export const runtimeAbi = {
         {
           "name": "settled",
           "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "ram_payer_owner",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        }
+      ]
+    },
+    {
+      "name": "ram_payer_pool",
+      "base": "",
+      "fields": [
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "quota_bytes",
+          "type": "uint64"
+        },
+        {
+          "name": "baseline_bytes",
+          "type": "uint64"
+        },
+        {
+          "name": "platform_headroom",
+          "type": "uint64"
+        },
+        {
+          "name": "source_hash",
+          "type": "checksum256"
         }
       ]
     },
@@ -3505,6 +3637,28 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "setrampool",
+      "base": "",
+      "fields": [
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "expected_quota",
+          "type": "uint64"
+        },
+        {
+          "name": "baseline_bytes",
+          "type": "uint64"
+        },
+        {
+          "name": "platform_headroom",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
       "name": "setresources",
       "base": "",
       "fields": [
@@ -3810,6 +3964,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "checkrampool",
+      "type": "checkrampool",
+      "ricardian_contract": ""
+    },
+    {
       "name": "commitepoch",
       "type": "commitepoch",
       "ricardian_contract": ""
@@ -3912,6 +4071,11 @@ export const runtimeAbi = {
     {
       "name": "grantcredit",
       "type": "grantcredit",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "grantdaoram",
+      "type": "grantdaoram",
       "ricardian_contract": ""
     },
     {
@@ -4122,6 +4286,11 @@ export const runtimeAbi = {
     {
       "name": "setramcode",
       "type": "setramcode",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "setrampool",
+      "type": "setrampool",
       "ricardian_contract": ""
     },
     {
@@ -4406,8 +4575,22 @@ export const runtimeAbi = {
       "key_types": []
     },
     {
+      "name": "ramgrants",
+      "type": "ram_grant_receipt",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "ramintent",
       "type": "ram_payment_intent",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "ramlimits",
+      "type": "ram_dao_limit",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -4422,6 +4605,20 @@ export const runtimeAbi = {
     {
       "name": "ramorders",
       "type": "ram_order",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "rampayer",
+      "type": "ram_payer_owner",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "rampools",
+      "type": "ram_payer_pool",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -4682,6 +4879,9 @@ export interface catalogue_record {
   price: string;
   code_hash: string;
   title: string;
+}
+export interface checkrampool {
+  payer: string;
 }
 export interface commitepoch {
   runtime: string;
@@ -4975,6 +5175,14 @@ export interface grantcredit {
   member_id: string;
   quantity: string;
 }
+export interface grantdaoram {
+  dao_id: string;
+  payer: string;
+  reference: string;
+  activity: string;
+  identity: string;
+  completion: string;
+}
 export interface grantkey {
   runtime: string;
   dao_id: string;
@@ -5213,6 +5421,21 @@ export interface ram_counter {
   retained: string;
   platform: string;
 }
+export interface ram_dao_limit {
+  payer: string;
+  activity: string;
+  identity: string;
+  completion: string;
+}
+export interface ram_grant_receipt {
+  id: string;
+  dao_id: string;
+  payer: string;
+  reference: string;
+  activity: string;
+  identity: string;
+  completion: string;
+}
 export interface ram_observer_config {
   meter_bytes: string;
   runtime_hash: string;
@@ -5236,6 +5459,16 @@ export interface ram_order {
   purchases: ram_acquisition[];
   funded: boolean;
   settled: boolean;
+}
+export interface ram_payer_owner {
+  runtime: string;
+}
+export interface ram_payer_pool {
+  payer: string;
+  quota_bytes: string;
+  baseline_bytes: string;
+  platform_headroom: string;
+  source_hash: string;
 }
 export interface ram_payment_intent {
   order: ram_order;
@@ -5426,6 +5659,12 @@ export interface setramcode {
   account: string;
   code_hash: string;
 }
+export interface setrampool {
+  payer: string;
+  expected_quota: string;
+  baseline_bytes: string;
+  platform_headroom: string;
+}
 export interface setresources {
   native_ram_bps: number;
   card_ram_bps: number;
@@ -5506,6 +5745,7 @@ export interface RuntimeActions {
   authproof: authproof;
   cancelob: cancelob;
   cardcreate: cardcreate;
+  checkrampool: checkrampool;
   commitepoch: commitepoch;
   confirmext: confirmext;
   createdao: createdao;
@@ -5527,6 +5767,7 @@ export interface RuntimeActions {
   govunlist: govunlist;
   govunlock: govunlock;
   grantcredit: grantcredit;
+  grantdaoram: grantdaoram;
   grantkey: grantkey;
   guardpause: guardpause;
   guardrecover: guardrecover;
@@ -5569,6 +5810,7 @@ export interface RuntimeActions {
   setpolicy: setpolicy;
   setprofile: setprofile;
   setramcode: setramcode;
+  setrampool: setrampool;
   setresources: setresources;
   setroles: setroles;
   submit: submit;

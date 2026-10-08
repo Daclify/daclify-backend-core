@@ -4,6 +4,18 @@
 #include <eosio/crypto.hpp>
 #include <eosio/asset.hpp>
 namespace daclify {
+#ifndef DACLIFY_RAM_PAYER_CONTRACT
+#define DACLIFY_RAM_PAYER_CONTRACT "runtime"
+#endif
+struct [[eosio::table("rampayer"),eosio::contract(DACLIFY_RAM_PAYER_CONTRACT)]] ram_payer_owner {
+  eosio::name runtime;
+  EOSLIB_SERIALIZE(ram_payer_owner,(runtime))
+};
+using ram_payer_binding=eosio::singleton<"rampayer"_n,ram_payer_owner>;
+inline void check_ram_payer_runtime(eosio::name payer,eosio::name runtime){
+  ram_payer_binding binding(payer,payer.value);
+  if(binding.exists())eosio::check(binding.get().runtime==runtime,"RAM_PAYER_RUNTIME");
+}
 struct [[eosio::table("ramreserve"),eosio::contract("runtime")]] ram_operator_reserve {
   eosio::asset available=eosio::asset(0,eosio::symbol("TLOS",4));
   EOSLIB_SERIALIZE(ram_operator_reserve,(available))
@@ -70,7 +82,7 @@ inline uint8_t ram_category(eosio::name table,uint64_t dao_id){
   if(!dao_id)return 3;
   switch(table.value){
     case "members"_n.value:case "actors"_n.value:case "sessions"_n.value:case "evmbindings"_n.value:case "profiles"_n.value:case "epochs"_n.value:case "keygrants"_n.value:return 0;
-    case "archives"_n.value:case "archpos"_n.value:case "ramcards"_n.value:case "ramorders"_n.value:case "ramalloc"_n.value:case "receipts"_n.value:case "evidence"_n.value:case "capreceipts"_n.value:case "createords"_n.value:case "obligations"_n.value:case "budgets"_n.value:case "executions"_n.value:case "grantplans"_n.value:case "agreements"_n.value:case "controls"_n.value:case "entries"_n.value:case "schedules"_n.value:case "terms"_n.value:return 2;
+    case "ramlimits"_n.value:case "ramgrants"_n.value:case "archives"_n.value:case "archpos"_n.value:case "ramcards"_n.value:case "ramorders"_n.value:case "ramalloc"_n.value:case "receipts"_n.value:case "evidence"_n.value:case "capreceipts"_n.value:case "createords"_n.value:case "obligations"_n.value:case "budgets"_n.value:case "executions"_n.value:case "grantplans"_n.value:case "agreements"_n.value:case "controls"_n.value:case "entries"_n.value:case "schedules"_n.value:case "terms"_n.value:return 2;
     default:return 1;
   }
 }

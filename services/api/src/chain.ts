@@ -38,6 +38,9 @@ import type {
   ArchiveProgressSchema,
 } from '@daclify/modules/archive';
 export interface ChainGateway {
+  archiveLiveVotes?(
+    input: z.infer<typeof import('@daclify/modules/archive').ArchiveLiveVotesRequestSchema>,
+  ): Promise<z.infer<typeof import('@daclify/modules/archive').ArchiveLiveVotesSchema>>;
   archiveHistory?(
     input: z.infer<typeof import('@daclify/modules/archive').ArchiveHistoryRequestSchema>,
   ): Promise<z.infer<typeof import('@daclify/modules/archive').ArchiveHistoryListSchema>>;
