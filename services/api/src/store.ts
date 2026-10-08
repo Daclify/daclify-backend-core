@@ -1,6 +1,7 @@
 import type { Pool } from 'pg';
 import { readdir, readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
+import { ArchiveMigrations } from '@daclify/modules/archive/migrations';
 export interface Challenge {
   id: string;
   signing_key: string;
@@ -27,12 +28,16 @@ export async function migrate(pool: Pool): Promise<void> {
       .filter((name) => /^\d{3}_[a-z_]+\.sql$/.test(name))
       .sort();
     if (!files.length) throw new Error('No migrations found');
-    for (const name of files) {
-      const sql = await readFile(`migrations/${name}`, 'utf8');
+    const migrations = [
+      ...files.map((name) => ({ namespace: 'core', name, url: `migrations/${name}` })),
+      ...ArchiveMigrations,
+    ];
+    for (const { namespace, name, url } of migrations) {
+      const sql = await readFile(url, 'utf8');
       const hash = createHash('sha256').update(sql).digest('hex');
       const previous = await client.query<{ hash: string }>(
         'SELECT hash FROM schema_migrations WHERE namespace=$1 AND name=$2',
-        ['core', name],
+        [namespace, name],
       );
       if (previous.rows[0]) {
         if (previous.rows[0].hash !== hash) throw new Error('Published migration hash changed');
@@ -40,7 +45,7 @@ export async function migrate(pool: Pool): Promise<void> {
       }
       await client.query(sql);
       await client.query('INSERT INTO schema_migrations(namespace,name,hash) VALUES($1,$2,$3)', [
-        'core',
+        namespace,
         name,
         hash,
       ]);

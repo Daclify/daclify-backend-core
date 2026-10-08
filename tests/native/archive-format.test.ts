@@ -37,7 +37,7 @@ const vector = z
 const abi = ABI.from(readFileSync('.artifacts/contracts/ramprobe.abi', 'utf8')),
   api = new APIClient({ url: network.url });
 let seq = 0;
-async function check(data: Record<string, unknown>) {
+async function check(data: Record<string, unknown>, action = 'chkarchive') {
   const info = await api.v1.chain.get_info();
   if (info.chain_id.toString() !== network.chainId) throw new Error('FIXTURE_CHAIN_CHANGED');
   const tx = Transaction.from({
@@ -46,7 +46,7 @@ async function check(data: Record<string, unknown>) {
       Action.from(
         {
           account: 'permprobe',
-          name: 'chkarchive',
+          name: action,
           authorization: [{ actor: 'permprobe', permission: 'active' }],
           data,
         },
@@ -130,4 +130,29 @@ it('rejects malformed paths, odd-leaf siblings and incorrect roots before prunin
     'ARCHIVE_DOMAIN',
   );
   await expect(check({ ...base, index: 3 })).rejects.toThrow('ARCHIVE_PROOF_INDEX');
+});
+it('matches the independent packed manifest descriptor in compiled C++ and rejects changed coverage', async () => {
+  const fixture = z
+    .object({
+      nativeDescriptor: z.record(z.string(), z.unknown()),
+      descriptorCommitment: z.string().regex(/^[a-f0-9]{64}$/),
+    })
+    .parse(
+      JSON.parse(
+        readFileSync('../daclify-backend-modules/tests/fixtures/archive-manifest-v1.json', 'utf8'),
+      ),
+    );
+  await check(
+    { descriptor: fixture.nativeDescriptor, expected: fixture.descriptorCommitment },
+    'chkmanifest',
+  );
+  await expect(
+    check(
+      {
+        descriptor: { ...fixture.nativeDescriptor, block_number: 101 },
+        expected: fixture.descriptorCommitment,
+      },
+      'chkmanifest',
+    ),
+  ).rejects.toThrow('ARCHIVE_DESCRIPTOR_COMMITMENT');
 });

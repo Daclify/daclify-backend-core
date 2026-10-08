@@ -17,6 +17,7 @@ public:
   }
   ACTION checkgain(name receiver,uint64_t before,uint64_t minimum){require_auth(get_self());check(get_sender()==get_self(),"RAM_PURCHASE_SENDER");auto after=daclify::telos_unmanaged_ram(receiver);check(after>=before&&after-before>=minimum,"RAM_ACQUISITION_MINIMUM");}
   ACTION chkarchive(daclify::archive_domain domain,uint32_t index,uint64_t primary,std::vector<char> row,std::vector<checksum256> proof,checksum256 domain_hash,checksum256 leaf_hash,checksum256 root){require_auth(get_self());check(daclify::archive_domain_hash(domain)==domain_hash,"ARCHIVE_DOMAIN_HASH");check(daclify::archive_leaf(domain,index,primary,row)==leaf_hash,"ARCHIVE_LEAF_HASH");check(daclify::verify_archive_proof(domain,index,primary,row,proof,root),"ARCHIVE_PROOF_ROOT");}
+  ACTION chkmanifest(daclify::archive_manifest_descriptor descriptor,checksum256 expected){require_auth(get_self());check(daclify::archive_descriptor_hash(descriptor)==expected,"ARCHIVE_DESCRIPTOR_COMMITMENT");}
   TABLE sample {
     uint64_t id; uint64_t value; std::vector<char> payload;
     uint64_t primary_key()const{return id;}
@@ -46,4 +47,4 @@ public:
   ACTION checkquota(name account,int64_t expected){require_auth(get_self());int64_t ram,net,cpu;get_resource_limits(account,ram,net,cpu);check(ram==expected,"RAM_QUOTA_READER");}
   ACTION checkcost(uint64_t id,uint64_t expected,uint64_t headers){require_auth(get_self());samples rows(get_self(),get_self().value);const auto& r=rows.get(id);using i64=indexed_by<"byvalue"_n,const_mem_fun<sample,uint64_t,&sample::key64>>;using i128=indexed_by<"bywide"_n,const_mem_fun<sample,uint128_t,&sample::key128>>;using i256=indexed_by<"byhash"_n,const_mem_fun<sample,checksum256,&sample::key256>>;check(daclify::ram_row_bytes<sample,i64,i128,i256>(r)==expected,"RAM_ROW_RECIPE");check(daclify::ram_scope_bytes<i64,i128,i256>()==headers,"RAM_SCOPE_RECIPE");}
 };
-EOSIO_DISPATCH(ramprobe,(put)(remove)(foreign)(foreignrm)(checkquota)(checkcost)(chkarchive)(quotafromsys)(buyassert)(checkgain))
+EOSIO_DISPATCH(ramprobe,(put)(remove)(foreign)(foreignrm)(checkquota)(checkcost)(chkarchive)(chkmanifest)(quotafromsys)(buyassert)(checkgain))

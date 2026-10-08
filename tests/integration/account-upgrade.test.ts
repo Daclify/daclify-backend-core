@@ -74,8 +74,11 @@ it('upgrades the actual seven-migration schema, preserving identities and forcin
     await migrate(pool);
     await migrate(pool);
     expect(
-      (await pool.query<{ count: string }>('SELECT count(*)::text AS count FROM schema_migrations'))
-        .rows[0]?.count,
+      (
+        await pool.query<{ count: string }>(
+          "SELECT count(*)::text AS count FROM schema_migrations WHERE namespace='core'",
+        )
+      ).rows[0]?.count,
     ).toBe(
       String(
         (await readdir('migrations')).filter((name) => /^\d{3}_[a-z_]+\.sql$/.test(name)).length,

@@ -26,7 +26,7 @@ describe('actual PostgreSQL transactions and constraints', () => {
     await migrate(pool);
     const files = readdirSync('migrations').filter((name) => /^\d{3}_[a-z_]+\.sql$/.test(name));
     const rows = await pool.query<{ count: string }>(
-      'SELECT count(*)::text FROM schema_migrations',
+      "SELECT count(*)::text FROM schema_migrations WHERE namespace='core'",
     );
     expect(files).toContain('003_service_payments.sql');
     expect(rows.rows[0]?.count).toBe(String(files.length));
