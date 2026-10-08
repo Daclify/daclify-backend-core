@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { z } from 'zod';
 import { VERSION } from '../../protocol/base.js';
 const development = process.argv.includes('--development');
+const manifestSource = await readFile('sdk/public-package.json', 'utf8');
 const manifest = z
   .object({
     name: z.literal('@daclify/core-protocol'),
@@ -10,7 +11,7 @@ const manifest = z
     dependencies: z.record(z.string(), z.string()),
   })
   .passthrough()
-  .parse(JSON.parse(await readFile('sdk/public-package.json', 'utf8')));
+  .parse(JSON.parse(manifestSource));
 if (
   Object.keys(manifest.dependencies).some(
     (name) =>
@@ -36,7 +37,7 @@ try {
 } catch {
   if (!development) throw new Error('Generated documentation required');
 }
-await writeFile(`${stage}/package.json`, JSON.stringify(manifest, null, 2) + '\n');
+await writeFile(`${stage}/package.json`, manifestSource);
 await cp('sdk/README.md', `${stage}/README.md`);
 for (const name of ['LICENSE', 'LICENSING.md']) await cp(name, `${stage}/${name}`);
 execFileSync('npm', ['pack', stage, '--pack-destination', '.artifacts'], { stdio: 'inherit' });
