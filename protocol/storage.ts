@@ -61,6 +61,19 @@ export const HostedUploadSchema = z.strictObject({
 });
 export const HostedIntentSchema = HostedUploadSchema.omit({ content: true });
 export const HostedDocumentSchema = HostedIntentSchema.extend({ cid: CidSchema });
+export const HostedObjectDescriptorSchema = HostedDocumentSchema.pick({
+  dao: true,
+  cid: true,
+  bytes: true,
+  commitment: true,
+});
+export const HostedReferenceSchema = z.strictObject({
+  kind: z.enum(['document-version', 'branding', 'media', 'archive']),
+  referenceKey: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9:._-]{0,255}$/),
+  uploadId: z.uuid().optional(),
+});
+export type HostedObjectDescriptor = z.infer<typeof HostedObjectDescriptorSchema>;
+export type HostedReference = z.infer<typeof HostedReferenceSchema>;
 export type HostedUpload = z.infer<typeof HostedUploadSchema>;
 export type HostedDocument = z.infer<typeof HostedDocumentSchema>;
 export const StorageStatusSchema = z.strictObject({

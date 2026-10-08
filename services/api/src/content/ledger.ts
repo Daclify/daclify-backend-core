@@ -1,7 +1,13 @@
 import type { PoolClient } from 'pg';
 import { z } from 'zod';
 import { CidSchema, Uint64Schema } from '../../../../protocol/base.js';
-import type { HostedDocument } from '../../../../protocol/storage.js';
+import {
+  HostedObjectDescriptorSchema,
+  HostedReferenceSchema,
+  type HostedObjectDescriptor,
+  type HostedReference,
+  type HostedDocument,
+} from '../../../../protocol/storage.js';
 import { ApiError } from '../errors.js';
 import type { PinnedFile } from './provider.js';
 
@@ -72,6 +78,45 @@ export async function recordVerifiedObject(
   document: HostedDocument,
   pin: PinnedFile,
 ): Promise<void> {
+  const objectId = await recordVerifiedPin(
+    client,
+    scope,
+    {
+      kind: 'document-version',
+      referenceKey: `${document.documentId}:${document.version}:${uploadId}`,
+      uploadId,
+    },
+    {
+      dao: document.dao,
+      cid: document.cid,
+      bytes: document.bytes,
+      commitment: document.commitment,
+    },
+    pin,
+  );
+  const updated = await client.query(
+    `UPDATE uploads SET storage_object_id=$1 WHERE id=$2 AND provider_scope=$3 AND import_profile=$4
+       AND (storage_object_id IS NULL OR storage_object_id=$1) RETURNING id`,
+    [objectId, uploadId, scope, CONTENT_IMPORT_PROFILE],
+  );
+  if (updated.rowCount !== 1) throw new ApiError('STORAGE_OBJECT_REVIEW', 409);
+}
+// Trusted workers must reserve capacity before pinning, then retrieve and verify bytes before calling.
+export async function recordVerifiedPin(
+  client: PoolClient,
+  scope: string,
+  value: HostedReference,
+  descriptor: HostedObjectDescriptor,
+  file: PinnedFile,
+): Promise<string> {
+  scope = ProviderScopeSchema.parse(scope);
+  const reference = HostedReferenceSchema.parse(value),
+    document = HostedObjectDescriptorSchema.parse(descriptor);
+  const pin = z
+    .strictObject({ id: z.uuid(), cid: CidSchema, size: HostedObjectDescriptorSchema.shape.bytes })
+    .parse(file);
+  if (pin.cid !== document.cid || pin.size !== document.bytes)
+    throw new ApiError('STORAGE_OBJECT_REVIEW', 409);
   const daoKey = contentDaoKey(document.dao);
   await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`upload-dao:${daoKey}`]);
   await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
@@ -95,13 +140,14 @@ export async function recordVerifiedObject(
   if (ownership.rowCount !== 1) throw new ApiError('STORAGE_OBJECT_REVIEW', 409);
   await client.query(
     `INSERT INTO hosted_references(object_id,dao_key,kind,reference_key,upload_id)
-     VALUES($1,$2,'document-version',$3,$4) ON CONFLICT(upload_id) DO NOTHING`,
-    [objectId.data, daoKey, `${document.documentId}:${document.version}:${uploadId}`, uploadId],
+     VALUES($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING`,
+    [objectId.data, daoKey, reference.kind, reference.referenceKey, reference.uploadId ?? null],
   );
-  const updated = await client.query(
-    `UPDATE uploads SET storage_object_id=$1 WHERE id=$2 AND provider_scope=$3 AND import_profile=$4
-       AND (storage_object_id IS NULL OR storage_object_id=$1) RETURNING id`,
-    [objectId.data, uploadId, scope, CONTENT_IMPORT_PROFILE],
+  const retained = await client.query(
+    `SELECT id FROM hosted_references WHERE object_id=$1 AND dao_key=$2 AND kind=$3 AND reference_key=$4
+       AND upload_id IS NOT DISTINCT FROM $5::uuid`,
+    [objectId.data, daoKey, reference.kind, reference.referenceKey, reference.uploadId ?? null],
   );
-  if (updated.rowCount !== 1) throw new ApiError('STORAGE_OBJECT_REVIEW', 409);
+  if (retained.rowCount !== 1) throw new ApiError('STORAGE_OBJECT_REVIEW', 409);
+  return objectId.data;
 }

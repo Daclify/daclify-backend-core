@@ -181,3 +181,9 @@ No hosted purchase UI, external charge, public deployment or main push was enabl
 - Fresh core checks: **73 unit files / 453 tests**, **22 integration files / 150 tests**, typecheck and lint passed. Modules verify: **18 files / 110 tests**. Frontend verify: **26 files / 107 tests**, typecheck and production build passed.
 - Four focused desktop/mobile cases passed: archive preview/selection clearing and recurring storage consent, with axe and overflow checks. Eligibility/paid-state browser responses are labelled HTTP fixtures; chain snapshot/index behavior has separate actual native coverage. No browser result is claimed as live provider proof.
 - Resources labels the archive as preview-only, explains the original 90-day delay/protected families/snapshot/gross estimate and provides no deletion action. Source contracts still have no pruning action. Export reservations, independent backup/approval/anchors, history restore, safe retention and RAM pool/reserve gates remain required.
+
+## Verified-reference reuse checkpoint
+
+- Extracted the shared object/pin/reference writer used by ordinary document verification and explicit legacy claims. Producer schemas define bounded object descriptors and existing ledger roles. References are idempotent and confirm the exact upload/DAO/role/object domain after conflict handling.
+- The new red case proved the common worker helper was absent. All 23 content integration cases then passed, including one CID across four roles, duplicate retry, wrong size, removal fence and a conflicting existing-upload role. Existing provider holds and migration paths remain covered; no old SQL migration changed.
+- This is internal verification groundwork. Asset/archive reservation/upload/publication workers still need to enforce capacity and byte retrieval before calling it. No public asset API or destructive cleanup was enabled.

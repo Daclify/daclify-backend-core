@@ -14,6 +14,7 @@ import { DaoContentSchema } from '../../protocol/content.js';
 import { HostedUploadSchema } from '../../protocol/storage.js';
 import { RuntimeTableSchemas } from '../../sdk/index.js';
 import { ContentService } from '../../services/api/src/content/service.js';
+import { recordVerifiedPin } from '../../services/api/src/content/ledger.js';
 import { claimLegacyUpload } from '../../services/api/src/content/migrate.js';
 import type { ContentProvider } from '../../services/api/src/content/provider.js';
 import type { ChainGateway } from '../../services/api/src/chain.js';
@@ -186,6 +187,94 @@ beforeAll(async () => {
 });
 afterAll(() => pool.end());
 describe('hosted upload transactions with a simulated provider', () => {
+  it('records verified pins consistently across branding/media/archive roles without double charging or changing ownership', async () => {
+    const fixture = setup(),
+      document = await fixture.service.upload(account, fixture.request());
+    const pin = (
+      await pool.query<{ id: string; provider_id: string }>(
+        'SELECT id,provider_id FROM uploads WHERE cid=$1 AND provider_scope=$2',
+        [document.cid, fixture.service.providerScope],
+      )
+    ).rows[0];
+    if (!pin) throw new Error('Owned pin missing');
+    const content = {
+        dao: document.dao,
+        cid: document.cid,
+        bytes: document.bytes,
+        commitment: document.commitment,
+      },
+      file = { id: pin.provider_id, cid: document.cid, size: document.bytes };
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      for (const kind of ['branding', 'media', 'archive'] as const) {
+        await recordVerifiedPin(
+          client,
+          fixture.service.providerScope,
+          { kind, referenceKey: kind },
+          content,
+          file,
+        );
+        await recordVerifiedPin(
+          client,
+          fixture.service.providerScope,
+          { kind, referenceKey: kind },
+          content,
+          file,
+        );
+      }
+      await client.query('COMMIT');
+      expect(await fixture.service.usage(account, fixture.dao.reference.daoId)).toMatchObject({
+        totalBytes: String(document.bytes),
+        objects: 1,
+        references: 4,
+      });
+      await client.query('BEGIN');
+      await expect(
+        recordVerifiedPin(
+          client,
+          fixture.service.providerScope,
+          { kind: 'archive', referenceKey: 'wrong-size' },
+          { ...content, bytes: document.bytes + 1 },
+          file,
+        ),
+      ).rejects.toThrow();
+      await client.query('ROLLBACK');
+      await client.query('BEGIN');
+      await expect(
+        recordVerifiedPin(
+          client,
+          fixture.service.providerScope,
+          { kind: 'archive', referenceKey: 'retag-existing-upload', uploadId: pin.id },
+          content,
+          file,
+        ),
+      ).rejects.toThrow('STORAGE_OBJECT_REVIEW');
+      await client.query('ROLLBACK');
+      await client.query('BEGIN');
+      await client.query("UPDATE hosted_objects SET state='removing' WHERE provider_scope=$1", [
+        fixture.service.providerScope,
+      ]);
+      await expect(
+        recordVerifiedPin(
+          client,
+          fixture.service.providerScope,
+          { kind: 'archive', referenceKey: 'fenced' },
+          content,
+          file,
+        ),
+      ).rejects.toThrow('STORAGE_OBJECT_REVIEW');
+      await client.query('ROLLBACK');
+      expect(await fixture.service.usage(account, fixture.dao.reference.daoId)).toMatchObject({
+        totalBytes: String(document.bytes),
+        references: 4,
+      });
+      expect(fixture.provider.remove).not.toHaveBeenCalled();
+    } finally {
+      await client.query('ROLLBACK');
+      client.release();
+    }
+  });
   it('verifies reconstructed bytes and reuses an identical request receipt', async () => {
     const fixture = setup();
     const request = fixture.request();
