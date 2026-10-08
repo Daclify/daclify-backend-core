@@ -274,7 +274,7 @@ export const CoreHelpBundle={
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "4b9d44365b04cc5683fe3409ab4fed7f67937b039f3dc09ea0482677c344b025",
+      "sourceAbiHash": "70c7932eb520ca382e6c892ee2fd4407b8757f6ded92dcb3aa5671adcef972b5",
       "actions": [
         {
           "name": "addmember",
@@ -1379,6 +1379,19 @@ export const CoreHelpBundle={
             {
               "name": "removed",
               "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "rebindramobs",
+          "fields": [
+            {
+              "name": "expected_old_hash",
+              "type": "checksum256"
+            },
+            {
+              "name": "expected_new_hash",
+              "type": "checksum256"
             }
           ]
         },

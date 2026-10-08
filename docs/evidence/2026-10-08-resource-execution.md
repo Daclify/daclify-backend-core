@@ -20,7 +20,7 @@ Plan: [RAM, prepaid storage and archives](../superpowers/plans/2026-10-08-resour
 | 1 Policy definitions                 | Complete    | Checked integer fees, approved storage units and pricing snapshot hashes; unchanged membership pricing |
 | 2 Native write inventory/calibration | In progress | Enforcement unavailable until payer reconciliation is demonstrated                                     |
 | 3 Backed allowances/metering         | In progress | Opt-in counters implemented; no funded allocation or enforcement                                       |
-| 4 Existing-state migration           | Pending     | Existing row layouts and rights must survive                                                           |
+| 4 Existing-state migration           | In progress | Observer code rebind preserves rows/counters; legacy backfill pending                                                           |
 | 5 Atomic TLOS RAM purchases          | In progress | Native funded-purchase/minimum proof; DAO settlement/API still pending                                 |
 | 6 Card RAM provisioning              | Pending     | Segregated operator reserve; no simulated funding                                                      |
 | 7 Hosted-object ledger               | In progress | Verified unique-CID accounting and legacy ownership checks; cleanup/lifecycle integrations pending                                                                |
@@ -143,3 +143,14 @@ Archive migration/coordinator, released-schema decoding, terminal eligibility ma
 - Added a bounded compiled-schema decoder for this development packet's ordinary votes/documents. It rejects unknown code/raw-ABI/schema hashes, wrong DAO scope/parent/primary key and trailing/noncanonical bytes, preserving original ciphertext/epoch metadata. A test fixture initially used a string for the producer's uint32 document byte count; it was corrected to the actual generated model. This helper is not a historic-release catalogue or a completed recovery service.
 
 - Final decoder/manifest module verification: **17 files / 104 tests passed** after correcting the byte-count fixture. Core typecheck/lint and the complete 21-file / 149-test integration suite passed. Only installed producer SQL is consumed; no source-checkout-only migration path or dynamic third-party SQL loader was added. Archive workers, native approvals/pruning and historical recovery are still unavailable.
+
+
+## Observer code-rebinding checkpoint
+
+- Added native-only `rebindramobs`, requiring current runtime authority plus exact expected previous/current reviewed hashes. Stale, wrong-code, unauthorized and replayed calls reject. The code pin changes without resetting counters or existing DAO/member/native-account/signing/encryption/nonce/document fields. This does not initialize observation over untracked legacy state or create funded capacity.
+- The first fixture setup correctly failed because its own active permission lacked `eosio.code`; the owned fixture now explicitly configures the same code authority used by the observer tests. The missing-action/unchanged-code regression then failed before implementation. The real native upgrade sequence passed after adding the action, and passed again against a reproduced commit-81afcba binary with existing DAO/member/document rows.
+- The existing upgrade builder gained a bounded observer-baseline mode, preserving its original pre-research upgrade mode. All original runtime structs/tables/actions still compare equal against 1954ebf; compatibility evidence records the new current code hash. New native maintenance actions are additive and are not in the user/relayer instruction allowlist.
+
+Legacy backfill, new funded allocations/reserves, native/card purchase settlement and complete Archive/cleanup/recovery remain pending. No public contract or main checkout was upgraded.
+
+- Final observer checkpoint: native focus **5 files / 12 tests**, core **72 unit files / 450 tests**, PostgreSQL **21 files / 149 tests**, modules **17 files / 104 tests**, generated docs and consumer typechecks passed. The focused upgrade was repeated with both platform and DAO counter scopes. Fixture configuration refuses implicit code replacement when an observer exists; an explicit maintenance upgrade is required.

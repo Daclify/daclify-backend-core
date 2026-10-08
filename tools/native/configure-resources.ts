@@ -22,6 +22,13 @@ const currentResponse = await fetch(network.url + '/v1/chain/get_code_hash', {
 if (!currentResponse.ok) throw new Error('FIXTURE_CODE_QUERY_FAILED');
 const current = z.object({ code_hash: z.string() }).parse(await currentResponse.json());
 if (current.code_hash !== RuntimeCodeHash) {
+  const observer = await new APIClient({ url: network.url }).v1.chain.get_table_rows({
+    code: 'daclifycore',
+    scope: 'daclifycore',
+    table: 'ramobs',
+    json: true,
+  });
+  if (observer.rows.length) throw new Error('EXPLICIT_OBSERVER_UPGRADE_REQUIRED');
   try {
     const value: unknown = JSON.parse(
       execFileSync(

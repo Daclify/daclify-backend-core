@@ -23,6 +23,11 @@ public:
   ACTION setresources(uint16_t native_ram_bps,uint16_t card_ram_bps,uint64_t included_activity_bytes,uint64_t identity_bytes_per_slot,uint32_t quote_lifetime_seconds,uint64_t storage_free_bytes,uint64_t storage_unit_bytes,uint32_t storage_monthly_usd){
     require_auth(get_self());save_resources(native_ram_bps,card_ram_bps,included_activity_bytes,identity_bytes_per_slot,quote_lifetime_seconds,storage_free_bytes,storage_unit_bytes,storage_monthly_usd);
   }
+  ACTION rebindramobs(checksum256 expected_old_hash,checksum256 expected_new_hash){
+    require_auth(get_self());ram_observer_settings saved(get_self(),get_self().value);auto cfg=saved.get();
+    check(cfg.runtime_hash==expected_old_hash,"RAM_OBSERVER_CHANGED");check(expected_new_hash!=checksum256{}&&expected_new_hash!=expected_old_hash&&get_code_hash(get_self())==expected_new_hash,"RAM_SOURCE_CODE");
+    cfg.runtime_hash=expected_new_hash;saved.set(cfg,get_self());
+  }
   ACTION govresources(name runtime,uint64_t dao_id,uint64_t member_id,uint64_t expected_revision,uint16_t native_ram_bps,uint16_t card_ram_bps,uint64_t included_activity_bytes,uint64_t identity_bytes_per_slot,uint32_t quote_lifetime_seconds,uint64_t storage_free_bytes,uint64_t storage_unit_bytes,uint32_t storage_monthly_usd){
     platform_actor(runtime,dao_id,member_id);resource_settings saved(get_self(),get_self().value);check((saved.exists()?saved.get().revision:0)==expected_revision,"RESOURCE_POLICY_CHANGED");save_resources(native_ram_bps,card_ram_bps,included_activity_bytes,identity_bytes_per_slot,quote_lifetime_seconds,storage_free_bytes,storage_unit_bytes,storage_monthly_usd);
   }
@@ -745,7 +750,7 @@ private:
 extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
   if(code==receiver){switch(action_name){
     EOSIO_DISPATCH_HELPER(runtime,(authproof)(unlinknat)(linkevm)(unlinkevm)(submitevm)(setadmit)(admitfrom))
-    EOSIO_DISPATCH_HELPER(runtime,(initramobs)(setresources)(govresources)(setramcode)(ramadjust))
+    EOSIO_DISPATCH_HELPER(runtime,(initramobs)(rebindramobs)(setresources)(govresources)(setramcode)(ramadjust))
     EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(setprofile)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(confirmext)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))
     EOSIO_DISPATCH_HELPER(runtime,(sethosted)(govhosted)(govseatfee)(orderfree)(setcapacity)(revokecap)(resumecap))
     EOSIO_DISPATCH_HELPER(runtime,(enrollagent)(addmember)(initgov)(setdaogov)(addsession)(delsession)(guardpause)(guardrevoke)(guardrecover)(submitsess)(setfees)(listmod)(unlistmod)(setmodcopy)(setpolicy)(setgov)(setoracle)(govfees)(govpayfees)(setcreate)(govcreate)(setcrrate)(ordercreate)(cardcreate)(createpaid)(govlist)(govunlist)(govmodcopy))

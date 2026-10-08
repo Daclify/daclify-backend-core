@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = '4b9d44365b04cc5683fe3409ab4fed7f67937b039f3dc09ea0482677c344b025';
+export const runtimeAbiHash = '70c7932eb520ca382e6c892ee2fd4407b8757f6ded92dcb3aa5671adcef972b5';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -2181,6 +2181,20 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "rebindramobs",
+      "base": "",
+      "fields": [
+        {
+          "name": "expected_old_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "expected_new_hash",
+          "type": "checksum256"
+        }
+      ]
+    },
+    {
       "name": "reserve",
       "base": "",
       "fields": [
@@ -3234,6 +3248,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "rebindramobs",
+      "type": "rebindramobs",
+      "ricardian_contract": ""
+    },
+    {
       "name": "reserve",
       "type": "reserve",
       "ricardian_contract": ""
@@ -4233,6 +4252,10 @@ export interface ramadjust {
   added: string;
   removed: string;
 }
+export interface rebindramobs {
+  expected_old_hash: string;
+  expected_new_hash: string;
+}
 export interface reserve {
   dao_id: string;
   source: string;
@@ -4505,6 +4528,7 @@ export interface RuntimeActions {
   putdoc: putdoc;
   putjson: putjson;
   ramadjust: ramadjust;
+  rebindramobs: rebindramobs;
   reserve: reserve;
   resumecap: resumecap;
   revokecap: revokecap;

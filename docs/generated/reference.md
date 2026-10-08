@@ -302,7 +302,7 @@ Commercial hosting, subscriptions and paid services are allowed. Independently d
 
 ## runtime contract
 
-Source ABI JSON SHA-256: `4b9d44365b04cc5683fe3409ab4fed7f67937b039f3dc09ea0482677c344b025`.
+Source ABI JSON SHA-256: `70c7932eb520ca382e6c892ee2fd4407b8757f6ded92dcb3aa5671adcef972b5`.
 
 ### Action: addmember
 
@@ -742,6 +742,13 @@ Source ABI JSON SHA-256: `4b9d44365b04cc5683fe3409ab4fed7f67937b039f3dc09ea04826
 | category | uint8 |
 | added | uint64 |
 | removed | uint64 |
+
+### Action: rebindramobs
+
+| Field | ABI type |
+| --- | --- |
+| expected_old_hash | checksum256 |
+| expected_new_hash | checksum256 |
 
 ### Action: reserve
 
