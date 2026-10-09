@@ -119,3 +119,5 @@ Quota activation checks existing credentials, financial holds and pinned first-p
 
 
 Native payouts now require receiving-wallet token-row preparation. The runtime refuses missing rows atomically, and the UI offers the receiver-funded wallet action. Operators must prepare new runtime rows before funding and separately qualify historical sender-payer state; see [RAM operating bounds](docs/ram-accounting.md#receiving-wallet-token-rows) and [native evidence](docs/evidence/2026-10-09-receiving-wallet-ram.md). These local checks do not authorize public rollout.
+
+The [documentation assistant and Telegram group runbook](docs/operations/docs-assistant.md) explains backend-only model configuration, docs-only scope, approved-group webhooks, privacy mode, cost limits and at-most-once reply delivery. App AI needs an OpenRouter key; group chat additionally requires explicit enablement and webhook registration.

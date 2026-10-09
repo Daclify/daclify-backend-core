@@ -51,6 +51,13 @@ import { registerTelegramOidcRoutes } from './auth/telegram-oidc.js';
 import { AccountControlPaths } from '../../../protocol/sign-in.js';
 import { registerDocsRoutes } from './docs/routes.js';
 import type { DocsAgentConfiguration } from './docs/config.js';
+import { createDocsAssistant } from './docs/service.js';
+import type { TelegramDocsConfiguration } from './docs/telegram-config.js';
+import {
+  claimTelegramUpdate,
+  registerTelegramDocsRoutes,
+  TELEGRAM_DOCS_PATH,
+} from './docs/telegram.js';
 import { IdSchema } from '../../../protocol/base.js';
 import { spendingReport, spendingCsv } from './reporting/spending.js';
 import { ApiError } from './errors.js';
@@ -90,6 +97,7 @@ export async function createServer(
     signIn?: SignInConfiguration;
     origins?: string[];
     docs?: DocsAgentConfiguration;
+    telegramDocs?: TelegramDocsConfiguration;
     creation?: CreationService;
     payments?: ConnectedPayments;
     apiOrigin?: string;
@@ -186,6 +194,7 @@ export async function createServer(
       path === storageWebhookPath ||
       path === ramWebhookPath ||
       path === CONNECT_WEBHOOK ||
+      path === TELEGRAM_DOCS_PATH ||
       BROKER_PATHS.some((route) => route === path)
     )
       return;
@@ -385,6 +394,12 @@ export async function createServer(
         'Documentation assistant',
         !!options.docs,
         'Optional assistant; generated documentation is always available.',
+      ],
+      [
+        'telegram-docs',
+        'Telegram handbook bot',
+        !!options.telegramDocs,
+        'Commands/replies in approved groups only. Webhook registration and live qualification are separate.',
       ],
       [
         'managed',
@@ -1089,6 +1104,14 @@ export async function createServer(
     chain.walletMemberships?.bind(chain),
     audience,
   );
-  registerDocsRoutes(app, options.docs);
+  const docsAssistant = createDocsAssistant(options.docs);
+  registerDocsRoutes(app, docsAssistant);
+  if (options.telegramDocs) {
+    const telegram = options.telegramDocs;
+    if (!docsAssistant.configured) throw new Error('TELEGRAM_DOCS_CONFIGURATION_INVALID');
+    registerTelegramDocsRoutes(app, telegram, docsAssistant, (updateId) =>
+      claimTelegramUpdate(pool, telegram.botId, updateId),
+    );
+  }
   return app;
 }

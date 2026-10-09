@@ -34,6 +34,7 @@ import { parseFrontendOrigins, parseModuleDeployments } from './deployment-confi
 import { readStripeConfig } from './billing/config.js';
 import { StripeBilling } from './billing/service.js';
 import { readDocsAgent } from './docs/config.js';
+import { readTelegramDocs } from './docs/telegram-config.js';
 import { readConnectConfig } from './payments/config.js';
 import { ConnectedPayments } from './payments/service.js';
 import { readOperatorPayments, OperatorPayments } from './payments/operator.js';
@@ -205,6 +206,7 @@ const ramCards = ramCardConfig ? new CardRam(pool, chain, ramCardConfig) : undef
 if (operatorConfig && (connectConfig || hostingConfig || storageConfig || ramCardConfig))
   throw new Error('PAYMENT_OPERATOR_CONFIGURATION_INVALID');
 const docs = readDocsAgent(process.env);
+const telegramDocs = readTelegramDocs(process.env);
 const creation = new CreationService(pool, chain);
 const deliverEmail = readMailDelivery(process.env);
 const noticeMail = readMailSender(process.env);
@@ -249,6 +251,7 @@ const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
     : {}),
   signIn: { environment: env.NETWORK_ENVIRONMENT, ...(deliverEmail ? { deliverEmail } : {}) },
   ...(docs ? { docs } : {}),
+  ...(telegramDocs ? { telegramDocs } : {}),
 });
 await app.listen({ host: '127.0.0.1', port: env.API_PORT });
 const worker = content ? startContentWorker(pool, content) : undefined;

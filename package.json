@@ -33,6 +33,8 @@
     "archive:verify": "tsx tools/archive/verify.ts",
     "docs:generate": "tsx tools/docs/generate.ts",
     "docs:check": "tsx tools/docs/generate.ts --check",
+    "telegram:docs:setup": "tsx tools/docs/telegram.ts",
+    "docs:evaluate": "tsx tools/docs/evaluate.ts",
     "bootstrap": "node tools/bootstrap.ts",
     "lint": "eslint . --max-warnings 0",
     "verify": "tsx tools/verify.ts",

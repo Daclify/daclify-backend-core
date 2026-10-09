@@ -76,6 +76,14 @@ Telos Zero login currently supports active permission with direct weighted keys,
 
 Telos EVM EOA login uses server-issued ERC-4361 messages. Direct DAO governance uses different EIP-712 signed bytes and on-chain K1/Keccak primitives. Chains 40/41 are supported; ERC-1271 wallets, EVM assets/payouts and cross-chain settlement are unavailable.
 
+To configure Telegram website login for Daclify, register the real HTTPS frontend and exact API callback in BotFather Login Widget. Configure TELEGRAM_OIDC_CLIENT_ID, TELEGRAM_OIDC_CLIENT_SECRET and TELEGRAM_OIDC_REDIRECT_URI together on the backend; the callback path is /v1/sign-in/telegram/oidc/callback. Use RS256. Restart the API. The bot token is separate from the OIDC client secret. OIDC pairing and Mini App launch setup are separate steps; do not share secrets in support chat.
+
+To configure Daclify email delivery, set SMTP_HOST, SMTP_PORT, SMTP_TLS_MODE and SMTP_FROM, with SMTP_USERNAME and SMTP_PASSWORD when required by the provider. Use starttls with port 587 or tls with port 465; testnet and mainnet require TLS. Restart the API and exercise delivery to an actual test mailbox. Setting SMTP fields does not prove deliverability. Never put these credentials in the frontend.
+
+Daclify content hosting uses backend PINATA_JWT, PINATA_STORAGE_SCOPE and CONTENT_GATEWAY together. The storage scope is a stable local ledger label, not a Pinata account or group ID. Use separate Pinata accounts and storage scopes for testnet and mainnet. Private content is encrypted before publication; support cannot recover document keys. Provider credentials stay outside source control and support questions.
+
+For a Netlify Daclify testnet frontend, deploy the frontend dev branch, publish dist, and use npm run build -- --mode testnet. Set VITE_NETWORK=testnet and VITE_API_TESTNET to the testnet HTTPS API origin. Production uses VITE_NETWORK=production and VITE_API_PRODUCTION pointing to the mainnet API. VITE variables are public. Configure the backend FRONTEND_ORIGIN and any explicit FRONTEND_ADDITIONAL_ORIGINS to allow the actual frontend origins, then restart the API. Frontend build settings do not select the backend blockchain network.
+
 ## Recover keys and blockchain access
 
 User-controlled signing and P-256 decryption private keys are encrypted in this browser’s local vault and downloaded recovery kit. The password protects the local envelope; the separate recovery credential protects the recovery envelope. Both use PBKDF2-SHA256 with 600,000 iterations and AES-256-GCM. The API stores public keys, not these private keys or your vault password.
@@ -210,6 +218,8 @@ Independent deployment options show Contact for pricing; they have no public set
 
 Previously captured card or TLOS creation orders retain their immutable quoted price and once-only fulfillment. Their original TLOS quote may include the agreed 20% conversion premium. Creating a new free DAO does not refund or cancel an earlier paid order.
 
+At the default published pricing, total approved capacity of 10 costs $0 per month; 11 costs $1; 50 costs $40; 51 costs $40.50; 250 costs $140; 251 costs $140.20; and 1,000 costs $290. These are capacity examples, not live quotations for a particular DAO. Existing subscriptions retain their accepted schedule; consult the app hosting screen for the actual current or accepted price and an exact quote before approving a change.
+
 ## Daclify DAO and platform status
 
 The Daclify DAO page reads the platform DAO reference from the runtime market configuration. A native operator first creates and enrolls that DAO and links it with setgov. Before that link, the page reports that platform governance is unconfigured. It does not guess a DAO by its name.
@@ -258,7 +268,9 @@ Release packaging requires twelve complete source/artifact-bound qualification r
 
 ## Shared hosting and graduated member capacity
 
-Create free with 10 active member slots. Administrators approve additional paid capacity. Paid slot ranges are 1–40 at 100 USD cents each, 41–240 at 50 cents each, and 241 onward at 20 cents each per month. The lower price applies only to slots in its band. A shared runtime currently supports at most 5,000 active members per DAO.
+Create free with 10 active member slots. Administrators approve additional paid capacity. The first 40 PAID slots cost 100 USD cents each per month: these are TOTAL member slots 11 through 50. The next 200 PAID slots (paid slots 41 through 240, TOTAL member slots 51 through 250) cost 50 cents each. Further PAID slots (TOTAL member slots 251 onward) cost 20 cents each. The free ten slots do not consume a paid band. The lower price applies only to slots in its band. A shared runtime currently supports at most 5,000 active members per DAO.
+
+At the default published pricing, total approved capacity of 10 costs $0 per month; 11 costs $1; 50 costs $40; 51 costs $40.50; 250 costs $140; 251 costs $140.20; and 1,000 costs $290. These are capacity examples, not live quotations for a particular DAO. Existing subscriptions retain their accepted schedule; consult the app hosting screen for the actual current or accepted price and an exact quote before approving a change.
 
 An agreement captures the complete on-chain price policy, included slots and approved quantity. Existing subscriptions retain that schedule, including when capacity changes, until an administrator explicitly accepts current pricing. The UI displays included slots, approved paid slots, total capacity, monthly charge and pending changes.
 
@@ -347,6 +359,20 @@ Resources shows notices tied to the original paid/grace dates. Email requires ex
 Operator recovery alerts can use a separately configured operations mailbox. They contain incident IDs, never recovery bytes or keys, and do not clear an incident. Email retries stop after 12 attempts for operator review. SMTP delivery and an operator response procedure require qualification before destructive cleanup.
 
 Hosted Pinata reads require a server-only dedicated-gateway key and a separately registered allowance period. The backend reserves expected bytes and a request before every upstream read; concurrent processes share PostgreSQL counters and failed reads retain their reservation. Missing, expired or exhausted allowance blocks gateway reads, including verification, without unpinning files or adding a DAO bandwidth invoice. Status shows the shared allowance. Operator funding is an attestation; actual provider funding and the key restriction must be verified separately. Alternative OR access controls can bypass the key. Public IPFS ciphertext remains available through other providers; unlimited access is not promised.
+
+## Daclify documentation assistant and Telegram group support
+
+The documentation assistant answers only questions about Daclify and the setup covered by its bundled handbook. It uses a decision model to select one complete guide and a chat model to write a short answer, then checks the answer against that guide. Missing or unrelated information is refused. AI checks are probabilistic, so review the linked guide; an answer is not a guarantee. It cannot inspect vaults, private DAO documents, balances or live DAO records, perform transactions, browse the web or administer services.
+
+Enable the app assistant by setting OPENROUTER_API_KEY in the backend environment and restarting the API. There is no separate app enable flag. OPENROUTER_DECISIONS_MODEL defaults to openai/gpt-6-luna-decisions; OPENROUTER_MODEL defaults to openai/gpt-4.1-mini. The selector and answer model are independent. GET /v1/docs/agent reports configuration presence, not valid credits or provider health. Generated documentation remains available without AI. Do not place keys in Netlify VITE variables.
+
+Telegram group chat is separate from Telegram login. Set TELEGRAM_DOCS_ENABLED=true, TELEGRAM_DOCS_GROUP_IDS as a JSON array of approved negative chat ID strings, TELEGRAM_DOCS_WEBHOOK_SECRET as a random URL-safe secret of at least 32 characters, and TELEGRAM_DOCS_WEBHOOK_URL as the HTTPS API URL ending /v1/docs/telegram/webhook. The backend also needs TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_USERNAME without @, OPENROUTER_API_KEY and the real FRONTEND_ORIGIN. Keep the bot a regular member with BotFather privacy mode enabled. Restart the API and register the webhook using npm run telegram:docs:setup -- --confirm with the correct DACLIFY_ENV_FILE. The read-only setup command without --confirm checks membership, privacy and webhook conflicts first.
+
+In an approved Telegram group use /docs@your_bot_username followed by the Daclify question; /docs also works when Telegram delivers it to this bot. Reply to the bot answer to ask a follow-up. Replies can use the previous bot answer as context, but only the bundled guide is evidence. Normal conversation, direct messages, other bots, other commands, edited updates and unapproved groups are ignored. Answers stay in the original topic and link to the configured frontend documentation.
+
+Only the requested question and optional previous bot answer, together with public guide text, are sent to OpenRouter. The bot does not scrape the group or persist message bodies. Telegram itself delivers messages according to its privacy mode; the API processes only allowed commands and replies. Do not send recovery kits, passwords, private keys or provider secrets. Update receipts expire after two days; messages older than one day are ignored. Requests share per-server model/concurrency limits with the app, and Telegram also has a group reply limit. Use a provider key budget for an account-wide spend limit.
+
+Telegram delivery is at most once per update in normal operation. A PostgreSQL receipt is claimed before inference and sending to prevent repeat replies and duplicate model calls on webhook retries. A crash or uncertain send can lose a reply; retry /docs manually. There is no automatic repeated send. Use separate bot identities for testnet and mainnet because one bot has one webhook. A webhook conflict is refused rather than silently replacing another integration.
 
 ## runtime contract
 

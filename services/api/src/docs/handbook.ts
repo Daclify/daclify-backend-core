@@ -20,7 +20,14 @@ export function handbookTopics(): HandbookTopic[] {
     })),
   );
   const ids = topics.map((topic) => topic.id);
-  if (new Set(ids).size !== ids.length || ids.includes('unlisted'))
+  if (
+    new Set(ids).size !== ids.length ||
+    ids.includes('unlisted') ||
+    topics.reduce(
+      (size, topic) => size + topic.title.length + topic.paragraphs.join('').length,
+      0,
+    ) > 256_000
+  )
     throw new Error('HANDBOOK_INVALID');
   return topics;
 }

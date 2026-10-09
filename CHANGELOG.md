@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — handbook assistant and Telegram groups
+
+Handbook routing reads actual guide evidence, preserves the complete selected guide and checks replies for support before returning them. App and group requests share bounded provider deadlines, responses, rates and concurrency. Generated help now documents provider setup and disambiguates paid-slot pricing with tested default-capacity examples.
+
+Added opt-in authenticated Telegram group webhooks for `/docs` and replies only, approved-group restrictions, forum reply targets, canonical source links and PostgreSQL retry receipts without conversation storage. Setup checks privacy, regular membership and webhook conflicts; it registers only with `--confirm`. Group deployment/qualification remains separate. No contracts, account keys or pairings change.
+
 ## 0.8.0-alpha.1 development candidate — RAM, prepaid storage and Archive
 
 - Fixed live Pinata upload/CID recovery by following terminal cursors with bounded coverage, duplicate-ID and loop checks.

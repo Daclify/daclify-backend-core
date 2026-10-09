@@ -80,3 +80,5 @@ this guidance at `/docs/license`; operators must offer their actual deployed sou
 
 
 Resource checkpoint: [RAM accounting, native/card purchases and operator reserve](ram-accounting.md) describes the current implementation and launch gates. DAO Resources exposes native one-time purchases and optional exact-price card checkout, prepaid pinned-storage capacity and verified archive exports. Included pools, new obligation receipt holds, native archive approval/pruning and empty-database history recovery are implemented in development and have bounded owned-fixture verification. Complete completion/external-token qualification, general legacy backfill and live guarded-cleanup/provider proof remain release gates; automatic deletion and release packaging stay disabled.
+
+The [documentation assistant and Telegram group runbook](operations/docs-assistant.md) explains backend-only model configuration, docs-only scope, approved-group webhooks, privacy mode, cost limits and at-most-once reply delivery. App AI needs an OpenRouter key; group chat additionally requires explicit enablement and webhook registration.

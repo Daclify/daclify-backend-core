@@ -12,6 +12,8 @@ import { createServer } from '../../services/api/src/server.js';
 import type { ChainGateway } from '../../services/api/src/chain.js';
 import { checksumAddress, personalDigest } from '../../services/api/src/auth/evm-proof.js';
 import { ChallengeSchema, NetworkSchema, SessionSchema } from '../../protocol/api.js';
+import { readTelegramDocs } from '../../services/api/src/docs/telegram-config.js';
+import { TELEGRAM_DOCS_PATH } from '../../services/api/src/docs/telegram.js';
 
 const url = process.env.DATABASE_URL;
 if (
@@ -75,6 +77,7 @@ const fetchImpl: typeof fetch = async (input) => {
     return new Response(
       JSON.stringify({
         answers: {
+          acceptable: { noul: 0.99 },
           in_handbook: { noul: 0.88 },
           topic: { choice: 'accounts', probabilities: { accounts: 0.7, unlisted: 0.1 } },
         },
@@ -89,7 +92,20 @@ const fetchImpl: typeof fetch = async (input) => {
     },
   );
 };
+const telegramDocs = readTelegramDocs({
+  TELEGRAM_DOCS_ENABLED: 'true',
+  TELEGRAM_BOT_TOKEN: '12345:fixture',
+  TELEGRAM_BOT_USERNAME: 'fixture_bot',
+  TELEGRAM_DOCS_GROUP_IDS: '["-100123"]',
+  TELEGRAM_DOCS_WEBHOOK_SECRET: 'a'.repeat(32),
+  TELEGRAM_DOCS_WEBHOOK_URL: 'https://testnet.api.example/v1/docs/telegram/webhook',
+  OPENROUTER_API_KEY: 'sk-or-v1-local-fixture-key',
+  FRONTEND_ORIGIN: origin,
+  NETWORK_ENVIRONMENT: 'local',
+});
+if (!telegramDocs) throw new Error('Expected configured Telegram docs fixture');
 const app = await createServer(pool, chain, origin, {
+  telegramDocs,
   docs: {
     apiKey: 'sk-or-v1-local-fixture-key',
     model: 'openai/gpt-4.1-mini',
@@ -315,6 +331,35 @@ describe('Telos EVM account links', () => {
 });
 
 describe('documentation assistant route', () => {
+  it('accepts only the authenticated Telegram callback without browser origin and keeps app origin checks', async () => {
+    expect(
+      (await app.inject({ method: 'POST', url: TELEGRAM_DOCS_PATH, payload: { update_id: 9 } }))
+        .statusCode,
+    ).toBe(401);
+    expect(
+      (
+        await app.inject({
+          method: 'POST',
+          url: TELEGRAM_DOCS_PATH,
+          headers: { 'x-telegram-bot-api-secret-token': 'a'.repeat(32) },
+          payload: { update_id: 9 },
+        })
+      ).statusCode,
+    ).toBe(200);
+    expect(
+      (
+        await app.inject({
+          method: 'POST',
+          url: '/v1/docs/ask',
+          payload: { question: 'Where are my keys?' },
+        })
+      ).statusCode,
+    ).toBe(403);
+    expect(
+      (await closed.inject({ method: 'POST', url: TELEGRAM_DOCS_PATH, payload: { update_id: 9 } }))
+        .statusCode,
+    ).toBe(404);
+  });
   it('answers from the mocked model and stays unavailable without a key', async () => {
     const missing = await closed.inject({ method: 'GET', url: '/v1/docs/agent' });
     expect(missing.json()).toEqual({ configured: false });
