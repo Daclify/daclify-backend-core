@@ -50,7 +50,7 @@ npm run verify
 npm run build
 ```
 
-Before uploading, replace **`dist/networks.json`**, not the tracked `public/networks.json`, with the actual production/testnet HTTPS API origins using the documented two-field format. The deployed application defaults to Production; select Testnet for testing. The development override below is ignored in production builds. Check `/account`, `/docs` and network selection in the uploaded site.
+Before building, set both public frontend API origins in the ignored frontend `.env.production` (see `.env.production.example`): `VITE_API_PRODUCTION=https://api.daclify.com` and `VITE_API_TESTNET=https://testnet.api.daclify.com`, using the actual deployed services. These settings take precedence over the network file and are embedded in the bundle. No `dist/networks.json` edit is needed. For `.env.testnet`, use `npm run build -- --mode testnet`. Rebuild/redeploy after changing env settings. The deployed application defaults to Production; select Testnet for testing. The development override below is ignored in static builds. Check `/account`, `/docs` and network selection in the uploaded site.
 
 The committed `public/_redirects` file supplies the Netlify SPA fallback, so direct `/account` and `/docs` visits reach the application. Netlify's existing static files take precedence, including `networks.json` and assets.
 
