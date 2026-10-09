@@ -480,6 +480,18 @@
         "Mainnet API/contract/authority/asset actions",
         "Off-VM port probe and off-VM backup setup"
       ]
+    },
+    "evmRpcReadiness": {
+      "date": "2026-10-09",
+      "finding": "Frontend wallet configuration used retired mainnet.telos.net/evm and testnet.telos.net/evm endpoints; actual testnet legacy POST returned 404.",
+      "primarySource": "https://docs.telos.net/build/network-info/",
+      "correction": "Frontend dev uses https://rpc.telos.net and https://rpc.testnet.telos.net; exact native chain configuration unchanged.",
+      "actualRpcVerification": {
+        "mainnet": 40,
+        "testnet": 41
+      },
+      "checks": "Fresh frontend standalone vendor install, 46 focused wallet/network/package checks and Vue typecheck/Vite build passed. No frontend hosting operation performed.",
+      "apiState": "Selected API remains the immutable 336fc93/b4dc1c1 release; frontend source changes do not alter it."
     }
   }
 }
