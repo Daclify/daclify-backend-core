@@ -50,4 +50,6 @@ Local verification does not qualify a production release. Public testnet/mainnet
 
 ## Delivery
 
-Feature commits are to be integrated and pushed to the three `dev` branches after final checks. `main` and the landing page are outside this change.
+Feature commits were pushed to all three origin/dev branches: core 6fa59e1, modules 16c3c81 and frontend 57ae41d, followed by documentation/UI follow-up commits. Main and the landing page were untouched.
+
+The original core/modules dev checkouts were fast-forwarded and their public contract artifacts plus backend dependencies refreshed. No environment files or native fixture keys/network records were copied. The original frontend checkout retained concurrent uncommitted module-card edits. Git refused its local fast-forward due to ModulesPanel.vue, so the frontend feature was pushed directly to remote dev; the concurrent work was not stashed or overwritten. The verified isolated frontend worktree contains the latest delivered feature. Integrate remote dev locally when that concurrent work is committed.

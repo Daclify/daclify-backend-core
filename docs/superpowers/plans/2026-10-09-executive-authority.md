@@ -50,4 +50,6 @@ Files: docs/guides/topics.json, docs/operations/upgrade-0.9.md, README.md in aff
 - [x] Generate docs and references; explain bootstrap, inactivity, holdover, native accounts, last-controller guards and independent hosting.
 - [x] Run full affected suites, native tests, builds and generated-doc checks; record actual results and unverified live integrations.
 - [x] Review final diffs for root-authority bypasses and preserve audit artifacts/user environment files.
-- [ ] Commit feature branches and fast-forward/integrate to dev; push dev only. Do not deploy contracts or change live native permissions.
+- [x] Commit feature branches and fast-forward/integrate to dev; push dev only. Do not deploy contracts or change live native permissions.
+
+Delivery note: all three origin/dev branches contain the feature commits. Core and modules local dev checkouts were advanced and their public compiled artifacts/dependencies refreshed. The original frontend dev checkout retains concurrent, uncommitted module-card work; Git refused its fast-forward because ModulesPanel.vue overlaps. That work was neither stashed nor overwritten. Continue review in the isolated frontend feature worktree or integrate remote dev after the concurrent work is committed.
