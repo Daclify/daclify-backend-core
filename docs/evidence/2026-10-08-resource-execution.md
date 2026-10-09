@@ -1,8 +1,8 @@
 # Resource billing and Archive execution ledger
 
-Current continuation: [main integration and deployed Telos token qualification](#main-integration-and-deployed-telos-token-qualification). Earlier entries are dated checkpoints, not current completion claims. The full 16-task plan is still in progress; quotas require explicit operator enablement and public rollout/release packaging remain gated.
+Current continuation: [final main verification and provider preflight](#final-main-verification-and-read-only-provider-preflight). Earlier entries are dated checkpoints, not current completion claims. The full 16-task plan is still in progress; quotas require explicit operator enablement and public rollout/release packaging remain gated.
 
-Implementation branch: `codex/resource-billing-archives` in isolated sibling worktrees under `/Users/seth/.config/superpowers/worktrees/daclify-ram-history`. Main checkouts are not implementation targets. No sub-agents, deployment, external spending or live data cleanup is authorized by this ledger.
+Implementation branch: `codex/resource-billing-archives` in isolated sibling worktrees under `/Users/seth/.config/superpowers/worktrees/daclify-ram-history`; reviewed checkpoints are merged/pushed to main at the user's request. Main checkouts are not implementation targets. No sub-agents, public deployment, external spending or live data cleanup is authorized by this ledger.
 
 Plan: [RAM, prepaid storage and archives](../superpowers/plans/2026-10-08-resource-billing-and-archives.md). Ponytail 5.1.0, full mode. Test-first implementation proceeds inline; independent format work can advance while enforcement qualification remains pending.
 
@@ -533,3 +533,13 @@ Remaining qualification includes other complete historical module/lifecycle comb
 - Modules `npm run verify` passed **27 files / 144 tests**, lint, strict types and generated docs. Current contract/SDK/protocol hashes and dependencies are unchanged. The required register now includes historical completion/admission/Works/Grants cases. This is compiled-WASM qualification, not native exhaustion or all historical agent/custody combinations.
 
 Public-chain/provider/immutable-release gates remain held. No public deployment, production authority changes, live payments or destructive cleanup occurred.
+
+## Final main verification and read-only provider preflight
+
+- Reviewed continuation checkpoints were fast-forwarded/pushed to main: core `5864fe810d75330c3ffaadac3fd7acb5c18c2a7a`, modules `9f440e22f17967b71f02befbf7b229c223107b20`, frontend unchanged at `2d0aabbfb9666dc2d24c26f7a25ff004f1832b9b`. Remote heads agree and tracked checkouts are clean. Final main verification passed core **94 files / 533 tests** and modules **27 files / 144 tests**, including lint/types/docs; frontend's preceding **30/128** verification remains its latest result. This continuation did not change frontend code. Required-register/manifest checks separately passed **2 files / 12 tests**.
+- Refreshed the local review manifest to these source pins; it remains **publication refused / unqualified**. Staged the exact ignored historical Endorsement fixture and public token snapshots in main, without copying private environment/wallet credentials. Eight new owned-native cases passed in their two focused suites; no provider/browser/database suites were relabelled as rerun.
+- Read only configuration presence from the private testnet env, then made two bounded authenticated read-only checks. The provided Stripe test key can retrieve its own account; the Pinata JWT can list the application's exact empty upload query. No key, company/contact information, filenames or provider file contents were printed. No products, accounts, webhooks, charges, uploads or removals were created by this preflight. Authentication alone is not Connect/payment/storage qualification.
+- Missing configuration in that file: Connect client/webhook identity, hosting/RAM/storage Stripe products, stable Pinata ownership scope, SMTP and Telegram OIDC client credentials. OpenBao production provider configuration is also absent. Complete configured HTTPS callbacks, gateway restrictions/funded allowances and actual provider/wallet/recovery drills before public rollout. The existing bot token does not replace Telegram OIDC credentials. Keep mainnet/testnet Pinata ownership separate.
+- Removed stale $20/$50 setup-price wording from all four environment examples: optional account-service billing is distinct from current free shared creation and subscription membership capacity. Private environment values are untouched.
+
+The remaining full historical lifecycle/public configuration/provider/immutable-release gates are still open. These are integration requirements, not reasons to enable destructive cleanup or production quota rollout prematurely.
