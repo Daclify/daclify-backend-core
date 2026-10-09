@@ -216,3 +216,78 @@ it('confirms a provider ID directly and requires absence after a delete acknowle
   );
   expect(fetcher.mock.calls.at(-1)?.[1]?.method).toBeUndefined();
 });
+
+it('follows Pinata terminal cursors to prove complete upload and CID inventory', async () => {
+  const file = {
+    id: providerId,
+    cid,
+    size: bytes.length,
+    number_of_files: 1,
+    keyvalues: { daclify_upload: uploadId },
+  };
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ data: { files: [file], next_page_token: 'terminal-cursor' } })),
+    )
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ data: { files: [], next_page_token: null } })),
+    )
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ data: { files: [file], next_page_token: 'cid-terminal' } })),
+    )
+    .mockResolvedValueOnce(
+      new Response(JSON.stringify({ data: { files: [], next_page_token: null } })),
+    );
+  vi.stubGlobal('fetch', fetcher);
+  const expected = [{ id: providerId, cid, size: bytes.length }];
+  expect(await provider.find(uploadId)).toEqual(expected);
+  expect(new URL(String(fetcher.mock.calls[1]?.[0])).searchParams.get('pageToken')).toBe(
+    'terminal-cursor',
+  );
+  expect(await provider.findCid(cid)).toEqual(expected);
+  expect(new URL(String(fetcher.mock.calls[3]?.[0])).searchParams.get('pageToken')).toBe(
+    'cid-terminal',
+  );
+});
+it('rejects cursor loops, duplicate IDs and more than ten provider objects without reporting partial ownership', async () => {
+  const file = {
+    id: providerId,
+    cid,
+    size: bytes.length,
+    number_of_files: 1,
+    keyvalues: { daclify_upload: uploadId },
+  };
+  for (const second of [
+    { files: [], next_page_token: 'same' },
+    { files: [file], next_page_token: null },
+    {
+      files: Array.from({ length: 10 }, () => ({ ...file, id: randomUUID() })),
+      next_page_token: null,
+    },
+  ]) {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { files: [file], next_page_token: 'same' } })),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: second })));
+    vi.stubGlobal('fetch', fetcher);
+    await expect(provider.find(uploadId)).rejects.toThrow('PINATA_RESPONSE_INVALID');
+    expect(fetcher.mock.calls.length).toBeLessThanOrEqual(2);
+  }
+});
+it('bounds an endless sequence of distinct empty cursors', async () => {
+  let sequence = 0;
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockImplementation(
+      async () =>
+        new Response(
+          JSON.stringify({ data: { files: [], next_page_token: 'cursor-' + sequence++ } }),
+        ),
+    );
+  vi.stubGlobal('fetch', fetcher);
+  await expect(provider.find(uploadId)).rejects.toThrow('PINATA_RESPONSE_INVALID');
+  expect(fetcher).toHaveBeenCalledTimes(11);
+});

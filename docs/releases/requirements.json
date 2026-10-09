@@ -336,6 +336,15 @@
         "tests/payout-wallet.test.ts",
         "tests/marketplace.test.ts"
       ]
+    },
+    {
+      "id": "RESOURCE-IMMUTABLE-RELEASE-EVIDENCE",
+      "suite": "unit",
+      "tests": [
+        "tests/release-qualification.test.ts",
+        "tests/release-artifact.test.ts",
+        "tests/release-package.test.ts"
+      ]
     }
   ]
 }

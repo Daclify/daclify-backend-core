@@ -1,0 +1,21 @@
+{
+  "runtime": "ramobsimdawn",
+  "source": "arcsrcsysj4q",
+  "votes": 1,
+  "freedBytes": "401",
+  "freshDatabaseRecreated": true,
+  "archivePinsRecovered": 2,
+  "privateFilePinsRecovered": 3,
+  "privateDocumentPruned": true,
+  "exactArchivedRowRestored": true,
+  "originalEpochAndGrantPreserved": true,
+  "billingInvented": false,
+  "originalKitDecrypted": true,
+  "replacementKitRejected": true,
+  "plaintextBytes": 39,
+  "limits": [
+    "Owned native system and local disk provider; no live Pinata/Stripe proof.",
+    "Current document, original epoch/grant and private signing domains remain live. Only the exact archived old version is pruned/restored.",
+    "Production pruning, general legacy RAM migration and completion enforcement remain unqualified."
+  ]
+}

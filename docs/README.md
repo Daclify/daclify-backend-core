@@ -1,6 +1,6 @@
 # Daclify documentation
 
-Current development version: **0.7.0-alpha.1**, contract interface 1. This is a development checkpoint; immutable publication, live provider/client qualification and hosted operations remain separate gates.
+Current development version: **0.8.0-alpha.1**, contract interface 1. This is a development checkpoint; immutable publication, live provider/client qualification and hosted operations remain separate gates.
 
 ## Start with the task
 
@@ -31,6 +31,8 @@ Edit `docs/guides/topics.json` for product explanations. `npm run docs:generate`
 After changing a guide, regenerate it, rebuild the public development packages and reinstall the consumers through core's sibling bootstrap. Otherwise the API assistant and frontend can continue showing the old packed help. See [development](development.md). Published package bytes must never be replaced under an existing version; current development tarballs are explicitly unpublished.
 
 Stable topic IDs are UI routes and contextual links. `release-0.5` is retained as a compatible topic ID even though its text now explains the current release. The bundles display package and interface versions. Contract module hashes are checked separately; a displayed service version is not proof of deployed runtime provenance.
+
+Use [upgrade 0.8](operations/upgrade-0.8.md) for the current candidate, [release qualification](operations/release-qualification.md) for immutable packaging, and the [acceptance record](evidence/2026-10-09-resource-completion.md) for actual checks and remaining external dependencies.
 
 ## Evidence and unresolved qualification
 

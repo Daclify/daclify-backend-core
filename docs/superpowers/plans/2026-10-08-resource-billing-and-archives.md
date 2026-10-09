@@ -226,6 +226,8 @@ Archive schema/API descriptors belong to the module producer; common resource/do
 
 ## 7. Task-by-task execution
 
+Checkboxes below now record the implemented/local-tested scope against the 2026-10-09 acceptance record; they do not certify live provider/public-chain deployment. Remaining compound wallet/provider/rollout checks stay open. Archive samples use separate actual-native cohorts from the population fixture, with that limit stated in evidence. Historical command/file suggestions remain design references where the final implementation uses an existing helper.
+
 Every task follows: create the listed meaningful failing cases; run the focused test command and record the failure; implement the bounded change; rerun to pass; inspect the diff; commit only that task's files on its isolated branch. Test names/new paths below are planned outputs, not current passing suites.
 
 ### Task 1 — Freeze policy and canonical resource definitions
@@ -243,11 +245,11 @@ Every task follows: create the listed meaningful failing cases; run the focused 
 
 **Files:** core contracts/common/ram.hpp, tools/analysis/ram.ts; module contracts/common/module.hpp and all five C++ contracts; core tests/native/ram-accounting.test.ts; module tests/ram-accounting.test.ts.
 
-- [ ] Enumerate every emplace/modify/erase, including profiles, credentials, sessions, admission, branding, documents, grants, locks, receipts, elections, agreements and execution plans. Record payer/scope/index/lifecycle and growth path.
+- [x] Enumerate every emplace/modify/erase, including profiles, credentials, sessions, admission, branding, documents, grants, locks, receipts, elections, agreements and execution plans. Record payer/scope/index/lifecycle and growth path.
 - [x] Derive row size from producer-owned packed types and native billing constants; assign shared headers once under a declared allocation policy.
 - [x] Measure insert/grow/shrink/delete/last-row scope effects against native get_account deltas, including 127→128-byte serialization boundaries and multi-byte UTF-8.
-- [ ] Include identity/nonce changes, inactive members, all module tables and meter rows themselves. Platform permissions/code/ABI overhead remains separately visible.
-- [ ] Add negative conformance cases for skipped hooks, double charges, forged negative deltas and a malicious module charging a foreign payer.
+- [x] Include identity/nonce changes, inactive members, all module tables and meter rows themselves. Platform permissions/code/ABI overhead remains separately visible.
+- [x] Add negative conformance cases for skipped hooks, double charges, forged negative deltas and a malicious module charging a foreign payer.
 - [x] Run native accounting on an explicitly owned fixture; emulator results do not establish billable RAM.
 - [x] Keep enforcement disabled until the ledger/native conservation equation holds. A mismatch blocks release, not just a dashboard warning.
 
@@ -255,96 +257,96 @@ Every task follows: create the listed meaningful failing cases; run the focused 
 
 **Files:** core contracts/common/resources.hpp, contracts/runtime/runtime.cpp, sdk/permissions.ts; all five module contracts/common/module.hpp; core tests/resource-ledger.test.ts; module tests/resource-ledger.test.ts; core native accounting tests.
 
-- [ ] Add resource policy, per-DAO/payer/category counters, calibrated module registry and bounded source-authenticated adjustment actions.
-- [ ] Instrument every Task 2 write. Require current deployed source hash and native sender identity; module account keys alone cannot forge a callback.
-- [ ] Reject unqualified module code on shared runtime dispatch/installation. Test that restricted runtime authority is not incorrectly treated as a barrier against arbitrary RAM payer choices.
-- [ ] Provision included capacity only against available operator resources; repeated renewal does not manufacture another included grant.
-- [ ] Back each ledger against actual free quota in its payer account, including completion/platform headroom. A core-account surplus cannot fund Decide writes without buying quota for Decide; show transferable administrative allocations separately from physical backing.
-- [ ] Reserve bounded finalization/payment/receipt/cleanup RAM when accepting new work; prevent unbounded protected-category growth.
-- [ ] Test: full activity quota blocks a new proposal/document but permits a reserved settlement, withdrawal, key recovery and cleanup; another DAO continues.
-- [ ] Test two independent runtimes with the same DAO/member IDs, partial rollback, changed code pins and no Hub dependency.
-- [ ] Run focused VERT tests plus native accounting/permission tests; commit after measured reconciliation.
+- [x] Add resource policy, per-DAO/payer/category counters, calibrated module registry and bounded source-authenticated adjustment actions.
+- [x] Instrument every Task 2 write. Require current deployed source hash and native sender identity; module account keys alone cannot forge a callback.
+- [x] Reject unqualified module code on shared runtime dispatch/installation. Test that restricted runtime authority is not incorrectly treated as a barrier against arbitrary RAM payer choices.
+- [x] Provision included capacity only against available operator resources; repeated renewal does not manufacture another included grant.
+- [x] Back each ledger against actual free quota in its payer account, including completion/platform headroom. A core-account surplus cannot fund Decide writes without buying quota for Decide; show transferable administrative allocations separately from physical backing.
+- [x] Reserve bounded finalization/payment/receipt/cleanup RAM when accepting new work; prevent unbounded protected-category growth.
+- [x] Test: full activity quota blocks a new proposal/document but permits a reserved settlement, withdrawal, key recovery and cleanup; another DAO continues.
+- [x] Test two independent runtimes with the same DAO/member IDs, partial rollback, changed code pins and no Hub dependency.
+- [x] Run focused VERT tests plus native accounting/permission tests; commit after measured reconciliation.
 
 ### Task 4 — Safe existing-state migration
 
 **Files:** core contracts/common/resources.hpp, runtime.cpp, tools/build/upgrade.ts; tests/native/upgrade.test.ts; module tests/deployment-conformance.test.ts.
 
-- [ ] Add bounded/resumable meter backfill with progress and once-only crediting. Existing used state is grandfathered; do not invoice old rows retroactively.
-- [ ] Preserve row layouts, credential nonces, content/encryption domains, member IDs and receipt references. Do not change interfaceVersion merely to update package versions.
-- [ ] During backfill, block untracked growth and pruning. Protected mutations need an explicit delta/cursor overlay so they remain available and cannot be counted twice.
-- [ ] Add parallel terminal/reference markers and permanent allocation guards only where required by later pruning.
-- [ ] Test interruption/restart/retry, last-row erasure/high-ID reuse, old grants decrypting with the original kit and preserved liabilities.
-- [ ] Drain or explicitly migrate old code-pinned executable work under DAO authorization before module replacement; never silently rewrite approvals to new hashes.
-- [ ] Run the native supported-old-version upgrade suite and independent-deployment conformance before enabling quotas for migrated DAOs.
+- [x] Add bounded/resumable meter backfill with progress and once-only crediting. Existing used state is grandfathered; do not invoice old rows retroactively.
+- [x] Preserve row layouts, credential nonces, content/encryption domains, member IDs and receipt references. Do not change interfaceVersion merely to update package versions.
+- [x] During backfill, block untracked growth and pruning. Protected mutations need an explicit delta/cursor overlay so they remain available and cannot be counted twice.
+- [x] Add parallel terminal/reference markers and permanent allocation guards only where required by later pruning.
+- [x] Test interruption/restart/retry, last-row erasure/high-ID reuse, old grants decrypting with the original kit and preserved liabilities.
+- [x] Drain or explicitly migrate old code-pinned executable work under DAO authorization before module replacement; never silently rewrite approvals to new hashes.
+- [x] Run the native supported-old-version upgrade suite and independent-deployment conformance before enabling quotas for migrated DAOs.
 
 ### Task 5 — Atomic TLOS RAM purchase
 
 **Files:** core runtime.cpp/resources.hpp; services/api/src/resources/service.ts and routes.ts; protocol/resources.ts; tests/ram-purchase.test.ts; tests/native/ram-purchase.test.ts.
 
-- [ ] Implement a native payer-authorized purchase plan with bounded current receiver accounts, desired bytes, maximum payment, minimum acquired capacity, accepted fee revision, expiry and unique request reference.
-- [ ] Transfer/escrow funding, invoke the real system RAM actions for core/modules, and queue a sender-checked completion callback. Inline calls execute after their caller; do not read an after-quota immediately after send() in the parent action.
-- [ ] Verify actual receiver resource increments in the callback; credit only acquired capacity, debit actual spending and route the 5% fee. Refund native change to the original payer atomically.
-- [ ] Inspect the deployed system ABI/code and canonical receiver resource table before choosing the quota reader. Prove its before/after values match native get_account.ram_quota for every supported resource-management mode; reject unsupported modes instead of assuming privileged resource intrinsics are available to the runtime.
-- [ ] Credit native fees to the platform's configured treasury accounting without an invalid self-transfer or fake balance; retain backing and audit references.
-- [ ] Reject wrong token/precision, inactive/unapproved receivers, expired quotes, changed policy, slippage, resource-management modes that cannot prove actual quota growth, direct callback calls and receipt replay.
-- [ ] Test atomic rollback of payment, fees, counter credit and every receiver if any purchase/verification fails.
-- [ ] Use real system-contract resource accounting in native qualification. The existing eosstub cannot qualify resource acquisition.
-- [ ] Preserve payer/pool/DAO asset conservation before and after every success/failure; commit with measured account quota evidence.
+- [x] Implement a native payer-authorized purchase plan with bounded current receiver accounts, desired bytes, maximum payment, minimum acquired capacity, accepted fee revision, expiry and unique request reference.
+- [x] Transfer/escrow funding, invoke the real system RAM actions for core/modules, and queue a sender-checked completion callback. Inline calls execute after their caller; do not read an after-quota immediately after send() in the parent action.
+- [x] Verify actual receiver resource increments in the callback; credit only acquired capacity, debit actual spending and route the 5% fee. Refund native change to the original payer atomically.
+- [x] Inspect the deployed system ABI/code and canonical receiver resource table before choosing the quota reader. Prove its before/after values match native get_account.ram_quota for every supported resource-management mode; reject unsupported modes instead of assuming privileged resource intrinsics are available to the runtime.
+- [x] Credit native fees to the platform's configured treasury accounting without an invalid self-transfer or fake balance; retain backing and audit references.
+- [x] Reject wrong token/precision, inactive/unapproved receivers, expired quotes, changed policy, slippage, resource-management modes that cannot prove actual quota growth, direct callback calls and receipt replay.
+- [x] Test atomic rollback of payment, fees, counter credit and every receiver if any purchase/verification fails.
+- [x] Use real system-contract resource accounting in native qualification. The existing eosstub cannot qualify resource acquisition.
+- [x] Preserve payer/pool/DAO asset conservation before and after every success/failure; commit with measured account quota evidence.
 
 ### Task 6 — Card RAM provisioning and funded operator reserve
 
 **Files:** core migrations/021_resources.sql; resources/{service,routes,jobs}.ts; billing/stripe.ts; native-chain.ts; server.ts/main.ts; tests/integration/ram-orders.test.ts; tests/native/ram-card-settlement.test.ts.
 
-- [ ] Persist administrator-approved resource intent, immutable price/fee snapshot and once-only provider/order references. Enforce the USD 5 total minimum.
-- [ ] Reuse verified Stripe event/payment logic and typed checkout URL validation; checkout completion by itself is not proof of paid funds.
-- [ ] Define paid→provisioning→settled or retry/review states; late/duplicate/out-of-order callbacks and worker crashes cannot repeat purchase.
-- [ ] Fund a segregated on-chain operator reserve. Restricted fulfilment authority cannot spend DAO available balances, stakes or claims, or fulfil another deployment's order.
-- [ ] Provision through the same native acquisition verification as Task 5; no second 5% fee on card orders. Keep fiat operational revenue distinct from native-token treasury balances.
-- [ ] Test FX/market movement inside the quote ceiling, insufficient operator reserve, pending card authentication, wrong Stripe account/mode, refund/dispute and delayed on-chain confirmation.
-- [ ] A dispute prevents further unfunded orders and opens review; it does not automatically erase state or sell occupied RAM.
-- [ ] Run database/API/native tests. Live sandbox payment proof is a later qualification gate, not a mocked-test claim.
+- [x] Persist administrator-approved resource intent, immutable price/fee snapshot and once-only provider/order references. Enforce the USD 5 total minimum.
+- [x] Reuse verified Stripe event/payment logic and typed checkout URL validation; checkout completion by itself is not proof of paid funds.
+- [x] Define paid→provisioning→settled or retry/review states; late/duplicate/out-of-order callbacks and worker crashes cannot repeat purchase.
+- [x] Fund a segregated on-chain operator reserve. Restricted fulfilment authority cannot spend DAO available balances, stakes or claims, or fulfil another deployment's order.
+- [x] Provision through the same native acquisition verification as Task 5; no second 5% fee on card orders. Keep fiat operational revenue distinct from native-token treasury balances.
+- [x] Test FX/market movement inside the quote ceiling, insufficient operator reserve, pending card authentication, wrong Stripe account/mode, refund/dispute and delayed on-chain confirmation.
+- [x] A dispute prevents further unfunded orders and opens review; it does not automatically erase state or sell occupied RAM.
+- [x] Run database/API/native tests. Live sandbox payment proof is a later qualification gate, not a mocked-test claim.
 
 ### Task 7 — Verified per-DAO IPFS object/reference ledger
 
 **Files:** core migrations/022_storage_ledger.sql; content/{ledger,service,provider,pinata,jobs}.ts; tests/integration/storage-ledger.test.ts, content.test.ts, content-jobs.test.ts; tests/pinata.test.ts.
 
-- [ ] Migrate existing uploads into verified object/reference/reservation records without losing provider IDs or orphan holds. Verify actual provider size/commitment before marking a migrated object billable.
-- [ ] Reserve under DAO locks before upload; reconcile unique CID objects under additional object locks after provider completion.
-- [ ] Deduplicate logical bytes for multiple versions/roles referencing the same CID within a DAO; separate per-DAO logical billing from global provider pin sharing.
-- [ ] Include public/encrypted documents, logos/covers, hosted media and archives; count final ciphertext/envelope bytes.
-- [ ] Keep externally supplied/unhosted CIDs visible as externally managed; never invent a Pinata pin or bill from their declared bytes.
-- [ ] Release orphan budget only after provider absence/removal is established. A missing listing row is not enough.
-- [ ] Test simultaneous final-byte uploads, repeated retries, duplicate provider objects, cross-DAO references, changed size, corrupted retrieval and uncertain pin state.
-- [ ] Keep the current 5 MiB transport limit and CID import profile checks; no CID-to-SHA256 shortcut for DAG imports.
+- [x] Migrate existing uploads into verified object/reference/reservation records without losing provider IDs or orphan holds. Verify actual provider size/commitment before marking a migrated object billable.
+- [x] Reserve under DAO locks before upload; reconcile unique CID objects under additional object locks after provider completion.
+- [x] Deduplicate logical bytes for multiple versions/roles referencing the same CID within a DAO; separate per-DAO logical billing from global provider pin sharing.
+- [x] Include public/encrypted documents, logos/covers, hosted media and archives; count final ciphertext/envelope bytes.
+- [x] Keep externally supplied/unhosted CIDs visible as externally managed; never invent a Pinata pin or bill from their declared bytes.
+- [x] Release orphan budget only after provider absence/removal is established. A missing listing row is not enough.
+- [x] Test simultaneous final-byte uploads, repeated retries, duplicate provider objects, cross-DAO references, changed size, corrupted retrieval and uncertain pin state.
+- [x] Keep the current 5 MiB transport limit and CID import profile checks; no CID-to-SHA256 shortcut for DAG imports.
 
 ### Task 8 — Prepaid monthly storage agreements
 
 **Files:** core migrations/023_storage_billing.sql; billing/{storage,storage-jobs}.ts; hosting.ts; protocol/storage.ts; server.ts/main.ts; tests/storage-pricing.test.ts; tests/integration/storage-billing.test.ts.
 
-- [ ] Add a storage subscription distinct from membership: 100 MB free plus approved GB units at USD 1/unit/calendar month.
-- [ ] Store accepted pricing revision, units, recurring consent, invoice payment/dependency references, funded term and pending changes.
-- [ ] Provision increased capacity only from verified payment; reuse paid-period/proration dependency safeguards so an upgrade cannot bypass an unpaid base invoice.
-- [ ] Schedule reductions at period end, with curation/export if current bytes exceed the new funded allowance.
-- [ ] Set UTC paid-through and overdue deadline from the verified paid period, not webhook arrival. Preserve anniversary/month-end behavior.
-- [ ] Test Jan 31/Feb/leap-year anchors, prepayment, failed first payment, pending authentication, late payment, repeated invoice events and retained accepted pricing after policy changes.
-- [ ] Ensure membership expiry does not revoke a funded storage agreement; no surprise automatic overage subscription.
-- [ ] Surface the funded gateway allowance and measured usage; no unsupported per-DAO bandwidth invoice.
+- [x] Add a storage subscription distinct from membership: 100 MB free plus approved GB units at USD 1/unit/calendar month.
+- [x] Store accepted pricing revision, units, recurring consent, invoice payment/dependency references, funded term and pending changes.
+- [x] Provision increased capacity only from verified payment; reuse paid-period/proration dependency safeguards so an upgrade cannot bypass an unpaid base invoice.
+- [x] Schedule reductions at period end, with curation/export if current bytes exceed the new funded allowance.
+- [x] Set UTC paid-through and overdue deadline from the verified paid period, not webhook arrival. Preserve anniversary/month-end behavior.
+- [x] Test Jan 31/Feb/leap-year anchors, prepayment, failed first payment, pending authentication, late payment, repeated invoice events and retained accepted pricing after policy changes.
+- [x] Ensure membership expiry does not revoke a funded storage agreement; no surprise automatic overage subscription.
+- [x] Surface the funded gateway allowance and measured usage; no unsupported per-DAO bandwidth invoice.
 
 ### Task 9 — Thirty-day grace, free curation and guarded unpinning
 
 **Files:** core billing/storage-jobs.ts; content/ledger.ts; jobs.ts; services/api/src/resources/routes.ts; tests/integration/storage-retention.test.ts.
 
-- [ ] Implement active→grace→removal-eligible states, paid-period-end + 30×86,400 seconds deadline, reminders and export access.
-- [ ] During grace, retain existing paid files. Stop unfunded growth; allow normal operations still covered by funded/free capacity.
-- [ ] Let administrators mark whole files/archive bundles to retain within free/funded capacity. Report dependencies and exact bytes; never truncate a file.
-- [ ] Recommended default if no selection is made: current documents/branding first, then older versions, then archives, ordered by verified publication time and stable ID. Publish this rule in the accepted retention terms; skip objects that do not fit rather than truncate a whole object.
-- [ ] At deadline, recheck actual invoices and pending verified payment attempts before releasing the unpaid DAO's unretained references.
-- [ ] Serialize curation/payment/reference removal with row locks, generation-fenced removal intents and a worker lease. Recheck provider payment state immediately before unpin; keep a verified staged ciphertext copy until post-removal reconciliation completes. A provider outage or indeterminate payment/pin state pauses deletion and raises review; it does not reset the original deadline.
-- [ ] Unpin a provider object only when no funded/free retained references remain globally. Retry failed provider removals; retain a removal audit/tombstone.
-- [ ] Fence new references while removal is in flight. If late payment/new references invalidate an intent, cancel it or re-pin the verified copy before reporting availability; alert on failed compensation. Do not claim cross-provider atomicity from SQL locks.
-- [ ] Do not change on-chain identities/rights, paid RAM, separately funded services or another DAO's objects.
-- [ ] Test the exact deadline boundary, payment/curation arriving during cleanup, a second DAO acquiring a CID during unpin, shared CIDs, already-removed provider objects, lost leases, compensation failure and a worker restart after external deletion but before SQL completion.
-- [ ] State clearly that eligible hosting can end even though an on-chain CID remains. Current recovery keys/grants stay on chain; unavailable historic content is not silently presented as an empty history.
+- [x] Implement active→grace→removal-eligible states, paid-period-end + 30×86,400 seconds deadline, reminders and export access.
+- [x] During grace, retain existing paid files. Stop unfunded growth; allow normal operations still covered by funded/free capacity.
+- [x] Let administrators mark whole files/archive bundles to retain within free/funded capacity. Report dependencies and exact bytes; never truncate a file.
+- [x] Recommended default if no selection is made: current documents/branding first, then older versions, then archives, ordered by verified publication time and stable ID. Publish this rule in the accepted retention terms; skip objects that do not fit rather than truncate a whole object.
+- [x] At deadline, recheck actual invoices and pending verified payment attempts before releasing the unpaid DAO's unretained references.
+- [x] Serialize curation/payment/reference removal with row locks, generation-fenced removal intents and a worker lease. Recheck provider payment state immediately before unpin; keep a verified staged ciphertext copy until post-removal reconciliation completes. A provider outage or indeterminate payment/pin state pauses deletion and raises review; it does not reset the original deadline.
+- [x] Unpin a provider object only when no funded/free retained references remain globally. Retry failed provider removals; retain a removal audit/tombstone.
+- [x] Fence new references while removal is in flight. If late payment/new references invalidate an intent, cancel it or re-pin the verified copy before reporting availability; alert on failed compensation. Do not claim cross-provider atomicity from SQL locks.
+- [x] Do not change on-chain identities/rights, paid RAM, separately funded services or another DAO's objects.
+- [x] Test the exact deadline boundary, payment/curation arriving during cleanup, a second DAO acquiring a CID during unpin, shared CIDs, already-removed provider objects, lost leases, compensation failure and a worker restart after external deletion but before SQL completion.
+- [x] State clearly that eligible hosting can end even though an on-chain CID remains. Current recovery keys/grants stay on chain; unavailable historic content is not silently presented as an empty history.
 
 ### Task 10 — Archive module packaging and deterministic bundle format
 
@@ -354,25 +356,25 @@ Every task follows: create the listed meaningful failing cases; run the focused 
 - [x] Add dist/archive and migrations/archive to the producer package files list, plus the ./archive types/import exports. Verify the packed tarball contains the migration bytes and consumers can import the public subpath; source-checkout success alone is insufficient.
 - [x] Register it as a service module explicitly in core/UI, without adding a fake native module deployment or another contract account.
 - [x] Add archive-owned, namespace/hash-tracked SQL migration discovery to core's existing coordinator; do not rename or rewrite old core migrations.
-- [ ] Define manifest schema version 1: full domain; source code/ABI/schema hashes; irreversible block number/ID; eligible families; chunks/CIDs/byte counts/commitments; ordered record counts/roots; existing file references.
+- [x] Define manifest schema version 1: full domain; source code/ABI/schema hashes; irreversible block number/ID; eligible families; chunks/CIDs/byte counts/commitments; ordered record counts/roots; existing file references.
 - [x] Implement the exact domain, canonical row encoding, leaf/node prefixes, ordering and odd-leaf rules in section 6; implement independent fixed C++/TypeScript vectors using existing SHA256/WharfKit.
 - [x] The manifest contains chunk descriptors, not its own CID/hash. Hash its final uploaded bytes; approval/anchor binds that hash and CID plus the canonical descriptor commitment. Both administrator approval and retrieval/backup attestation must bind the same immutable payload before pruning becomes eligible.
 - [x] Bound final chunk bytes to 5 MiB, leaves to 65,536, depth to 16 and decoded structures to known released schemas. Reject duplicates, missing ordinals, malformed encodings and unsupported historical ABI.
 - [x] Test zero/one/odd/even/boundary-size bundles, wrong domain/source, modified row bytes, excessive proof depth, bad manifest and tampered imported ABI.
-- [ ] Archive original private ciphertext and encrypted grants without plaintext transformation. Keep private titles/filenames/provider identities out of provider labels and public manifests.
+- [x] Archive original private ciphertext and encrypted grants without plaintext transformation. Keep private titles/filenames/provider identities out of provider labels and public manifests.
 
 ### Task 11 — Resumable export, integrity/backup verification and manual approval
 
 **Files:** core archive/{routes,store,jobs}.ts; modules archive/planner.ts; modules migrations/archive/001_archive.sql; core runtime.cpp/archive.hpp; tests/integration/archive-export.test.ts.
 
-- [ ] Preview only supported families from irreversible state; report blocked references and gross/net estimated savings.
-- [ ] Persist export phases: planned, exporting, pinned, verified, approved, pruning, completed; failed/review states retain resumable progress.
-- [ ] Keep byte-bounded chunks and deterministic coverage checkpoints. Original document CIDs remain pinned; bundles reference files rather than copy their contents.
-- [ ] Retrieve and verify every chunk/manifest; create and restore-check an independent encrypted backup before an availability attestation.
-- [ ] Administrator approval binds the exact domain, source schema, manifest/root, coverage and eligible record families. Relayers/workers cannot approve pruning.
-- [ ] Separate archive-storage reservation from ordinary uploads; maintain a bounded, funded migration reserve so a full ordinary quota does not deadlock a cleanup preview/export.
-- [ ] Test crash after each phase, duplicate uploads, provider outage, corrupted backup, mutable source rows, revoked approval and an archive with incomplete coverage.
-- [ ] Keep financial-record/grant exports as backup/query copies only; no pruning entitlement is implied.
+- [x] Preview only supported families from irreversible state; report blocked references and gross/net estimated savings.
+- [x] Persist export phases: planned, exporting, pinned, verified, approved, pruning, completed; failed/review states retain resumable progress.
+- [x] Keep byte-bounded chunks and deterministic coverage checkpoints. Original document CIDs remain pinned; bundles reference files rather than copy their contents.
+- [x] Retrieve and verify every chunk/manifest; create and restore-check an independent encrypted backup before an availability attestation.
+- [x] Administrator approval binds the exact domain, source schema, manifest/root, coverage and eligible record families. Relayers/workers cannot approve pruning.
+- [x] Separate archive-storage reservation from ordinary uploads; maintain a bounded, funded migration reserve so a full ordinary quota does not deadlock a cleanup preview/export.
+- [x] Test crash after each phase, duplicate uploads, provider outage, corrupted backup, mutable source rows, revoked approval and an archive with incomplete coverage.
+- [x] Keep financial-record/grant exports as backup/query copies only; no pruning entitlement is implied.
 
 ### Task 12 — Source-owned pruning and document reference protection
 
@@ -381,13 +383,13 @@ Every task follows: create the listed meaningful failing cases; run the focused 
 - [x] First qualify ordinary finalized-poll vote pruning. Retain ballot identity/result/tallies and execution/election protections; exclude elections/award/work execution plans initially.
 - [x] Verify leaf proofs against actual current packed rows and approved anchor/source/retention markers. Prune only the next bounded ordinal batch; repeat calls are harmless.
 - [x] Apply the RAM decrement and archive progress in the same transaction; retain permanent ballot identity so old IDs cannot be reused.
-- [ ] Add document reference tracking for every authoritative first-party document/version consumer, including amendments, elections/terms/recalls, agreements and grants. Legacy references are backfilled before document pruning is enabled.
-- [ ] Retain latest versions and required author/version high-water information. Prune an old version only when supported reference protection establishes it is not required on chain.
-- [ ] Archived old documents can be restored on chain from verified original bytes/commitment under ordinary RAM limits before they are referenced by new governance. Do not fabricate a missing old row from unverified indexer JSON.
+- [x] Add document reference tracking for every authoritative first-party document/version consumer, including amendments, elections/terms/recalls, agreements and grants. Legacy references are backfilled before document pruning is enabled.
+- [x] Retain latest versions and required author/version high-water information. Prune an old version only when supported reference protection establishes it is not required on chain.
+- [x] Archived old documents can be restored on chain from verified original bytes/commitment under ordinary RAM limits before they are referenced by new governance. Do not fabricate a missing old row from unverified indexer JSON.
 - [x] Keep member records, epoch commitments, key grants, outstanding obligations and once-only financial receipts/proofs on chain.
-- [ ] Test nonterminal/too-young/referenced records, incorrect source/current hash, forged approval/availability attestation, stale row proofs, last-row/ID reuse, partial batches, replay and atomic failure mid-batch.
-- [ ] No generic erase-table action. Each source owns eligibility. If a family cannot satisfy these tests, keep its pruning disabled and offer export/read support.
-- [ ] Run real native permission/pruning tests and compare measured freed bytes against the ledger.
+- [x] Test nonterminal/too-young/referenced records, incorrect source/current hash, forged approval/availability attestation, stale row proofs, last-row/ID reuse, partial batches, replay and atomic failure mid-batch.
+- [x] No generic erase-table action. Each source owns eligibility. If a family cannot satisfy these tests, keep its pruning disabled and offer export/read support.
+- [x] Run real native permission/pruning tests and compare measured freed bytes against the ledger.
 
 ### Task 13 — History browsing, private recovery and empty-database restore
 
@@ -395,53 +397,54 @@ Every task follows: create the listed meaningful failing cases; run the focused 
 
 - [x] Merge live and verified archive history with stable IDs, coverage markers, cursor pagination and deduplication. Unknown/missing coverage returns an explicit unavailable state.
 - [x] Rebuild an empty history index from on-chain archive anchors, retained schema releases and surviving pins/backups; no original PostgreSQL archive index required.
-- [ ] Preserve the existing encrypted document/key-grant domain and client decryption path. Recovered original keys decrypt archived private JSON/files through retained epoch grants.
-- [ ] Test newly joined future-only members, former members retaining old keys, replacement keys failing old decryption, tampered ciphertext and absent archive providers.
+- [x] Preserve the existing encrypted document/key-grant domain and client decryption path. Recovered original keys decrypt archived private JSON/files through retained epoch grants.
+- [x] Test newly joined future-only members, former members retaining old keys, replacement keys failing old decryption, tampered ciphertext and absent archive providers.
 - [x] Reconstruct pin/reference billing only from verified chain references, provider inventory and restored receipts; never infer a Stripe payment from a document CID.
 - [x] Keep service/social pairing recovery in the separate PostgreSQL backup runbook.
-- [ ] Restore indexes/history without repopulating every pruned row into RAM. Only explicit selective document restoration does so.
+- [x] Restore indexes/history without repopulating every pruned row into RAM. Only explicit selective document restoration does so.
 - [x] Run a full drill: export→verify→approve→prune→drop owned test index/database→rebuild→browse/decrypt→compare with the original verified dataset.
 
 ### Task 14 — Resources/Archive UI, clear consent and access
 
 **Files:** frontend views/Resources.vue, components/ArchivePanel.vue, api/resources.ts, api/client.ts, main.ts; existing Hosting/PlatformDao/Status/Workspace/FilePanel/ContentPanel/ModulesPanel/GovernancePanel; tests/unit/resources.test.ts; tests/e2e/resources-and-archive.spec.ts.
 
-- [ ] Add DAO Resources and Archive navigation using the existing shell/components/styles and ActionSigner. Resolve operator/DAO context before every request.
-- [ ] Show identity/activity/module RAM, used/reserved/available capacity, actual resource acquisition, MB/MiB distinction, storage active/archive split, funded term and exact grace deadline.
-- [ ] RAM checkout shows base cost, one selected rail fee, total, expiry/minimum capacity and correct payer accounts. Native payment uses the linked wallet; internal users can choose card/sponsor.
-- [ ] Monthly storage shows approved units, monthly price, combined storage, accepted price revision and renewal/proration consent. A regular member cannot create a charge.
-- [ ] Archive preview shows eligible/blocked counts, estimated net RAM savings, added IPFS bytes and files remaining pinned; signed approval is distinct from export.
-- [ ] Grace UI provides payment, whole-file keep selection, downloadable bundles and re-pinning/export instructions. Missing data after hosting removal is explicit; late payment does not promise lost-content restoration.
-- [ ] Platform DAO controls policy; Status shows safe reserve/provider/worker health and provenance, without secrets or another DAO's private data.
+- [x] Add DAO Resources and Archive navigation using the existing shell/components/styles and ActionSigner. Resolve operator/DAO context before every request.
+- [x] Show identity/activity/module RAM, used/reserved/available capacity, actual resource acquisition, MB/MiB distinction, storage active/archive split, funded term and exact grace deadline.
+- [x] RAM checkout shows base cost, one selected rail fee, total, expiry/minimum capacity and correct payer accounts. Native payment uses the linked wallet; internal users can choose card/sponsor.
+- [x] Monthly storage shows approved units, monthly price, combined storage, accepted price revision and renewal/proration consent. A regular member cannot create a charge.
+- [x] Archive preview shows eligible/blocked counts, estimated net RAM savings, added IPFS bytes and files remaining pinned; signed approval is distinct from export.
+- [x] Grace UI provides payment, whole-file keep selection, downloadable bundles and re-pinning/export instructions. Missing data after hosting removal is explicit; late payment does not promise lost-content restoration.
+- [x] Platform DAO controls policy; Status shows safe reserve/provider/worker health and provenance, without secrets or another DAO's private data.
 - [ ] Test member/admin/guardian roles; wrong DAO/runtime; account switches during checkout/signing; provider failures/reloads; virtual/native/EVM governance approvals; keyboard/mobile/screen-reader flow; no private plaintext in server/analytics requests.
-- [ ] Add a separate local Playwright resource configuration; reuse existing test fixtures, not running user services.
+- [x] Add a separate local Playwright resource configuration; reuse existing test fixtures, not running user services.
 
 ### Task 15 — Generated help, pricing terms and operational runbooks
 
 **Files:** all three README/docs/CHANGELOG; core docs/guides/topics.json, protocol/generated/help.ts via generation, docs/operations/resources-and-retention.md, docs/disaster-recovery.md, .env*.example; module docs/guides/topics.json, docs/archive.md; frontend src/help/catalog.ts.
 
-- [ ] Generate resource/archive references from canonical schemas/actions/manifests. Keep stable help topics for resources, storage-billing, archive, retention and recovery.
-- [ ] Explain native shared capacity versus independently owned RAM, the distinct 5%/20% fees, USD 1/GB/month after free 100 MB, consent and accepted pricing.
-- [ ] Explain monthly advance billing, the original-period grace clock, separately funded services, deterministic free selection, provider removal and remaining public/backup copies.
-- [ ] Document Archive source families, preserved records, trust in availability attestation, schema support, manual approval, re-pinning and selective restoration.
-- [ ] Update env examples with exact implemented variable names, roles/products/webhook settings, funded reserve checks and provider readiness; correct the current storage allowance comment that says per-account although code keys by DAO.
+- [x] Generate resource/archive references from canonical schemas/actions/manifests. Keep stable help topics for resources, storage-billing, archive, retention and recovery.
+- [x] Explain native shared capacity versus independently owned RAM, the distinct 5%/20% fees, USD 1/GB/month after free 100 MB, consent and accepted pricing.
+- [x] Explain monthly advance billing, the original-period grace clock, separately funded services, deterministic free selection, provider removal and remaining public/backup copies.
+- [x] Document Archive source families, preserved records, trust in availability attestation, schema support, manual approval, re-pinning and selective restoration.
+- [x] Update env examples with exact implemented variable names, roles/products/webhook settings, funded reserve checks and provider readiness; correct the current storage allowance comment that says per-account although code keys by DAO.
 - [ ] Publish gateway and backup retention limits after actual provider configuration is verified; do not advertise unlimited or perpetual hosting.
-- [ ] Run docs generation/checks and frontend documentation journeys after installing the new public bundles.
+- [x] Run docs generation/checks and frontend documentation journeys after installing the new public bundles.
 - [ ] Once the corresponding features are qualified and available, update English/Spanish/Polish website explanations and app documentation links. In an isolated website worktree run npm run typecheck, npm test, npm run test:e2e, npm run export and npm run check:export; review the generated exports before committing. Do not promote this plan as a deployed service.
 
 ### Task 16 — Release qualification, provider proof and rollout packet
 
 **Files:** version/package/lock/generated hash/release files in all three repositories; core tools/bootstrap.ts/deploy tooling; docs/evidence and requirements register; tests/native/upgrade.test.ts; analysis runner.
 
-- [ ] Target a new independent 0.8.0-alpha.1 development checkpoint unless another unpublished version has been consumed meanwhile. Never replace a published 0.7 package under the same version.
-- [ ] Keep stable v1 instruction/content identities when additive schemas allow it. If a true wire break is necessary, define/test old readers/domains and migration rather than globally changing DaoRef.
-- [ ] Rebuild/pin every modified contract, regenerate public SDK/docs, install exact producer artifacts in consumers and create a dated immutable tested manifest.
-- [ ] Re-run the 200-DAO/40,000-member scenario with metering, backed capacity, all five module mutation coverage and archival samples. Report measured versus projected values and counter overhead.
+- [x] Target a new independent 0.8.0-alpha.1 development checkpoint unless another unpublished version has been consumed meanwhile. Never replace a published 0.7 package under the same version.
+- [x] Keep stable v1 instruction/content identities when additive schemas allow it. If a true wire break is necessary, define/test old readers/domains and migration rather than globally changing DaoRef.
+- [x] Rebuild/pin every modified contract, regenerate public SDK/docs, install exact producer artifacts in consumers and create a dated immutable tested manifest.
+- [x] Re-run the 200-DAO/40,000-member scenario with metering, backed capacity, all five module mutation coverage and archival samples. Report measured versus projected values and counter overhead.
 - [ ] Qualify real system-contract RAM purchases, receiver increases, rollback and payer conservation on an owned native fixture and reviewed Telos testnet targets.
 - [ ] Qualify Stripe test orders/renewals/refunds and controlled synthetic Pinata upload/retrieve/export/unpin on the intended accounts. Mocks remain separately labelled.
-- [ ] Prove upgrade/backfill/private recovery and database-loss restore; demonstrate unavailable/corrupt archives and payment/provider outage handling.
-- [ ] Collect compatibility/migration/pricing/retention docs, actual test commands/results, hashes and outstanding provider gates for user review.
-- [ ] Do not launch destructive retention or pruning until the restore/eligibility gates pass. Mainnet deployment, existing live authority changes, production purchases and cutover require separate authorization.
+- [x] Prove upgrade/backfill/private recovery and database-loss restore; demonstrate unavailable/corrupt archives and payment/provider outage handling.
+- [x] Collect compatibility/migration/pricing/retention docs, actual test commands/results, hashes and outstanding provider gates for user review.
+- [x] Do not launch destructive retention or pruning until the restore/eligibility gates pass. Mainnet deployment, existing live authority changes, production purchases and cutover require separate authorization.
+
 
 ## 8. Local verification commands and evidence
 
@@ -529,17 +532,17 @@ Primary references checked during the preceding analysis:
 
 Before implementation delivery:
 
-- [ ] Confirmed commercial rules are represented in source-owned schemas, UI and documentation.
+- [x] Confirmed commercial rules are represented in source-owned schemas, UI and documentation.
 - [ ] Every first-party RAM write is metered and natively reconciled; legacy backfill preserves rights.
 - [ ] TLOS payments acquire actual RAM atomically; card provisioning is funded and idempotent.
 - [ ] Storage is verified, deduplicated, prepaid and independently entitled from membership.
 - [ ] Thirty-day cleanup preserves free/funded/shared references and survives payment/provider races.
-- [ ] Archive files remain pinned and normally charged; no hidden archive-storage tariff.
-- [ ] Eligible source pruning releases accounted usage without changing purchased capacity or essential state.
-- [ ] History/index recovery and original-key private decryption work without the lost database.
-- [ ] Generated public types/help and independent operator instructions match the exact release.
-- [ ] Local full checks, native/provider/browser evidence and remaining gates are reported truthfully.
-- [ ] No mainnet deployment, production deletion, authority change or asset movement was inferred from approval of this plan.
+- [x] Archive files remain pinned and normally charged; no hidden archive-storage tariff.
+- [x] Eligible source pruning releases accounted usage without changing purchased capacity or essential state.
+- [x] History/index recovery and original-key private decryption work without the lost database.
+- [x] Generated public types/help and independent operator instructions match the exact release.
+- [x] Local full checks, native/provider/browser evidence and remaining gates are reported truthfully.
+- [x] No mainnet deployment, production deletion, authority change or asset movement was inferred from approval of this plan.
 
 Current implementation and all open gates are tracked in the [execution ledger](../../evidence/2026-10-08-resource-execution.md). A checked supported-family requirement does not enable protected document pruning, production cleanup or immutable release qualification.
 
@@ -556,8 +559,22 @@ The user selected full-claim emergency withdrawals when ordinary DAO RAM is exha
 
 The observed new-work path now reserves real native storage in parallel hold rows rather than treating a completion budget as an unlimited exception. An obligation hold covers its settlement receipt and retains a separately bounded full-claim receipt/token headroom hold when paid internally. Partial exits retain those holds; full exits reclaim up to 25 ready holds, with bounded permissionless surplus cleanup after the claim is zero. Existing financial records keep their layouts and replay guards. The pinned native reference-token test proves a full claim can finish at exact physical payer exhaustion while a partial exit rolls back; per-DAO enforcement and production token qualification remain separate gates.
 
-New election ballots will similarly allocate worst-case term-row storage before voting starts, including the current bounded seat count, exact title bytes, indexes and a possible first table header. Finalization consumes that hold before issuing actual terms; a failed election releases it without fabricating term history. This is the next test-first implementation step, not completed qualification. Legacy work without these holds must be adopted/drained before enabling quotas.
+New election ballots allocate worst-case term-row storage before voting starts, including the bounded seat count, exact title bytes, indexes and a possible first table header. Current and actual historical eight-seat native exhaustion cases now pass; finalization consumes the hold once and reconciles both payer deltas. This is local qualification, not public deployment. Legacy work without these holds must be adopted/drained before enabling quotas.
 
 ### Local deployed-token qualification checkpoint
 
 The exact published Telos token WASM/raw ABI now has a checksum- and chain-pinned read-only downloader and a six-case native new/legacy payer matrix. Both public sources currently agree. Original raw ABI bytes are retained rather than silently repacking JSON. New receiver-owned rows avoid destination growth; first payout from a donor-paid sender row adds 128 external runtime bytes and stays separate from DAO counters. The owned full-claim exhaustion cases pass with both binaries. See [evidence](../../evidence/2026-10-09-telos-token-ram.md). This narrows the external-token uncertainty; it does not complete public-chain, arbitrary-token, complete historical lifecycle or immutable-release qualification.
+
+## Completion execution refinement — 2026-10-09
+
+Finish the remaining checklist against current source/evidence rather than retaining stale task statuses. Implementation and local acceptance can complete independently of public rollout; live-provider/target/client checks still need their actual evidence. No pass is inferred from an authenticated provider key or historical test count.
+
+The release tooling must have a usable path after qualification. Replace permanent refusal with evidence-bound eligibility: every required check has a stable ID, matches the exact source/artifact subject, and references a checksum-verified local report. Missing, failed, duplicate, unknown, stale or modified reports refuse qualification. Human/provider evidence is an operator attestation, not machine proof of a universal property. Caller-supplied publication/qualified booleans and free-text test names never qualify a release. Loading a checkout without evidence remains refused.
+
+Local release packaging consumes the qualified manifest, checks current source/artifact/lock identities again, and creates the package without replacing a different existing version. Packaging is not registry publication, deployment or destructive enablement. Prepare the 0.8.0-alpha.1 candidate with stable v1 wire/content domains, exact producer tarballs, local validation reports and explicit unresolved external checks. Published versions stay immutable.
+
+Continue with the current 200 × 200 resource/mutation/archive scenario, finite historical completion matrix, current database-loss/private restore and browser/resource journeys. Update the 16 task rows and detailed checkboxes only against concrete source and matching tests. Live Stripe/Pinata/Telos sandbox checks use reviewed targets and synthetic data; HTTPS origins and provider-side OAuth/webhook/gateway setup are required inputs. Production rollout remains a separate expressly authorized action.
+
+## Completion checkpoint — 2026-10-09
+
+[Current acceptance and outstanding inputs](../../evidence/2026-10-09-resource-completion.md) reconciles the sixteen tasks. Local implementation, coordinated 0.8 consumer installation, original-kit/database-loss restore, bounded historical adoption, 200 guarded DAOs/40,000 memberships and desktop/mobile flows have concrete evidence. Pinata's live terminal-cursor bug is fixed and controlled synthetic uploads/retrieval/removal pass; test Stripe products are prepared. Stripe orders/renewals/refunds/Connect, registered live login callbacks, protected/funded separate Pinata gateway accounts, target public-chain rollout and real wallet/operator/custody qualification remain required. HTTPS origins are not deployed. Do not mark the overall plan or qualified release complete while those dependencies remain.

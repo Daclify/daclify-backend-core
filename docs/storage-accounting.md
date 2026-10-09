@@ -122,3 +122,8 @@ A funded, enforceable bandwidth allowance and verified provider spending cap rem
 `DACLIFY_STORAGE_ALERT_EMAIL` opts a configured operations mailbox into scope-bound removal/recovery incident notifications. Complete SMTP and Pinata content configuration are required. The existing job worker queues one alert per object/generation, checks the current incident before sending, retries at most 12 times and cancels only a terminal removed/canceled incident. A temporary in-flight recovery defers delivery; it does not declare the incident resolved. Status shows whether the worker is configured.
 
 Alerts contain only incident IDs and public operating instructions, never staged file bytes, grants, signing keys or provider credentials. They neither delete the protected staged copy nor acknowledge/clear a removal incident. Delivery can duplicate after an ambiguous SMTP response. Failed delivery remains visible in the private jobs table for operator review; SMTP qualification and monitored operator response are required before enabling destructive cleanup.
+
+
+## Complete provider inventory
+
+Pinata upload/CID reconciliation follows bounded provider cursors through an empty terminal page. A nonempty cursor on a small result is not proof of truncation. The adapter retains its ten-object reconciliation limit, rejects duplicate IDs/cursor loops/mismatched ownership and never reports partial inventory as complete. This is required for lost-upload-response and chain-reference recovery. The 2026-10-09 live synthetic-object drill found and fixes the previous early refusal; account separation, protected gateway funding and full retention compensation remain separate qualification.

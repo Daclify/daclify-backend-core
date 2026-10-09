@@ -97,47 +97,53 @@ export class PinataStorage implements ContentProvider {
     const file = parsed.data.data;
     return { id: file.id, cid: file.cid, size: file.size };
   }
+  async #list(params: URLSearchParams): Promise<z.infer<typeof ListedFileSchema>[]> {
+    const files: z.infer<typeof ListedFileSchema>[] = [];
+    const ids = new Set<string>(),
+      cursors = new Set<string>();
+    for (let page = 0; page <= 10; page++) {
+      const parsed = z
+        .object({
+          data: z.object({
+            files: z.array(ListedFileSchema).max(10),
+            next_page_token: z.string().max(4096).nullable().optional(),
+          }),
+        })
+        .safeParse(
+          await vendorJson(
+            await this.#request(`https://api.pinata.cloud/v3/files/public?${params}`),
+          ),
+        );
+      if (!parsed.success || files.length + parsed.data.data.files.length > 10)
+        throw new ApiError('PINATA_RESPONSE_INVALID', 502);
+      for (const file of parsed.data.data.files) {
+        if (ids.has(file.id)) throw new ApiError('PINATA_RESPONSE_INVALID', 502);
+        ids.add(file.id);
+        files.push(file);
+      }
+      const cursor = parsed.data.data.next_page_token;
+      // Pinata can return a last-row cursor even when the next page is empty.
+      if (!cursor) return files;
+      if (cursors.has(cursor)) throw new ApiError('PINATA_RESPONSE_INVALID', 502);
+      cursors.add(cursor);
+      params.set('pageToken', cursor);
+    }
+    throw new ApiError('PINATA_RESPONSE_INVALID', 502);
+  }
   async find(uploadId: string): Promise<PinnedFile[]> {
     z.uuid().parse(uploadId);
-    const params = new URLSearchParams({ 'keyvalues[daclify_upload]': uploadId, limit: '10' });
-    const parsed = z
-      .object({
-        data: z.object({
-          files: z.array(ListedFileSchema).max(10),
-          next_page_token: z.string().nullable().optional(),
-        }),
-      })
-      .safeParse(
-        await vendorJson(await this.#request(`https://api.pinata.cloud/v3/files/public?${params}`)),
-      );
-    if (
-      !parsed.success ||
-      parsed.data.data.next_page_token ||
-      parsed.data.data.files.some((file) => file.keyvalues.daclify_upload !== uploadId)
-    )
+    const files = await this.#list(
+      new URLSearchParams({ 'keyvalues[daclify_upload]': uploadId, limit: '10' }),
+    );
+    if (files.some((file) => file.keyvalues.daclify_upload !== uploadId))
       throw new ApiError('PINATA_RESPONSE_INVALID', 502);
-    return parsed.data.data.files.map((file) => ({ id: file.id, cid: file.cid, size: file.size }));
+    return files.map((file) => ({ id: file.id, cid: file.cid, size: file.size }));
   }
   async findCid(cid: string): Promise<PinnedFile[]> {
     CidSchema.parse(cid);
-    const params = new URLSearchParams({ cid, limit: '10' });
-    const parsed = z
-      .object({
-        data: z.object({
-          files: z.array(ListedFileSchema).max(10),
-          next_page_token: z.string().nullable().optional(),
-        }),
-      })
-      .safeParse(
-        await vendorJson(await this.#request(`https://api.pinata.cloud/v3/files/public?${params}`)),
-      );
-    if (
-      !parsed.success ||
-      parsed.data.data.next_page_token ||
-      parsed.data.data.files.some((file) => file.cid !== cid)
-    )
-      throw new ApiError('PINATA_RESPONSE_INVALID', 502);
-    return parsed.data.data.files
+    const files = await this.#list(new URLSearchParams({ cid, limit: '10' }));
+    if (files.some((file) => file.cid !== cid)) throw new ApiError('PINATA_RESPONSE_INVALID', 502);
+    return files
       .filter((file) => z.uuid().safeParse(file.keyvalues.daclify_upload).success)
       .map((file) => ({ id: file.id, cid: file.cid, size: file.size }));
   }

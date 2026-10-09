@@ -32,6 +32,10 @@ const artifacts = {
   runtimeAbiSha256: '2'.repeat(64),
   runtimeRawAbiSha256: '4'.repeat(64),
   documentationSha256: '3'.repeat(64),
+  corePackageSha256: '5'.repeat(64),
+  modulesPackageSha256: '6'.repeat(64),
+  frontendBuildSha256: '7'.repeat(64),
+  sdkBuildSha256: '8'.repeat(64),
 };
 
 describe('release manifest', () => {

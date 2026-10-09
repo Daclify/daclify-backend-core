@@ -1,0 +1,23 @@
+{
+  "account": "acct_1UM5eWCzS2gO7W4S",
+  "products": [
+    {
+      "purpose": "hosting",
+      "id": "prod_DaclifyTestnetHostingV1",
+      "livemode": false
+    },
+    {
+      "purpose": "ram",
+      "id": "prod_DaclifyTestnetRamV1",
+      "livemode": false
+    },
+    {
+      "purpose": "storage",
+      "id": "prod_DaclifyTestnetStorageV1",
+      "livemode": false
+    }
+  ],
+  "chargesCreated": 0,
+  "privateEnvChanged": false,
+  "scope": "Test product preparation only; no Connect/payment/webhook/subscription qualification."
+}

@@ -1,0 +1,495 @@
+{
+  "historical": {
+    "coreCommit": "6145da8",
+    "worksPayrollGrantsCommit": "4a43786",
+    "decideCommit": "2d44085",
+    "decideCoreHeadersCommit": "c6e713e",
+    "codeHashes": {
+      "runtime": "5a7d037c3e9557b123edfaedbc1248b9a01f8c27f85c11f99d1e63acd5dd3c1a",
+      "works": "65a4ca00ebecb810c9e2ecb0e79d0a736dfbe576f787b2544c9811ebf5dbabe1",
+      "payroll": "32f5e0778bb3e3d8598eb438d4a77ec210f13eaccea3b6f5f30d731be238bc75",
+      "decide": "9f3512f832aafcfed993e1b89681a16df8af50b6a84eecdca156d26e7be67df9",
+      "grants": "ad5e89d6fda1479c40ee3a96f44f2c82699f4aa558a270e535fe531b7d674bea"
+    }
+  },
+  "currentCoreCodeHash": "f40c696e86ab532ca57ea073265a982f694f9f21f8de53300b51365e83711878",
+  "currentModuleCodeHashes": {
+    "works": "9e4117b18393b0de1a090acf87788d908419ecb5dc85e8354a28dacb707bc308",
+    "payroll": "4db6a327656d81fb055da26f359beb6d97cb4f3bb172b1efbd1e71c59ff7a8e7",
+    "decide": "aabbaa9a70a042a7747c55fe33d100eb0475961b2e8e42ce29e4f76ff41c39cc",
+    "grants": "e973f83fbe27e548d4ef14733f511d705d066db74a32a5ff65ca7f005af138fa"
+  },
+  "beforeUpgrade": [
+    {
+      "account": "ramobsr2c1ji",
+      "artifact": "runtime",
+      "native": "9330",
+      "counters": [
+        {
+          "payer": "obs1aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 456
+        },
+        {
+          "payer": "obs2aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 456
+        },
+        {
+          "payer": "obs3aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 224
+        },
+        {
+          "payer": "obs4aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 568
+        },
+        {
+          "payer": "ramobsr2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 1380
+        }
+      ],
+      "daoCounters": [
+        {
+          "payer": "obs1aar2c1ji",
+          "identity": 0,
+          "activity": 936,
+          "retained": 0,
+          "platform": 0
+        },
+        {
+          "payer": "obs2aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 574,
+          "platform": 0
+        },
+        {
+          "payer": "obs3aar2c1ji",
+          "identity": 0,
+          "activity": 642,
+          "retained": 285,
+          "platform": 0
+        },
+        {
+          "payer": "obs4aar2c1ji",
+          "identity": 0,
+          "activity": 813,
+          "retained": 0,
+          "platform": 0
+        },
+        {
+          "payer": "ramobsr2c1ji",
+          "identity": 1266,
+          "activity": 2552,
+          "retained": 1404,
+          "platform": 0
+        }
+      ],
+      "observer": [
+        {
+          "meter_bytes": 2728,
+          "runtime_hash": "5a7d037c3e9557b123edfaedbc1248b9a01f8c27f85c11f99d1e63acd5dd3c1a"
+        }
+      ]
+    },
+    {
+      "artifact": "works",
+      "account": "obs1aar2c1ji",
+      "native": "1392",
+      "counters": [
+        {
+          "payer": "obs1aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 456
+        },
+        {
+          "payer": "obs2aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 456
+        },
+        {
+          "payer": "obs3aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 224
+        },
+        {
+          "payer": "obs4aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 568
+        },
+        {
+          "payer": "ramobsr2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 1380
+        }
+      ],
+      "daoCounters": [
+        {
+          "payer": "obs1aar2c1ji",
+          "identity": 0,
+          "activity": 936,
+          "retained": 0,
+          "platform": 0
+        },
+        {
+          "payer": "obs2aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 574,
+          "platform": 0
+        },
+        {
+          "payer": "obs3aar2c1ji",
+          "identity": 0,
+          "activity": 642,
+          "retained": 285,
+          "platform": 0
+        },
+        {
+          "payer": "obs4aar2c1ji",
+          "identity": 0,
+          "activity": 813,
+          "retained": 0,
+          "platform": 0
+        },
+        {
+          "payer": "ramobsr2c1ji",
+          "identity": 1266,
+          "activity": 2552,
+          "retained": 1404,
+          "platform": 0
+        }
+      ],
+      "observer": [
+        {
+          "meter_bytes": 2728,
+          "runtime_hash": "5a7d037c3e9557b123edfaedbc1248b9a01f8c27f85c11f99d1e63acd5dd3c1a"
+        }
+      ]
+    },
+    {
+      "artifact": "payroll",
+      "account": "obs2aar2c1ji",
+      "native": "1030",
+      "counters": [
+        {
+          "payer": "obs1aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 456
+        },
+        {
+          "payer": "obs2aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 456
+        },
+        {
+          "payer": "obs3aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 224
+        },
+        {
+          "payer": "obs4aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 568
+        },
+        {
+          "payer": "ramobsr2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 1380
+        }
+      ],
+      "daoCounters": [
+        {
+          "payer": "obs1aar2c1ji",
+          "identity": 0,
+          "activity": 936,
+          "retained": 0,
+          "platform": 0
+        },
+        {
+          "payer": "obs2aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 574,
+          "platform": 0
+        },
+        {
+          "payer": "obs3aar2c1ji",
+          "identity": 0,
+          "activity": 642,
+          "retained": 285,
+          "platform": 0
+        },
+        {
+          "payer": "obs4aar2c1ji",
+          "identity": 0,
+          "activity": 813,
+          "retained": 0,
+          "platform": 0
+        },
+        {
+          "payer": "ramobsr2c1ji",
+          "identity": 1266,
+          "activity": 2552,
+          "retained": 1404,
+          "platform": 0
+        }
+      ],
+      "observer": [
+        {
+          "meter_bytes": 2728,
+          "runtime_hash": "5a7d037c3e9557b123edfaedbc1248b9a01f8c27f85c11f99d1e63acd5dd3c1a"
+        }
+      ]
+    },
+    {
+      "artifact": "decide",
+      "account": "obs3aar2c1ji",
+      "native": "1151",
+      "counters": [
+        {
+          "payer": "obs1aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 456
+        },
+        {
+          "payer": "obs2aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 456
+        },
+        {
+          "payer": "obs3aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 224
+        },
+        {
+          "payer": "obs4aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 568
+        },
+        {
+          "payer": "ramobsr2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 1380
+        }
+      ],
+      "daoCounters": [
+        {
+          "payer": "obs1aar2c1ji",
+          "identity": 0,
+          "activity": 936,
+          "retained": 0,
+          "platform": 0
+        },
+        {
+          "payer": "obs2aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 574,
+          "platform": 0
+        },
+        {
+          "payer": "obs3aar2c1ji",
+          "identity": 0,
+          "activity": 642,
+          "retained": 285,
+          "platform": 0
+        },
+        {
+          "payer": "obs4aar2c1ji",
+          "identity": 0,
+          "activity": 813,
+          "retained": 0,
+          "platform": 0
+        },
+        {
+          "payer": "ramobsr2c1ji",
+          "identity": 1266,
+          "activity": 2552,
+          "retained": 1404,
+          "platform": 0
+        }
+      ],
+      "observer": [
+        {
+          "meter_bytes": 2728,
+          "runtime_hash": "5a7d037c3e9557b123edfaedbc1248b9a01f8c27f85c11f99d1e63acd5dd3c1a"
+        }
+      ]
+    },
+    {
+      "artifact": "grants",
+      "account": "obs4aar2c1ji",
+      "native": "1381",
+      "counters": [
+        {
+          "payer": "obs1aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 456
+        },
+        {
+          "payer": "obs2aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 456
+        },
+        {
+          "payer": "obs3aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 224
+        },
+        {
+          "payer": "obs4aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 568
+        },
+        {
+          "payer": "ramobsr2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 0,
+          "platform": 1380
+        }
+      ],
+      "daoCounters": [
+        {
+          "payer": "obs1aar2c1ji",
+          "identity": 0,
+          "activity": 936,
+          "retained": 0,
+          "platform": 0
+        },
+        {
+          "payer": "obs2aar2c1ji",
+          "identity": 0,
+          "activity": 0,
+          "retained": 574,
+          "platform": 0
+        },
+        {
+          "payer": "obs3aar2c1ji",
+          "identity": 0,
+          "activity": 642,
+          "retained": 285,
+          "platform": 0
+        },
+        {
+          "payer": "obs4aar2c1ji",
+          "identity": 0,
+          "activity": 813,
+          "retained": 0,
+          "platform": 0
+        },
+        {
+          "payer": "ramobsr2c1ji",
+          "identity": 1266,
+          "activity": 2552,
+          "retained": 1404,
+          "platform": 0
+        }
+      ],
+      "observer": [
+        {
+          "meter_bytes": 2728,
+          "runtime_hash": "5a7d037c3e9557b123edfaedbc1248b9a01f8c27f85c11f99d1e63acd5dd3c1a"
+        }
+      ]
+    }
+  ],
+  "afterUpgrade": [
+    {
+      "account": "ramobsr2c1ji",
+      "artifact": "runtime",
+      "native": "15088",
+      "accounted": "15088"
+    },
+    {
+      "artifact": "works",
+      "account": "obs1aar2c1ji",
+      "native": "1634",
+      "accounted": "1634"
+    },
+    {
+      "artifact": "payroll",
+      "account": "obs2aar2c1ji",
+      "native": "1510",
+      "accounted": "1510"
+    },
+    {
+      "artifact": "decide",
+      "account": "obs3aar2c1ji",
+      "native": "1870",
+      "accounted": "1870"
+    },
+    {
+      "artifact": "grants",
+      "account": "obs4aar2c1ji",
+      "native": "1381",
+      "accounted": "1381"
+    }
+  ],
+  "preservedRows": true,
+  "retryCountersUnchanged": true,
+  "quotaEnabled": true,
+  "ordinaryCapacityExhausted": true,
+  "originalKeyRecovery": true,
+  "partialExitRejected": true,
+  "fullClaimExited": true,
+  "remainingPendingObligations": 2,
+  "failedHistoricalAwardPreserved": true,
+  "failedAwardExecutionRejected": true,
+  "limits": [
+    "Owned native fixture and four historical module producers; not the complete old-release lifecycle matrix.",
+    "Exact native/counter reconciliation is before token exit; external token-row ownership remains separately unqualified."
+  ]
+}

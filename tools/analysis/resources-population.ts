@@ -32,6 +32,7 @@ import {
   encodeEndorse,
   encodeDecide,
 } from '@daclify/modules/sdk';
+import { Uint64Schema } from '../../protocol/base.js';
 import { EncryptionPublicKeySchema } from '../../protocol/crypto.js';
 import { fixtureNetwork } from '../native/network.js';
 import { fixtureKey } from '../native/keys.js';
@@ -132,7 +133,38 @@ async function counters(scope: string) {
 const info = await api.v1.chain.get_info();
 assert.equal(info.chain_id.toString(), network.chainId);
 unlockFixtureWallet(network.container);
+// Synthetic market expansion preserves the finite token supply and existing account quotas.
+const global = await api.v1.chain.get_table_rows({
+  code: 'eosio',
+  scope: 'eosio',
+  table: 'global',
+  json: true,
+  limit: 1,
+});
+assert.equal(global.more, false);
+const marketState = z
+  .array(z.object({ max_ram_size: Uint64Schema }))
+  .length(1)
+  .parse(global.rows)[0];
+assert.ok(marketState);
+const targetMarketBytes = 1099511627776n;
+if (BigInt(marketState.max_ram_size) < targetMarketBytes)
+  cleos([
+    'push',
+    'action',
+    'eosio',
+    'setram',
+    JSON.stringify([targetMarketBytes.toString()]),
+    '-p',
+    'eosio@active',
+    '--force-unique',
+  ]);
 await fundResourceFixture();
+const fixtureMarket = {
+  beforeMaxBytes: marketState.max_ram_size,
+  minimumMaxBytes: targetMarketBytes.toString(),
+  synthetic: true,
+};
 cleos([
   'system',
   'newaccount',
@@ -648,6 +680,7 @@ const report = {
   coreCodeHash: RuntimeCodeHash,
   moduleCodeHashes: ModuleCodeHashes,
   population,
+  fixtureMarket,
   membershipCount,
   enforcedDaos: population.daos,
   measurements,
@@ -657,7 +690,8 @@ const report = {
     '200 disposable identities reused across DAOs model memberships, not 40000 distinct people.',
     'One representative workflow per DAO; not throughput, complete lifecycle or projected activity volumes.',
     'Representative writes use active per-DAO guards and receipt/reference holds; exhaustion, legacy backfill and live billing are qualified separately, not by this population run.',
-    'Free capacity, included payer split and market supply are synthetic owned-fixture settings.',
+    'Free capacity, included payer split and expanded 1 TiB market supply are synthetic owned-fixture settings; acquisition costs are not production price evidence.',
+    'Archive pruning, private-file recovery and historical completion are separate native drills, not simulated by this population run.',
   ],
   runtimeScope: Name.from(runtime).value.toString(),
 };

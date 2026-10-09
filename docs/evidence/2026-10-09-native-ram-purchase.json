@@ -1,0 +1,56 @@
+{
+  "chainId": "d9f6e8c655703ba364f0ee82b4fd0631350475747b1924396c8fbef2558b8f51",
+  "systemCodeHash": "48d74c3df9f5c9952c0f87ab6c01e1c6dfe621429f59932ecf609b5d81e668e4",
+  "runtimeCodeHash": "f40c696e86ab532ca57ea073265a982f694f9f21f8de53300b51365e83711878",
+  "success": {
+    "runtime": "rambuytojhxp",
+    "receiver": "rammod14vjmg",
+    "before": ["12584186", "12584113", "5852366", "682029", "0"],
+    "after": ["13689565", "13136801", "5836616", "682779", "0"],
+    "receipt": {
+      "id": "1",
+      "dao_id": "1",
+      "reference": "3206b4be5cefbe77fbad1502e592e5f46c66e1256a58d7dd8f2038de6d522a87",
+      "payer": "alice",
+      "treasury": "bob",
+      "policy_revision": "1",
+      "fee_bps": 500,
+      "expires": 1791543029,
+      "maximum": "2.0000 TLOS",
+      "spent": "1.5000 TLOS",
+      "platform_fee": "0.0750 TLOS",
+      "received": "2.0000 TLOS",
+      "purchases": [
+        {
+          "receiver": "rambuytojhxp",
+          "quantity": "1.0000 TLOS",
+          "minimum_bytes": "1",
+          "before_bytes": "12584186",
+          "acquired_bytes": "1105379"
+        },
+        {
+          "receiver": "rammod14vjmg",
+          "quantity": "0.5000 TLOS",
+          "minimum_bytes": "1",
+          "before_bytes": "12584113",
+          "acquired_bytes": "552688"
+        }
+      ],
+      "funded": true,
+      "settled": true
+    },
+    "actualCredits": [
+      {
+        "payer": "rambuytojhxp",
+        "purchased_bytes": "1105379"
+      },
+      {
+        "payer": "rammod14vjmg",
+        "purchased_bytes": "552688"
+      }
+    ]
+  },
+  "atomicRollback": true,
+  "paymentBoundaries": true,
+  "receiverAndRevisionBoundaries": true
+}

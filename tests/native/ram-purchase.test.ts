@@ -157,7 +157,7 @@ beforeAll(async () => {
       key.toPublic().toString(),
       key.toPublic().toString(),
       '--buy-ram-bytes',
-      '8388608',
+      '12582912',
       '--stake-net',
       '1.0000 TLOS',
       '--stake-cpu',
@@ -395,10 +395,7 @@ it('rejects unapproved receivers, duplicate legs and a stale policy after order 
   ).toEqual(before);
   await push([policyChange]);
   evidence.receiverAndRevisionBoundaries = true;
-  writeFileSync(
-    'docs/evidence/2026-10-08-ram-purchase.json',
-    JSON.stringify(evidence, null, 2) + '\n',
-  );
+  writeFileSync('.artifacts/native-ram-purchase.json', JSON.stringify(evidence, null, 2) + '\n');
 });
 
 it('quotes and atomically pays two real contract payers from the pinned RAM market', async () => {

@@ -1,6 +1,6 @@
 # Resource billing and Archive execution ledger
 
-Current continuation: [final main verification and provider preflight](#final-main-verification-and-read-only-provider-preflight). Earlier entries are dated checkpoints, not current completion claims. The full 16-task plan is still in progress; quotas require explicit operator enablement and public rollout/release packaging remain gated.
+Current continuation: [0.8 completion checkpoint](2026-10-09-resource-completion.md). Earlier entries are dated checkpoints, not current completion claims. The full 16-task plan is still in progress; quotas require explicit operator enablement and public rollout/release packaging remain gated.
 
 Implementation branch: `codex/resource-billing-archives` in isolated sibling worktrees under `/Users/seth/.config/superpowers/worktrees/daclify-ram-history`; reviewed checkpoints are merged/pushed to main at the user's request. Main checkouts are not implementation targets. No sub-agents, public deployment, external spending or live data cleanup is authorized by this ledger.
 
@@ -17,26 +17,28 @@ Plan: [RAM, prepaid storage and archives](../superpowers/plans/2026-10-08-resour
 
 ## Task status
 
-| Task                                 | State       | Evidence / boundary                                                                                                                                               |
-| ------------------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 Policy definitions                 | Complete    | Checked integer fees, approved storage units and pricing snapshot hashes; unchanged membership pricing                                                            |
-| 2 Native write inventory/calibration | In progress | Owned six-payer reconciliation, guarded population and exact deployed Telos token new/legacy payer checks passed; arbitrary tokens/public configuration remain open |
-| 3 Backed allowances/metering         | In progress | Finite backed pools, once-only grants, physical holds and explicit per-DAO guard implemented and locally qualified; external token and full lifecycle gates remain |
-| 4 Existing-state migration           | In progress | Bounded full backfill and completion-only observed adoption implemented; actual old-core/module claim/recovery tests passed; complete historical matrix remains gated                                                                                             |
-| 5 Atomic TLOS RAM purchases          | Implemented | Atomic actual quota acquisition, typed quotes/API/wallet UI and bounded same-transaction intent; public-chain qualification pending                               |
-| 6 Card RAM provisioning              | Implemented | Segregated native reserve, immutable consent/provider proofs, leased retry/UI; live sandbox qualification pending                                                 |
-| 7 Hosted-object ledger               | In progress | Unique-CID ledger, branding/retry, native-reference recovery and direct-ID orphan absence release implemented; live provider qualification pending                |
-| 8 Monthly storage                    | In progress | Immutable agreements, verified invoice projection, jobs/API/Resources UI; live provider and retention gates pending                                               |
-| 9 Grace/retention                    | In progress | Fenced staging/compensation/races, opt-in host, period reminders and operator incident alerts; default off, live delivery/provider gates pending                  |
-| 10 Archive format/package            | In progress | Bounded codec/manifest/proofs, packaged namespaced migrations and retained trusted prior schema snapshots                                                         |
-| 11 Export/verification/approval      | In progress | Resumable export, encrypted backup, exact native attestation/approval/revocation; cleanup reserve qualification pending                                           |
-| 12 Source pruning/references         | In progress | Native poll and document proof deletion, source-owned references/backfill, permanent IDs and exact-row restore; rollout remains disabled                          |
-| 13 History/recovery                  | In progress | Merged history, retained decoders, real private-document pruning/database-loss/original-kit/exact restoration drill passed; legacy RAM/upgrade remains pending    |
-| 14 Resources/Archive UI              | In progress | Native/card purchases, consent/group curation, Archive backup/approval/pruning/history/restoration and period notices; quotas/rollout remain pending              |
-| 15 Documentation                     | In progress | Producer references/help and operations/evidence updated; final full release runbooks pending                                                                     |
-| 16 Release/qualification             | Pending     | Native/provider/browser results recorded separately                                                                                                               |
+The detailed checklist has been reconciled against [the current acceptance record](2026-10-09-resource-completion.md). “Local verified” describes the documented bounded fixture scope, not unrestricted production certification.
 
-This is a progress ledger, not a release certification. Live Stripe, Pinata and Telos testnet qualification has not been performed for these features.
+| Task | Local state | Remaining boundary |
+| --- | --- | --- |
+| 1 Policy | Verified | Accepted commercial rules retained |
+| 2 Inventory/calibration | Verified | Reviewed target configuration and unsupported custom code/token coverage |
+| 3 Backing/counters/holds | Verified | Explicit funded production enablement; finite documented limits |
+| 4 Migration/adoption | Verified | Target-specific inventory/drain/restore before cutover |
+| 5 Native RAM purchase | Verified | Reviewed Telos public target qualification |
+| 6 Card RAM provision | Implemented/tested | Real Stripe sandbox order/refund/native-reserve proof |
+| 7 Hosted object ledger | Verified locally; live adapter smoke passed | Separate-account ownership/access/funding configuration |
+| 8 Advance storage billing | Implemented/tested | Real Stripe renewal/invoice/refund lifecycle |
+| 9 Grace/retention | Implemented/tested; off by default | Protected funded gateway and live compensation/delivery qualification |
+| 10 Archive format/package | Verified | Release acceptance and supported schema boundaries |
+| 11 Export/backup/approval | Verified | Public/provider durability; no automatic pruning authorization |
+| 12 Source prune/references | Verified | Production explicitly disabled pending rollout evidence |
+| 13 History/private recovery | Verified | Off-host backup operations and surviving content required |
+| 14 Resources/Archive UI | 26 desktop/mobile checks pass | Real wallet clients, independent deployed cookie/CORS and assistive-technology review |
+| 15 Documentation | Updated/generated | Vendor allowance claims and landing-page promotion after actual availability |
+| 16 Release/qualification | 0.8 candidate; evidence verifier implemented | Full real evidence, HTTPS/providers/public targets and separate deployment authorization |
+
+The overall plan remains open for those external acceptance gates. Synthetic reports exercise policy tests and do not qualify a real release.
 
 ## Native findings
 
@@ -543,3 +545,9 @@ Public-chain/provider/immutable-release gates remain held. No public deployment,
 - Removed stale $20/$50 setup-price wording from all four environment examples: optional account-service billing is distinct from current free shared creation and subscription membership capacity. Private environment values are untouched.
 
 The remaining full historical lifecycle/public configuration/provider/immutable-release gates are still open. These are integration requirements, not reasons to enable destructive cleanup or production quota rollout prematurely.
+
+## 0.8 completion continuation
+
+The [current acceptance record](2026-10-09-resource-completion.md) records current population, native migration/purchase/Archive recovery, all 26 desktop/mobile cases, PostgreSQL and local provider checks. The live Pinata smoke found and fixes terminal-cursor reconciliation; both synthetic fixtures were verified/retrieved and removed by exact ID, with direct absence checks. Three Stripe test products were prepared on the env-key account; no charge, webhook or private env mutation occurred.
+
+Coordinated 0.8 versions, generated help and exact public artifacts are rebuilt. The release verifier now has a complete evidence path and immutable-output policy; actual release eligibility remains refused because external gates are incomplete. Supported wire/content identities and current C++ hashes are retained. No managed production custody, public deployment or destructive rollout is certified. Final exact-consumer verification passed core **97/558**, modules **27/144**, frontend **30/128** (files/tests); lint/types/generated docs and frontend production build passed. PostgreSQL rerun passed **26/190**. The native purchase rerun passed **1/7** after fixture/output corrections; original historical evidence was preserved. Current Archive/native migration results are separately listed in the acceptance record. Changed-file formatting and final diff checks passed.

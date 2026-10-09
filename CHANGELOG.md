@@ -1,7 +1,9 @@
 # Changelog
 
-## Unreleased — RAM, prepaid storage and Archive
+## 0.8.0-alpha.1 development candidate — RAM, prepaid storage and Archive
 
+- Fixed live Pinata upload/CID recovery by following terminal cursors with bounded coverage, duplicate-ID and loop checks.
+- Added source/artifact-bound release evidence validation and immutable local packaging; incomplete or changed reports remain refused. This is not registry publication or deployment.
 - Added a chain/code/raw-ABI pinned public Telos token downloader and owned-native new/legacy sender tests, preserving exact deployed ABI bytes and separating external payer changes from DAO usage.
 - Qualified eight maximum-title election terms at both native payer limits, including actual historical election adoption without rewriting ballots or member credentials.
 - Guard activation now verifies existing credentials, claims and pending holds plus pinned module completion checks. Bounded completion-only adoption preserves already-metered legacy counters.

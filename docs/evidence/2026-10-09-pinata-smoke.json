@@ -1,0 +1,14 @@
+{
+  "uploadId": "4788ff2b-508b-4692-9a3f-05fee4504af7",
+  "expectedBytes": 86,
+  "contentSha256": "f1fb38f4c9230d0ef8bee0e1fab4567b223c17d44dbec5b50d3181ca631cf51d",
+  "scope": "Controlled synthetic object only; not account-separation, gateway access-control/funding or retention qualification.",
+  "created": {
+    "id": "01a12041-18b9-7a96-a892-8446521de991",
+    "cid": "bafkreihr7m4pjsjdbuhprpxa4h5livt3ei6bpvcnx3c3kdjrqhfgghhvdu",
+    "size": 86
+  },
+  "ownershipVerified": true,
+  "retrieved": true,
+  "removed": true
+}

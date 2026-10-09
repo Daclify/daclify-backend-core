@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.7.0-alpha.1 · interface 1.
+Package 0.8.0-alpha.1 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -250,13 +250,11 @@ Basic complete JSON/CSV exports are free and do not require an Operations subscr
 
 ## Use the matching release and enabled modules
 
-Core, module and frontend packages are versioned together at 0.7.0-alpha.1. Documentation displays its package version and warns when the selected DAO deployment does not match. Module actions remain unavailable when the installed frontend SDK differs from the deployed module version or code hash.
+Core, module and frontend packages are coordinated at 0.8.0-alpha.1 for this development candidate. Contract interface and existing signing/content domains stay at version 1. Documentation shows its package version and warns when the selected deployment differs; module actions require the exact compatible installed version and verified code hash.
 
-A DAO administrator enables optional modules in Workspace → Modules. Grants rounds requires Works and Decide; funded awards continue through Works delivery, independent review and Treasury settlement. Enable Endorsement admission before configuring an opt-in member endorsement rule in Members. Representative elections are available in Decide and confer term labels, without administrator or spending powers.
+The candidate adds physically backed per-DAO RAM, native and card acquisition, prepaid pinned storage, bounded Archive export/backup/approval/pruning and original-key recovery. Follow upgrade-0.8, RAM migration and release-qualification runbooks. Preserve old approved executable hashes, member IDs, claims, obligations, key grants and document ciphertext. A package version alone does not prove a deployed contract upgrade.
 
-Contract upgrades preserve balances, approved liabilities, old documents and existing identities. Changed module code invalidates old execution pins; review a new proposal rather than changing the terms of an existing vote. Complete spending exports remain available and mark missing historical receipts or document references as incomplete.
-
-Version 0.7 adds free shared creation, graduated capacity subscriptions, optional Connect merchant receipts and independent portal routing. It requires the matching runtime WASM/ABI, execctx permission links and migrations 016–021. Earlier table layouts and module WASM are retained. Follow the repository upgrade-0.7 and connected-payments runbooks; older recovery behavior still applies. Use matching API/frontend/protocol/help artifacts, review permissions and immutable hashes, and qualify live providers, wallet clients, backups and proxy trust before enabling a hosted service. Local fixture passes do not qualify production managed custody.
+Release packaging requires twelve complete source/artifact-bound qualification reports and clean reviewed checkouts. Missing, stale or changed evidence rejects; qualifying packaging writes immutable local bytes and performs no registry publication or deployment. Live provider/client and selected public-chain checks remain separate from local tests. Cleanup is opt-in and stays disabled during unverified recovery; production spending, authority changes and cutover require operator review and separate authorization.
 
 ## Shared hosting and graduated member capacity
 

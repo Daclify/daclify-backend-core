@@ -1,0 +1,11 @@
+{
+  "runtime": "ramobsimdawn",
+  "source": "arcsrcsysj4q",
+  "rows": 25,
+  "proofDepth": 16,
+  "actionBytes": 13058,
+  "cpuMicroseconds": 13120,
+  "freedBytes": "7225",
+  "unusedLeaves": "synthetic padding",
+  "replayFreedBytes": "0"
+}
