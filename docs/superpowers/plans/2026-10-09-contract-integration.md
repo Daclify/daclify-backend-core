@@ -15,6 +15,6 @@
 - [x] Export the SVG with the public SDK, consume it in `src/views/Docs.vue`, and verify loaded diagrams, readable text and accessibility on desktop and mobile.
 - [x] Regenerate producer docs and pinned development packages; run relevant VERT/unit/native suites, strict types, lint, documentation checks and frontend build.
 - [x] Review the final diff and record actual results and limitations in `docs/evidence/2026-10-09-contract-integration.md`.
-- [ ] Integrate and push `dev` without staging concurrent work.
+- [x] Integrate and push `dev` without staging concurrent work.
 
 Native fixture tests qualify local contract interaction, not live Telos deployment, production resource pricing or Stripe/IPFS availability. Tests must not reuse the shared research container or any real environment file.

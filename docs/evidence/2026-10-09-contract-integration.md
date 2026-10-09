@@ -71,7 +71,7 @@ Verified on the isolated worktrees, with frontend based on the latest module red
 | Frontend unit suite | 155 passed, 32 files |
 | Native permissions + new module integration | 22 passed, 2 files, 69.63 seconds |
 | Native executive lifecycle on a fresh chain | 10 passed, 1 file, 210.86 seconds |
-| Latest frontend desktop/mobile browser set | 40 passed, 27.6 seconds |
+| Frontend desktop/mobile browser set on the module redesign | 40 passed, 27.6 seconds |
 | Permission-guide Axe checks | Zero violations on desktop and mobile |
 | Core/modules/frontend strict type checks and lint | Passed |
 | Core/modules generated documentation checks | Passed |
@@ -83,3 +83,10 @@ The native counts come from two separate fresh-node runs; they are not one indis
 The reviewed [permission diagram](../guides/contract-permissions.md) is illustrative after handover, not a current testnet account audit. Runtime code has root authority, so a runtime upgrade remains a deployment-wide trust decision. Single-active-executive control is the user's selected policy.
 
 Live Telos deployment, production resource capacity/pricing, arbitrary third-party contracts, Telos EVM/external-chain settlement, Stripe, Pinata and social-provider qualification are outside these local checks. Existing native RAM/archive/upgrade/provider suites are not rerun by this task; the recorded passing suites must not be read as whole-platform production qualification.
+
+
+## Delivered development state
+
+All three repositories were integrated and pushed to `dev`; `main` was not changed. Implementation commits: core `6648481`, modules `4622f75` and frontend documentation `e2d104f`. Frontend delivery `837bb29` also incorporates the concurrent PWA commit `f06e58d`, following the module redesign. After that merge, frontend verify (155 tests), build, documentation browser regressions (8 desktop/mobile cases) and PWA checks (2 cases) passed; the full core suite passed again (610 tests). The earlier 40-case browser run predates the PWA markup change.
+
+The local `eosio.token` account uses the compiled standard-shaped token fixture, not a live Telos token deployment. The local native node was stopped after testing. No real environment file, deployed authority or provider configuration was changed.
