@@ -38,6 +38,8 @@ Standard Luna is a reasonable next model to evaluate for latency and false refus
 - New mocked-API Chromium desktop/mobile assistant regressions: **4 tests** passed, covering safe plain text, canonical links, refusal clearing, missing configuration and failed status requests. These do not qualify live provider or Telegram clients.
 - Sibling locked bootstrap completed and refreshed all development package integrities. Final diffs and whitespace were reviewed.
 
+Other agents pushed host-preflight/rollout evidence, Telos EVM RPC endpoints and a module stress-test timeout while this work was in progress. The three unpublished local commits were rebased onto their current remote `dev` parents without conflicts or public-history rewrites. After integration, core verify passed **588 tests / 101 files**, frontend verify/build passed again (**151 tests**), and the affected module Works stress fixture passed **2 tests**. The owned isolated database and temporary credential file were removed after the PostgreSQL suites. These integration changes were preserved.
+
 The first PostgreSQL attempt used the unrelated fixture's assumed password and failed authentication; no tests ran. The corrected run used a new owned isolated `_test` database and the container credential without logging it. Initial lint identified two fixture non-null assertions; both were removed before passing verification. The initial live revised evaluation also had relevant-question refusals; these are not silently counted as successful calibration.
 
 ## Remaining operational steps
