@@ -399,7 +399,7 @@ export async function createServer(
         'telegram-docs',
         'Telegram handbook bot',
         !!options.telegramDocs,
-        'Commands/replies in approved groups only. Webhook registration and live qualification are separate.',
+        'Docs-only support in approved groups and whitelisted private chats. Webhook registration and live qualification are separate.',
       ],
       [
         'managed',

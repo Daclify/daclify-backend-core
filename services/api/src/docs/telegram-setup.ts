@@ -11,15 +11,15 @@ export async function setupTelegramDocs(
     .object({
       id: z.number().int().safe(),
       username: z.string(),
-      can_join_groups: z.boolean(),
+      can_join_groups: z.boolean().optional(),
       can_read_all_group_messages: z.boolean().optional(),
     })
     .parse(await telegramCall(config.token, 'getMe', {}, fetchImpl));
   if (
     identity.id !== config.botId ||
     identity.username.toLowerCase() !== config.username.toLowerCase() ||
-    !identity.can_join_groups ||
-    identity.can_read_all_group_messages
+    (config.groupIds.length > 0 &&
+      (!identity.can_join_groups || identity.can_read_all_group_messages))
   )
     throw new Error('TELEGRAM_DOCS_BOT_CONFIGURATION_INVALID');
   const webhook = z
@@ -44,6 +44,13 @@ export async function setupTelegramDocs(
     if (!chat.success || !member.success)
       throw new Error('TELEGRAM_DOCS_GROUP_CONFIGURATION_INVALID');
   }
+  for (const chatId of config.privateChatIds) {
+    const chat = z
+      .object({ id: z.number().int().positive().safe(), type: z.literal('private') })
+      .safeParse(await telegramCall(config.token, 'getChat', { chat_id: chatId }, fetchImpl));
+    if (!chat.success || String(chat.data.id) !== chatId)
+      throw new Error('TELEGRAM_DOCS_PRIVATE_CHAT_CONFIGURATION_INVALID');
+  }
   if (confirm) {
     const result = await telegramCall(
       config.token,
@@ -61,7 +68,8 @@ export async function setupTelegramDocs(
   return {
     mode: confirm ? 'registered' : 'read-only',
     approvedGroups: config.groupIds.length,
-    privacyMode: true,
+    approvedPrivateChats: config.privateChatIds.length,
+    privacyMode: !identity.can_read_all_group_messages,
     webhookMatches: confirm || webhook.url === config.webhookUrl,
   };
 }

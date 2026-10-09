@@ -2,6 +2,8 @@
 
 ## Unreleased — handbook assistant and Telegram groups
 
+Added `TELEGRAM_DOCS_PRIVATE_CHAT_IDS` for explicit one-on-one testers. Private questions require matching human sender/chat IDs; group commands/replies remain restricted. Private-only setup can omit groups and validates the private chat instead of requiring group membership.
+
 Handbook routing reads actual guide evidence, preserves the complete selected guide and checks replies for support before returning them. App and group requests share bounded provider deadlines, responses, rates and concurrency. Generated help now documents provider setup and disambiguates paid-slot pricing with tested default-capacity examples.
 
 Added opt-in authenticated Telegram group webhooks for `/docs` and replies only, approved-group restrictions, forum reply targets, canonical source links and PostgreSQL retry receipts without conversation storage. Setup checks privacy, regular membership and webhook conflicts; it registers only with `--confirm`. Group deployment/qualification remains separate. No contracts, account keys or pairings change.

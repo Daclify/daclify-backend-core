@@ -67,6 +67,7 @@ it('documents complete API settings separately from deployment credentials', () 
     'TELEGRAM_BOT_USERNAME',
     'TELEGRAM_DOCS_ENABLED',
     'TELEGRAM_DOCS_GROUP_IDS',
+    'TELEGRAM_DOCS_PRIVATE_CHAT_IDS',
     'TELEGRAM_DOCS_WEBHOOK_SECRET',
     'TELEGRAM_DOCS_WEBHOOK_URL',
     'GOOGLE_CLIENT_ID',

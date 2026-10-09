@@ -8,9 +8,8 @@ const ConfigurationSchema = z.object({
   FRONTEND_ORIGIN: z.url(),
   OPENROUTER_API_KEY: z.string().min(20),
 });
-const GroupIdsSchema = z
-  .array(z.string().regex(/^-[1-9][0-9]{0,15}$/))
-  .min(1)
+const ChatIdsSchema = z
+  .array(z.string().regex(/^-?[1-9][0-9]{0,15}$/))
   .max(20)
   .refine(
     (ids) =>
@@ -23,7 +22,13 @@ export function readTelegramDocs(env: NodeJS.ProcessEnv) {
   try {
     if (enabled !== 'true') throw new Error();
     const config = ConfigurationSchema.parse(env);
-    const groupIds = GroupIdsSchema.parse(JSON.parse(env.TELEGRAM_DOCS_GROUP_IDS ?? 'null'));
+    const groupIds = ChatIdsSchema.refine((ids) => ids.every((id) => id.startsWith('-'))).parse(
+      JSON.parse(env.TELEGRAM_DOCS_GROUP_IDS || '[]'),
+    );
+    const privateChatIds = ChatIdsSchema.refine((ids) =>
+      ids.every((id) => !id.startsWith('-')),
+    ).parse(JSON.parse(env.TELEGRAM_DOCS_PRIVATE_CHAT_IDS || '[]'));
+    if (!groupIds.length && !privateChatIds.length) throw new Error();
     const origin = new URL(config.FRONTEND_ORIGIN);
     const webhook = new URL(config.TELEGRAM_DOCS_WEBHOOK_URL);
     if (
@@ -51,6 +56,7 @@ export function readTelegramDocs(env: NodeJS.ProcessEnv) {
       username: config.TELEGRAM_BOT_USERNAME,
       botId,
       groupIds,
+      privateChatIds,
       secret: config.TELEGRAM_DOCS_WEBHOOK_SECRET,
       frontendOrigin: origin.origin,
       webhookUrl: webhook.href,

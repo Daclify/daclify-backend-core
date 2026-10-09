@@ -35,8 +35,6 @@ export function telegramQuestion(
   if (!parsed.success) return undefined;
   const message = parsed.data;
   if (
-    !['group', 'supergroup'].includes(message.chat.type) ||
-    !config.groupIds.includes(String(message.chat.id)) ||
     !message.from ||
     message.from.is_bot ||
     !message.text ||
@@ -44,17 +42,22 @@ export function telegramQuestion(
     message.date * 1000 < now - 86_400_000
   )
     return undefined;
+  const privateChat =
+    message.chat.type === 'private' &&
+    message.chat.id === message.from.id &&
+    config.privateChatIds.includes(String(message.chat.id));
+  const groupChat =
+    ['group', 'supergroup'].includes(message.chat.type) &&
+    config.groupIds.includes(String(message.chat.id));
+  if (!privateChat && !groupChat) return undefined;
   const command = message.text.match(/^\/docs(?:@([A-Za-z0-9_]+))?(?:\s+([\s\S]*))?$/i);
   let previousAnswer: string | undefined;
   if (command?.[1] && command[1].toLowerCase() !== config.username.toLowerCase()) return undefined;
   if (!command) {
-    if (
-      message.text.startsWith('/') ||
-      message.reply_to_message?.from?.id !== config.botId ||
-      !message.reply_to_message.from.is_bot
-    )
-      return undefined;
-    previousAnswer = message.reply_to_message.text?.slice(0, 2500);
+    const replyToBot =
+      message.reply_to_message?.from?.id === config.botId && message.reply_to_message.from.is_bot;
+    if (message.text.startsWith('/') || (!privateChat && !replyToBot)) return undefined;
+    if (replyToBot) previousAnswer = message.reply_to_message?.text?.slice(0, 2500);
   }
   const question = (command ? (command[2] ?? '') : message.text).trim();
   if (question.length > 500) return undefined;

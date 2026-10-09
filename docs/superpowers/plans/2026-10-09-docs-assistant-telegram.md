@@ -25,6 +25,8 @@ The user approved commands and replies only. Reuse the public handbook assistant
 
 ## Execution
 
+Follow-up: the user requested one-on-one testing. Add a separate positive-ID private-chat whitelist, empty by default. Allow ordinary docs questions only from listed private users whose sender/chat IDs match. Group behavior remains commands/replies only. Private-only setup may omit groups and uses the same webhook, limits and assistant; document and test both admission paths.
+
 - [x] Assistant safeguards and regression tests
 - [x] Telegram transport, migration and tests
 - [x] Config, guides, runbook and frontend explanation

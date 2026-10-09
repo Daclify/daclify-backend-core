@@ -80,6 +80,215 @@ describe('Telegram docs-only group bot', () => {
     });
   });
 
+  it('defaults private access off and validates a separate positive-ID whitelist', () => {
+    expect(config).toMatchObject({ privateChatIds: [] });
+    const privateOnly = readTelegramDocs({
+      ...environment,
+      TELEGRAM_DOCS_GROUP_IDS: '[]',
+      TELEGRAM_DOCS_PRIVATE_CHAT_IDS: '["987"]',
+    });
+    expect(privateOnly).toMatchObject({ groupIds: [], privateChatIds: ['987'] });
+    for (const value of [
+      '["-100123"]',
+      '[987]',
+      '["@tester"]',
+      '["0"]',
+      '["987","987"]',
+      '["9007199254740992"]',
+      'null',
+    ]) {
+      expect(() =>
+        readTelegramDocs({ ...environment, TELEGRAM_DOCS_PRIVATE_CHAT_IDS: value }),
+      ).toThrow('TELEGRAM_DOCS_CONFIGURATION_INVALID');
+    }
+  });
+
+  it('accepts plain questions, commands and replies only from whitelisted private users', () => {
+    const privateConfig = readTelegramDocs({
+      ...environment,
+      TELEGRAM_DOCS_PRIVATE_CHAT_IDS: '["987"]',
+    });
+    if (!privateConfig) throw new Error('Expected private fixture configuration');
+    const message = {
+      ...groupMessage,
+      chat: { id: 987, type: 'private' },
+      text: 'How does Daclify recovery work?',
+    };
+    expect(telegramQuestion(message, privateConfig)).toMatchObject({
+      question: message.text,
+      chatId: '987',
+      userId: '987',
+    });
+    expect(
+      telegramQuestion({ ...message, text: '/docs How does recovery work?' }, privateConfig)
+        ?.question,
+    ).toBe('How does recovery work?');
+    expect(
+      telegramQuestion(
+        {
+          ...message,
+          text: 'How do I back that up?',
+          reply_to_message: { from: { id: 12345, is_bot: true }, text: 'Use the recovery kit.' },
+        },
+        privateConfig,
+      ),
+    ).toMatchObject({ previousAnswer: 'Use the recovery kit.' });
+    for (const patch of [
+      { chat: { id: 988, type: 'private' }, from: { id: 988, is_bot: false } },
+      { from: { id: 988, is_bot: false } },
+      { from: { id: 987, is_bot: true } },
+      { chat: { id: 987, type: 'group' } },
+      { text: '/other' },
+      { text: '/docs@another_bot Help' },
+      { text: 'x'.repeat(501) },
+    ])
+      expect(telegramQuestion({ ...message, ...patch }, privateConfig)).toBeUndefined();
+    expect(telegramQuestion(message, config)).toBeUndefined();
+    expect(
+      telegramQuestion({ ...groupMessage, text: 'ordinary group conversation' }, privateConfig),
+    ).toBeUndefined();
+  });
+
+  it('allows private-only setup without any group membership checks', async () => {
+    const privateOnly = readTelegramDocs({
+      ...environment,
+      TELEGRAM_DOCS_GROUP_IDS: '[]',
+      TELEGRAM_DOCS_PRIVATE_CHAT_IDS: '["987"]',
+    });
+    if (!privateOnly) throw new Error('Expected private-only configuration');
+    const methods: string[] = [];
+    const fetchImpl: typeof fetch = async (input) => {
+      const method = String(input).split('/').at(-1) ?? '';
+      methods.push(method);
+      const result =
+        method === 'getMe'
+          ? {
+              id: 12345,
+              username: 'daclify_test_bot',
+              can_read_all_group_messages: false,
+            }
+          : method === 'getWebhookInfo'
+            ? { url: '' }
+            : method === 'getChat'
+              ? { id: 987, type: 'private' }
+              : true;
+      return new Response(JSON.stringify({ ok: true, result }));
+    };
+    expect(await setupTelegramDocs(privateOnly, true, fetchImpl)).toMatchObject({
+      approvedGroups: 0,
+      approvedPrivateChats: 1,
+      mode: 'registered',
+    });
+    expect(methods).not.toContain('getChatMember');
+    expect(methods.filter((method) => method === 'setWebhook')).toHaveLength(1);
+  });
+
+  it('refuses private registration when Telegram resolves a different ID or a non-private chat', async () => {
+    const privateOnly = readTelegramDocs({
+      ...environment,
+      TELEGRAM_DOCS_GROUP_IDS: '[]',
+      TELEGRAM_DOCS_PRIVATE_CHAT_IDS: '["987"]',
+    });
+    if (!privateOnly) throw new Error('Expected private-only configuration');
+    for (const chat of [
+      { id: 988, type: 'private' },
+      { id: 987, type: 'supergroup' },
+    ]) {
+      const methods: string[] = [];
+      await expect(
+        setupTelegramDocs(privateOnly, true, async (input) => {
+          const method = String(input).split('/').at(-1) ?? '';
+          methods.push(method);
+          const result =
+            method === 'getMe'
+              ? { id: 12345, username: 'daclify_test_bot' }
+              : method === 'getWebhookInfo'
+                ? { url: '' }
+                : chat;
+          return new Response(JSON.stringify({ ok: true, result }));
+        }),
+      ).rejects.toThrow('TELEGRAM_DOCS_PRIVATE_CHAT_CONFIGURATION_INVALID');
+      expect(methods).not.toContain('setWebhook');
+    }
+  });
+
+  it('blocks unlisted direct senders before claiming or calling providers and answers an allowed direct question', async () => {
+    const privateConfig = readTelegramDocs({
+      ...environment,
+      TELEGRAM_DOCS_PRIVATE_CHAT_IDS: '["987"]',
+    });
+    if (!privateConfig) throw new Error('Expected private configuration');
+    let claims = 0,
+      calls = 0;
+    const sent: unknown[] = [];
+    const app = Fastify();
+    registerTelegramDocsRoutes(
+      app,
+      privateConfig,
+      {
+        configured: true,
+        ask: async (question) => {
+          calls++;
+          return {
+            status: 'outside',
+            topicId: null,
+            title: null,
+            answer: `Docs-only reply to: ${question}`,
+          };
+        },
+      },
+      async () => {
+        claims++;
+        return true;
+      },
+      async (_, init) => {
+        sent.push(JSON.parse(String(init?.body)));
+        return new Response('{"ok":true,"result":{}}');
+      },
+    );
+    const headers = { 'x-telegram-bot-api-secret-token': environment.TELEGRAM_DOCS_WEBHOOK_SECRET };
+    const message = {
+      ...groupMessage,
+      chat: { id: 988, type: 'private' },
+      from: { id: 988, is_bot: false },
+      text: 'What is Daclify?',
+      message_thread_id: undefined,
+    };
+    await app.inject({
+      method: 'POST',
+      url: TELEGRAM_DOCS_PATH,
+      headers,
+      payload: { update_id: 201, message },
+    });
+    expect(claims).toBe(0);
+    expect(calls).toBe(0);
+    expect(sent).toHaveLength(0);
+    await app.inject({
+      method: 'POST',
+      url: TELEGRAM_DOCS_PATH,
+      headers,
+      payload: {
+        update_id: 202,
+        message: {
+          ...message,
+          chat: { id: 987, type: 'private' },
+          from: { id: 987, is_bot: false },
+        },
+      },
+    });
+    expect(claims).toBe(1);
+    expect(calls).toBe(1);
+    expect(sent).toEqual([
+      {
+        chat_id: '987',
+        reply_parameters: { message_id: 12, allow_sending_without_reply: false },
+        text: 'Docs-only reply to: What is Daclify?',
+        link_preview_options: { is_disabled: true },
+      },
+    ]);
+    await app.close();
+  });
+
   it('ignores normal conversation, other commands/bots, unapproved chats, old messages and oversized questions', () => {
     for (const patch of [
       { text: 'Daclify is great' },

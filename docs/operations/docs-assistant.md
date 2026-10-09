@@ -28,12 +28,13 @@ Telegram login/OIDC does not run a group bot. Group chat is off by default. No l
    ```sh
    TELEGRAM_DOCS_ENABLED=true
    TELEGRAM_DOCS_GROUP_IDS=["-1001234567890"]
+   TELEGRAM_DOCS_PRIVATE_CHAT_IDS=[]
    TELEGRAM_DOCS_WEBHOOK_SECRET=YOUR_RANDOM_URL_SAFE_SECRET_AT_LEAST_32_CHARACTERS
    TELEGRAM_DOCS_WEBHOOK_URL=https://testnet.api.daclify.com/v1/docs/telegram/webhook
    FRONTEND_ORIGIN=https://testnet.app.daclify.com
    ```
 
-   Generate the secret locally into private configuration, for example with Node's `crypto.randomBytes(32).toString('base64url')`; do not paste it into chat or a shell argument. Protect the env file using the existing VM credential-file procedure. The secret is separate from the bot token. Group IDs must be a JSON array of negative numeric **strings**, with no duplicates. Startup refuses incomplete enabled configuration. HTTP webhook URLs are rejected.
+   Generate the secret locally into private configuration, for example with Node's `crypto.randomBytes(32).toString('base64url')`; do not paste it into chat or a shell argument. Protect the env file using the existing VM credential-file procedure. The secret is separate from the bot token. Group IDs must be a JSON array of negative numeric **strings**, with no duplicates. Private IDs must be positive numeric strings. Both lists default to empty; enabled chat requires at least one allowed ID in either list. Startup refuses incomplete enabled configuration. HTTP webhook URLs are rejected.
 
 4. Deploy the API code and apply migration 032 through normal startup. The migration adds only update IDs and timestamps; it changes no user identity or pairings. Restart the API. HAProxy must route this exact HTTPS API path without adding a browser-origin requirement or logging its secret header. The route verifies `X-Telegram-Bot-Api-Secret-Token` before parsing the update, and checks the group allowlist before any model or send call. App endpoints retain their existing origin checks.
 5. From the backend checkout on the VM, run the read-only check with the actual private env path:
@@ -54,7 +55,17 @@ Telegram login/OIDC does not run a group bot. Group chat is off by default. No l
 
 7. In the group, try `/docs@YOUR_BOT_USERNAME How does Daclify recovery work?`. In multi-bot groups the explicit username is the reliable command form. `/docs` works when Telegram routes it to this bot. Reply to the bot response to ask a follow-up; the previous bot answer is bounded context and never a source of authority. Verify a source link, a forum-topic reply, an unrelated-question refusal and normal-conversation silence. Do not use actual secrets or private DAO records as test inputs.
 
-The handler ignores private chats, channels, other bots, edited updates, unapproved groups, ordinary text and messages older than one day. A forwarded message is not a command unless it is itself an accepted command/reply. No parse mode is used for bot output, so model text cannot introduce Telegram formatting entities. Source links are constructed from the configured frontend origin and the validated bundled topic ID, rather than a model-supplied URL.
+The handler ignores unlisted private chats, channels, other bots, edited updates, unapproved groups, ordinary group text and messages older than one day. A forwarded group message is not a command unless it is itself an accepted command/reply. No parse mode is used for bot output, so model text cannot introduce Telegram formatting entities. Source links are constructed from the configured frontend origin and the validated bundled topic ID, rather than a model-supplied URL.
+
+## One-on-one testing
+
+Set `TELEGRAM_DOCS_PRIVATE_CHAT_IDS` to a JSON array containing your positive numeric Telegram user ID as a string, for example `["123456789"]`. This is a synthetic example: replace it with your actual ID. Usernames are not accepted. Only messages whose private chat ID equals their human sender ID and an entry in this list reach the assistant. Unlisted users are silently ignored before receipt storage, model calls or replies.
+
+To find your ID without another bot, open this bot, press Start and send a short test message. An authorized operator can inspect only the sender metadata of that private update using Telegram's Bot API. If no webhook is registered, a read-only `getUpdates` request without an offset can reveal the numeric sender ID without acknowledging the update. Filter the expected username and matching private sender/chat IDs; never dump chat bodies or other users' profiles. Do not replace or remove an existing webhook just to discover an ID. With a registered webhook, use a private operator diagnostic at its receiver instead; the normal docs handler deliberately does not retain message bodies.
+
+For private-only testing, set `TELEGRAM_DOCS_GROUP_IDS=[]`; the bot does not need to join a group first. Open the bot's private chat and press Start before running the setup check, so Telegram can resolve that private chat. The setup tool checks private-chat existence/type/ID, and checks group membership/privacy only when groups are configured. Keep the existing shared webhook configuration and enable flag; a second webhook is unnecessary.
+
+Once the updated API is deployed, restarted and its webhook registered, send an ordinary Daclify question, `/docs question`, or a reply to a bot answer. The docs-only scope, public source links, question/response limits, rate limits and duplicate protection are identical to group support. Other slash commands are ignored. Plain private text is accepted only for whitelisted users; it does not enable reading ordinary group conversations. Leave the private list empty to disable direct-chat support while retaining groups.
 
 ## Retry and privacy limits
 
