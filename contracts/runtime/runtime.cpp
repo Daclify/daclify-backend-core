@@ -372,7 +372,7 @@ private:
     const bool first=d.max_member==0;
     rows.emplace(get_self(),[&](auto& m){m.id=member_id;m.native_account=native_account;m.signing_key=signing_key;m.encryption_key=encryption_key;m.custody=custody;m.admin=first;m.join_epoch=d.key_epoch;});
     dao_rows.modify(d,same_payer,[&](auto& r){r.member_count++;r.max_member=member_id;if(first)r.admin_count++;});
-    if(kind==1){participants actors(get_self(),dao_id);actors.emplace(get_self(),[&](auto& r){r.id=member_id;r.kind=1;r.operator_label=operator_label;});}
+    participants actors(get_self(),dao_id);actors.emplace(get_self(),[&](auto& r){r.id=member_id;r.kind=kind;if(kind==1)r.operator_label=operator_label;});
   }
 public:
   ACTION submit(instruction request,signature sig) {

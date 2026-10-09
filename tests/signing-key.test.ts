@@ -4,6 +4,7 @@ import { Blockchain } from '@proton/vert';
 import { ABI, Checksum256, PrivateKey, Serializer } from '@wharfkit/antelope';
 import { z } from 'zod';
 import { loadContract, row, send, allowFixtureInheritedAuth } from './helpers/vert.js';
+import { RuntimeTableSchemas } from '../sdk/index.js';
 
 const artifact = '.artifacts/contracts/runtime';
 const chainId = 'ab'.repeat(32);
@@ -60,6 +61,33 @@ function signed(action: string, object: object, signer: PrivateKey, nonce: numbe
 }
 
 describe('signing-key rotation without a second member', () => {
+  it('allocates the credential epoch at enrollment so first recovery does not grow that row', async () => {
+    const before = RuntimeTableSchemas.actors.parse(row(runtime, 'actors', 1n, 1n));
+    expect(before).toMatchObject({ kind: 0, operator_label: '', credential_epoch: '1' });
+    const abi = ABI.from(readFileSync(`${artifact}.abi`, 'utf8'));
+    await send(
+      runtime,
+      'submit',
+      signed(
+        'rotatekey',
+        {
+          runtime: 'daclifycore',
+          dao_id: 1,
+          member_id: 1,
+          signing_key: nextKey.toPublic().toString(),
+        },
+        key,
+        0,
+      ),
+      'relay@active',
+    );
+    const after = RuntimeTableSchemas.actors.parse(row(runtime, 'actors', 1n, 1n));
+    expect(after.credential_epoch).toBe('2');
+    expect(Serializer.encode({ abi, type: 'participant_record', object: after }).array.length).toBe(
+      Serializer.encode({ abi, type: 'participant_record', object: before }).array.length,
+    );
+    expect(daoSchema.parse(row(runtime, 'daos', runtime.toBigInt(), 1n)).member_count).toBe(1);
+  });
   it('links a native wallet without a second member or a second vote', async () => {
     allowFixtureInheritedAuth(chain, 'bob', 'daclifycore');
     await send(

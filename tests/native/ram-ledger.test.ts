@@ -16,6 +16,7 @@ import {
   Checksum256,
   PrivateKey,
   Name,
+  UInt64,
 } from '@wharfkit/antelope';
 import { fixtureNetwork } from '../../tools/native/network.js';
 import { fixtureKey } from '../../tools/native/keys.js';
@@ -25,7 +26,7 @@ import { configureFixtureContext } from '../../tools/native/permissions.js';
 import { ModulePermissions } from '@daclify/modules';
 import { buildArchiveTree } from '@daclify/modules/archive';
 import { RuntimeTableSchemas } from '../../sdk/index.js';
-import { DecideTableSchemas } from '@daclify/modules/sdk';
+import { DecideTableSchemas, PayrollTableSchemas } from '@daclify/modules/sdk';
 const network = fixtureNetwork();
 if (network.container !== 'daclify-resources-native' || network.url !== 'http://127.0.0.1:20588')
   throw new Error('OWNED_RESOURCE_FIXTURE_REQUIRED');
@@ -675,6 +676,90 @@ it('backs included DAO grants against actual payer quota, protects platform head
     'RAM_POOL_UNKNOWN',
   );
   expect(await read()).toEqual(saved);
+  expect(BigInt(await used()) - BigInt(baseline)).toBe(await accounted());
+});
+
+it('rotates a new human signing key without allocating first-use recovery RAM', async () => {
+  await push('setramauto', { enabled: false, offers: [] }, runtime);
+  daoScopes.push('4');
+  await push('createdao', {
+    dao_id: '4',
+    owner: 'alice',
+    metadata: '{}',
+    privacy: 0,
+    token_contract: 'eosio.token',
+    token_symbol: '4,TLOS',
+  });
+  await push('enroll', {
+    dao_id: '4',
+    member_id: '1',
+    native_account: '',
+    signing_key: key.toPublic().toString(),
+    encryption_key: 'fixture',
+    custody: 0,
+  });
+  const read = async () =>
+    RuntimeTableSchemas.actors.parse(
+      (
+        await api.v1.chain.get_table_rows({
+          code: runtime,
+          scope: '4',
+          table: 'actors',
+          json: true,
+          limit: 1,
+        })
+      ).rows[0],
+    );
+  expect((await read()).credential_epoch).toBe('1');
+  const before = await used(),
+    counted = await accounted();
+  await act(
+    runtime,
+    'rotatekey',
+    { signing_key: PrivateKey.generate('K1').toPublic().toString() },
+    '4',
+  );
+  expect((await read()).credential_epoch).toBe('2');
+  expect(await used()).toBe(before);
+  expect(await accounted()).toBe(counted);
+  expect(BigInt(await used()) - BigInt(baseline)).toBe(await accounted());
+});
+
+it('settles a newly accepted payroll schedule without growing its module payer', async () => {
+  const now = Math.floor((await api.v1.chain.get_info()).head_block_time.toMilliseconds() / 1000);
+  await act('payroll', 'commit', {
+    schedule_id: '50',
+    recipient: '1',
+    quantity: '1.0000 TLOS',
+    periods: 1,
+    interval: 86400,
+    starts: now + 3,
+  });
+  const schedule = PayrollTableSchemas.schedules.parse(
+    (
+      await api.v1.chain.get_table_rows({
+        code: 'payroll',
+        scope: runtime,
+        table: 'schedules',
+        key_type: 'i64',
+        lower_bound: UInt64.from(50),
+        limit: 1,
+        json: true,
+      })
+    ).rows[0],
+  );
+  const before = await used('payroll'),
+    counted = await accounted('payroll');
+  while (
+    Math.floor((await api.v1.chain.get_info()).head_block_time.toMilliseconds() / 1000) <
+    schedule.starts
+  )
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  const entry = schedule.entries[0];
+  if (!entry) throw new Error('PAYROLL_ENTRY_REQUIRED');
+  await push('settle', { runtime, dao_id: '1', entry_id: entry }, 'alice', 'payroll');
+  expect(await used('payroll')).toBe(before);
+  expect(await accounted('payroll')).toBe(counted);
   expect(BigInt(await used()) - BigInt(baseline)).toBe(await accounted());
 });
 
