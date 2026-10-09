@@ -95,6 +95,27 @@ for (const name of ['LICENSE', 'LICENSING.md']) await cp(join(core, name), join(
 npm(['pack', '--pack-destination', artifacts], stage);
 const coreTar = `../daclify-backend-core/.artifacts/daclify-core-protocol-${publicManifest.version}.tgz`;
 const moduleTar = `../daclify-backend-modules/.artifacts/daclify-modules-${moduleManifest.version}.tgz`;
+async function installFrontendPackages() {
+  const coreFile = `daclify-core-protocol-${publicManifest.version}.tgz`;
+  const moduleFile = `daclify-modules-${moduleManifest.version}.tgz`;
+  await mkdir(join(frontend, 'vendor'), { recursive: true });
+  await cp(join(artifacts, coreFile), join(frontend, 'vendor', coreFile));
+  await cp(join(modules, '.artifacts', moduleFile), join(frontend, 'vendor', moduleFile));
+  npm(
+    [
+      'install',
+      '--package-lock-only',
+      '--save-prod',
+      '--ignore-scripts',
+      '--no-audit',
+      '--no-fund',
+      `./vendor/${coreFile}`,
+      `./vendor/${moduleFile}`,
+    ],
+    frontend,
+  );
+  npm(['ci', '--ignore-scripts', '--no-audit', '--no-fund'], frontend);
+}
 // Development artifacts have not been published. Refresh their lock integrities explicitly;
 // --save-dev preserves the module's exact released-core peer range.
 await mkdir(join(modules, '.artifacts'), { recursive: true });
@@ -127,20 +148,7 @@ npm(
   core,
 );
 npm(['ci', '--ignore-scripts', '--no-audit', '--no-fund'], core);
-npm(
-  [
-    'install',
-    '--package-lock-only',
-    '--save-prod',
-    '--ignore-scripts',
-    '--no-audit',
-    '--no-fund',
-    coreTar,
-    moduleTar,
-  ],
-  frontend,
-);
-npm(['ci', '--ignore-scripts', '--no-audit', '--no-fund'], frontend);
+await installFrontendPackages();
 if (flags.includes('--contracts')) {
   // Requires the documented checksum-verified local toolchain image. No chain deployment.
   npm(['run', 'build:contracts'], core);
@@ -171,7 +179,7 @@ if (flags.includes('--contracts')) {
         join(modules, `.artifacts/core-release/${name}.${extension}`),
       );
   npm(['install', '--save-prod', '--ignore-scripts', moduleTar], core);
-  npm(['install', '--save-prod', '--ignore-scripts', coreTar, moduleTar], frontend);
+  await installFrontendPackages();
 }
 console.log(
   'Development checkouts bootstrapped from locked dependencies. No package was published and no chain was deployed.',
