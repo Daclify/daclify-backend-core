@@ -386,6 +386,8 @@ export class NativeChainGateway implements ChainGateway {
     IdSchema.parse(id);
     const startedAt = new Date().toISOString();
     await this.reviewedRuntime(this.config.runtime);
+    if ((await this.table('rammigrate', this.config.runtime))[0]?.active)
+      throw new ApiError('RAM_MIGRATION_ACTIVE', 503);
     const read = async <
       K extends
         | 'ramobs'
@@ -419,23 +421,31 @@ export class NativeChainGateway implements ChainGateway {
     const observer = observers[0];
     let completionHolds: { rows: number; bytes: string } | null = null;
     if (observer) {
-      let cursor: string | null = '0',
-        count = 0,
+      let count = 0,
         heldBytes = 0n;
       const abi = ABI.from(runtimeAbi);
       // ponytail: bounded to 5,000 holds; add a native aggregate if measured outstanding work exceeds this.
-      while (cursor !== null) {
-        const page: { rows: z.infer<typeof RuntimeTableSchemas.ramholds>[]; next: string | null } =
-          await this.tablePage('ramholds', id, cursor);
-        count += page.rows.length;
-        if (count > 5000) throw new ApiError('RESOURCE_SCOPE_LIMIT', 503);
-        for (const row of page.rows)
-          heldBytes += BigInt(
-            Serializer.encode({ abi, type: 'ram_completion_hold', object: row }).array.length + 240,
-          );
-        cursor = page.next;
+      for (const table of ['ramholds', 'ramclmholds'] as const) {
+        let cursor: string | null = '0',
+          familyCount = 0;
+        while (cursor !== null) {
+          const page: {
+            rows: z.infer<typeof RuntimeTableSchemas.ramholds>[];
+            next: string | null;
+          } = await this.tablePage(table, id, cursor);
+          count += page.rows.length;
+          familyCount += page.rows.length;
+          if (count > 5000) throw new ApiError('RESOURCE_SCOPE_LIMIT', 503);
+          for (const row of page.rows)
+            heldBytes += BigInt(
+              Serializer.encode({ abi, type: 'ram_completion_hold', object: row }).array.length +
+                240,
+            );
+          cursor = page.next;
+        }
+        if (familyCount) heldBytes += 112n;
       }
-      completionHolds = { rows: count, bytes: (heldBytes + (count ? 112n : 0n)).toString() };
+      completionHolds = { rows: count, bytes: heldBytes.toString() };
     }
     if (observer && observer.runtime_hash !== RuntimeCodeHash)
       throw new ApiError('RESOURCE_UNQUALIFIED', 503);
@@ -535,6 +545,8 @@ export class NativeChainGateway implements ChainGateway {
             )
             .toString()
         : null;
+    if ((await this.table('rammigrate', this.config.runtime))[0]?.active)
+      throw new ApiError('RAM_MIGRATION_ACTIVE', 503);
     return RamUsageSchema.parse({
       dao: {
         chainId: this.config.chainId,

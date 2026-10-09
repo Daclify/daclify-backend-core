@@ -97,10 +97,12 @@ Owned-native checks cover 200 DAOs/40,000 memberships and representative workflo
 
 `DACLIFY_STORAGE_CLEANUP_ENABLED` defaults false. Explicit enablement requires content and storage billing configuration and current-payment reconciliation. Period-bound in-app reminders are available; optional SMTP reminder/operator alert workers require separate configuration and live delivery qualification. A server-only gateway key can protect the dedicated gateway when its matching provider restriction is configured. It does not establish a funded bandwidth allowance. Keep cleanup off during incomplete recovery.
 
-General legacy RAM backfill and old executable-work migration, obligation-specific completion holds, safe quota enforcement, funded gateway limits, provider qualification and the immutable 0.8 release remain open. No production deployment or destructive rollout is certified by these development changes.
+Legacy controller/supported-release qualification and old executable-work migration, safe quota enforcement, live gateway funding/access qualification, provider qualification and the immutable 0.8 release remain open. No production deployment or destructive rollout is certified by these development changes.
 
 ## License
 
 First-party code, contracts, SDKs and documentation are licensed under
 **AGPL-3.0-only**. See [LICENSE](LICENSE) and [licensing and source obligations](LICENSING.md).
 Third-party files retain their own licenses. Contributions remain owned by their authors.
+
+The development [RAM migration controller](docs/operations/ram-migration.md) has bounded core/all-five-module scans, financial/election hold adoption and once-only physically backed inherited grants. Migration totals fail closed until sealing. Existing observed deployments require a separate reviewed upgrade path. No migration is run automatically at API startup.

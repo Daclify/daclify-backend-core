@@ -1,19 +1,33 @@
 #pragma once
 #include "resources.hpp"
+#include "ram_migration.hpp"
 #include <type_traits>
 namespace daclify {
 template<eosio::name::raw Table,typename Value>
 class ram_singleton:public eosio::singleton<Table,Value>{
   using base=eosio::singleton<Table,Value>;
-  eosio::name code;
+  eosio::name code;uint64_t scope_id;
+  void capture(){
+    auto progress=migration_cursor(code,code,scope_id,eosio::name{Table},false,0,0);
+    migration_capture(code,code,scope_id,progress,0,0,eosio::pack_size(base::get())+224);
+  }
 public:
-  ram_singleton(eosio::name account,uint64_t scope):base(account,scope),code(account){}
+  ram_singleton(eosio::name account,uint64_t scope):base(account,scope),code(account),scope_id(scope){}
+  void backfill(uint32_t limit){
+    eosio::check(limit>=1&&limit<=25,"RAM_MIGRATION_BATCH");eosio::check(ram_backfill_active(code),"RAM_MIGRATION_INACTIVE");
+    auto progress=migration_cursor(code,code,scope_id,eosio::name{Table},!base::exists(),0,0);if(progress.complete)return;
+    if(migration_overlay_exists(code,scope_id,eosio::name{Table},0))migration_unmark(code,code,scope_id,eosio::name{Table},0);
+    else observe_ram(code,0,code,eosio::name{Table},eosio::pack_size(base::get())+224,0);
+    progress.advanced=true;progress.complete=true;ram_migration_cursors rows(code,scope_id);rows.modify(rows.get(static_cast<uint64_t>(Table)),eosio::same_payer,[&](auto& r){r=progress;});
+  }
   void set(const Value& value,eosio::name payer){
+    if(ram_backfill_active(code)&&base::exists())capture();
     bool found=base::exists();eosio::check(payer==code||(!payer.value&&found),"RAM_FOREIGN_PAYER");uint64_t before=found?eosio::pack_size(base::get())+224:0;uint64_t after=eosio::pack_size(value)+224;base::set(value,payer);
+    eosio::check(!ram_backfill_active(code)||after<=before,"RAM_MIGRATION_GROWTH");
     if(after!=before)observe_ram(code,0,code,eosio::name{Table},after>before?after-before:0,before>after?before-after:0);
   }
   Value get_or_create(eosio::name payer,const Value& value=Value{}){if(base::exists())return base::get();set(value,payer);return value;}
-  void remove(){if(!base::exists())return;uint64_t bytes=eosio::pack_size(base::get())+224;base::remove();observe_ram(code,0,code,eosio::name{Table},0,bytes);}
+  void remove(){eosio::check(!ram_backfill_active(code),"RAM_MIGRATION_PRUNING");if(!base::exists())return;uint64_t bytes=eosio::pack_size(base::get())+224;base::remove();observe_ram(code,0,code,eosio::name{Table},0,bytes);}
 };
 template<typename T,typename=void>struct row_has_dao:std::false_type{};
 template<typename T>struct row_has_dao<T,std::void_t<decltype(std::declval<T>().dao_id)>>:std::true_type{};
@@ -38,7 +52,15 @@ class ram_table:public eosio::multi_index<Table,Row,Indices...>{
   }
   bool scoped()const{
     if constexpr(is_module)return false;
-    switch(static_cast<uint64_t>(Table)){case "docsrcs"_n.value:case "docrefs"_n.value:case "docheads"_n.value:case "docclocks"_n.value:case "docstate"_n.value:case "docscan"_n.value:case "ramentitle"_n.value:case "ramholds"_n.value:case "ramlimits"_n.value:case "ramgrants"_n.value:case "archives"_n.value:case "archpos"_n.value:case "ramalloc"_n.value:case "members"_n.value:case "actors"_n.value:case "sessions"_n.value:case "evmbindings"_n.value:case "modules"_n.value:case "documents"_n.value:case "epochs"_n.value:case "keygrants"_n.value:case "govlocks"_n.value:case "obligations"_n.value:case "receipts"_n.value:return true;default:return false;}
+    switch(static_cast<uint64_t>(Table)){case "docsrcs"_n.value:case "docrefs"_n.value:case "docheads"_n.value:case "docclocks"_n.value:case "docstate"_n.value:case "docscan"_n.value:case "ramentitle"_n.value:case "ramholds"_n.value:case "ramclmholds"_n.value:case "ramlimits"_n.value:case "ramgrants"_n.value:case "raminherit"_n.value:case "archives"_n.value:case "archpos"_n.value:case "ramalloc"_n.value:case "members"_n.value:case "actors"_n.value:case "sessions"_n.value:case "evmbindings"_n.value:case "modules"_n.value:case "documents"_n.value:case "epochs"_n.value:case "keygrants"_n.value:case "govlocks"_n.value:case "obligations"_n.value:case "receipts"_n.value:return true;default:return false;}
+  }
+  bool protected_table()const{
+    if constexpr(is_module)return static_cast<uint64_t>(Table)=="termholds"_n.value||static_cast<uint64_t>(Table)=="terms"_n.value||static_cast<uint64_t>(Table)=="pollends"_n.value;
+    switch(static_cast<uint64_t>(Table)){case "receipts"_n.value:case "ramholds"_n.value:case "ramclmholds"_n.value:case "actors"_n.value:case "sessions"_n.value:case "evmbindings"_n.value:return true;default:return false;}
+  }
+  ram_migration_cursor capture(const Row& row){
+    auto progress=migration_cursor(runtime(),base::get_code(),base::get_scope(),eosio::name{Table},false,scoped()?base::get_scope():0,ram_scope_bytes<Indices...>());
+    migration_capture(runtime(),base::get_code(),base::get_scope(),progress,row.primary_key(),owner(row),ram_row_bytes<Row,Indices...>(row));return progress;
   }
   void delta(uint64_t dao,uint64_t added,uint64_t removed){observe_ram(runtime(),dao,base::get_code(),eosio::name{Table},added,removed);}
   void header(uint64_t dao,uint64_t added,uint64_t removed){observe_ram(runtime(),scoped()?dao:0,base::get_code(),eosio::name{Table},added,removed);}
@@ -51,17 +73,26 @@ class ram_table:public eosio::multi_index<Table,Row,Indices...>{
   };
 public:
   using base::base;
+  void backfill(uint32_t limit){
+    eosio::check(ram_backfill_active(runtime()),"RAM_MIGRATION_INACTIVE");
+    migration_scan(runtime(),base::get_code(),base::get_scope(),eosio::name{Table},*this,scoped()?base::get_scope():0,ram_scope_bytes<Indices...>(),limit,[&](const Row& r){return owner(r);},[](const Row& r){return ram_row_bytes<Row,Indices...>(r);});
+  }
   template<typename Constructor>auto emplace(eosio::name payer,Constructor&& fn){
     if constexpr(is_module)check_ram_payer_runtime(base::get_code(),runtime());
-    eosio::check(payer==base::get_code(),"RAM_FOREIGN_PAYER");bool empty=base::begin()==base::end();auto it=base::emplace(payer,std::forward<Constructor>(fn));auto dao=owner(*it);delta(dao,ram_row_bytes<Row,Indices...>(*it),0);if(empty)header(dao,ram_scope_bytes<Indices...>(),0);return it;
+    const bool migrating=ram_backfill_active(runtime());eosio::check(!migrating||protected_table(),"RAM_MIGRATION_GROWTH");
+    ram_migration_cursor progress;if(migrating)progress=migration_cursor(runtime(),base::get_code(),base::get_scope(),eosio::name{Table},base::begin()==base::end(),scoped()?base::get_scope():0,ram_scope_bytes<Indices...>());
+    eosio::check(payer==base::get_code(),"RAM_FOREIGN_PAYER");bool empty=base::begin()==base::end();auto it=base::emplace(payer,std::forward<Constructor>(fn));auto dao=owner(*it);delta(dao,ram_row_bytes<Row,Indices...>(*it),0);if(empty)header(dao,ram_scope_bytes<Indices...>(),0);
+    if(migrating&&!progress.complete&&(!progress.advanced||it->primary_key()>progress.cursor))migration_mark(runtime(),base::get_code(),base::get_scope(),eosio::name{Table},it->primary_key());return it;
   }
   template<typename Updater>void modify(const Row& obj,eosio::name payer,Updater&& fn){
     if constexpr(is_module)check_ram_payer_runtime(base::get_code(),runtime());
+    const bool migrating=ram_backfill_active(runtime());if(migrating)capture(obj);
     eosio::check(!payer.value||payer==base::get_code(),"RAM_FOREIGN_PAYER");auto old_owner=owner(obj);auto before=ram_row_bytes<Row,Indices...>(obj);auto key=obj.primary_key();base::modify(obj,payer,std::forward<Updater>(fn));const auto& updated=base::get(key);auto next_owner=owner(updated);auto after=ram_row_bytes<Row,Indices...>(updated);
+    eosio::check(!migrating||after<=before||protected_table(),"RAM_MIGRATION_GROWTH");
     if(old_owner!=next_owner){delta(old_owner,0,before);delta(next_owner,after,0);}else if(after>before)delta(old_owner,after-before,0);else if(before>after)delta(old_owner,0,before-after);
   }
   template<typename Updater>void modify(typename base::const_iterator it,eosio::name payer,Updater&& fn){modify(*it,payer,std::forward<Updater>(fn));}
-  auto erase(typename base::const_iterator it){if constexpr(is_module)check_ram_payer_runtime(base::get_code(),runtime());auto dao=owner(*it);auto bytes=ram_row_bytes<Row,Indices...>(*it);auto next=base::erase(it);delta(dao,0,bytes);if(base::begin()==base::end())header(dao,0,ram_scope_bytes<Indices...>());return next;}
+  auto erase(typename base::const_iterator it){if constexpr(is_module)check_ram_payer_runtime(base::get_code(),runtime());const bool migrating=ram_backfill_active(runtime());eosio::check(!migrating||protected_table(),"RAM_MIGRATION_PRUNING");if(migrating)capture(*it);auto key=it->primary_key(),dao=owner(*it);auto bytes=ram_row_bytes<Row,Indices...>(*it);auto next=base::erase(it);delta(dao,0,bytes);if(base::begin()==base::end())header(dao,0,ram_scope_bytes<Indices...>());if(migrating)migration_unmark(runtime(),base::get_code(),base::get_scope(),eosio::name{Table},key);return next;}
   void erase(const Row& obj){erase(base::iterator_to(obj));}
   template<eosio::name::raw IndexName>auto get_index(){auto value=base::template get_index<IndexName>();return tracked_index<decltype(value)>{value,this};}
   template<eosio::name::raw IndexName>auto get_index()const{return base::template get_index<IndexName>();}

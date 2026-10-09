@@ -36,6 +36,12 @@ struct [[eosio::table("ramentitle"),eosio::contract("runtime")]] ram_entitlement
  EOSLIB_SERIALIZE(ram_entitlement,(payer)(policy_revision)(identity_per_slot)(slots))
 };
 using ram_entitlements=ram_table<"ramentitle"_n,ram_entitlement>;
+struct [[eosio::table("raminherit"),eosio::contract("runtime")]] ram_inherited_capacity {
+ name payer;uint64_t activity,identity,completion,activity_headroom,identity_headroom,completion_headroom;
+ uint64_t primary_key()const{return payer.value;}
+ EOSLIB_SERIALIZE(ram_inherited_capacity,(payer)(activity)(identity)(completion)(activity_headroom)(identity_headroom)(completion_headroom))
+};
+using ram_inherited=ram_table<"raminherit"_n,ram_inherited_capacity>;
 inline uint64_t ram_used(const ram_counter& row){return add64(add64(row.identity,row.activity),add64(row.retained,row.platform));}
 inline uint64_t ram_limit_bytes(const ram_dao_limit& value){return add64(add64(value.activity,value.identity),value.completion);}
 inline uint64_t committed_ram(name runtime,name payer,uint64_t target_dao=0,uint64_t extra=0){

@@ -14,7 +14,8 @@ import { ramUsage } from '../services/api/src/resources/service.js';
 const chainId = 'ab'.repeat(32);
 afterEach(() => vi.unstubAllGlobals());
 function fixture() {
-  let observing = true,
+  let migrating = false,
+    observing = true,
     changed = false,
     truncated = false,
     held = false,
@@ -60,58 +61,68 @@ function fixture() {
       });
     if (!url.endsWith('get_table_rows')) throw new Error('Unexpected RAM fixture RPC');
     const rows =
-      body.table === 'ramholds'
-        ? held
-          ? [{ id: '1', recipient: '1', ready: true, padding: '00'.repeat(512) }]
+      body.table === 'rammigrate'
+        ? migrating
+          ? [{ active: true, globals_complete: false, advanced: false, dao_cursor: '0' }]
           : []
-        : body.table === 'ramobs'
-          ? observing
-            ? [{ meter_bytes: '900', runtime_hash: RuntimeCodeHash }]
+        : body.table === 'ramholds'
+          ? held
+            ? [{ id: '1', recipient: '1', ready: true, padding: '00'.repeat(512) }]
             : []
-          : body.table === 'ramstats' && body.scope === '1'
-            ? [
-                {
-                  payer: 'daclifycore',
-                  identity: '1000',
-                  activity: '200',
-                  retained: '300',
-                  platform: '0',
-                },
-                { payer: 'decide', identity: '0', activity: '400', retained: '50', platform: '0' },
-              ]
-            : body.table === 'ramalloc'
-              ? [{ payer: 'decide', purchased_bytes: '4096' }]
-              : body.table === 'ramentitle'
-                ? [
-                    {
-                      payer: 'daclifycore',
-                      policy_revision: '1',
-                      identity_per_slot: '2048',
-                      slots: 10,
-                    },
-                  ]
-                : body.table === 'ramlimits'
+          : body.table === 'ramobs'
+            ? observing
+              ? [{ meter_bytes: '900', runtime_hash: RuntimeCodeHash }]
+              : []
+            : body.table === 'ramstats' && body.scope === '1'
+              ? [
+                  {
+                    payer: 'daclifycore',
+                    identity: '1000',
+                    activity: '200',
+                    retained: '300',
+                    platform: '0',
+                  },
+                  {
+                    payer: 'decide',
+                    identity: '0',
+                    activity: '400',
+                    retained: '50',
+                    platform: '0',
+                  },
+                ]
+              : body.table === 'ramalloc'
+                ? [{ payer: 'decide', purchased_bytes: '4096' }]
+                : body.table === 'ramentitle'
                   ? [
                       {
                         payer: 'daclifycore',
-                        activity: '262144',
-                        identity: '20480',
-                        completion: '32768',
+                        policy_revision: '1',
+                        identity_per_slot: '2048',
+                        slots: 10,
                       },
                     ]
-                  : body.table === 'ramsources'
-                    ? [{ account: 'decide', code_hash: 'cd'.repeat(32) }]
-                    : body.table === 'modules'
-                      ? [
-                          {
-                            account: 'decide',
-                            version: 1,
-                            actions: [],
-                            grants: [],
-                            code_hash: 'cd'.repeat(32),
-                          },
-                        ]
-                      : [];
+                  : body.table === 'ramlimits'
+                    ? [
+                        {
+                          payer: 'daclifycore',
+                          activity: '262144',
+                          identity: '20480',
+                          completion: '32768',
+                        },
+                      ]
+                    : body.table === 'ramsources'
+                      ? [{ account: 'decide', code_hash: 'cd'.repeat(32) }]
+                      : body.table === 'modules'
+                        ? [
+                            {
+                              account: 'decide',
+                              version: 1,
+                              actions: [],
+                              grants: [],
+                              code_hash: 'cd'.repeat(32),
+                            },
+                          ]
+                        : [];
     return Response.json({
       rows:
         tooManyHolds && body.table === 'ramholds'
@@ -138,6 +149,7 @@ function fixture() {
   });
   return {
     gateway,
+    migrate: () => (migrating = true),
     disable: () => (observing = false),
     change: () => (changed = true),
     truncate: () => (truncated = true),
@@ -268,4 +280,10 @@ it('does not present disabled or unqualified observation as a zero-byte DAO', as
   const truncated = fixture();
   truncated.truncate();
   await expect(truncated.gateway.ramUsage('1')).rejects.toThrow('RESOURCE_SCOPE_LIMIT');
+});
+
+it('does not publish partial RAM totals while legacy backfill is active', async () => {
+  const current = fixture();
+  current.migrate();
+  await expect(current.gateway.ramUsage('1')).rejects.toThrow('RAM_MIGRATION_ACTIVE');
 });

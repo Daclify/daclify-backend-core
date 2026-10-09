@@ -9,6 +9,7 @@ struct [[eosio::table("ramholds"),eosio::contract("runtime")]] ram_completion_ho
 };
 using ram_hold_index=indexed_by<"byrecipient"_n,const_mem_fun<ram_completion_hold,uint64_t,&ram_completion_hold::by_recipient>>;
 using ram_holds=ram_table<"ramholds"_n,ram_completion_hold,ram_hold_index>;
+using ram_claim_holds=ram_table<"ramclmholds"_n,ram_completion_hold,ram_hold_index>;
 inline void hold_obligation_receipts(name runtime,uint64_t dao,uint64_t obligation,uint64_t recipient){
  if(!ram_observer_settings(runtime,runtime.value).exists())return;
  // Physical padding backs both receipts and the measured reference-token transfer headroom.
@@ -26,5 +27,7 @@ inline void settle_receipt_hold(name runtime,uint64_t dao,uint64_t obligation,bo
 inline void consume_claim_hold(name runtime,uint64_t dao,uint64_t recipient){
  ram_holds rows(runtime,dao);auto index=rows.get_index<"byrecipient"_n>();auto found=index.find(recipient);
  uint32_t released=0;while(found!=index.end()&&found->ready&&found->recipient==recipient&&released++<25)found=index.erase(found);
+ ram_claim_holds legacy(runtime,dao);auto old_index=legacy.get_index<"byrecipient"_n>();auto old=old_index.find(recipient);
+ while(old!=old_index.end()&&old->ready&&old->recipient==recipient&&released++<25)old=old_index.erase(old);
 }
 }

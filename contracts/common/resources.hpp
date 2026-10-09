@@ -66,6 +66,19 @@ struct [[eosio::table("ramobs"),eosio::contract("runtime")]] ram_observer_config
   EOSLIB_SERIALIZE(ram_observer_config,(meter_bytes)(runtime_hash))
 };
 using ram_observer_settings=eosio::singleton<"ramobs"_n,ram_observer_config>;
+struct [[eosio::table("rammigrate"),eosio::contract("runtime")]] ram_migration_state {
+ bool active=true;
+ bool globals_complete=false,advanced=false;uint64_t dao_cursor=0;
+ EOSLIB_SERIALIZE(ram_migration_state,(active)(globals_complete)(advanced)(dao_cursor))
+};
+using ram_migration_settings=eosio::singleton<"rammigrate"_n,ram_migration_state>;
+inline bool ram_backfill_active(eosio::name runtime){ram_migration_settings rows(runtime,runtime.value);return rows.exists()&&rows.get().active;}
+struct [[eosio::table("rammigsrcs"),eosio::contract("runtime")]] ram_migration_source {
+ eosio::name account;uint8_t kind;eosio::checksum256 code_hash;
+ uint64_t primary_key()const{return account.value;}
+ EOSLIB_SERIALIZE(ram_migration_source,(account)(kind)(code_hash))
+};
+using ram_migration_sources=eosio::multi_index<"rammigsrcs"_n,ram_migration_source>;
 struct [[eosio::table("ramsources"),eosio::contract("runtime")]] ram_source {
   eosio::name account;eosio::checksum256 code_hash;
   uint64_t primary_key()const{return account.value;}
@@ -85,7 +98,7 @@ inline uint8_t ram_category(eosio::name table,uint64_t dao_id){
 #endif
   switch(table.value){
     case "members"_n.value:case "actors"_n.value:case "sessions"_n.value:case "evmbindings"_n.value:case "profiles"_n.value:case "epochs"_n.value:case "keygrants"_n.value:return 0;
-    case "docsrcs"_n.value:case "docheads"_n.value:case "docclocks"_n.value:case "docstate"_n.value:case "docscan"_n.value:case "ramentitle"_n.value:case "ramholds"_n.value:case "ramlimits"_n.value:case "ramgrants"_n.value:case "archives"_n.value:case "archpos"_n.value:case "ramcards"_n.value:case "ramorders"_n.value:case "ramalloc"_n.value:case "receipts"_n.value:case "evidence"_n.value:case "capreceipts"_n.value:case "createords"_n.value:case "obligations"_n.value:case "budgets"_n.value:case "executions"_n.value:case "grantplans"_n.value:case "agreements"_n.value:case "controls"_n.value:case "entries"_n.value:case "schedules"_n.value:case "terms"_n.value:return 2;
+    case "docsrcs"_n.value:case "docheads"_n.value:case "docclocks"_n.value:case "docstate"_n.value:case "docscan"_n.value:case "ramentitle"_n.value:case "ramholds"_n.value:case "ramclmholds"_n.value:case "ramlimits"_n.value:case "ramgrants"_n.value:case "raminherit"_n.value:case "archives"_n.value:case "archpos"_n.value:case "ramcards"_n.value:case "ramorders"_n.value:case "ramalloc"_n.value:case "receipts"_n.value:case "evidence"_n.value:case "capreceipts"_n.value:case "createords"_n.value:case "obligations"_n.value:case "budgets"_n.value:case "executions"_n.value:case "grantplans"_n.value:case "agreements"_n.value:case "controls"_n.value:case "entries"_n.value:case "schedules"_n.value:case "terms"_n.value:return 2;
     default:return 1;
   }
 }

@@ -306,7 +306,7 @@ export const CoreHelpBundle={
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "ccb9f9c0366c9bfe045653f7790c3de627809127b3d2aeb7e8e0cdac60c5be1d",
+      "sourceAbiHash": "0e5d9e4f52d9b6a5e47343c3da22ec658e2a11b73262b11af0a7fd4696fa9601",
       "actions": [
         {
           "name": "addmember",
@@ -396,6 +396,23 @@ export const CoreHelpBundle={
             {
               "name": "revision",
               "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "adoptram",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "claims",
+              "type": "bool"
+            },
+            {
+              "name": "limit",
+              "type": "uint32"
             }
           ]
         },
@@ -567,6 +584,15 @@ export const CoreHelpBundle={
             {
               "name": "limit",
               "type": "uint32"
+            }
+          ]
+        },
+        {
+          "name": "beginram",
+          "fields": [
+            {
+              "name": "sources",
+              "type": "ram_migration_source[]"
             }
           ]
         },
@@ -1412,6 +1438,31 @@ export const CoreHelpBundle={
           ]
         },
         {
+          "name": "inheritram",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "payer",
+              "type": "name"
+            },
+            {
+              "name": "activity_headroom",
+              "type": "uint64"
+            },
+            {
+              "name": "identity_headroom",
+              "type": "uint64"
+            },
+            {
+              "name": "completion_headroom",
+              "type": "uint64"
+            }
+          ]
+        },
+        {
           "name": "init",
           "fields": [
             {
@@ -1913,6 +1964,32 @@ export const CoreHelpBundle={
             {
               "name": "signing_key",
               "type": "public_key"
+            }
+          ]
+        },
+        {
+          "name": "scanram",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "table",
+              "type": "name"
+            },
+            {
+              "name": "limit",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
+          "name": "sealram",
+          "fields": [
+            {
+              "name": "limit",
+              "type": "uint32"
             }
           ]
         },
@@ -3669,6 +3746,48 @@ export const CoreHelpBundle={
           ]
         },
         {
+          "name": "ramclmholds",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uint64"
+            },
+            {
+              "name": "recipient",
+              "type": "uint64"
+            },
+            {
+              "name": "ready",
+              "type": "bool"
+            },
+            {
+              "name": "padding",
+              "type": "bytes"
+            }
+          ]
+        },
+        {
+          "name": "ramcursors",
+          "fields": [
+            {
+              "name": "table",
+              "type": "name"
+            },
+            {
+              "name": "cursor",
+              "type": "uint64"
+            },
+            {
+              "name": "advanced",
+              "type": "bool"
+            },
+            {
+              "name": "complete",
+              "type": "bool"
+            }
+          ]
+        },
+        {
           "name": "ramentitle",
           "fields": [
             {
@@ -3744,6 +3863,39 @@ export const CoreHelpBundle={
           ]
         },
         {
+          "name": "raminherit",
+          "fields": [
+            {
+              "name": "payer",
+              "type": "name"
+            },
+            {
+              "name": "activity",
+              "type": "uint64"
+            },
+            {
+              "name": "identity",
+              "type": "uint64"
+            },
+            {
+              "name": "completion",
+              "type": "uint64"
+            },
+            {
+              "name": "activity_headroom",
+              "type": "uint64"
+            },
+            {
+              "name": "identity_headroom",
+              "type": "uint64"
+            },
+            {
+              "name": "completion_headroom",
+              "type": "uint64"
+            }
+          ]
+        },
+        {
           "name": "ramintent",
           "fields": [
             {
@@ -3774,6 +3926,44 @@ export const CoreHelpBundle={
             {
               "name": "completion",
               "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "rammigrate",
+          "fields": [
+            {
+              "name": "active",
+              "type": "bool"
+            },
+            {
+              "name": "globals_complete",
+              "type": "bool"
+            },
+            {
+              "name": "advanced",
+              "type": "bool"
+            },
+            {
+              "name": "dao_cursor",
+              "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "rammigsrcs",
+          "fields": [
+            {
+              "name": "account",
+              "type": "name"
+            },
+            {
+              "name": "kind",
+              "type": "uint8"
+            },
+            {
+              "name": "code_hash",
+              "type": "checksum256"
             }
           ]
         },
@@ -3852,6 +4042,23 @@ export const CoreHelpBundle={
             {
               "name": "settled",
               "type": "bool"
+            }
+          ]
+        },
+        {
+          "name": "ramoverlays",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uint64"
+            },
+            {
+              "name": "table",
+              "type": "name"
+            },
+            {
+              "name": "row",
+              "type": "uint64"
             }
           ]
         },

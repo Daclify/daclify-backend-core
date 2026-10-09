@@ -346,7 +346,7 @@ Hosted Pinata reads require a server-only dedicated-gateway key and a separately
 
 ## runtime contract
 
-Source ABI JSON SHA-256: `ccb9f9c0366c9bfe045653f7790c3de627809127b3d2aeb7e8e0cdac60c5be1d`.
+Source ABI JSON SHA-256: `0e5d9e4f52d9b6a5e47343c3da22ec658e2a11b73262b11af0a7fd4696fa9601`.
 
 ### Action: addmember
 
@@ -381,6 +381,14 @@ Source ABI JSON SHA-256: `ccb9f9c0366c9bfe045653f7790c3de627809127b3d2aeb7e8e0cd
 | source | name |
 | application_id | uint64 |
 | revision | uint64 |
+
+### Action: adoptram
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| claims | bool |
+| limit | uint32 |
 
 ### Action: approveob
 
@@ -450,6 +458,12 @@ Source ABI JSON SHA-256: `ccb9f9c0366c9bfe045653f7790c3de627809127b3d2aeb7e8e0cd
 | --- | --- |
 | dao_id | uint64 |
 | limit | uint32 |
+
+### Action: beginram
+
+| Field | ABI type |
+| --- | --- |
+| sources | ram_migration_source[] |
 
 ### Action: cancelob
 
@@ -785,6 +799,16 @@ Source ABI JSON SHA-256: `ccb9f9c0366c9bfe045653f7790c3de627809127b3d2aeb7e8e0cd
 | dao_id | uint64 |
 | member_id | uint64 |
 
+### Action: inheritram
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| payer | name |
+| activity_headroom | uint64 |
+| identity_headroom | uint64 |
+| completion_headroom | uint64 |
+
 ### Action: init
 
 | Field | ABI type |
@@ -994,6 +1018,20 @@ Source ABI JSON SHA-256: `ccb9f9c0366c9bfe045653f7790c3de627809127b3d2aeb7e8e0cd
 | dao_id | uint64 |
 | member_id | uint64 |
 | signing_key | public_key |
+
+### Action: scanram
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| table | name |
+| limit | uint32 |
+
+### Action: sealram
+
+| Field | ABI type |
+| --- | --- |
+| limit | uint32 |
 
 ### Action: setactive
 
@@ -1695,6 +1733,24 @@ Source ABI JSON SHA-256: `ccb9f9c0366c9bfe045653f7790c3de627809127b3d2aeb7e8e0cd
 | operational_bps | uint16 |
 | fulfiller | name |
 
+### Table: ramclmholds
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| recipient | uint64 |
+| ready | bool |
+| padding | bytes |
+
+### Table: ramcursors
+
+| Field | ABI type |
+| --- | --- |
+| table | name |
+| cursor | uint64 |
+| advanced | bool |
+| complete | bool |
+
 ### Table: ramentitle
 
 | Field | ABI type |
@@ -1725,6 +1781,18 @@ Source ABI JSON SHA-256: `ccb9f9c0366c9bfe045653f7790c3de627809127b3d2aeb7e8e0cd
 | ready | bool |
 | padding | bytes |
 
+### Table: raminherit
+
+| Field | ABI type |
+| --- | --- |
+| payer | name |
+| activity | uint64 |
+| identity | uint64 |
+| completion | uint64 |
+| activity_headroom | uint64 |
+| identity_headroom | uint64 |
+| completion_headroom | uint64 |
+
 ### Table: ramintent
 
 | Field | ABI type |
@@ -1740,6 +1808,23 @@ Source ABI JSON SHA-256: `ccb9f9c0366c9bfe045653f7790c3de627809127b3d2aeb7e8e0cd
 | activity | uint64 |
 | identity | uint64 |
 | completion | uint64 |
+
+### Table: rammigrate
+
+| Field | ABI type |
+| --- | --- |
+| active | bool |
+| globals_complete | bool |
+| advanced | bool |
+| dao_cursor | uint64 |
+
+### Table: rammigsrcs
+
+| Field | ABI type |
+| --- | --- |
+| account | name |
+| kind | uint8 |
+| code_hash | checksum256 |
 
 ### Table: ramobs
 
@@ -1767,6 +1852,14 @@ Source ABI JSON SHA-256: `ccb9f9c0366c9bfe045653f7790c3de627809127b3d2aeb7e8e0cd
 | purchases | ram_acquisition[] |
 | funded | bool |
 | settled | bool |
+
+### Table: ramoverlays
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| table | name |
+| row | uint64 |
 
 ### Table: rampayer
 

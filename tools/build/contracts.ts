@@ -8,6 +8,7 @@ for (const contract of [
   'hub',
   'permprobe',
   'ramprobe',
+  'migprobe',
   'testtoken',
   'boot',
   'modrelay',

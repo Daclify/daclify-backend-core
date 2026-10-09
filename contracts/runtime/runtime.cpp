@@ -8,6 +8,7 @@
 #include "ram_capacity.hpp"
 #include "ram_completion.hpp"
 #include "document_refs.hpp"
+#include "ram_families.hpp"
 #include <eosio/transaction.hpp>
 #define JSON_NOEXCEPTION
 #define JSON_HAS_FILESYSTEM 0
@@ -173,6 +174,17 @@ public:
     // Meter callbacks precede this final check, including the grant's own permanent metadata.
     action(permission_level{get_self(),"active"_n},get_self(),"checkrampool"_n,std::make_tuple(payer)).send();
   }
+  ACTION inheritram(uint64_t dao_id,name payer,uint64_t activity_headroom,uint64_t identity_headroom,uint64_t completion_headroom){
+    require_auth(get_self());ram_migration_settings migration(get_self(),get_self().value);check(migration.exists()&&!migration.get().active,"RAM_MIGRATION_INCOMPLETE");dao_rows.get(dao_id,"DAO_UNKNOWN");
+    ram_inherited inherited(get_self(),dao_id);auto prior=inherited.find(payer.value);
+    if(prior!=inherited.end()){check(prior->activity_headroom==activity_headroom&&prior->identity_headroom==identity_headroom&&prior->completion_headroom==completion_headroom,"RAM_GRANT_IMMUTABLE");return;}
+    ram_limits prior_limits(get_self(),dao_id);check(prior_limits.find(payer.value)==prior_limits.end(),"RAM_INHERITED_ALLOCATION");
+    ram_counters counters(get_self(),dao_id);auto used=counters.find(payer.value);ram_counter baseline;if(used!=counters.end())baseline=*used;
+    const auto activity=add64(add64(add64(baseline.activity,baseline.retained),baseline.platform),activity_headroom);
+    const auto identity=add64(baseline.identity,identity_headroom);check(completion_headroom>=32768,"RAM_GRANT_BOUNDS");
+    inherited.emplace(get_self(),[&](auto& r){r={payer,activity,identity,completion_headroom,activity_headroom,identity_headroom,completion_headroom};});
+    action(permission_level{get_self(),"active"_n},get_self(),"grantdaoram"_n,std::make_tuple(dao_id,payer,uint64_t(0x696e6865726974),activity,identity,completion_headroom)).send();
+  }
   ACTION checkrampool(name payer){
     check(get_sender()==get_self(),"RAM_POOL_SENDER");require_auth(get_self());
     ram_pools pools(get_self(),get_self().value);check_ram_pool(get_self(),pools.get(payer.value,"RAM_POOL_UNKNOWN"));
@@ -181,7 +193,7 @@ public:
     require_auth(get_self());save_resources(native_ram_bps,card_ram_bps,included_activity_bytes,identity_bytes_per_slot,quote_lifetime_seconds,storage_free_bytes,storage_unit_bytes,storage_monthly_usd);
   }
   ACTION rebindramobs(checksum256 expected_old_hash,checksum256 expected_new_hash){
-    require_auth(get_self());ram_observer_settings saved(get_self(),get_self().value);auto cfg=saved.get();
+    require_auth(get_self());check(!ram_backfill_active(get_self()),"RAM_MIGRATION_ACTIVE");ram_observer_settings saved(get_self(),get_self().value);auto cfg=saved.get();
     check(cfg.runtime_hash==expected_old_hash,"RAM_OBSERVER_CHANGED");check(expected_new_hash!=checksum256{}&&expected_new_hash!=expected_old_hash&&get_code_hash(get_self())==expected_new_hash,"RAM_SOURCE_CODE");
     cfg.runtime_hash=expected_new_hash;saved.set(cfg,get_self());
   }
@@ -189,7 +201,7 @@ public:
     platform_actor(runtime,dao_id,member_id);resource_settings saved(get_self(),get_self().value);check((saved.exists()?saved.get().revision:0)==expected_revision,"RESOURCE_POLICY_CHANGED");save_resources(native_ram_bps,card_ram_bps,included_activity_bytes,identity_bytes_per_slot,quote_lifetime_seconds,storage_free_bytes,storage_unit_bytes,storage_monthly_usd);
   }
   ACTION setramcode(name account,checksum256 code_hash){
-    require_auth(get_self());check(account!=get_self()&&code_hash!=checksum256{}&&get_code_hash(account)==code_hash,"RAM_SOURCE_CODE");ram_observer_settings saved(get_self(),get_self().value);auto cfg=saved.get();ram_sources sources(get_self(),get_self().value);auto found=sources.find(account.value);
+    require_auth(get_self());check(!ram_backfill_active(get_self()),"RAM_MIGRATION_ACTIVE");check(account!=get_self()&&code_hash!=checksum256{}&&get_code_hash(account)==code_hash,"RAM_SOURCE_CODE");ram_observer_settings saved(get_self(),get_self().value);auto cfg=saved.get();ram_sources sources(get_self(),get_self().value);auto found=sources.find(account.value);
     if(found==sources.end()){bool empty=sources.begin()==sources.end();ram_source r{account,code_hash};cfg.meter_bytes=add64(cfg.meter_bytes,pack_size(r)+112+(empty?112:0));sources.emplace(get_self(),[&](auto& row){row=r;});saved.set(cfg,get_self());}else sources.modify(found,same_payer,[&](auto& row){row.code_hash=code_hash;});
   }
   ACTION ramadjust(uint64_t dao_id,name payer,uint8_t category,uint64_t added,uint64_t removed){
@@ -201,6 +213,90 @@ public:
   }
   TABLE settings { checksum256 chain_id; uint16_t interface_version=1; EOSLIB_SERIALIZE(settings,(chain_id)(interface_version)) };
   using config = ram_singleton<"settings"_n,settings>;
+  ACTION beginram(std::vector<ram_migration_source> sources){
+    require_auth(get_self());check(sources.size()<=5,"RAM_MIGRATION_SOURCE_LIMIT");
+    ram_observer_settings observer(get_self(),get_self().value);check(!observer.exists(),"ALREADY_INITIALIZED");
+    ram_migration_settings migration(get_self(),get_self().value);check(!migration.exists(),"ALREADY_INITIALIZED");
+    ram_migration_sources snapshots(get_self(),get_self().value);ram_sources allowed(get_self(),get_self().value);
+    ram_observer_config cfg;cfg.runtime_hash=get_code_hash(get_self());cfg.meter_bytes=pack_size(cfg)+224+pack_size(ram_migration_state{})+224;
+    for(size_t i=0;i<sources.size();i++){
+      const auto& source=sources[i];module_ram_families(source.kind);
+      check(source.account!=get_self()&&source.code_hash!=checksum256{}&&source.code_hash==get_code_hash(source.account),"RAM_MIGRATION_SOURCE");
+      for(size_t j=0;j<i;j++)check(source.account!=sources[j].account,"RAM_MIGRATION_SOURCE");
+      action(permission_level{get_self(),"active"_n},source.account,"checkmig"_n,std::make_tuple(get_self(),source.kind)).send();
+      ram_payer_binding binding(source.account,source.account.value);check(binding.exists()&&binding.get().runtime==get_self(),"RAM_PAYER_RUNTIME");
+      snapshots.emplace(get_self(),[&](auto& r){r=source;});ram_source value{source.account,source.code_hash};allowed.emplace(get_self(),[&](auto& r){r=value;});
+      cfg.meter_bytes=add64(cfg.meter_bytes,pack_size(source)+112+pack_size(value)+112+(i?0:224));
+    }
+    uint32_t communities=0;for(const auto& dao:dao_rows){
+      check(++communities<=5000,"RAM_POOL_SCAN_LIMIT");modules installed(get_self(),dao.id);uint32_t module_count=0;
+      for(const auto& grant:installed){check(++module_count<=5,"RAM_MIGRATION_SOURCE_LIMIT");const auto& source=snapshots.get(grant.account.value,"RAM_MIGRATION_SOURCE");check(source.code_hash==grant.code_hash,"MODULE_CODE");}
+    }
+    observer.set(cfg,get_self());migration.set(ram_migration_state{},get_self());
+  }
+  ACTION scanram(uint64_t dao_id,name table,uint32_t limit){
+    require_auth(get_self());check(ram_backfill_active(get_self()),"RAM_MIGRATION_INACTIVE");check(limit>=1&&limit<=25,"RAM_MIGRATION_BATCH");
+    if(dao_id){dao_rows.get(dao_id,"DAO_UNKNOWN");
+#define SCAN_FAMILY(label,type) if(table==name{label}){type(get_self(),dao_id).backfill(limit);return;}
+      DACLIFY_RAM_SCOPED(SCAN_FAMILY)
+#undef SCAN_FAMILY
+    }else{
+#define SCAN_FAMILY(label,type) if(table==name{label}){type(get_self(),get_self().value).backfill(limit);return;}
+      DACLIFY_RAM_GLOBALS(SCAN_FAMILY)
+#undef SCAN_FAMILY
+    }
+    check(false,"RAM_MIGRATION_TABLE");
+  }
+  ACTION adoptram(uint64_t dao_id,bool claims,uint32_t limit){
+    require_auth(get_self());check(ram_backfill_active(get_self()),"RAM_MIGRATION_INACTIVE");dao_rows.get(dao_id,"DAO_UNKNOWN");check(limit>=1&&limit<=25,"RAM_MIGRATION_BATCH");
+    if(claims)require_migration_family(get_self(),dao_id,"adoptobs"_n);
+    const auto table=claims?"adoptclaims"_n:"adoptobs"_n;auto progress=migration_cursor(get_self(),get_self(),dao_id,table,false,0,0);if(progress.complete)return;
+    uint32_t count=0;bool complete=false;
+    if(claims){
+      members people(get_self(),dao_id);auto it=progress.advanced?people.upper_bound(progress.cursor):people.begin();
+      for(;it!=people.end()&&count<limit;++it,++count){
+        if(it->claim>0){ram_holds held(get_self(),dao_id);auto index=held.get_index<"byrecipient"_n>();ram_claim_holds legacy(get_self(),dao_id);
+          if(index.find(it->id)==index.end()&&legacy.find(it->id)==legacy.end())legacy.emplace(get_self(),[&](auto& r){r.id=it->id;r.recipient=it->id;r.ready=true;r.padding.resize(512);});
+        }
+        progress.cursor=it->id;progress.advanced=true;
+      }complete=it==people.end();
+    }else{
+      obligations debts(get_self(),dao_id);auto it=progress.advanced?debts.upper_bound(progress.cursor):debts.begin();
+      for(;it!=debts.end()&&count<limit;++it,++count){
+        if(it->status<=1){ram_holds held(get_self(),dao_id);auto prior=held.find(it->id);if(prior==held.end())hold_obligation_receipts(get_self(),dao_id,it->id,it->recipient);else check(!prior->ready&&prior->recipient==it->recipient,"RAM_HOLD_STATE");}
+        progress.cursor=it->id;progress.advanced=true;
+      }complete=it==debts.end();
+    }
+    progress.complete=complete;ram_migration_cursors rows(get_self(),dao_id);rows.modify(rows.get(table.value),same_payer,[&](auto& r){r=progress;});
+  }
+  ACTION sealram(uint32_t limit){
+    require_auth(get_self());check(limit>=1&&limit<=5,"RAM_MIGRATION_BATCH");ram_migration_settings saved(get_self(),get_self().value);auto state=saved.get();if(!state.active)return;
+    check(ram_observer_settings(get_self(),get_self().value).get().runtime_hash==get_code_hash(get_self()),"RAM_SOURCE_CODE");
+    ram_migration_sources current_sources(get_self(),get_self().value);for(const auto& source:current_sources)require_migration_source(get_self(),source.account,source.kind);
+    if(!state.globals_complete){
+#define REQUIRE_FAMILY(label,type) require_migration_family(get_self(),get_self().value,name{label});
+      DACLIFY_RAM_GLOBALS(REQUIRE_FAMILY)
+#undef REQUIRE_FAMILY
+      ram_migration_sources sources(get_self(),get_self().value);for(const auto& source:sources){
+        require_migration_source(get_self(),source.account,source.kind);
+        require_migration_family(source.account,source.account.value,"rampayer"_n);
+        for(const auto& table:module_ram_families(source.kind))require_migration_family(source.account,get_self().value,table);
+      }
+      state.globals_complete=true;
+    }
+    uint32_t count=0;auto it=state.advanced?dao_rows.upper_bound(state.dao_cursor):dao_rows.begin();
+    for(;it!=dao_rows.end()&&count<limit;++it,++count){
+#define REQUIRE_FAMILY(label,type) require_migration_family(get_self(),it->id,name{label});
+      DACLIFY_RAM_SCOPED(REQUIRE_FAMILY)
+      require_migration_family(get_self(),it->id,"adoptobs"_n);require_migration_family(get_self(),it->id,"adoptclaims"_n);
+#undef REQUIRE_FAMILY
+      modules installed(get_self(),it->id);ram_migration_sources sources(get_self(),get_self().value);
+      for(const auto& grant:installed){const auto& source=sources.get(grant.account.value,"RAM_MIGRATION_SOURCE");check(source.code_hash==grant.code_hash&&source.code_hash==get_code_hash(grant.account),"MODULE_CODE");}
+      state.dao_cursor=it->id;state.advanced=true;
+    }
+    if(it==dao_rows.end())state.active=false;saved.set(state,get_self());
+  }
+
   ACTION init(checksum256 chain_id) {
     require_auth(get_self()); config c(get_self(),get_self().value);
     check(!c.exists(),"ALREADY_INITIALIZED"); c.set(settings{chain_id,1},get_self());
@@ -656,6 +752,8 @@ public:
     check(limit>=1&&limit<=25,"RAM_HOLD_BATCH");members people(get_self(),dao_id);check(people.get(recipient,"MEMBER_UNKNOWN").claim==0,"CLAIM_OUTSTANDING");
     ram_holds holds(get_self(),dao_id);auto index=holds.get_index<"byrecipient"_n>();auto found=index.find(recipient);uint32_t removed=0;
     while(found!=index.end()&&found->ready&&found->recipient==recipient&&removed++<limit)found=index.erase(found);
+    ram_claim_holds legacy(get_self(),dao_id);auto old_index=legacy.get_index<"byrecipient"_n>();auto old=old_index.find(recipient);
+    while(old!=old_index.end()&&old->ready&&old->recipient==recipient&&removed++<limit)old=old_index.erase(old);
   }
   ACTION withdraw(name runtime,uint64_t dao_id,uint64_t member_id,name destination,asset quantity) {
     authorized_actor(runtime,dao_id,member_id,false,true);const auto& d=dao_rows.get(dao_id);check(quantity.symbol==d.token_symbol&&quantity.amount>0,"ASSET_QUANTITY");check(destination!=get_self()&&is_account(destination),"PAYOUT_DESTINATION");members people(get_self(),dao_id);const auto& m=people.get(member_id);check(quantity.amount<=m.claim,"INSUFFICIENT_CLAIM");
@@ -1021,7 +1119,7 @@ extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
   if(code==receiver){switch(action_name){
     EOSIO_DISPATCH_HELPER(runtime,(authproof)(unlinknat)(linkevm)(unlinkevm)(submitevm)(setadmit)(admitfrom))
     EOSIO_DISPATCH_HELPER(runtime,(docsrc)(docref)(docscanstep)(backfilldocs)(prunedocs)(restoredoc))
-    EOSIO_DISPATCH_HELPER(runtime,(setarchcfg)(archattest)(archapprove)(archrevoke)(archstep)(clearholds)(initramobs)(rebindramobs)(setramauto)(setrampool)(grantdaoram)(checkrampool)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram)(fulfilram))
+    EOSIO_DISPATCH_HELPER(runtime,(beginram)(scanram)(adoptram)(sealram)(setarchcfg)(archattest)(archapprove)(archrevoke)(archstep)(clearholds)(initramobs)(rebindramobs)(setramauto)(setrampool)(grantdaoram)(inheritram)(checkrampool)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram)(fulfilram))
     EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(setprofile)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(confirmext)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))
     EOSIO_DISPATCH_HELPER(runtime,(sethosted)(govhosted)(govseatfee)(orderfree)(setcapacity)(revokecap)(resumecap))
     EOSIO_DISPATCH_HELPER(runtime,(enrollagent)(addmember)(initgov)(setdaogov)(addsession)(delsession)(guardpause)(guardrevoke)(guardrecover)(submitsess)(setfees)(listmod)(unlistmod)(setmodcopy)(setpolicy)(setgov)(setoracle)(govfees)(govpayfees)(setcreate)(govcreate)(setcrrate)(ordercreate)(cardcreate)(createpaid)(govlist)(govunlist)(govmodcopy))

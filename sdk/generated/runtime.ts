@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = 'ccb9f9c0366c9bfe045653f7790c3de627809127b3d2aeb7e8e0cdac60c5be1d';
+export const runtimeAbiHash = '0e5d9e4f52d9b6a5e47343c3da22ec658e2a11b73262b11af0a7fd4696fa9601';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -130,6 +130,24 @@ export const runtimeAbi = {
         {
           "name": "revision",
           "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "adoptram",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "claims",
+          "type": "bool"
+        },
+        {
+          "name": "limit",
+          "type": "uint32"
         }
       ]
     },
@@ -646,6 +664,16 @@ export const runtimeAbi = {
         {
           "name": "limit",
           "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "beginram",
+      "base": "",
+      "fields": [
+        {
+          "name": "sources",
+          "type": "ram_migration_source[]"
         }
       ]
     },
@@ -2280,6 +2308,32 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "inheritram",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "activity_headroom",
+          "type": "uint64"
+        },
+        {
+          "name": "identity_headroom",
+          "type": "uint64"
+        },
+        {
+          "name": "completion_headroom",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
       "name": "init",
       "base": "",
       "fields": [
@@ -3191,6 +3245,120 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "ram_inherited_capacity",
+      "base": "",
+      "fields": [
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "activity",
+          "type": "uint64"
+        },
+        {
+          "name": "identity",
+          "type": "uint64"
+        },
+        {
+          "name": "completion",
+          "type": "uint64"
+        },
+        {
+          "name": "activity_headroom",
+          "type": "uint64"
+        },
+        {
+          "name": "identity_headroom",
+          "type": "uint64"
+        },
+        {
+          "name": "completion_headroom",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "ram_migration_cursor",
+      "base": "",
+      "fields": [
+        {
+          "name": "table",
+          "type": "name"
+        },
+        {
+          "name": "cursor",
+          "type": "uint64"
+        },
+        {
+          "name": "advanced",
+          "type": "bool"
+        },
+        {
+          "name": "complete",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "ram_migration_overlay",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "table",
+          "type": "name"
+        },
+        {
+          "name": "row",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "ram_migration_source",
+      "base": "",
+      "fields": [
+        {
+          "name": "account",
+          "type": "name"
+        },
+        {
+          "name": "kind",
+          "type": "uint8"
+        },
+        {
+          "name": "code_hash",
+          "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "ram_migration_state",
+      "base": "",
+      "fields": [
+        {
+          "name": "active",
+          "type": "bool"
+        },
+        {
+          "name": "globals_complete",
+          "type": "bool"
+        },
+        {
+          "name": "advanced",
+          "type": "bool"
+        },
+        {
+          "name": "dao_cursor",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
       "name": "ram_observer_config",
       "base": "",
       "fields": [
@@ -3587,6 +3755,34 @@ export const runtimeAbi = {
         {
           "name": "signing_key",
           "type": "public_key"
+        }
+      ]
+    },
+    {
+      "name": "scanram",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "table",
+          "type": "name"
+        },
+        {
+          "name": "limit",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "sealram",
+      "base": "",
+      "fields": [
+        {
+          "name": "limit",
+          "type": "uint32"
         }
       ]
     },
@@ -4350,6 +4546,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "adoptram",
+      "type": "adoptram",
+      "ricardian_contract": ""
+    },
+    {
       "name": "approveob",
       "type": "approveob",
       "ricardian_contract": ""
@@ -4382,6 +4583,11 @@ export const runtimeAbi = {
     {
       "name": "backfilldocs",
       "type": "backfilldocs",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "beginram",
+      "type": "beginram",
       "ricardian_contract": ""
     },
     {
@@ -4550,6 +4756,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "inheritram",
+      "type": "inheritram",
+      "ricardian_contract": ""
+    },
+    {
       "name": "init",
       "type": "init",
       "ricardian_contract": ""
@@ -4657,6 +4868,16 @@ export const runtimeAbi = {
     {
       "name": "rotatekey",
       "type": "rotatekey",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "scanram",
+      "type": "scanram",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "sealram",
+      "type": "sealram",
       "ricardian_contract": ""
     },
     {
@@ -5090,6 +5311,20 @@ export const runtimeAbi = {
       "key_types": []
     },
     {
+      "name": "ramclmholds",
+      "type": "ram_completion_hold",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "ramcursors",
+      "type": "ram_migration_cursor",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "ramentitle",
       "type": "ram_entitlement",
       "index_type": "i64",
@@ -5111,6 +5346,13 @@ export const runtimeAbi = {
       "key_types": []
     },
     {
+      "name": "raminherit",
+      "type": "ram_inherited_capacity",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "ramintent",
       "type": "ram_payment_intent",
       "index_type": "i64",
@@ -5125,6 +5367,20 @@ export const runtimeAbi = {
       "key_types": []
     },
     {
+      "name": "rammigrate",
+      "type": "ram_migration_state",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "rammigsrcs",
+      "type": "ram_migration_source",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "ramobs",
       "type": "ram_observer_config",
       "index_type": "i64",
@@ -5134,6 +5390,13 @@ export const runtimeAbi = {
     {
       "name": "ramorders",
       "type": "ram_order",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "ramoverlays",
+      "type": "ram_migration_overlay",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -5246,6 +5509,11 @@ export interface admitfrom {
   source: string;
   application_id: string;
   revision: string;
+}
+export interface adoptram {
+  dao_id: string;
+  claims: boolean;
+  limit: number;
 }
 export interface approveob {
   dao_id: string;
@@ -5383,6 +5651,9 @@ export interface authproof {
 export interface backfilldocs {
   dao_id: string;
   limit: number;
+}
+export interface beginram {
+  sources: ram_migration_source[];
 }
 export interface budget_record {
   dao_id: string;
@@ -5820,6 +6091,13 @@ export interface hosted_policy {
   free_members: number;
   settler: string;
 }
+export interface inheritram {
+  dao_id: string;
+  payer: string;
+  activity_headroom: string;
+  identity_headroom: string;
+  completion_headroom: string;
+}
 export interface init {
   chain_id: string;
 }
@@ -6066,6 +6344,37 @@ export interface ram_grant_receipt {
   identity: string;
   completion: string;
 }
+export interface ram_inherited_capacity {
+  payer: string;
+  activity: string;
+  identity: string;
+  completion: string;
+  activity_headroom: string;
+  identity_headroom: string;
+  completion_headroom: string;
+}
+export interface ram_migration_cursor {
+  table: string;
+  cursor: string;
+  advanced: boolean;
+  complete: boolean;
+}
+export interface ram_migration_overlay {
+  id: string;
+  table: string;
+  row: string;
+}
+export interface ram_migration_source {
+  account: string;
+  kind: number;
+  code_hash: string;
+}
+export interface ram_migration_state {
+  active: boolean;
+  globals_complete: boolean;
+  advanced: boolean;
+  dao_cursor: string;
+}
 export interface ram_observer_config {
   meter_bytes: string;
   runtime_hash: string;
@@ -6174,6 +6483,14 @@ export interface rotatekey {
   dao_id: string;
   member_id: string;
   signing_key: string;
+}
+export interface scanram {
+  dao_id: string;
+  table: string;
+  limit: number;
+}
+export interface sealram {
+  limit: number;
 }
 export interface seat_policy {
   first_usd: number;
@@ -6382,6 +6699,7 @@ export interface RuntimeActions {
   addmember: addmember;
   addsession: addsession;
   admitfrom: admitfrom;
+  adoptram: adoptram;
   approveob: approveob;
   archapprove: archapprove;
   archattest: archattest;
@@ -6389,6 +6707,7 @@ export interface RuntimeActions {
   archstep: archstep;
   authproof: authproof;
   backfilldocs: backfilldocs;
+  beginram: beginram;
   cancelob: cancelob;
   cardcreate: cardcreate;
   checkrampool: checkrampool;
@@ -6422,6 +6741,7 @@ export interface RuntimeActions {
   guardpause: guardpause;
   guardrecover: guardrecover;
   guardrevoke: guardrevoke;
+  inheritram: inheritram;
   init: init;
   initgov: initgov;
   initramobs: initramobs;
@@ -6444,6 +6764,8 @@ export interface RuntimeActions {
   revokecap: revokecap;
   rotateepoch: rotateepoch;
   rotatekey: rotatekey;
+  scanram: scanram;
+  sealram: sealram;
   setactive: setactive;
   setadmit: setadmit;
   setarchcfg: setarchcfg;
