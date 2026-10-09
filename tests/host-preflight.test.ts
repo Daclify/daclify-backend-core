@@ -160,7 +160,7 @@ it('refuses stale release manifests even when they match an older on-chain deplo
   ).toThrow('RELEASE_MODULE_PIN_MISMATCH:decide');
 });
 
-it('requires Pinata ownership settings together and supports Connect without legacy billing', () => {
+it('requires Pinata storage settings together and supports Connect without legacy billing', () => {
   expect(() =>
     validateHostEnvironment('mainnet', {
       ...environment(),
@@ -177,7 +177,7 @@ it('requires Pinata ownership settings together and supports Connect without leg
   const pinata = {
     ...environment(),
     PINATA_JWT: 'fixture',
-    PINATA_ACCOUNT_ID: 'fixture-mainnet-pinata-account',
+    PINATA_STORAGE_SCOPE: 'fixture-mainnet-pinata-account',
     CONTENT_GATEWAY: 'https://gateway.example.org',
   };
   expect(() => validateHostEnvironment('mainnet', pinata)).toThrow('CONTENT_GATEWAY_KEY_REQUIRED');
@@ -187,6 +187,21 @@ it('requires Pinata ownership settings together and supports Connect without leg
       CONTENT_GATEWAY_KEY: 'fixture-gateway-key',
     }),
   ).toEqual([]);
+  const { PINATA_STORAGE_SCOPE: scope, ...legacy } = pinata;
+  expect(
+    validateHostEnvironment('mainnet', {
+      ...legacy,
+      PINATA_ACCOUNT_ID: scope,
+      CONTENT_GATEWAY_KEY: 'fixture-gateway-key',
+    }),
+  ).toEqual([]);
+  expect(() =>
+    validateHostEnvironment('mainnet', {
+      ...pinata,
+      PINATA_ACCOUNT_ID: 'different-owner',
+      CONTENT_GATEWAY_KEY: 'fixture-gateway-key',
+    }),
+  ).toThrow('PINATA_STORAGE_SCOPE_CONFLICT');
   expect(() =>
     validateHostEnvironment('mainnet', {
       ...pinata,

@@ -17,7 +17,7 @@ import { readStripeConfig } from '../../services/api/src/billing/config.js';
 import { mailConfiguration } from '../../services/api/src/auth/mail.js';
 import { readTelegramOidc } from '../../services/api/src/auth/telegram-oidc.js';
 import { readDocsAgent } from '../../services/api/src/docs/config.js';
-import { ProviderScopeSchema } from '../../services/api/src/content/ledger.js';
+import { readPinataStorageScope } from '../../services/api/src/content/config.js';
 import { PinataStorage } from '../../services/api/src/content/pinata.js';
 import { readConnectConfig } from '../../services/api/src/payments/config.js';
 import { readHostingConfig } from '../../services/api/src/billing/hosting-config.js';
@@ -113,13 +113,13 @@ export function validateHostEnvironment(environment: HostEnvironment, env: Recor
   }
   if (!!env.BOOTSTRAP_OWNER !== !!env.BOOTSTRAP_PRIVATE_KEY)
     throw new Error('BOOTSTRAP_CONFIGURATION');
+  const storageScope = readPinataStorageScope(env);
   if (
     !!env.PINATA_JWT !== !!env.CONTENT_GATEWAY ||
-    !!env.PINATA_JWT !== !!env.PINATA_ACCOUNT_ID ||
+    !!env.PINATA_JWT !== !!storageScope ||
     ((env.CONTENT_GATEWAY_KEY || env.CONTENT_GATEWAY_BUDGET_ID) && !env.PINATA_JWT)
   )
     throw new Error('PINATA_CONFIGURATION');
-  if (env.PINATA_ACCOUNT_ID) ProviderScopeSchema.parse(env.PINATA_ACCOUNT_ID);
   if (env.CONTENT_GATEWAY_BUDGET_ID) z.uuid().parse(env.CONTENT_GATEWAY_BUDGET_ID);
   if (env.PINATA_JWT) {
     if (!env.CONTENT_GATEWAY_KEY) throw new Error('CONTENT_GATEWAY_KEY_REQUIRED');
@@ -129,12 +129,7 @@ export function validateHostEnvironment(environment: HostEnvironment, env: Recor
   if (env.STRIPE_PRICE_ID || env.STRIPE_WEBHOOK_SECRET) readStripeConfig(env, environment);
   readConnectConfig(env, environment, frontend);
   readHostingConfig(env, environment, frontend);
-  const storage = readStorageConfig(
-    env,
-    environment,
-    frontend,
-    env.PINATA_ACCOUNT_ID ?? 'unconfigured',
-  );
+  const storage = readStorageConfig(env, environment, frontend, storageScope ?? 'unconfigured');
   if (storage && !env.PINATA_JWT) throw new Error('STORAGE_CONFIGURATION_INVALID');
   readRamCardConfig(env, environment, frontend);
   if (readArchiveBackupConfig(env) && !env.PINATA_JWT)
