@@ -311,6 +311,16 @@
       "tests": ["../daclify-backend-modules/tests/works-completion.test.ts"]
     },
     {
+      "id": "RESOURCE-MODULE-HISTORICAL-COMPLETION",
+      "suite": "modules",
+      "tests": [
+        "../daclify-backend-modules/tests/completion-upgrade.test.ts",
+        "../daclify-backend-modules/tests/admission-upgrade.test.ts",
+        "../daclify-backend-modules/tests/governed-works.test.ts",
+        "../daclify-backend-modules/tests/grants.test.ts"
+      ]
+    },
+    {
       "id": "RESOURCE-UI-ACCESS",
       "suite": "browser",
       "tests": [

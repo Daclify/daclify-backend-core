@@ -525,3 +525,11 @@ Remaining: complete supported historical-module lifecycle combinations and pendi
 - Core `npm run verify` passed **94 files / 533 tests**, lint, types, generated documentation and required-suite register. The register now requires the observed-upgrade and election-completion native suites. Reviewed diff and `git diff --check`; no contract, protocol, dependency or database change. Modules/frontend remain unchanged from their preceding verified/pushed checkpoints. The Telos token checkpoint was separately merged/pushed as core `4211c8a4bea44784596e9543bac15cff1d3a6557`.
 
 Remaining qualification includes other complete historical module/lifecycle combinations, public chain/configuration and arbitrary-token behavior, actual wallets and funded providers, live Stripe/Pinata/SMTP and immutable release packaging. No public deployment, real payment, production authority change or destructive cleanup occurred.
+
+## Historical endorsement application preservation
+
+- Extended the retained actual old module build to Endorsement (modules `4a43786`, core `6145da8`). Two new compiled-WASM cases create pending applications and endorsements under those actual older contracts, then preserve their original application keys/documents/witnesses, member nonces and admission policy during replacement/rebinding.
+- Current source-owned document-reference backfill is idempotent and leaves the original application intact. An offboarded historical witness prevents admission with complete application/member/counter rollback; reactivation permits one ordinary internal-account member with the original applicant keys, no powers or credits. Repeat admission and direct source-key callback reject without changes. [Evidence and reproduction](2026-10-09-admission-upgrade.md).
+- Modules `npm run verify` passed **27 files / 144 tests**, lint, strict types and generated docs. Current contract/SDK/protocol hashes and dependencies are unchanged. The required register now includes historical completion/admission/Works/Grants cases. This is compiled-WASM qualification, not native exhaustion or all historical agent/custody combinations.
+
+Public-chain/provider/immutable-release gates remain held. No public deployment, production authority changes, live payments or destructive cleanup occurred.
