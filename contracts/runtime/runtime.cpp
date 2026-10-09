@@ -103,8 +103,9 @@ public:
   ACTION docref(uint64_t dao_id,name source,name table,uint64_t source_id,uint8_t slot,uint64_t document_id,uint32_t version){
     check_document_source(dao_id,source);require_document_table(dao_id,source,table);check(table.value&&source_id&&slot<=2,"DOCUMENT_REFERENCE_BOUNDS");check((document_id==0)==(version==0),"DOCUMENT_REFERENCE_BOUNDS");
     document_references rows(get_self(),dao_id);auto index=rows.get_index<"bysource"_n>();auto data=pack(std::make_tuple(source,table,source_id,slot));auto found=index.find(sha256(data.data(),data.size()));
-    if(!document_id){if(found!=index.end())index.erase(found);return;}
-    documents docs(get_self(),dao_id);auto versions=docs.get_index<"byversion"_n>();versions.get((uint128_t(document_id)<<32)|version,"DOCUMENT_UNKNOWN");
+    const bool fixed_slot=table=="milestones"_n&&slot<=1&&ram_observer_settings(get_self(),get_self().value).exists();
+    if(!document_id&&!fixed_slot){if(found!=index.end())index.erase(found);return;}
+    if(document_id){documents docs(get_self(),dao_id);auto versions=docs.get_index<"byversion"_n>();versions.get((uint128_t(document_id)<<32)|version,"DOCUMENT_UNKNOWN");}
     if(found!=index.end()){if(found->document_id!=document_id||found->version!=version)index.modify(found,same_payer,[&](auto& r){r.document_id=document_id;r.version=version;});return;}
     auto id=rows.available_primary_key();if(!id)id=1;check(id<std::numeric_limits<uint64_t>::max(),"DOCUMENT_REFERENCE_LIMIT");
     rows.emplace(get_self(),[&](auto& r){r.id=id;r.source=source;r.table=table;r.source_id=source_id;r.slot=slot;r.document_id=document_id;r.version=version;});

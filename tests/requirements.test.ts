@@ -60,4 +60,19 @@ describe('requirement register', () => {
   it('accepts the committed register and its cited tests', () => {
     expect(loadRequirementRegister(process.cwd()).requirements.length).toBeGreaterThan(0);
   });
+
+  it('accepts a parameterized test declaration without treating it as an empty suite', () => {
+    writeFileSync(
+      join(root, 'parameterized.test.ts'),
+      "it.each([false, true])('preserves rights, old=%s', () => {});\n",
+    );
+    expect(
+      checkRequirementRegister(root, {
+        requiredSuites: ['native'],
+        requirements: [
+          { id: 'RESOURCE-QUOTA-UPGRADE', suite: 'native', tests: ['parameterized.test.ts'] },
+        ],
+      }).requirements,
+    ).toHaveLength(1);
+  });
 });

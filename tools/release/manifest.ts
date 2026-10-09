@@ -21,6 +21,10 @@ const HELD_CHECKS = [
   'Stripe sandbox graduated subscriptions, invoice lifecycle and native capacity qualification',
   'independent operator browser cookie/CORS and wallet-client qualification',
   'immutable published artifact verification',
+  'target-chain RAM conservation, module completion bounds and external token-row ownership qualification',
+  'supported old-release and already-observed adoption, pending executable-work drain and recovery qualification',
+  'Stripe sandbox RAM fulfilment and prepaid storage payment/grace lifecycle qualification',
+  'separate Pinata account ownership, gateway funding/access controls, retention compensation and live delivery qualification',
 ] as const;
 
 const HashSchema = z.string().regex(/^[0-9a-f]{64}$/);

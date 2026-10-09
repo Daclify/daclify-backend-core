@@ -2,11 +2,12 @@ import { expect, it } from 'vitest';
 import { randomBytes, createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { APIClient, ABI } from '@wharfkit/antelope';
+import { APIClient, ABI, PrivateKey } from '@wharfkit/antelope';
 import { z } from 'zod';
 import { fixtureNetwork } from '../../tools/native/network.js';
 import { fixtureKey } from '../../tools/native/keys.js';
 import { unlockFixtureWallet } from '../../tools/native/wallet.js';
+import { fundResourceFixture } from '../../tools/native/resource-funding.js';
 import { configureFixtureContext } from '../../tools/native/permissions.js';
 import { executedChainResult } from '../../services/api/src/chain-result.js';
 import { ModulePermissions } from '@daclify/modules';
@@ -153,6 +154,7 @@ it.each([false, true])(
     if ((await api.v1.chain.get_info()).chain_id.toString() !== network.chainId)
       throw new Error('FIXTURE_CHAIN_CHANGED');
     unlockFixtureWallet(network.container);
+    await fundResourceFixture();
     const pub = fixtureKey('alice').toPublic().toString();
     const baseline = new Map<string, bigint>();
     for (const source of [{ account: runtime, artifact: 'runtime' }, ...modules]) {
@@ -401,6 +403,45 @@ it.each([false, true])(
         z.array(RuntimeTableSchemas.members).parse(await rows(runtime, 'members', '1')),
       ).toEqual(original);
     }
+    const works = modules.find((source) => source.artifact === 'works');
+    if (!works) throw new Error('CONTROLLER_WORKS_REQUIRED');
+    push(
+      runtime,
+      'enroll',
+      [1, 2, '', PrivateKey.generate('K1').toPublic().toString(), 'work-contributor-key', 0],
+      'alice',
+    );
+    push(runtime, 'listmod', [
+      works.account,
+      'alice',
+      0,
+      1,
+      '0.0000 TLOS',
+      works.code_hash,
+      'Legacy pending work',
+    ]);
+    push(
+      runtime,
+      'setmodule',
+      [
+        1,
+        works.account,
+        1,
+        ModulePermissions.works.actions,
+        ModulePermissions.works.grants,
+        works.code_hash,
+      ],
+      'alice',
+    );
+    for (const id of [8, 9]) push(runtime, 'putjson', [runtime, 1, 1, id, 1, '{}', 0, 0]);
+    push(works.account, 'propose', [runtime, 1, 2, 40, 2, 8, 1, ['1.0000 TLOS'], [0]], runtime);
+    push(works.account, 'accept', [runtime, 1, 1, 40], runtime);
+    expect(
+      z
+        .array(RuntimeTableSchemas.docrefs)
+        .parse(await rows(runtime, 'docrefs', '1'))
+        .filter((value) => value.table === 'milestones'),
+    ).toEqual([]);
     await expect(async () =>
       push(runtime, 'beginram', {
         sources: modules.map(({ account, kind, code_hash }) => ({
@@ -460,7 +501,18 @@ it.each([false, true])(
     expect(progress).toMatchObject([{ active: false, dao_cursor: '2' }]);
     expect(
       z.array(RuntimeTableSchemas.actors).parse(await rows(runtime, 'actors', '1')),
-    ).toMatchObject([{ kind: 0, credential_epoch: '1' }]);
+    ).toMatchObject([
+      { kind: 0, credential_epoch: '1' },
+      { kind: 0, credential_epoch: '1' },
+    ]);
+    const workSlots = z
+      .array(RuntimeTableSchemas.docrefs)
+      .parse(await rows(runtime, 'docrefs', '1'))
+      .filter((value) => value.table === 'milestones');
+    expect(workSlots.map((value) => [value.slot, value.document_id, value.version])).toEqual([
+      [0, '0', 0],
+      [1, '0', 0],
+    ]);
     const totals = new Map<string, bigint>();
     for (const scope of ['0', '1', '2']) {
       for (const value of z
@@ -483,6 +535,7 @@ it.each([false, true])(
     const members = z.array(RuntimeTableSchemas.members).parse(await rows(runtime, 'members', '1'));
     expect(members).toMatchObject([
       { nonce: '0', claim: '10000', encryption_key: 'legacy-encryption-key', signing_key: pub },
+      { nonce: '0', claim: '0', encryption_key: 'work-contributor-key' },
     ]);
     expect(
       z.array(RuntimeTableSchemas.ramclmholds).parse(await rows(runtime, 'ramclmholds', '1')),
@@ -492,6 +545,7 @@ it.each([false, true])(
     ).toMatchObject([
       { id: '2', recipient: '1', ready: false },
       { id: '3', recipient: '1', ready: false },
+      { id: '4', recipient: '2', ready: false },
     ]);
     const beforeRetry = await used(runtime);
     push(runtime, 'sealram', { limit: 1 });
@@ -531,7 +585,7 @@ it.each([false, true])(
       push(runtime, 'inheritram', { ...inherited, activity_headroom: 8192 }),
     ).rejects.toThrow('OWNED_RAM_CONTROLLER_ACTION_REJECTED');
     expect(await used(runtime)).toBe(afterInheritance);
-    for (const payer of [payroll.account, decide.account])
+    for (const payer of [payroll.account, decide.account, works.account])
       push(runtime, 'inheritram', { ...inherited, payer, identity_headroom: 0 });
     push(runtime, 'inheritram', { ...inherited, dao_id: 2 });
     push(runtime, 'setdaoquota', { dao_id: 1, enabled: true });
@@ -592,6 +646,22 @@ it.each([false, true])(
     expect(await rows(runtime, 'members', '1')).toEqual(beforeFailure);
     expect(await used(runtime)).toBe(beforeRam);
     expect(await rows(runtime, 'ramclmholds', '1')).toHaveLength(1);
+    const workBefore = await used(works.account);
+    const referencesBefore = await used(runtime);
+    for (const approved of [false, true]) {
+      push(works.account, 'submitwork', [runtime, 1, 2, 1, approved ? 9 : 8, 1], runtime);
+      push(works.account, 'review', [runtime, 1, 1, 1, approved, approved ? 9 : 8, 1], runtime);
+    }
+    expect(await used(runtime)).toBe(referencesBefore);
+    expect(await used(works.account)).toBe(workBefore);
+    expect(await ordinaryRemaining()).toBe(0n);
+    expect(
+      z
+        .array(RuntimeTableSchemas.docrefs)
+        .parse(await rows(runtime, 'docrefs', '1'))
+        .filter((value) => value.table === 'milestones')
+        .map((value) => value.id),
+    ).toEqual(workSlots.map((value) => value.id));
     await govern(
       'setmeta',
       { runtime, dao_id: '2', member_id: '1', metadata: '{"other":"still writable"}' },
@@ -600,7 +670,7 @@ it.each([false, true])(
     push(runtime, 'payob', { dao_id: 1, source: payroll.account, source_id: 3 });
     expect(
       z.array(RuntimeTableSchemas.members).parse(await rows(runtime, 'members', '1')),
-    ).toMatchObject([{ claim: '20000' }]);
+    ).toMatchObject([{ claim: '20000' }, { claim: '0' }]);
     await fillOrdinary();
     const beforeExit = await used(runtime);
     await govern('withdraw', {
@@ -612,11 +682,17 @@ it.each([false, true])(
     });
     expect(
       z.array(RuntimeTableSchemas.members).parse(await rows(runtime, 'members', '1')),
-    ).toMatchObject([{ claim: '0', nonce: '6', encryption_key: 'legacy-encryption-key' }]);
+    ).toMatchObject([
+      { claim: '0', nonce: '6', encryption_key: 'legacy-encryption-key' },
+      { claim: '0', nonce: '0' },
+    ]);
     expect(await rows(runtime, 'ramclmholds', '1')).toEqual([]);
     expect(
       z.array(RuntimeTableSchemas.ramholds).parse(await rows(runtime, 'ramholds', '1')),
-    ).toMatchObject([{ id: '2', ready: false }]);
+    ).toMatchObject([
+      { id: '2', ready: false },
+      { id: '4', ready: false },
+    ]);
     expect(await used(runtime)).toBeLessThan(beforeExit);
     await fillOrdinary();
     push(runtime, 'setresources', [

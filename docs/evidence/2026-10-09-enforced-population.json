@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 2,
+  "runtime": "ramobsi3cvpn",
+  "chainId": "d9f6e8c655703ba364f0ee82b4fd0631350475747b1924396c8fbef2558b8f51",
+  "coreCodeHash": "c185f2ed3872f795b035dbd6fcfa309f25b792a9eb10a05034f0c769dece0651",
+  "moduleCodeHashes": {
+    "decide": "6436a6f2c0e1c28b6c52c2269588fe32f8a082dc5a5f504ec4a7967cd4feae09",
+    "works": "276f78238e009afd87f4466dc3228c06f5352a28b266a57f4b4b47b14cddbca8",
+    "payroll": "d1e270decd8b556eeacecaaa7e375bf52b38a0ec85884b64fe2d455046c17945",
+    "grants-rounds": "43bdc65ed36981bcac46f5e1a8ad3afbfb8561b251aa4b0a7ba2dde21e7cedfc",
+    "endorsement-admission": "ad0199c32a285851eb3517fc07fb7b4a71c01953f996e096839699ca8dc84935"
+  },
+  "population": {
+    "daos": 200,
+    "membersPerDao": 200
+  },
+  "membershipCount": 40000,
+  "enforcedDaos": 200,
+  "measurements": [
+    {
+      "payer": "ramobsi3cvpn",
+      "baselineBytes": "9046469",
+      "usedBytes": "42226583",
+      "quotaBytes": "268436855",
+      "allocatedBytes": "114688000",
+      "nativeDeltaBytes": "33180114",
+      "accountedDeltaBytes": "33180114"
+    },
+    {
+      "payer": "rdecidi3cvpn",
+      "baselineBytes": "2677621",
+      "usedBytes": "2827037",
+      "quotaBytes": "33555831",
+      "allocatedBytes": "13107200",
+      "nativeDeltaBytes": "149416",
+      "accountedDeltaBytes": "149416"
+    },
+    {
+      "payer": "rworksi3cvpn",
+      "baselineBytes": "1238754",
+      "usedBytes": "1361410",
+      "quotaBytes": "33555831",
+      "allocatedBytes": "13107200",
+      "nativeDeltaBytes": "122656",
+      "accountedDeltaBytes": "122656"
+    },
+    {
+      "payer": "rpayrli3cvpn",
+      "baselineBytes": "801615",
+      "usedBytes": "997583",
+      "quotaBytes": "33555831",
+      "allocatedBytes": "9830400",
+      "nativeDeltaBytes": "195968",
+      "accountedDeltaBytes": "195968"
+    },
+    {
+      "payer": "rgranti3cvpn",
+      "baselineBytes": "1098871",
+      "usedBytes": "1165215",
+      "quotaBytes": "33555831",
+      "allocatedBytes": "13107200",
+      "nativeDeltaBytes": "66344",
+      "accountedDeltaBytes": "66344"
+    },
+    {
+      "payer": "rendori3cvpn",
+      "baselineBytes": "827515",
+      "usedBytes": "905259",
+      "quotaBytes": "33555831",
+      "allocatedBytes": "9830400",
+      "nativeDeltaBytes": "77744",
+      "accountedDeltaBytes": "77744"
+    }
+  ],
+  "samples": [
+    {
+      "stage": "rdecidi3cvpn:exclusive-code-binding-baseline",
+      "bytes": "2677621"
+    },
+    {
+      "stage": "rworksi3cvpn:exclusive-code-binding-baseline",
+      "bytes": "1238754"
+    },
+    {
+      "stage": "rpayrli3cvpn:exclusive-code-binding-baseline",
+      "bytes": "801615"
+    },
+    {
+      "stage": "rgranti3cvpn:exclusive-code-binding-baseline",
+      "bytes": "1098871"
+    },
+    {
+      "stage": "rendori3cvpn:exclusive-code-binding-baseline",
+      "bytes": "827515"
+    },
+    {
+      "stage": "ramobsi3cvpn:code-permissions-initial-settings",
+      "bytes": "9046469"
+    },
+    {
+      "stage": "ramobsi3cvpn:200-daos-and-automatic-six-payer-allocations",
+      "bytes": "9890071"
+    },
+    {
+      "stage": "ramobsi3cvpn:40000-active-memberships",
+      "bytes": "40037271"
+    },
+    {
+      "stage": "ramobsi3cvpn:200-explicitly-enforced-daos",
+      "bytes": "40082271"
+    },
+    {
+      "stage": "ramobsi3cvpn:all-module-mutations-complete",
+      "bytes": "42226583"
+    },
+    {
+      "stage": "rdecidi3cvpn:all-module-mutations-complete",
+      "bytes": "2827037"
+    },
+    {
+      "stage": "rworksi3cvpn:all-module-mutations-complete",
+      "bytes": "1361410"
+    },
+    {
+      "stage": "rpayrli3cvpn:all-module-mutations-complete",
+      "bytes": "997583"
+    },
+    {
+      "stage": "rgranti3cvpn:all-module-mutations-complete",
+      "bytes": "1165215"
+    },
+    {
+      "stage": "rendori3cvpn:all-module-mutations-complete",
+      "bytes": "905259"
+    }
+  ],
+  "representativeOperationsPerDao": 11,
+  "limits": [
+    "200 disposable identities reused across DAOs model memberships, not 40000 distinct people.",
+    "One representative workflow per DAO; not throughput, complete lifecycle or projected activity volumes.",
+    "Representative writes use active per-DAO guards and receipt/reference holds; exhaustion, legacy backfill and live billing are qualified separately, not by this population run.",
+    "Free capacity, included payer split and market supply are synthetic owned-fixture settings."
+  ],
+  "runtimeScope": "13377172905096833840"
+}

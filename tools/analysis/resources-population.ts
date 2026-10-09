@@ -25,6 +25,7 @@ import {
 import { ModulePermissions } from '@daclify/modules';
 import {
   ModuleCodeHashes,
+  WorksTableSchemas,
   encodeWorks,
   encodeGrants,
   encodePayroll,
@@ -32,10 +33,10 @@ import {
   encodeDecide,
 } from '@daclify/modules/sdk';
 import { EncryptionPublicKeySchema } from '../../protocol/crypto.js';
-import { Uint64Schema } from '../../protocol/base.js';
 import { fixtureNetwork } from '../native/network.js';
 import { fixtureKey } from '../native/keys.js';
 import { unlockFixtureWallet } from '../native/wallet.js';
+import { fundResourceFixture } from '../native/resource-funding.js';
 import { configureFixtureContext } from '../native/permissions.js';
 import { executedChainResult } from '../../services/api/src/chain-result.js';
 const network = fixtureNetwork();
@@ -131,51 +132,7 @@ async function counters(scope: string) {
 const info = await api.v1.chain.get_info();
 assert.equal(info.chain_id.toString(), network.chainId);
 unlockFixtureWallet(network.container);
-const aliceBalance = (await api.v1.chain.get_currency_balance('eosio.token', 'alice', 'TLOS'))[0];
-assert.ok(aliceBalance && aliceBalance.symbol.toString() === '4,TLOS');
-if (BigInt(aliceBalance.units.toString()) < 100000000n)
-  cleos([
-    'push',
-    'action',
-    'eosio.token',
-    'issue',
-    JSON.stringify(['alice', '10000.0000 TLOS', 'Owned population fixture funding']),
-    '-p',
-    'alice@active',
-    '--force-unique',
-  ]);
-// Increase only this owned fixture's synthetic market supply; no price conclusion is drawn from it.
-const market = await api.v1.chain.get_table_rows({
-  code: 'eosio',
-  scope: 'eosio',
-  table: 'rammarket',
-  json: true,
-  limit: 1,
-});
-const reserve = z
-  .object({ base: z.object({ balance: z.string().regex(/^[0-9]+ RAM$/) }) })
-  .parse(market.rows[0]).base.balance;
-if (BigInt(reserve.split(' ')[0] ?? '') < 536870912n) {
-  const global = await api.v1.chain.get_table_rows({
-    code: 'eosio',
-    scope: 'eosio',
-    table: 'global',
-    json: true,
-    limit: 1,
-  });
-  const current = z.object({ max_ram_size: Uint64Schema }).parse(global.rows[0]);
-  const expanded = Uint64Schema.parse((BigInt(current.max_ram_size) + 2147483648n).toString());
-  cleos([
-    'push',
-    'action',
-    'eosio',
-    'setram',
-    JSON.stringify([expanded]),
-    '-p',
-    'eosio@active',
-    '--force-unique',
-  ]);
-}
+await fundResourceFixture();
 cleos([
   'system',
   'newaccount',
@@ -377,6 +334,9 @@ for (let dao = 1; dao <= population.daos; dao++) {
   if (dao % 25 === 0) process.stdout.write(`Verified writes submitted for ${dao} DAOs\n`);
 }
 await measure('40000-active-memberships');
+for (let dao = 1; dao <= population.daos; dao++)
+  await push([action('setdaoquota', { dao_id: String(dao), enabled: true })]);
+await measure('200-explicitly-enforced-daos');
 const member = keys[0];
 if (!member) throw new Error('POPULATION_MEMBER_REQUIRED');
 const works = modules[1].account,
@@ -423,6 +383,11 @@ for (let id = 1; id <= population.daos; id++) {
         payments: ['1.0000 TLOS'],
         dues: [0],
       }),
+    },
+    {
+      target: works,
+      name: 'accept',
+      data: encodeWorks('accept', { ...context, project_id: dao_id }),
     },
     {
       target: grants,
@@ -540,6 +505,34 @@ const tracked = new Map(payers.map((payer) => [payer, 0n])),
   allocations = new Map(payers.map((payer) => [payer, 0n]));
 let membershipCount = 0;
 for (let dao = 1; dao <= population.daos; dao++) {
+  const quota = await api.v1.chain.get_table_rows({
+    code: runtime,
+    scope: String(dao),
+    table: 'ramquota',
+    json: true,
+    limit: 1,
+  });
+  assert.equal(quota.more, false);
+  assert.deepEqual(z.array(RuntimeTableSchemas.ramquota).parse(quota.rows), [{ enabled: true }]);
+  const refs = await api.v1.chain.get_table_rows({
+    code: runtime,
+    scope: String(dao),
+    table: 'docrefs',
+    json: true,
+    limit: 10,
+  });
+  assert.equal(refs.more, false);
+  const slots = z
+    .array(RuntimeTableSchemas.docrefs)
+    .parse(refs.rows)
+    .filter((row) => row.source === works && row.table === 'milestones');
+  assert.deepEqual(
+    slots.map((row) => [row.slot, row.document_id, row.version]),
+    [
+      [0, '0', 0],
+      [1, '0', 0],
+    ],
+  );
   const members = await api.v1.chain.get_table_rows({
     code: runtime,
     scope: String(dao),
@@ -613,6 +606,21 @@ const observed = z.array(RuntimeTableSchemas.ramobs).length(1).parse(observer.ro
 if (!observed) throw new Error('OBSERVER_REQUIRED');
 tracked.set(runtime, (tracked.get(runtime) ?? 0n) + BigInt(observed.meter_bytes));
 assert.equal(membershipCount, 40000);
+const worksRows = await api.v1.chain.get_table_rows({
+  code: works,
+  scope: runtime,
+  table: 'projects',
+  json: true,
+  limit: 201,
+});
+assert.equal(worksRows.more, false);
+assert.ok(
+  z
+    .array(WorksTableSchemas.projects)
+    .length(200)
+    .parse(worksRows.rows)
+    .every((row) => row.status === 1),
+);
 const measurements = [];
 for (const payer of payers) {
   const before = baselines.get(payer),
@@ -641,13 +649,14 @@ const report = {
   moduleCodeHashes: ModuleCodeHashes,
   population,
   membershipCount,
+  enforcedDaos: population.daos,
   measurements,
   samples,
-  representativeOperationsPerDao: 10,
+  representativeOperationsPerDao: 11,
   limits: [
     '200 disposable identities reused across DAOs model memberships, not 40000 distinct people.',
     'One representative workflow per DAO; not throughput, complete lifecycle or projected activity volumes.',
-    'Receipt holds are allocated for accepted obligations; no exhaustion, enforcement, legacy backfill or live billing qualification in this population run.',
+    'Representative writes use active per-DAO guards and receipt/reference holds; exhaustion, legacy backfill and live billing are qualified separately, not by this population run.',
     'Free capacity, included payer split and market supply are synthetic owned-fixture settings.',
   ],
   runtimeScope: Name.from(runtime).value.toString(),

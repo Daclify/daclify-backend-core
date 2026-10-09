@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { fixtureNetwork } from '../../tools/native/network.js';
 import { fixtureKey } from '../../tools/native/keys.js';
 import { unlockFixtureWallet } from '../../tools/native/wallet.js';
+import { fundResourceFixture } from '../../tools/native/resource-funding.js';
 import { executedChainResult } from '../../services/api/src/chain-result.js';
 import { Uint64Schema } from '../../protocol/base.js';
 const NativeUint64 = z.preprocess(
@@ -95,6 +96,7 @@ async function reconcile() {
 }
 beforeAll(async () => {
   unlockFixtureWallet(network.container);
+  await fundResourceFixture();
   const pub = key.toPublic().toString();
   cleos([
     'system',

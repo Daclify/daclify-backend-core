@@ -66,7 +66,7 @@ export function checkRequirementRegister(root: string, register: unknown): Requi
       const source = readFileSync(absolute, 'utf8')
         .replace(/\/\*[\s\S]*?\*\//g, '')
         .replace(/^\s*\/\/.*$/gm, '');
-      if (!/\b(?:it|test)\s*\(/.test(source))
+      if (!/\b(?:it|test)(?:\.each\s*\([\s\S]*?\))?\s*\(/.test(source))
         throw new Error(`REQUIREMENT_TEST_EMPTY: ${testPath}`);
       tests.push(testPath);
     }

@@ -56,7 +56,7 @@ class ram_table:public eosio::multi_index<Table,Row,Indices...>{
   }
   bool protected_table()const{
     if constexpr(is_module)return static_cast<uint64_t>(Table)=="termholds"_n.value||static_cast<uint64_t>(Table)=="terms"_n.value||static_cast<uint64_t>(Table)=="pollends"_n.value;
-    switch(static_cast<uint64_t>(Table)){case "receipts"_n.value:case "ramholds"_n.value:case "ramclmholds"_n.value:case "actors"_n.value:case "sessions"_n.value:case "evmbindings"_n.value:return true;default:return false;}
+    switch(static_cast<uint64_t>(Table)){case "docsrcs"_n.value:case "docrefs"_n.value:case "receipts"_n.value:case "ramholds"_n.value:case "ramclmholds"_n.value:case "actors"_n.value:case "sessions"_n.value:case "evmbindings"_n.value:return true;default:return false;}
   }
   ram_migration_cursor capture(const Row& row){
     auto progress=migration_cursor(runtime(),base::get_code(),base::get_scope(),eosio::name{Table},false,scoped()?base::get_scope():0,ram_scope_bytes<Indices...>());

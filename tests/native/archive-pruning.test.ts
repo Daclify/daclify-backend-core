@@ -48,6 +48,7 @@ import {
 import { fixtureNetwork } from '../../tools/native/network.js';
 import { fixtureKey } from '../../tools/native/keys.js';
 import { unlockFixtureWallet } from '../../tools/native/wallet.js';
+import { fundResourceFixture } from '../../tools/native/resource-funding.js';
 import { configureFixtureContext } from '../../tools/native/permissions.js';
 import { executedChainResult } from '../../services/api/src/chain-result.js';
 const network = fixtureNetwork();
@@ -149,8 +150,18 @@ function cleos(args: string[]) {
       ['exec', network.container, 'cleos', '--wallet-url', 'http://127.0.0.1:8900', ...args],
       { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] },
     );
-  } catch {
-    throw new Error('OWNED_PRUNE_FIXTURE_SETUP_REJECTED');
+  } catch (cause) {
+    const stderr = z
+      .union([z.string(), z.instanceof(Buffer)])
+      .safeParse(cause instanceof Error && 'stderr' in cause ? cause.stderr : undefined);
+    const code = stderr.success
+      ? stderr.data
+          .toString()
+          .match(/ram_usage_exceeded|assertion failure with message: ([A-Z_]{1,80})/)
+      : null;
+    throw new Error(
+      'OWNED_PRUNE_FIXTURE_SETUP_REJECTED' + (code ? ':' + (code[1] ?? 'RAM_USAGE_EXCEEDED') : ''),
+    );
   }
 }
 async function act(
@@ -258,6 +269,7 @@ async function configureSource(codeHash: string) {
 }
 beforeAll(async () => {
   unlockFixtureWallet(network.container);
+  await fundResourceFixture();
   for (const [account, directory, contract] of [
     [runtime, '/work/.artifacts/contracts', 'runtime'],
     [source, '/work/../daclify-backend-modules/.artifacts/archive-aged', 'decide'],
@@ -271,7 +283,7 @@ beforeAll(async () => {
       key.toPublic().toString(),
       key.toPublic().toString(),
       '--buy-ram-bytes',
-      '8388608',
+      '12582912',
       '--stake-net',
       '20.0000 TLOS',
       '--stake-cpu',

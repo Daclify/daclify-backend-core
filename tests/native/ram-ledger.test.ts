@@ -21,6 +21,7 @@ import {
 import { fixtureNetwork } from '../../tools/native/network.js';
 import { fixtureKey } from '../../tools/native/keys.js';
 import { unlockFixtureWallet } from '../../tools/native/wallet.js';
+import { fundResourceFixture } from '../../tools/native/resource-funding.js';
 import { executedChainResult } from '../../services/api/src/chain-result.js';
 import { configureFixtureContext } from '../../tools/native/permissions.js';
 import { ModulePermissions } from '@daclify/modules';
@@ -243,6 +244,7 @@ async function act(
 let baseline = 0;
 beforeAll(async () => {
   unlockFixtureWallet(network.container);
+  await fundResourceFixture();
   let exists = true;
   try {
     cleos(['get', 'account', runtime]);

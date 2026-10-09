@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased — RAM, prepaid storage and Archive
+
+Native RAM purchases verify actual acquisition; card orders use a separate funded operator reserve. Physically backed per-DAO/payer allocations, native counters, finite financial/election holds, bounded legacy adoption and explicit growth enforcement preserve existing record layouts and signing domains. Works acceptance reserves fixed review/submission reference slots. Full-claim withdrawals are the emergency exit; partial withdrawals need ordinary capacity.
+
+Prepaid pinned storage has immutable pricing/period agreements, verified CID ownership/reference accounting, 30-day grace, notices and fenced opt-in cleanup. The Archive service adds encrypted backups, native approval/revocation, constrained poll/document pruning, retained trusted decoders and original-kit recovery. Shared gateway requests require a manually funded, bounded allowance.
+
+All features remain development work on `codex/resource-billing-archives`. Public rollout, destructive retention and immutable release packaging remain gated by the recorded migration, token, native and live-provider requirements. See [execution evidence](docs/evidence/2026-10-08-resource-execution.md).
+
 ## 0.7.0-alpha.1 — Shared hosting and connected payments
 
 Applied AGPL-3.0-only to first-party code, contracts, SDKs and documentation; preserved third-party licenses. Development packages include the license and source guidance.

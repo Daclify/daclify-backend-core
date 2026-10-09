@@ -14,6 +14,7 @@ import {
 import { fixtureNetwork } from '../../tools/native/network.js';
 import { fixtureKey } from '../../tools/native/keys.js';
 import { unlockFixtureWallet } from '../../tools/native/wallet.js';
+import { fundResourceFixture } from '../../tools/native/resource-funding.js';
 import { executedChainResult } from '../../services/api/src/chain-result.js';
 const network = fixtureNetwork();
 if (network.container !== 'daclify-resources-native' || network.url !== 'http://127.0.0.1:20588')
@@ -113,6 +114,7 @@ async function preservedRows() {
 }
 beforeAll(async () => {
   unlockFixtureWallet(network.container);
+  await fundResourceFixture();
   const pub = key.toPublic().toString();
   cleos([
     'system',

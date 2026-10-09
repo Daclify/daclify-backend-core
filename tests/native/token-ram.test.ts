@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { fixtureNetwork } from '../../tools/native/network.js';
 import { fixtureKey } from '../../tools/native/keys.js';
 import { unlockFixtureWallet } from '../../tools/native/wallet.js';
+import { fundResourceFixture } from '../../tools/native/resource-funding.js';
 import { RuntimeTableSchemas } from '../../sdk/index.js';
 import { executedChainResult } from '../../services/api/src/chain-result.js';
 const network = fixtureNetwork();
@@ -81,6 +82,7 @@ beforeAll(async () => {
     .object({ commit: z.literal('c526479a48370981a1e9f0ac6b3bb0e4f737afa2') })
     .parse(JSON.parse(readFileSync('.artifacts/reference-token/source-pins.json', 'utf8')));
   unlockFixtureWallet(network.container);
+  await fundResourceFixture();
   for (const account of [token, sender, receiver, opened])
     cleos([
       'system',

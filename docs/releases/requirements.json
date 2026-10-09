@@ -247,6 +247,69 @@
       "id": "OPERATOR-OWNERSHIP",
       "suite": "integration",
       "tests": ["tests/integration/operator-payments.test.ts"]
+    },
+    {
+      "id": "RESOURCE-RAM-QUOTA-MIGRATION",
+      "suite": "native",
+      "tests": [
+        "tests/native/ram-controller.test.ts",
+        "tests/native/ram-migration.test.ts",
+        "tests/native/ram-rebind.test.ts"
+      ]
+    },
+    {
+      "id": "RESOURCE-RAM-PAYER-CONSERVATION",
+      "suite": "native",
+      "tests": [
+        "tests/native/ram-ledger.test.ts",
+        "tests/native/token-ram.test.ts",
+        "tests/native/ram-purchase.test.ts"
+      ]
+    },
+    {
+      "id": "RESOURCE-RAM-LEGACY-RECOVERY",
+      "suite": "vert",
+      "tests": [
+        "tests/ram-old-release.test.ts",
+        "tests/ram-controller.test.ts",
+        "tests/resource-ledger.test.ts"
+      ]
+    },
+    {
+      "id": "RESOURCE-STORAGE-BILLING",
+      "suite": "integration",
+      "tests": [
+        "tests/integration/storage-billing.test.ts",
+        "tests/integration/storage-stripe.test.ts",
+        "tests/integration/ram-card.test.ts"
+      ]
+    },
+    {
+      "id": "RESOURCE-STORAGE-RETENTION-GATEWAY",
+      "suite": "integration",
+      "tests": [
+        "tests/integration/storage-jobs.test.ts",
+        "tests/integration/storage-alerts.test.ts",
+        "tests/integration/gateway-allowance.test.ts"
+      ]
+    },
+    {
+      "id": "RESOURCE-ARCHIVE-RECOVERY",
+      "suite": "native",
+      "tests": ["tests/native/archive-pruning.test.ts", "tests/native/archive-format.test.ts"]
+    },
+    {
+      "id": "RESOURCE-WORKS-COMPLETION",
+      "suite": "modules",
+      "tests": ["../daclify-backend-modules/tests/works-completion.test.ts"]
+    },
+    {
+      "id": "RESOURCE-UI-ACCESS",
+      "suite": "browser",
+      "tests": [
+        "../daclify-frontend/tests/e2e/files.spec.ts",
+        "../daclify-frontend/tests/e2e/platform.spec.ts"
+      ]
     }
   ]
 }
