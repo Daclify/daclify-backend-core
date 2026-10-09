@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { z } from 'zod';
 export const FixtureContainerSchema = z.enum([
+  'daclify-integration-native',
   'daclify-executives-native',
   'daclify-resources-native',
   'daclify-ram-native',

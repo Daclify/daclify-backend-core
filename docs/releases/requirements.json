@@ -365,6 +365,16 @@
       "id": "WP02-EXECUTIVE-PLANS",
       "suite": "unit",
       "tests": ["tests/executive-authority.test.ts"]
+    },
+    {
+      "id": "WP03-ALL-MODULES-AFTER-HANDOVER",
+      "suite": "native",
+      "tests": ["tests/native/module-integration.test.ts"]
+    },
+    {
+      "id": "WP11-PERMISSION-DIAGRAM",
+      "suite": "unit",
+      "tests": ["tests/permission-documentation.test.ts"]
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "name": "@daclify/core-protocol",
-  "version": "0.9.0-alpha.1",
+  "version": "0.9.0-alpha.2",
   "license": "AGPL-3.0-only",
   "type": "module",
   "description": "Daclify public protocol and generated contract SDK",
@@ -32,6 +32,7 @@
       "types": "./dist/sdk/documentation.d.ts",
       "import": "./dist/sdk/documentation.js"
     },
+    "./diagrams/contract-permissions.svg": "./docs/generated/contract-permissions.svg",
     "./help": {
       "types": "./dist/protocol/generated/help.d.ts",
       "import": "./dist/protocol/generated/help.js"

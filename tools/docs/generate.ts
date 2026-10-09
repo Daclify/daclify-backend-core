@@ -43,6 +43,10 @@ const output = generateDocumentation(
   ],
 );
 const files = new Map([
+  [
+    'docs/generated/contract-permissions.svg',
+    await readFile('docs/guides/contract-permissions.svg', 'utf8'),
+  ],
   ['docs/generated/reference.json', JSON.stringify(output.bundle, null, 2) + '\n'],
   ['docs/generated/reference.md', output.markdown],
   [

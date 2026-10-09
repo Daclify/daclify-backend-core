@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="1370" viewBox="0 0 1120 1370" role="img" aria-labelledby="title description">
+  <title id="title">Daclify contract permissions and module interaction map</title>
+  <desc id="description">Illustrative configuration after native executive handover. Alice and Bob jointly satisfy runtime govern. Runtime owner and active also trust runtime code. Managed module owner trusts runtime govern; module active trusts govern or its own code. Service and execution permissions are separate children of active. A member's signed instruction passes through Runtime to installed modules. Grants and Decide authorize Works funding; Works and Payroll create Runtime obligations and claims. Runtime pays through the token contract. The Hub is discovery and grants no authority over registered independent deployments.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L9 5L0 10" fill="none" stroke="#e8b971" stroke-width="1.5"/></marker>
+    <style>
+      text { font-family: system-ui, sans-serif; fill: #f7eee3; font-size: 21px; }
+      .title { font-size: 34px; font-weight: 750; }
+      .heading { font-size: 25px; font-weight: 700; }
+      .small { font-size: 18px; fill: #d8c7b4; }
+      .label { font-size: 19px; fill: #e8b971; font-weight: 600; }
+      .box { fill: #241d19; stroke: #80613e; stroke-width: 1.5; rx: 12; }
+      .muted { fill: #191b22; stroke: #647086; stroke-width: 1.5; rx: 12; }
+      .line { fill: none; stroke: #e8b971; stroke-width: 2.5; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect width="1120" height="1370" rx="20" fill="#110f0e"/>
+  <text x="40" y="56" class="title">daclify · contracts &amp; permissions</text>
+  <text x="40" y="88" class="small">Example after handover · core 0.9 · illustrative account names · not live-chain status</text>
+
+  <text x="40" y="139" class="heading">1. Who controls the deployment?</text>
+  <rect x="40" y="158" width="440" height="85" class="box"/>
+  <text x="60" y="191">Alice@active + Bob@active</text>
+  <text x="60" y="222" class="small">Two executives · weight 1 each · both required</text>
+  <path d="M480 200H610" class="line"/>
+  <text x="492" y="184" class="label">2 of 2</text>
+  <rect x="625" y="158" width="455" height="85" class="box"/>
+  <text x="645" y="191">daclifycore1@govern</text>
+  <text x="645" y="222" class="small">Parent: owner · executive quorum</text>
+
+  <path d="M850 243V265H260V286" class="line"/>
+  <path d="M850 243V286" class="line"/>
+  <rect x="40" y="300" width="510" height="142" class="box"/>
+  <text x="60" y="334" class="heading">Runtime account</text>
+  <text x="60" y="368">owner: govern OR own eosio.code</text>
+  <text x="60" y="400">active: govern OR own eosio.code</text>
+  <text x="60" y="428" class="small">Contract code can refresh root permissions.</text>
+  <rect x="580" y="300" width="500" height="142" class="box"/>
+  <text x="600" y="334" class="heading">Each managed module account</text>
+  <text x="600" y="368">owner: runtime@govern</text>
+  <text x="600" y="400">active: govern OR own eosio.code</text>
+  <text x="600" y="428" class="small">No module bootstrap key remains.</text>
+
+  <rect x="40" y="465" width="510" height="104" class="muted"/>
+  <text x="60" y="499">execctx · child of active</text>
+  <text x="60" y="530">Only runtime@eosio.code</text>
+  <text x="60" y="556" class="small">Linked member actions · no external signing key</text>
+  <rect x="580" y="465" width="500" height="104" class="muted"/>
+  <text x="600" y="499">service · child of active</text>
+  <text x="600" y="530">Separate service signing key</text>
+  <text x="600" y="556" class="small">Selected service links · no parent authority</text>
+  <text x="40" y="601" class="small">Arrows show delegated authority. OR means either authority satisfies threshold 1.</text>
+  <text x="40" y="628" class="small">Owner can satisfy children. A service/execctx child cannot authorize its parent.</text>
+
+  <text x="40" y="687" class="heading">2. How do modules cooperate?</text>
+  <rect x="40" y="707" width="305" height="85" class="box"/>
+  <text x="60" y="741">Member signs instruction</text>
+  <text x="60" y="772" class="small">Vault key or linked native wallet</text>
+  <path d="M345 749H405" class="line"/>
+  <rect x="420" y="707" width="660" height="85" class="box"/>
+  <text x="440" y="741">Runtime: DAO + signature + nonce + role</text>
+  <text x="440" y="772" class="small">Inline dispatch under runtime@execctx · pinned installed actions</text>
+  <path d="M750 792V812H190V822" class="line"/>
+  <path d="M750 812H540V822" class="line"/>
+  <path d="M750 812H900V822" class="line"/>
+
+  <rect x="40" y="836" width="315" height="109" class="box"/>
+  <text x="60" y="871">Decide → Grants → Works</text>
+  <text x="60" y="902" class="small">Reviewed grant + passing vote</text>
+  <text x="60" y="928" class="small">Contributor consent + milestones</text>
+  <rect x="380" y="836" width="315" height="109" class="box"/>
+  <text x="400" y="871">Payroll</text>
+  <text x="400" y="902" class="small">Funded fixed-term schedule</text>
+  <text x="400" y="928" class="small">Due installments settle once</text>
+  <rect x="720" y="836" width="360" height="109" class="box"/>
+  <text x="740" y="871">Endorsement</text>
+  <text x="740" y="902" class="small">Witness threshold → admission</text>
+  <text x="740" y="928" class="small">Membership ≠ executive authority</text>
+  <path d="M190 945V972H510V994" class="line"/>
+  <path d="M540 945V994" class="line"/>
+  <path d="M900 945V972H590V994" class="line"/>
+  <rect x="40" y="1008" width="690" height="105" class="box"/>
+  <text x="60" y="1044">Runtime: obligations → claims / admitted members</text>
+  <text x="60" y="1075" class="small">Callbacks: module@active + actual sender + code pin + grant</text>
+  <text x="60" y="1101" class="small">Failed actions roll back; completed payments cannot be repeated.</text>
+  <path d="M730 1060H790" class="line"/>
+  <rect x="805" y="1008" width="275" height="105" class="box"/>
+  <text x="825" y="1044">Token contract</text>
+  <text x="825" y="1075" class="small">Signed claim withdrawal</text>
+  <text x="825" y="1101" class="small">Recipient opens balance row</text>
+
+  <text x="40" y="1160" class="heading">3. Shared and independent DAOs</text>
+  <rect x="40" y="1182" width="510" height="147" class="muted"/>
+  <text x="60" y="1219">Shared: Daclify DAO owns platform code</text>
+  <text x="60" y="1250" class="small">Hosted DAO administrators control their DAO settings.</text>
+  <text x="60" y="1278" class="small">DAO IDs isolate members, balances and configuration.</text>
+  <text x="60" y="1306" class="small">Hosted members do not own platform permissions.</text>
+  <rect x="580" y="1182" width="500" height="147" class="muted"/>
+  <text x="600" y="1219">Independent: own runtime + modules</text>
+  <text x="600" y="1250" class="small">Own executives and service/execution links.</text>
+  <text x="600" y="1278" class="small">Hub lists the deployment/API/portal.</text>
+  <text x="600" y="1306" class="small">Registration grants no treasury or root authority.</text>
+</svg>

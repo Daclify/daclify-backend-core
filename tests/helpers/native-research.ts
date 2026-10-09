@@ -20,7 +20,7 @@ export const researchNetwork = z
   .object({
     url: z.string().regex(/^http:\/\/127\.0\.0\.1:[0-9]{4,5}$/),
     chainId: z.string().regex(/^[0-9a-f]{64}$/),
-    container: z.literal('daclify-research-native'),
+    container: z.enum(['daclify-research-native', 'daclify-integration-native']),
   })
   .parse(JSON.parse(readFileSync('.artifacts/native/network.json', 'utf8')));
 export const researchRpc = new APIClient({ url: researchNetwork.url });
