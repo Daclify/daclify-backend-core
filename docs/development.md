@@ -39,7 +39,7 @@ The [9 October branch audit](evidence/2026-10-09-dev-branch-audit.md) records th
 
 ## Local builds and manual Netlify uploads
 
-For the dedicated development frontend, follow the frontend's [Netlify dev guide](../../daclify-frontend/docs/netlify-dev.md). Build from the sibling `dev` checkouts and publish to a separate testnet Netlify project. This uses the existing two-network configuration; the Git branch does not select the blockchain. Select **Testnet** in the application before testing.
+For the dedicated development frontend, follow the frontend's [Netlify dev guide](../../daclify-frontend/docs/netlify-dev.md). Build from the sibling `dev` checkouts and publish to a separate testnet Netlify project using frontend `VITE_NETWORK=testnet` and `VITE_API_TESTNET=https://testnet.api.daclify.com`. The Git branch does not select the blockchain; the explicit env lock does. Saved browser choices cannot change a locked deployment.
 
 Use the existing sibling bootstrap and checks on the Mac. Recompile contracts when their source changes; choose the required integration/native/browser suites for the affected flow. Run `npm run verify`, `npm run format:check` and `npm run build` in each affected repository before committing. A full release still requires the complete acceptance evidence described above. Disabling automatic CI does not remove tests or release gates.
 
@@ -50,7 +50,7 @@ npm run verify
 npm run build
 ```
 
-Before building, set both public frontend API origins in the ignored frontend `.env.production` (see `.env.production.example`): `VITE_API_PRODUCTION=https://api.daclify.com` and `VITE_API_TESTNET=https://testnet.api.daclify.com`, using the actual deployed services. These settings take precedence over the network file and are embedded in the bundle. No `dist/networks.json` edit is needed. For `.env.testnet`, use `npm run build -- --mode testnet`. Rebuild/redeploy after changing env settings. The deployed application defaults to Production; select Testnet for testing. The development override below is ignored in static builds. Check `/account`, `/docs` and network selection in the uploaded site.
+For a mainnet frontend, use the ignored frontend `.env.production` (see `.env.production.example`) with `VITE_NETWORK=production` and `VITE_API_PRODUCTION=https://api.daclify.com`, then run `npm run build`. For the testnet frontend, put `VITE_NETWORK=testnet` and `VITE_API_TESTNET=https://testnet.api.daclify.com` in frontend `.env.testnet`, then use `npm run build -- --mode testnet`. Confirm actual service origins before publishing. The locked network and matching URL are embedded in the bundle; no `dist/networks.json` edit is needed. Rebuild/redeploy after env changes. Locked builds show a network badge instead of a switch and keep workspace screens closed if the API's reported environment differs; production expects `mainnet`. Check `/account`, `/docs` and the badge in the uploaded site.
 
 The committed `public/_redirects` file supplies the Netlify SPA fallback, so direct `/account` and `/docs` visits reach the application. Netlify's existing static files take precedence, including `networks.json` and assets.
 
@@ -66,7 +66,7 @@ The selected backend topology is separate mainnet/testnet services on one Hetzne
 
 ## Local frontend with a hosted testnet API
 
-Once the hosted testnet API is configured and verified, set `VITE_API_ORIGIN=https://YOUR_TESTNET_API_HOST` in frontend `.env.testnet`, then run `npm run dev -- --mode testnet`. This development-only HTTPS origin overrides the network file and hides the service switch, so a saved Production choice cannot redirect development requests. CSRF storage is scoped to that API origin. Changes remain local until committed and pushed. Requests still write to the actual testnet service and chain; they are not a private sandbox.
+Once the hosted testnet API is configured and verified, leave `VITE_NETWORK` unset for the direct-development flow, set `VITE_API_ORIGIN=https://YOUR_TESTNET_API_HOST` in frontend `.env.testnet`, then run `npm run dev -- --mode testnet`. This development-only HTTPS origin overrides the network file and hides the service switch, so a saved Production choice cannot redirect development requests. CSRF storage is scoped to that API origin. A configured deployment lock takes precedence over this override. Changes remain local until committed and pushed. Requests still write to the actual testnet service and chain; they are not a private sandbox.
 
 For dependable login, use a local HTTPS hostname under the **same site** as the API. Example only, assuming both domains are controlled by Daclify: browser `https://dev.app.daclify.com:5198`, API `https://testnet.api.daclify.com`. Map the developer hostname to `127.0.0.1` in `/etc/hosts` on this Mac; no public DNS entry or tunnel is needed. Vite continues to bind to loopback.
 

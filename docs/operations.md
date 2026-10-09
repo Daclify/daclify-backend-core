@@ -164,16 +164,16 @@ A Zero payer would use the memo `svc:<reference>`. An EVM payer withdraws throug
 
 With frontend API env settings absent, local `daclify-frontend/public/networks.json` is `{ "mode": "local" }`. The app then calls relative `/v1` URLs, and Vite proxies them to `127.0.0.1:3008`. The service-network switch stays hidden. The CSRF token is stored at `daclify.csrf`.
 
-For a deployed build, configure both public origins in frontend `.env.production` before running `npm run build`:
+For a mainnet build, configure the fixed network and its public origin in frontend `.env.production` before running `npm run build`:
 
 ```dotenv
+VITE_NETWORK=production
 VITE_API_PRODUCTION=https://api.daclify.com
-VITE_API_TESTNET=https://testnet.api.daclify.com
 ```
 
-Each value must be an https origin with no userinfo, no path other than `/`, and no search or hash. The switch then shows Production and Testnet. The choice is stored at `daclify.network` and defaults to production. Fetches are prefixed with the selected origin. CSRF tokens are stored separately at `daclify.csrf.production` and `daclify.csrf.testnet`, because one browser is talking to two API hosts. Cookies remain host-only.
+For a testnet build, use `VITE_NETWORK=testnet` and `VITE_API_TESTNET=https://testnet.api.daclify.com` in frontend `.env.testnet`, then run `npm run build -- --mode testnet`. A fixed deployment requires only its matching HTTPS origin with no credentials, path, query or hash. It ignores saved browser choices and development overrides, hides the switch and checks the API's reported environment before opening workspace screens. Production expects `mainnet`; testnet expects `testnet`. Cookies remain host-only and CSRF tokens stay separate by network.
 
-Env settings take precedence over `networks.json`; both are required if either is configured, and invalid values fail closed. Rebuild/redeploy after editing them. Keep the committed local-mode file unchanged. Older deployments without env settings can still provide a two-field `{production, testnet}` network file. The single `VITE_API_ORIGIN` override remains development-only and takes precedence in the Vite dev server.
+Without `VITE_NETWORK`, supplying both API origins retains the legacy network switch, saved browser choice and Production default. Env settings take precedence over `networks.json`; invalid lock values and missing matching origins fail closed. Rebuild/redeploy after edits. Keep the committed local-mode file unchanged. Older deployments without env settings can still provide a two-field `{production, testnet}` network file. With the lock unset, `VITE_API_ORIGIN` remains the development-only direct override.
 
 The account screen can start a card checkout when the API has Stripe configured. It redirects only to `https://checkout.stripe.com`. Refreshing the receipt reads `GET /v1/billing/receipts`. The screen copy states that the receipt does not change votes, permissions, withdrawals, or a DAO treasury.
 
@@ -208,7 +208,7 @@ cp .env.testnet.example .env.testnet
 npm run dev -- --mode testnet
 ```
 
-This sets UI port 5198 and `/v1` proxy port 3028. It does not set the backend network or blockchain credentials. Keep the API's `FRONTEND_ORIGIN` aligned with the URL you open. To configure a static build from `.env.testnet`, supply both public `VITE_API_PRODUCTION` and `VITE_API_TESTNET` and run `npm run build -- --mode testnet`; the env settings override the network file. Never place private keys or provider credentials in frontend env files.
+The unchanged local example defaults set UI port 5198 and `/v1` proxy port 3028. They do not set the backend network or blockchain credentials. Keep the API's `FRONTEND_ORIGIN` aligned with the URL you open. For a fixed static testnet deployment, enable `VITE_NETWORK=testnet` and `VITE_API_TESTNET` in the frontend mode file and build with `npm run build -- --mode testnet`. Never place private keys or provider credentials in frontend env files.
 
 ## What is still open
 
