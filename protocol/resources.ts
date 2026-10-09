@@ -49,6 +49,10 @@ export const RamUsageSchema = z
     dao: DaoRefSchema,
     observation: z.enum(['active', 'disabled']),
     enforcement: z.literal('disabled'),
+    completionHolds: z
+      .strictObject({ rows: z.int().min(0).max(5000), bytes: Uint64Schema })
+      .nullable()
+      .default(null),
     policy: ResourcePolicySchema.nullable(),
     read: SpendingReportSchema.shape.read,
     totalObservedBytes: Uint64Schema.nullable(),

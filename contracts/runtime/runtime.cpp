@@ -6,6 +6,7 @@
 #include "telos_resources.hpp"
 #include "archive_state.hpp"
 #include "ram_capacity.hpp"
+#include "ram_completion.hpp"
 #include "document_refs.hpp"
 #include <eosio/transaction.hpp>
 #define JSON_NOEXCEPTION
@@ -532,6 +533,7 @@ public:
     obligations rows(get_self(),dao_id);auto index=rows.get_index<"bysource"_n>();check(index.find(source_hash(source,source_id))==index.end(),"OBLIGATION_EXISTS");
     auto next=rows.available_primary_key();check(next<std::numeric_limits<uint64_t>::max(),"OBLIGATION_LIMIT");if(next==0)next=1;
     rows.emplace(get_self(),[&](auto& r){r.id=next;r.source=source;r.source_id=source_id;r.recipient=recipient;r.quantity=quantity;r.due=due;r.status=0;});
+    hold_obligation_receipts(get_self(),dao_id,next,recipient);
     dao_rows.modify(d,same_payer,[&](auto& r){r.available=add_amount(r.available,-quantity.amount);r.reserved=add_amount(r.reserved,quantity.amount);});
   }
   ACTION approveob(uint64_t dao_id,name source,uint64_t source_id) {
@@ -543,7 +545,7 @@ public:
     const auto& d=dao_rows.get(dao_id,"DAO_UNKNOWN");if(!has_auth(d.owner))require_source(dao_id,source,"cancel"_n);else require_auth(d.owner);
     obligations rows(get_self(),dao_id);const auto& o=rows.get(obligation_id(rows,source,source_id));check(o.status==0,"NOT_CANCELLABLE");
     dao_rows.modify(d,same_payer,[&](auto& r){r.reserved=add_amount(r.reserved,-o.quantity.amount);r.available=add_amount(r.available,o.quantity.amount);});
-    rows.modify(o,same_payer,[](auto& r){r.status=3;});
+    rows.modify(o,same_payer,[](auto& r){r.status=3;});settle_receipt_hold(get_self(),dao_id,o.id,false);
   }
   ACTION confirmext(name runtime,uint64_t dao_id,uint64_t member_id,uint64_t obligation_id,std::string chain,std::string payer,uint64_t recipient,asset quantity,checksum256 reference) {
     check(get_sender()==get_self(),"ACTOR_SENDER");authorized_actor(runtime,dao_id,member_id,true);
@@ -565,6 +567,7 @@ public:
     dao_rows.modify(d,same_payer,[&](auto& r){r.reserved=add_amount(r.reserved,-quantity.amount);if(!destination.value)r.claims=add_amount(r.claims,quantity.amount);});
     if(destination.value)action(permission_level{get_self(),"active"_n},d.token_contract,"transfer"_n,std::make_tuple(get_self(),destination,quantity,std::string("Daclify approved obligation"))).send();
     else people.modify(m,same_payer,[&](auto& r){r.claim=add_amount(r.claim,quantity.amount);});
+    settle_receipt_hold(get_self(),dao_id,o.id,!destination.value);
     receipt(dao_id,destination.value?1:0,o.id,o.recipient,destination,d.token_contract,quantity);
   }
   ACTION putdoc(name runtime,uint64_t dao_id,uint64_t member_id,uint64_t document_id,uint32_t version,std::string cid,std::string metadata,checksum256 commitment,uint32_t bytes,uint16_t envelope_version,uint64_t key_epoch) {
@@ -649,8 +652,14 @@ public:
     if(lock.expires>current_time_point().sec_since_epoch())require_source(dao_id,source,"govlock"_n);
     rows.modify(rows.get(lock.id),same_payer,[](auto& r){r.active=false;});const auto& d=dao_rows.get(dao_id);check(d.active_ballots>0,"LOCK_COUNTER");dao_rows.modify(d,same_payer,[](auto& r){r.active_ballots--;});
   }
+  ACTION clearholds(uint64_t dao_id,uint64_t recipient,uint32_t limit){
+    check(limit>=1&&limit<=25,"RAM_HOLD_BATCH");members people(get_self(),dao_id);check(people.get(recipient,"MEMBER_UNKNOWN").claim==0,"CLAIM_OUTSTANDING");
+    ram_holds holds(get_self(),dao_id);auto index=holds.get_index<"byrecipient"_n>();auto found=index.find(recipient);uint32_t removed=0;
+    while(found!=index.end()&&found->ready&&found->recipient==recipient&&removed++<limit)found=index.erase(found);
+  }
   ACTION withdraw(name runtime,uint64_t dao_id,uint64_t member_id,name destination,asset quantity) {
     authorized_actor(runtime,dao_id,member_id,false,true);const auto& d=dao_rows.get(dao_id);check(quantity.symbol==d.token_symbol&&quantity.amount>0,"ASSET_QUANTITY");check(destination!=get_self()&&is_account(destination),"PAYOUT_DESTINATION");members people(get_self(),dao_id);const auto& m=people.get(member_id);check(quantity.amount<=m.claim,"INSUFFICIENT_CLAIM");
+    if(quantity.amount==m.claim)consume_claim_hold(get_self(),dao_id,member_id);
     people.modify(m,same_payer,[&](auto& r){r.claim=add_amount(r.claim,-quantity.amount);});dao_rows.modify(d,same_payer,[&](auto& r){r.claims=add_amount(r.claims,-quantity.amount);});
     action(permission_level{get_self(),"active"_n},d.token_contract,"transfer"_n,std::make_tuple(get_self(),destination,quantity,std::string("Daclify claim withdrawal"))).send();
     receipt(dao_id,2,0,member_id,destination,d.token_contract,quantity);
@@ -1012,7 +1021,7 @@ extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
   if(code==receiver){switch(action_name){
     EOSIO_DISPATCH_HELPER(runtime,(authproof)(unlinknat)(linkevm)(unlinkevm)(submitevm)(setadmit)(admitfrom))
     EOSIO_DISPATCH_HELPER(runtime,(docsrc)(docref)(docscanstep)(backfilldocs)(prunedocs)(restoredoc))
-    EOSIO_DISPATCH_HELPER(runtime,(setarchcfg)(archattest)(archapprove)(archrevoke)(archstep)(initramobs)(rebindramobs)(setramauto)(setrampool)(grantdaoram)(checkrampool)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram)(fulfilram))
+    EOSIO_DISPATCH_HELPER(runtime,(setarchcfg)(archattest)(archapprove)(archrevoke)(archstep)(clearholds)(initramobs)(rebindramobs)(setramauto)(setrampool)(grantdaoram)(checkrampool)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram)(fulfilram))
     EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(setprofile)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(confirmext)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))
     EOSIO_DISPATCH_HELPER(runtime,(sethosted)(govhosted)(govseatfee)(orderfree)(setcapacity)(revokecap)(resumecap))
     EOSIO_DISPATCH_HELPER(runtime,(enrollagent)(addmember)(initgov)(setdaogov)(addsession)(delsession)(guardpause)(guardrevoke)(guardrecover)(submitsess)(setfees)(listmod)(unlistmod)(setmodcopy)(setpolicy)(setgov)(setoracle)(govfees)(govpayfees)(setcreate)(govcreate)(setcrrate)(ordercreate)(cardcreate)(createpaid)(govlist)(govunlist)(govmodcopy))

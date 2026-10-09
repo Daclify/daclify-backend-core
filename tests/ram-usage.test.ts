@@ -16,7 +16,9 @@ afterEach(() => vi.unstubAllGlobals());
 function fixture() {
   let observing = true,
     changed = false,
-    truncated = false;
+    truncated = false,
+    held = false,
+    tooManyHolds = false;
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
     const body = z
       .record(z.string(), z.unknown())
@@ -58,55 +60,71 @@ function fixture() {
       });
     if (!url.endsWith('get_table_rows')) throw new Error('Unexpected RAM fixture RPC');
     const rows =
-      body.table === 'ramobs'
-        ? observing
-          ? [{ meter_bytes: '900', runtime_hash: RuntimeCodeHash }]
+      body.table === 'ramholds'
+        ? held
+          ? [{ id: '1', recipient: '1', ready: true, padding: '00'.repeat(512) }]
           : []
-        : body.table === 'ramstats' && body.scope === '1'
-          ? [
-              {
-                payer: 'daclifycore',
-                identity: '1000',
-                activity: '200',
-                retained: '300',
-                platform: '0',
-              },
-              { payer: 'decide', identity: '0', activity: '400', retained: '50', platform: '0' },
-            ]
-          : body.table === 'ramalloc'
-            ? [{ payer: 'decide', purchased_bytes: '4096' }]
-            : body.table === 'ramentitle'
-              ? [
-                  {
-                    payer: 'daclifycore',
-                    policy_revision: '1',
-                    identity_per_slot: '2048',
-                    slots: 10,
-                  },
-                ]
-              : body.table === 'ramlimits'
+        : body.table === 'ramobs'
+          ? observing
+            ? [{ meter_bytes: '900', runtime_hash: RuntimeCodeHash }]
+            : []
+          : body.table === 'ramstats' && body.scope === '1'
+            ? [
+                {
+                  payer: 'daclifycore',
+                  identity: '1000',
+                  activity: '200',
+                  retained: '300',
+                  platform: '0',
+                },
+                { payer: 'decide', identity: '0', activity: '400', retained: '50', platform: '0' },
+              ]
+            : body.table === 'ramalloc'
+              ? [{ payer: 'decide', purchased_bytes: '4096' }]
+              : body.table === 'ramentitle'
                 ? [
                     {
                       payer: 'daclifycore',
-                      activity: '262144',
-                      identity: '20480',
-                      completion: '32768',
+                      policy_revision: '1',
+                      identity_per_slot: '2048',
+                      slots: 10,
                     },
                   ]
-                : body.table === 'ramsources'
-                  ? [{ account: 'decide', code_hash: 'cd'.repeat(32) }]
-                  : body.table === 'modules'
-                    ? [
-                        {
-                          account: 'decide',
-                          version: 1,
-                          actions: [],
-                          grants: [],
-                          code_hash: 'cd'.repeat(32),
-                        },
-                      ]
-                    : [];
-    return Response.json({ rows, more: truncated && body.table === 'ramstats', next_key: '100' });
+                : body.table === 'ramlimits'
+                  ? [
+                      {
+                        payer: 'daclifycore',
+                        activity: '262144',
+                        identity: '20480',
+                        completion: '32768',
+                      },
+                    ]
+                  : body.table === 'ramsources'
+                    ? [{ account: 'decide', code_hash: 'cd'.repeat(32) }]
+                    : body.table === 'modules'
+                      ? [
+                          {
+                            account: 'decide',
+                            version: 1,
+                            actions: [],
+                            grants: [],
+                            code_hash: 'cd'.repeat(32),
+                          },
+                        ]
+                      : [];
+    return Response.json({
+      rows:
+        tooManyHolds && body.table === 'ramholds'
+          ? Array.from({ length: 5001 }, (_, i) => ({
+              id: String(i + 1),
+              recipient: '1',
+              ready: true,
+              padding: '00'.repeat(512),
+            }))
+          : rows,
+      more: truncated && body.table === 'ramstats',
+      next_key: '100',
+    });
   });
   const gateway = new NativeChainGateway({
     rpcUrl: 'http://localhost:18888',
@@ -123,6 +141,8 @@ function fixture() {
     disable: () => (observing = false),
     change: () => (changed = true),
     truncate: () => (truncated = true),
+    hold: () => (held = true),
+    excessHolds: () => (tooManyHolds = true),
   };
 }
 it('separates DAO counters/purchased credits from the whole payer account usage', async () => {
@@ -154,6 +174,23 @@ it('separates DAO counters/purchased credits from the whole payer account usage'
     identity: '20480',
     completion: '32768',
   });
+});
+it('reports physically occupied completion holds without adding them to usage twice', async () => {
+  const { gateway } = fixture();
+  const value = await gateway.ramUsage('1');
+  expect(value).toMatchObject({
+    completionHolds: { rows: 0, bytes: '0' },
+    totalObservedBytes: '1950',
+  });
+  const withHold = fixture();
+  withHold.hold();
+  expect(await withHold.gateway.ramUsage('1')).toMatchObject({
+    completionHolds: { rows: 1, bytes: '883' },
+    totalObservedBytes: '1950',
+  });
+  const excessive = fixture();
+  excessive.excessHolds();
+  await expect(excessive.gateway.ramUsage('1')).rejects.toThrow('RESOURCE_SCOPE_LIMIT');
 });
 it('requires active membership of the exact DAO before reading resource details', async () => {
   const fixtureData = fixture(),

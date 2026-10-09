@@ -278,10 +278,10 @@
         "A visible payer allocation separates identity, activity and completion budgets. Issued grants are backed by the exact native payer account and replay safely. Allocations do not yet enforce growth limits or guarantee completion of outstanding work; those protections require the remaining reserve and migration qualification. Purchased bytes are shown separately from granted capacity.",
         "To buy RAM with TLOS, select a qualified contract payer and minimum byte increase, review native acquisition cost plus one operational fee (5% at launch), then approve the one-time wallet payment. Order and token payment share one transaction. Every actual quota increase is checked; an expired quote, changed policy or unmet minimum rolls the whole purchase back. Sponsoring RAM grants no membership or administration.",
         "Administrators can instead approve a card RAM order when the operator has configured Stripe and funded its separate native reserve. The card rail adds one operational markup (20% at launch), with a $5 minimum total. It does not add the native 5% markup or Connect commission. The exchange-rate observation, byte minimum and exact USD price are disclosed before fresh account-control approval. Complete Stripe checkout, then refresh the saved order. Payment must be verified and provisioning must finish before capacity is credited. An operator outage or low reserve needs reconciliation; checkout return alone proves nothing.",
-        "Purchased RAM is permanent and reusable. A refund, dispute or hosting arrears does not automatically sell RAM or erase keys, memberships, nonces, balances or financial claims. Operator RAM reserve deposits are distinct from DAO treasury/stake/claim deposits. Included payer offers require actual funded pools; quota enforcement and obligation-specific completion holds remain under qualification.",
+        "Purchased RAM is permanent and reusable. A refund, dispute or hosting arrears does not automatically sell RAM or erase keys, memberships, nonces, balances or financial claims. Operator RAM reserve deposits are distinct from DAO treasury/stake/claim deposits. Included payer offers require actual funded pools; new obligation receipt holds are physically allocated; legacy adoption, external token costs and quota enforcement remain under qualification.",
         "Pinned hosting includes 100 MB (100,000,000 bytes). Each explicitly approved additional 1 GB costs $1 per calendar month at launch. Active files, old versions and archive bundles share this rate; the same CID counts once per DAO. Payment retries do not restart the original paid-term-end plus 30-day grace deadline. Automatic deletion is disabled until guarded cleanup and recovery qualify.",
         "Archive preview and resumable export cover qualified ordinary-poll votes and old unreferenced document versions, at least 90 days after recorded terminal completion or document creation/backfill. Create and independently verify the encrypted backup, obtain a fresh native availability attestation, then sign approval binding the exact manifest, descriptor, backup and delay. Approval does not prune. Each permitted source-owned batch is a separate manual action; revocation stops subsequent batches. Members can browse verified anchored history merged with qualified live rows and recover bundles without the old SQL index. Exports contain no decryption kits, social pairings or original file blobs. A local native ordinary-vote database-loss drill and original-kit recovery of a retained private file passed. A controlled native encrypted-document pruning, empty-database archive/file reconstruction, original-kit decryption and exact-row restore drill passed. Backed enforcement, general legacy migration and live provider qualification still gate production release.",
-        "On qualified new deployments, the operator can enable a physically backed included RAM schedule split across core and module payer accounts. Identity capacity uses the DAO’s accepted per-slot rate and is granted only above its permanent maximum previously funded slot count. Monthly renewal, expiry and replacement members do not issue the same grant again. Resources shows these markers separately from current membership entitlement. Quota enforcement and obligation-specific completion holds remain under qualification."
+        "On qualified new deployments, the operator can enable a physically backed included RAM schedule split across core and module payer accounts. Identity capacity uses the DAO’s accepted per-slot rate and is granted only above its permanent maximum previously funded slot count. Monthly renewal, expiry and replacement members do not issue the same grant again. Resources shows these markers separately from current membership entitlement. Quota enforcement remains under qualification. New observed obligations allocate physical receipt holds at acceptance; full claim withdrawals release up to 25 ready holds, while partial withdrawals retain them. Remaining surplus holds can be cleared in bounded batches after the claim is zero. Legacy obligations and external token costs still need qualification."
       ]
     },
     {
@@ -295,7 +295,7 @@
         "Archive manifests and chunks form one retention group. Selecting one includes all its dependencies and shared objects count once. A partial bundle is explicitly unavailable; original document files stay separately pinned and normally billed. Hosting recovery can reconstruct complete groups from verified surviving owned pins without inventing payment.",
         "Resources shows notices tied to the original paid/grace dates. Email requires explicit operator SMTP configuration and the current billing administrator’s paired email. Obsolete notices are canceled after renewed funding or administrator removal; a retry can duplicate an email and never resets grace. Missing contacts and delivery failures need operator review. Check Resources even if mail delivery is disabled.",
         "Operator recovery alerts can use a separately configured operations mailbox. They contain incident IDs, never recovery bytes or keys, and do not clear an incident. Email retries stop after 12 attempts for operator review. SMTP delivery and an operator response procedure require qualification before destructive cleanup.",
-        "The backend can use a server-only dedicated-gateway key. The matching Pinata restriction must be configured and verified separately; alternative OR access controls can bypass it. Public IPFS ciphertext remains available through other providers. A funded gateway bandwidth allowance remains a launch gate; no unlimited access or unapproved bandwidth overage charge is promised."
+        "Hosted Pinata reads require a server-only dedicated-gateway key and a separately registered allowance period. The backend reserves expected bytes and a request before every upstream read; concurrent processes share PostgreSQL counters and failed reads retain their reservation. Missing, expired or exhausted allowance blocks gateway reads, including verification, without unpinning files or adding a DAO bandwidth invoice. Status shows the shared allowance. Operator funding is an attestation; actual provider funding and the key restriction must be verified separately. Alternative OR access controls can bypass the key. Public IPFS ciphertext remains available through other providers; unlimited access is not promised."
       ]
     }
   ],
@@ -304,7 +304,7 @@
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "7c27972fb5a349024396c29012f47453720cb66f99f602da285488fb1e3a9d8f",
+      "sourceAbiHash": "ccb9f9c0366c9bfe045653f7790c3de627809127b3d2aeb7e8e0cdac60c5be1d",
       "actions": [
         {
           "name": "addmember",
@@ -612,6 +612,23 @@
             {
               "name": "payer",
               "type": "name"
+            }
+          ]
+        },
+        {
+          "name": "clearholds",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "recipient",
+              "type": "uint64"
+            },
+            {
+              "name": "limit",
+              "type": "uint32"
             }
           ]
         },
@@ -3700,6 +3717,27 @@
             {
               "name": "completion",
               "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "ramholds",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uint64"
+            },
+            {
+              "name": "recipient",
+              "type": "uint64"
+            },
+            {
+              "name": "ready",
+              "type": "bool"
+            },
+            {
+              "name": "padding",
+              "type": "bytes"
             }
           ]
         },
@@ -6899,6 +6937,33 @@
             "type": "string",
             "const": "disabled"
           },
+          "completionHolds": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "rows": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5000
+                  },
+                  "bytes": {
+                    "type": "string",
+                    "maxLength": 20
+                  }
+                },
+                "required": [
+                  "rows",
+                  "bytes"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "policy": {
             "anyOf": [
               {
@@ -7195,6 +7260,7 @@
           "dao",
           "observation",
           "enforcement",
+          "completionHolds",
           "policy",
           "read",
           "totalObservedBytes",
@@ -7498,6 +7564,88 @@
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
+          "gatewayAllowance": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "type": "string",
+                    "enum": [
+                      "unconfigured",
+                      "unavailable",
+                      "scheduled",
+                      "available",
+                      "exhausted",
+                      "expired"
+                    ]
+                  },
+                  "startsAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "endsAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "byteLimit": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "reservedBytes": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "requestLimit": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "requests": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "fundingQualification": {
+                    "type": "string",
+                    "enum": [
+                      "unconfigured",
+                      "operator-attested"
+                    ]
+                  }
+                },
+                "required": [
+                  "state",
+                  "startsAt",
+                  "endsAt",
+                  "byteLimit",
+                  "reservedBytes",
+                  "requestLimit",
+                  "requests",
+                  "fundingQualification"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "checkedAt": {
             "type": "string",
             "format": "date-time",
@@ -8397,6 +8545,7 @@
           }
         },
         "required": [
+          "gatewayAllowance",
           "checkedAt",
           "apiVersion",
           "moduleVersion",

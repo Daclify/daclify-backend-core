@@ -44,6 +44,16 @@ const sources = roots
       })),
   )
   .filter((source) => !source.path.endsWith('/json.hpp'));
+const indexAliases = new Map<string, string>();
+for (const source of sources)
+  for (const match of source.text.matchAll(/using\s+(\w+)\s*=\s*(indexed_by<[^;]+);/g)) {
+    const name = match[1],
+      declaration = match[2];
+    assert.ok(name && declaration);
+    const prior = indexAliases.get(name);
+    assert.ok(!prior || prior === declaration, `Ambiguous index alias: ${name}`);
+    indexAliases.set(name, declaration);
+  }
 const abiSchema = z.object({
   tables: z.array(z.object({ name: z.string(), type: z.string() })),
   structs: z.array(
@@ -66,6 +76,9 @@ for (const match of categorySource.matchAll(/((?:case "[a-z1-5]+"_n\.value:)+)re
 }
 assert.equal(categories.get('members'), 0);
 assert.equal(categories.get('obligations'), 2);
+const moduleCategories = new Map<string, number>();
+for (const match of categorySource.matchAll(/if\(table=="([a-z1-5]+)"_n\)return ([0-3]);/g))
+  if (match[1]) moduleCategories.set(match[1], Number(match[2]));
 const tables = producers.flatMap((producer) => {
   const abi = abiSchema.parse(producer.abi);
   assert.equal(new Set(abi.tables.map((table) => table.name)).size, abi.tables.length);
@@ -91,13 +104,20 @@ const tables = producers.flatMap((producer) => {
         })),
     );
     assert.ok(declarations.length, `Unmapped table declaration: ${producer.name}/${table.name}`);
-    const secondaryKeyBytes = [
-      ...(declarations[0]?.declaration ?? '').matchAll(/const_mem_fun<\w+,\s*(\w+),/g),
-    ].map((match) => {
-      const bytes = { uint64_t: 8, uint128_t: 16, checksum256: 32 }[match[1] ?? ''];
-      assert.ok(bytes, `Unqualified secondary key: ${match[1]}`);
-      return bytes;
-    });
+    const declaration = declarations[0]?.declaration ?? '';
+    const expandedDeclaration =
+      declaration +
+      [...indexAliases.entries()]
+        .filter(([name]) => new RegExp('\\b' + name + '\\b').test(declaration))
+        .map(([, value]) => value)
+        .join('');
+    const secondaryKeyBytes = [...expandedDeclaration.matchAll(/const_mem_fun<\w+,\s*(\w+),/g)].map(
+      (match) => {
+        const bytes = { uint64_t: 8, uint128_t: 16, checksum256: 32 }[match[1] ?? ''];
+        assert.ok(bytes, `Unqualified secondary key: ${match[1]}`);
+        return bytes;
+      },
+    );
     const scoped =
       producer.name === 'runtime' && scopedSource.includes('"' + table.name + '"_n.value');
     const explicitOwner = sources.some((source) =>
@@ -132,7 +152,11 @@ const tables = producers.flatMap((producer) => {
       category:
         daoBinding === 'platform'
           ? 'platform'
-          : ['identity', 'activity', 'retained', 'platform'][categories.get(table.name) ?? 1],
+          : ['identity', 'activity', 'retained', 'platform'][
+              (producer.name !== 'runtime' ? moduleCategories.get(table.name) : undefined) ??
+                categories.get(table.name) ??
+                1
+            ],
       instrumentation: declarations.every((declaration) =>
         /ram_(table|singleton)</.test(declaration.declaration),
       )
@@ -169,6 +193,19 @@ const writeCandidates = sources.flatMap((source) =>
   ),
 );
 assert.ok(tables.length > 70 && writeCandidates.length > 200);
+for (const [producer, table] of [
+  ['runtime', 'ramholds'],
+  ['decide', 'terms'],
+]) {
+  const entry = tables.find((row) => row.producer === producer && row.table === table);
+  assert.ok(entry, `Missing indexed completion table: ${producer}/${table}`);
+  assert.deepEqual(entry.secondaryKeyBytes, [8]);
+  assert.equal(entry.rowOverheadBytes, 240);
+}
+assert.equal(
+  tables.find((row) => row.producer === 'decide' && row.table === 'termholds')?.category,
+  'retained',
+);
 const report = {
   schemaVersion: 2,
   billingLayout: 1,

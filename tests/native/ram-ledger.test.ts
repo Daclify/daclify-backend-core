@@ -34,8 +34,10 @@ const runtime =
     'ramobs' +
     Array.from(randomBytes(6), (v) => '12345abcdefghijklmnopqrstuvwxyz'.charAt(v % 31)).join(''),
   api = new APIClient({ url: network.url });
+const electionSource = 'relect' + runtime.slice(6);
 const abi = ABI.from(readFileSync('.artifacts/contracts/runtime.abi', 'utf8'));
-const key = fixtureKey('alice');
+const key = fixtureKey('alice'),
+  internalKey = PrivateKey.generate('K1');
 const daoScopes = ['0', '1', '2', Name.from(runtime).value.toString()];
 let seq = 0;
 function cleos(args: string[]) {
@@ -86,7 +88,14 @@ async function push(
         { account: target, name, authorization: [{ actor, permission: 'active' }], data },
         target === runtime
           ? abi
-          : ABI.from(readFileSync('.artifacts/modules-release/' + target + '.abi', 'utf8')),
+          : ABI.from(
+              readFileSync(
+                '.artifacts/modules-release/' +
+                  (target === electionSource ? 'decide' : target) +
+                  '.abi',
+                'utf8',
+              ),
+            ),
       ),
     ],
   });
@@ -179,6 +188,8 @@ async function act(
   action: string,
   fields: Record<string, unknown>,
   dao: string | number = 1,
+  memberId = '1',
+  memberKey = memberId === '2' ? internalKey : key,
 ) {
   const member = z.object({ rows: z.array(z.object({ nonce: count })) }).parse(
     await rpc('get_table_rows', {
@@ -186,6 +197,8 @@ async function act(
       code: runtime,
       scope: String(dao),
       table: 'members',
+      key_type: 'i64',
+      lower_bound: memberId,
       limit: 1,
     }),
   ).rows[0];
@@ -194,13 +207,20 @@ async function act(
   const targetAbi =
     target === runtime
       ? abi
-      : ABI.from(readFileSync('.artifacts/modules-release/' + target + '.abi', 'utf8'));
+      : ABI.from(
+          readFileSync(
+            '.artifacts/modules-release/' +
+              (target === electionSource ? 'decide' : target) +
+              '.abi',
+            'utf8',
+          ),
+        );
   const request = {
     version: 1,
     chain_id: network.chainId,
     deployment: runtime,
     dao_id: dao,
-    member_id: 1,
+    member_id: memberId,
     nonce: member.nonce.toString(),
     expires: Math.floor(now) + 120,
     target,
@@ -208,12 +228,12 @@ async function act(
     data: Serializer.encode({
       abi: targetAbi,
       type: action,
-      object: { runtime, dao_id: dao, member_id: 1, ...fields },
+      object: { runtime, dao_id: dao, member_id: memberId, ...fields },
     }).hexString,
   };
   await push('submit', {
     request,
-    sig: key
+    sig: memberKey
       .signDigest(
         Checksum256.hash(Serializer.encode({ abi, type: 'instruction', object: request })),
       )
@@ -386,6 +406,15 @@ it('reconciles core and all five module payers against actual native RAM', async
       encryption_key: 'fixture-encryption',
       custody: 0,
     });
+    if (id === '1')
+      await push('enroll', {
+        dao_id: '1',
+        member_id: '2',
+        native_account: '',
+        signing_key: internalKey.toPublic().toString(),
+        encryption_key: 'fixture-internal-claim',
+        custody: 0,
+      });
     expect(BigInt((await used()) - baseline)).toBe(await accounted());
   }
   await expect(
@@ -729,7 +758,7 @@ it('settles a newly accepted payroll schedule without growing its module payer',
   const now = Math.floor((await api.v1.chain.get_info()).head_block_time.toMilliseconds() / 1000);
   await act('payroll', 'commit', {
     schedule_id: '50',
-    recipient: '1',
+    recipient: '2',
     quantity: '1.0000 TLOS',
     periods: 1,
     interval: 86400,
@@ -749,7 +778,8 @@ it('settles a newly accepted payroll schedule without growing its module payer',
     ).rows[0],
   );
   const before = await used('payroll'),
-    counted = await accounted('payroll');
+    counted = await accounted('payroll'),
+    coreBefore = await used();
   while (
     Math.floor((await api.v1.chain.get_info()).head_block_time.toMilliseconds() / 1000) <
     schedule.starts
@@ -760,6 +790,11 @@ it('settles a newly accepted payroll schedule without growing its module payer',
   await push('settle', { runtime, dao_id: '1', entry_id: entry }, 'alice', 'payroll');
   expect(await used('payroll')).toBe(before);
   expect(await accounted('payroll')).toBe(counted);
+  expect(await used()).toBeLessThan(coreBefore);
+  expect(BigInt(await used()) - BigInt(baseline)).toBe(await accounted());
+  const beforeWithdrawal = await used();
+  await act(runtime, 'withdraw', { destination: 'bob', quantity: '1.0000 TLOS' }, 1, '2');
+  expect(await used()).toBeLessThan(beforeWithdrawal);
   expect(BigInt(await used()) - BigInt(baseline)).toBe(await accounted());
 });
 
@@ -1127,6 +1162,269 @@ it('prunes only old unreferenced native documents and restores exact bytes witho
   );
   expect(BigInt((await used()) - baseline)).toBe(await accounted());
 });
+
+it('finalizes a maximum-seat election from its physical hold at an exact module payer limit', async () => {
+  await push(
+    'setfees',
+    {
+      third_party_bps: 500,
+      first_party_bps: 10000,
+      treasury: 'alice',
+      token_contract: 'eosio.token',
+      token_symbol: '4,TLOS',
+      names: '',
+    },
+    runtime,
+  );
+  daoScopes.push('5');
+  cleos([
+    'system',
+    'newaccount',
+    'alice',
+    electionSource,
+    key.toPublic().toString(),
+    key.toPublic().toString(),
+    '--buy-ram-bytes',
+    '8388608',
+    '--stake-net',
+    '1.0000 TLOS',
+    '--stake-cpu',
+    '1.0000 TLOS',
+  ]);
+  cleos([
+    'set',
+    'contract',
+    electionSource,
+    '/work/.artifacts/modules-release',
+    'decide.wasm',
+    'decide.abi',
+    '-p',
+    electionSource + '@active',
+  ]);
+  cleos([
+    'set',
+    'account',
+    'permission',
+    electionSource,
+    'active',
+    '--add-code',
+    '-p',
+    electionSource + '@active',
+  ]);
+  moduleBaselines.set(electionSource, await used(electionSource));
+  const beforeContext = await used();
+  configureFixtureContext(network.container, runtime, { decide: electionSource });
+  baseline += (await used()) - beforeContext;
+  const sourceHash = moduleHashes.get('decide');
+  if (!sourceHash) throw new Error('DECIDE_HASH_REQUIRED');
+  await push('setramcode', { account: electionSource, code_hash: sourceHash }, runtime);
+  await push(
+    'listmod',
+    {
+      account: electionSource,
+      publisher: 'alice',
+      party: 0,
+      accepts_fee_rule: 1,
+      price: '0.0000 TLOS',
+      code_hash: sourceHash,
+      title: 'Owned election hold fixture',
+    },
+    runtime,
+  );
+
+  await push('createdao', {
+    dao_id: '5',
+    owner: 'alice',
+    metadata: '{}',
+    privacy: 0,
+    token_contract: 'eosio.token',
+    token_symbol: '4,TLOS',
+  });
+  await push('initgov', {
+    dao_id: '5',
+    settings: {
+      participant_mode: 0,
+      decide: electionSource,
+      guardian: 'alice',
+      kind: 0,
+      duration: 60,
+      quorum: 5000,
+      approval: 5001,
+      governed_works: false,
+      max_commitment: 100000,
+      daily_commitment: 100000,
+    },
+  });
+  const people = Array.from({ length: 9 }, (_, i) => (i === 0 ? key : PrivateKey.generate('K1')));
+  for (const [index, memberKey] of people.entries())
+    await push('enroll', {
+      dao_id: '5',
+      member_id: index + 1,
+      native_account: '',
+      signing_key: memberKey.toPublic().toString(),
+      encryption_key: 'native-election-reserve',
+      custody: 0,
+    });
+
+  await push('setmodule', {
+    dao_id: '5',
+    account: electionSource,
+    version: 1,
+    actions: ModulePermissions.decide.actions,
+    grants: ModulePermissions.decide.grants,
+    code_hash: sourceHash,
+  });
+
+  await act(
+    runtime,
+    'putjson',
+    { document_id: '1', version: 1, value: '{}', envelope_version: 0, key_epoch: '0' },
+    5,
+  );
+  const now = Math.floor((await api.v1.chain.get_info()).head_block_time.toMilliseconds() / 1000);
+  await act(
+    electionSource,
+    'newelect',
+    {
+      election_id: '501',
+      title: 'x'.repeat(80),
+      document_id: '1',
+      document_version: 1,
+      nomination_close: now + 10,
+      term_start: now + 300,
+      term_end: now + 3600,
+      seats: 8,
+    },
+    5,
+  );
+  for (let id = 2; id <= 9; id++) {
+    const memberKey = people[id - 1];
+    if (!memberKey) throw new Error('ELECTION_KEY_REQUIRED');
+    await act(
+      electionSource,
+      'nominate',
+      { election_id: '501', active: true },
+      5,
+      String(id),
+      memberKey,
+    );
+  }
+  while (
+    Math.floor((await api.v1.chain.get_info()).head_block_time.toMilliseconds() / 1000) <
+    now + 10
+  )
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  await act(electionSource, 'startelect', { election_id: '501' }, 5);
+  for (let id = 2; id <= 9; id++) {
+    const memberKey = people[id - 1];
+    if (!memberKey) throw new Error('ELECTION_KEY_REQUIRED');
+    await act(
+      electionSource,
+      'vote',
+      { ballot_id: '501', choice: id - 1 },
+      5,
+      String(id),
+      memberKey,
+    );
+  }
+  const ballot = DecideTableSchemas.ballots.parse(
+    (
+      await api.v1.chain.get_table_rows({
+        code: electionSource,
+        scope: runtime,
+        table: 'ballots',
+        key_type: 'i64',
+        lower_bound: UInt64.from(501),
+        limit: 1,
+        json: true,
+      })
+    ).rows[0],
+  );
+  while (
+    Math.floor((await api.v1.chain.get_info()).head_block_time.toMilliseconds() / 1000) <
+    ballot.closes
+  )
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  const initial = await used(electionSource);
+  cleos([
+    'push',
+    'action',
+    'eosio',
+    'setacctram',
+    JSON.stringify([electionSource, initial + 1024]),
+    '-p',
+    'eosio@active',
+  ]);
+  const before = await used(electionSource),
+    counterBefore = await accounted(electionSource);
+  const originalBaseline = moduleBaselines.get(electionSource);
+  if (originalBaseline === undefined) throw new Error('ELECTION_BASELINE_REQUIRED');
+  moduleBaselines.set(electionSource, originalBaseline + before - initial);
+  cleos([
+    'push',
+    'action',
+    'eosio',
+    'setacctram',
+    JSON.stringify([electionSource, before]),
+    '-p',
+    'eosio@active',
+  ]);
+  expect((await api.v1.chain.get_account(electionSource)).ram_quota.toString()).toBe(
+    String(before),
+  );
+  let after: number;
+  try {
+    await push('finalize', { runtime, dao_id: '5', ballot_id: '501' }, 'alice', electionSource);
+    after = await used(electionSource);
+    expect(after).toBeLessThan(before);
+    expect(BigInt(after - before)).toBe((await accounted(electionSource)) - counterBefore);
+    const terms = (
+      await api.v1.chain.get_table_rows({
+        code: electionSource,
+        scope: runtime,
+        table: 'terms',
+        json: true,
+        limit: 25,
+      })
+    ).rows.map((row) => DecideTableSchemas.terms.parse(row));
+    expect(terms.filter((term) => term.election_id === '501')).toHaveLength(8);
+  } finally {
+    cleos([
+      'push',
+      'action',
+      'eosio',
+      'setacctram',
+      JSON.stringify([electionSource, null]),
+      '-p',
+      'eosio@active',
+    ]);
+  }
+  expect(
+    BigInt(await used(electionSource)) - BigInt(moduleBaselines.get(electionSource) ?? 0),
+  ).toBe(await accounted(electionSource));
+  expect(BigInt(await used()) - BigInt(baseline)).toBe(await accounted());
+  writeFileSync(
+    '.artifacts/native-election-hold.json',
+    JSON.stringify(
+      {
+        runtime,
+        payer: electionSource,
+        sourceHash,
+        seats: 8,
+        titleBytes: 80,
+        beforeBytes: before,
+        afterBytes: after,
+        deltaBytes: after - before,
+        finiteQuotaBytes: before,
+        systemControlBytes: before - initial,
+        limitation:
+          'Owned native physical-payer limit; DAO enforcement and legacy election adoption remain unqualified.',
+      },
+      null,
+      2,
+    ) + '\n',
+  );
+}, 120000);
 
 it('grants included RAM once and only adds newly approved member slots across renewal and policy changes', async () => {
   const quota = (await api.v1.chain.get_account(runtime)).ram_quota.toString();

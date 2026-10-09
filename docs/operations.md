@@ -256,3 +256,5 @@ Encrypted automated PostgreSQL/configuration backups must be stored outside the 
 The dated $20 sandbox examples above describe legacy flows, not current setup prices. Follow [connected payment operations](operations/connected-payments.md) for current shared/independent options, monthly approval, merchant onboarding, separate webhooks, live flags, broker tokens and billing recovery.
 
 Resource development branch: mainnet and testnet require separate Pinata accounts and stable ownership IDs. The ledger keeps all provider file IDs and counts a verified CID once per DAO. See [storage accounting and legacy ownership reconciliation](storage-accounting.md) before upgrading an existing database. Automatic removal is disabled.
+
+Hosted Pinata retrieval also requires a server-only gateway key and `CONTENT_GATEWAY_BUDGET_ID` for a separately registered operator-funded period. A JWT/gateway alone no longer permits upstream reads. Missing or exhausted allowance blocks retrieval and upload verification without unpinning anything. Follow [shared gateway allowance](operations/gateway-allowance.md) for registration, renewal, provider checks and database-loss recovery.

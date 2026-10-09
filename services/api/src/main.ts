@@ -11,6 +11,7 @@ import { NativeChainGateway } from './native-chain.js';
 import { migrate } from './store.js';
 import { createServer } from './server.js';
 import { PinataStorage } from './content/pinata.js';
+import { GatewayAllowance } from './content/gateway-allowance.js';
 import { ContentService } from './content/service.js';
 import { EncryptedArchiveBackup, readArchiveBackupConfig } from './archive/backup.js';
 import { ProviderScopeSchema } from './content/ledger.js';
@@ -63,6 +64,7 @@ const configuration = z
     PINATA_JWT: z.string().min(1).optional(),
     PINATA_ACCOUNT_ID: ProviderScopeSchema.optional(),
     CONTENT_GATEWAY: z.url().optional(),
+    CONTENT_GATEWAY_BUDGET_ID: z.uuid().optional(),
     CONTENT_GATEWAY_KEY: z
       .string()
       .regex(/^[\x21-\x7e]{1,4096}$/)
@@ -89,6 +91,8 @@ if (!!env.BOOTSTRAP_OWNER !== !!env.BOOTSTRAP_PRIVATE_KEY)
 if (!!env.PINATA_JWT !== !!env.CONTENT_GATEWAY || !!env.PINATA_JWT !== !!env.PINATA_ACCOUNT_ID)
   throw new Error('PINATA_CONFIGURATION_INVALID');
 if (env.CONTENT_GATEWAY_KEY && !env.PINATA_JWT) throw new Error('PINATA_CONFIGURATION_INVALID');
+if (env.CONTENT_GATEWAY_BUDGET_ID && !env.PINATA_JWT)
+  throw new Error('PINATA_CONFIGURATION_INVALID');
 if (!!env.GOOGLE_CLIENT_ID !== !!env.GOOGLE_PUBLIC_JWK)
   throw new Error('GOOGLE_CONFIGURATION_INVALID');
 function privateKey(value: string): PrivateKey {
@@ -163,12 +167,26 @@ const hostedStorage = storageConfig
     })
   : undefined;
 const retentionEnabled = readRetentionEnabled(process.env, !!env.PINATA_JWT, !!hostedStorage);
+const gatewayAllowance =
+  env.PINATA_ACCOUNT_ID && env.CONTENT_GATEWAY
+    ? new GatewayAllowance(
+        pool,
+        env.PINATA_ACCOUNT_ID,
+        new URL(env.CONTENT_GATEWAY).origin,
+        env.CONTENT_GATEWAY_BUDGET_ID ?? null,
+      )
+    : undefined;
 const content =
   env.PINATA_JWT && env.CONTENT_GATEWAY
     ? new ContentService(
         pool,
         chain,
-        new PinataStorage(env.PINATA_JWT, env.CONTENT_GATEWAY, env.CONTENT_GATEWAY_KEY),
+        new PinataStorage(
+          env.PINATA_JWT,
+          env.CONTENT_GATEWAY,
+          env.CONTENT_GATEWAY_KEY,
+          gatewayAllowance,
+        ),
         BigInt(env.CONTENT_FREE_STORAGE_BYTES),
         'pinata',
         env.PINATA_ACCOUNT_ID,
@@ -223,6 +241,7 @@ const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
     : {}),
   ...(connectConfig ? { payments: new ConnectedPayments(pool, chain, connectConfig) } : {}),
   ...(content ? { content } : {}),
+  ...(gatewayAllowance ? { gatewayAllowance } : {}),
   ...(providers.google || providers.telegram ? { providers } : {}),
   ...(stripeConfig
     ? { billing: new StripeBilling(pool, stripeConfig, env.FRONTEND_ORIGIN, chain, creation) }

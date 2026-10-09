@@ -1,0 +1,13 @@
+{
+  "runtime": "ramobsspm2cp",
+  "payer": "relectspm2cp",
+  "sourceHash": "4cf20ecedac8994c55fd78804a9053a2bc5cb456a86cf4a5e4dbbd7e6e66d6a2",
+  "seats": 8,
+  "titleBytes": 80,
+  "beforeBytes": 2336604,
+  "afterBytes": 2336362,
+  "deltaBytes": -242,
+  "finiteQuotaBytes": 2336604,
+  "systemControlBytes": 194,
+  "limitation": "Owned native physical-payer limit; DAO enforcement and legacy election adoption remain unqualified."
+}

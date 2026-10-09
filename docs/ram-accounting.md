@@ -62,3 +62,13 @@ Native token transfers can create or change the payer of rows in a separate toke
 ## First-use metadata allocation
 
 Newly enrolled human accounts allocate their fixed credential-epoch row immediately, just as agent accounts already did. First signing-key recovery then modifies existing fixed-size state. Newly accepted payroll schedules likewise allocate the fixed control row at commitment; first settlement updates its existing payout timestamp. These changes preserve original row serialization, identifiers, key/nonce domains and legacy fallback behavior. They remove two avoidable first-use allocation paths but do not implement the remaining completion ledger, token-payer integration or quota enforcement.
+
+## Physically allocated obligation receipt holds — development
+
+With observation enabled, accepting an obligation also creates a separate DAO-scoped `ramholds` row with 1,024 bytes of physical padding. This is real native RAM occupied before approval, not an unfunded counter or a premature payment receipt. Canonical packed receipt size, primary/index geometry and scope headers are checked on chain against the hold recipe. Cancellation releases the hold. Native settlement consumes it; settlement into an internal claim shrinks it to 512 bytes of padding and marks it ready for that recipient.
+
+A full-claim withdrawal releases up to 25 ready holds before appending the withdrawal receipt. Partial withdrawals retain all claim holds and append ordinary receipts. If several obligations accumulated into one full withdrawal, unused ready holds can be cleared permissionlessly in batches of 1–25 with `clearholds`, only while the recipient has no outstanding claim. Pending obligations, financial receipts and balances cannot be removed by this action. Failed payment/withdrawal rolls every hold and liability mutation back.
+
+Resources reports the canonical serialized hold rows plus qualified primary/index/header overhead, already included in retained usage. The reader refuses more than 5,000 held rows rather than returning a partial total. These live reads are not atomic billing snapshots.
+
+The sizing includes the 368-byte first-transfer headroom measured for the pinned official reference token; this does not qualify arbitrary token code, external row-payer changes or Telos production token behavior. These holds cover the runtime receipt path, not every module execution/election or private-key-grant path. New unobserved deployments and old obligations retain their existing settlement behavior. General legacy adoption, external token reconciliation and quota enforcement remain release gates; no emergency execution guarantee is claimed yet.

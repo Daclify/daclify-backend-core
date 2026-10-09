@@ -2,6 +2,7 @@ import type { PoolClient } from 'pg';
 import { z } from 'zod';
 import { CidSchema, Uint64Schema, type DaoRef } from '../../../../protocol/base.js';
 import {
+  ProviderScopeSchema,
   HostedObjectDescriptorSchema,
   HostedReferenceSchema,
   type HostedObjectDescriptor,
@@ -12,7 +13,7 @@ import { ApiError } from '../errors.js';
 import type { PinnedFile } from './provider.js';
 
 export const CONTENT_IMPORT_PROFILE = 'public-cidv1-file-v1';
-export const ProviderScopeSchema = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/);
+export { ProviderScopeSchema };
 const ObjectSchema = z.object({
   id: z.uuid(),
   provider_id: z.uuid(),

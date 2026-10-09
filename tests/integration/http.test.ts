@@ -1,7 +1,11 @@
-import { beforeAll, afterAll, describe, it, expect } from 'vitest';
+import { beforeAll, afterAll, describe, it, expect, vi } from 'vitest';
 import { Pool } from 'pg';
 import { PrivateKey } from '@wharfkit/antelope';
-import { generateKeyPairSync } from 'node:crypto';
+import { generateKeyPairSync, randomUUID } from 'node:crypto';
+import {
+  GatewayAllowance,
+  registerGatewayAllowance,
+} from '../../services/api/src/content/gateway-allowance.js';
 import { z } from 'zod';
 import { migrate } from '../../services/api/src/store.js';
 import { createServer } from '../../services/api/src/server.js';
@@ -333,6 +337,45 @@ describe('HTTP session boundary', () => {
     expect(status.database.state).toBe('reachable');
     expect(status.services.every((s) => !s.configured)).toBe(true);
     expect(response.body).not.toMatch(/postgres:\/\/|PVT_|whsec_|private key provider detail/);
+  });
+  it('reports the shared allowance without its funding reference and redacts a failed read', async () => {
+    const id = randomUUID(),
+      providerScope = 'status-' + randomUUID(),
+      gateway = 'https://status.mypinata.cloud';
+    await registerGatewayAllowance(pool, {
+      id,
+      providerScope,
+      gateway,
+      startsAt: new Date(Date.now() - 60000).toISOString(),
+      endsAt: new Date(Date.now() + 3600000).toISOString(),
+      byteLimit: '1000',
+      requestLimit: '10',
+      fundingReference: 'private-operator-reference',
+    });
+    const gatewayAllowance = new GatewayAllowance(pool, providerScope, gateway, id);
+    await gatewayAllowance.reserve(100);
+    const hosted = await createServer(pool, chain, origin, { gatewayAllowance });
+    try {
+      const response = await hosted.inject(ApiRoutes.status.path);
+      expect(ApiRoutes.status.response.parse(response.json()).gatewayAllowance).toMatchObject({
+        state: 'available',
+        reservedBytes: '100',
+        requests: '1',
+        fundingQualification: 'operator-attested',
+      });
+      expect(response.body).not.toContain('private-operator-reference');
+      const read = vi
+        .spyOn(gatewayAllowance, 'status')
+        .mockRejectedValueOnce(new Error('private database connection detail'));
+      const unavailable = await hosted.inject(ApiRoutes.status.path);
+      expect(ApiRoutes.status.response.parse(unavailable.json()).gatewayAllowance).toMatchObject({
+        state: 'unavailable',
+      });
+      expect(unavailable.body).not.toContain('private database connection detail');
+      read.mockRestore();
+    } finally {
+      await hosted.close();
+    }
   });
   it('rejects unpaid creation and forged order prices through authenticated HTTP', async () => {
     const { cookie, session } = await login();

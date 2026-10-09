@@ -4,6 +4,79 @@ import { BrandImageSchema } from './dao.js';
 import { Checksum256 } from '@wharfkit/antelope';
 import { DaoRefSchema, IdSchema, Uint64Schema, ChainIdSchema, CidSchema } from './base.js';
 export const MAX_HOSTED_CONTENT_BYTES = 5 * 1024 * 1024;
+export const ProviderScopeSchema = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/);
+export const GatewayOriginSchema = z.url().refine((value) => {
+  const url = new URL(value);
+  return (
+    url.protocol === 'https:' &&
+    !url.username &&
+    !url.password &&
+    !url.search &&
+    !url.hash &&
+    url.pathname === '/' &&
+    value === url.origin
+  );
+});
+const GatewayLimitSchema = Uint64Schema.refine(
+  (value) => BigInt(value) > 0n && BigInt(value) <= (1n << 63n) - 1n,
+);
+export const GatewayFundingSchema = z
+  .strictObject({
+    id: z.uuid(),
+    providerScope: ProviderScopeSchema,
+    gateway: GatewayOriginSchema,
+    startsAt: z.iso.datetime().transform((value) => new Date(value).toISOString()),
+    endsAt: z.iso.datetime().transform((value) => new Date(value).toISOString()),
+    byteLimit: GatewayLimitSchema,
+    requestLimit: GatewayLimitSchema,
+    fundingReference: z.string().regex(/^[\x21-\x7e]{1,128}$/),
+  })
+  .refine((value) => {
+    const duration = Date.parse(value.endsAt) - Date.parse(value.startsAt);
+    return duration > 0 && duration <= 31 * 86400000;
+  });
+export const GatewayAllowanceStatusSchema = z
+  .strictObject({
+    state: z.enum([
+      'unconfigured',
+      'unavailable',
+      'scheduled',
+      'available',
+      'exhausted',
+      'expired',
+    ]),
+    startsAt: z.iso.datetime().nullable(),
+    endsAt: z.iso.datetime().nullable(),
+    byteLimit: Uint64Schema,
+    reservedBytes: Uint64Schema,
+    requestLimit: Uint64Schema,
+    requests: Uint64Schema,
+    fundingQualification: z.enum(['unconfigured', 'operator-attested']),
+  })
+  .refine(
+    (value) =>
+      BigInt(value.reservedBytes) <= BigInt(value.byteLimit) &&
+      BigInt(value.requests) <= BigInt(value.requestLimit),
+  )
+  .refine((value) => {
+    if (value.fundingQualification === 'unconfigured')
+      return (
+        ['unconfigured', 'unavailable'].includes(value.state) &&
+        value.startsAt === null &&
+        value.endsAt === null &&
+        [value.byteLimit, value.reservedBytes, value.requestLimit, value.requests].every(
+          (n) => n === '0',
+        )
+      );
+    return (
+      !['unconfigured', 'unavailable'].includes(value.state) &&
+      value.startsAt !== null &&
+      value.endsAt !== null &&
+      Date.parse(value.endsAt) > Date.parse(value.startsAt) &&
+      BigInt(value.byteLimit) > 0n &&
+      BigInt(value.requestLimit) > 0n
+    );
+  });
 const MAX_ENCODED_BYTES = Math.ceil(MAX_HOSTED_CONTENT_BYTES / 3) * 4;
 // A repeated-group regular expression can overflow the JS stack on multi-MiB files.
 // Check the alphabet and unused padding bits in one bounded pass instead.

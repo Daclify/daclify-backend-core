@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = '7c27972fb5a349024396c29012f47453720cb66f99f602da285488fb1e3a9d8f';
+export const runtimeAbiHash = 'ccb9f9c0366c9bfe045653f7790c3de627809127b3d2aeb7e8e0cdac60c5be1d';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -778,6 +778,24 @@ export const runtimeAbi = {
         {
           "name": "payer",
           "type": "name"
+        }
+      ]
+    },
+    {
+      "name": "clearholds",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "recipient",
+          "type": "uint64"
+        },
+        {
+          "name": "limit",
+          "type": "uint32"
         }
       ]
     },
@@ -3047,6 +3065,28 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "ram_completion_hold",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "recipient",
+          "type": "uint64"
+        },
+        {
+          "name": "ready",
+          "type": "bool"
+        },
+        {
+          "name": "padding",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
       "name": "ram_counter",
       "base": "",
       "fields": [
@@ -4360,6 +4400,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "clearholds",
+      "type": "clearholds",
+      "ricardian_contract": ""
+    },
+    {
       "name": "commitepoch",
       "type": "commitepoch",
       "ricardian_contract": ""
@@ -5059,6 +5104,13 @@ export const runtimeAbi = {
       "key_types": []
     },
     {
+      "name": "ramholds",
+      "type": "ram_completion_hold",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "ramintent",
       "type": "ram_payment_intent",
       "index_type": "i64",
@@ -5367,6 +5419,11 @@ export interface catalogue_record {
 }
 export interface checkrampool {
   payer: string;
+}
+export interface clearholds {
+  dao_id: string;
+  recipient: string;
+  limit: number;
 }
 export interface commitepoch {
   runtime: string;
@@ -5975,6 +6032,12 @@ export interface ram_card_receipt {
   operational_bps: number;
   fulfiller: string;
 }
+export interface ram_completion_hold {
+  id: string;
+  recipient: string;
+  ready: boolean;
+  padding: string;
+}
 export interface ram_counter {
   payer: string;
   identity: string;
@@ -6329,6 +6392,7 @@ export interface RuntimeActions {
   cancelob: cancelob;
   cardcreate: cardcreate;
   checkrampool: checkrampool;
+  clearholds: clearholds;
   commitepoch: commitepoch;
   confirmext: confirmext;
   createdao: createdao;

@@ -1,0 +1,21 @@
+{
+  "runtime": "rmcorefefmfh",
+  "token": "rmtoknfefmfh",
+  "receiver": "rmrcvrfefmfh",
+  "runtimeCodeHash": "d5f4af5867d38339cb6bbf08fc2ac9c5e90a275bfb050013efc26860d9eb2fb7",
+  "tokenCodeHash": "ea1bd149e28f21420450b6c7b2c5be600ef9922e44c383fa4489b025aac0eb46",
+  "acceptedBytes": 7532232,
+  "claimBytes": 7532037,
+  "withdrawnBytes": 7531921,
+  "settlementDeltaBytes": -195,
+  "fullClaimDeltaBytes": -310,
+  "physicalQuotaAtWithdrawalBytes": 7532231,
+  "managedQuotaControlBytes": 194,
+  "partialWithdrawalRejectedAtPhysicalQuota": true,
+  "limitations": [
+    "Owned native reference token only; Telos token code is not qualified.",
+    "Exact finite managed quota is an exhaustion fixture; native RAM purchases reject managed accounts.",
+    "External sender-paid rows remain outside the Daclify contract-record counter.",
+    "Quota enforcement and legacy holds remain disabled/unimplemented."
+  ]
+}

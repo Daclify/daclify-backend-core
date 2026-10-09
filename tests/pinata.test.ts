@@ -3,6 +3,8 @@ import { createHash, randomUUID } from 'node:crypto';
 import { CID } from 'multiformats/cid';
 import { create } from 'multiformats/hashes/digest';
 import { PinataStorage } from '../services/api/src/content/pinata.js';
+import { GatewayAllowance } from '../services/api/src/content/gateway-allowance.js';
+import { Pool } from 'pg';
 const bytes = new TextEncoder().encode('Synthetic content fixture');
 const cid = CID.createV1(
   0x55,
@@ -13,6 +15,33 @@ const uploadId = randomUUID();
 const provider = new PinataStorage('fixture-token-only', 'https://example.mypinata.cloud');
 afterEach(() => vi.unstubAllGlobals());
 describe('Pinata adapter fault fixtures (not live provider evidence)', () => {
+  it('reserves allowance before each upstream read and retains reservations on failure', async () => {
+    const pool = new Pool();
+    const allowance = new GatewayAllowance(pool, 'fixture', 'https://example.mypinata.cloud', null);
+    const reserve = vi.spyOn(allowance, 'reserve').mockResolvedValue();
+    const guarded = new PinataStorage(
+      'fixture-token-only',
+      'https://example.mypinata.cloud',
+      'gateway-fixture-only',
+      allowance,
+    );
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(async () => {
+      expect(reserve).toHaveBeenCalledWith(bytes.length);
+      return new Response('provider failure', { status: 503 });
+    });
+    vi.stubGlobal('fetch', fetcher);
+    await expect(guarded.retrieve(cid, bytes.length)).rejects.toThrow('CONTENT_UNAVAILABLE');
+    expect(reserve).toHaveBeenCalledTimes(1);
+    reserve.mockRejectedValueOnce(new Error('CONTENT_GATEWAY_ALLOWANCE_EXHAUSTED'));
+    await expect(guarded.retrieve(cid, bytes.length)).rejects.toThrow(
+      'CONTENT_GATEWAY_ALLOWANCE_EXHAUSTED',
+    );
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(
+      () => new PinataStorage('fixture', 'https://example.mypinata.cloud', undefined, allowance),
+    ).toThrow('CONTENT_GATEWAY_KEY_REQUIRED');
+    await pool.end();
+  });
   it('finds only Daclify-owned pins for an exact CID and rejects truncated or mismatched inventory', async () => {
     const response = {
       data: {

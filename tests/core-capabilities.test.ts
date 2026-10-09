@@ -16,6 +16,8 @@ beforeEach(async () => {
   works = loadContract(chain, 'works', '.artifacts/contracts/modrelay');
   token = loadContract(chain, 'eosio.token', '.artifacts/contracts/testtoken');
   await send(runtime, 'init', ['ab'.repeat(32)], 'daclifycore@active');
+  await send(runtime, 'initramobs', [], 'daclifycore@active');
+  await send(runtime, 'setramcode', ['works', worksHash], 'daclifycore@active');
   await send(runtime, 'createdao', [1, 'alice', '{}', 2, 'eosio.token', '4,TLOS'], 'alice@active');
   for (const id of [1, 2])
     await send(
@@ -107,6 +109,111 @@ describe('roles and encrypted epoch grants', () => {
   });
 });
 describe('bounded governance locks and financial exit', () => {
+  it('backs each accepted obligation with real completion space without a premature receipt', async () => {
+    await send(
+      works,
+      'reserve',
+      [runtime.name.toString(), 1, 1, 2, '1.0000 TLOS', 0],
+      'works@active',
+    );
+    expect(row(runtime, 'ramholds', 1n, 1n)).toMatchObject({ recipient: 2, ready: false });
+    expect(row(runtime, 'receipts', 1n, 1n)).toBeUndefined();
+    await send(works, 'cancelob', [runtime.name.toString(), 1, 1], 'works@active');
+    expect(row(runtime, 'ramholds', 1n, 1n)).toBeUndefined();
+    expect(balance()).toMatchObject({ available: 100000, reserved: 0, claims: 0 });
+  });
+  it('retains full-claim receipt space through partial exits and releases it on full exit', async () => {
+    await send(
+      works,
+      'reserve',
+      [runtime.name.toString(), 1, 1, 2, '1.0000 TLOS', 0],
+      'works@active',
+    );
+    await send(works, 'approveob', [runtime.name.toString(), 1, 1], 'works@active');
+    await send(runtime, 'payob', [1, 'works', 1], 'bob@active');
+    expect(row(runtime, 'ramholds', 1n, 1n)).toMatchObject({ recipient: 2, ready: true });
+    await send(
+      runtime,
+      'withdraw',
+      ['daclifycore', 1, 2, 'bob', '0.2500 TLOS'],
+      'daclifycore@active',
+    );
+    expect(row(runtime, 'ramholds', 1n, 1n)).toMatchObject({ ready: true });
+    expect(balance().claims).toBe(7500);
+    await send(
+      runtime,
+      'withdraw',
+      ['daclifycore', 1, 2, 'bob', '0.7500 TLOS'],
+      'daclifycore@active',
+    );
+    expect(row(runtime, 'ramholds', 1n, 1n)).toBeUndefined();
+    expect(balance().claims).toBe(0);
+    expect(row(runtime, 'receipts', 1n, 3n)).toMatchObject({ kind: 2, quantity: '0.7500 TLOS' });
+  });
+  it('cleans surplus ready holds in bounded batches without touching pending obligations or receipts', async () => {
+    for (const id of [1, 2, 3]) {
+      await send(
+        works,
+        'reserve',
+        [runtime.name.toString(), 1, id, 2, '1.0000 TLOS', 0],
+        'works@active',
+      );
+      if (id < 3) {
+        await send(works, 'approveob', [runtime.name.toString(), 1, id], 'works@active');
+        await send(runtime, 'payob', [1, 'works', id], 'bob@active');
+      }
+    }
+    await expect(send(runtime, 'clearholds', [1, 2, 25], 'bob@active')).rejects.toThrow(
+      'CLAIM_OUTSTANDING',
+    );
+    await send(
+      runtime,
+      'withdraw',
+      ['daclifycore', 1, 2, 'bob', '2.0000 TLOS'],
+      'daclifycore@active',
+    );
+    await expect(send(runtime, 'clearholds', [1, 2, 0], 'bob@active')).rejects.toThrow(
+      'RAM_HOLD_BATCH',
+    );
+    await expect(send(runtime, 'clearholds', [1, 2, 26], 'bob@active')).rejects.toThrow(
+      'RAM_HOLD_BATCH',
+    );
+    await send(runtime, 'clearholds', [1, 2, 1], 'bob@active');
+    expect(row(runtime, 'ramholds', 1n, 2n)).toBeUndefined();
+    expect(row(runtime, 'ramholds', 1n, 3n)).toMatchObject({ ready: false });
+    expect(row(runtime, 'receipts', 1n, 3n)).toMatchObject({ kind: 2, quantity: '2.0000 TLOS' });
+    await send(runtime, 'clearholds', [1, 2, 25], 'bob@active');
+    expect(balance()).toMatchObject({ available: 70000, reserved: 10000, claims: 0 });
+  });
+  it('releases at most 25 accumulated ready holds on full exit and lets bounded cleanup finish', async () => {
+    for (let id = 1; id <= 29; id++) {
+      await send(
+        works,
+        'reserve',
+        [runtime.name.toString(), 1, id, 2, '0.0100 TLOS', 0],
+        'works@active',
+      );
+      if (id <= 28) {
+        await send(works, 'approveob', [runtime.name.toString(), 1, id], 'works@active');
+        await send(runtime, 'payob', [1, 'works', id], 'bob@active');
+      }
+    }
+    await send(
+      runtime,
+      'withdraw',
+      ['daclifycore', 1, 2, 'bob', '0.2800 TLOS'],
+      'daclifycore@active',
+    );
+    expect(row(runtime, 'ramholds', 1n, 25n)).toBeUndefined();
+    expect(row(runtime, 'ramholds', 1n, 26n)).toMatchObject({ ready: true });
+    await send(runtime, 'clearholds', [1, 2, 1], 'bob@active');
+    expect(row(runtime, 'ramholds', 1n, 26n)).toBeUndefined();
+    expect(row(runtime, 'ramholds', 1n, 27n)).toMatchObject({ ready: true });
+    await send(runtime, 'clearholds', [1, 2, 25], 'bob@active');
+    expect(row(runtime, 'ramholds', 1n, 28n)).toBeUndefined();
+    expect(row(runtime, 'ramholds', 1n, 29n)).toMatchObject({ ready: false });
+    expect(balance()).toMatchObject({ claims: 0, reserved: 100 });
+  });
   it('freezes supply under a granted ballot lock', async () => {
     await send(works, 'govlock', [runtime.name.toString(), 1, 1, 500], 'works@active');
     expect(balance().active_ballots).toBe(1);

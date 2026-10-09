@@ -4,6 +4,8 @@ Current development version: **0.7.0-alpha.1**, contract interface 1. This is a 
 
 ## Start with the task
 
+Hosted operators must also configure a [shared gateway allowance](operations/gateway-allowance.md); its application counters do not prove provider funding.
+
 | Task                                                        | Guide                                                                                                                                                                                                     |
 | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Understand the repository split and capabilities            | [Core README](../README.md), [modules README](https://github.com/Daclify/daclify-backend-modules/blob/main/README.md), [frontend README](https://github.com/Daclify/daclify-frontend/blob/main/README.md) |
@@ -74,4 +76,4 @@ redistribution, hosting modified versions or combining modules. The app exposes
 this guidance at `/docs/license`; operators must offer their actual deployed source.
 
 
-Resource checkpoint: [RAM accounting, native/card purchases and operator reserve](ram-accounting.md) describes the current implementation and launch gates. DAO Resources exposes native one-time purchases and optional exact-price card checkout, prepaid pinned-storage capacity and verified archive exports. Included pools, completion reserves, safe backfill, native archive approval/pruning, guarded cleanup and full empty-database history recovery remain open; automatic deletion and release packaging stay disabled.
+Resource checkpoint: [RAM accounting, native/card purchases and operator reserve](ram-accounting.md) describes the current implementation and launch gates. DAO Resources exposes native one-time purchases and optional exact-price card checkout, prepaid pinned-storage capacity and verified archive exports. Included pools, new obligation receipt holds, native archive approval/pruning and empty-database history recovery are implemented in development and have bounded owned-fixture verification. Complete completion/external-token qualification, general legacy backfill and live guarded-cleanup/provider proof remain release gates; automatic deletion and release packaging stay disabled.

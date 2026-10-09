@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { CidSchema } from '../../../../protocol/base.js';
 import { ApiError } from '../errors.js';
 import { MAX_HOSTED_CONTENT_BYTES } from '../../../../protocol/storage.js';
+import type { GatewayAllowance } from './gateway-allowance.js';
 const FileSchema = z.object({
   id: z.uuid(),
   cid: CidSchema,
@@ -26,7 +27,12 @@ export class PinataStorage implements ContentProvider {
   #jwt: string;
   #gateway: string;
   #gatewayKey: string | undefined;
-  constructor(jwt: string, gateway: string, gatewayKey?: string) {
+  constructor(
+    jwt: string,
+    gateway: string,
+    gatewayKey?: string,
+    private readonly allowance?: GatewayAllowance,
+  ) {
     try {
       const url = new URL(gateway);
       if (
@@ -47,6 +53,7 @@ export class PinataStorage implements ContentProvider {
     if (gatewayKey !== undefined && !/^[\x21-\x7e]{1,4096}$/.test(gatewayKey))
       throw new Error('CONTENT_GATEWAY_KEY');
     this.#gatewayKey = gatewayKey;
+    if (allowance && !gatewayKey) throw new Error('CONTENT_GATEWAY_KEY_REQUIRED');
   }
   async #request(url: string, init: RequestInit = {}, allowNotFound = false): Promise<Response> {
     try {
@@ -142,6 +149,7 @@ export class PinataStorage implements ContentProvider {
       expectedBytes > MAX_HOSTED_CONTENT_BYTES
     )
       throw new ApiError('CONTENT_SIZE');
+    await this.allowance?.reserve(expectedBytes);
     try {
       const response = await fetch(`${this.#gateway}/ipfs/${cid}`, {
         headers: this.#gatewayKey ? { 'x-pinata-gateway-token': this.#gatewayKey } : {},

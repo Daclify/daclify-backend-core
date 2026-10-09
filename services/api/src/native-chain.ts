@@ -78,6 +78,7 @@ import {
 import { PaymentPolicySchema } from '../../../protocol/payments.js';
 import type { DaoRef } from '../../../protocol/base.js';
 import { RuntimeCodeHash, RuntimeRawAbiHash } from '../../../sdk/generated/releases.js';
+import { runtimeAbi } from '../../../sdk/generated/runtime.js';
 import { parseModuleDeployments } from './deployment-config.js';
 import { z } from 'zod';
 import { executedChainResult } from './chain-result.js';
@@ -416,6 +417,26 @@ export class NativeChainGateway implements ChainGateway {
         read('modules', id),
       ]);
     const observer = observers[0];
+    let completionHolds: { rows: number; bytes: string } | null = null;
+    if (observer) {
+      let cursor: string | null = '0',
+        count = 0,
+        heldBytes = 0n;
+      const abi = ABI.from(runtimeAbi);
+      // ponytail: bounded to 5,000 holds; add a native aggregate if measured outstanding work exceeds this.
+      while (cursor !== null) {
+        const page: { rows: z.infer<typeof RuntimeTableSchemas.ramholds>[]; next: string | null } =
+          await this.tablePage('ramholds', id, cursor);
+        count += page.rows.length;
+        if (count > 5000) throw new ApiError('RESOURCE_SCOPE_LIMIT', 503);
+        for (const row of page.rows)
+          heldBytes += BigInt(
+            Serializer.encode({ abi, type: 'ram_completion_hold', object: row }).array.length + 240,
+          );
+        cursor = page.next;
+      }
+      completionHolds = { rows: count, bytes: (heldBytes + (count ? 112n : 0n)).toString() };
+    }
     if (observer && observer.runtime_hash !== RuntimeCodeHash)
       throw new ApiError('RESOURCE_UNQUALIFIED', 503);
     const accounts = [
@@ -523,6 +544,7 @@ export class NativeChainGateway implements ChainGateway {
       },
       observation: observer ? 'active' : 'disabled',
       enforcement: 'disabled',
+      completionHolds,
       read: { startedAt, completedAt: new Date().toISOString(), atomic: false },
       policy: policies[0] ? resourcePolicyFromRow(policies[0]) : null,
       totalObservedBytes: total,

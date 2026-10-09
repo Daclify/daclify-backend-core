@@ -131,6 +131,19 @@ async function counters(scope: string) {
 const info = await api.v1.chain.get_info();
 assert.equal(info.chain_id.toString(), network.chainId);
 unlockFixtureWallet(network.container);
+const aliceBalance = (await api.v1.chain.get_currency_balance('eosio.token', 'alice', 'TLOS'))[0];
+assert.ok(aliceBalance && aliceBalance.symbol.toString() === '4,TLOS');
+if (BigInt(aliceBalance.units.toString()) < 100000000n)
+  cleos([
+    'push',
+    'action',
+    'eosio.token',
+    'issue',
+    JSON.stringify(['alice', '10000.0000 TLOS', 'Owned population fixture funding']),
+    '-p',
+    'alice@active',
+    '--force-unique',
+  ]);
 // Increase only this owned fixture's synthetic market supply; no price conclusion is drawn from it.
 const market = await api.v1.chain.get_table_rows({
   code: 'eosio',
@@ -634,7 +647,7 @@ const report = {
   limits: [
     '200 disposable identities reused across DAOs model memberships, not 40000 distinct people.',
     'One representative workflow per DAO; not throughput, complete lifecycle or projected activity volumes.',
-    'No enforcement, completion holds, legacy backfill or live billing qualification.',
+    'Receipt holds are allocated for accepted obligations; no exhaustion, enforcement, legacy backfill or live billing qualification in this population run.',
     'Free capacity, included payer split and market supply are synthetic owned-fixture settings.',
   ],
   runtimeScope: Name.from(runtime).value.toString(),

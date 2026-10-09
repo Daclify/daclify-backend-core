@@ -60,6 +60,7 @@ import type { ContentService } from './content/service.js';
 import { StripeBilling } from './billing/service.js';
 import { registerMarketRoutes } from './market/routes.js';
 import { MAX_HOSTED_CONTENT_BYTES } from '../../../protocol/storage.js';
+import type { GatewayAllowance } from './content/gateway-allowance.js';
 import {
   createWindowLimiter,
   SPONSORED_GLOBAL_PER_WINDOW,
@@ -79,6 +80,7 @@ export async function createServer(
   origin: string,
   options: {
     content?: ContentService;
+    gatewayAllowance?: GatewayAllowance;
     storageAlerts?: boolean;
     providers?: ProviderConfiguration;
     billing?: StripeBilling;
@@ -387,6 +389,18 @@ export async function createServer(
       ],
     ] as const;
     return PlatformStatusSchema.parse({
+      gatewayAllowance: options.gatewayAllowance
+        ? await options.gatewayAllowance.status().catch(() => ({
+            state: 'unavailable',
+            startsAt: null,
+            endsAt: null,
+            byteLimit: '0',
+            reservedBytes: '0',
+            requestLimit: '0',
+            requests: '0',
+            fundingQualification: 'unconfigured',
+          }))
+        : null,
       checkedAt: new Date().toISOString(),
       apiVersion: VERSION,
       moduleVersion: MODULE_VERSION,

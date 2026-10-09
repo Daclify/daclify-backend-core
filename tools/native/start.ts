@@ -104,7 +104,7 @@ docker([
   '--wasm-runtime',
   'eos-vm',
   '--chain-state-db-size-mb',
-  '128',
+  name === 'daclify-resources-native' ? '1024' : '128',
   '--chain-state-db-guard-size-mb',
   '8',
 ]);

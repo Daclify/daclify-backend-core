@@ -17,6 +17,7 @@
     "typecheck": "tsc --noEmit",
     "build": "tsc",
     "dev": "tsx watch services/api/src/main.ts",
+    "gateway:allowance": "tsx tools/content/gateway-allowance.ts",
     "build:contracts": "tsx tools/build/contracts.ts",
     "codegen": "tsx tools/codegen/abi.ts",
     "test:native": "vitest run --config vitest.native.config.ts",

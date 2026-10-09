@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ResourcePolicySchema } from './resources.js';
+import { GatewayAllowanceStatusSchema } from './storage.js';
 import { NetworkSchema, CreateDaoSchema, VaultAccountSchema } from './api.js';
 import { DaoRefSchema, ChainIdSchema } from './base.js';
 import { RuntimeTableSchemas } from '../sdk/generated/schemas.js';
@@ -73,6 +74,7 @@ export const ChainPlatformSchema = z.strictObject({
   independentAvailable: z.literal(false),
 });
 export const PlatformStatusSchema = z.strictObject({
+  gatewayAllowance: GatewayAllowanceStatusSchema.nullable().default(null),
   checkedAt: z.iso.datetime(),
   apiVersion: z.string(),
   moduleVersion: z.string(),

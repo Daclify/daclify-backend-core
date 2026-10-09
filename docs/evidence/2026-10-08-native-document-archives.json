@@ -1,9 +1,9 @@
 {
   "environment": "owned local Spring fixture",
   "chainId": "d9f6e8c655703ba364f0ee82b4fd0631350475747b1924396c8fbef2558b8f51",
-  "runtime": "ramobsnrtqug",
-  "coreCodeHash": "9a6691b98cc168134625f9e76d812a670dc8085b2605c4dff6af9851cefe93ea",
-  "coreRawAbiHash": "4ac41f5aa0178b751675f1c7239580cf9984f141361eb82269f149ddf32e9e8c",
+  "runtime": "ramobsspm2cp",
+  "coreCodeHash": "d5f4af5867d38339cb6bbf08fc2ac9c5e90a275bfb050013efc26860d9eb2fb7",
+  "coreRawAbiHash": "a0f3223045f4a9cd98ad99b4cb5a8fd8cb9aa7a57f1c1d462ad77dc94b36d6b2",
   "documentId": "90",
   "prunedVersions": [
     2,
