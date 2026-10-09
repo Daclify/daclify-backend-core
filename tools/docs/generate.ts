@@ -36,7 +36,9 @@ const output = generateDocumentation(
           ? 'marketplace'
           : endpoint.path.startsWith('/v1/billing')
             ? 'service-payment'
-            : endpoint.path.startsWith('/v1/account') || endpoint.path.includes('profile')
+            : endpoint.path.startsWith('/v1/account') ||
+                endpoint.path.startsWith('/v1/people') ||
+                endpoint.path.includes('profile')
               ? 'accounts'
               : 'providers',
     })),

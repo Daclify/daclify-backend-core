@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle={
   "producer": "core",
-  "packageVersion": "0.9.0-alpha.4",
+  "packageVersion": "0.9.0-alpha.5",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -24,7 +24,7 @@ export const CoreHelpBundle={
         "User-controlled accounts keep encrypted signing and decryption keys in your browser. Recovery requires the encrypted kit and its separate recovery credential. Social login and publicly visible wallet signatures cannot recover or derive these keys.",
         "Managed recovery delegates signing and decryption recovery to an operator. OpenBao remains the open-source candidate; production custody is gated on isolated service, audit, provider and recovery qualification.",
         "Accounts with vault keys can share Account → Keys → Public join identity with a DAO administrator. Never share recovery kits or their credentials. A saved service-to-member association can survive DAO signing-key rotation while its database exists; a lost mapping cannot make an old signing key current again. Current chain permissions and wallet bindings remain authoritative.",
-        "Users is the public profile directory. Publish a profile from your own user page to appear there. Your profile is shown first when you sign in; opening another profile gives the same public view without your editing and pairing controls. Public handles belong to a specific DAO membership. One service account can publish more than one handle; this directory does not publicly correlate those memberships through private sign-in credentials.",
+        "The Users directory reads public DAO membership records, so members appear before they publish a profile. Native accounts shared across DAO memberships appear once, with available published profile details; internal members without a native account or profile appear as Member plus their public member ID. Each card opens its DAO-specific public record. Sign in to keep your own card first and edit your profile or account pairings. The paginated directory reads at most 50 members from one DAO per request; Load more users continues into the next page or DAO. Unpublished profile details remain absent and private service identities are never used for discovery. Your profile is shown first when you sign in; opening another user gives the same public view without your editing and pairing controls.",
         "Open your own user card and choose Edit profile & account to edit your public profile, set avatar/background IPFS CIDs, manage recovery keys, pair sign-in credentials and manage wallet links. A browser signer must be authorized for the selected membership to publish. Email and social contact fields entered in this public profile are public on-chain; they are distinct from private service login pairings."
       ]
     },
@@ -17688,6 +17688,255 @@ export const CoreHelpBundle={
     },
     {
       "method": "GET",
+      "path": "/v1/people/members",
+      "query": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "daoId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "after": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "onlyDao": {
+            "type": "string",
+            "maxLength": 20
+          }
+        },
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "members": {
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "native_account": {
+                  "type": "string",
+                  "maxLength": 13
+                },
+                "active": {
+                  "type": "boolean"
+                },
+                "dao": {
+                  "type": "object",
+                  "properties": {
+                    "chainId": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "contract": {
+                      "type": "string",
+                      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                    },
+                    "daoId": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "interfaceVersion": {
+                      "type": "number",
+                      "const": 1
+                    }
+                  },
+                  "required": [
+                    "chainId",
+                    "contract",
+                    "daoId",
+                    "interfaceVersion"
+                  ],
+                  "additionalProperties": false
+                },
+                "profile": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                        },
+                        "fullName": {
+                          "type": "string",
+                          "maxLength": 80
+                        },
+                        "location": {
+                          "type": "string",
+                          "maxLength": 80
+                        },
+                        "email": {
+                          "type": "string",
+                          "maxLength": 254
+                        },
+                        "telegram": {
+                          "type": "string",
+                          "maxLength": 32
+                        },
+                        "introduction": {
+                          "type": "string",
+                          "maxLength": 2000
+                        },
+                        "motto": {
+                          "type": "string",
+                          "maxLength": 140
+                        },
+                        "facebook": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "const": ""
+                            },
+                            {
+                              "type": "string",
+                              "maxLength": 300,
+                              "format": "uri"
+                            }
+                          ]
+                        },
+                        "instagram": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "const": ""
+                            },
+                            {
+                              "type": "string",
+                              "maxLength": 300,
+                              "format": "uri"
+                            }
+                          ]
+                        },
+                        "youtube": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "const": ""
+                            },
+                            {
+                              "type": "string",
+                              "maxLength": 300,
+                              "format": "uri"
+                            }
+                          ]
+                        },
+                        "linkedin": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "const": ""
+                            },
+                            {
+                              "type": "string",
+                              "maxLength": 300,
+                              "format": "uri"
+                            }
+                          ]
+                        },
+                        "website": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "const": ""
+                            },
+                            {
+                              "type": "string",
+                              "maxLength": 300,
+                              "format": "uri"
+                            }
+                          ]
+                        },
+                        "avatar": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "const": ""
+                            },
+                            {
+                              "type": "string",
+                              "maxLength": 128
+                            }
+                          ]
+                        },
+                        "background": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "const": ""
+                            },
+                            {
+                              "type": "string",
+                              "maxLength": 128
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "native_account",
+                "active",
+                "dao",
+                "profile"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "next": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "daoId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "after": {
+                    "type": "string",
+                    "maxLength": 20
+                  }
+                },
+                "required": [
+                  "daoId",
+                  "after"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "members",
+          "next"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "GET",
       "path": "/v1/people",
       "query": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -17920,7 +18169,7 @@ export const CoreHelpBundle={
         ],
         "additionalProperties": false
       },
-      "helpTopic": "providers"
+      "helpTopic": "accounts"
     },
     {
       "method": "GET",

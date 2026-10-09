@@ -2018,6 +2018,46 @@ export class NativeChainGateway implements ChainGateway {
       ? { accountName: row.account_name, profile: row.profile }
       : { accountName: null, profile: null };
   }
+  async publicMembers(value: z.infer<typeof PeopleRoutes.members.query>) {
+    const query = PeopleRoutes.members.query.parse(value);
+    const daos = await this.tablePage(
+      'daos',
+      this.config.runtime,
+      query.daoId ?? query.onlyDao ?? '0',
+      2,
+    );
+    const dao = daos.rows[0];
+    if (!dao || (query.onlyDao && dao.id !== query.onlyDao))
+      return PeopleRoutes.members.response.parse({ members: [], next: null });
+    const after = dao.id === query.daoId ? (query.after ?? '0') : '0';
+    const page = await this.tablePage('members', dao.id, after, 50);
+    const published = page.rows.length ? await this.people({ daoId: dao.id, after }) : null;
+    const profiles = new Map(
+      published?.profiles.map((person) => [person.memberId, person.profile]),
+    );
+    const nextDaoId = query.onlyDao ? null : (daos.rows[1]?.id ?? daos.next);
+    if (nextDaoId && BigInt(nextDaoId) <= BigInt(dao.id))
+      throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+    return PeopleRoutes.members.response.parse({
+      members: page.rows.map((member) => ({
+        id: member.id,
+        native_account: member.native_account,
+        active: member.active,
+        dao: {
+          chainId: this.config.chainId,
+          contract: this.config.runtime,
+          daoId: dao.id,
+          interfaceVersion: 1,
+        },
+        profile: profiles.get(member.id) ?? null,
+      })),
+      next: page.next
+        ? { daoId: dao.id, after: page.next }
+        : nextDaoId
+          ? { daoId: nextDaoId, after: '0' }
+          : null,
+    });
+  }
   async people(value: z.infer<typeof PeopleRoutes.list.query>) {
     const query = PeopleRoutes.list.query.parse(value);
     const page = await this.tablePage(

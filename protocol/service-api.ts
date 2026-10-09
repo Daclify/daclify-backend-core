@@ -202,6 +202,7 @@ export const DocsAnswerSchema = z.strictObject({
 });
 
 export const ServiceResponseRoutes = [
+  PeopleRoutes.members,
   PeopleRoutes.list,
   ...Object.values(StorageBillingRoutes),
   ...Object.values(HostingRoutes),

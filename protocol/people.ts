@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { CidSchema, DaoRefSchema, IdSchema, NativeAccountSchema, Uint64Schema } from './base.js';
+import { RuntimeTableSchemas } from '../sdk/generated/schemas.js';
 
 const link = z.union([
   z.literal(''),
@@ -32,7 +33,28 @@ export const PublicPersonSchema = z.strictObject({
   accountName: NativeAccountSchema,
   profile: PublicProfileSchema,
 });
+export const PublicMemberSchema = RuntimeTableSchemas.members
+  .pick({ id: true, native_account: true, active: true })
+  .extend({ dao: DaoRefSchema, profile: PublicProfileSchema.nullable() });
+const memberCursor = z.strictObject({ daoId: IdSchema, after: Uint64Schema });
 export const PeopleRoutes = {
+  members: {
+    method: 'GET',
+    path: '/v1/people/members',
+    helpTopic: 'accounts',
+    query: memberCursor
+      .partial()
+      .extend({ onlyDao: IdSchema.optional() })
+      .refine(
+        (value) =>
+          (value.after === undefined || !!value.daoId) &&
+          (!value.onlyDao || !value.daoId || value.onlyDao === value.daoId),
+      ),
+    response: z.strictObject({
+      members: z.array(PublicMemberSchema).max(50),
+      next: memberCursor.nullable(),
+    }),
+  },
   list: {
     method: 'GET',
     path: '/v1/people',
@@ -55,4 +77,5 @@ export const PeopleRoutes = {
   },
 } as const;
 export type PublicPerson = z.infer<typeof PublicPersonSchema>;
+export type PublicMember = z.infer<typeof PublicMemberSchema>;
 export type PublicProfile = z.infer<typeof PublicProfileSchema>;

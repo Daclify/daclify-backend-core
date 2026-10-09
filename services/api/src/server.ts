@@ -988,6 +988,12 @@ export async function createServer(
       await chain.people(PeopleRoutes.list.query.parse(request.query)),
     );
   });
+  app.get(PeopleRoutes.members.path, async (request) => {
+    if (!chain.publicMembers) throw new ApiError('SERVICE_UNAVAILABLE', 503);
+    return PeopleRoutes.members.response.parse(
+      await chain.publicMembers(PeopleRoutes.members.query.parse(request.query)),
+    );
+  });
   app.post(ApiRoutes.logout.path, async (request, reply) => {
     ApiRoutes.logout.input.parse(request.body);
     const token = request.cookies[cookieName];

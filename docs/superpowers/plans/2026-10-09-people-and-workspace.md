@@ -2,7 +2,7 @@
 
 **Goal:** Make DAO navigation consistent; present public users and members; provide useful module details, movable documentation help and a usable native names marketplace.
 
-**Architecture:** Reuse the Vue account controls, public on-chain profiles, generated ABI schemas and native wallet verification. Public directory records are published profiles, never service accounts, private sign-in pairings or recovery data. Shared DAO administration never grants the shared runtime's native selling authority. No production or testnet authority changes are part of this implementation.
+**Architecture:** Reuse the Vue account controls, public on-chain profiles, generated ABI schemas and native wallet verification. Public directory records are existing public DAO memberships enriched with optional published profiles, never private service accounts, sign-in pairings or recovery data. Shared DAO administration never grants the shared runtime's native selling authority. No production or testnet authority changes are part of this implementation.
 
 **Tech stack:** Existing Vue, Pinia, Lucide, TypeScript, Zod, WharfKit and Antelope C++.
 
@@ -18,7 +18,7 @@
 
 ## Acceptance and limits
 
-Directory membership uses public blockchain records and profile publication is the existing opt-in. Profiles are per DAO membership; one service account can own multiple handles and these are not publicly correlated. An unpublished user sees a self card; other unpublished members remain discoverable only through their DAO's public member records. The Help assistant remains docs-only and does not receive account, DAO content or keys. Cached chat is not a server backup.
+Directory membership uses public blockchain records and profile publication is the existing opt-in. Profiles are per DAO membership. The global Users directory includes members without a profile and lists each public native account once, preferring an available published profile. Internal members without a native account are distinct DAO/member records; the directory never correlates them through private service identities. A signed-in user sees their own card first. The Help assistant remains docs-only and does not receive account, DAO content or keys. Cached chat is not a server backup.
 
 Names sell new native accounts; existing native account ownership is not transferred. Independent DAOs can use a native seller account governed by their executives. Shared DAOs need their own native seller account if they want namespace revenue; a Daclify administrator is not thereby a native-account signer. Transactions for quorum-controlled accounts are exported for approval. Names suffix creation must use the native suffix as creator, with a dedicated permission linked only to `eosio::newaccount`.
 
