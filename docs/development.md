@@ -29,7 +29,17 @@ Fifteen migration files (001–015) are in `migrations/`. Preserve every applied
 
 The optional manual GitHub workflows use immutable action hashes, read-only workflow permissions, no persisted checkout credentials, pinned Node/npm and a 20-minute job limit. Only if manually using GitHub verification, configure `DACLIFY_CHECKOUT_TOKEN` as a fine-grained credential with Contents read access only to the three private repositories (and organization approval if required). Store it as an organization secret restricted to these repositories or as a repository secret in each. Never substitute a broad personal credential. Hosted CI remains unverified until its actual checkout, bootstrap, checks and build succeed.
 
+## Branches
+
+Use `dev` for ongoing work in core, modules, frontend and `www-landing-page`. Keep the three app repositories on matching development checkouts; their package versions and exact artifact integrities must still agree. A branch name does not establish package compatibility.
+
+From each clean checkout, run `git switch dev`, then `git pull --ff-only origin dev`. Preserve uncommitted work before switching. Create feature worktrees from the current `dev`, review and verify the affected changes, then merge into `dev` and push it. Update `main` only when the user explicitly requests a release. Changing the GitHub default branch is a separate repository setting; creating `dev` does not change it.
+
+The [9 October branch audit](evidence/2026-10-09-dev-branch-audit.md) records the older branches and the previously missing governance plan. Retaining an old branch does not mean its changes are missing; compare ancestry with `git merge-base --is-ancestor BRANCH dev` and inspect worktree status before integrating anything.
+
 ## Local builds and manual Netlify uploads
+
+For the dedicated development frontend, follow the frontend's [Netlify dev guide](../../daclify-frontend/docs/netlify-dev.md). Build from the sibling `dev` checkouts and publish to a separate testnet Netlify project. This uses the existing two-network configuration; the Git branch does not select the blockchain. Select **Testnet** in the application before testing.
 
 Use the existing sibling bootstrap and checks on the Mac. Recompile contracts when their source changes; choose the required integration/native/browser suites for the affected flow. Run `npm run verify`, `npm run format:check` and `npm run build` in each affected repository before committing. A full release still requires the complete acceptance evidence described above. Disabling automatic CI does not remove tests or release gates.
 
