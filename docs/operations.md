@@ -112,7 +112,7 @@ DACLIFY_ENV_FILE=.env.production npm run dev
 
 Session cookies on an https API are `SameSite=None` and `Secure`, so the deployed frontend can call the API on another host. Local http cookies stay `SameSite=Strict`. This applies to every https deployment, including production login.
 
-Hosted files need `PINATA_JWT`, `PINATA_ACCOUNT_ID` and `CONTENT_GATEWAY`. The gateway value is an https origin whose path is `/` only. The JWT stays in the gitignored environment file. `CONTENT_FREE_STORAGE_BYTES=0` refuses new uploads. The uploader uses the public Pinata network and does not send a group id. A private IPFS group is a Pinata Enterprise network and does not replace encryption in the browser.
+Hosted files need `PINATA_JWT`, `PINATA_STORAGE_SCOPE` and `CONTENT_GATEWAY`. The gateway value is an https origin whose path is `/` only. The JWT stays in the gitignored environment file. `CONTENT_FREE_STORAGE_BYTES=0` refuses new uploads. The uploader uses the public Pinata network and does not send a group id. A private IPFS group is a Pinata Enterprise network and does not replace encryption in the browser.
 
 ## Stripe Checkout
 
@@ -179,7 +179,7 @@ The account screen can start a card checkout when the API has Stripe configured.
 
 ## Provider settings and limits
 
-Pinata requires `PINATA_JWT`, a stable `PINATA_ACCOUNT_ID` and an HTTPS root `CONTENT_GATEWAY` together. Set `CONTENT_FREE_STORAGE_BYTES` to a positive allowance before expecting uploads; `0` allows no new hosted bytes. Keys stay on the backend, and private documents are encrypted before public-IPFS upload. Configuration alone does not verify uploading, retrieval or decryption.
+Daclify's hosted-content setup requires `PINATA_JWT`, a stable `PINATA_STORAGE_SCOPE` and an HTTPS root `CONTENT_GATEWAY` together. The scope is a label you choose, such as `daclify-testnet`, not a Pinata-issued account ID. Keep it unchanged when rotating the JWT. Existing `PINATA_ACCOUNT_ID` configuration remains a compatibility alias; rename the key without changing its value. If both keys exist, their values must match. See [provider ownership](storage-accounting.md#provider-ownership). Set `CONTENT_FREE_STORAGE_BYTES` to a positive allowance before expecting uploads; `0` allows no new hosted bytes. Keys stay on the backend, and private documents are encrypted before public-IPFS upload. Configuration alone does not verify uploading, retrieval or decryption.
 
 SMTP requires `SMTP_HOST` and `SMTP_FROM`, with `SMTP_USERNAME`/`SMTP_PASSWORD` together when authentication is used. `SMTP_PORT` defaults to 587 and `SMTP_TLS_MODE` to `starttls`; `tls` commonly uses 465. `local-plain` is limited to loopback under `NETWORK_ENVIRONMENT=local`, so a public-testnet profile cannot use a plaintext Mailpit fixture as real email delivery.
 
@@ -226,7 +226,7 @@ Still required before production:
 
 Still outside the current contracts: paid membership subscriptions, bounties, vesting, inbound dues, a global hackathon module owned by the project DAO, and delegated committee spending authority. Ordinary DAO membership and optional endorsement admission already exist. Core has per-obligation and UTC-day commitment limits; Decide has bounded representative elections and term records, which confer no administrative or spending authority. The legacy elections module stays in the legacy repository and is not ported. Hub is not the hackathon authority.
 
-Pinata uploads work when `PINATA_JWT`, `PINATA_ACCOUNT_ID` and `CONTENT_GATEWAY` are set. They do not use a group id. Expired upload reservations that are uncertain stay reserved, record `UPLOAD_REVIEW_REQUIRED`, and are not unpinned. Google and Telegram live redirects are not qualified. The browser still targets one configured runtime.
+Pinata uploads work when `PINATA_JWT`, `PINATA_STORAGE_SCOPE` and `CONTENT_GATEWAY` are set. They do not use a group id. Expired upload reservations that are uncertain stay reserved, record `UPLOAD_REVIEW_REQUIRED`, and are not unpinned. Google and Telegram live redirects are not qualified. The browser still targets one configured runtime.
 
 For service/device loss, follow the [disaster recovery runbook](disaster-recovery.md). Wallet recovery preserves on-chain member IDs without depending on a service database backup; social pairings and operational history still require verified backups or explicit reconstruction.
 

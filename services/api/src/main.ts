@@ -11,6 +11,7 @@ import { NativeChainGateway } from './native-chain.js';
 import { migrate } from './store.js';
 import { createServer } from './server.js';
 import { PinataStorage } from './content/pinata.js';
+import { readPinataStorageScope } from './content/config.js';
 import { GatewayAllowance } from './content/gateway-allowance.js';
 import { ContentService } from './content/service.js';
 import { EncryptedArchiveBackup, readArchiveBackupConfig } from './archive/backup.js';
@@ -62,7 +63,7 @@ const configuration = z
     NETWORK_ENVIRONMENT: z.enum(['local', 'testnet', 'mainnet']),
     API_PORT: z.coerce.number().int().min(1).max(65535).default(3008),
     PINATA_JWT: z.string().min(1).optional(),
-    PINATA_ACCOUNT_ID: ProviderScopeSchema.optional(),
+    PINATA_STORAGE_SCOPE: ProviderScopeSchema.optional(),
     CONTENT_GATEWAY: z.url().optional(),
     CONTENT_GATEWAY_BUDGET_ID: z.uuid().optional(),
     CONTENT_GATEWAY_KEY: z
@@ -82,13 +83,13 @@ const configuration = z
       .optional(),
     MODULE_DEPLOYMENTS: z.string().min(2).optional(),
   })
-  .safeParse(process.env);
+  .safeParse({ ...process.env, PINATA_STORAGE_SCOPE: readPinataStorageScope(process.env) });
 if (!configuration.success) throw new Error('API_CONFIGURATION_INVALID');
 const env = configuration.data;
 const origins = parseFrontendOrigins(env.FRONTEND_ORIGIN, env.FRONTEND_ADDITIONAL_ORIGINS);
 if (!!env.BOOTSTRAP_OWNER !== !!env.BOOTSTRAP_PRIVATE_KEY)
   throw new Error('Bootstrap owner and key must be configured together');
-if (!!env.PINATA_JWT !== !!env.CONTENT_GATEWAY || !!env.PINATA_JWT !== !!env.PINATA_ACCOUNT_ID)
+if (!!env.PINATA_JWT !== !!env.CONTENT_GATEWAY || !!env.PINATA_JWT !== !!env.PINATA_STORAGE_SCOPE)
   throw new Error('PINATA_CONFIGURATION_INVALID');
 if (env.CONTENT_GATEWAY_KEY && !env.PINATA_JWT) throw new Error('PINATA_CONFIGURATION_INVALID');
 if (env.CONTENT_GATEWAY_BUDGET_ID && !env.PINATA_JWT)
@@ -157,7 +158,7 @@ const storageConfig = readStorageConfig(
   process.env,
   env.NETWORK_ENVIRONMENT,
   env.FRONTEND_ORIGIN,
-  env.PINATA_ACCOUNT_ID ?? 'unconfigured',
+  env.PINATA_STORAGE_SCOPE ?? 'unconfigured',
 );
 if (storageConfig && !env.PINATA_JWT) throw new Error('STORAGE_CONFIGURATION_INVALID');
 const hostedStorage = storageConfig
@@ -168,10 +169,10 @@ const hostedStorage = storageConfig
   : undefined;
 const retentionEnabled = readRetentionEnabled(process.env, !!env.PINATA_JWT, !!hostedStorage);
 const gatewayAllowance =
-  env.PINATA_ACCOUNT_ID && env.CONTENT_GATEWAY
+  env.PINATA_STORAGE_SCOPE && env.CONTENT_GATEWAY
     ? new GatewayAllowance(
         pool,
-        env.PINATA_ACCOUNT_ID,
+        env.PINATA_STORAGE_SCOPE,
         new URL(env.CONTENT_GATEWAY).origin,
         env.CONTENT_GATEWAY_BUDGET_ID ?? null,
       )
@@ -189,7 +190,7 @@ const content =
         ),
         BigInt(env.CONTENT_FREE_STORAGE_BYTES),
         'pinata',
-        env.PINATA_ACCOUNT_ID,
+        env.PINATA_STORAGE_SCOPE,
         archiveBackupConfig ? new EncryptedArchiveBackup(archiveBackupConfig) : undefined,
         hostedStorage
           ? {
@@ -209,11 +210,11 @@ const deliverEmail = readMailDelivery(process.env);
 const noticeMail = readMailSender(process.env);
 const alertEmail = readStorageAlertEmail(
   process.env,
-  !!noticeMail && !!content && !!env.PINATA_ACCOUNT_ID,
+  !!noticeMail && !!content && !!env.PINATA_STORAGE_SCOPE,
 );
 const storageAlerts =
-  alertEmail && noticeMail && env.PINATA_ACCOUNT_ID
-    ? new StorageAlerts(pool, env.PINATA_ACCOUNT_ID, alertEmail, noticeMail)
+  alertEmail && noticeMail && env.PINATA_STORAGE_SCOPE
+    ? new StorageAlerts(pool, env.PINATA_STORAGE_SCOPE, alertEmail, noticeMail)
     : undefined;
 const noticeEnabled = readStorageNoticesEnabled(process.env, !!noticeMail && !!hostedStorage);
 if (hostedStorage) hostedStorage.noticeDelivery = noticeEnabled;

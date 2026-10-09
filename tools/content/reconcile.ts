@@ -2,6 +2,7 @@ import '../../services/api/src/load-local-env.js';
 import { Pool } from 'pg';
 import { z } from 'zod';
 import { PinataStorage } from '../../services/api/src/content/pinata.js';
+import { readPinataStorageScope } from '../../services/api/src/content/config.js';
 import { ProviderScopeSchema } from '../../services/api/src/content/ledger.js';
 import { claimLegacyUpload } from '../../services/api/src/content/migrate.js';
 import { ApiError } from '../../services/api/src/errors.js';
@@ -10,9 +11,9 @@ const env = z
     DATABASE_URL: z.url(),
     PINATA_JWT: z.string().min(1),
     CONTENT_GATEWAY: z.url(),
-    PINATA_ACCOUNT_ID: ProviderScopeSchema,
+    PINATA_STORAGE_SCOPE: ProviderScopeSchema,
   })
-  .safeParse(process.env);
+  .safeParse({ ...process.env, PINATA_STORAGE_SCOPE: readPinataStorageScope(process.env) });
 const args = process.argv.slice(2);
 const id = z.uuid().safeParse(args[1]);
 if (!env.success || args.length !== 2 || args[0] !== '--claim-upload' || !id.success) {
@@ -26,7 +27,7 @@ if (!env.success || args.length !== 2 || args[0] !== '--claim-upload' || !id.suc
     await claimLegacyUpload(
       pool,
       new PinataStorage(env.data.PINATA_JWT, env.data.CONTENT_GATEWAY),
-      env.data.PINATA_ACCOUNT_ID,
+      env.data.PINATA_STORAGE_SCOPE,
       id.data,
     );
     process.stdout.write(

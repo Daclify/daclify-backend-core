@@ -10,11 +10,13 @@ An upload whose provider outcome is unknown still holds its expected bytes. Expi
 
 ## Provider ownership
 
-Mainnet and testnet use **separate Pinata accounts**, credentials, gateways, stable `PINATA_ACCOUNT_ID` values and databases. Keep an ownership ID unchanged when rotating credentials for the same account. Use a different ID for a different provider account. This ID is an operator-supplied namespace, not proof that a JWT belongs to that account; live credential/ownership qualification is required before destructive cleanup.
+Mainnet and testnet use **separate Pinata accounts**, credentials, gateways, stable `PINATA_STORAGE_SCOPE` values and databases. This is an operator-chosen storage ledger label, not an ID issued by Pinata or a secret. For example, use `daclify-testnet` for the testnet account and `daclify-mainnet` for the separate mainnet account. Keep the label unchanged when rotating credentials for the same account. Use a different label for a different provider account. This label does not prove that a JWT belongs to that account; live credential/ownership qualification is required before destructive cleanup.
+
+`PINATA_ACCOUNT_ID` remains a deprecated compatibility alias for existing deployments and the legacy upload-claim tool. Rename the environment key to `PINATA_STORAGE_SCOPE` while preserving its exact value; existing database ownership and billing records need no migration. Both names may coexist only with identical values. Conflicting values refuse startup/tool execution with `PINATA_STORAGE_SCOPE_CONFLICT`, and invalid values are rejected without printing them. Changing the label itself is a provider-account transition, not part of this rename.
 
 Do not run two independent reference databases against the same Pinata account. Their local reference counts cannot protect each other's pins. Every DAO using one account must participate in that environment's global ledger.
 
-Configure all three `PINATA_JWT`, `PINATA_ACCOUNT_ID` and `CONTENT_GATEWAY`, or none. `CONTENT_FREE_STORAGE_BYTES=100000000` is the approved 100 MB decimal launch allowance per DAO. The examples retain `0` until the operator funds/configures hosting. Files remain bounded to 5 MiB per request.
+Configure all three `PINATA_JWT`, `PINATA_STORAGE_SCOPE` and `CONTENT_GATEWAY`, or none. `CONTENT_FREE_STORAGE_BYTES=100000000` is the approved 100 MB decimal launch allowance per DAO. The examples retain `0` until the operator funds/configures hosting. Files remain bounded to 5 MiB per request.
 
 ## Existing uploads
 
