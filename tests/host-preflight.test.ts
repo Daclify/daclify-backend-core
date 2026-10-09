@@ -2,7 +2,7 @@ import { expect, it } from 'vitest';
 import { chmodSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { PrivateKey } from '@wharfkit/antelope';
+import { Authority, PrivateKey } from '@wharfkit/antelope';
 import { ModuleCodeHashes } from '@daclify/modules/sdk';
 import { RuntimeCodeHash, RuntimeRawAbiHash } from '../sdk/generated/releases.js';
 import {
@@ -11,7 +11,30 @@ import {
   validateReleaseSource,
   validateReleasePins,
   validateEnvironmentFilePermissions,
+  directKeyAuthorized,
 } from '../tools/host/preflight.js';
+
+it('accepts equivalent legacy/modern relay keys but requires the complete direct authority weight', () => {
+  const key = PrivateKey.generate('K1').toPublic();
+  const different = PrivateKey.generate('K1').toPublic();
+  for (const format of [key.toString(), key.toLegacyString()]) {
+    const authority = Authority.from({
+      threshold: 1,
+      keys: [{ key: format, weight: 1 }],
+      accounts: [],
+      waits: [],
+    });
+    expect(directKeyAuthorized(authority, key)).toBe(true);
+    expect(directKeyAuthorized(authority, different)).toBe(false);
+  }
+  const delayed = Authority.from({
+    threshold: 2,
+    keys: [{ key, weight: 1 }],
+    accounts: [],
+    waits: [{ wait_sec: 30, weight: 1 }],
+  });
+  expect(directKeyAuthorized(delayed, key)).toBe(false);
+});
 
 it('rejects exposed source env files and cannot bypass permissions with a fake credential directory', () => {
   const directory = mkdtempSync(path.join(tmpdir(), 'daclify-env-permissions-'));

@@ -434,6 +434,14 @@
       "stripe": "Enabled test-mode legacy billing webhook created and read back at the exact testnet API URL. Four Checkout events subscribed, API version matches the installed adapter, signing secret atomically saved in private testnet.env with a private backup.",
       "stripeDelivery": "No test checkout or charge created; public signature/route verification awaits API startup.",
       "configuration": "Canonical testnet env validation passed, with five configured modules. Mainnet credentials remain incomplete."
+    },
+    "testnetStartupPreparation": {
+      "date": "2026-10-09",
+      "candidateCore": "40441d3c143f148821018adf2019c4dec65e3116",
+      "candidateModules": "b4dc1c1f69972d1e8c5f75c7c8f10bec23f6d798",
+      "build": "Fresh backend-only bootstrap, TypeScript build, 10 focused checks and lint passed in the isolated candidate. Actual canonical manifest generated with qualified=false and all 12 production gates held.",
+      "preflight": "Live relay check rejected literal EOS/PUB_K1 formatting despite equal decoded keys. No API started and no credentials or authority changed. Fix uses the canonical Antelope Authority/keyWeight decoder and tests legacy/modern keys, wrong keys and incomplete delayed authority.",
+      "sourceIntegration": "Preserved upstream frontend vendor-package bootstrap work and latest documentation while rebasing deployment tooling; normal dev pushes only, no force push or main change."
     }
   }
 }

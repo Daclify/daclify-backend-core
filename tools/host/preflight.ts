@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { Pool } from 'pg';
-import { PrivateKey } from '@wharfkit/antelope';
+import { APIClient, Authority, PrivateKey, PublicKey } from '@wharfkit/antelope';
 import { ModuleCodeHashes } from '@daclify/modules/sdk';
 import { z } from 'zod';
 import { RuntimeCodeHash, RuntimeRawAbiHash } from '../../sdk/generated/releases.js';
@@ -191,6 +191,13 @@ export function validateEnvironmentFilePermissions(
   if (!metadata.isFile() || metadata.mode & forbidden) throw new Error('ENV_FILE_PERMISSIONS');
 }
 
+export function directKeyAuthorized(authority: Authority, key: PublicKey) {
+  return (
+    Number(authority.threshold) > 0 &&
+    Number(authority.keyWeight(key)) >= Number(authority.threshold)
+  );
+}
+
 async function preflight() {
   const environment = HostEnvironment.parse(process.argv[2]);
   const coreDirectory = realpathSync(process.cwd());
@@ -249,36 +256,14 @@ async function preflight() {
     z.object({ abi_hash: hash }).parse(await abiResponse.json()).abi_hash !== RuntimeRawAbiHash
   )
     throw new Error('CHAIN_RUNTIME_ABI_MISMATCH');
-  const relay = z.object({
-    permissions: z.array(
-      z.object({
-        perm_name: z.string(),
-        required_auth: z.object({
-          threshold: z.number(),
-          keys: z.array(z.object({ key: z.string(), weight: z.number() })),
-        }),
-      }),
-    ),
-  });
-  const response = await fetch(`${env.CHAIN_RPC_URL}/v1/chain/get_account`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ account_name: env.RELAY_ACCOUNT }),
-    signal: AbortSignal.timeout(20000),
-  });
-  if (!response.ok) throw new Error('RELAY_ACCOUNT_UNAVAILABLE');
-  const permission = relay
-    .parse(await response.json())
-    .permissions.find((row) => row.perm_name === 'active');
-  const publicKey = PrivateKey.from(env.RELAY_PRIVATE_KEY ?? '')
-    .toPublic()
-    .toString();
-  if (
-    !permission ||
-    !permission.required_auth.keys.some(
-      (key) => key.key === publicKey && key.weight >= permission.required_auth.threshold,
-    )
-  )
+  const relay = await new APIClient({ url: env.CHAIN_RPC_URL ?? '' }).v1.chain
+    .get_account(env.RELAY_ACCOUNT ?? '')
+    .catch(() => {
+      throw new Error('RELAY_ACCOUNT_UNAVAILABLE');
+    });
+  const permission = relay.permissions.find((row) => row.perm_name.toString() === 'active');
+  const publicKey = PrivateKey.from(env.RELAY_PRIVATE_KEY ?? '').toPublic();
+  if (!permission || !directKeyAuthorized(permission.required_auth, publicKey))
     throw new Error('RELAY_KEY_AUTHORITY');
   const pool = new Pool({ connectionString: env.DATABASE_URL, connectionTimeoutMillis: 5000 });
   try {
