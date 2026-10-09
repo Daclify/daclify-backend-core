@@ -99,6 +99,8 @@ Owned-native checks cover 200 DAOs/40,000 memberships and representative workflo
 
 Legacy controller/supported-release qualification and old executable-work migration, quota/completion-path release qualification, live gateway funding/access qualification, provider qualification and the immutable 0.8 release remain open. No production deployment or destructive rollout is certified by these development changes.
 
+The [deployed Telos token native matrix](docs/evidence/2026-10-09-telos-token-ram.md) passes six receiver/payout/exhaustion cases using checksum-checked public token bytes on the owned chain. It reconciles legacy sender-payer costs separately from DAO counters. Run the documented read-only snapshot step before this suite; public deployment, arbitrary tokens and provider qualification remain separate gates.
+
 ## License
 
 First-party code, contracts, SDKs and documentation are licensed under

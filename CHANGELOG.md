@@ -2,6 +2,7 @@
 
 ## Unreleased — RAM, prepaid storage and Archive
 
+- Added a chain/code/raw-ABI pinned public Telos token downloader and owned-native new/legacy sender tests, preserving exact deployed ABI bytes and separating external payer changes from DAO usage.
 - Guard activation now verifies existing credentials, claims and pending holds plus pinned module completion checks. Bounded completion-only adoption preserves already-metered legacy counters.
 - Extended the owned native observed-upgrade drill to Grants and signed governance, preserved failed award plans, and consumed the compatible Decide migration fix and retained poll Archive decoder.
 
@@ -9,7 +10,7 @@ Native RAM purchases verify actual acquisition; card orders use a separate funde
 
 Prepaid pinned storage has immutable pricing/period agreements, verified CID ownership/reference accounting, 30-day grace, notices and fenced opt-in cleanup. The Archive service adds encrypted backups, native approval/revocation, constrained poll/document pruning, retained trusted decoders and original-kit recovery. Shared gateway requests require a manually funded, bounded allowance.
 
-All features remain development work on `codex/resource-billing-archives`. Public rollout, destructive retention and immutable release packaging remain gated by the recorded migration, token, native and live-provider requirements. See [execution evidence](docs/evidence/2026-10-08-resource-execution.md).
+Reviewed development checkpoints are integrated into main; continuation uses `codex/resource-billing-archives`. Public rollout, destructive retention and immutable release packaging remain gated by the recorded migration, token, native and live-provider requirements. See [execution evidence](docs/evidence/2026-10-08-resource-execution.md).
 
 ## 0.7.0-alpha.1 — Shared hosting and connected payments
 

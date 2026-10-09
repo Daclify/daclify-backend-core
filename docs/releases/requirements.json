@@ -258,6 +258,11 @@
       ]
     },
     {
+      "id": "RESOURCE-TOKEN-SNAPSHOT-PINS",
+      "suite": "unit",
+      "tests": ["tests/telos-token-snapshot.test.ts"]
+    },
+    {
       "id": "RESOURCE-RAM-PAYER-CONSERVATION",
       "suite": "native",
       "tests": [

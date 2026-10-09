@@ -1,0 +1,287 @@
+{
+  "qualification": "owned-native-token-billing-only",
+  "fixture": {
+    "url": "http://127.0.0.1:20588",
+    "chainId": "d9f6e8c655703ba364f0ee82b4fd0631350475747b1924396c8fbef2558b8f51",
+    "container": "daclify-resources-native"
+  },
+  "publicSources": [
+    {
+      "environment": "mainnet",
+      "source": "https://mainnet.telos.net",
+      "chainId": "4667b205c6838ef70ff7988f6e8257e8be0e1284a2f59699054a018f743b1d11",
+      "codeHash": "e7aa90a489446616f9bf0f1d0368f849722c7d36054d910e8f378ce9d2b618f1",
+      "rawAbiHash": "fb8452c70aa203505592aef25b696acaa1aee58805888cc9aae024b4c03af91e",
+      "account": "eosio.token",
+      "downloadedAt": "2026-10-09T09:16:34.344Z",
+      "observedStartBlock": 493030971,
+      "observedEndBlock": 493030981,
+      "wasmBytes": 15547
+    },
+    {
+      "environment": "testnet",
+      "source": "https://testnet.telos.caleos.io",
+      "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+      "codeHash": "e7aa90a489446616f9bf0f1d0368f849722c7d36054d910e8f378ce9d2b618f1",
+      "rawAbiHash": "fb8452c70aa203505592aef25b696acaa1aee58805888cc9aae024b4c03af91e",
+      "account": "eosio.token",
+      "downloadedAt": "2026-10-09T09:16:35.611Z",
+      "observedStartBlock": 449269017,
+      "observedEndBlock": 449269018,
+      "wasmBytes": 15547
+    }
+  ],
+  "result": {
+    "files": 1,
+    "passed": 6,
+    "failed": 0,
+    "skipped": 0,
+    "durationSeconds": 36.07
+  },
+  "reports": {
+    "native-token-ram": {
+      "sourceCommit": "c526479a48370981a1e9f0ac6b3bb0e4f737afa2",
+      "codeHash": "ea1bd149e28f21420450b6c7b2c5be600ef9922e44c383fa4489b025aac0eb46",
+      "token": "rmtokn23xatd",
+      "sender": "rmpayr23xatd",
+      "receiver": "rmrcvr23xatd",
+      "opened": "rmopen23xatd",
+      "before": {
+        "rmpayr23xatd": 3190,
+        "rmrcvr23xatd": 3190,
+        "rmopen23xatd": 3190,
+        "rmtokn23xatd": 177921
+      },
+      "first": {
+        "rmpayr23xatd": 3558,
+        "rmrcvr23xatd": 3190,
+        "rmopen23xatd": 3190,
+        "rmtokn23xatd": 177921
+      },
+      "second": {
+        "rmpayr23xatd": 3558,
+        "rmrcvr23xatd": 3190,
+        "rmopen23xatd": 3190,
+        "rmtokn23xatd": 177921
+      },
+      "returned": {
+        "rmpayr23xatd": 3430,
+        "rmrcvr23xatd": 3318,
+        "rmopen23xatd": 3190,
+        "rmtokn23xatd": 177921
+      },
+      "closed": {
+        "rmpayr23xatd": 3318,
+        "rmrcvr23xatd": 3190,
+        "rmopen23xatd": 3190,
+        "rmtokn23xatd": 177921
+      },
+      "preopened": {
+        "rmpayr23xatd": 3318,
+        "rmrcvr23xatd": 3190,
+        "rmopen23xatd": 3430,
+        "rmtokn23xatd": 177921
+      },
+      "firstSenderDeltaBytes": 368,
+      "limits": [
+        "Owned native fixture and pinned official reference token.",
+        "Direct token actions calibrate external payer behavior; integrated Daclify exits are tested separately.",
+        "Receiver transfer/close can move or release sender-paid bytes outside Daclify callbacks."
+      ]
+    },
+    "native-reference-claim": {
+      "runtime": "rmcoreo5ummk",
+      "token": "rmtokn23xatd",
+      "source": "reference",
+      "legacySender": false,
+      "senderPayerChangeBytes": 0,
+      "accountedExitDeltaBytes": "-566",
+      "receiver": "rmrcvro5ummk",
+      "runtimeCodeHash": "f40c696e86ab532ca57ea073265a982f694f9f21f8de53300b51365e83711878",
+      "tokenCodeHash": "ea1bd149e28f21420450b6c7b2c5be600ef9922e44c383fa4489b025aac0eb46",
+      "acceptedBytes": 9079687,
+      "claimBytes": 9079492,
+      "withdrawnBytes": 9078926,
+      "settlementDeltaBytes": -195,
+      "fullClaimDeltaBytes": -566,
+      "physicalQuotaAtWithdrawalBytes": 9079492,
+      "managedQuotaControlBytes": 0,
+      "partialWithdrawalRejectedAtPhysicalQuota": true,
+      "missingAndClosedReceiverPreservesState": true,
+      "receiverFundedPreparationBytes": 240,
+      "recipientAndTokenRamUnchangedAtPayout": true,
+      "nativeExitReconcilesCountersAndExternalPayerChange": true,
+      "stakeAndDirectObligationMissingRowRollback": true,
+      "signedStakeExitAndOnceOnlyNativePayment": true,
+      "limitations": [
+        "Pinned official reference token only.",
+        "Owned accounts use finite managed quotas for billing/exhaustion; this does not qualify RAM purchases, which reject managed accounts.",
+        "The runtime row is opened by the operator before funding; no sender payer change occurs.",
+        "This new observed claim does not qualify every historical token/module lifecycle or public deployment."
+      ]
+    },
+    "native-reference-legacy-claim": {
+      "runtime": "rmcorevwam1v",
+      "token": "rmtokn23xatd",
+      "source": "reference",
+      "legacySender": true,
+      "senderPayerChangeBytes": 128,
+      "accountedExitDeltaBytes": "-566",
+      "receiver": "rmrcvrvwam1v",
+      "runtimeCodeHash": "f40c696e86ab532ca57ea073265a982f694f9f21f8de53300b51365e83711878",
+      "tokenCodeHash": "ea1bd149e28f21420450b6c7b2c5be600ef9922e44c383fa4489b025aac0eb46",
+      "acceptedBytes": 9079447,
+      "claimBytes": 9079252,
+      "withdrawnBytes": 9078814,
+      "settlementDeltaBytes": -195,
+      "fullClaimDeltaBytes": -438,
+      "physicalQuotaAtWithdrawalBytes": 9079252,
+      "managedQuotaControlBytes": 0,
+      "partialWithdrawalRejectedAtPhysicalQuota": true,
+      "missingAndClosedReceiverPreservesState": true,
+      "receiverFundedPreparationBytes": 240,
+      "recipientAndTokenRamUnchangedAtPayout": true,
+      "nativeExitReconcilesCountersAndExternalPayerChange": true,
+      "stakeAndDirectObligationMissingRowRollback": true,
+      "signedStakeExitAndOnceOnlyNativePayment": true,
+      "limitations": [
+        "Pinned official reference token only.",
+        "Owned accounts use finite managed quotas for billing/exhaustion; this does not qualify RAM purchases, which reject managed accounts.",
+        "A pre-existing donor-funded row shifts 128 bytes to runtime; reconcile this as operator overhead, never a historical DAO invoice.",
+        "This new observed claim does not qualify every historical token/module lifecycle or public deployment."
+      ]
+    },
+    "native-telos-token-ram": {
+      "publicSources": [
+        {
+          "environment": "mainnet",
+          "source": "https://mainnet.telos.net",
+          "chainId": "4667b205c6838ef70ff7988f6e8257e8be0e1284a2f59699054a018f743b1d11",
+          "codeHash": "e7aa90a489446616f9bf0f1d0368f849722c7d36054d910e8f378ce9d2b618f1",
+          "rawAbiHash": "fb8452c70aa203505592aef25b696acaa1aee58805888cc9aae024b4c03af91e"
+        },
+        {
+          "environment": "testnet",
+          "source": "https://testnet.telos.caleos.io",
+          "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+          "codeHash": "e7aa90a489446616f9bf0f1d0368f849722c7d36054d910e8f378ce9d2b618f1",
+          "rawAbiHash": "fb8452c70aa203505592aef25b696acaa1aee58805888cc9aae024b4c03af91e"
+        }
+      ],
+      "codeHash": "e7aa90a489446616f9bf0f1d0368f849722c7d36054d910e8f378ce9d2b618f1",
+      "token": "rmtoknr4hpgj",
+      "sender": "rmpayrr4hpgj",
+      "receiver": "rmrcvrr4hpgj",
+      "opened": "rmopenr4hpgj",
+      "before": {
+        "rmpayrr4hpgj": 3190,
+        "rmrcvrr4hpgj": 3190,
+        "rmopenr4hpgj": 3190,
+        "rmtoknr4hpgj": 163839
+      },
+      "first": {
+        "rmpayrr4hpgj": 3558,
+        "rmrcvrr4hpgj": 3190,
+        "rmopenr4hpgj": 3190,
+        "rmtoknr4hpgj": 163839
+      },
+      "second": {
+        "rmpayrr4hpgj": 3558,
+        "rmrcvrr4hpgj": 3190,
+        "rmopenr4hpgj": 3190,
+        "rmtoknr4hpgj": 163839
+      },
+      "returned": {
+        "rmpayrr4hpgj": 3430,
+        "rmrcvrr4hpgj": 3318,
+        "rmopenr4hpgj": 3190,
+        "rmtoknr4hpgj": 163839
+      },
+      "closed": {
+        "rmpayrr4hpgj": 3318,
+        "rmrcvrr4hpgj": 3190,
+        "rmopenr4hpgj": 3190,
+        "rmtoknr4hpgj": 163839
+      },
+      "preopened": {
+        "rmpayrr4hpgj": 3318,
+        "rmrcvrr4hpgj": 3190,
+        "rmopenr4hpgj": 3430,
+        "rmtoknr4hpgj": 163839
+      },
+      "firstSenderDeltaBytes": 368,
+      "limits": [
+        "Pinned deployed Telos token bytes on owned Spring; not public-chain execution.",
+        "Direct token actions calibrate external payer behavior; integrated Daclify exits are tested separately.",
+        "Receiver transfer/close can move or release sender-paid bytes outside Daclify callbacks."
+      ]
+    },
+    "native-telos-claim": {
+      "runtime": "rmcorehpib1d",
+      "token": "rmtoknr4hpgj",
+      "source": "deployed Telos",
+      "legacySender": false,
+      "senderPayerChangeBytes": 0,
+      "accountedExitDeltaBytes": "-566",
+      "receiver": "rmrcvrhpib1d",
+      "runtimeCodeHash": "f40c696e86ab532ca57ea073265a982f694f9f21f8de53300b51365e83711878",
+      "tokenCodeHash": "e7aa90a489446616f9bf0f1d0368f849722c7d36054d910e8f378ce9d2b618f1",
+      "acceptedBytes": 9079687,
+      "claimBytes": 9079492,
+      "withdrawnBytes": 9078926,
+      "settlementDeltaBytes": -195,
+      "fullClaimDeltaBytes": -566,
+      "physicalQuotaAtWithdrawalBytes": 9079492,
+      "managedQuotaControlBytes": 0,
+      "partialWithdrawalRejectedAtPhysicalQuota": true,
+      "missingAndClosedReceiverPreservesState": true,
+      "receiverFundedPreparationBytes": 240,
+      "recipientAndTokenRamUnchangedAtPayout": true,
+      "nativeExitReconcilesCountersAndExternalPayerChange": true,
+      "stakeAndDirectObligationMissingRowRollback": true,
+      "signedStakeExitAndOnceOnlyNativePayment": true,
+      "limitations": [
+        "Pinned deployed Telos binary on owned Spring; public transactions and arbitrary tokens remain unqualified.",
+        "Owned accounts use finite managed quotas for billing/exhaustion; this does not qualify RAM purchases, which reject managed accounts.",
+        "The runtime row is opened by the operator before funding; no sender payer change occurs.",
+        "This new observed claim does not qualify every historical token/module lifecycle or public deployment."
+      ]
+    },
+    "native-telos-legacy-claim": {
+      "runtime": "rmcorev22na1",
+      "token": "rmtoknr4hpgj",
+      "source": "deployed Telos",
+      "legacySender": true,
+      "senderPayerChangeBytes": 128,
+      "accountedExitDeltaBytes": "-566",
+      "receiver": "rmrcvrv22na1",
+      "runtimeCodeHash": "f40c696e86ab532ca57ea073265a982f694f9f21f8de53300b51365e83711878",
+      "tokenCodeHash": "e7aa90a489446616f9bf0f1d0368f849722c7d36054d910e8f378ce9d2b618f1",
+      "acceptedBytes": 9079447,
+      "claimBytes": 9079252,
+      "withdrawnBytes": 9078814,
+      "settlementDeltaBytes": -195,
+      "fullClaimDeltaBytes": -438,
+      "physicalQuotaAtWithdrawalBytes": 9079252,
+      "managedQuotaControlBytes": 0,
+      "partialWithdrawalRejectedAtPhysicalQuota": true,
+      "missingAndClosedReceiverPreservesState": true,
+      "receiverFundedPreparationBytes": 240,
+      "recipientAndTokenRamUnchangedAtPayout": true,
+      "nativeExitReconcilesCountersAndExternalPayerChange": true,
+      "stakeAndDirectObligationMissingRowRollback": true,
+      "signedStakeExitAndOnceOnlyNativePayment": true,
+      "limitations": [
+        "Pinned deployed Telos binary on owned Spring; public transactions and arbitrary tokens remain unqualified.",
+        "Owned accounts use finite managed quotas for billing/exhaustion; this does not qualify RAM purchases, which reject managed accounts.",
+        "A pre-existing donor-funded row shifts 128 bytes to runtime; reconcile this as operator overhead, never a historical DAO invoice.",
+        "This new observed claim does not qualify every historical token/module lifecycle or public deployment."
+      ]
+    }
+  },
+  "limitations": [
+    "No public-chain transaction or custom-token code qualification.",
+    "Finite managed quotas isolate billing and exhaustion; RAM purchases remain a separate suite.",
+    "No live Stripe/Pinata/wallet/provider qualification or production deployment."
+  ]
+}
