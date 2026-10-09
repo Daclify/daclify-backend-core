@@ -27,3 +27,10 @@ Hosting and Connect are independently optional. Missing provider configuration d
 Run all repo verify/build/format checks, generated-doc checks, core's isolated PostgreSQL integration suite, compiled-WASM tests, the owned native payment test and frontend `npm run test:e2e:payments`. The browser payment suite uses HTTP fixtures; it is not live Stripe qualification. Replay, wrong-account/issuer/code, removed roles, invoice/refund and uncertain-response checks must fail safely. Existing membership remains usable after capacity expires.
 
 Back up the merchant account mapping, Stripe agreement/order/invoice IDs, immutable pricing/consent, job receipts, broker hashes and local customer ownership. Chain capacity does not reconstruct a recurring Stripe subscription or social pairings. After total database loss, disable payment creation/workers until a verified backup or explicit provider reconciliation restores these mappings; never automatically create replacement subscriptions. Rotate broker credentials after restoring sessions/keys. Retain the old [0.6 recovery guide](upgrade-0.6.md) for its per-user key behavior.
+
+
+## Receiving-wallet preparation update
+
+The development runtime requires an existing token balance row for every native payout destination, including fee treasuries and module publishers. Review this behavior before upgrading: a previously unprepared destination now leaves its payment pending instead of charging the sender for a new receiving row. All state changes roll back on refusal. Deploy the matching UI/help so recipients can use **Prepare receiving wallet**, then sign their withdrawal separately.
+
+Keep the standard token contract and exact symbol/precision fixed for a DAO. Before funding a new runtime, open its supported token row under runtime authority and account for that operator infrastructure in the native baseline. `open` does not change the payer of an existing row; historical sender ownership needs separate inspection/qualification. No token closure, asset transfer, payer repair or public upgrade is automatic. See [token-row operating bounds](../ram-accounting.md#receiving-wallet-token-rows).

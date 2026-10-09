@@ -48,6 +48,7 @@ This plan continues the [master plan](2026-10-05-daclify-v2-master-plan.md), [ar
 | Card RAM purchase     | USD equivalent of actual system RAM cost plus 2,000 basis points operational markup. Provision with operator-funded TLOS.                                                 |
 | Fee stacking          | The RAM rails have alternative 5%/20% markups. Do not add Connect commission or the older generic 20% TLOS conversion premium to RAM purchases.                           |
 | Purchased RAM         | One-time, reusable capacity; no monthly expiry or automatic sale for hosting arrears.                                                                                     |
+| Native payout preparation | The receiving wallet prepares its own exact-token balance row and pays its RAM. Missing/closed rows refuse payment atomically. Operator sender-row ownership and token-code qualification remain separate rollout checks. |
 | Free hosted storage   | 100 MB per DAO, defined as 100,000,000 verified stored bytes. Correctly label MB versus MiB in the UI.                                                                    |
 | Paid hosted storage   | USD 1 per administrator-approved additional 1 GB per calendar month; 1 GB means 1,000,000,000 bytes. User confirmed this price on 2026-10-08.                             |
 | Storage billing       | Active files, old versions, archived files and archive bundles share one allowance and rate. No extra archive-storage tariff.                                             |

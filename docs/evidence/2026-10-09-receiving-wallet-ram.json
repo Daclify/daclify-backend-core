@@ -1,0 +1,27 @@
+{
+  "runtime": "rmcoreniahs5",
+  "token": "rmtoknniahs5",
+  "receiver": "rmrcvrniahs5",
+  "runtimeCodeHash": "f40c696e86ab532ca57ea073265a982f694f9f21f8de53300b51365e83711878",
+  "tokenCodeHash": "ea1bd149e28f21420450b6c7b2c5be600ef9922e44c383fa4489b025aac0eb46",
+  "acceptedBytes": 9079493,
+  "claimBytes": 9079298,
+  "withdrawnBytes": 9078926,
+  "settlementDeltaBytes": -195,
+  "fullClaimDeltaBytes": -566,
+  "physicalQuotaAtWithdrawalBytes": 9079492,
+  "managedQuotaControlBytes": 194,
+  "partialWithdrawalRejectedAtPhysicalQuota": true,
+  "missingAndClosedReceiverPreservesState": true,
+  "receiverFundedPreparationBytes": 240,
+  "recipientAndTokenRamUnchangedAtPayout": true,
+  "nativeExitReconcilesInstrumentedCounters": true,
+  "stakeAndDirectObligationMissingRowRollback": true,
+  "signedStakeExitAndOnceOnlyNativePayment": true,
+  "limitations": [
+    "Owned native reference token only; Telos token code is not qualified.",
+    "Exact finite managed quota is an exhaustion fixture; native RAM purchases reject managed accounts.",
+    "The runtime row is opened by the operator before funding; historical payer changes remain a separate qualification gate.",
+    "This new observed claim does not qualify every historical token/module lifecycle or public deployment."
+  ]
+}

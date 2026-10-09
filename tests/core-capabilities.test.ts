@@ -41,6 +41,7 @@ beforeEach(async () => {
   );
   await send(token, 'create', ['alice', '1000.0000 TLOS'], 'eosio.token@active');
   await send(token, 'issue', ['alice', '100.0000 TLOS', ''], 'alice@active');
+  await send(token, 'open', ['bob', '4,TLOS', 'bob'], 'bob@active');
   await send(token, 'transfer', ['alice', 'daclifycore', '10.0000 TLOS', 'dao:1'], 'alice@active');
 });
 const role = (target: number, admin: boolean, reviewer: boolean) => [

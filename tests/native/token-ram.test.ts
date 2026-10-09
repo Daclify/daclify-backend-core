@@ -3,11 +3,19 @@ import { randomBytes, createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { z } from 'zod';
+import { APIClient } from '@wharfkit/antelope';
 import { fixtureNetwork } from '../../tools/native/network.js';
 import { fixtureKey } from '../../tools/native/keys.js';
 import { unlockFixtureWallet } from '../../tools/native/wallet.js';
 import { fundResourceFixture } from '../../tools/native/resource-funding.js';
-import { RuntimeTableSchemas } from '../../sdk/index.js';
+import { contextPermissionPlan } from '../../tools/deploy/permissions.js';
+import {
+  RuntimeTableSchemas,
+  encodeAction,
+  makeInstruction,
+  instructionDigest,
+  RuntimeCodeHash,
+} from '../../sdk/index.js';
 import { executedChainResult } from '../../services/api/src/chain-result.js';
 const network = fixtureNetwork();
 if (network.container !== 'daclify-resources-native' || network.url !== 'http://127.0.0.1:20588')
@@ -42,14 +50,33 @@ function cleos(args: string[]) {
       );
     }
   } catch (error) {
+    const detail = z.object({ stderr: z.string().optional() }).safeParse(error);
+    const code = detail.success
+      ? detail.data.stderr?.match(/assertion failure with message: ([A-Z_]{1,80})/)?.[1]
+      : undefined;
+    if (code) throw new Error('OWNED_TOKEN_PROBE_REJECTED:' + code);
     const output = z.object({ stdout: z.string().optional() }).safeParse(error);
     if (output.success && output.data.stdout) {
       const value: unknown = JSON.parse(output.data.stdout);
       const failure = z
-        .object({ processed: z.object({ except: z.object({ name: z.string() }) }) })
+        .object({
+          processed: z.object({
+            except: z.object({
+              name: z.string(),
+              message: z.string().optional(),
+              stack: z.array(z.object({ data: z.object({ s: z.string().optional() }) })).optional(),
+            }),
+          }),
+        })
         .safeParse(value);
-      if (failure.success)
-        throw new Error('OWNED_TOKEN_PROBE_REJECTED: ' + failure.data.processed.except.name);
+      if (failure.success) {
+        const exception = failure.data.processed.except;
+        const reason =
+          [exception.message, ...(exception.stack?.map((entry) => entry.data.s) ?? [])].find(
+            (value) => value !== undefined && /^[A-Z_]{1,80}$/.test(value),
+          ) ?? exception.message?.match(/assertion failure with message: ([A-Z_]{1,80})/)?.[1];
+        throw new Error('OWNED_TOKEN_PROBE_REJECTED: ' + (reason ?? exception.name));
+      }
     }
     throw new Error('OWNED_TOKEN_PROBE_REJECTED');
   }
@@ -191,7 +218,7 @@ it('measures sender-paid first balances, existing source payer transfer, recipie
   );
 }, 60000);
 
-it('finishes a real Daclify internal claim using held RAM even when the reference token creates sender-paid rows', async () => {
+it('preserves unprepared claim/stake/native payments and reconciles prepared signed exits at physical quota', async () => {
   const runtime = 'rmcore' + suffix;
   cleos([
     'system',
@@ -232,8 +259,39 @@ it('finishes a real Daclify internal claim using held RAM even when the referenc
       account + '@active',
     ]);
   }
-  const core = (name: string, data: unknown[], actor = runtime) =>
-    cleos(['push', 'action', runtime, name, JSON.stringify(data), '-p', actor + '@active']);
+  const permission = contextPermissionPlan(runtime, []);
+  cleos([
+    'set',
+    'account',
+    'permission',
+    runtime,
+    permission.permission,
+    JSON.stringify(permission.authority),
+    permission.parent,
+    '-p',
+    runtime + '@active',
+  ]);
+  for (const action of ['withdraw', 'unstake'])
+    cleos([
+      'set',
+      'action',
+      'permission',
+      runtime,
+      runtime,
+      action,
+      permission.permission,
+      '-p',
+      runtime + '@active',
+    ]);
+  const core = (name: string, data: unknown[], actor: string | string[] = runtime) =>
+    cleos([
+      'push',
+      'action',
+      runtime,
+      name,
+      JSON.stringify(data),
+      ...(Array.isArray(actor) ? actor : [actor]).flatMap((account) => ['-p', account + '@active']),
+    ]);
   const source = (name: string, data: unknown[]) =>
     cleos(['push', 'action', sender, name, JSON.stringify(data), '-p', sender + '@active']);
   const sourceHash = createHash('sha256')
@@ -251,6 +309,17 @@ it('finishes a real Daclify internal claim using held RAM even when the referenc
     'alice',
   );
   core('setmodule', [1, sender, 1, [], ['reserve', 'approve'], sourceHash], 'alice');
+  core(
+    'enroll',
+    [1, 2, sender, fixtureKey('bob').toPublic().toString(), 'owned native stake', 0],
+    ['alice', sender],
+  );
+  core(
+    'enroll',
+    [1, 3, receiver, fixtureKey('relay').toPublic().toString(), 'owned native payment', 0],
+    ['alice', receiver],
+  );
+  action('open', { owner: runtime, symbol: '4,RAMT', ram_payer: runtime }, runtime);
   action(
     'transfer',
     { from: 'alice', to: runtime, quantity: '2.0000 RAMT', memo: 'dao:1' },
@@ -258,47 +327,157 @@ it('finishes a real Daclify internal claim using held RAM even when the referenc
   );
   source('reserve', [runtime, 1, 1, 1, '1.0000 RAMT', 0]);
   source('approveob', [runtime, 1, 1]);
+  source('reserve', [runtime, 1, 2, 3, '1.0000 RAMT', 0]);
+  source('approveob', [runtime, 1, 2]);
+  action(
+    'transfer',
+    { from: sender, to: runtime, quantity: '1.0000 RAMT', memo: 'stake:1:2' },
+    sender,
+  );
   const accepted = await used(runtime);
   core('payob', [1, sender, 1], 'alice');
   const claimed = await used(runtime);
   expect(claimed).toBeLessThan(accepted);
-  cleos([
-    'push',
-    'action',
-    'eosio',
-    'setacctram',
-    JSON.stringify([runtime, claimed + 1024]),
-    '-p',
-    'eosio@active',
-  ]);
-  const physicalBeforeWithdrawal = await used(runtime);
-  cleos([
-    'push',
-    'action',
-    'eosio',
-    'setacctram',
-    JSON.stringify([runtime, physicalBeforeWithdrawal]),
-    '-p',
-    'eosio@active',
-  ]);
-  expect(await used(runtime)).toBe(physicalBeforeWithdrawal);
-  let withdrawn: number;
+  let withdrawn: number, physicalBeforeWithdrawal: number;
   try {
-    expect(() => core('withdraw', [runtime, 1, 1, receiver, '0.2500 RAMT'])).toThrow(
-      'ram_usage_exceeded',
-    );
+    cleos([
+      'push',
+      'action',
+      'eosio',
+      'setacctram',
+      JSON.stringify([runtime, claimed + 1024]),
+      '-p',
+      'eosio@active',
+    ]);
+    physicalBeforeWithdrawal = await used(runtime);
+    cleos([
+      'push',
+      'action',
+      'eosio',
+      'setacctram',
+      JSON.stringify([runtime, physicalBeforeWithdrawal]),
+      '-p',
+      'eosio@active',
+    ]);
     expect(await used(runtime)).toBe(physicalBeforeWithdrawal);
-    const response = await fetch(network.url + '/v1/chain/get_table_rows', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ code: runtime, scope: '1', table: 'members', json: true, limit: 1 }),
+    const api = new APIClient({ url: network.url });
+    const rows = async (table: string, scope = '1') => {
+      const result = await api.v1.chain.get_table_rows({
+        code: runtime,
+        scope,
+        table,
+        json: true,
+        limit: 100,
+      });
+      if (result.more) throw new Error('TOKEN_PROBE_COVERAGE_REQUIRED');
+      return result.rows;
+    };
+    const member = async (id = '1') => {
+      const person = z
+        .array(RuntimeTableSchemas.members)
+        .parse(await rows('members'))
+        .find((person) => person.id === id);
+      if (!person) throw new Error('TOKEN_PROBE_MEMBER_REQUIRED');
+      return person;
+    };
+    const state = async () => ({
+      members: await rows('members'),
+      obligations: await rows('obligations'),
+      daos: await rows('daos', runtime),
+      holds: await rows('ramholds'),
+      receipts: await rows('receipts'),
+      stats: await rows('ramstats'),
+      usage: await used(runtime),
     });
-    const member = z
-      .object({ rows: z.array(RuntimeTableSchemas.members) })
-      .parse(await response.json()).rows[0];
-    expect(member?.claim).toBe('10000');
-    core('withdraw', [runtime, 1, 1, receiver, '1.0000 RAMT']);
+    const accounted = async () => {
+      let total = 0n;
+      for (const scope of ['0', '1'])
+        for (const row of z
+          .array(RuntimeTableSchemas.ramstats)
+          .parse(await rows('ramstats', scope)))
+          if (row.payer === runtime)
+            total +=
+              BigInt(row.identity) +
+              BigInt(row.activity) +
+              BigInt(row.retained) +
+              BigInt(row.platform);
+      const observer = z.array(RuntimeTableSchemas.ramobs).parse(await rows('ramobs', runtime))[0];
+      if (!observer) throw new Error('TOKEN_PROBE_OBSERVER_REQUIRED');
+      return total + BigInt(observer.meter_bytes);
+    };
+    const exit = async (kind: 'withdraw' | 'unstake', id: string, quantity: string) => {
+      const person = await member(id),
+        info = await api.v1.chain.get_info();
+      const request = makeInstruction(
+        { chainId: network.chainId, contract: runtime, daoId: '1', interfaceVersion: 1 },
+        id,
+        person.nonce,
+        Math.floor(info.head_block_time.toMilliseconds() / 1000) + 120,
+        runtime,
+        kind,
+        encodeAction(kind, {
+          runtime,
+          dao_id: '1',
+          member_id: id,
+          destination: receiver,
+          quantity,
+        }),
+      );
+      core('submit', [
+        request,
+        fixtureKey(id === '2' ? 'bob' : 'alice')
+          .signDigest(instructionDigest(request))
+          .toString(),
+      ]);
+    };
+    const beforeFailure = await state();
+    await expect(exit('withdraw', '1', '1.0000 RAMT')).rejects.toThrow('PAYOUT_TOKEN_ROW_REQUIRED');
+    await expect(exit('unstake', '2', '1.0000 RAMT')).rejects.toThrow('PAYOUT_TOKEN_ROW_REQUIRED');
+    expect(() => core('payob', [1, sender, 2], 'alice')).toThrow('PAYOUT_TOKEN_ROW_REQUIRED');
+    expect(await state()).toEqual(beforeFailure);
+    const receiverBeforeOpen = await used(receiver);
+    action('open', { owner: receiver, symbol: '4,RAMT', ram_payer: receiver }, receiver);
+    expect((await used(receiver)) - receiverBeforeOpen).toBe(240);
+    expect(await used(runtime)).toBe(physicalBeforeWithdrawal);
+    action('close', { owner: receiver, symbol: '4,RAMT' }, receiver);
+    await expect(exit('withdraw', '1', '1.0000 RAMT')).rejects.toThrow('PAYOUT_TOKEN_ROW_REQUIRED');
+    await expect(exit('unstake', '2', '1.0000 RAMT')).rejects.toThrow('PAYOUT_TOKEN_ROW_REQUIRED');
+    expect(() => core('payob', [1, sender, 2], 'alice')).toThrow('PAYOUT_TOKEN_ROW_REQUIRED');
+    expect(await state()).toEqual(beforeFailure);
+    action('open', { owner: receiver, symbol: '4,RAMT', ram_payer: receiver }, receiver);
+    const receiverAtWithdrawal = await used(receiver),
+      tokenAtWithdrawal = await used(token);
+    const accountedBefore = await accounted();
+    await expect(exit('withdraw', '1', '0.2500 RAMT')).rejects.toThrow('ram_usage_exceeded');
+    expect(await used(runtime)).toBe(physicalBeforeWithdrawal);
+    expect(await state()).toEqual(beforeFailure);
+    await exit('withdraw', '1', '1.0000 RAMT');
     withdrawn = await used(runtime);
+    expect(withdrawn).toBeLessThan(claimed);
+    expect(BigInt(withdrawn - physicalBeforeWithdrawal)).toBe(
+      (await accounted()) - accountedBefore,
+    );
+    expect(await used(receiver)).toBe(receiverAtWithdrawal);
+    expect(await used(token)).toBe(tokenAtWithdrawal);
+    expect(await member()).toMatchObject({ claim: '0', nonce: '1' });
+    const afterClaim = await used(runtime),
+      afterClaimAccounted = await accounted();
+    await exit('unstake', '2', '1.0000 RAMT');
+    expect(await member('2')).toMatchObject({ stake: '0', nonce: '1' });
+    expect(await used(runtime)).toBe(afterClaim);
+    core('payob', [1, sender, 2], 'alice');
+    expect(
+      z
+        .array(RuntimeTableSchemas.obligations)
+        .parse(await rows('obligations'))
+        .find((row) => row.id === '2')?.status,
+    ).toBe(2);
+    expect(() => core('payob', [1, sender, 2], 'alice')).toThrow('NOT_PAYABLE');
+    expect(BigInt((await used(runtime)) - afterClaim)).toBe(
+      (await accounted()) - afterClaimAccounted,
+    );
+    expect(await used(receiver)).toBe(receiverAtWithdrawal);
+    expect(await used(token)).toBe(tokenAtWithdrawal);
   } finally {
     cleos([
       'push',
@@ -310,8 +489,6 @@ it('finishes a real Daclify internal claim using held RAM even when the referenc
       'eosio@active',
     ]);
   }
-  expect(withdrawn).toBeLessThan(claimed);
-  expect(withdrawn - physicalBeforeWithdrawal).toBe(-310);
   writeFileSync(
     '.artifacts/native-reference-claim.json',
     JSON.stringify(
@@ -319,9 +496,7 @@ it('finishes a real Daclify internal claim using held RAM even when the referenc
         runtime,
         token,
         receiver,
-        runtimeCodeHash: createHash('sha256')
-          .update(readFileSync('.artifacts/contracts/runtime.wasm'))
-          .digest('hex'),
+        runtimeCodeHash: RuntimeCodeHash,
         tokenCodeHash: createHash('sha256')
           .update(readFileSync('.artifacts/reference-token/reference.wasm'))
           .digest('hex'),
@@ -333,11 +508,17 @@ it('finishes a real Daclify internal claim using held RAM even when the referenc
         physicalQuotaAtWithdrawalBytes: physicalBeforeWithdrawal,
         managedQuotaControlBytes: physicalBeforeWithdrawal - claimed,
         partialWithdrawalRejectedAtPhysicalQuota: true,
+        missingAndClosedReceiverPreservesState: true,
+        receiverFundedPreparationBytes: 240,
+        recipientAndTokenRamUnchangedAtPayout: true,
+        nativeExitReconcilesInstrumentedCounters: true,
+        stakeAndDirectObligationMissingRowRollback: true,
+        signedStakeExitAndOnceOnlyNativePayment: true,
         limitations: [
           'Owned native reference token only; Telos token code is not qualified.',
           'Exact finite managed quota is an exhaustion fixture; native RAM purchases reject managed accounts.',
-          'External sender-paid rows remain outside the Daclify contract-record counter.',
-          'Quota enforcement and legacy holds remain disabled/unimplemented.',
+          'The runtime row is opened by the operator before funding; historical payer changes remain a separate qualification gate.',
+          'This new observed claim does not qualify every historical token/module lifecycle or public deployment.',
         ],
       },
       null,

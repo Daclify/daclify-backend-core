@@ -59,6 +59,8 @@ beforeEach(async () => {
   );
   await send(token, 'create', ['eosio.token', '1000.0000 TLOS'], 'eosio.token@active');
   await send(token, 'issue', ['carol', '100.0000 TLOS', ''], 'eosio.token@active');
+  for (const recipient of ['alice', 'bob'])
+    await send(token, 'open', [recipient, '4,TLOS', recipient], recipient + '@active');
   await send(
     names,
     'settier',
@@ -78,6 +80,36 @@ function balance(account: string): string {
 }
 
 describe('module catalogue fees', () => {
+  it('rolls back the buyer transfer and platform share until the publisher prepares its token row', async () => {
+    await send(
+      runtime,
+      'listmod',
+      ['payroll', 'relay', 1, 1, '2.0000 TLOS', hash, 'Receiving-wallet fixture'],
+      'relay@active',
+    );
+    const before = {
+      buyer: balance('carol'),
+      platform: balance('alice'),
+      payments: runtime.tables.modpays?.(runtime.toBigInt()).getTableRows(),
+    };
+    const pay = () =>
+      send(
+        token,
+        'transfer',
+        ['carol', 'daclifycore', '2.0000 TLOS', 'mod:payroll'],
+        'carol@active',
+      );
+    await expect(pay()).rejects.toThrow('PAYOUT_TOKEN_ROW_REQUIRED');
+    expect({
+      buyer: balance('carol'),
+      platform: balance('alice'),
+      payments: runtime.tables.modpays?.(runtime.toBigInt()).getTableRows(),
+    }).toEqual(before);
+    await send(token, 'open', ['relay', '4,TLOS', 'relay'], 'relay@active');
+    await pay();
+    expect(balance('relay')).toBe('1.9000 TLOS');
+    expect(balance('alice')).toBe('0.1000 TLOS');
+  });
   it('refuses a module that does not accept the platform fee', async () => {
     await expect(
       send(

@@ -399,6 +399,10 @@ export const ServiceResponseRoutes = [
 }[];
 
 export const ContractFailureMessages = {
+  PAYOUT_TOKEN_ROW_REQUIRED:
+    'The receiving wallet must prepare its balance row for this token and precision before payment. Preparation pays the wallet’s RAM cost; it does not authorize a withdrawal.',
+  PAYOUT_WALLET_REQUIRED:
+    'Connect the receiving account’s wallet on this DAO’s blockchain to prepare its token balance row.',
   RAM_QUOTA_ACTIVE:
     'The operator must disable this DAO’s RAM guard before legacy completion adoption.',
   RAM_CREDENTIAL_REQUIRED:

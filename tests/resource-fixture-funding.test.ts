@@ -8,6 +8,13 @@ const fixture = vi.hoisted(() => ({
   },
   info: vi.fn(async () => ({ chain_id: 'ab'.repeat(32) })),
   balance: vi.fn(async () => [{ units: 1000000000n, symbol: '4,TLOS' }]),
+  stats: vi.fn(async () => ({
+    TLOS: {
+      supply: { units: 0n, symbol: '4,TLOS' },
+      max_supply: { units: 10000000000n, symbol: '4,TLOS' },
+      issuer: 'alice',
+    },
+  })),
   tables: vi.fn(async (): Promise<{ rows: unknown[]; more: boolean }> => ({
     rows: [{ base: { balance: '2147483648 RAM' } }],
     more: false,
@@ -35,6 +42,7 @@ vi.mock('@wharfkit/antelope', async (importOriginal) => ({
       chain: {
         get_info: fixture.info,
         get_currency_balance: fixture.balance,
+        get_currency_stats: fixture.stats,
         get_table_rows: fixture.tables,
       },
     };
@@ -46,6 +54,48 @@ beforeEach(() => {
   vi.clearAllMocks();
   fixture.network.container = 'daclify-resources-native';
   fixture.network.url = 'http://127.0.0.1:20588';
+});
+it('caps synthetic top-ups at the remaining supply and leaves a funded issuer usable when minting is exhausted', async () => {
+  fixture.balance.mockResolvedValueOnce([{ units: 876056238n, symbol: '4,TLOS' }]);
+  fixture.stats.mockResolvedValueOnce({
+    TLOS: {
+      supply: { units: 9895002856n, symbol: '4,TLOS' },
+      max_supply: { units: 10000000000n, symbol: '4,TLOS' },
+      issuer: 'alice',
+    },
+  });
+  await fundResourceFixture();
+  expect(fixture.exec).toHaveBeenCalledWith(
+    'docker',
+    expect.arrayContaining([
+      'issue',
+      '["alice","10499.7144 TLOS","Owned resource fixture funding"]',
+    ]),
+    { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] },
+  );
+  fixture.exec.mockClear();
+  fixture.balance.mockResolvedValueOnce([{ units: 876056238n, symbol: '4,TLOS' }]);
+  fixture.stats.mockResolvedValueOnce({
+    TLOS: {
+      supply: { units: 10000000000n, symbol: '4,TLOS' },
+      max_supply: { units: 10000000000n, symbol: '4,TLOS' },
+      issuer: 'alice',
+    },
+  });
+  await fundResourceFixture();
+  expect(fixture.exec).not.toHaveBeenCalled();
+});
+it('refuses an exhausted empty issuer instead of inventing funds', async () => {
+  fixture.balance.mockResolvedValueOnce([{ units: 0n, symbol: '4,TLOS' }]);
+  fixture.stats.mockResolvedValueOnce({
+    TLOS: {
+      supply: { units: 10000000000n, symbol: '4,TLOS' },
+      max_supply: { units: 10000000000n, symbol: '4,TLOS' },
+      issuer: 'alice',
+    },
+  });
+  await expect(fundResourceFixture()).rejects.toThrow('RESOURCE_FIXTURE_FUNDING_REQUIRED');
+  expect(fixture.exec).not.toHaveBeenCalled();
 });
 
 it.each(['https://testnet.telos.net', 'http://127.0.0.1:20488'])(

@@ -23,6 +23,7 @@ beforeEach(async () => {
   );
   await send(token, 'create', ['alice', '1000000.0000 TLOS'], 'eosio.token@active');
   await send(token, 'issue', ['alice', '1000.0000 TLOS', ''], 'alice@active');
+  await send(token, 'open', ['treasury', '4,TLOS', 'treasury'], 'treasury@active');
   await send(core, 'setcreate', [2000, 5000, 2000, 'relay'], 'daclifycore@active');
   await send(
     core,

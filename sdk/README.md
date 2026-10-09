@@ -18,3 +18,6 @@ This SDK, generated code, headers and documentation are **AGPL-3.0-only**.
 The package includes [LICENSE](LICENSE) and [licensing guidance](LICENSING.md).
 Dependencies retain their own licenses. Review copyleft compatibility before
 combining this SDK with proprietary code; there is no blanket module exception.
+
+
+`nativeTokenOpenAction(token,wallet,destination)` encodes the standard native token `open` action with the receiving wallet as both owner and RAM payer. It validates the producer-owned asset and native identity, exact chain and destination. Preparation does not pair an identity or authorize a withdrawal. Tokens without the qualified standard `open`/`accounts` layout need operator review; an existing row alone does not qualify arbitrary token RAM behavior.

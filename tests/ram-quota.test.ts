@@ -63,6 +63,7 @@ it('refuses activating an actual old observer while legacy recovery metadata is 
   );
   await send(token, 'create', ['test.token', '1000.0000 TLOS'], 'test.token@active');
   await send(token, 'issue', ['alice', '10.0000 TLOS', ''], 'test.token@active');
+  await send(token, 'open', ['bob', '4,TLOS', 'bob'], 'bob@active');
   await send(token, 'transfer', ['alice', 'daclifycore', '10.0000 TLOS', 'dao:1'], 'alice@active');
   for (const id of [1, 2]) {
     await send(module, 'reserve', ['daclifycore', 1, id, 1, '1.0000 TLOS', 0], 'works@active');

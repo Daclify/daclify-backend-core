@@ -9,6 +9,7 @@
 #include "ram_completion.hpp"
 #include "document_refs.hpp"
 #include "ram_families.hpp"
+#include "token_payout.hpp"
 #include <eosio/transaction.hpp>
 #define JSON_NOEXCEPTION
 #define JSON_HAS_FILESYSTEM 0
@@ -695,7 +696,7 @@ public:
     auto quantity=o.quantity;auto destination=m.native_account;
     rows.modify(o,same_payer,[](auto& r){r.status=2;});
     dao_rows.modify(d,same_payer,[&](auto& r){r.reserved=add_amount(r.reserved,-quantity.amount);if(!destination.value)r.claims=add_amount(r.claims,quantity.amount);});
-    if(destination.value)action(permission_level{get_self(),"active"_n},d.token_contract,"transfer"_n,std::make_tuple(get_self(),destination,quantity,std::string("Daclify approved obligation"))).send();
+    if(destination.value)send_payout(d.token_contract,destination,quantity,"Daclify approved obligation");
     else people.modify(m,same_payer,[&](auto& r){r.claim=add_amount(r.claim,quantity.amount);});
     settle_receipt_hold(get_self(),dao_id,o.id,!destination.value);
     receipt(dao_id,destination.value?1:0,o.id,o.recipient,destination,d.token_contract,quantity);
@@ -794,13 +795,13 @@ public:
     if(quantity.amount==m.claim)consume_claim_hold(get_self(),dao_id,member_id);
     else{finance_receipt sample{};finance_receipts history(get_self(),dao_id);check_dao_ram(get_self(),dao_id,get_self(),false,ram_row_bytes(sample)+(history.begin()==history.end()?ram_scope_bytes<>():0));}
     people.modify(m,same_payer,[&](auto& r){r.claim=add_amount(r.claim,-quantity.amount);});dao_rows.modify(d,same_payer,[&](auto& r){r.claims=add_amount(r.claims,-quantity.amount);});
-    action(permission_level{get_self(),"active"_n},d.token_contract,"transfer"_n,std::make_tuple(get_self(),destination,quantity,std::string("Daclify claim withdrawal"))).send();
+    send_payout(d.token_contract,destination,quantity,"Daclify claim withdrawal");
     receipt(dao_id,2,0,member_id,destination,d.token_contract,quantity);
   }
   ACTION unstake(name runtime,uint64_t dao_id,uint64_t member_id,name destination,asset quantity) {
     authorized_actor(runtime,dao_id,member_id,false,true);const auto& d=dao_rows.get(dao_id);check(d.active_ballots==0,"GOVERNANCE_LOCKED");check(quantity.symbol==d.token_symbol&&quantity.amount>0,"ASSET_QUANTITY");check(destination!=get_self()&&is_account(destination),"PAYOUT_DESTINATION");members people(get_self(),dao_id);const auto& m=people.get(member_id);check(quantity.amount<=m.stake,"INSUFFICIENT_STAKE");
     dao_rows.modify(d,same_payer,[&](auto& r){r.staked=add_amount(r.staked,-quantity.amount);if(m.active)r.eligible_stake=add_amount(r.eligible_stake,-quantity.amount);});people.modify(m,same_payer,[&](auto& r){r.stake=add_amount(r.stake,-quantity.amount);});
-    action(permission_level{get_self(),"active"_n},d.token_contract,"transfer"_n,std::make_tuple(get_self(),destination,quantity,std::string("Daclify governance unstake"))).send();
+    send_payout(d.token_contract,destination,quantity,"Daclify governance unstake");
   }
   [[eosio::on_notify("*::transfer")]] void deposit(name from,name to,asset quantity,std::string memo) {
     if(to!=get_self()||from==get_self())return;
@@ -1001,10 +1002,14 @@ private:
     const auto cfg=fee_configuration();
     if(cfg.names.value)action(permission_level{get_self(),"active"_n},cfg.names,"setpolicy"_n,std::make_tuple(get_self(),bump_bps,quote_premium_bps)).send();
   }
+  void send_payout(name token,name to,asset quantity,const std::string& memo) {
+    require_payout_row(token,to,quantity.symbol);
+    action(permission_level{get_self(),"active"_n},token,"transfer"_n,std::make_tuple(get_self(),to,quantity,memo)).send();
+  }
   void pay_share(name token,name to,asset quantity,const std::string& memo) {
     if(quantity.amount==0)return;
     check(to!=get_self()&&is_account(to),"FEE_ACCOUNT");
-    action(permission_level{get_self(),"active"_n},token,"transfer"_n,std::make_tuple(get_self(),to,quantity,memo)).send();
+    send_payout(token,to,quantity,memo);
   }
   void settle_module(name from,asset quantity,const std::string& memo) {
     check(memo.size()>4&&memo.size()<=16,"MODULE_PAYMENT");

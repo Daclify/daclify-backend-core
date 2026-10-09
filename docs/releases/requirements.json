@@ -310,6 +310,15 @@
         "../daclify-frontend/tests/e2e/files.spec.ts",
         "../daclify-frontend/tests/e2e/platform.spec.ts"
       ]
+    },
+    {
+      "id": "RESOURCE-RECEIVER-FUNDED-PAYOUTS",
+      "suite": "vert",
+      "tests": [
+        "tests/payout-preparation.test.ts",
+        "tests/payout-wallet.test.ts",
+        "tests/marketplace.test.ts"
+      ]
     }
   ]
 }

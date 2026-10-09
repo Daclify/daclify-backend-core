@@ -6,6 +6,10 @@ import {
   IdSchema,
   Uint64Schema,
   NativeAccountSchema,
+  AssetRefSchema,
+  NativeIdentitySchema,
+  type AssetRef,
+  type NativeIdentity,
 } from '../protocol/index.js';
 import { runtimeAbi, type RuntimeActions, type instruction } from './generated/runtime.js';
 export { RuntimeCodeHash, RuntimeRawAbiHash } from './generated/releases.js';
@@ -21,6 +25,45 @@ export {
   type EvmBinding,
 } from './evm.js';
 const abi = ABI.from(runtimeAbi);
+export function nativeTokenOpenAction(
+  value: AssetRef,
+  selected: NativeIdentity,
+  destination: string,
+): Action {
+  const token = AssetRefSchema.parse(value),
+    wallet = NativeIdentitySchema.parse(selected);
+  NativeAccountSchema.parse(destination);
+  if (wallet.chainId !== token.chainId || wallet.account !== destination)
+    throw new Error('PAYOUT_WALLET_REQUIRED');
+  const tokenAbi = ABI.from({
+    version: 'eosio::abi/1.2',
+    structs: [
+      {
+        name: 'open',
+        base: '',
+        fields: [
+          { name: 'owner', type: 'name' },
+          { name: 'symbol', type: 'symbol' },
+          { name: 'ram_payer', type: 'name' },
+        ],
+      },
+    ],
+    actions: [{ name: 'open', type: 'open', ricardian_contract: '' }],
+  });
+  return Action.from(
+    {
+      account: token.contract,
+      name: 'open',
+      authorization: [{ actor: wallet.account, permission: wallet.permission }],
+      data: {
+        owner: destination,
+        symbol: token.precision + ',' + token.symbol,
+        ram_payer: wallet.account,
+      },
+    },
+    tokenAbi,
+  );
+}
 export function nativeRamActions(value: RamQuote): Action[] {
   const quote = RamQuoteSchema.parse(value),
     authorization = [{ actor: quote.order.payer, permission: 'active' }];

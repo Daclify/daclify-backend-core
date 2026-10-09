@@ -110,3 +110,6 @@ The development [RAM migration controller](docs/operations/ram-migration.md) has
 The development per-DAO RAM guard is explicitly enabled by native operator action after backed allocations and completed legacy adoption. Resources shows its actual on-chain state. Normal growth and partial withdrawals cannot consume the additional completion budget; native full-claim exit and sponsored acquisition checks remain part of release qualification.
 
 Quota activation checks existing credentials, financial holds and pinned first-party module completion reserves. Already observed deployments use completion-only adoption; do not reset or backfill their historical counters. See the RAM migration runbook for exact stages, 5,000-row activation bounds and pending-approval restrictions. These local development checks do not qualify public rollout or foreign token-row ownership.
+
+
+Native payouts now require receiving-wallet token-row preparation. The runtime refuses missing rows atomically, and the UI offers the receiver-funded wallet action. Operators must prepare new runtime rows before funding and separately qualify historical sender-payer state; see [RAM operating bounds](docs/ram-accounting.md#receiving-wallet-token-rows) and [native evidence](docs/evidence/2026-10-09-receiving-wallet-ram.md). These local checks do not authorize public rollout.

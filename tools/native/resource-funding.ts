@@ -50,7 +50,24 @@ export async function fundResourceFixture() {
     fixtureAction(network.container, 'eosio', 'setram', [expanded], 'eosio');
   }
   if (BigInt(balance.units.toString()) >= 1000000000n) return;
-  const shortfall = 1000000000n - BigInt(balance.units.toString());
+  const stats = (await api.v1.chain.get_currency_stats('eosio.token', 'TLOS')).TLOS;
+  if (
+    !stats ||
+    stats.issuer.toString() !== 'alice' ||
+    stats.supply.symbol.toString() !== '4,TLOS' ||
+    stats.max_supply.symbol.toString() !== '4,TLOS'
+  )
+    throw new Error('RESOURCE_FIXTURE_FUNDING_REQUIRED');
+  const remaining =
+    BigInt(stats.max_supply.units.toString()) - BigInt(stats.supply.units.toString());
+  if (remaining < 0n) throw new Error('RESOURCE_FIXTURE_FUNDING_REQUIRED');
+  if (remaining === 0n) {
+    if (BigInt(balance.units.toString()) === 0n)
+      throw new Error('RESOURCE_FIXTURE_FUNDING_REQUIRED');
+    return;
+  }
+  const target = 1000000000n - BigInt(balance.units.toString());
+  const shortfall = target < remaining ? target : remaining;
   unlockFixtureWallet(network.container);
   fixtureAction(
     network.container,
