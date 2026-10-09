@@ -399,6 +399,14 @@ export const ServiceResponseRoutes = [
 }[];
 
 export const ContractFailureMessages = {
+  RAM_ORDINARY_EXHAUSTED:
+    'This DAO needs additional ordinary RAM before this write or partial withdrawal. A full-claim withdrawal can use its reserved hold.',
+  RAM_DAO_EXHAUSTED:
+    'This DAO has exhausted its allocated and purchased RAM. Additional backed capacity is required.',
+  RAM_ALLOCATION_REQUIRED:
+    'The operator must issue physically backed capacity for this DAO and contract before enabling writes.',
+  RAM_MIGRATION_ACTIVE:
+    'The operator is completing the legacy RAM migration. Ordinary growth is temporarily unavailable.',
   RAM_PURCHASE_TRANSACTION:
     'Prepare the RAM order and its TLOS transfer together in one wallet transaction.',
   RAM_ORDER_UNKNOWN: 'This RAM order was not found on the selected operator.',

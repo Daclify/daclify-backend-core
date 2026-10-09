@@ -10,7 +10,7 @@ The implementation is not a production release. `npm run package:release` still 
 
 The current development version is **0.7.0-alpha.1**, with contract interface 1. The resource-billing-archives branch adds core migrations 022–028 and hash-tracked Archive migrations 001–004, plus additive C++ state while preserving existing serialized rows and signing/content domains. It implements native/card RAM acquisition, manually funded payer allocations, configured prepaid storage, verified hosted references, public card-image uploads, encrypted Archive backups, native approval/revocation, bounded ordinary-poll pruning and merged history recovery. Hosted ownership/usage can be rebuilt from surviving chain references and provider inventory without inventing payment receipts.
 
-Quota enforcement, completion holds, safe legacy backfill, document pruning/selective restoration, a complete restore drill and live-provider qualification remain unfinished. Pruning and destructive retention stay off by default. The baseline 0.7 upgrade guide does not qualify this branch; a separate versioned release/upgrade packet is required before public deployment. Existing wallet recovery remains available; social pairings and billing records require database backups.
+Complete release/provider qualification remains unfinished. Development code includes physical completion holds, bounded legacy adoption, per-DAO growth limits, source-owned pruning/restoration and tested local recovery; remaining lifecycle/old-release gates are listed in the execution ledger. Pruning and destructive retention stay off by default. The baseline 0.7 upgrade guide does not qualify this branch; a separate versioned release/upgrade packet is required before public deployment. Existing wallet recovery remains available; social pairings and billing records require database backups.
 
 Shared creation includes 10 active members. Paid slots 1–40 cost $1/month each,41–240 cost $0.50, further slots cost $0.20. Administrators approve capacity; joining never triggers charges. Own contracts/server with either the Daclify frontend or an own portal show Contact for pricing. Optional module-product Connect receipts use each DAO's own merchant account and initially 5% governed commission, separately from hosting. Read [payment operations](docs/operations/connected-payments.md) and app `/docs/shared-hosting`, `/docs/payments`, `/docs/independent-operators`.
 
@@ -97,7 +97,7 @@ Owned-native checks cover 200 DAOs/40,000 memberships and representative workflo
 
 `DACLIFY_STORAGE_CLEANUP_ENABLED` defaults false. Explicit enablement requires content and storage billing configuration and current-payment reconciliation. Period-bound in-app reminders are available; optional SMTP reminder/operator alert workers require separate configuration and live delivery qualification. A server-only gateway key can protect the dedicated gateway when its matching provider restriction is configured. It does not establish a funded bandwidth allowance. Keep cleanup off during incomplete recovery.
 
-Legacy controller/supported-release qualification and old executable-work migration, safe quota enforcement, live gateway funding/access qualification, provider qualification and the immutable 0.8 release remain open. No production deployment or destructive rollout is certified by these development changes.
+Legacy controller/supported-release qualification and old executable-work migration, quota/completion-path release qualification, live gateway funding/access qualification, provider qualification and the immutable 0.8 release remain open. No production deployment or destructive rollout is certified by these development changes.
 
 ## License
 
@@ -106,3 +106,5 @@ First-party code, contracts, SDKs and documentation are licensed under
 Third-party files retain their own licenses. Contributions remain owned by their authors.
 
 The development [RAM migration controller](docs/operations/ram-migration.md) has bounded core/all-five-module scans, financial/election hold adoption and once-only physically backed inherited grants. Migration totals fail closed until sealing. Existing observed deployments require a separate reviewed upgrade path. No migration is run automatically at API startup.
+
+The development per-DAO RAM guard is explicitly enabled by native operator action after backed allocations and completed legacy adoption. Resources shows its actual on-chain state. Normal growth and partial withdrawals cannot consume the additional completion budget; native full-claim exit and sponsored acquisition checks remain part of release qualification.

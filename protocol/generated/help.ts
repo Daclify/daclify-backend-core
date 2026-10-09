@@ -306,7 +306,7 @@ export const CoreHelpBundle={
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "0e5d9e4f52d9b6a5e47343c3da22ec658e2a11b73262b11af0a7fd4696fa9601",
+      "sourceAbiHash": "f263203034d46b332021e7e837bdde670b3cce8c5aaa65ab767410bf9ee9a316",
       "actions": [
         {
           "name": "addmember",
@@ -631,6 +631,23 @@ export const CoreHelpBundle={
             {
               "name": "paid_at",
               "type": "uint32"
+            }
+          ]
+        },
+        {
+          "name": "checkdaoram",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "payer",
+              "type": "name"
+            },
+            {
+              "name": "table",
+              "type": "name"
             }
           ]
         },
@@ -2174,6 +2191,19 @@ export const CoreHelpBundle={
             {
               "name": "settings",
               "type": "gov_settings"
+            }
+          ]
+        },
+        {
+          "name": "setdaoquota",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "enabled",
+              "type": "bool"
             }
           ]
         },
@@ -4093,6 +4123,15 @@ export const CoreHelpBundle={
             {
               "name": "source_hash",
               "type": "checksum256"
+            }
+          ]
+        },
+        {
+          "name": "ramquota",
+          "fields": [
+            {
+              "name": "enabled",
+              "type": "bool"
             }
           ]
         },
@@ -7144,7 +7183,10 @@ export const CoreHelpBundle={
           },
           "enforcement": {
             "type": "string",
-            "const": "disabled"
+            "enum": [
+              "disabled",
+              "active"
+            ]
           },
           "completionHolds": {
             "default": null,

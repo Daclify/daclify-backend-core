@@ -1124,7 +1124,7 @@ it('prunes only old unreferenced native documents and restores exact bytes witho
     key_epoch: 0,
   });
   writeFileSync(
-    'docs/evidence/2026-10-08-native-document-archives.json',
+    '.artifacts/native-document-archives-latest.json',
     JSON.stringify(
       {
         environment: 'owned local Spring fixture',

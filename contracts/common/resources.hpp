@@ -79,6 +79,12 @@ struct [[eosio::table("rammigsrcs"),eosio::contract("runtime")]] ram_migration_s
  EOSLIB_SERIALIZE(ram_migration_source,(account)(kind)(code_hash))
 };
 using ram_migration_sources=eosio::multi_index<"rammigsrcs"_n,ram_migration_source>;
+struct [[eosio::table("ramquota"),eosio::contract("runtime")]] ram_quota_state {
+ bool enabled=false;
+ EOSLIB_SERIALIZE(ram_quota_state,(enabled))
+};
+using ram_quota_settings=eosio::singleton<"ramquota"_n,ram_quota_state>;
+inline bool ram_quota_enabled(eosio::name runtime,uint64_t dao){ram_quota_settings saved(runtime,dao);return dao&&saved.exists()&&saved.get().enabled;}
 struct [[eosio::table("ramsources"),eosio::contract("runtime")]] ram_source {
   eosio::name account;eosio::checksum256 code_hash;
   uint64_t primary_key()const{return account.value;}
@@ -105,5 +111,7 @@ inline uint8_t ram_category(eosio::name table,uint64_t dao_id){
 inline void observe_ram(eosio::name runtime,uint64_t dao_id,eosio::name payer,eosio::name table,uint64_t added,uint64_t removed){
   ram_observer_settings config(runtime,runtime.value);if(!config.exists())return;
   eosio::action(eosio::permission_level{payer,"active"_n},runtime,"ramadjust"_n,std::make_tuple(dao_id,payer,ram_category(table,dao_id),added,removed)).send();
+  if(added>removed&&ram_quota_enabled(runtime,dao_id))
+    eosio::action(eosio::permission_level{payer,"active"_n},runtime,"checkdaoram"_n,std::make_tuple(dao_id,payer,table)).send();
 }
 }

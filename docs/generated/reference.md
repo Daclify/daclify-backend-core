@@ -346,7 +346,7 @@ Hosted Pinata reads require a server-only dedicated-gateway key and a separately
 
 ## runtime contract
 
-Source ABI JSON SHA-256: `0e5d9e4f52d9b6a5e47343c3da22ec658e2a11b73262b11af0a7fd4696fa9601`.
+Source ABI JSON SHA-256: `f263203034d46b332021e7e837bdde670b3cce8c5aaa65ab767410bf9ee9a316`.
 
 ### Action: addmember
 
@@ -481,6 +481,14 @@ Source ABI JSON SHA-256: `0e5d9e4f52d9b6a5e47343c3da22ec658e2a11b73262b11af0a7fd
 | usd_cents | uint32 |
 | checkout_reference | checksum256 |
 | paid_at | uint32 |
+
+### Action: checkdaoram
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| payer | name |
+| table | name |
 
 ### Action: checkrampool
 
@@ -1108,6 +1116,13 @@ Source ABI JSON SHA-256: `0e5d9e4f52d9b6a5e47343c3da22ec658e2a11b73262b11af0a7fd
 | dao_id | uint64 |
 | member_id | uint64 |
 | settings | gov_settings |
+
+### Action: setdaoquota
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| enabled | bool |
 
 ### Action: setfees
 
@@ -1876,6 +1891,12 @@ Source ABI JSON SHA-256: `0e5d9e4f52d9b6a5e47343c3da22ec658e2a11b73262b11af0a7fd
 | baseline_bytes | uint64 |
 | platform_headroom | uint64 |
 | source_hash | checksum256 |
+
+### Table: ramquota
+
+| Field | ABI type |
+| --- | --- |
+| enabled | bool |
 
 ### Table: ramreserve
 
@@ -4808,7 +4829,10 @@ Response:
     },
     "enforcement": {
       "type": "string",
-      "const": "disabled"
+      "enum": [
+        "disabled",
+        "active"
+      ]
     },
     "completionHolds": {
       "default": null,

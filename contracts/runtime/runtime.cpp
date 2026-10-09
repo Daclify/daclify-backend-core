@@ -189,6 +189,26 @@ public:
     check(get_sender()==get_self(),"RAM_POOL_SENDER");require_auth(get_self());
     ram_pools pools(get_self(),get_self().value);check_ram_pool(get_self(),pools.get(payer.value,"RAM_POOL_UNKNOWN"));
   }
+  ACTION setdaoquota(uint64_t dao_id,bool enabled){
+    require_auth(get_self());dao_rows.get(dao_id,"DAO_UNKNOWN");check(!ram_backfill_active(get_self()),"RAM_MIGRATION_ACTIVE");
+    ram_observer_settings observer(get_self(),get_self().value);auto cfg=observer.get();check(cfg.runtime_hash==get_code_hash(get_self()),"RAM_SOURCE_CODE");
+    ram_quota_settings saved(get_self(),dao_id);const bool existed=saved.exists();if(existed&&saved.get().enabled==enabled)return;
+    ram_pools pools(get_self(),get_self().value);
+    if(enabled){check_ram_pool(get_self(),pools.get(get_self().value,"RAM_POOL_UNKNOWN"));modules installed(get_self(),dao_id);
+      for(const auto& grant:installed)check_ram_pool(get_self(),pools.get(grant.account.value,"RAM_POOL_UNKNOWN"));
+      ram_counters used(get_self(),dao_id);
+      for(const auto& row:used)check_ram_pool(get_self(),pools.get(row.payer.value,"RAM_POOL_UNKNOWN"));
+    }
+    saved.set(ram_quota_state{enabled},get_self());if(!existed){cfg.meter_bytes=add64(cfg.meter_bytes,pack_size(ram_quota_state{})+224);observer.set(cfg,get_self());}
+    if(enabled){ram_counters used(get_self(),dao_id);for(const auto& row:used)check_dao_ram(get_self(),dao_id,row.payer,false);
+      check_ram_pool(get_self(),pools.get(get_self().value));}
+  }
+  ACTION checkdaoram(uint64_t dao_id,name payer,name table){
+    check(get_sender()==payer,"RAM_SOURCE_SENDER");require_auth(payer);
+    const auto cfg=ram_observer_settings(get_self(),get_self().value).get();if(payer==get_self())check(get_code_hash(payer)==cfg.runtime_hash,"RAM_SOURCE_CODE");
+    else check(ram_sources(get_self(),get_self().value).get(payer.value,"RAM_SOURCE_UNKNOWN").code_hash==get_code_hash(payer),"RAM_SOURCE_CODE");
+    check_dao_ram(get_self(),dao_id,payer,ram_completion_table(table));
+  }
   ACTION setresources(uint16_t native_ram_bps,uint16_t card_ram_bps,uint64_t included_activity_bytes,uint64_t identity_bytes_per_slot,uint32_t quote_lifetime_seconds,uint64_t storage_free_bytes,uint64_t storage_unit_bytes,uint32_t storage_monthly_usd){
     require_auth(get_self());save_resources(native_ram_bps,card_ram_bps,included_activity_bytes,identity_bytes_per_slot,quote_lifetime_seconds,storage_free_bytes,storage_unit_bytes,storage_monthly_usd);
   }
@@ -210,6 +230,7 @@ public:
     ram_counters counters(get_self(),dao_id);auto found=counters.find(payer.value);ram_counter value;if(found!=counters.end())value=*found;else{value.payer=payer;cfg.meter_bytes=add64(cfg.meter_bytes,pack_size(value)+112+(counters.begin()==counters.end()?112:0));saved.set(cfg,get_self());}
     auto& bytes=category==0?value.identity:category==1?value.activity:category==2?value.retained:value.platform;check(removed<=bytes,"RAM_COUNTER_UNDERFLOW");bytes=add64(bytes-removed,added);
     if(found==counters.end())counters.emplace(get_self(),[&](auto& r){r=value;});else counters.modify(found,same_payer,[&](auto& r){r=value;});
+    if(added>removed)check_dao_ram(get_self(),dao_id,payer,true);
   }
   TABLE settings { checksum256 chain_id; uint16_t interface_version=1; EOSLIB_SERIALIZE(settings,(chain_id)(interface_version)) };
   using config = ram_singleton<"settings"_n,settings>;
@@ -255,6 +276,7 @@ public:
     if(claims){
       members people(get_self(),dao_id);auto it=progress.advanced?people.upper_bound(progress.cursor):people.begin();
       for(;it!=people.end()&&count<limit;++it,++count){
+        participants identities(get_self(),dao_id);if(identities.find(it->id)==identities.end())identities.emplace(get_self(),[&](auto& r){r.id=it->id;});
         if(it->claim>0){ram_holds held(get_self(),dao_id);auto index=held.get_index<"byrecipient"_n>();ram_claim_holds legacy(get_self(),dao_id);
           if(index.find(it->id)==index.end()&&legacy.find(it->id)==legacy.end())legacy.emplace(get_self(),[&](auto& r){r.id=it->id;r.recipient=it->id;r.ready=true;r.padding.resize(512);});
         }
@@ -758,6 +780,7 @@ public:
   ACTION withdraw(name runtime,uint64_t dao_id,uint64_t member_id,name destination,asset quantity) {
     authorized_actor(runtime,dao_id,member_id,false,true);const auto& d=dao_rows.get(dao_id);check(quantity.symbol==d.token_symbol&&quantity.amount>0,"ASSET_QUANTITY");check(destination!=get_self()&&is_account(destination),"PAYOUT_DESTINATION");members people(get_self(),dao_id);const auto& m=people.get(member_id);check(quantity.amount<=m.claim,"INSUFFICIENT_CLAIM");
     if(quantity.amount==m.claim)consume_claim_hold(get_self(),dao_id,member_id);
+    else{finance_receipt sample{};finance_receipts history(get_self(),dao_id);check_dao_ram(get_self(),dao_id,get_self(),false,ram_row_bytes(sample)+(history.begin()==history.end()?ram_scope_bytes<>():0));}
     people.modify(m,same_payer,[&](auto& r){r.claim=add_amount(r.claim,-quantity.amount);});dao_rows.modify(d,same_payer,[&](auto& r){r.claims=add_amount(r.claims,-quantity.amount);});
     action(permission_level{get_self(),"active"_n},d.token_contract,"transfer"_n,std::make_tuple(get_self(),destination,quantity,std::string("Daclify claim withdrawal"))).send();
     receipt(dao_id,2,0,member_id,destination,d.token_contract,quantity);
@@ -1119,7 +1142,7 @@ extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
   if(code==receiver){switch(action_name){
     EOSIO_DISPATCH_HELPER(runtime,(authproof)(unlinknat)(linkevm)(unlinkevm)(submitevm)(setadmit)(admitfrom))
     EOSIO_DISPATCH_HELPER(runtime,(docsrc)(docref)(docscanstep)(backfilldocs)(prunedocs)(restoredoc))
-    EOSIO_DISPATCH_HELPER(runtime,(beginram)(scanram)(adoptram)(sealram)(setarchcfg)(archattest)(archapprove)(archrevoke)(archstep)(clearholds)(initramobs)(rebindramobs)(setramauto)(setrampool)(grantdaoram)(inheritram)(checkrampool)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram)(fulfilram))
+    EOSIO_DISPATCH_HELPER(runtime,(beginram)(scanram)(adoptram)(sealram)(setarchcfg)(archattest)(archapprove)(archrevoke)(archstep)(clearholds)(initramobs)(rebindramobs)(setramauto)(setrampool)(grantdaoram)(inheritram)(setdaoquota)(checkdaoram)(checkrampool)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram)(fulfilram))
     EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(setprofile)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(confirmext)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))
     EOSIO_DISPATCH_HELPER(runtime,(sethosted)(govhosted)(govseatfee)(orderfree)(setcapacity)(revokecap)(resumecap))
     EOSIO_DISPATCH_HELPER(runtime,(enrollagent)(addmember)(initgov)(setdaogov)(addsession)(delsession)(guardpause)(guardrevoke)(guardrecover)(submitsess)(setfees)(listmod)(unlistmod)(setmodcopy)(setpolicy)(setgov)(setoracle)(govfees)(govpayfees)(setcreate)(govcreate)(setcrrate)(ordercreate)(cardcreate)(createpaid)(govlist)(govunlist)(govmodcopy))

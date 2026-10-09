@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = '0e5d9e4f52d9b6a5e47343c3da22ec658e2a11b73262b11af0a7fd4696fa9601';
+export const runtimeAbiHash = 'f263203034d46b332021e7e837bdde670b3cce8c5aaa65ab767410bf9ee9a316';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -796,6 +796,24 @@ export const runtimeAbi = {
         {
           "name": "title",
           "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "checkdaoram",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "payer",
+          "type": "name"
+        },
+        {
+          "name": "table",
+          "type": "name"
         }
       ]
     },
@@ -3535,6 +3553,16 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "ram_quota_state",
+      "base": "",
+      "fields": [
+        {
+          "name": "enabled",
+          "type": "bool"
+        }
+      ]
+    },
+    {
       "name": "ram_source",
       "base": "",
       "fields": [
@@ -4045,6 +4073,20 @@ export const runtimeAbi = {
         {
           "name": "settings",
           "type": "gov_settings"
+        }
+      ]
+    },
+    {
+      "name": "setdaoquota",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "enabled",
+          "type": "bool"
         }
       ]
     },
@@ -4601,6 +4643,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "checkdaoram",
+      "type": "checkdaoram",
+      "ricardian_contract": ""
+    },
+    {
       "name": "checkrampool",
       "type": "checkrampool",
       "ricardian_contract": ""
@@ -4918,6 +4965,11 @@ export const runtimeAbi = {
     {
       "name": "setdaogov",
       "type": "setdaogov",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "setdaoquota",
+      "type": "setdaoquota",
       "ricardian_contract": ""
     },
     {
@@ -5416,6 +5468,13 @@ export const runtimeAbi = {
       "key_types": []
     },
     {
+      "name": "ramquota",
+      "type": "ram_quota_state",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "ramreserve",
       "type": "ram_operator_reserve",
       "index_type": "i64",
@@ -5687,6 +5746,11 @@ export interface catalogue_record {
   price: string;
   code_hash: string;
   title: string;
+}
+export interface checkdaoram {
+  dao_id: string;
+  payer: string;
+  table: string;
 }
 export interface checkrampool {
   payer: string;
@@ -6423,6 +6487,9 @@ export interface ram_purchase {
   quantity: string;
   minimum_bytes: string;
 }
+export interface ram_quota_state {
+  enabled: boolean;
+}
 export interface ram_source {
   account: string;
   code_hash: string;
@@ -6562,6 +6629,10 @@ export interface setdaogov {
   dao_id: string;
   member_id: string;
   settings: gov_settings;
+}
+export interface setdaoquota {
+  dao_id: string;
+  enabled: boolean;
 }
 export interface setfees {
   third_party_bps: number;
@@ -6710,6 +6781,7 @@ export interface RuntimeActions {
   beginram: beginram;
   cancelob: cancelob;
   cardcreate: cardcreate;
+  checkdaoram: checkdaoram;
   checkrampool: checkrampool;
   clearholds: clearholds;
   commitepoch: commitepoch;
@@ -6774,6 +6846,7 @@ export interface RuntimeActions {
   setcredits: setcredits;
   setcrrate: setcrrate;
   setdaogov: setdaogov;
+  setdaoquota: setdaoquota;
   setfees: setfees;
   setgov: setgov;
   sethosted: sethosted;

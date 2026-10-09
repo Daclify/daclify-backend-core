@@ -547,6 +547,9 @@ export class NativeChainGateway implements ChainGateway {
         : null;
     if ((await this.table('rammigrate', this.config.runtime))[0]?.active)
       throw new ApiError('RAM_MIGRATION_ACTIVE', 503);
+    const quotaEnabled = (await this.table('ramquota', id))[0]?.enabled === true;
+    if (quotaEnabled && (!observer || payers.some((payer) => !payer.sourceVerified)))
+      throw new ApiError('RESOURCE_UNQUALIFIED', 503);
     return RamUsageSchema.parse({
       dao: {
         chainId: this.config.chainId,
@@ -555,7 +558,7 @@ export class NativeChainGateway implements ChainGateway {
         interfaceVersion: 1,
       },
       observation: observer ? 'active' : 'disabled',
-      enforcement: 'disabled',
+      enforcement: quotaEnabled ? 'active' : 'disabled',
       completionHolds,
       read: { startedAt, completedAt: new Date().toISOString(), atomic: false },
       policy: policies[0] ? resourcePolicyFromRow(policies[0]) : null,

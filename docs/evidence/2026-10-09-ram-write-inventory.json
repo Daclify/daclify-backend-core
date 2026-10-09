@@ -9,12 +9,12 @@
     "No static inventory demonstrates safe completion holds or legacy-state migration."
   ],
   "producerHashes": {
-    "runtime": "1e3c9c7117098be1960e9d27596672a22c8595060c2bd09ef38be197f1f0a78f",
-    "decide": "ce4a0e221197946968fb59ac34d1b7692349bef5e28b3afe12527181a9079a20",
-    "works": "f897d7f4e2068b935bbe88fb5db63a0ee7c09c8ed47ecd59c8de9dd852498b6f",
-    "payroll": "884bdaf686f8ed3c3455554b4c12af8a95abf2080b4f467c702cebfe11bf918e",
-    "grants": "ea1f6914f5d7c25c714691de820be14aaa9bdf230f5a5233127baf111a0cd60e",
-    "endorse": "cc4cb9301c198519a90674f69b644287cd882bf573d86408e81734df46baf846"
+    "runtime": "c4a69eccf3b776f4238f31148730d8733df23597d87892dd671d22a889ad6fca",
+    "decide": "6436a6f2c0e1c28b6c52c2269588fe32f8a082dc5a5f504ec4a7967cd4feae09",
+    "works": "7b0df56d654564cfaf602bf0698338849de1a7c43bba70593fa7561f26bd7b46",
+    "payroll": "d1e270decd8b556eeacecaaa7e375bf52b38a0ec85884b64fe2d455046c17945",
+    "grants": "43bdc65ed36981bcac46f5e1a8ad3afbfb8561b251aa4b0a7ba2dde21e7cedfc",
+    "endorse": "ad0199c32a285851eb3517fc07fb7b4a71c01953f996e096839699ca8dc84935"
   },
   "sources": [
     {
@@ -59,7 +59,7 @@
     },
     {
       "path": "core/common/ram_capacity.hpp",
-      "sha256": "9fb8428d99a6fd934bc1c20c5e3ad09abde8ffa2c715df5e030bf21a199341d3"
+      "sha256": "f7ccf8ea02166b454e7239478ec94758959204d258db057a88b54e6d74a7d00f"
     },
     {
       "path": "core/common/ram_completion.hpp",
@@ -75,7 +75,7 @@
     },
     {
       "path": "core/common/ram_table.hpp",
-      "sha256": "c715f8624ed316caae0b6e267afa40174f11531e9c23e4ac4339ef46a82ba21f"
+      "sha256": "1816a0ab6b74fea3a1861ba256be89a3e840889b0f97cbe3ed11180e0387a747"
     },
     {
       "path": "core/common/records.hpp",
@@ -83,7 +83,7 @@
     },
     {
       "path": "core/common/resources.hpp",
-      "sha256": "d12f5499127fe2a8f002631f2821c83a50f6d9724a100ac1a6e8944bbe24e5e4"
+      "sha256": "2dd6bc3c284b5701da11f4d906a557dbdcd14a37cc71b06534db27509e3a49d1"
     },
     {
       "path": "core/common/telos_resources.hpp",
@@ -119,7 +119,7 @@
     },
     {
       "path": "core/runtime/runtime.cpp",
-      "sha256": "21961c2aee424f02eb98d1814ebb4e40caca60ff22dbc3c05263ab51193768f4"
+      "sha256": "43b676bb0b3392867c5c297c431b70518c4760b2cd9fbefada6a2f501099babc"
     },
     {
       "path": "core/testtoken/testtoken.cpp",
@@ -2002,7 +2002,12 @@
       "declarations": [
         {
           "source": "core/common/ram_capacity.hpp",
-          "line": 50,
+          "line": 56,
+          "declaration": "ram_table<\"ramalloc\"_n,ram_allocation> allocations(runtime,dao);"
+        },
+        {
+          "source": "core/common/ram_capacity.hpp",
+          "line": 65,
           "declaration": "ram_table<\"ramalloc\"_n,ram_allocation> bought(runtime,dao.id);"
         },
         {
@@ -2756,6 +2761,35 @@
     },
     {
       "producer": "runtime",
+      "table": "ramquota",
+      "rowType": "ram_quota_state",
+      "fields": [
+        {
+          "name": "enabled",
+          "type": "bool"
+        }
+      ],
+      "payer": "own contract; foreign payer rejected by qualified ram_table writes",
+      "daoBinding": "platform",
+      "nativeScope": "runtime account (shared)",
+      "category": "platform",
+      "instrumentation": "explicit observer/metadata path; inspect callers",
+      "kind": "singleton",
+      "secondaryKeyBytes": [],
+      "rowOverheadBytes": 224,
+      "newScopeOverheadBytes": 0,
+      "sharedHeaderPolicy": "platform",
+      "declarations": [
+        {
+          "source": "core/common/resources.hpp",
+          "line": 86,
+          "declaration": "eosio::singleton<\"ramquota\"_n,ram_quota_state>;"
+        }
+      ],
+      "lifecycleQualification": "See native test evidence; static presence alone does not qualify every lifecycle."
+    },
+    {
+      "producer": "runtime",
       "table": "ramreserve",
       "rowType": "ram_operator_reserve",
       "fields": [
@@ -2810,7 +2844,7 @@
       "declarations": [
         {
           "source": "core/common/resources.hpp",
-          "line": 87,
+          "line": 93,
           "declaration": "eosio::multi_index<\"ramsources\"_n,ram_source>;"
         }
       ],
@@ -2855,7 +2889,7 @@
       "declarations": [
         {
           "source": "core/common/resources.hpp",
-          "line": 93,
+          "line": 99,
           "declaration": "eosio::multi_index<\"ramstats\"_n,ram_counter>;"
         }
       ],
@@ -3111,7 +3145,7 @@
       "declarations": [
         {
           "source": "core/runtime/runtime.cpp",
-          "line": 215,
+          "line": 236,
           "declaration": "ram_singleton<\"settings\"_n,settings>;"
         }
       ],
@@ -5413,833 +5447,854 @@
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 198,
+      "line": 202,
+      "receiver": "saved",
+      "operation": "set",
+      "precedingDeclaration": "setdaoquota"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 202,
+      "receiver": "observer",
+      "operation": "set",
+      "precedingDeclaration": "setdaoquota"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 218,
       "receiver": "saved",
       "operation": "set",
       "precedingDeclaration": "rebindramobs"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 205,
+      "line": 225,
       "receiver": "sources",
       "operation": "emplace",
       "precedingDeclaration": "setramcode"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 205,
+      "line": 225,
       "receiver": "saved",
       "operation": "set",
       "precedingDeclaration": "setramcode"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 205,
+      "line": 225,
       "receiver": "sources",
       "operation": "modify",
       "precedingDeclaration": "setramcode"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 210,
+      "line": 230,
       "receiver": "saved",
       "operation": "set",
       "precedingDeclaration": "ramadjust"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 212,
+      "line": 232,
       "receiver": "counters",
       "operation": "emplace",
       "precedingDeclaration": "ramadjust"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 212,
+      "line": 232,
       "receiver": "counters",
       "operation": "modify",
       "precedingDeclaration": "ramadjust"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 228,
+      "line": 249,
       "receiver": "snapshots",
       "operation": "emplace",
       "precedingDeclaration": "beginram"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 228,
+      "line": 249,
       "receiver": "allowed",
       "operation": "emplace",
       "precedingDeclaration": "beginram"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 235,
+      "line": 256,
       "receiver": "observer",
       "operation": "set",
       "precedingDeclaration": "beginram"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 235,
+      "line": 256,
       "receiver": "migration",
       "operation": "set",
       "precedingDeclaration": "beginram"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 259,
+      "line": 279,
+      "receiver": "identities",
+      "operation": "emplace",
+      "precedingDeclaration": "adoptram"
+    },
+    {
+      "source": "core/runtime/runtime.cpp",
+      "line": 281,
       "receiver": "legacy",
       "operation": "emplace",
       "precedingDeclaration": "adoptram"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 270,
+      "line": 292,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "adoptram"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 297,
+      "line": 319,
       "receiver": "saved",
       "operation": "set",
       "precedingDeclaration": "sealram"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 302,
+      "line": 324,
       "receiver": "c",
       "operation": "set",
       "precedingDeclaration": "init"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 313,
+      "line": 335,
       "receiver": "index",
       "operation": "modify",
       "precedingDeclaration": "createpaid"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 320,
+      "line": 342,
       "receiver": "dao_rows",
       "operation": "emplace",
       "precedingDeclaration": "create_dao"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 332,
+      "line": 354,
       "receiver": "saved",
       "operation": "set",
       "precedingDeclaration": "setcrrate"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 341,
+      "line": 363,
       "receiver": "orders",
       "operation": "emplace",
       "precedingDeclaration": "ordercreate"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 347,
+      "line": 369,
       "receiver": "saved",
       "operation": "set",
       "precedingDeclaration": "govseatfee"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 353,
+      "line": 375,
       "receiver": "orders",
       "operation": "emplace",
       "precedingDeclaration": "orderfree"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 361,
+      "line": 383,
       "receiver": "receipts",
       "operation": "emplace",
       "precedingDeclaration": "setcapacity"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 363,
+      "line": 385,
       "receiver": "rows",
       "operation": "emplace",
       "precedingDeclaration": "setcapacity"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 364,
+      "line": 386,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "setcapacity"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 368,
+      "line": 390,
       "receiver": "index",
       "operation": "modify",
       "precedingDeclaration": "revokecap"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 368,
+      "line": 390,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "revokecap"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 373,
+      "line": 395,
       "receiver": "index",
       "operation": "modify",
       "precedingDeclaration": "resumecap"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 381,
+      "line": 403,
       "receiver": "index",
       "operation": "modify",
       "precedingDeclaration": "cardcreate"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 397,
+      "line": 419,
       "receiver": "rows",
       "operation": "emplace",
       "precedingDeclaration": "initgov"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 403,
+      "line": 425,
       "receiver": "rows",
       "operation": "emplace",
       "precedingDeclaration": "setdaogov"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 404,
+      "line": 426,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "setdaogov"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 419,
+      "line": 441,
       "receiver": "rows",
       "operation": "emplace",
       "precedingDeclaration": "addsession"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 423,
+      "line": 445,
       "receiver": "rows",
       "operation": "erase",
       "precedingDeclaration": "delsession"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 428,
+      "line": 450,
       "receiver": "rows",
       "operation": "emplace",
       "precedingDeclaration": "guardpause"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 429,
+      "line": 451,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "guardpause"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 433,
+      "line": 455,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "guardrevoke"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 438,
+      "line": 460,
       "receiver": "people",
       "operation": "modify",
       "precedingDeclaration": "guardrecover"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 439,
+      "line": 461,
       "receiver": "bindings",
       "operation": "modify",
       "precedingDeclaration": "guardrecover"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 440,
+      "line": 462,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "guardrecover"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 444,
+      "line": 466,
       "receiver": "rows",
       "operation": "emplace",
       "precedingDeclaration": "setadmit"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 444,
+      "line": 466,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "setadmit"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 470,
+      "line": 492,
       "receiver": "rows",
       "operation": "emplace",
       "precedingDeclaration": "enroll_member"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 471,
+      "line": 493,
       "receiver": "dao_rows",
       "operation": "modify",
       "precedingDeclaration": "enroll_member"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 472,
+      "line": 494,
       "receiver": "actors",
       "operation": "emplace",
       "precedingDeclaration": "enroll_member"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 512,
+      "line": 534,
       "receiver": "dao_rows",
       "operation": "modify",
       "precedingDeclaration": "setmeta"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 518,
+      "line": 540,
       "receiver": "rows",
       "operation": "emplace",
       "precedingDeclaration": "setprofile"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 519,
+      "line": 541,
       "receiver": "members_index",
       "operation": "modify",
       "precedingDeclaration": "setprofile"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 524,
+      "line": 546,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "grantcredit"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 525,
+      "line": 547,
       "receiver": "dao_rows",
       "operation": "modify",
       "precedingDeclaration": "grantcredit"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 549,
+      "line": 571,
       "receiver": "saved",
       "operation": "set",
       "precedingDeclaration": "setfees"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 611,
+      "line": 633,
       "receiver": "saved",
       "operation": "set",
       "precedingDeclaration": "govpayfees"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 621,
+      "line": 643,
       "receiver": "dao_rows",
       "operation": "modify",
       "precedingDeclaration": "setcredits"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 621,
+      "line": 643,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "setcredits"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 631,
+      "line": 653,
       "receiver": "rows",
       "operation": "emplace",
       "precedingDeclaration": "reserve"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 633,
+      "line": 655,
       "receiver": "dao_rows",
       "operation": "modify",
       "precedingDeclaration": "reserve"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 638,
+      "line": 660,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "approveob"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 643,
+      "line": 665,
       "receiver": "dao_rows",
       "operation": "modify",
       "precedingDeclaration": "cancelob"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 644,
+      "line": 666,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "cancelob"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 654,
+      "line": 676,
       "receiver": "rows",
       "operation": "emplace",
       "precedingDeclaration": "confirmext"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 662,
+      "line": 684,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "payob"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 663,
+      "line": 685,
       "receiver": "dao_rows",
       "operation": "modify",
       "precedingDeclaration": "payob"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 665,
+      "line": 687,
       "receiver": "people",
       "operation": "modify",
       "precedingDeclaration": "payob"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 681,
+      "line": 703,
       "receiver": "rows",
       "operation": "emplace",
       "precedingDeclaration": "commitepoch"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 686,
+      "line": 708,
       "receiver": "dao_rows",
       "operation": "modify",
       "precedingDeclaration": "rotateepoch"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 694,
+      "line": 716,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "rotatekey"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 700,
+      "line": 722,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "linknative"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 704,
+      "line": 726,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "unlinknat"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 716,
+      "line": 738,
       "receiver": "bindings",
       "operation": "emplace",
       "precedingDeclaration": "linkevm"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 716,
+      "line": 738,
       "receiver": "bindings",
       "operation": "modify",
       "precedingDeclaration": "linkevm"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 719,
+      "line": 741,
       "receiver": "bindings",
       "operation": "modify",
       "precedingDeclaration": "unlinkevm"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 725,
+      "line": 747,
       "receiver": "dao_rows",
       "operation": "modify",
       "precedingDeclaration": "setactive"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 726,
+      "line": 748,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "setactive"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 731,
+      "line": 753,
       "receiver": "dao_rows",
       "operation": "modify",
       "precedingDeclaration": "setroles"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 732,
+      "line": 754,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "setroles"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 739,
+      "line": 761,
       "receiver": "rows",
       "operation": "emplace",
       "precedingDeclaration": "grantkey"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 744,
+      "line": 766,
       "receiver": "rows",
       "operation": "emplace",
       "precedingDeclaration": "govlock"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 744,
+      "line": 766,
       "receiver": "dao_rows",
       "operation": "modify",
       "precedingDeclaration": "govlock"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 749,
+      "line": 771,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "govunlock"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 749,
+      "line": 771,
       "receiver": "dao_rows",
       "operation": "modify",
       "precedingDeclaration": "govunlock"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 754,
+      "line": 776,
       "receiver": "index",
       "operation": "erase",
       "precedingDeclaration": "clearholds"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 756,
+      "line": 778,
       "receiver": "old_index",
       "operation": "erase",
       "precedingDeclaration": "clearholds"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 761,
+      "line": 784,
       "receiver": "people",
       "operation": "modify",
       "precedingDeclaration": "withdraw"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 761,
+      "line": 784,
       "receiver": "dao_rows",
       "operation": "modify",
       "precedingDeclaration": "withdraw"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 767,
+      "line": 790,
       "receiver": "dao_rows",
       "operation": "modify",
       "precedingDeclaration": "unstake"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 767,
+      "line": 790,
       "receiver": "people",
       "operation": "modify",
       "precedingDeclaration": "unstake"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 778,
+      "line": 801,
       "receiver": "reserve",
       "operation": "set",
       "precedingDeclaration": "deposit"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 788,
+      "line": 811,
       "receiver": "people",
       "operation": "modify",
       "precedingDeclaration": "deposit"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 789,
+      "line": 812,
       "receiver": "dao_rows",
       "operation": "modify",
       "precedingDeclaration": "deposit"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 846,
+      "line": 869,
       "receiver": "intents",
       "operation": "remove",
       "precedingDeclaration": "ram_payment"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 846,
+      "line": 869,
       "receiver": "orders",
       "operation": "emplace",
       "precedingDeclaration": "ram_payment"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 852,
+      "line": 875,
       "receiver": "index",
       "operation": "modify",
       "precedingDeclaration": "buy_ram_order"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 859,
+      "line": 882,
       "receiver": "rows",
       "operation": "emplace",
       "precedingDeclaration": "allocate_ram"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 859,
+      "line": 882,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "allocate_ram"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 866,
+      "line": 889,
       "receiver": "receipts",
       "operation": "emplace",
       "precedingDeclaration": "allocate_included_ram"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 871,
+      "line": 894,
       "receiver": "receipts",
       "operation": "modify",
       "precedingDeclaration": "allocate_member_ram"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 877,
+      "line": 900,
       "receiver": "saved",
       "operation": "set",
       "precedingDeclaration": "save_resources"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 894,
+      "line": 917,
       "receiver": "saved",
       "operation": "set",
       "precedingDeclaration": "save_creation"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 905,
+      "line": 928,
       "receiver": "rows",
       "operation": "emplace",
       "precedingDeclaration": "save_listing"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 905,
+      "line": 928,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "save_listing"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 909,
+      "line": 932,
       "receiver": "rows",
       "operation": "erase",
       "precedingDeclaration": "remove_listing"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 910,
+      "line": 933,
       "receiver": "copy",
       "operation": "erase",
       "precedingDeclaration": "remove_listing"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 919,
+      "line": 942,
       "receiver": "copy",
       "operation": "emplace",
       "precedingDeclaration": "save_copy"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 919,
+      "line": 942,
       "receiver": "copy",
       "operation": "modify",
       "precedingDeclaration": "save_copy"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 927,
+      "line": 950,
       "receiver": "index",
       "operation": "modify",
       "precedingDeclaration": "creation_payment"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 948,
+      "line": 971,
       "receiver": "rows",
       "operation": "emplace",
       "precedingDeclaration": "bump_credentials"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 949,
+      "line": 972,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "bump_credentials"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 958,
+      "line": 981,
       "receiver": "budgets",
       "operation": "emplace",
       "precedingDeclaration": "charge_commitment"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 959,
+      "line": 982,
       "receiver": "budgets",
       "operation": "modify",
       "precedingDeclaration": "charge_commitment"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 990,
+      "line": 1013,
       "receiver": "payments",
       "operation": "emplace",
       "precedingDeclaration": "settle_module"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 1005,
+      "line": 1028,
       "receiver": "heads",
       "operation": "emplace",
       "precedingDeclaration": "record_document"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 1005,
+      "line": 1028,
       "receiver": "heads",
       "operation": "modify",
       "precedingDeclaration": "record_document"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 1007,
+      "line": 1030,
       "receiver": "clocks",
       "operation": "emplace",
       "precedingDeclaration": "record_document"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 1016,
+      "line": 1039,
       "receiver": "rows",
       "operation": "emplace",
       "precedingDeclaration": "append_document"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 1017,
+      "line": 1040,
       "receiver": "state",
       "operation": "emplace",
       "precedingDeclaration": "append_document"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 1017,
+      "line": 1040,
       "receiver": "state",
       "operation": "modify",
       "precedingDeclaration": "append_document"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 1030,
+      "line": 1053,
       "receiver": "rows",
       "operation": "emplace",
       "precedingDeclaration": "receipt"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 1091,
+      "line": 1114,
       "receiver": "rows",
       "operation": "emplace",
       "precedingDeclaration": "install_module"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 1091,
+      "line": 1114,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "install_module"
     },
     {
       "source": "core/runtime/runtime.cpp",
-      "line": 1112,
+      "line": 1135,
       "receiver": "rows",
       "operation": "modify",
       "precedingDeclaration": "dispatch"

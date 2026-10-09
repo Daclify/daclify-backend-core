@@ -48,7 +48,7 @@ export const RamUsageSchema = z
   .strictObject({
     dao: DaoRefSchema,
     observation: z.enum(['active', 'disabled']),
-    enforcement: z.literal('disabled'),
+    enforcement: z.enum(['disabled', 'active']),
     completionHolds: z
       .strictObject({ rows: z.int().min(0).max(5000), bytes: Uint64Schema })
       .nullable()
@@ -82,6 +82,7 @@ export const RamUsageSchema = z
     if (
       value.totalObservedBytes !== (valid ? observed.toString() : null) ||
       value.purchasedBytes !== purchased.toString() ||
+      (value.enforcement === 'active' && !valid) ||
       value.payers.some((p) => (value.observation === 'active') === (p.usage === null)) ||
       Date.parse(value.read.completedAt) < Date.parse(value.read.startedAt)
     )

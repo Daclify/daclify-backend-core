@@ -44,6 +44,21 @@ struct [[eosio::table("raminherit"),eosio::contract("runtime")]] ram_inherited_c
 using ram_inherited=ram_table<"raminherit"_n,ram_inherited_capacity>;
 inline uint64_t ram_used(const ram_counter& row){return add64(add64(row.identity,row.activity),add64(row.retained,row.platform));}
 inline uint64_t ram_limit_bytes(const ram_dao_limit& value){return add64(add64(value.activity,value.identity),value.completion);}
+inline bool ram_completion_table(name table){
+ switch(table.value){case "receipts"_n.value:case "ramholds"_n.value:case "ramclmholds"_n.value:
+ case "termholds"_n.value:case "terms"_n.value:case "pollends"_n.value:
+ case "ramorders"_n.value:case "ramcards"_n.value:case "ramalloc"_n.value:case "ramlimits"_n.value:
+ case "ramgrants"_n.value:case "raminherit"_n.value:case "ramentitle"_n.value:return true;default:return false;}
+}
+inline void check_dao_ram(name runtime,uint64_t dao,name payer,bool completion,uint64_t extra=0){
+ if(!ram_quota_enabled(runtime,dao))return;
+ ram_limits limits(runtime,dao);auto granted=limits.find(payer.value);ram_dao_limit limit;if(granted!=limits.end())limit=*granted;
+ ram_table<"ramalloc"_n,ram_allocation> allocations(runtime,dao);auto bought=allocations.find(payer.value);const auto purchased=bought==allocations.end()?0:bought->purchased_bytes;
+ check(granted!=limits.end()||purchased>0,"RAM_ALLOCATION_REQUIRED");
+ ram_counters counters(runtime,dao);auto found=counters.find(payer.value);const auto used=found==counters.end()?0:ram_used(*found);
+ const auto ordinary=add64(add64(limit.identity,limit.activity),purchased);
+ check(add64(used,extra)<=add64(ordinary,completion?limit.completion:0),completion?"RAM_DAO_EXHAUSTED":"RAM_ORDINARY_EXHAUSTED");
+}
 inline uint64_t committed_ram(name runtime,name payer,uint64_t target_dao=0,uint64_t extra=0){
  uint64_t total=0,count=0;daos communities(runtime,runtime.value);
  for(const auto& dao:communities){check(++count<=5000,"RAM_POOL_SCAN_LIMIT");ram_counters used(runtime,dao.id);auto u=used.find(payer.value);ram_limits limits(runtime,dao.id);auto limit=limits.find(payer.value);

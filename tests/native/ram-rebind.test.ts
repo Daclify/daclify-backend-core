@@ -122,7 +122,7 @@ beforeAll(async () => {
     pub,
     pub,
     '--buy-ram-bytes',
-    '8388608',
+    '12582912',
     '--stake-net',
     '1.0000 TLOS',
     '--stake-cpu',
