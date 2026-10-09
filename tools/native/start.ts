@@ -47,6 +47,7 @@ const accountNames = [
   'grants',
   'endorse',
   'permprobe',
+  'names',
 ] as const;
 const accountKeys = Object.fromEntries(
   accountNames.map((account) => {

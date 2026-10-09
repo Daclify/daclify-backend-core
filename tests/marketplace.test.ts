@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Blockchain } from '@proton/vert';
-import { PublicKey } from '@greymass/eosio';
+import { PublicKey, API } from '@greymass/eosio';
 import { Asset, Name, PrivateKey } from '@wharfkit/antelope';
 
 // Vert logs decoded action data before the VM runs. JSON.stringify calls
@@ -43,6 +43,21 @@ const saleRow = z.object({
 beforeEach(async () => {
   const chain = new Blockchain();
   chain.createAccounts('alice', 'bob', 'carol', 'relay');
+  const bob = chain.accounts.bob;
+  if (!bob) throw new Error('FIXTURE_ACCOUNT_REQUIRED');
+  bob.setPermissions([
+    ...bob.permissions,
+    API.v1.AccountPermission.from({
+      perm_name: 'namesale',
+      parent: 'active',
+      required_auth: {
+        threshold: 1,
+        keys: [],
+        accounts: [{ permission: { actor: 'names', permission: 'eosio.code' }, weight: 1 }],
+        waits: [],
+      },
+    }),
+  ]);
   runtime = loadContract(chain, 'daclifycore', '.artifacts/contracts/runtime');
   names = loadContract(chain, 'names', '.artifacts/contracts/names');
   token = loadContract(chain, 'eosio.token', '.artifacts/contracts/testtoken');
@@ -294,6 +309,29 @@ describe('module catalogue fees', () => {
 });
 
 describe('Telos name sales', () => {
+  it('lets only the seller change or remove unsold listings and suffixes', async () => {
+    await send(names, 'regname', ['bob', 'premname', '2.0000 TLOS', 0, 1], 'bob@active');
+    await expect(
+      send(names, 'editname', ['carol', 'premname', '3.0000 TLOS', 0, 1], 'carol@active'),
+    ).rejects.toThrow('SELLER');
+    await send(names, 'editname', ['bob', 'premname', '3.0000 TLOS', 0, 1], 'bob@active');
+    expect(
+      z
+        .object({ price: z.string() })
+        .parse(
+          row(names, 'namelist', names.toBigInt(), BigInt(Name.from('premname').value.toString())),
+        ).price,
+    ).toBe('3.0000 TLOS');
+    await expect(send(names, 'delname', ['carol', 'premname'], 'carol@active')).rejects.toThrow(
+      'SELLER',
+    );
+    await send(names, 'delname', ['bob', 'premname'], 'bob@active');
+    await send(names, 'regsuffix', ['bob', '1.0000 TLOS', 0, 1], 'bob@active');
+    await expect(send(names, 'delsuffix', ['bob'], 'carol@active')).rejects.toThrow(
+      'missing required authority',
+    );
+    await send(names, 'delsuffix', ['bob'], 'bob@active');
+  });
   it('keeps a RAM float and refuses an unknown transfer memo', async () => {
     await send(token, 'transfer', ['carol', 'names', '1.0000 TLOS', 'float'], 'carol@active');
     expect(balance('names')).toBe('1.0000 TLOS');

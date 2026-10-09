@@ -153,6 +153,7 @@ public:
     const auto cfg = load();
     check(cfg.treasury.value && seller != cfg.treasury, "FEE_PARTY");
     check_name(account_name);
+    check(account_name.suffix() == account_name || account_name.suffix() == seller, "NATIVE_SUFFIX_REQUIRED");
     check(!is_account(account_name), "NAME_TAKEN");
     check_price(price, cfg.token_symbol);
     check(usd_cents <= 100000000, "PRICE_LIMIT");
@@ -178,6 +179,7 @@ public:
     const auto cfg = load();
     check(is_account(suffix) && suffix != get_self() && suffix != cfg.treasury, "FEE_PARTY");
     check_name(suffix);
+    check(suffix.suffix() == suffix, "NATIVE_SUFFIX_REQUIRED");
     check_price(price, cfg.token_symbol);
     check(usd_cents <= 100000000, "PRICE_LIMIT");
     check(price.amount > 0 || usd_cents > 0, "PRICE");
@@ -192,6 +194,32 @@ public:
     };
     if (it == rows.end()) rows.emplace(get_self(), [&](auto& row) { write(row); row.sales_count = 0; });
     else rows.modify(it, same_payer, write);
+  }
+  ACTION editname(name seller, name account_name, asset price, uint32_t usd_cents, uint8_t accepts_fee_rule) {
+    require_auth(seller);
+    const auto cfg = load();
+    check(accepts_fee_rule == 1, "FEE_RULE");
+    check_price(price, cfg.token_symbol);
+    check(usd_cents <= 100000000 && (price.amount > 0 || usd_cents > 0), "PRICE");
+    listings rows(get_self(), get_self().value);
+    const auto& item = rows.get(account_name.value, "NAME_LISTED");
+    check(item.seller == seller, "SELLER");
+    check(item.sold == 0 && !is_account(account_name), "NAME_SOLD");
+    rows.modify(item, same_payer, [&](auto& row) { row.price = price; row.usd_cents = usd_cents; row.accepts = 1; });
+  }
+  ACTION delname(name seller, name account_name) {
+    require_auth(seller);
+    listings rows(get_self(), get_self().value);
+    const auto& item = rows.get(account_name.value, "NAME_LISTED");
+    check(item.seller == seller, "SELLER");
+    check(item.sold == 0 && !is_account(account_name), "NAME_SOLD");
+    rows.erase(item);
+  }
+  ACTION delsuffix(name suffix) {
+    require_auth(suffix);
+    suffixes rows(get_self(), get_self().value);
+    const auto& item = rows.get(suffix.value, "SUFFIX");
+    rows.erase(item);
   }
   ACTION setpolicy(name runtime, uint16_t bump_bps, uint16_t quote_premium_bps) {
     const auto cfg = load();
@@ -314,6 +342,7 @@ private:
     }
     const name suffix = suffix_for(account_name);
     if (suffix.value) {
+      check(suffix == account_name.suffix(), "NATIVE_SUFFIX_REQUIRED");
       suffixes linked(get_self(), get_self().value);
       const auto& item = linked.get(suffix.value, "SUFFIX");
       asset price = item.price;
@@ -380,7 +409,9 @@ private:
     check(!is_account(account_name), "NAME_TAKEN");
     daclify::authority owner{1, {{owner_key, 1}}, {}, {}};
     daclify::authority active{1, {{active_key, 1}}, {}, {}};
-    action(permission_level{get_self(), "active"_n}, "eosio"_n, "newaccount"_n, std::make_tuple(get_self(), account_name, owner, active)).send();
+    const name creator = chosen.suffix.value ? account_name.suffix() : (chosen.listed && !is_basic(account_name) ? chosen.seller : get_self());
+    const name permission = creator == get_self() ? "active"_n : "namesale"_n;
+    action(permission_level{creator, permission}, "eosio"_n, "newaccount"_n, std::make_tuple(creator, account_name, owner, active)).send();
     action(permission_level{get_self(), "active"_n}, "eosio"_n, "buyrambytes"_n, std::make_tuple(get_self(), account_name, chosen.ram_bytes)).send();
     if (chosen.net_stake.amount > 0 || chosen.cpu_stake.amount > 0) {
       action(permission_level{get_self(), "active"_n}, "eosio"_n, "delegatebw"_n, std::make_tuple(get_self(), account_name, chosen.net_stake, chosen.cpu_stake, true)).send();
@@ -440,7 +471,7 @@ private:
 extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action) {
   if (code == receiver) {
     switch (action) {
-      EOSIO_DISPATCH_HELPER(names, (init)(setrates)(setsettler)(settier)(regname)(regsuffix)(setpolicy)(setoracle)(intend)(fulfill))
+      EOSIO_DISPATCH_HELPER(names, (init)(setrates)(setsettler)(settier)(regname)(regsuffix)(editname)(delname)(delsuffix)(setpolicy)(setoracle)(intend)(fulfill))
     }
   } else if (action == "transfer"_n.value) {
     execute_action(name(receiver), name(code), &names::ontransfer);

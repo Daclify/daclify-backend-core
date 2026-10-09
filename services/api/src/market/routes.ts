@@ -30,6 +30,8 @@ export interface MarketChain {
     modules: ListedModule[];
   }>;
   nameService(): Promise<{
+    contract: string | null;
+    tokenContract: string | null;
     configured: boolean;
     reason: string | null;
     thirdPartyBps: number | null;
@@ -64,6 +66,8 @@ const absentCatalogue = {
   modules: [],
 };
 const absentNames = {
+  contract: null,
+  tokenContract: null,
   configured: false,
   reason: 'The Telos nameservice is not on this chain yet.',
   thirdPartyBps: null,
@@ -151,6 +155,8 @@ export function registerMarketRoutes(
       if (error instanceof MarketRuleError) throw new ApiError(error.code, 409);
       throw error;
     }
+    if (quote.party !== 'first-party') throw new ApiError('NAME_CARD_SELLER_UNSUPPORTED', 409);
+    if (quote.kind !== 'basic') throw new ApiError('NAME_CARD_PREMIUM_UNSUPPORTED', 409);
     if (quote.usdCents < 1) throw new ApiError('CARD_UNAVAILABLE', 409);
     return billing.startNameCheckout({
       accountId: account.id,
@@ -199,6 +205,8 @@ export async function readNameService(rpcUrl: string, runtime: string) {
     configured: true,
     reason: null,
     thirdPartyBps: names.thirdPartyBps,
+    contract: fees.names,
+    tokenContract: names.tokenContract ?? null,
     firstPartyBps: names.firstPartyBps,
     treasury: names.treasury,
     tiers: names.tiers.map((tier) => ({

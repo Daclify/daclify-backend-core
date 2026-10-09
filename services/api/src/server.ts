@@ -64,6 +64,7 @@ import { ApiError } from './errors.js';
 import { parseFrontendOrigins } from './deployment-config.js';
 import { DaoPresets } from '../../../protocol/dao.js';
 import type { ContentService } from './content/service.js';
+import { PeopleRoutes } from '../../../protocol/people.js';
 import { StripeBilling } from './billing/service.js';
 import { registerMarketRoutes } from './market/routes.js';
 import { MAX_HOSTED_CONTENT_BYTES } from '../../../protocol/storage.js';
@@ -980,6 +981,12 @@ export async function createServer(
     await session(request.cookies[cookieName]);
     const query = z.strictObject({ daoId: IdSchema, memberId: IdSchema }).parse(request.query);
     return chain.memberProfile(query.daoId, query.memberId);
+  });
+  app.get(PeopleRoutes.list.path, async (request) => {
+    if (!chain.people) throw new ApiError('SERVICE_UNAVAILABLE', 503);
+    return PeopleRoutes.list.response.parse(
+      await chain.people(PeopleRoutes.list.query.parse(request.query)),
+    );
   });
   app.post(ApiRoutes.logout.path, async (request, reply) => {
     ApiRoutes.logout.input.parse(request.body);

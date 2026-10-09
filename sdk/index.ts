@@ -18,6 +18,13 @@ export type { RuntimeActions, instruction } from './generated/runtime.js';
 export { RuntimeActionSchemas, RuntimeTableSchemas } from './generated/schemas.js';
 export { governanceSettings } from './dao.js';
 export {
+  nameSellerAction,
+  namePurchaseActions,
+  nameCreationPermissionActions,
+  namesAbi,
+  NamesCodeHash,
+} from './names.js';
+export {
   bindingTypedData,
   governanceTypedData,
   evmTypedDigest,

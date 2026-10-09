@@ -6,7 +6,7 @@ import { ApiRoutes } from '../../protocol/routes.js';
 import { VERSION } from '../../protocol/base.js';
 const topics: unknown = JSON.parse(await readFile('docs/guides/topics.json', 'utf8'));
 const contracts = await Promise.all(
-  ['runtime', 'hub'].map(async (name) => ({
+  ['runtime', 'hub', 'names'].map(async (name) => ({
     name,
     abi: await readFile(`.artifacts/contracts/${name}.abi`, 'utf8'),
   })),

@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { CID } from 'multiformats/cid';
 import { satisfies, valid, validRange } from 'semver';
 
-export const VERSION = '0.9.0-alpha.3';
+export const VERSION = '0.9.0-alpha.4';
 export const ApiOriginSchema = z
   .url()
   .max(512)

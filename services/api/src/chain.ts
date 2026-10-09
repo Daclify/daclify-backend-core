@@ -38,6 +38,9 @@ import type {
   ArchiveProgressSchema,
 } from '@daclify/modules/archive';
 export interface ChainGateway {
+  people?(
+    query: z.infer<typeof import('../../../protocol/people.js').PeopleRoutes.list.query>,
+  ): Promise<z.infer<typeof import('../../../protocol/people.js').PeopleRoutes.list.response>>;
   archiveLiveVotes?(
     input: z.infer<typeof import('@daclify/modules/archive').ArchiveLiveVotesRequestSchema>,
   ): Promise<z.infer<typeof import('@daclify/modules/archive').ArchiveLiveVotesSchema>>;

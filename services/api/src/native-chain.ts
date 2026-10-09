@@ -146,6 +146,7 @@ import {
   type NameQuote,
 } from './market/read.js';
 import { readMarketplace, readNameService } from './market/routes.js';
+import { PeopleRoutes, PublicProfileSchema } from '../../../protocol/people.js';
 export interface NativeChainConfig {
   rpcUrl: string;
   chainId: string;
@@ -1521,8 +1522,11 @@ export class NativeChainGateway implements ChainGateway {
     scope: string,
     lower = '0',
     limit = 200,
+    profileDao?: string,
   ): Promise<{ rows: z.infer<(typeof RuntimeTableSchemas)[K]>[]; next: string | null }> {
     Uint64Schema.parse(lower);
+    if (profileDao && table !== 'profiles') throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+    const base = profileDao ? BigInt(IdSchema.parse(profileDao)) << 64n : 0n;
     const response = await fetch(`${this.config.rpcUrl}/v1/chain/get_table_rows`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -1531,8 +1535,9 @@ export class NativeChainGateway implements ChainGateway {
         table,
         scope,
         json: true,
-        key_type: 'i64',
-        lower_bound: lower,
+        key_type: profileDao ? 'i128' : 'i64',
+        ...(profileDao ? { index_position: 2, upper_bound: (base + (1n << 64n)).toString() } : {}),
+        lower_bound: (base + BigInt(lower)).toString(),
         limit,
       }),
       signal: AbortSignal.timeout(10000),
@@ -1544,7 +1549,19 @@ export class NativeChainGateway implements ChainGateway {
     if (!body.success) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
     const parsed = z.array(RuntimeTableSchemas[table]).safeParse(body.data.rows);
     if (!parsed.success) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
-    const next = body.data.more && limit !== 1 ? Uint64Schema.safeParse(body.data.next_key) : null;
+    let cursor = body.data.next_key;
+    if (profileDao && body.data.more) {
+      if (
+        !cursor ||
+        cursor.length > 39 ||
+        !/^\d+$/.test(cursor) ||
+        BigInt(cursor) < base ||
+        BigInt(cursor) >= base + (1n << 64n)
+      )
+        throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+      cursor = (BigInt(cursor) - base).toString();
+    }
+    const next = body.data.more && limit !== 1 ? Uint64Schema.safeParse(cursor) : null;
     if (next && (!next.success || BigInt(next.data) <= BigInt(lower)))
       throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
     return { rows: parsed.data, next: next?.success ? next.data : null };
@@ -1995,11 +2012,47 @@ export class NativeChainGateway implements ChainGateway {
   ): Promise<{ accountName: string | null; profile: string | null }> {
     IdSchema.parse(daoId);
     IdSchema.parse(memberId);
-    const rows = await this.table('profiles', this.config.runtime, '0', 5000);
-    const row = rows.find((item) => item.dao_id === daoId && item.member_id === memberId);
+    const page = await this.tablePage('profiles', this.config.runtime, memberId, 1, daoId);
+    const row = page.rows.find((item) => item.dao_id === daoId && item.member_id === memberId);
     return row
       ? { accountName: row.account_name, profile: row.profile }
       : { accountName: null, profile: null };
+  }
+  async people(value: z.infer<typeof PeopleRoutes.list.query>) {
+    const query = PeopleRoutes.list.query.parse(value);
+    const page = await this.tablePage(
+      'profiles',
+      this.config.runtime,
+      query.memberId ?? query.after ?? '0',
+      query.memberId ? 1 : 50,
+      query.daoId,
+    );
+    const profiles: z.infer<typeof PeopleRoutes.list.response>['profiles'] = [];
+    let skipped = 0;
+    for (const row of page.rows) {
+      if (query.memberId && row.member_id !== query.memberId) continue;
+      if (query.daoId && row.dao_id !== query.daoId)
+        throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+      try {
+        const profile = PublicProfileSchema.parse(JSON.parse(row.profile));
+        if (profile.name !== row.account_name) throw new Error('PROFILE_NAME');
+        profiles.push({
+          id: row.id,
+          dao: {
+            chainId: this.config.chainId,
+            contract: this.config.runtime,
+            daoId: row.dao_id,
+            interfaceVersion: 1,
+          },
+          memberId: row.member_id,
+          accountName: row.account_name,
+          profile,
+        });
+      } catch {
+        skipped++;
+      }
+    }
+    return PeopleRoutes.list.response.parse({ profiles, next: page.next, skipped });
   }
   private async push<K extends keyof RuntimeActions>(
     name: K,

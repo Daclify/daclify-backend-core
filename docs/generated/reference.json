@@ -1,6 +1,6 @@
 {
   "producer": "core",
-  "packageVersion": "0.9.0-alpha.3",
+  "packageVersion": "0.9.0-alpha.4",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -21,7 +21,9 @@
         "A paired native or EVM wallet can authorize governance after explicit activation for the same member in each DAO. It adds no member or voting weight. Private documents still require the separate encryption keys.",
         "User-controlled accounts keep encrypted signing and decryption keys in your browser. Recovery requires the encrypted kit and its separate recovery credential. Social login and publicly visible wallet signatures cannot recover or derive these keys.",
         "Managed recovery delegates signing and decryption recovery to an operator. OpenBao remains the open-source candidate; production custody is gated on isolated service, audit, provider and recovery qualification.",
-        "Accounts with vault keys can share Account → Keys → Public join identity with a DAO administrator. Never share recovery kits or their credentials. A saved service-to-member association can survive DAO signing-key rotation while its database exists; a lost mapping cannot make an old signing key current again. Current chain permissions and wallet bindings remain authoritative."
+        "Accounts with vault keys can share Account → Keys → Public join identity with a DAO administrator. Never share recovery kits or their credentials. A saved service-to-member association can survive DAO signing-key rotation while its database exists; a lost mapping cannot make an old signing key current again. Current chain permissions and wallet bindings remain authoritative.",
+        "Users is the public profile directory. Publish a profile from your own user page to appear there. Your profile is shown first when you sign in; opening another profile gives the same public view without your editing and pairing controls. Public handles belong to a specific DAO membership. One service account can publish more than one handle; this directory does not publicly correlate those memberships through private sign-in credentials.",
+        "Open your own user card and choose Edit profile & account to edit your public profile, set avatar/background IPFS CIDs, manage recovery keys, pair sign-in credentials and manage wallet links. A browser signer must be authorized for the selected membership to publish. Email and social contact fields entered in this public profile are public on-chain; they are distinct from private service login pairings."
       ]
     },
     {
@@ -116,7 +118,8 @@
         "Administrators assign administrator and reviewer roles. The final active administrator cannot be demoted or removed. Reviewers can review contributions within the Works policy; contribution authors cannot approve their own work.",
         "Governance credits are nontransferable units. Their issuance and removal require DAO authority and stop while an active ballot has locked weights. Removing access preserves recorded balances and accepted payment rights.",
         "Encrypted DAOs rotate the future-content epoch when a member is deactivated. Remaining authorized members need grants for the new committed key. Deactivation cannot revoke earlier keys or erase exported history.",
-        "In Members, an active administrator pastes the applicant’s public join identity and signs admission. Confirm the keys through a trusted channel first. Then select the admitted member to assign roles and governance credits; grant an encryption epoch separately for private documents. Admission never makes an applicant an administrator automatically. Managed admission remains unavailable in this deployment."
+        "In Members, an active administrator pastes the applicant’s public join identity and signs admission. Confirm the keys through a trusted channel first. Then select the admitted member to assign roles and governance credits; grant an encryption epoch separately for private documents. Admission never makes an applicant an administrator automatically. Managed admission remains unavailable in this deployment.",
+        "Members displays each public on-chain member record, with published profile cards when available. Switch between cards and list, search names, locations or roles, and filter active/inactive members. The page labels administrator, reviewer, executive and non-voting membership using the connected runtime state. Admission, role changes, credits and private key grants retain their existing separate authorization rules."
       ]
     },
     {
@@ -171,7 +174,12 @@
         "Modules that a DAO can turn on are listed in the runtime catalogue. A listing is stored only when it accepts the platform fee rule. A DAO cannot enable a module that is missing from that catalogue or whose code no longer matches the listing.",
         "A first-party module is published by the platform treasury. Its usage charge, when one is set, is kept at the first-party rate stored in the runtime fee configuration. A third-party module is published by someone else. Its usage charge pays the platform the third-party rate in that same configuration, and the rest goes to the publisher. The rate can be changed later. The next payment uses the rate that is current, not the rate from the day the module was listed.",
         "The Telos nameservice sells new native accounts from its own contract. A 12-character name without a dot uses the basic tier. Its dollar price is stored on chain. When a TLOS conversion rate is stored beside it, the TLOS price is that dollar amount converted at the rate plus the quote premium. The account is created with the CPU, NET, and RAM stored on that tier. A name that contains a dot can be sold only when the longest suffix is connected. The suffix owner sets the price in TLOS or dollars with regsuffix. Each sale raises that price by the bump rate, and the platform keeps the third-party rate. A shorter name without a dot uses the premium tier. Someone can still list one exact name with regname. Prices, suffixes, fee rates, and completed sales stay on chain, so a new server can read them after the application database is gone. A Daclify DAO admin changes the platform cut, the bump, and the quote premium with govfees after the runtime links that DAO. Until then the runtime account can change them.",
-        "Card checkout uses the dollar amount stored on chain for that name. The browser creates the new account keys and does not send the private keys to the server. After the card payment is confirmed, the names contract records the sale and creates the account. A card session that never reaches the chain remains with the card processor. Returning from the card page does not by itself create the account. If the on-chain price changes before confirmation, the account is not created."
+        "Card checkout uses the dollar amount stored on chain for that name. The browser creates the new account keys and does not send the private keys to the server. After the card payment is confirmed, the names contract records the sale and creates the account. A card session that never reaches the chain remains with the card processor. Returning from the card page does not by itself create the account. If the on-chain price changes before confirmation, the account is not created.",
+        "Names has Find a name and Manage & sell views. Suggestions are not availability guarantees; request a fresh chain quote before payment. Back up distinct owner and active private keys before native-wallet or supported card checkout. Private keys stay in the browser. Existing native accounts are not sold or transferred by this marketplace.",
+        "An individual sells through their own native account. A DAO sells through a native account whose owner/active authority is governed by its own executives or quorum. A shared DAO administrator has no authority over the shared runtime account and needs a separate native seller account. Native proceeds go to that seller. Quorum-controlled listings and permission setup are exported as unsigned transactions for review and multisignature approval.",
+        "Before selling a suffix or special exact name, the seller owner reviews a namesale child under active, containing only the reviewed names contract eosio.code authority, and links it only to eosio::newaccount. Root owner/active authority is preserved. Existing namesale permissions and newaccount links must be reviewed before replacement. The names contract uses the actual final native suffix as creator; dotted suffix registrations are rejected. A short undotted name still needs the native seller to have won a closed native auction. This delegated child cannot authorize token transfers.",
+        "The reviewed names upgrade adds editname, delname and delsuffix for seller-authorized changes. Unsold exact listings may be repriced or removed. Existing sale receipts and created accounts remain unchanged. Removing a suffix stops its future fulfillment; coordinate pending purchases first. Native TLOS purchases are atomic: creation or authorization failure rolls the transfer back. The UI checks the names code hash before requesting any broadcast.",
+        "Third-party name card checkout is disabled because this names checkout has no seller merchant routing. Enter a positive TLOS sale price. Daclify Connect for DAO module products does not automatically route native names revenue. First-party basic-name card checkout remains separate and needs its configured billing/fulfillment service. Premium names use native TLOS checkout so a failed namespace/auction claim rolls back payment."
       ]
     },
     {
@@ -196,7 +204,8 @@
         "Status displays the selected network, actual chain ID and head blocks, runtime and module hashes, public permission authorities, resources, on-chain fee and governance configuration, database migrations and safe provider configuration flags. Missing services are labelled unconfigured. Module hash checks verify the pinned SDK artifact; unpinned runtime and hub hashes are displayed without claiming they are verified.",
         "Configured providers are not evidence of successful live integration or a qualified production release. Pinata, Stripe, Google, Telegram and managed recovery require their own configuration and acceptance checks. Public status excludes credentials, private keys, DSNs, account records and raw internal errors.",
         "Status starts with user-facing capabilities and distinguishes configured services from qualified live integrations. Expand Technical platform details to inspect hashes, authorities, resources and migration state.",
-        "Development resource policy is stored separately in resourcecfg. A linked Daclify DAO administrator can sign govresources to set the native RAM fee, card operational markup, storage allowance, unit price and capacity targets. The expected revision prevents stale overwrites. The launch policy is 5% for TLOS RAM purchases, 20% for card RAM purchases, 100 MB free pinned storage and $1/month per approved extra 1 GB. This policy does not itself buy RAM, fund an included allocation or activate a storage subscription; those services remain under implementation."
+        "Development resource policy is stored separately in resourcecfg. A linked Daclify DAO administrator can sign govresources to set the native RAM fee, card operational markup, storage allowance, unit price and capacity targets. The expected revision prevents stale overwrites. The launch policy is 5% for TLOS RAM purchases, 20% for card RAM purchases, 100 MB free pinned storage and $1/month per approved extra 1 GB. This policy does not itself buy RAM, fund an included allocation or activate a storage subscription; those services remain under implementation.",
+        "The sidebar Daclify DAO entry and its Hub card open the same DAO workspace. The linked governing DAO has a Platform controls tab for fee policy and the module catalogue; ordinary DAOs do not gain platform administration. These controls still require an active administrator and an authorized signer."
       ]
     },
     {
@@ -315,7 +324,8 @@
         "Telegram documentation chat is separate from Telegram login. Set TELEGRAM_DOCS_ENABLED=true, TELEGRAM_DOCS_GROUP_IDS as a JSON array of approved negative group chat ID strings, optional TELEGRAM_DOCS_PRIVATE_CHAT_IDS as a JSON array of approved positive numeric user ID strings, TELEGRAM_DOCS_WEBHOOK_SECRET as a random URL-safe secret of at least 32 characters, and TELEGRAM_DOCS_WEBHOOK_URL as the HTTPS API URL ending /v1/docs/telegram/webhook. The backend also needs TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_USERNAME without @, OPENROUTER_API_KEY and the real FRONTEND_ORIGIN. Keep the bot a regular member with BotFather privacy mode enabled. Restart the API and register the webhook using npm run telegram:docs:setup -- --confirm with the correct DACLIFY_ENV_FILE. The read-only setup command without --confirm checks membership, privacy and webhook conflicts first. Both chat lists default to empty; enabled chat needs at least one allowed group or private ID. For private-only testing, leave the group list empty, list your own numeric Telegram user ID and start a private chat with the bot before running setup. Group membership/privacy checks apply only when groups are configured.",
         "In an approved Telegram group use /docs@your_bot_username followed by the Daclify question; /docs also works when Telegram delivers it to this bot. Reply to the bot answer to ask a follow-up. Replies can use the previous bot answer as context, but only the bundled guide is evidence. In a whitelisted private chat, ask an ordinary Daclify question, use /docs or reply to the bot. Private access requires the chat ID to match its human sender and an explicit whitelist entry. Ordinary group conversation, unlisted private chats, other bots, other commands, edited updates and unapproved groups are ignored. Answers stay in the original topic and link to the configured frontend documentation.",
         "Only the requested question and optional previous bot answer, together with public guide text, are sent to OpenRouter. The bot does not scrape the group or persist message bodies. Telegram itself delivers messages according to its privacy mode; the API processes only allowed group commands/replies and questions from whitelisted private users. Do not send recovery kits, passwords, private keys or provider secrets. Update receipts expire after two days; messages older than one day are ignored. Requests share per-server model/concurrency limits with the app, and Telegram also has a per-chat reply limit. Use a provider key budget for an account-wide spend limit.",
-        "Telegram delivery is at most once per update in normal operation. A PostgreSQL receipt is claimed before inference and sending to prevent repeat replies and duplicate model calls on webhook retries. A crash or uncertain send can lose a reply; retry /docs manually. There is no automatic repeated send. Use separate bot identities for testnet and mainnet because one bot has one webhook. A webhook conflict is refused rather than silently replacing another integration."
+        "Telegram delivery is at most once per update in normal operation. A PostgreSQL receipt is claimed before inference and sending to prevent repeat replies and duplicate model calls on webhook retries. A crash or uncertain send can lose a reply; retry /docs manually. There is no automatic repeated send. Use separate bot identities for testnet and mainnet because one bot has one webhook. A webhook conflict is refused rather than silently replacing another integration.",
+        "Open Help from the sidebar to use the floating handbook assistant from any page. Drag its title, resize it on desktop, or use arrow keys on the title and the reset/expand buttons. Minimize it and click Help again to resume. The last 100 messages are saved in this browser, separately by service, chain/runtime and account; Clear conversation removes that history. The assistant answers the current question, rather than sending this stored conversation to the model. Never enter keys or private DAO content. Browser history is not an encrypted recovery backup."
       ]
     },
     {
@@ -4793,6 +4803,507 @@
             {
               "name": "listed",
               "type": "bool"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "names",
+      "abiVersion": "eosio::abi/1.2",
+      "sourceAbiHash": "3a195c05737dfb18c1f4d0d5b4668659f054f4a355ae695541f5239816a5c172",
+      "actions": [
+        {
+          "name": "delname",
+          "fields": [
+            {
+              "name": "seller",
+              "type": "name"
+            },
+            {
+              "name": "account_name",
+              "type": "name"
+            }
+          ]
+        },
+        {
+          "name": "delsuffix",
+          "fields": [
+            {
+              "name": "suffix",
+              "type": "name"
+            }
+          ]
+        },
+        {
+          "name": "editname",
+          "fields": [
+            {
+              "name": "seller",
+              "type": "name"
+            },
+            {
+              "name": "account_name",
+              "type": "name"
+            },
+            {
+              "name": "price",
+              "type": "asset"
+            },
+            {
+              "name": "usd_cents",
+              "type": "uint32"
+            },
+            {
+              "name": "accepts_fee_rule",
+              "type": "uint8"
+            }
+          ]
+        },
+        {
+          "name": "fulfill",
+          "fields": [
+            {
+              "name": "settler",
+              "type": "name"
+            },
+            {
+              "name": "account_name",
+              "type": "name"
+            },
+            {
+              "name": "owner_key",
+              "type": "public_key"
+            },
+            {
+              "name": "active_key",
+              "type": "public_key"
+            },
+            {
+              "name": "usd_cents",
+              "type": "uint32"
+            },
+            {
+              "name": "reference",
+              "type": "checksum256"
+            }
+          ]
+        },
+        {
+          "name": "init",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "settler",
+              "type": "name"
+            },
+            {
+              "name": "token_contract",
+              "type": "name"
+            },
+            {
+              "name": "token_symbol",
+              "type": "symbol"
+            }
+          ]
+        },
+        {
+          "name": "intend",
+          "fields": [
+            {
+              "name": "buyer",
+              "type": "name"
+            },
+            {
+              "name": "account_name",
+              "type": "name"
+            },
+            {
+              "name": "owner_key",
+              "type": "public_key"
+            },
+            {
+              "name": "active_key",
+              "type": "public_key"
+            }
+          ]
+        },
+        {
+          "name": "regname",
+          "fields": [
+            {
+              "name": "seller",
+              "type": "name"
+            },
+            {
+              "name": "account_name",
+              "type": "name"
+            },
+            {
+              "name": "price",
+              "type": "asset"
+            },
+            {
+              "name": "usd_cents",
+              "type": "uint32"
+            },
+            {
+              "name": "accepts_fee_rule",
+              "type": "uint8"
+            }
+          ]
+        },
+        {
+          "name": "regsuffix",
+          "fields": [
+            {
+              "name": "suffix",
+              "type": "name"
+            },
+            {
+              "name": "price",
+              "type": "asset"
+            },
+            {
+              "name": "usd_cents",
+              "type": "uint32"
+            },
+            {
+              "name": "accepts_fee_rule",
+              "type": "uint8"
+            }
+          ]
+        },
+        {
+          "name": "setoracle",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "median",
+              "type": "uint64"
+            },
+            {
+              "name": "quoted_precision",
+              "type": "uint8"
+            },
+            {
+              "name": "observed_at",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
+          "name": "setpolicy",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "bump_bps",
+              "type": "uint16"
+            },
+            {
+              "name": "quote_premium_bps",
+              "type": "uint16"
+            }
+          ]
+        },
+        {
+          "name": "setrates",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "third_party_bps",
+              "type": "uint16"
+            },
+            {
+              "name": "first_party_bps",
+              "type": "uint16"
+            },
+            {
+              "name": "treasury",
+              "type": "name"
+            },
+            {
+              "name": "token_contract",
+              "type": "name"
+            },
+            {
+              "name": "token_symbol",
+              "type": "symbol"
+            }
+          ]
+        },
+        {
+          "name": "setsettler",
+          "fields": [
+            {
+              "name": "settler",
+              "type": "name"
+            }
+          ]
+        },
+        {
+          "name": "settier",
+          "fields": [
+            {
+              "name": "kind",
+              "type": "uint8"
+            },
+            {
+              "name": "price",
+              "type": "asset"
+            },
+            {
+              "name": "usd_cents",
+              "type": "uint32"
+            },
+            {
+              "name": "ram_bytes",
+              "type": "uint32"
+            },
+            {
+              "name": "net_stake",
+              "type": "asset"
+            },
+            {
+              "name": "cpu_stake",
+              "type": "asset"
+            }
+          ]
+        }
+      ],
+      "tables": [
+        {
+          "name": "intents",
+          "fields": [
+            {
+              "name": "buyer",
+              "type": "name"
+            },
+            {
+              "name": "account_name",
+              "type": "name"
+            },
+            {
+              "name": "owner_key",
+              "type": "public_key"
+            },
+            {
+              "name": "active_key",
+              "type": "public_key"
+            },
+            {
+              "name": "expires",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
+          "name": "namelist",
+          "fields": [
+            {
+              "name": "account_name",
+              "type": "name"
+            },
+            {
+              "name": "seller",
+              "type": "name"
+            },
+            {
+              "name": "price",
+              "type": "asset"
+            },
+            {
+              "name": "usd_cents",
+              "type": "uint32"
+            },
+            {
+              "name": "accepts",
+              "type": "uint8"
+            },
+            {
+              "name": "sold",
+              "type": "uint8"
+            }
+          ]
+        },
+        {
+          "name": "namescfg",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "settler",
+              "type": "name"
+            },
+            {
+              "name": "treasury",
+              "type": "name"
+            },
+            {
+              "name": "third_party_bps",
+              "type": "uint16"
+            },
+            {
+              "name": "first_party_bps",
+              "type": "uint16"
+            },
+            {
+              "name": "token_contract",
+              "type": "name"
+            },
+            {
+              "name": "token_symbol",
+              "type": "symbol"
+            }
+          ]
+        },
+        {
+          "name": "policy",
+          "fields": [
+            {
+              "name": "bump_bps",
+              "type": "uint16"
+            },
+            {
+              "name": "quote_premium_bps",
+              "type": "uint16"
+            },
+            {
+              "name": "median",
+              "type": "uint64"
+            },
+            {
+              "name": "quoted_precision",
+              "type": "uint8"
+            },
+            {
+              "name": "observed_at",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
+          "name": "sales",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uint64"
+            },
+            {
+              "name": "account_name",
+              "type": "name"
+            },
+            {
+              "name": "payer",
+              "type": "name"
+            },
+            {
+              "name": "seller",
+              "type": "name"
+            },
+            {
+              "name": "owner_key",
+              "type": "public_key"
+            },
+            {
+              "name": "gross",
+              "type": "asset"
+            },
+            {
+              "name": "platform_fee",
+              "type": "asset"
+            },
+            {
+              "name": "usd_cents",
+              "type": "uint32"
+            },
+            {
+              "name": "platform_cents",
+              "type": "uint32"
+            },
+            {
+              "name": "bps",
+              "type": "uint16"
+            },
+            {
+              "name": "rail",
+              "type": "uint8"
+            },
+            {
+              "name": "reference",
+              "type": "checksum256"
+            }
+          ]
+        },
+        {
+          "name": "suffixes",
+          "fields": [
+            {
+              "name": "suffix",
+              "type": "name"
+            },
+            {
+              "name": "seller",
+              "type": "name"
+            },
+            {
+              "name": "price",
+              "type": "asset"
+            },
+            {
+              "name": "usd_cents",
+              "type": "uint32"
+            },
+            {
+              "name": "accepts",
+              "type": "uint8"
+            },
+            {
+              "name": "sales_count",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
+          "name": "tiers",
+          "fields": [
+            {
+              "name": "kind",
+              "type": "uint8"
+            },
+            {
+              "name": "price",
+              "type": "asset"
+            },
+            {
+              "name": "usd_cents",
+              "type": "uint32"
+            },
+            {
+              "name": "ram_bytes",
+              "type": "uint32"
+            },
+            {
+              "name": "net_stake",
+              "type": "asset"
+            },
+            {
+              "name": "cpu_stake",
+              "type": "asset"
             }
           ]
         }
@@ -17175,6 +17686,242 @@
     },
     {
       "method": "GET",
+      "path": "/v1/people",
+      "query": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "after": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "daoId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "memberId": {
+            "type": "string",
+            "maxLength": 20
+          }
+        },
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "profiles": {
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "dao": {
+                  "type": "object",
+                  "properties": {
+                    "chainId": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "contract": {
+                      "type": "string",
+                      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                    },
+                    "daoId": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "interfaceVersion": {
+                      "type": "number",
+                      "const": 1
+                    }
+                  },
+                  "required": [
+                    "chainId",
+                    "contract",
+                    "daoId",
+                    "interfaceVersion"
+                  ],
+                  "additionalProperties": false
+                },
+                "memberId": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "accountName": {
+                  "type": "string",
+                  "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                },
+                "profile": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                    },
+                    "fullName": {
+                      "type": "string",
+                      "maxLength": 80
+                    },
+                    "location": {
+                      "type": "string",
+                      "maxLength": 80
+                    },
+                    "email": {
+                      "type": "string",
+                      "maxLength": 254
+                    },
+                    "telegram": {
+                      "type": "string",
+                      "maxLength": 32
+                    },
+                    "introduction": {
+                      "type": "string",
+                      "maxLength": 2000
+                    },
+                    "motto": {
+                      "type": "string",
+                      "maxLength": 140
+                    },
+                    "facebook": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "const": ""
+                        },
+                        {
+                          "type": "string",
+                          "maxLength": 300,
+                          "format": "uri"
+                        }
+                      ]
+                    },
+                    "instagram": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "const": ""
+                        },
+                        {
+                          "type": "string",
+                          "maxLength": 300,
+                          "format": "uri"
+                        }
+                      ]
+                    },
+                    "youtube": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "const": ""
+                        },
+                        {
+                          "type": "string",
+                          "maxLength": 300,
+                          "format": "uri"
+                        }
+                      ]
+                    },
+                    "linkedin": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "const": ""
+                        },
+                        {
+                          "type": "string",
+                          "maxLength": 300,
+                          "format": "uri"
+                        }
+                      ]
+                    },
+                    "website": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "const": ""
+                        },
+                        {
+                          "type": "string",
+                          "maxLength": 300,
+                          "format": "uri"
+                        }
+                      ]
+                    },
+                    "avatar": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "const": ""
+                        },
+                        {
+                          "type": "string",
+                          "maxLength": 128
+                        }
+                      ]
+                    },
+                    "background": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "const": ""
+                        },
+                        {
+                          "type": "string",
+                          "maxLength": 128
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "dao",
+                "memberId",
+                "accountName",
+                "profile"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "next": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "skipped": {
+            "default": 0,
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "profiles",
+          "next",
+          "skipped"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "GET",
       "path": "/v1/storage/billing",
       "query": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -23615,6 +24362,20 @@
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
+          "contract": {
+            "default": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tokenContract": {
+            "default": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "configured": {
             "type": "boolean"
           },
@@ -23837,6 +24598,8 @@
           }
         },
         "required": [
+          "contract",
+          "tokenContract",
           "configured",
           "reason",
           "cardPayments",

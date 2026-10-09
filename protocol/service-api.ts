@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PeopleRoutes } from './people.js';
 import { PaymentRoutes, BrokerRoutes } from './payments.js';
 import { StorageBillingRoutes } from './storage.js';
 import { HostingRoutes } from './hosting.js';
@@ -154,6 +155,8 @@ export const NameSuffixSchema = z.strictObject({
   sales: z.number().int().nonnegative(),
 });
 export const NamesServiceSchema = z.strictObject({
+  contract: z.string().nullable().default(null),
+  tokenContract: z.string().nullable().default(null),
   configured: z.boolean(),
   reason: z.string().nullable(),
   cardPayments: z.boolean(),
@@ -199,6 +202,7 @@ export const DocsAnswerSchema = z.strictObject({
 });
 
 export const ServiceResponseRoutes = [
+  PeopleRoutes.list,
   ...Object.values(StorageBillingRoutes),
   ...Object.values(HostingRoutes),
   ...Object.values(PaymentRoutes),

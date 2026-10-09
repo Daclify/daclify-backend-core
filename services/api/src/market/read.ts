@@ -454,6 +454,7 @@ export async function loadCatalogue(rpcUrl: string, runtime: string): Promise<Li
 }
 
 export interface NamesChainState {
+  tokenContract?: string;
   thirdPartyBps: number;
   firstPartyBps: number;
   treasury: string;
@@ -498,6 +499,7 @@ export async function loadNames(
     : undefined;
   return {
     thirdPartyBps: saved.data.third_party_bps,
+    tokenContract: saved.data.token_contract,
     firstPartyBps: saved.data.first_party_bps,
     treasury: saved.data.treasury,
     ...(savedPolicy ? { policy: savedPolicy } : {}),

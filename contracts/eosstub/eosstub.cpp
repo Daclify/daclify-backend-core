@@ -7,7 +7,9 @@ CONTRACT eosstub : public contract {
 public:
   using contract::contract;
   ACTION newaccount(name creator, name account, daclify::authority owner, daclify::authority active) {
-    require_auth(creator);
+    // VERT require_auth incorrectly rejects a declared custom permission.
+    require_auth(permission_level{creator, creator == "names"_n ? "active"_n : "namesale"_n});
+    check(account.suffix() == account || creator == account.suffix(), "only suffix may create this account");
     check(account.value && owner.threshold == 1 && active.threshold == 1, "ACCOUNT");
     check(owner.keys.size() == 1 && active.keys.size() == 1, "ACCOUNT");
   }

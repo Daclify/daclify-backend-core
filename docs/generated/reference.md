@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.9.0-alpha.3 · interface 1.
+Package 0.9.0-alpha.4 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -25,6 +25,10 @@ User-controlled accounts keep encrypted signing and decryption keys in your brow
 Managed recovery delegates signing and decryption recovery to an operator. OpenBao remains the open-source candidate; production custody is gated on isolated service, audit, provider and recovery qualification.
 
 Accounts with vault keys can share Account → Keys → Public join identity with a DAO administrator. Never share recovery kits or their credentials. A saved service-to-member association can survive DAO signing-key rotation while its database exists; a lost mapping cannot make an old signing key current again. Current chain permissions and wallet bindings remain authoritative.
+
+Users is the public profile directory. Publish a profile from your own user page to appear there. Your profile is shown first when you sign in; opening another profile gives the same public view without your editing and pairing controls. Public handles belong to a specific DAO membership. One service account can publish more than one handle; this directory does not publicly correlate those memberships through private sign-in credentials.
+
+Open your own user card and choose Edit profile & account to edit your public profile, set avatar/background IPFS CIDs, manage recovery keys, pair sign-in credentials and manage wallet links. A browser signer must be authorized for the selected membership to publish. Email and social contact fields entered in this public profile are public on-chain; they are distinct from private service login pairings.
 
 ## Choose how to operate your DAO
 
@@ -146,6 +150,8 @@ Encrypted DAOs rotate the future-content epoch when a member is deactivated. Rem
 
 In Members, an active administrator pastes the applicant’s public join identity and signs admission. Confirm the keys through a trusted channel first. Then select the admitted member to assign roles and governance credits; grant an encryption epoch separately for private documents. Admission never makes an applicant an administrator automatically. Managed admission remains unavailable in this deployment.
 
+Members displays each public on-chain member record, with published profile cards when available. Switch between cards and list, search names, locations or roles, and filter active/inactive members. The page labels administrator, reviewer, executive and non-voting membership using the connected runtime state. Admission, role changes, credits and private key grants retain their existing separate authorization rules.
+
 ## Pay for a hosted service
 
 A card payment uses Stripe Checkout at the price configured for this service. The application does not ask you to type an amount. Returning from the card page does not by itself record the payment. The service records a receipt only after Stripe reports that the checkout was paid.
@@ -206,6 +212,16 @@ The Telos nameservice sells new native accounts from its own contract. A 12-char
 
 Card checkout uses the dollar amount stored on chain for that name. The browser creates the new account keys and does not send the private keys to the server. After the card payment is confirmed, the names contract records the sale and creates the account. A card session that never reaches the chain remains with the card processor. Returning from the card page does not by itself create the account. If the on-chain price changes before confirmation, the account is not created.
 
+Names has Find a name and Manage & sell views. Suggestions are not availability guarantees; request a fresh chain quote before payment. Back up distinct owner and active private keys before native-wallet or supported card checkout. Private keys stay in the browser. Existing native accounts are not sold or transferred by this marketplace.
+
+An individual sells through their own native account. A DAO sells through a native account whose owner/active authority is governed by its own executives or quorum. A shared DAO administrator has no authority over the shared runtime account and needs a separate native seller account. Native proceeds go to that seller. Quorum-controlled listings and permission setup are exported as unsigned transactions for review and multisignature approval.
+
+Before selling a suffix or special exact name, the seller owner reviews a namesale child under active, containing only the reviewed names contract eosio.code authority, and links it only to eosio::newaccount. Root owner/active authority is preserved. Existing namesale permissions and newaccount links must be reviewed before replacement. The names contract uses the actual final native suffix as creator; dotted suffix registrations are rejected. A short undotted name still needs the native seller to have won a closed native auction. This delegated child cannot authorize token transfers.
+
+The reviewed names upgrade adds editname, delname and delsuffix for seller-authorized changes. Unsold exact listings may be repriced or removed. Existing sale receipts and created accounts remain unchanged. Removing a suffix stops its future fulfillment; coordinate pending purchases first. Native TLOS purchases are atomic: creation or authorization failure rolls the transfer back. The UI checks the names code hash before requesting any broadcast.
+
+Third-party name card checkout is disabled because this names checkout has no seller merchant routing. Enter a positive TLOS sale price. Daclify Connect for DAO module products does not automatically route native names revenue. First-party basic-name card checkout remains separate and needs its configured billing/fulfillment service. Premium names use native TLOS checkout so a failed namespace/auction claim rolls back payment.
+
 ## Free creation and approved hosting capacity
 
 Shared creation is free and includes 10 active governance member slots. Human and agent governance identities each use one slot; pairing Telegram, email or wallets does not add another member or slot.
@@ -235,6 +251,8 @@ Configured providers are not evidence of successful live integration or a qualif
 Status starts with user-facing capabilities and distinguishes configured services from qualified live integrations. Expand Technical platform details to inspect hashes, authorities, resources and migration state.
 
 Development resource policy is stored separately in resourcecfg. A linked Daclify DAO administrator can sign govresources to set the native RAM fee, card operational markup, storage allowance, unit price and capacity targets. The expected revision prevents stale overwrites. The launch policy is 5% for TLOS RAM purchases, 20% for card RAM purchases, 100 MB free pinned storage and $1/month per approved extra 1 GB. This policy does not itself buy RAM, fund an included allocation or activate a storage subscription; those services remain under implementation.
+
+The sidebar Daclify DAO entry and its Hub card open the same DAO workspace. The linked governing DAO has a Platform controls tab for fee policy and the module catalogue; ordinary DAOs do not gain platform administration. These controls still require an active administrator and an authorized signer.
 
 ## Find and identify a DAO
 
@@ -373,6 +391,8 @@ In an approved Telegram group use /docs@your_bot_username followed by the Daclif
 Only the requested question and optional previous bot answer, together with public guide text, are sent to OpenRouter. The bot does not scrape the group or persist message bodies. Telegram itself delivers messages according to its privacy mode; the API processes only allowed group commands/replies and questions from whitelisted private users. Do not send recovery kits, passwords, private keys or provider secrets. Update receipts expire after two days; messages older than one day are ignored. Requests share per-server model/concurrency limits with the app, and Telegram also has a per-chat reply limit. Use a provider key budget for an account-wide spend limit.
 
 Telegram delivery is at most once per update in normal operation. A PostgreSQL receipt is claimed before inference and sending to prevent repeat replies and duplicate model calls on webhook retries. A crash or uncertain send can lose a reply; retry /docs manually. There is no automatic repeated send. Use separate bot identities for testnet and mainnet because one bot has one webhook. A webhook conflict is refused rather than silently replacing another integration.
+
+Open Help from the sidebar to use the floating handbook assistant from any page. Drag its title, resize it on desktop, or use arrow keys on the title and the reset/expand buttons. Minimize it and click Help again to resume. The last 100 messages are saved in this browser, separately by service, chain/runtime and account; Clear conversation removes that history. The assistant answers the current question, rather than sending this stored conversation to the model. Never enter keys or private DAO content. Browser history is not an encrypted recovery backup.
 
 ## Executive authority, inactivity and wallet handover
 
@@ -2228,6 +2248,208 @@ Source ABI JSON SHA-256: `ae70e5f0f7af1f1a9ded1b8ce193c5e6cab1808799f4e11c7e9ad1
 | abi_hash | checksum256 |
 | metadata | string |
 | listed | bool |
+
+## names contract
+
+Source ABI JSON SHA-256: `3a195c05737dfb18c1f4d0d5b4668659f054f4a355ae695541f5239816a5c172`.
+
+### Action: delname
+
+| Field | ABI type |
+| --- | --- |
+| seller | name |
+| account_name | name |
+
+### Action: delsuffix
+
+| Field | ABI type |
+| --- | --- |
+| suffix | name |
+
+### Action: editname
+
+| Field | ABI type |
+| --- | --- |
+| seller | name |
+| account_name | name |
+| price | asset |
+| usd_cents | uint32 |
+| accepts_fee_rule | uint8 |
+
+### Action: fulfill
+
+| Field | ABI type |
+| --- | --- |
+| settler | name |
+| account_name | name |
+| owner_key | public_key |
+| active_key | public_key |
+| usd_cents | uint32 |
+| reference | checksum256 |
+
+### Action: init
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| settler | name |
+| token_contract | name |
+| token_symbol | symbol |
+
+### Action: intend
+
+| Field | ABI type |
+| --- | --- |
+| buyer | name |
+| account_name | name |
+| owner_key | public_key |
+| active_key | public_key |
+
+### Action: regname
+
+| Field | ABI type |
+| --- | --- |
+| seller | name |
+| account_name | name |
+| price | asset |
+| usd_cents | uint32 |
+| accepts_fee_rule | uint8 |
+
+### Action: regsuffix
+
+| Field | ABI type |
+| --- | --- |
+| suffix | name |
+| price | asset |
+| usd_cents | uint32 |
+| accepts_fee_rule | uint8 |
+
+### Action: setoracle
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| median | uint64 |
+| quoted_precision | uint8 |
+| observed_at | uint32 |
+
+### Action: setpolicy
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| bump_bps | uint16 |
+| quote_premium_bps | uint16 |
+
+### Action: setrates
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| third_party_bps | uint16 |
+| first_party_bps | uint16 |
+| treasury | name |
+| token_contract | name |
+| token_symbol | symbol |
+
+### Action: setsettler
+
+| Field | ABI type |
+| --- | --- |
+| settler | name |
+
+### Action: settier
+
+| Field | ABI type |
+| --- | --- |
+| kind | uint8 |
+| price | asset |
+| usd_cents | uint32 |
+| ram_bytes | uint32 |
+| net_stake | asset |
+| cpu_stake | asset |
+
+### Table: intents
+
+| Field | ABI type |
+| --- | --- |
+| buyer | name |
+| account_name | name |
+| owner_key | public_key |
+| active_key | public_key |
+| expires | uint32 |
+
+### Table: namelist
+
+| Field | ABI type |
+| --- | --- |
+| account_name | name |
+| seller | name |
+| price | asset |
+| usd_cents | uint32 |
+| accepts | uint8 |
+| sold | uint8 |
+
+### Table: namescfg
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| settler | name |
+| treasury | name |
+| third_party_bps | uint16 |
+| first_party_bps | uint16 |
+| token_contract | name |
+| token_symbol | symbol |
+
+### Table: policy
+
+| Field | ABI type |
+| --- | --- |
+| bump_bps | uint16 |
+| quote_premium_bps | uint16 |
+| median | uint64 |
+| quoted_precision | uint8 |
+| observed_at | uint32 |
+
+### Table: sales
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| account_name | name |
+| payer | name |
+| seller | name |
+| owner_key | public_key |
+| gross | asset |
+| platform_fee | asset |
+| usd_cents | uint32 |
+| platform_cents | uint32 |
+| bps | uint16 |
+| rail | uint8 |
+| reference | checksum256 |
+
+### Table: suffixes
+
+| Field | ABI type |
+| --- | --- |
+| suffix | name |
+| seller | name |
+| price | asset |
+| usd_cents | uint32 |
+| accepts | uint8 |
+| sales_count | uint32 |
+
+### Table: tiers
+
+| Field | ABI type |
+| --- | --- |
+| kind | uint8 |
+| price | asset |
+| usd_cents | uint32 |
+| ram_bytes | uint32 |
+| net_stake | asset |
+| cpu_stake | asset |
 
 ## GET /v1/storage/curation
 
@@ -14945,6 +15167,253 @@ Response:
 }
 ```
 
+## GET /v1/people
+
+Guide: providers.
+
+No request body.
+
+Query:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "after": {
+      "type": "string",
+      "maxLength": 20
+    },
+    "daoId": {
+      "type": "string",
+      "maxLength": 20
+    },
+    "memberId": {
+      "type": "string",
+      "maxLength": 20
+    }
+  },
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "profiles": {
+      "maxItems": 50,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "memberId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "accountName": {
+            "type": "string",
+            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+          },
+          "profile": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "fullName": {
+                "type": "string",
+                "maxLength": 80
+              },
+              "location": {
+                "type": "string",
+                "maxLength": 80
+              },
+              "email": {
+                "type": "string",
+                "maxLength": 254
+              },
+              "telegram": {
+                "type": "string",
+                "maxLength": 32
+              },
+              "introduction": {
+                "type": "string",
+                "maxLength": 2000
+              },
+              "motto": {
+                "type": "string",
+                "maxLength": 140
+              },
+              "facebook": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": ""
+                  },
+                  {
+                    "type": "string",
+                    "maxLength": 300,
+                    "format": "uri"
+                  }
+                ]
+              },
+              "instagram": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": ""
+                  },
+                  {
+                    "type": "string",
+                    "maxLength": 300,
+                    "format": "uri"
+                  }
+                ]
+              },
+              "youtube": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": ""
+                  },
+                  {
+                    "type": "string",
+                    "maxLength": 300,
+                    "format": "uri"
+                  }
+                ]
+              },
+              "linkedin": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": ""
+                  },
+                  {
+                    "type": "string",
+                    "maxLength": 300,
+                    "format": "uri"
+                  }
+                ]
+              },
+              "website": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": ""
+                  },
+                  {
+                    "type": "string",
+                    "maxLength": 300,
+                    "format": "uri"
+                  }
+                ]
+              },
+              "avatar": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": ""
+                  },
+                  {
+                    "type": "string",
+                    "maxLength": 128
+                  }
+                ]
+              },
+              "background": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": ""
+                  },
+                  {
+                    "type": "string",
+                    "maxLength": 128
+                  }
+                ]
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "dao",
+          "memberId",
+          "accountName",
+          "profile"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "next": {
+      "anyOf": [
+        {
+          "type": "string",
+          "maxLength": 20
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "skipped": {
+      "default": 0,
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": [
+    "profiles",
+    "next",
+    "skipped"
+  ],
+  "additionalProperties": false
+}
+```
+
 ## GET /v1/storage/billing
 
 Guide: providers.
@@ -21864,6 +22333,20 @@ Response:
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "properties": {
+    "contract": {
+      "default": null,
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "tokenContract": {
+      "default": null,
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "configured": {
       "type": "boolean"
     },
@@ -22086,6 +22569,8 @@ Response:
     }
   },
   "required": [
+    "contract",
+    "tokenContract",
     "configured",
     "reason",
     "cardPayments",

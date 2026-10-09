@@ -6,6 +6,7 @@ export * from './sign-in.js';
 export * from './native-wallet.js';
 export * from './evm-wallet.js';
 export * from './content.js';
+export * from './people.js';
 export * from './docs.js';
 export * from './routes.js';
 export * from './storage.js';
