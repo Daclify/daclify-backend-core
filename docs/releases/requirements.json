@@ -375,6 +375,15 @@
       "id": "WP11-PERMISSION-DIAGRAM",
       "suite": "unit",
       "tests": ["tests/permission-documentation.test.ts"]
+    },
+    {
+      "id": "DAXI-KNOWLEDGE-AND-PUBLIC-STATUS",
+      "suite": "unit",
+      "tests": [
+        "tests/docs-agent.test.ts",
+        "tests/documentation.test.ts",
+        "tests/telegram-docs.test.ts"
+      ]
     }
   ]
 }

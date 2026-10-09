@@ -35,7 +35,6 @@ import {
   ModuleStateSchema,
   ModulePageQuerySchema,
   type ModulePageQuery,
-  VERSION as MODULE_VERSION,
   type ModuleState,
   type ModuleDeployment,
   type FinalizationRequest,
@@ -2618,7 +2617,7 @@ export class NativeChainGateway implements ChainGateway {
         deployment: {
           id: deployment.id,
           account: deployment.account,
-          version: MODULE_VERSION,
+          version: manifest.version,
           codeHash: ModuleCodeHashes[deployment.id],
         },
         manifest,

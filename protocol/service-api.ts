@@ -193,7 +193,18 @@ export const NameQuoteSchema = z.strictObject({
   nextPrice: z.string().nullable(),
   nextUsdCents: z.number().int().nullable(),
 });
-export const DocsAgentStatusSchema = z.strictObject({ configured: z.boolean() });
+export const DocsAgentStatusSchema = z.strictObject({
+  configured: z.boolean(),
+  profile: z
+    .strictObject({
+      name: z.literal('Daxi'),
+      scope: z.tuple([z.literal('Daclify'), z.literal('Telos'), z.literal('DAOs')]),
+      answerModel: z.string().nullable(),
+      decisionsModel: z.string().nullable(),
+      knowledgeVersion: z.string(),
+    })
+    .optional(),
+});
 export const DocsAnswerSchema = z.strictObject({
   status: z.enum(['answered', 'outside']),
   topicId: z.string().nullable(),

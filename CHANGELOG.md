@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0-alpha.6 development — Daxi support and Status metadata
+
+Name the shared app/Telegram assistant Daxi and support reviewed Telos Zero/EVM and general DAO guides with light, helpful humour. Use simpler evidence-based guide selection, retain output grounding, exact guide/source URL checks and existing privacy/rate/deadline limits. Add optional reviewed sources and public model/scope/knowledge metadata; generate the matching help and API references. Status configuration does not establish live qualification.
+
+SDK/help changes leave contract binaries and database layouts unchanged. Read actual module contract versions from their manifests rather than the SDK package version. See [Daxi operations](docs/operations/docs-assistant.md).
+
 ## Unreleased — handbook assistant and Telegram groups
 
 Added `TELEGRAM_DOCS_PRIVATE_CHAT_IDS` for explicit one-on-one testers. Private questions require matching human sender/chat IDs; group commands/replies remain restricted. Private-only setup can omit groups and validates the private chat instead of requiring group membership.

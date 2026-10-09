@@ -5,6 +5,23 @@ const TopicSchema = z.strictObject({
   id: z.string().regex(/^[a-z][a-z0-9.-]{1,63}$/),
   title: z.string().min(1).max(160),
   paragraphs: z.array(z.string().min(1).max(4000)).min(1).max(16),
+  sources: z
+    .array(
+      z.strictObject({
+        title: z.string().min(1).max(160),
+        url: z
+          .url()
+          .max(2048)
+          .refine((value) => {
+            if (!URL.canParse(value)) return false;
+            const url = new URL(value);
+            return url.protocol === 'https:' && !url.username && !url.password;
+          }),
+        reviewedAt: z.iso.date(),
+      }),
+    )
+    .max(8)
+    .optional(),
 });
 const FieldSchema = z.strictObject({
   name: z.string().regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/),

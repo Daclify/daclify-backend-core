@@ -32,8 +32,94 @@ describe('handbook assistant', () => {
     const ids = handbookTopics().map((topic) => topic.id);
     expect(ids).toContain('accounts');
     expect(ids).toContain('decide');
+    expect(ids).toContain('telos');
+    expect(ids).toContain('dao-fundamentals');
     expect(new Set(ids).size).toBe(ids.length);
   });
+
+  it('reports Daxi scope and models without credentials', () => {
+    const assistant = createDocsAssistant({
+      apiKey: 'private-test-marker',
+      model: 'fixture/answer',
+      decisionsModel: 'fixture/decision',
+    });
+    expect(assistant).toMatchObject({
+      status: {
+        configured: true,
+        profile: {
+          name: 'Daxi',
+          scope: ['Daclify', 'Telos', 'DAOs'],
+          answerModel: 'fixture/answer',
+          decisionsModel: 'fixture/decision',
+        },
+      },
+    });
+    expect(JSON.stringify(assistant)).not.toContain('private-test-marker');
+    expect(createDocsAssistant(undefined)).toMatchObject({
+      status: { configured: false, profile: { answerModel: null, decisionsModel: null } },
+    });
+  });
+
+  it.each([
+    {
+      id: 'telos',
+      question: 'How are Telos Zero and EVM different?',
+      answer: 'Telos Zero uses Antelope; Telos EVM supports Ethereum-compatible applications.',
+    },
+    {
+      id: 'dao-fundamentals',
+      question: 'What is a DAO?',
+      answer: 'A DAO coordinates members through shared governance rules.',
+    },
+  ])(
+    'supports $id education without requiring Daclify in the question',
+    async ({ id, question, answer }) => {
+      let calls = 0;
+      const result = await answerHandbookQuestion(
+        question,
+        [{ id, title: id, paragraphs: [answer] }],
+        {
+          apiKey: 'fixture',
+          model: 'fixture/answer',
+          decisionsModel: 'fixture/decision',
+          fetch: async (input, init) => {
+            calls++;
+            const body = z
+              .object({
+                questions: z
+                  .record(z.string(), z.object({ instructions: z.string() }).passthrough())
+                  .optional(),
+                messages: z.array(z.object({ content: z.string() }).passthrough()).optional(),
+              })
+              .parse(JSON.parse(String(init?.body)));
+            if (String(input).endsWith('/decisions')) {
+              const instructions =
+                body.questions?.acceptable?.instructions ??
+                body.questions?.in_scope?.instructions ??
+                '';
+              expect(instructions).toContain('Telos');
+              expect(instructions).toContain('DAO');
+              return body.questions?.acceptable
+                ? json({ answers: { acceptable: { noul: 0.99 } } })
+                : json({
+                    answers: {
+                      in_scope: { noul: 0.99 },
+                      topic: { choice: id, probabilities: { [id]: 0.99 } },
+                    },
+                  });
+            }
+            const instructions = body.messages?.[0]?.content ?? '';
+            expect(instructions).toContain('Daxi');
+            expect(instructions).toContain('humour');
+            expect(instructions).toContain('Telos');
+            return json({ choices: [{ message: { content: answer } }] });
+          },
+        },
+      );
+      expect(result).toMatchObject({ status: 'answered', topicId: id, answer });
+      expect(calls).toBe(3);
+    },
+  );
 
   it('documents prices by total capacity without shifting the paid-slot bands', () => {
     const guide = handbookTopics()
@@ -119,7 +205,7 @@ describe('handbook assistant', () => {
         expect(JSON.stringify(body.state)).toContain('Secret marker stays here.');
         return json({
           answers: {
-            in_handbook: { noul: 0.91 },
+            in_scope: { noul: 0.91 },
             topic: {
               choice: 'accounts',
               probabilities: { accounts: 0.8, recovery: 0.1, unlisted: 0.1 },
@@ -158,7 +244,7 @@ describe('handbook assistant', () => {
       expect(String(input)).toContain('/decisions');
       return json({
         answers: {
-          in_handbook: { noul: 0.1 },
+          in_scope: { noul: 0.1 },
           topic: { choice: 'unlisted', probabilities: { unlisted: 0.9, accounts: 0.1 } },
         },
       });
@@ -189,7 +275,7 @@ describe('handbook assistant', () => {
     let calls = 0;
     const fetchImpl: typeof fetch = async () => {
       calls += 1;
-      return json({ answers: { in_handbook: { noul: 'yes' }, topic: { choice: 'accounts' } } });
+      return json({ answers: { in_scope: { noul: 'yes' }, topic: { choice: 'accounts' } } });
     };
     await expect(
       answerHandbookQuestion('Where are my keys?', topics, {
@@ -211,7 +297,7 @@ describe('handbook assistant', () => {
         fetch: async () =>
           json({
             answers: {
-              in_handbook: { noul: probability },
+              in_scope: { noul: probability },
               topic: { choice: 'accounts', probabilities: { accounts: 0.9 } },
             },
           }),
@@ -245,7 +331,7 @@ describe('handbook assistant', () => {
         if (body.questions)
           return json({
             answers: {
-              in_handbook: { noul: 0.99 },
+              in_scope: { noul: 0.99 },
               topic: { choice: 'accounts', probabilities: { accounts: 0.99 } },
             },
           });
@@ -271,7 +357,7 @@ describe('handbook assistant', () => {
           if (signals.length === 1)
             return json({
               answers: {
-                in_handbook: { noul: 0.99 },
+                in_scope: { noul: 0.99 },
                 topic: { choice: 'accounts', probabilities: { accounts: 0.99 } },
               },
             });
@@ -300,7 +386,7 @@ describe('handbook assistant', () => {
             ? json({ answers: { acceptable: { noul: 1 } } })
             : json({
                 answers: {
-                  in_handbook: { noul: 1 },
+                  in_scope: { noul: 1 },
                   topic: { choice: 'accounts', probabilities: { accounts: 1 } },
                 },
               });
@@ -312,6 +398,56 @@ describe('handbook assistant', () => {
     },
   );
 
+  it.each([
+    ['See https://docs.telos.net/.', 'answered'],
+    ['Testnet uses https://rpc.testnet.telos.net.', 'answered'],
+    ['Testnet uses https://rpc.testnet.telos.net.attacker.example.', 'outside'],
+    ['See https://docs.telos.net.attacker.example/', 'outside'],
+    ['See https://docs.telos.net/?redirect=attacker', 'outside'],
+    ['See https://attacker.example/', 'outside'],
+  ])('allows only exact reviewed guide links (%s)', async (answer, expected) => {
+    const result = await answerHandbookQuestion(
+      'Where can I read about Telos?',
+      [
+        {
+          id: 'telos',
+          title: 'Telos',
+          paragraphs: [
+            'Use the official Telos documentation. Testnet RPC: https://rpc.testnet.telos.net.',
+          ],
+          sources: [
+            {
+              title: 'Official documentation',
+              url: 'https://docs.telos.net/',
+              reviewedAt: '2026-10-09',
+            },
+          ],
+        },
+      ],
+      {
+        apiKey: 'fixture',
+        model: 'fixture',
+        decisionsModel: 'fixture',
+        fetch: async (input, init) => {
+          if (!String(input).endsWith('/decisions'))
+            return json({ choices: [{ message: { content: answer } }] });
+          const body = z
+            .object({ questions: z.record(z.string(), z.unknown()) })
+            .parse(JSON.parse(String(init?.body)));
+          return body.questions.acceptable
+            ? json({ answers: { acceptable: { noul: 1 } } })
+            : json({
+                answers: {
+                  in_scope: { noul: 1 },
+                  topic: { choice: 'telos', probabilities: { telos: 1 } },
+                },
+              });
+        },
+      },
+    );
+    expect(result.status).toBe(expected);
+  });
+
   it('bounds aggregate spending across app and bot requests before provider calls', async () => {
     let calls = 0;
     const assistant = createDocsAssistant({
@@ -322,7 +458,7 @@ describe('handbook assistant', () => {
         calls++;
         return json({
           answers: {
-            in_handbook: { noul: 0.01 },
+            in_scope: { noul: 0.01 },
             topic: { choice: 'unlisted', probabilities: { unlisted: 1 } },
           },
         });

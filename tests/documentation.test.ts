@@ -23,6 +23,32 @@ const abi = JSON.stringify({
   variants: [],
 });
 describe('producer-owned versioned documentation', () => {
+  it('publishes reviewed HTTPS sources and rejects unsafe links', () => {
+    const reference = {
+      title: 'Official Telos documentation',
+      url: 'https://docs.telos.net/',
+      reviewedAt: '2026-10-09',
+    };
+    const output = generateDocumentation(
+      { ...source, topics: [{ ...guide, sources: [reference] }] },
+      [],
+      [],
+    );
+    expect(output.bundle.topics[0]).toMatchObject({ sources: [reference] });
+    expect(output.markdown).toContain('https://docs.telos.net/');
+    for (const url of [
+      'javascript:alert(1)',
+      'http://docs.telos.net/',
+      'https://user:secret@docs.telos.net/',
+    ])
+      expect(() =>
+        generateDocumentation(
+          { ...source, topics: [{ ...guide, sources: [{ ...reference, url }] }] },
+          [],
+          [],
+        ),
+      ).toThrow();
+  });
   it('generates deterministic guide and compiled ABI references', () => {
     const output = generateDocumentation(source, [{ name: 'runtime', abi }], []);
     const again = generateDocumentation(source, [{ name: 'runtime', abi }], []);

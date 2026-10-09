@@ -4,6 +4,8 @@ import { createWindowLimiter } from '../limits.js';
 import { answerHandbookQuestion } from './agent.js';
 import type { DocsAgentConfiguration } from './config.js';
 import { handbookTopics } from './handbook.js';
+import { DocsAgentStatusSchema } from '../../../../protocol/service-api.js';
+import { VERSION } from '../../../../protocol/base.js';
 
 export const DocsQuestionSchema = z.string().trim().min(2).max(500);
 
@@ -13,6 +15,16 @@ export function createDocsAssistant(agent: DocsAgentConfiguration | undefined) {
   let active = 0;
   return {
     configured: Boolean(agent),
+    status: DocsAgentStatusSchema.parse({
+      configured: Boolean(agent),
+      profile: {
+        name: 'Daxi',
+        scope: ['Daclify', 'Telos', 'DAOs'],
+        answerModel: agent?.model ?? null,
+        decisionsModel: agent?.decisionsModel ?? null,
+        knowledgeVersion: VERSION,
+      },
+    }),
     async ask(question: string, subject: string, previousAnswer?: string) {
       const input = DocsQuestionSchema.parse(question);
       const context = z.string().max(2500).optional().parse(previousAnswer);

@@ -75,7 +75,10 @@ export function generateDocumentation(
   });
   const sections = [
     `# Daclify ${source.producer} reference\n\nPackage ${source.packageVersion} · interface ${source.interfaceVersion}.\n\nGenerated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.`,
-    ...source.topics.map((t) => `## ${t.title}\n\n${t.paragraphs.join('\n\n')}`),
+    ...source.topics.map(
+      (t) =>
+        `## ${t.title}\n\n${t.paragraphs.join('\n\n')}${t.sources?.length ? '\n\nSources:\n' + t.sources.map((s) => `- ${s.title}: <${s.url}> (reviewed ${s.reviewedAt})`).join('\n') : ''}`,
+    ),
   ];
   for (const contract of references) {
     sections.push(

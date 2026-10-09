@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle={
   "producer": "core",
-  "packageVersion": "0.9.0-alpha.5",
+  "packageVersion": "0.9.0-alpha.6",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -203,9 +203,9 @@ export const CoreHelpBundle={
         "The Daclify DAO page reads the platform DAO reference from the runtime market configuration. A native operator first creates and enrolls that DAO and links it with setgov. Before that link, the page reports that platform governance is unconfigured. It does not guess a DAO by its name.",
         "Active administrators of the linked DAO can sign creation fee and settler changes, commission and names policy changes, first-party module registration, catalogue removal and first-party module descriptions. These are administrator actions, not automatic execution of a member ballot. Use the DAO workspace for proposals, voting, members and treasury. Native upgrade, fee treasury and oracle authorities remain with the operator.",
         "Module registration checks the on-chain code hash, accepted fee rule and asset identity. Removing a catalogue entry prevents new installations but does not erase existing DAO installations, pending work or financial exit rights. Publishers retain control over their third-party listings and prices.",
-        "Status displays the selected network, actual chain ID and head blocks, runtime and module hashes, public permission authorities, resources, on-chain fee and governance configuration, database migrations and safe provider configuration flags. Missing services are labelled unconfigured. Module hash checks verify the pinned SDK artifact; unpinned runtime and hub hashes are displayed without claiming they are verified.",
+        "Status displays the selected network, actual chain ID and head blocks, runtime and module hashes, public permission authorities, resources, on-chain fee and governance configuration and safe provider configuration flags. Missing services are labelled unconfigured. Module hash checks verify the pinned SDK artifact; unpinned runtime and hub hashes are displayed without claiming they are verified. Database migration listings remain in operator diagnostics and are omitted from the app.",
         "Configured providers are not evidence of successful live integration or a qualified production release. Pinata, Stripe, Google, Telegram and managed recovery require their own configuration and acceptance checks. Public status excludes credentials, private keys, DSNs, account records and raw internal errors.",
-        "Status starts with user-facing capabilities and distinguishes configured services from qualified live integrations. Expand Technical platform details to inspect hashes, authorities, resources and migration state.",
+        "Status groups information into Overview, Network, Contracts, Fees, Services and AI Daxi Help tabs. Contracts shows code hashes, RAM and public permission weights. AI Daxi Help shows public model names, knowledge version and Daclify/Telos/DAO scope, opens the floating help window and separates app help from Telegram bot configuration. Failed status requests are distinct from missing configuration.",
         "Development resource policy is stored separately in resourcecfg. A linked Daclify DAO administrator can sign govresources to set the native RAM fee, card operational markup, storage allowance, unit price and capacity targets. The expected revision prevents stale overwrites. The launch policy is 5% for TLOS RAM purchases, 20% for card RAM purchases, 100 MB free pinned storage and $1/month per approved extra 1 GB. This policy does not itself buy RAM, fund an included allocation or activate a storage subscription; those services remain under implementation.",
         "The sidebar Daclify DAO entry and its Hub card open the same DAO workspace. The linked governing DAO has a Platform controls tab for fee policy and the module catalogue; ordinary DAOs do not gain platform administration. These controls still require an active administrator and an authorized signer."
       ]
@@ -319,15 +319,17 @@ export const CoreHelpBundle={
     },
     {
       "id": "docs-assistant",
-      "title": "Daclify documentation assistant and Telegram support",
+      "title": "Daxi: help with Daclify, Telos and DAOs",
       "paragraphs": [
-        "The documentation assistant answers only questions about Daclify and the setup covered by its bundled handbook. It uses a decision model to select one complete guide and a chat model to write a short answer, then checks the answer against that guide. Missing or unrelated information is refused. AI checks are probabilistic, so review the linked guide; an answer is not a guarantee. It cannot inspect vaults, private DAO documents, balances or live DAO records, perform transactions, browse the web or administer services.",
+        "Daxi is the helpful Daclify assistant for Daclify usage and setup, the Telos blockchain (Zero and EVM), and DAOs in general. Ask beginner questions without adding a Daclify prefix. Daxi explains concepts, compares documented options and suggests practical next steps. It has a friendly personality with occasional light, dry humour; it does not mock users or force jokes about lost keys or money. Greetings, questions about Daxi and brief on-topic humour are welcome.",
+        "When asked your name or what you can help with, introduce yourself as Daxi and offer Daclify setup, Telos Zero/EVM explanations and DAO education. A greeting needs no Daclify keyword. On request, Daxi can offer a gentle DAO joke: We formed a committee to reduce meetings. Its first decision was to schedule another meeting. Humour must not imply a real event or replace useful guidance.",
+        "Answers use the bundled Daclify/module guides plus reviewed Telos and DAO learning guides. Those guides include source links and review dates. Daxi is not a live browser or account inspector. Unsupported details, current balances, changing prices and current deployment claims need the app, official documentation or an explorer. General design suggestions are labelled as suggestions, rather than claims of deployed Daclify features. AI can make mistakes; read the cited guide. The app and Telegram share scope and personality.",
         "Enable the app assistant by setting OPENROUTER_API_KEY in the backend environment and restarting the API. There is no separate app enable flag. OPENROUTER_DECISIONS_MODEL defaults to openai/gpt-6-luna-decisions; OPENROUTER_MODEL defaults to openai/gpt-4.1-mini. The selector and answer model are independent. GET /v1/docs/agent reports configuration presence, not valid credits or provider health. Generated documentation remains available without AI. Do not place keys in Netlify VITE variables.",
         "Telegram documentation chat is separate from Telegram login. Set TELEGRAM_DOCS_ENABLED=true, TELEGRAM_DOCS_GROUP_IDS as a JSON array of approved negative group chat ID strings, optional TELEGRAM_DOCS_PRIVATE_CHAT_IDS as a JSON array of approved positive numeric user ID strings, TELEGRAM_DOCS_WEBHOOK_SECRET as a random URL-safe secret of at least 32 characters, and TELEGRAM_DOCS_WEBHOOK_URL as the HTTPS API URL ending /v1/docs/telegram/webhook. The backend also needs TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_USERNAME without @, OPENROUTER_API_KEY and the real FRONTEND_ORIGIN. Keep the bot a regular member with BotFather privacy mode enabled. Restart the API and register the webhook using npm run telegram:docs:setup -- --confirm with the correct DACLIFY_ENV_FILE. The read-only setup command without --confirm checks membership, privacy and webhook conflicts first. Both chat lists default to empty; enabled chat needs at least one allowed group or private ID. For private-only testing, leave the group list empty, list your own numeric Telegram user ID and start a private chat with the bot before running setup. Group membership/privacy checks apply only when groups are configured.",
-        "In an approved Telegram group use /docs@your_bot_username followed by the Daclify question; /docs also works when Telegram delivers it to this bot. Reply to the bot answer to ask a follow-up. Replies can use the previous bot answer as context, but only the bundled guide is evidence. In a whitelisted private chat, ask an ordinary Daclify question, use /docs or reply to the bot. Private access requires the chat ID to match its human sender and an explicit whitelist entry. Ordinary group conversation, unlisted private chats, other bots, other commands, edited updates and unapproved groups are ignored. Answers stay in the original topic and link to the configured frontend documentation.",
+        "In an approved Telegram group use /docs@your_bot_username followed by a Daclify, Telos or DAO question; /docs also works when Telegram delivers it to this bot. Reply to the bot answer to ask a follow-up. Replies can use the previous bot answer as context, but only the bundled guide is evidence. In a whitelisted private chat, ask an ordinary Daclify, Telos or DAO question, use /docs or reply to the bot. Private access requires the chat ID to match its human sender and an explicit whitelist entry. Ordinary group conversation, unlisted private chats, other bots, other commands, edited updates and unapproved groups are ignored. Answers stay in the original topic and link to the configured frontend documentation.",
         "Only the requested question and optional previous bot answer, together with public guide text, are sent to OpenRouter. The bot does not scrape the group or persist message bodies. Telegram itself delivers messages according to its privacy mode; the API processes only allowed group commands/replies and questions from whitelisted private users. Do not send recovery kits, passwords, private keys or provider secrets. Update receipts expire after two days; messages older than one day are ignored. Requests share per-server model/concurrency limits with the app, and Telegram also has a per-chat reply limit. Use a provider key budget for an account-wide spend limit.",
         "Telegram delivery is at most once per update in normal operation. A PostgreSQL receipt is claimed before inference and sending to prevent repeat replies and duplicate model calls on webhook retries. A crash or uncertain send can lose a reply; retry /docs manually. There is no automatic repeated send. Use separate bot identities for testnet and mainnet because one bot has one webhook. A webhook conflict is refused rather than silently replacing another integration.",
-        "Open Help from the sidebar to use the floating handbook assistant from any page. Drag its title, resize it on desktop, or use arrow keys on the title and the reset/expand buttons. Minimize it and click Help again to resume. The last 100 messages are saved in this browser, separately by service, chain/runtime and account; Clear conversation removes that history. The assistant answers the current question, rather than sending this stored conversation to the model. Never enter keys or private DAO content. Browser history is not an encrypted recovery backup."
+        "Open Help from the sidebar to use the floating Daxi help window from any page. Drag its title, resize it on desktop, or use arrow keys on the title and the reset/expand buttons. Minimize it and click Help again to resume. The last 100 messages are saved in this browser, separately by service, chain/runtime and account; Clear conversation removes that history. The assistant answers the current question, rather than sending this stored conversation to the model. Never enter keys or private DAO content. Browser history is not an encrypted recovery backup."
       ]
     },
     {
@@ -365,6 +367,127 @@ export const CoreHelpBundle={
         "A member withdraws an earned claim by signing an instruction; Runtime pays through the configured token contract under its active/code authority. The receiving wallet must prepare its token balance row and cover that RAM. Offboarding does not erase earned claims. Failed inline actions roll back nonces, balances and execution markers. Retrying completed settlement cannot pay twice.",
         "Executive elections and activity refresh can update native control. Only eligible active paired executives contribute signer weight. Inactivity changes authority when a transaction refreshes it; no transaction means no automatic update. The all-inactive fallback retains recovery signers until an eligible executive returns. One remaining active executive can intentionally control the deployment. Last-controller unlinking is blocked; authenticated atomic wallet replacement remains available.",
         "The bundled diagram illustrates the post-handover model introduced in core 0.9.0-alpha.1; it is not a statement that current live Telos account permissions were changed. Local native integration tests verify signatures, thresholds, all module owners, actual inline callbacks, multiple DAO isolation and complete settlement. VERT verifies compiled-WASM state behavior; neither is evidence of a live provider or network deployment."
+      ]
+    },
+    {
+      "id": "dao-fundamentals",
+      "title": "DAOs: purpose, membership and governance",
+      "paragraphs": [
+        "A DAO is an organisation coordinated through shared governance rules, often implemented in smart contracts. Members propose changes, decide who may vote and control a treasury according to those rules. A DAO can serve a community, nonprofit project, cooperative, gaming guild or other shared purpose; it is a coordination model, not automatically a tradable token or a legal entity.",
+        "Membership models vary. Token-based voting weights holdings; reputation or contribution models recognise participation; membership-based voting can give eligible members equal votes. Quorum sets required participation, while approval sets the support needed to pass. Delegation gives another participant voting responsibility. Multisig execution requires a configured combination of signers. Passing a vote does not automatically execute arbitrary transactions: the actual contract and execution policy decide that.",
+        "General design suggestions: start with a clear purpose, admission rules, voting eligibility, spending limits and a recovery process. A small community may prefer equal-member voting; a grants DAO may pair funding decisions with milestones; a gaming guild may organise shared assets and contributor rewards. Compare these options with your goals rather than assuming a token solves every coordination problem. These are design suggestions, not a claim that every option is implemented in Daclify.",
+        "General operational suggestions: publish the decision process, distinguish voters from non-voting contributors and administrators, set explicit terms and inactivity rules where supported, document conflicts of interest and use staged payments for work. Blockchain transparency does not prove project quality. Privacy needs separate encryption and key recovery; a public ledger does not hide membership or transaction metadata. Legal form, taxes, charity status and financial suitability depend on jurisdiction and require appropriate professional advice, not an AI verdict."
+      ],
+      "sources": [
+        {
+          "title": "DAO education, ethereum.org",
+          "url": "https://ethereum.org/dao/",
+          "reviewedAt": "2026-10-09"
+        }
+      ]
+    },
+    {
+      "id": "telos",
+      "title": "Telos Zero and Telos EVM explained",
+      "paragraphs": [
+        "Telos provides a native Antelope environment called Telos Zero and an Ethereum-compatible environment called Telos EVM. Zero supports named accounts and C++ smart contracts compiled to WebAssembly. Telos EVM supports Ethereum-style applications and JSON-RPC tools, including Solidity contracts. The official introduction describes EVM as running through a smart contract on Zero; this does not make native and EVM account formats or transaction APIs interchangeable.",
+        "TLOS is used across the Telos ecosystem, but native balances, EVM balances and balances on other chains are distinct. Native account names and EVM hexadecimal addresses need the correct wallet and network. Connecting a wallet to an app is different from authorising a transaction. Bridging or depositing requires the correct supported route, destination and network; never infer a payment merely from matching address text.",
+        "Daclify governance contracts run on Telos Zero in Antelope C++. Its internal member accounts are different from native Telos accounts. Pairing a Zero or EVM wallet proves control for supported Daclify flows; it does not merge chain balances, automatically create a native account or grant executive office. Whether an external-chain payment or action is supported depends on the installed, verified module.",
+        "This is a reviewed introductory guide, not a live network-status or investment feed. Check official documentation and the app Status page for current configuration. Performance headlines, future price predictions and guaranteed fee claims are not verified here."
+      ],
+      "sources": [
+        {
+          "title": "Telos introduction",
+          "url": "https://docs.telos.net/overview/what-is-telos/introduction/",
+          "reviewedAt": "2026-10-09"
+        },
+        {
+          "title": "Telos Zero toolkit",
+          "url": "https://docs.telos.net/zero/telos_zero/",
+          "reviewedAt": "2026-10-09"
+        },
+        {
+          "title": "Telos EVM introduction",
+          "url": "https://docs.telos.net/evm/about/introduction/",
+          "reviewedAt": "2026-10-09"
+        }
+      ]
+    },
+    {
+      "id": "telos-networks",
+      "title": "Telos networks, wallets and explorers",
+      "paragraphs": [
+        "The official Telos network guide lists EVM mainnet chain ID 40 with RPC https://rpc.telos.net and EVM testnet chain ID 41 with RPC https://rpc.testnet.telos.net. TLOS is the network symbol. These are EVM JSON-RPC endpoints, not native Antelope /v1/chain APIs. Network settings can change; the source review date is not proof that an endpoint is reachable now.",
+        "An EVM wallet must select the correct chain ID and RPC before interacting. Teloscan is the EVM explorer; Telos Zero has a separate native explorer. A native account wallet uses Zero rather than an Ethereum JSON-RPC network entry. Testnet uses test funds; a successful test transaction is not a mainnet payment.",
+        "For Daclify, testnet and production frontend builds select their matching API through deployment environment settings. Wallet network selection does not change the app deployment. Check Status and the wallet transaction network before approving anything. Verify a payment through its actual transaction, recipient, asset, amount and finality, not a browser return message. Never paste a private key or recovery phrase into a help chat."
+      ],
+      "sources": [
+        {
+          "title": "Telos EVM network information",
+          "url": "https://docs.telos.net/build/network-info/",
+          "reviewedAt": "2026-10-09"
+        },
+        {
+          "title": "Telos EVM wallet setup",
+          "url": "https://docs.telos.net/evm/about/setup-a-wallet/",
+          "reviewedAt": "2026-10-09"
+        }
+      ]
+    },
+    {
+      "id": "telos-permissions",
+      "title": "Telos native accounts and permission thresholds",
+      "paragraphs": [
+        "A native Telos account identifies a person, group or smart contract. Authorisation uses named permissions and weighted authorities. An authority threshold must be met by eligible keys, account permissions or configured waits. Accounts normally start with owner and active permissions, and can use additional custom permissions for narrower actions.",
+        "Owner is the root recovery authority; active is used for ordinary transactions and sits beneath owner. A multisig authority can require several participants or a weighted combination, rather than one private key. Review the complete authority and parent relationship before changing it: a parent authority can override a child.",
+        "In Daclify, a paired wallet alone does not appoint an executive. Internal DAO roles and native contract control are different layers. Shared DAOs use platform-managed contracts. An independent deployment or the Daclify DAO can synchronise an eligible executive quorum to native account authorities after authorised handover. Its inactivity and final-controller rules come from the deployed Daclify contracts; Telos does not automatically implement that policy for every native account.",
+        "General operational guidance: review account names, permission names, thresholds and remaining recovery authority before signing a permission change. Keep the approval details visible and use the documented deployment procedure. This guide does not inspect your current account or generate a live permission audit."
+      ],
+      "sources": [
+        {
+          "title": "Telos accounts and permissions",
+          "url": "https://docs.telos.net/zero/about/accounts/",
+          "reviewedAt": "2026-10-09"
+        }
+      ]
+    },
+    {
+      "id": "telos-resources",
+      "title": "Telos Zero RAM, CPU and NET",
+      "paragraphs": [
+        "Telos Zero uses RAM, CPU and NET resources. RAM holds persistent account and contract state such as table rows. CPU covers transaction computation; NET covers transaction bandwidth. CPU and NET capacity relate to allocated or staked resources. These native resources are different from EVM gas and from memory or storage on an application server.",
+        "A contract can need more RAM as its tables grow. The billed account and contract rules determine who funds those rows. A blockchain does not remove the need to budget state growth. IPFS stores file content separately; a CID on-chain is a reference, not a promise that a file is pinned or retrievable.",
+        "For Daclify, Resources separates physical contract RAM, DAO allocations, completion reserves and pinned storage. All enabled modules can contribute to DAO RAM use. Archiving can remove eligible live rows after the required verification, while retained IPFS files remain pinned and billed. Consult the Daclify resource guide for its exact purchase fees, capacity and retention policy; native Telos resource concepts do not define Daclify commercial prices."
+      ],
+      "sources": [
+        {
+          "title": "Telos resource overview",
+          "url": "https://docs.telos.net/zero/resource-management/overview/",
+          "reviewedAt": "2026-10-09"
+        }
+      ]
+    },
+    {
+      "id": "telos-governance",
+      "title": "Telos Decide and Works: governance concepts",
+      "paragraphs": [
+        "The documented Telos Decide governance engine hosts ballots, token treasuries, voting methods and committee tools. A publisher chooses a voting token and the rules used to count votes. Its treasury and committee features let applications build on a common governance service.",
+        "The documented Telos Works system organises funding proposals into milestones, with community voting and predefined milestone amounts. It illustrates how a project can receive funding in stages rather than a single unrestricted payment.",
+        "At a high level, Telos Decide is a chain-wide governance service organised around voting-token treasuries. Daclify Decide works with DAO-scoped Daclify member identities and supports equal active-member, internal-credit or deposited-native-stake voting; a ballot snapshots its eligible denominator and member boundary. Daclify can bind a vote to one Works project under its saved governance policy. These are differences in identity, weight accounting and authorised effects, not a complete API comparison. Consult the matching Daclify Decide guide for its own settings and execution rules.",
+        "These are the documented Telos systems, not the same deployed contracts as Daclify Decide and Works. Daclify has its own member identity, voting snapshots, governance policy, project obligations and funding execution. Similar names do not establish action, table, token, fee or permission compatibility. Treat older Telos documentation as an explanation of those systems and verify a current deployment before using it.",
+        "General design suggestions: define eligible voters, voting weight, quorum, approval and execution authority before accepting proposals. For work funding, make deliverables and milestone review explicit and keep the amount reserved for the obligation. A ballot result and an actual treasury settlement are different events. Current Telos budgets, fees, proposals or deployment availability are not verified by this educational guide."
+      ],
+      "sources": [
+        {
+          "title": "Telos Decide",
+          "url": "https://docs.telos.net/zero/governance/decide/",
+          "reviewedAt": "2026-10-09"
+        },
+        {
+          "title": "Telos Works",
+          "url": "https://docs.telos.net/zero/governance/works/",
+          "reviewedAt": "2026-10-09"
+        }
       ]
     }
   ],
@@ -25020,6 +25143,58 @@ export const CoreHelpBundle={
         "properties": {
           "configured": {
             "type": "boolean"
+          },
+          "profile": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "const": "Daxi"
+              },
+              "scope": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "string",
+                    "const": "Daclify"
+                  },
+                  {
+                    "type": "string",
+                    "const": "Telos"
+                  },
+                  {
+                    "type": "string",
+                    "const": "DAOs"
+                  }
+                ],
+                "items": false,
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "answerModel": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "decisionsModel": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "knowledgeVersion": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "scope",
+              "answerModel",
+              "decisionsModel",
+              "knowledgeVersion"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [

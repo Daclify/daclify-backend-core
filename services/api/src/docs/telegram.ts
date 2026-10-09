@@ -113,7 +113,7 @@ export async function claimTelegramUpdate(
 export function registerTelegramDocsRoutes(
   app: FastifyInstance,
   config: TelegramDocsConfiguration,
-  assistant: DocsAssistant,
+  assistant: Pick<DocsAssistant, 'configured' | 'ask'>,
   claim: (updateId: number) => Promise<boolean>,
   fetchImpl: typeof fetch = fetch,
 ): void {
@@ -137,7 +137,7 @@ export function registerTelegramDocsRoutes(
       const input = telegramQuestion(update.message, config);
       if (!input || !(await claim(update.update_id))) return { ok: true };
       if (!admit(input.chatId, Date.now())) return { ok: true };
-      let text = `Ask /docs@${config.username} followed by a Daclify question, or reply to my answer. I cover only the Daclify handbook and documented setup. Do not send passwords, recovery kits or provider keys.`;
+      let text = `I'm Daxi. Ask /docs@${config.username} about Daclify, Telos or DAOs, or reply to my answer. I'll help untangle the jargon. Do not send passwords, recovery kits or provider keys.`;
       if (input.question.length >= 2) {
         try {
           const answer = await assistant.ask(
@@ -153,7 +153,7 @@ export function registerTelegramDocsRoutes(
         } catch (cause) {
           if (cause instanceof ApiError && cause.code === 'RATE_LIMIT') return { ok: true };
           text =
-            'The Daclify handbook assistant is temporarily unavailable. Please try /docs again later. Do not send secrets.';
+            'Daxi is temporarily unavailable. Please try /docs again later. Do not send secrets.';
           console.error('TELEGRAM_DOCS_ANSWER_FAILED');
         }
       }

@@ -392,15 +392,15 @@ export async function createServer(
       ],
       [
         'docs',
-        'Documentation assistant',
+        'AI Daxi Help',
         !!options.docs,
-        'Optional assistant; generated documentation is always available.',
+        'Daxi explains Daclify, Telos and DAOs using the bundled guides. Configuration does not verify provider access or answer quality.',
       ],
       [
         'telegram-docs',
-        'Telegram handbook bot',
+        'Daxi on Telegram',
         !!options.telegramDocs,
-        'Docs-only support in approved groups and whitelisted private chats. Webhook registration and live qualification are separate.',
+        'Daclify, Telos and DAO support in approved groups and whitelisted private chats. Webhook registration and live qualification are separate.',
       ],
       [
         'managed',

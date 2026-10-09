@@ -83,7 +83,7 @@ const fetchImpl: typeof fetch = async (input) => {
       JSON.stringify({
         answers: {
           acceptable: { noul: 0.99 },
-          in_handbook: { noul: 0.88 },
+          in_scope: { noul: 0.88 },
           topic: { choice: 'accounts', probabilities: { accounts: 0.7, unlisted: 0.1 } },
         },
       }),
@@ -367,7 +367,10 @@ describe('documentation assistant route', () => {
   });
   it('answers from the mocked model and stays unavailable without a key', async () => {
     const missing = await closed.inject({ method: 'GET', url: '/v1/docs/agent' });
-    expect(missing.json()).toEqual({ configured: false });
+    expect(missing.json()).toMatchObject({
+      configured: false,
+      profile: { name: 'Daxi', answerModel: null, decisionsModel: null },
+    });
     const refused = await closed.inject({
       method: 'POST',
       url: '/v1/docs/ask',
@@ -376,7 +379,10 @@ describe('documentation assistant route', () => {
     });
     expect(refused.statusCode).toBe(503);
     const status = await app.inject({ method: 'GET', url: '/v1/docs/agent' });
-    expect(status.json()).toEqual({ configured: true });
+    expect(status.json()).toMatchObject({
+      configured: true,
+      profile: { name: 'Daxi', scope: ['Daclify', 'Telos', 'DAOs'] },
+    });
     const asked = await app.inject({
       method: 'POST',
       url: '/v1/docs/ask',

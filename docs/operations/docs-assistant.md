@@ -1,6 +1,8 @@
-# Documentation assistant and Telegram bot
+# Daxi support and Telegram bot
 
-The app and bot use the same bundled public core/module guides. They do not query DAO records, open private documents, browse arbitrary sites, execute commands or sign transactions. Setup questions are allowed when the handbook actually documents the Daclify setup. General Docker, Stripe, Telegram or blockchain chat is outside scope unless it concerns a documented Daclify configuration.
+Daxi helps with Daclify usage/setup, Telos Zero and EVM, and DAO education/design. These questions need no Daclify prefix. Replies explain clearly, offer practical next steps and may use light, dry humour without mocking users or forcing jokes about keys or money. The app and Telegram use the same assistant and reviewed guides.
+
+The public knowledge pack includes concise Telos/network/wallet/permission/resource/governance explanations and DAO fundamentals, with official source links reviewed on 9 October 2026. It is maintained release content, not a live crawl of the entire Telos website. Daxi admits unsupported details and current-state gaps. It cannot inspect DAO records/private files or execute actions. General design suggestions are labelled; unrelated chat remains outside scope.
 
 ## App configuration
 
@@ -11,11 +13,15 @@ OPENROUTER_DECISIONS_MODEL=openai/gpt-6-luna-decisions
 OPENROUTER_MODEL=openai/gpt-4.1-mini
 ```
 
-These defaults apply to absent/empty model settings. The testnet local file currently overrides the answer model with Luna Pro. Keep that override only if representative evaluations justify its latency and cost; it is not necessary for handbook replies. Model IDs receive syntax checks, not provider availability checks. `/v1/docs/agent` returning `configured: true` means that a key/configuration was supplied; test an actual answer to check provider access and credits.
+These defaults apply to absent/empty model settings. The testnet local file currently overrides the answer model with Luna Pro. Keep that override only if representative evaluations justify its latency and cost; it is not necessary for handbook replies. Model IDs receive syntax checks, not provider availability checks. `/v1/docs/agent` reports Daxi’s scope, answer/decision model names and knowledge version without keys or allowlists. `configured: true` means that a key/configuration was supplied; test an actual answer to check provider access and credits.
 
-Decisions sees the full bundled handbook paragraphs, selects one guide and admits only in-scope questions with evidence. The answer model sees the complete selected guide. A second decision checks relevance and support before the reply is returned. Thresholds are 0.8 for answerability, 0.2 for the selected topic and 0.9 for output support. These are conservative launch gates, **not calibrated accuracy guarantees**. A refusal can mean either unrelated content or insufficient documented evidence. Complex questions spanning several guides may need to be split into separate questions.
+Decisions sees the full bundled handbook paragraphs, selects one guide and admits in-scope questions. Answerability is checked against that guide after generation; a bounded explanation of how to find live data is allowed, but the assistant cannot inspect or invent that data. The answer model sees the complete selected guide and reviewed sources. Harmless humour/metaphors need no verbatim source; factual claims still require evidence. URLs must exactly match published guide text or source links; a model cannot invent a URL or add redirect/query parameters. A second decision checks relevance and support before the reply is returned. Thresholds are 0.8 for scope, 0.2 for the selected topic and 0.9 for output support. These are conservative launch gates, **not calibrated accuracy guarantees**. A refusal can mean either unrelated content or insufficient documented evidence. Complex questions spanning several guides may need to be split into separate questions.
 
 All provider calls for one answer share an 18-second deadline. Responses are bounded at 128 KB; questions are limited to 500 characters and replies to 2,000 characters. The current instance admits 12 model requests per subject and 80 globally per ten minutes, with at most four answers in flight. Web and Telegram share that global pool. Limits are per API instance and reset on restart; set an OpenRouter key budget for an account-wide cost ceiling. Do not supply secrets or private DAO content in questions. Public guide text and the question go to OpenRouter.
+
+## Status and Telegram configuration
+
+The app Status page has Overview, Network, Contracts, Fees, Services and AI Daxi Help tabs. AI Daxi Help shows the configured public model names and knowledge version, distinguishes failed status requests from absent configuration and opens the existing floating help window. Migration details remain in backend diagnostics rather than the public UI.
 
 ## Telegram group configuration
 
@@ -65,7 +71,7 @@ To find your ID without another bot, open this bot, press Start and send a short
 
 For private-only testing, set `TELEGRAM_DOCS_GROUP_IDS=[]`; the bot does not need to join a group first. Open the bot's private chat and press Start before running the setup check, so Telegram can resolve that private chat. The setup tool checks private-chat existence/type/ID, and checks group membership/privacy only when groups are configured. Keep the existing shared webhook configuration and enable flag; a second webhook is unnecessary.
 
-Once the updated API is deployed, restarted and its webhook registered, send an ordinary Daclify question, `/docs question`, or a reply to a bot answer. The docs-only scope, public source links, question/response limits, rate limits and duplicate protection are identical to group support. Other slash commands are ignored. Plain private text is accepted only for whitelisted users; it does not enable reading ordinary group conversations. Leave the private list empty to disable direct-chat support while retaining groups.
+Once the updated API is deployed, restarted and its webhook registered, send an ordinary Daclify, Telos or DAO question, `/docs question`, or a reply to a bot answer. The Daclify/Telos/DAO scope, public source links, question/response limits, rate limits and duplicate protection are identical to group support. Other slash commands are ignored. Plain private text is accepted only for whitelisted users; it does not enable reading ordinary group conversations. Leave the private list empty to disable direct-chat support while retaining groups.
 
 ## Retry and privacy limits
 

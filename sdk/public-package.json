@@ -1,6 +1,6 @@
 {
   "name": "@daclify/core-protocol",
-  "version": "0.9.0-alpha.5",
+  "version": "0.9.0-alpha.6",
   "license": "AGPL-3.0-only",
   "type": "module",
   "description": "Daclify public protocol and generated contract SDK",

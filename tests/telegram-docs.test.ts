@@ -310,7 +310,7 @@ describe('Telegram docs-only group bot', () => {
     const sent: unknown[] = [];
     const asked: unknown[] = [];
     const app = Fastify();
-    const assistant: DocsAssistant = {
+    const assistant: Pick<DocsAssistant, 'configured' | 'ask'> = {
       configured: true,
       ask: async (...args) => {
         asked.push(args);
