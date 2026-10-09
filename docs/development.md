@@ -31,9 +31,9 @@ The optional manual GitHub workflows use immutable action hashes, read-only work
 
 ## Branches
 
-Use `dev` for ongoing work in core, modules, frontend and `www-landing-page`. Keep the three app repositories on matching development checkouts; their package versions and exact artifact integrities must still agree. A branch name does not establish package compatibility.
+Use `dev` for ongoing work in core, modules and frontend. Keep the three app repositories on matching development checkouts; their package versions and exact artifact integrities must still agree. A branch name does not establish package compatibility. The standalone `www-landing-page` continues using `main` and does not need a `dev` branch.
 
-From each clean checkout, run `git switch dev`, then `git pull --ff-only origin dev`. Preserve uncommitted work before switching. Create feature worktrees from the current `dev`, review and verify the affected changes, then merge into `dev` and push it. Update `main` only when the user explicitly requests a release. Changing the GitHub default branch is a separate repository setting; creating `dev` does not change it.
+From each clean app checkout, run `git switch dev`, then `git pull --ff-only origin dev`. Preserve uncommitted work before switching. Create feature worktrees from the current `dev`, review and verify the affected changes, then merge into `dev` and push it. Update an app repository's `main` only when the user explicitly requests a release. Changing the GitHub default branch is a separate repository setting; creating `dev` does not change it.
 
 The [9 October branch audit](evidence/2026-10-09-dev-branch-audit.md) records the older branches and the previously missing governance plan. Retaining an old branch does not mean its changes are missing; compare ancestry with `git merge-base --is-ancestor BRANCH dev` and inspect worktree status before integrating anything.
 

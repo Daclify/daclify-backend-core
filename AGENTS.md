@@ -5,6 +5,7 @@ Act as a skeptical, evidence-driven senior technical and business partner. Clear
 ## Implementation workflow
 
 - Develop and commit on `dev`. Create isolated feature branches from the current `dev` when needed and integrate them back into `dev`. Push `dev`; merge or push `main` only when the user explicitly requests a release. Earlier main-branch instructions do not override this workflow.
+- This workflow applies to core, modules and frontend. The standalone `www-landing-page` continues using `main` and does not need a `dev` branch.
 - Read the canonical master plan, architecture, work packages and release/documentation/test policy in `../daclify-backend-core/docs/superpowers/` (or `docs/superpowers/` within core) before feature work.
 - The user requests one continuous implementation session and reviews the complete code afterward. Continue through ready packages without repeated permission requests. Keep internal review, tests, progress updates and a durable execution ledger. No sub-agent delegation is authorized.
 - Inspect current code, conventions and worktree state before edits. Preserve user changes and the six legacy repositories.

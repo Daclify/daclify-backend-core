@@ -8,7 +8,7 @@ The implementation is not a production release. `npm run package:release` refuse
 
 ## Read next
 
-Development now uses **`dev`** across core, modules, frontend and the landing page. Keep sibling app checkouts on `dev`; release to `main` only on an explicit request. See the [branch workflow](docs/development.md#branches) and [branch integration audit](docs/evidence/2026-10-09-dev-branch-audit.md).
+Development now uses **`dev`** across core, modules and frontend. Keep sibling app checkouts on `dev`; release to `main` only on an explicit request. The standalone landing page continues using **`main`**. See the [branch workflow](docs/development.md#branches) and [branch integration audit](docs/evidence/2026-10-09-dev-branch-audit.md).
 
 The current development version is **0.8.0-alpha.1**, with contract interface 1. The resource-billing-archives branch adds core migrations 022–031 and hash-tracked Archive migrations 001–005, plus additive C++ state while preserving existing serialized rows and signing/content domains. It implements native/card RAM acquisition, manually funded payer allocations, configured prepaid storage, verified hosted references, public card-image uploads, encrypted Archive backups, native approval/revocation, bounded ordinary-poll pruning and merged history recovery. Hosted ownership/usage can be rebuilt from surviving chain references and provider inventory without inventing payment receipts.
 
