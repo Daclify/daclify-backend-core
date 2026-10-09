@@ -3,6 +3,7 @@
 ## Unreleased — RAM, prepaid storage and Archive
 
 - Added a chain/code/raw-ABI pinned public Telos token downloader and owned-native new/legacy sender tests, preserving exact deployed ABI bytes and separating external payer changes from DAO usage.
+- Qualified eight maximum-title election terms at both native payer limits, including actual historical election adoption without rewriting ballots or member credentials.
 - Guard activation now verifies existing credentials, claims and pending holds plus pinned module completion checks. Bounded completion-only adoption preserves already-metered legacy counters.
 - Extended the owned native observed-upgrade drill to Grants and signed governance, preserved failed award plans, and consumed the compatible Decide migration fix and retained poll Archive decoder.
 

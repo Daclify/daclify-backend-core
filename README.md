@@ -101,6 +101,8 @@ Legacy controller/supported-release qualification and old executable-work migrat
 
 The [deployed Telos token native matrix](docs/evidence/2026-10-09-telos-token-ram.md) passes six receiver/payout/exhaustion cases using checksum-checked public token bytes on the owned chain. It reconciles legacy sender-payer costs separately from DAO counters. Run the documented read-only snapshot step before this suite; public deployment, arbitrary tokens and provider qualification remain separate gates.
 
+The [maximum-seat election drill](docs/evidence/2026-10-09-election-completion.md) passes new and actual historical-contract adoption cases: eight maximum-title terms complete at both native RAM limits, with exact counter reconciliation and once-only finalization. Full historical lifecycle/public release qualification remains open.
+
 ## License
 
 First-party code, contracts, SDKs and documentation are licensed under

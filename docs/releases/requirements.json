@@ -254,7 +254,9 @@
       "tests": [
         "tests/native/ram-controller.test.ts",
         "tests/native/ram-migration.test.ts",
-        "tests/native/ram-rebind.test.ts"
+        "tests/native/ram-rebind.test.ts",
+        "tests/native/ram-observed-upgrade.test.ts",
+        "tests/native/ram-election-completion.test.ts"
       ]
     },
     {

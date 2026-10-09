@@ -1,0 +1,68 @@
+{
+  "qualification": "owned-native-election-completion-only",
+  "result": {
+    "files": 1,
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "durationSeconds": 158.9
+  },
+  "historicalSources": {
+    "coreCommit": "6145da8",
+    "decideCommit": "2d44085",
+    "decideCoreHeadersCommit": "c6e713e"
+  },
+  "cases": [
+    {
+      "fixture": {
+        "container": "daclify-resources-native",
+        "url": "http://127.0.0.1:20588",
+        "chainId": "d9f6e8c655703ba364f0ee82b4fd0631350475747b1924396c8fbef2558b8f51"
+      },
+      "legacy": false,
+      "runtime": "ramctlphbb5j",
+      "decide": "rmelecphbb5j",
+      "oldCoreHash": "5a7d037c3e9557b123edfaedbc1248b9a01f8c27f85c11f99d1e63acd5dd3c1a",
+      "oldDecideHash": "9f3512f832aafcfed993e1b89681a16df8af50b6a84eecdca156d26e7be67df9",
+      "runtimeCodeHash": "f40c696e86ab532ca57ea073265a982f694f9f21f8de53300b51365e83711878",
+      "decideCodeHash": "aabbaa9a70a042a7747c55fe33d100eb0475961b2e8e42ce29e4f76ff41c39cc",
+      "seats": 8,
+      "titleBytes": 80,
+      "nativeDelta": {
+        "ramctlphbb5j": "0",
+        "rmelecphbb5j": "-242"
+      },
+      "exactBothPhysicalQuotas": true,
+      "adoptionPreservesOriginalState": false,
+      "qualifiedPublicDeployment": false
+    },
+    {
+      "fixture": {
+        "container": "daclify-resources-native",
+        "url": "http://127.0.0.1:20588",
+        "chainId": "d9f6e8c655703ba364f0ee82b4fd0631350475747b1924396c8fbef2558b8f51"
+      },
+      "legacy": true,
+      "runtime": "ramctll2oapk",
+      "decide": "rmelecl2oapk",
+      "oldCoreHash": "5a7d037c3e9557b123edfaedbc1248b9a01f8c27f85c11f99d1e63acd5dd3c1a",
+      "oldDecideHash": "9f3512f832aafcfed993e1b89681a16df8af50b6a84eecdca156d26e7be67df9",
+      "runtimeCodeHash": "f40c696e86ab532ca57ea073265a982f694f9f21f8de53300b51365e83711878",
+      "decideCodeHash": "aabbaa9a70a042a7747c55fe33d100eb0475961b2e8e42ce29e4f76ff41c39cc",
+      "seats": 8,
+      "titleBytes": 80,
+      "nativeDelta": {
+        "ramctll2oapk": "0",
+        "rmelecl2oapk": "-242"
+      },
+      "exactBothPhysicalQuotas": true,
+      "adoptionPreservesOriginalState": true,
+      "qualifiedPublicDeployment": false
+    }
+  ],
+  "limitations": [
+    "Finite managed native quotas; not RAM-market acquisition or per-DAO guard activation proof.",
+    "No public deployment, arbitrary module or complete historical lifecycle qualification.",
+    "No provider cleanup, live payment or production authority change."
+  ]
+}
