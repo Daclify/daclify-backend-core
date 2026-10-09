@@ -189,7 +189,7 @@
       "Private env files with generated distinct DB credentials",
       "Daily separate local backup timer"
     ],
-    "apiServices": "Installed, stopped and disabled pending prerequisites; both public APIs intentionally return 503.",
+    "apiServices": "Testnet enabled and running as daclify-testnet at 127.0.0.1:3028 from its pinned dev release. Mainnet stopped/disabled; its public hostname stays 503.",
     "passed": [
       "Node 24.21.0 checksum verification",
       "Backend-only source bootstrap and TypeScript build",
@@ -201,13 +201,13 @@
       "Shellcheck and systemd unit validation"
     ],
     "pending": [
-      "Review/commit deployment tooling into selected deployment branches",
-      "Per-environment relay/provider credentials",
-      "Release manifest and deployed runtime/module hashes matching the selected API SDK",
-      "Qualified mainnet release and actual mainnet accounts",
-      "Hosted frontend DNS and network selector/CORS acceptance",
-      "Actual simultaneous API operation and restart acceptance",
-      "Off-VM closed-port probing and backup destination"
+      "Actual mainnet accounts, credentials, qualified artifacts and tools on its selected main branch",
+      "Simultaneous actual API operation after mainnet prerequisites",
+      "Hosted Netlify frontend/DNS/selector/browser acceptance",
+      "Actual Stripe checkout delivery/fulfilment and SMTP deliverability",
+      "Verified funded Pinata gateway allowance and upload/retrieval/access-control qualification",
+      "Advanced target-chain RAM/migration/custody qualification",
+      "Off-VM port probe and independent backup destination"
     ],
     "chainSnapshot": {
       "mainnet": {
@@ -442,6 +442,44 @@
       "build": "Fresh backend-only bootstrap, TypeScript build, 10 focused checks and lint passed in the isolated candidate. Actual canonical manifest generated with qualified=false and all 12 production gates held.",
       "preflight": "Live relay check rejected literal EOS/PUB_K1 formatting despite equal decoded keys. No API started and no credentials or authority changed. Fix uses the canonical Antelope Authority/keyWeight decoder and tests legacy/modern keys, wrong keys and incomplete delayed authority.",
       "sourceIntegration": "Preserved upstream frontend vendor-package bootstrap work and latest documentation while rebasing deployment tooling; normal dev pushes only, no force push or main change."
+    },
+    "testnetApiRollout": {
+      "date": "2026-10-09",
+      "coreCommit": "336fc93dd5da1dec9bee0d19f9dd2046f30db141",
+      "modulesCommit": "b4dc1c1f69972d1e8c5f75c7c8f10bec23f6d798",
+      "releaseDirectory": "/data/daclify-api/testnet/releases/336fc93dd5da1dec9bee0d19f9dd2046f30db141-b4dc1c1f69972d1e8c5f75c7c8f10bec23f6d798",
+      "selection": "Only testnet current selected; previous unselected candidate retained. Dependencies/SDK/compiled contracts reused only after exact producer-source compatibility checks; exact source revision build and isolated focused tests passed. Frontend artifact input exists solely for the actual canonical manifest; hosting remains Netlify.",
+      "qualification": "Actual candidate manifest qualified=false, publication refused, all 12 production gates held; no evidence fabricated.",
+      "tests": "Latest config regression 4 files / 17 cases, strict TypeScript build and lint passed; same 17 cases/lint in the isolated release passed. Broader core 565 tests and native historical upgrade passed earlier; module stress timeout corrected without reducing its 5,000-row assertions.",
+      "privateConfiguration": "User-supplied PINATA_STORAGE_SCOPE preserved; conflicting legacy account alias retired after all 10 scoped ledger tables were verified empty. Stripe signing secret verified unchanged from registration. Env remains root-only outside Git.",
+      "livePreflight": "Configuration, actual native chain/features/code/raw ABI pins and resources, decoded direct relay authority, own DB/role and denied cross-database access passed, including real systemd credential delivery.",
+      "publicAcceptance": {
+        "httpsNetwork": 200,
+        "environment": "testnet",
+        "runtime": "daclifycore1",
+        "nativeChainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+        "coreVersion": "0.8.0-alpha.1",
+        "approvedOrigin": "https://testnet.app.daclify.com",
+        "peerOrigin": "No CORS permission for https://app.daclify.com",
+        "unknownHost": 421,
+        "mainnet": 503,
+        "validLocallySignedIgnoredWebhook": 200,
+        "invalidSignature": 400,
+        "stoppedTestnet": 503,
+        "stoppedTestnetRedirect": false,
+        "afterRestart": 200,
+        "tls": "Hostname and trusted certificate chain validated; earlier renewal/reload drill passed"
+      },
+      "database": "Actual API connections use daclify_testnet_app/daclify_testnet. 36 migrations, 0 app accounts; cross-database CONNECT false. No reset/import and no data volume removed.",
+      "listeners": "Testnet 3028, PostgreSQL 5432 and ACME 9080 only on 127.0.0.1; mainnet 3018 absent.",
+      "notPerformed": [
+        "Hosted frontend/browser acceptance",
+        "Actual Stripe checkout or provider-delivered payment event",
+        "Email or provider upload",
+        "Pinata funded allowance registration",
+        "Mainnet API/contract/authority/asset actions",
+        "Off-VM port probe and off-VM backup setup"
+      ]
     }
   }
 }
