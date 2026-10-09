@@ -203,7 +203,8 @@
     "pending": [
       "Actual mainnet accounts, credentials, qualified artifacts and tools on its selected main branch",
       "Simultaneous actual API operation after mainnet prerequisites",
-      "Hosted Netlify frontend/DNS/selector/browser acceptance",
+      "Actual hosted browser/login/wallet acceptance; frontend DNS, testnet lock and pinned public assets verified",
+      "Telegram docs bot private chat/webhook configuration and registration",
       "Actual Stripe checkout delivery/fulfilment and SMTP deliverability",
       "Verified funded Pinata gateway allowance and upload/retrieval/access-control qualification",
       "Advanced target-chain RAM/migration/custody qualification",
@@ -491,7 +492,48 @@
         "testnet": 41
       },
       "checks": "Fresh frontend standalone vendor install, 46 focused wallet/network/package checks and Vue typecheck/Vite build passed. No frontend hosting operation performed.",
-      "apiState": "Selected API remains the immutable 336fc93/b4dc1c1 release; frontend source changes do not alter it."
+      "apiState": "At the time of this frontend correction, the selected API remained the immutable 336fc93/b4dc1c1 release. See testnetAppUpdate for the later API rollout."
+    },
+    "testnetAppUpdate": {
+      "date": "2026-10-09",
+      "authorization": "User requested making the updated testnet app live after synchronizing all three dev repositories.",
+      "coreCommit": "13b9a63545f784f97476b589e5763946f9b20852",
+      "modulesCommit": "ac14a7cb2cf30b6329c9b4c12366995e59741108",
+      "frontendCommit": "ee4e21e1e075cb549a62d00b86257c9ce07c04e6",
+      "releaseDirectory": "/data/daclify-api/testnet/releases/13b9a63545f784f97476b589e5763946f9b20852-ac14a7cb2cf30b6329c9b4c12366995e59741108",
+      "selection": "Atomic testnet-only current switch and service restart. New API process working directory verified against the candidate. Previous immutable release retained; private environment file unchanged.",
+      "artifacts": "Contract producer source and generated pins unchanged; previous compiled contracts copied only after exact source comparison. Tracked frontend vendor archives match candidate lock integrities and generated documentation. Separate fresh installs/builds; canonical manifest pins actual artifacts and all three commits.",
+      "qualification": "Development manifest remains qualified=false, publication refused, all twelve production gates held.",
+      "checks": [
+        "Memory-bounded candidate TypeScript build, lint, generated documentation consistency and 65 focused tests passed",
+        "Separate module install/build and generated documentation checks passed",
+        "Dedicated testnet frontend build passed; entry/network/handbook assets on Netlify match its bytes exactly",
+        "Actual testnet backup restored into an isolated loopback PostgreSQL 17 fixture with a non-superuser app role",
+        "Old, new and old canonical migration coordinators passed against the restored schema; six documentation/account-control integration tests passed",
+        "Live preflight verified configuration, contract/ABI pins, chain features/resources, direct relay authority, dedicated database role and cross-database denial",
+        "Public trusted HTTPS network, native RPC chain ID, EVM chain ID 41, approved CORS and peer-origin denial passed",
+        "Public handbook assistant status passed; locally signed ignored Stripe event returned 200 and an invalid signature returned 400",
+        "Unknown Host returned 421; mainnet stayed 503; API/database listeners remain loopback-only and private source env remains root-owned 0600"
+      ],
+      "database": {
+        "migrationsBefore": 36,
+        "migrationsAfter": 37,
+        "tablesBefore": 55,
+        "tablesAfter": 56,
+        "addedMigration": "core/032_telegram_docs.sql",
+        "preserved": "Every existing migration hash, table count and account-ID checksum remained unchanged. Zero app accounts; new receipt table empty. No resets, imports or volume removal.",
+        "backups": "Separate ordinary backups completed before verification; another root-private testnet dump taken while its API was stopped immediately before cutover.",
+        "receipts": "/root/daclify-rollout-checks/20261009T1618Z/"
+      },
+      "frontend": "https://testnet.app.daclify.com serves Netlify HTTPS with VITE_NETWORK=testnet and the exact approved API origin. /docs, /account and /status HTTP checks passed. Existing hosted deployment matched; no Netlify publishing operation performed.",
+      "telegramDocs": "New handler deployed but disabled by the current private VM configuration; approved chat IDs, webhook settings and registration remain separate prerequisites.",
+      "notPerformed": [
+        "Actual hosted browser/login/wallet/provider acceptance",
+        "Real Stripe checkout, charge or provider-delivered payment event",
+        "Email, Telegram message, provider upload or funded Pinata allowance registration",
+        "Mainnet API/contract/authority/asset actions or any new testnet contract transaction",
+        "Off-VM port probe or independent backup destination"
+      ]
     }
   }
 }
