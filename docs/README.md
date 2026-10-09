@@ -52,6 +52,7 @@ Local/mock checks do not certify real browser wallet clients, SMTP delivery, pro
 These record design decisions and acceptance criteria. They are not a substitute for current source, runbooks or dated verification evidence; a planned capability is not automatically implemented.
 
 - [Master plan](superpowers/plans/2026-10-05-daclify-v2-master-plan.md)
+- [Governance hardening plan](superpowers/plans/2026-10-08-governance-hardening.md): qualification, ballot integrity, DAO module selection, arbitration and election methods.
 - [Architecture](superpowers/specs/2026-10-05-daclify-v2-architecture.md)
 - [Work packages](superpowers/plans/2026-10-05-daclify-v2-work-packages.md)
 - [Foundation plan](superpowers/plans/2026-10-05-daclify-v2-foundation-plan.md)
