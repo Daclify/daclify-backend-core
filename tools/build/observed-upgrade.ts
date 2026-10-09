@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 
 const modules = resolve('../daclify-backend-modules');
 for (const [required, script] of [
-  ['.artifacts/document-upgrade-old/payroll.wasm', 'tools/build-document-upgrade.ts'],
+  ['.artifacts/document-upgrade-old/grants.wasm', 'tools/build-document-upgrade.ts'],
   ['.artifacts/archive-upgrade-old/decide.wasm', 'tools/build-upgrade.ts'],
 ] as const)
   if (!existsSync(resolve(modules, required)))
@@ -12,7 +12,7 @@ for (const [required, script] of [
 
 const destination = '.artifacts/observed-upgrade';
 mkdirSync(destination, { recursive: true });
-for (const contract of ['runtime', 'works', 'payroll', 'decide'])
+for (const contract of ['runtime', 'works', 'payroll', 'decide', 'grants'])
   for (const extension of ['abi', 'wasm'])
     copyFileSync(
       resolve(

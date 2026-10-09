@@ -28,7 +28,8 @@ const fixture = vi.hoisted(() => ({
 vi.mock('../tools/native/network.js', () => ({ fixtureNetwork: () => fixture.network }));
 vi.mock('../tools/native/wallet.js', () => ({ unlockFixtureWallet: fixture.unlock }));
 vi.mock('node:child_process', () => ({ execFileSync: fixture.exec }));
-vi.mock('@wharfkit/antelope', () => ({
+vi.mock('@wharfkit/antelope', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@wharfkit/antelope')>()),
   APIClient: class {
     v1 = {
       chain: {
@@ -105,3 +106,15 @@ it.each(['58737625 RAM', '649872420 RAM'])(
     );
   },
 );
+it('issues only the exact shortfall instead of exhausting the finite dummy-token supply', async () => {
+  fixture.balance.mockResolvedValueOnce([{ units: 836576178n, symbol: '4,TLOS' }]);
+  await fundResourceFixture();
+  expect(fixture.exec).toHaveBeenCalledWith(
+    'docker',
+    expect.arrayContaining([
+      'issue',
+      '["alice","16342.3822 TLOS","Owned resource fixture funding"]',
+    ]),
+    { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] },
+  );
+});

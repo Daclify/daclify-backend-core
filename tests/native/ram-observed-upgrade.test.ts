@@ -19,6 +19,7 @@ import {
   runtimeAbi,
 } from '../../sdk/index.js';
 import { ModulePermissions } from '@daclify/modules';
+import { DecideTableSchemas } from '@daclify/modules/sdk';
 const network = fixtureNetwork();
 if (network.container !== 'daclify-resources-native' || network.url !== 'http://127.0.0.1:20588')
   throw new Error('OWNED_RESOURCE_FIXTURE_REQUIRED');
@@ -27,7 +28,7 @@ const suffix = Array.from(randomBytes(6), (byte) =>
   '12345abcdefghijklmnopqrstuvwxyz'.charAt(byte % 31),
 ).join('');
 const runtime = 'ramobs' + suffix;
-const sources = ['works', 'payroll', 'decide'].map((artifact, index) => ({
+const sources = ['works', 'payroll', 'decide', 'grants'].map((artifact, index) => ({
   artifact,
   account: 'obs' + (index + 1) + 'aa' + suffix,
 }));
@@ -105,7 +106,7 @@ const hash = (directory: string, name: string) =>
   createHash('sha256')
     .update(readFileSync(directory + '/' + name + '.wasm'))
     .digest('hex');
-async function govern<K extends 'setmeta' | 'rotatekey' | 'withdraw'>(
+async function govern<K extends 'setmeta' | 'rotatekey' | 'withdraw' | 'setdaogov'>(
   action: K,
   data: RuntimeActions[K],
   memberId: string,
@@ -126,6 +127,38 @@ async function govern<K extends 'setmeta' | 'rotatekey' | 'withdraw'>(
     action,
     encodeAction(action, data),
   );
+  push(runtime, 'submit', {
+    request,
+    sig: signer.signDigest(instructionDigest(request)).toString(),
+  });
+}
+async function governModule(
+  source: (typeof sources)[number],
+  action: string,
+  fields: Record<string, unknown>,
+  memberId = '1',
+) {
+  const person = z
+    .array(RuntimeTableSchemas.members)
+    .parse(await rows(runtime, 'members', '1'))
+    .find((person) => person.id === memberId);
+  if (!person) throw new Error('OBSERVED_UPGRADE_MEMBER_REQUIRED');
+  const info = await api.v1.chain.get_info();
+  const data = Serializer.encode({
+    abi: ABI.from(readFileSync('.artifacts/observed-upgrade/' + source.artifact + '.abi', 'utf8')),
+    type: action,
+    object: { runtime, dao_id: '1', member_id: memberId, ...fields },
+  }).array;
+  const request = makeInstruction(
+    { chainId: network.chainId, contract: runtime, daoId: '1', interfaceVersion: 1 },
+    memberId,
+    person.nonce,
+    Math.floor(info.head_block_time.toMilliseconds() / 1000) + 120,
+    source.account,
+    action,
+    data,
+  );
+  const signer = fixtureKey(memberId === '1' ? 'alice' : 'bob');
   push(runtime, 'submit', {
     request,
     sig: signer.signDigest(instructionDigest(request)).toString(),
@@ -184,12 +217,15 @@ it('reconciles actual old observed core/module adoption without resetting existi
   }
   const works = sources[0],
     payroll = sources[1],
-    decide = sources[2];
-  if (!works || !payroll || !decide) throw new Error('OBSERVED_UPGRADE_SOURCES_REQUIRED');
+    decide = sources[2],
+    grants = sources[3];
+  if (!works || !payroll || !decide || !grants)
+    throw new Error('OBSERVED_UPGRADE_SOURCES_REQUIRED');
   configureFixtureContext(network.container, runtime, {
     works: works.account,
     payroll: payroll.account,
     decide: decide.account,
+    grants: grants.account,
   });
   baseline.set(runtime, await used(runtime));
   push(runtime, 'init', { chain_id: network.chainId });
@@ -225,7 +261,9 @@ it('reconciles actual old observed core/module adoption without resetting existi
         ? ModulePermissions.works
         : source.artifact === 'payroll'
           ? ModulePermissions.payroll
-          : ModulePermissions.decide;
+          : source.artifact === 'grants'
+            ? ModulePermissions['grants-rounds']
+            : ModulePermissions.decide;
     const code = hash('.artifacts/observed-upgrade', source.artifact);
     push(runtime, 'listmod', [
       source.account,
@@ -259,7 +297,101 @@ it('reconciles actual old observed core/module adoption without resetting existi
   const starts =
     30 + Math.floor((await api.v1.chain.get_info()).head_block_time.toMilliseconds() / 1000);
   push(payroll.account, 'commit', [runtime, 1, 1, 1, 2, '1.0000 TLOS', 1, 86400, starts], runtime);
-  push(decide.account, 'open', [runtime, 1, 1, 1, 0, 2, 300, 5000, 5001, '{}'], runtime);
+  await govern(
+    'setdaogov',
+    {
+      runtime,
+      dao_id: '1',
+      member_id: '1',
+      settings: {
+        participant_mode: 0,
+        decide: decide.account,
+        guardian: 'alice',
+        kind: 0,
+        duration: 60,
+        quorum: 5000,
+        approval: 5001,
+        governed_works: false,
+        max_commitment: '100000',
+        daily_commitment: '300000',
+      },
+    },
+    '1',
+    fixtureKey('alice'),
+  );
+  await governModule(decide, 'open', {
+    ballot_id: '1',
+    kind: 0,
+    choices: 2,
+    duration: 60,
+    quorum: 5000,
+    approval: 5001,
+    metadata: '{}',
+  });
+  const grantStart = Math.floor(
+    (await api.v1.chain.get_info()).head_block_time.toMilliseconds() / 1000,
+  );
+  await governModule(grants, 'newround', {
+    round_id: '1',
+    document_id: '1',
+    document_version: 1,
+    applications_close: grantStart + 3600,
+    review_close: grantStart + 7200,
+    awards_close: grantStart + 10800,
+    maximum: '5.0000 TLOS',
+    allow_agents: false,
+    works: works.account,
+  });
+  await governModule(
+    grants,
+    'applygrant',
+    {
+      round_id: '1',
+      application_id: '1',
+      document_id: '1',
+      document_version: 1,
+      payments: ['1.0000 TLOS'],
+      dues: [grantStart + 7200],
+      term_start: grantStart,
+      term_end: grantStart + 10800,
+    },
+    '2',
+  );
+  await governModule(grants, 'submitapp', { application_id: '1' }, '2');
+  await governModule(grants, 'reviewapp', {
+    application_id: '1',
+    eligible: true,
+    document_id: '1',
+    document_version: 1,
+  });
+  await governModule(decide, 'openaward', {
+    ballot_id: '2',
+    grants: grants.account,
+    round_id: '1',
+    application_id: '1',
+    project_id: '10',
+    duration: 60,
+    quorum: 5000,
+    approval: 5001,
+    metadata: '{}',
+  });
+  const grantCloses = z
+    .array(DecideTableSchemas.ballots)
+    .parse(await rows(decide.account, 'ballots', runtime))
+    .find((poll) => poll.id === '2')?.closes;
+  if (!grantCloses) throw new Error('OBSERVED_UPGRADE_GRANT_BALLOT_REQUIRED');
+  while (
+    Math.floor((await api.v1.chain.get_info()).head_block_time.toMilliseconds() / 1000) <
+    grantCloses
+  )
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  push(decide.account, 'finalize', [runtime, 1, 2]);
+  expect(
+    z
+      .array(DecideTableSchemas.ballots)
+      .parse(await rows(decide.account, 'ballots', runtime))
+      .find((poll) => poll.id === '2')?.status,
+  ).toBe(2);
   const preserved = async () =>
     Promise.all([
       rows(runtime, 'members', '1'),
@@ -267,6 +399,9 @@ it('reconciles actual old observed core/module adoption without resetting existi
       rows(works.account, 'milestones', runtime),
       rows(payroll.account, 'schedules', runtime),
       rows(decide.account, 'ballots', runtime),
+      rows(decide.account, 'grantplans', runtime),
+      rows(grants.account, 'rounds', runtime),
+      rows(grants.account, 'applications', runtime),
     ]);
   const original = await preserved();
   const beforeUpgrade = await Promise.all(
@@ -307,7 +442,9 @@ it('reconciles actual old observed core/module adoption without resetting existi
         ? ModulePermissions.works
         : source.artifact === 'payroll'
           ? ModulePermissions.payroll
-          : ModulePermissions.decide;
+          : source.artifact === 'grants'
+            ? ModulePermissions['grants-rounds']
+            : ModulePermissions.decide;
     const code = hash('.artifacts/controller-modules', source.artifact);
     push(runtime, 'setramcode', [source.account, code]);
     push(source.account, 'bindrampool', [runtime]);
@@ -327,6 +464,10 @@ it('reconciles actual old observed core/module adoption without resetting existi
       'alice',
     );
   }
+  push(decide.account, 'checkmig', [runtime, 1], runtime);
+  const failedPlan = await rows(decide.account, 'grantplans', runtime);
+  expect(() => push(decide.account, 'executeaward', [runtime, 1, 2])).toThrow('BALLOT_NOT_PASSED');
+  expect(await rows(decide.account, 'grantplans', runtime)).toEqual(failedPlan);
   for (const claims of [false, true])
     for (let page = 0; page < 3; page++) push(runtime, 'adoptram', [1, claims, 1]);
   for (const [source, table] of [
@@ -421,6 +562,11 @@ it('reconciles actual old observed core/module adoption without resetting existi
     '1',
     fixtureKey('alice'),
   );
+  const recipientBeforeExit = z
+    .array(RuntimeTableSchemas.members)
+    .parse(await rows(runtime, 'members', '1'))
+    .find((member) => member.id === '2');
+  if (!recipientBeforeExit) throw new Error('OBSERVED_UPGRADE_MEMBER_REQUIRED');
   const nextKey = PrivateKey.generate('K1');
   await govern(
     'rotatekey',
@@ -447,7 +593,11 @@ it('reconciles actual old observed core/module adoption without resetting existi
       .array(RuntimeTableSchemas.members)
       .parse(await rows(runtime, 'members', '1'))
       .find((member) => member.id === '2'),
-  ).toMatchObject({ claim: '0', nonce: '2', encryption_key: 'original recovery identity' });
+  ).toMatchObject({
+    claim: '0',
+    nonce: String(BigInt(recipientBeforeExit.nonce) + 2n),
+    encryption_key: 'original recovery identity',
+  });
   expect(await rows(runtime, 'ramclmholds', '1')).toEqual([]);
   expect(
     z
@@ -461,7 +611,7 @@ it('reconciles actual old observed core/module adoption without resetting existi
       {
         historical: {
           coreCommit: '6145da8',
-          worksPayrollCommit: '4a43786',
+          worksPayrollGrantsCommit: '4a43786',
           decideCommit: '2d44085',
           decideCoreHeadersCommit: 'c6e713e',
           codeHashes: Object.fromEntries(
@@ -472,6 +622,12 @@ it('reconciles actual old observed core/module adoption without resetting existi
           ),
         },
         currentCoreCodeHash: hash('.artifacts/contracts', 'runtime'),
+        currentModuleCodeHashes: Object.fromEntries(
+          sources.map((source) => [
+            source.artifact,
+            hash('.artifacts/controller-modules', source.artifact),
+          ]),
+        ),
         beforeUpgrade,
         afterUpgrade,
         preservedRows: true,
@@ -482,8 +638,10 @@ it('reconciles actual old observed core/module adoption without resetting existi
         partialExitRejected: true,
         fullClaimExited: true,
         remainingPendingObligations: 2,
+        failedHistoricalAwardPreserved: true,
+        failedAwardExecutionRejected: true,
         limits: [
-          'Owned native fixture and three historical module producers; not the complete old-release lifecycle matrix.',
+          'Owned native fixture and four historical module producers; not the complete old-release lifecycle matrix.',
           'Exact native/counter reconciliation is before token exit; external token-row ownership remains separately unqualified.',
         ],
       },
@@ -491,4 +649,4 @@ it('reconciles actual old observed core/module adoption without resetting existi
       2,
     ) + '\n',
   );
-}, 120000);
+}, 180000);

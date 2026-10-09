@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { APIClient } from '@wharfkit/antelope';
+import { APIClient, Asset } from '@wharfkit/antelope';
 import { z } from 'zod';
 import { fixtureNetwork } from './network.js';
 import { unlockFixtureWallet } from './wallet.js';
@@ -50,12 +50,17 @@ export async function fundResourceFixture() {
     fixtureAction(network.container, 'eosio', 'setram', [expanded], 'eosio');
   }
   if (BigInt(balance.units.toString()) >= 1000000000n) return;
+  const shortfall = 1000000000n - BigInt(balance.units.toString());
   unlockFixtureWallet(network.container);
   fixtureAction(
     network.container,
     'eosio.token',
     'issue',
-    ['alice', '100000.0000 TLOS', 'Owned resource fixture funding'],
+    [
+      'alice',
+      Asset.fromUnits(shortfall.toString(), balance.symbol).toString(),
+      'Owned resource fixture funding',
+    ],
     'alice',
   );
 }

@@ -3,6 +3,7 @@
 ## Unreleased — RAM, prepaid storage and Archive
 
 - Guard activation now verifies existing credentials, claims and pending holds plus pinned module completion checks. Bounded completion-only adoption preserves already-metered legacy counters.
+- Extended the owned native observed-upgrade drill to Grants and signed governance, preserved failed award plans, and consumed the compatible Decide migration fix and retained poll Archive decoder.
 
 Native RAM purchases verify actual acquisition; card orders use a separate funded operator reserve. Physically backed per-DAO/payer allocations, native counters, finite financial/election holds, bounded legacy adoption and explicit growth enforcement preserve existing record layouts and signing domains. Works acceptance reserves fixed review/submission reference slots. Full-claim withdrawals are the emergency exit; partial withdrawals need ordinary capacity.
 
