@@ -5,8 +5,10 @@ export async function readBoundedResponse(
 ): Promise<Uint8Array> {
   if (!response.body) throw new ApiError('CONTENT_UNAVAILABLE', 503);
   const length = response.headers.get('content-length');
-  if (length !== null && (!/^[0-9]+$/.test(length) || BigInt(length) > BigInt(maximum)))
+  if (length !== null && (!/^[0-9]+$/.test(length) || BigInt(length) > BigInt(maximum))) {
+    await response.body.cancel().catch(() => undefined);
     throw new ApiError('CONTENT_SIZE', 502);
+  }
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
   let size = 0;

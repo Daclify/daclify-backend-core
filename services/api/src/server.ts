@@ -164,7 +164,7 @@ export async function createServer(
       'x-account-proof',
     ],
   });
-  app.setErrorHandler((error, _request, reply) => {
+  app.setErrorHandler((error, request, reply) => {
     if (error instanceof ApiError)
       return reply.code(error.statusCode).send({ code: error.code, message: error.code });
     if (error instanceof ZodError)
@@ -181,6 +181,7 @@ export async function createServer(
       return reply
         .code(error instanceof errorCodes.FST_ERR_CTP_INVALID_MEDIA_TYPE ? 415 : 400)
         .send({ code: 'INPUT_INVALID', message: 'Check the supplied fields.' });
+    console.error({ code: 'API_REQUEST_FAILED', route: request.routeOptions.url ?? '(unmatched)' });
     return reply.code(500).send({
       code: 'SERVICE_UNAVAILABLE',
       message: 'The service could not complete the request.',

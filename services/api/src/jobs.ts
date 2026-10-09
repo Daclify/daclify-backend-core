@@ -8,8 +8,8 @@ export function startPollingWorker(
   async function tick() {
     if (stopped) return;
     let outcome = 'idle';
-    running = work();
     try {
+      running = work();
       outcome = await running;
     } catch {
       console.error(errorCode);

@@ -1,5 +1,5 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
-import { APIClient } from '@wharfkit/antelope';
+import { createRpcClient } from '../rpc.js';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Pool } from 'pg';
 import type { Account, Network, WalletIdentity, UserMembership } from '../../../../protocol/api.js';
@@ -155,7 +155,7 @@ export function registerNativeRoutes(
       row.runtime,
       row.message,
       row.expires_at,
-      new APIClient({ url: info.rpcUrl }),
+      createRpcClient(info.rpcUrl),
     );
     return { current, identity };
   }

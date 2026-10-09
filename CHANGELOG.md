@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — three-repository audit
+
+Recover polling after synchronous worker failures, cancel rejected provider bodies, and give service-owned native RPC calls a 10-second deadline without following redirects. Unexpected API failures now emit only a fixed failure code and registered route; provider messages, headers and query strings remain excluded. Consume module SDK 0.9.0-alpha.7 with streamed payment-response bounds; module contracts remain 0.9.0-alpha.5. Manual backend verification follows the selected sibling branch rather than silently cloning default branches. No permissions, database semantics or prices change.
+
 ## 0.9.0-alpha.6 development — Daxi support and Status metadata
 
 Name the shared app/Telegram assistant Daxi and support reviewed Telos Zero/EVM and general DAO guides with light, helpful humour. Use simpler evidence-based guide selection, retain output grounding, exact guide/source URL checks and existing privacy/rate/deadline limits. Add optional reviewed sources and public model/scope/knowledge metadata; generate the matching help and API references. Status configuration does not establish live qualification.

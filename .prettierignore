@@ -4,3 +4,5 @@ dist/
 **/generated/
 **/vendor/
 **/package-lock.json
+# Machine-written evidence retains its original serialized bytes.
+docs/evidence/**/*.json

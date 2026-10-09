@@ -56,6 +56,8 @@ npm test
 npm run verify
 ```
 
+See the [three-repository audit](docs/evidence/2026-10-10-three-repository-audit.md) for the current verified boundaries and pending decisions. Service-owned native SDK requests abort after 10 seconds and do not follow redirects. Unexpected API errors log only a fixed code and registered route; no provider error text or request data is logged. A timed-out broadcast still needs reconciliation before retrying.
+
 `npm test` does not run `tests/integration`, `tests/providers`, or `tests/native`. Those are `npm run test:integration`, `npm run test:providers`, and `npm run test:native`. Integration tests require an isolated database whose name ends in `_test`. Native qualification uses both `test:native:research` and `test:native:paid` with their matching owned fixture bundles; their bootstrap/payment setup is deliberately different. See the 0.5 upgrade runbook. Browser journeys are run from the frontend repository. Builds and tests run locally. GitHub verification workflows are manual-only, so pushing source does not start CI. See [local checks and Netlify deployments](docs/development.md#local-checks-and-netlify-deployments).
 
 ## Deploy profiles

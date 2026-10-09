@@ -23,11 +23,12 @@ jobs:
           fi
       - name: Checkout private sibling repositories
         env:
+          DACLIFY_CHECKOUT_REF: ${{ github.ref_name }}
           DACLIFY_CHECKOUT_TOKEN: ${{ secrets.DACLIFY_CHECKOUT_TOKEN }}
         run: |
           header="AUTHORIZATION: bearer ${DACLIFY_CHECKOUT_TOKEN}"
-          git -c "http.extraheader=${header}" clone --depth 1 https://github.com/Daclify/daclify-backend-modules.git daclify-backend-modules
-          git -c "http.extraheader=${header}" clone --depth 1 https://github.com/Daclify/daclify-frontend.git daclify-frontend
+          git -c "http.extraheader=${header}" clone --depth 1 --branch "${DACLIFY_CHECKOUT_REF}" https://github.com/Daclify/daclify-backend-modules.git daclify-backend-modules
+          git -c "http.extraheader=${header}" clone --depth 1 --branch "${DACLIFY_CHECKOUT_REF}" https://github.com/Daclify/daclify-frontend.git daclify-frontend
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24.21.0

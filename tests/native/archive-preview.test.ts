@@ -79,7 +79,9 @@ it('reads actual native RAM and poll coverage without resource charges or prunin
   for (const payer of resources.payers) {
     const actual = await api.v1.chain.get_account(payer.payer);
     expect(payer.globalUsedBytes).toBe(actual.ram_usage.toString());
-    expect(payer.globalQuotaBytes).toBe(BigInt(actual.ram_quota.toString())<0n?null:actual.ram_quota.toString());
+    expect(payer.globalQuotaBytes).toBe(
+      BigInt(actual.ram_quota.toString()) < 0n ? null : actual.ram_quota.toString(),
+    );
   }
   const after = await api.v1.chain.get_account(runtime);
   expect(after.ram_usage.toString()).toBe(before.ram_usage.toString());

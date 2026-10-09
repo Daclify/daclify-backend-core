@@ -5,6 +5,7 @@ import {
   type DaoContent,
 } from '../../../protocol/content.js';
 import { waitForIrreversibleBlock } from './chain-confirmation.js';
+import { createRpcClient } from './rpc.js';
 import {
   TreasurySchema,
   SettlementRequestSchema,
@@ -182,7 +183,7 @@ export class NativeChainGateway implements ChainGateway {
       !(url.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(url.hostname))
     )
       throw new Error('Chain RPC requires TLS outside local tests');
-    this.api = new APIClient({ url: config.rpcUrl });
+    this.api = createRpcClient(config.rpcUrl);
   }
   private async reviewedRuntime(runtime: string) {
     const response = await fetch(this.config.rpcUrl + '/v1/chain/get_info', {

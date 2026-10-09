@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { APIClient, Signature, PublicKey } from '@wharfkit/antelope';
+import { Signature, PublicKey } from '@wharfkit/antelope';
+import { createRpcClient } from '../rpc.js';
 import type { Pool, PoolClient } from 'pg';
 import {
   AccountControlMessageSchema,
@@ -122,7 +123,7 @@ export async function consumeAccountControl(
           info.runtime,
           row.message,
           row.expires_at,
-          new APIClient({ url: info.rpcUrl }),
+          createRpcClient(info.rpcUrl),
         );
         valid = true;
       } else {

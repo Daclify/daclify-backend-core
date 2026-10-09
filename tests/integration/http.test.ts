@@ -111,6 +111,27 @@ async function login(server = app, browserOrigin = origin) {
   };
 }
 describe('HTTP session boundary', () => {
+  it('records unexpected failures without logging provider details, headers or query strings', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const read = vi
+      .spyOn(chain, 'listDaos')
+      .mockRejectedValueOnce(new Error('private-provider-secret'));
+    try {
+      const response = await app.inject({
+        url: '/v1/daos?after=123',
+        headers: { authorization: 'Bearer private-header' },
+      });
+      expect(response.statusCode).toBe(500);
+      expect(response.body).not.toContain('private');
+      expect(log).toHaveBeenCalledExactlyOnceWith({
+        code: 'API_REQUEST_FAILED',
+        route: '/v1/daos',
+      });
+    } finally {
+      read.mockRestore();
+      log.mockRestore();
+    }
+  });
   it('keeps authenticated developer-origin requests and account-control challenges bound to that origin', async () => {
     const development = 'https://dev.app.example:5198';
     const hosted = await createServer(pool, chain, 'https://testnet.app.example', {
