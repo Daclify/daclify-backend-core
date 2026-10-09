@@ -10,7 +10,9 @@ const frontend = join(dirname(core), 'daclify-frontend');
 if (!/^24\./.test(process.versions.node) || Number(process.versions.node.split('.')[1]) < 21)
   throw new Error('Node 24.21 or newer in the Node 24 line is required');
 const flags = process.argv.slice(2);
-if (flags.some((flag) => flag !== '--contracts')) throw new Error('Supported option: --contracts');
+if (flags.some((flag) => !['--contracts', '--backend-only'].includes(flag)))
+  throw new Error('Supported options: --contracts, --backend-only');
+const backendOnly = flags.includes('--backend-only');
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -35,7 +37,8 @@ const npmVersion = execFileSync('npm', ['--version'], {
 }).trim();
 if (!/^11\./.test(npmVersion) || Number(npmVersion.split('.')[1]) < 19)
   throw new Error('npm 11.19 or newer in the npm 11 line is required');
-for (const repo of [core, modules, frontend]) await access(join(repo, 'package.json'));
+for (const repo of backendOnly ? [core, modules] : [core, modules, frontend])
+  await access(join(repo, 'package.json'));
 const publicManifest = await json(join(core, 'sdk/public-package.json'));
 const builderManifest = await json(join(core, 'tools/bootstrap/builder/package.json'));
 const rootManifest = await json(join(core, 'package.json'));
@@ -148,7 +151,7 @@ npm(
   core,
 );
 npm(['ci', '--ignore-scripts', '--no-audit', '--no-fund'], core);
-await installFrontendPackages();
+if (!backendOnly) await installFrontendPackages();
 if (flags.includes('--contracts')) {
   // Requires the documented checksum-verified local toolchain image. No chain deployment.
   npm(['run', 'build:contracts'], core);
@@ -179,7 +182,7 @@ if (flags.includes('--contracts')) {
         join(modules, `.artifacts/core-release/${name}.${extension}`),
       );
   npm(['install', '--save-prod', '--ignore-scripts', moduleTar], core);
-  await installFrontendPackages();
+  if (!backendOnly) await installFrontendPackages();
 }
 console.log(
   'Development checkouts bootstrapped from locked dependencies. No package was published and no chain was deployed.',

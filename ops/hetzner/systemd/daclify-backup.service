@@ -1,0 +1,9 @@
+[Unit]
+Description=Separate Daclify mainnet and testnet database backups
+Requires=daclify-postgres.service
+After=daclify-postgres.service
+
+[Service]
+Type=oneshot
+ExecStart=/data/daclify-backend-core/ops/hetzner/backup.sh
+UMask=0077

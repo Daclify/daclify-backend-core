@@ -382,12 +382,33 @@ it('upgrades actual old rows, preserves claims and liabilities, and invalidates 
     encodeAction('payob', { dao_id: daoId, source: works, source_id: approved.source_id }),
     'relay',
   );
-  const withdrawal = await act(
-    runtime,
-    'withdraw',
-    encodeAction('withdraw', { ...actor('2'), destination: 'bob', quantity: '2.0000 TLOS' }),
-    '2',
+  const withdrawalData = encodeAction('withdraw', {
+    ...actor('2'),
+    destination: 'bob',
+    quantity: '2.0000 TLOS',
+  });
+  const receiverRows = await researchRpc.v1.chain.get_table_rows({
+    code: 'eosio.token',
+    scope: 'bob',
+    table: 'accounts',
+    json: true,
+  });
+  if (!receiverRows.rows.length)
+    await expect(act(runtime, 'withdraw', withdrawalData, '2')).rejects.toThrow(
+      'PAYOUT_TOKEN_ROW_REQUIRED',
+    );
+  await nativePush(
+    'eosio.token',
+    'open',
+    Serializer.encode({
+      abi: tokenAbi,
+      type: 'open',
+      object: { owner: 'bob', symbol: '4,TLOS', ram_payer: 'bob' },
+    }).array,
+    'bob',
+    fixtureKey('bob'),
   );
+  const withdrawal = await act(runtime, 'withdraw', withdrawalData, '2');
   const receipts = (await gateway.treasury(daoId)).receipts;
   expect(receipts.map((r) => r.transaction_id)).toEqual([
     settlement.transaction_id.toString(),

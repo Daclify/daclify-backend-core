@@ -112,7 +112,12 @@ export async function createServer(
   const secure = new URL(origin).protocol === 'https:';
   const sameSite = secure ? 'none' : 'strict';
   const cookieName = secure ? '__Host-daclify_session' : 'daclify_session';
-  const app = Fastify({ logger: false, bodyLimit: 65536, requestTimeout: 15000 });
+  const app = Fastify({
+    logger: false,
+    bodyLimit: 65536,
+    requestTimeout: 15000,
+    trustProxy: ['127.0.0.1', '::1'],
+  });
   app.addContentTypeParser('application/json', { parseAs: 'buffer' }, (request, body, done) => {
     const raw = Buffer.isBuffer(body) ? body : Buffer.from(body);
     rawJsonBodies.set(request, raw);

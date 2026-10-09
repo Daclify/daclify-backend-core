@@ -1,0 +1,36 @@
+[Unit]
+Description=Daclify mainnet API on loopback port 3018
+Requires=daclify-postgres.service
+After=daclify-postgres.service network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=daclify-mainnet
+Group=daclify-mainnet
+WorkingDirectory=/data/daclify-api/mainnet/current/daclify-backend-core
+LoadCredential=api.env:/data/daclify-env/mainnet.env
+Environment=DACLIFY_ENV_FILE=%d/api.env
+Environment=NODE_ENV=production
+ExecStartPre=/usr/local/bin/node /data/daclify-api/mainnet/current/daclify-backend-core/dist/tools/host/preflight.js mainnet
+ExecStart=/usr/local/bin/node /data/daclify-api/mainnet/current/daclify-backend-core/dist/services/api/src/main.js
+Restart=on-failure
+RestartSec=15
+TimeoutStopSec=45
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+InaccessiblePaths=/data/daclify-api/testnet
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,18 @@
+[Unit]
+Description=Daclify PostgreSQL 17 in Docker Compose
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/data/daclify-backend-core/ops/hetzner
+ExecStart=/usr/bin/docker compose up -d --wait --wait-timeout 120 postgres
+# Ordinary service stops do not remove the container or its named data volume.
+ExecStop=/usr/bin/docker compose stop postgres
+TimeoutStartSec=180
+TimeoutStopSec=90
+
+[Install]
+WantedBy=multi-user.target

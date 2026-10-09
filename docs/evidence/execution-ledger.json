@@ -174,5 +174,266 @@
       "status": "held",
       "reason": "Earlier 8 cleos cases passed on wasm 79878fbe88cf4b2019cac7bed5db3b761caf7d09cd1f1489090402f39632276a. They were not rerun after setcode to 93e63ba9e7e7fb0b19e246208d8f13e263a0e03ff01a032cc855fecc38054042 or after setcode to 3d716f22468286d26b89d5379e0d571cd348a3c9dd8888ca785056c3f1de95a6. native/runtime.test.ts was not rerun. The HTTP/API native file was not run because DATABASE_URL was unset."
     }
-  ]
+  ],
+  "hetznerDeployment": {
+    "date": "2026-10-07",
+    "vmIpv4": "167.233.206.242",
+    "authorization": "User requested API infrastructure deployment with concurrent mainnet and testnet once real prerequisites are verified; no contract/authority/asset actions.",
+    "postgresImage": "postgres:17.11-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826",
+    "liveInfrastructure": [
+      "Docker PostgreSQL 17 with named volume and loopback port",
+      "Separate nonprivileged database owners and HBA/grant isolation",
+      "HAProxy exact Host/SNI routing on 80/443",
+      "Lets Encrypt certificate for both API domains",
+      "Certbot timer and validated graceful reload hook",
+      "Private env files with generated distinct DB credentials",
+      "Daily separate local backup timer"
+    ],
+    "apiServices": "Installed, stopped and disabled pending prerequisites; both public APIs intentionally return 503.",
+    "passed": [
+      "Node 24.21.0 checksum verification",
+      "Backend-only source bootstrap and TypeScript build",
+      "Typecheck and lint",
+      "Host config and proxy tests: 6 tests across 3 files",
+      "Real PostgreSQL isolation and synthetic account-ID restore checks",
+      "Actual HAProxy config with isolated fixture backends: routing, forwarding, unknown hosts and independent failures",
+      "Certbot renewal dry run with deploy hook",
+      "Shellcheck and systemd unit validation"
+    ],
+    "pending": [
+      "Review/commit deployment tooling into selected deployment branches",
+      "Per-environment relay/provider credentials",
+      "Release manifest and deployed runtime/module hashes matching the selected API SDK",
+      "Qualified mainnet release and actual mainnet accounts",
+      "Hosted frontend DNS and network selector/CORS acceptance",
+      "Actual simultaneous API operation and restart acceptance",
+      "Off-VM closed-port probing and backup destination"
+    ],
+    "chainSnapshot": {
+      "mainnet": {
+        "core.we": "HTTPError",
+        "hub.we": "HTTPError",
+        "relay.we": "HTTPError"
+      },
+      "testnet": {
+        "daclifycore1": "35b7018872391f8eb883b7b75e1ecad91325bceaae77e9207fc5403c4b2838b0",
+        "daclifyhubv1": "5f05cac05cd0bc3ea057402df7aef3e0c3fb3f9373094d1ad47605b377ab6bee",
+        "daclifyrelay": "0000000000000000000000000000000000000000000000000000000000000000",
+        "daclifydecid": "94f0fe24dad8ef28e16f7d2fbae4485d46e7154df7594b2a298904beac28dd62",
+        "daclifyworks": "ae355df0647e244a059def9ddee0a2a54f4b5833d5e10e5dc337864d9a7e0a33",
+        "daclifypayr1": "efdceb30d194fbf7ed06f921e94cafe0de9fb7f9d6c11792507f2c2388108ffc",
+        "daclifygrant": "e31202b04f590f98adbc001a7949889c39c576fec9aa81b83f64403cf6fd9f2c",
+        "daclifyendor": "6b03c73787541cdb28446f981bdd31e42234f10f3f5b3bccc33c7ba750b86cbc"
+      }
+    },
+    "runbook": "ops/hetzner/README.md",
+    "branchIsolation": {
+      "date": "2026-10-09",
+      "coreBranches": {
+        "mainnet": "main",
+        "testnet": "dev"
+      },
+      "releaseRoots": {
+        "mainnet": "/data/daclify-api/mainnet",
+        "testnet": "/data/daclify-api/testnet"
+      },
+      "modules": "Explicit matching reviewed commit per candidate; no guessed branch",
+      "prepared": "Independent systemd working directories/entry points, pinned detached Git worktree staging, selected-release startup checks, per-environment manifest paths, cross-environment filesystem denial, and runbook",
+      "passed": [
+        "All six Ponytail skills match v5.1.0 upstream; previous version backed up",
+        "Real Git worktree isolation self-check passed",
+        "Typecheck, TypeScript build and lint passed",
+        "7 targeted tests passed across 3 files",
+        "Updated systemd units validated and installed; APIs stayed inactive"
+      ],
+      "notRun": [
+        "Actual API concurrency: relay credentials, testnet contract/source compatibility and mainnet qualification remain pending",
+        "Real candidate builds from remote branches: deployment tooling changes are still local and require review/commit into the selected branches",
+        "No release pointers selected; no contracts/authorities/assets changed"
+      ]
+    },
+    "latestSetup": {
+      "date": "2026-10-09",
+      "coreMainCommit": "dc229ab723fc969ea64b2b520f11006fc111602e",
+      "modulesMainCommit": "9f440e22f17967b71f02befbf7b229c223107b20",
+      "version": "0.7.0-alpha.1",
+      "pull": "Both main branches fast-forwarded; deployment changes preserved. Retained pre-pull stashes and root-private backups.",
+      "dev": "Created and pushed dev from core main dc229ab723fc969ea64b2b520f11006fc111602e; remote branch verified; local dev tracks origin/dev.",
+      "databaseDecision": "User explicitly confirmed there is no Mac dump and none is planned. Fresh VM databases; no import receipt required.",
+      "databases": {
+        "each": {
+          "migrations": 36,
+          "publicTables": 55,
+          "applicationAccounts": 0,
+          "dedicatedRoleOwnership": true
+        },
+        "migrationRepeat": "Canonical coordinator repeated with identical recorded migration hashes"
+      },
+      "privateConfig": "API_PUBLIC_ORIGIN set per environment; latest optional provider setting names added without replacing existing values. Files remain root-private 0600.",
+      "chainCompatibility": {
+        "testnetRuntimeLive": "35b7018872391f8eb883b7b75e1ecad91325bceaae77e9207fc5403c4b2838b0",
+        "runtimeSdkExpected": "f40c696e86ab532ca57ea073265a982f694f9f21f8de53300b51365e83711878",
+        "testnetModules": "All five live module hashes differ from latest generated module SDK pins",
+        "result": "Latest API must not start against this deployment. No contract upgrade authorized or performed."
+      },
+      "passed": [
+        "Backend-only bootstrap on latest source",
+        "Typecheck, TypeScript build and lint",
+        "9 targeted tests across 3 files",
+        "2 Python release isolation/credential separation checks",
+        "Real PostgreSQL role/grant/HBA isolation and synthetic account-ID restores",
+        "Separate backups of both 0.7.0 databases restored to disposable databases, preserving empty account sets",
+        "Actual HAProxy config: exact Host/SNI, Origin, sanitized forwarding and independent fixture backend failures",
+        "Both public API certificates trusted; both API URLs return expected 503 while units remain inactive",
+        "Both actual RPC get_info chain IDs agree with their environment files",
+        "Recorded old testnet manifest rejected for obsolete schema; recorded 0.7.0 development manifest rejected for stale SDK pins",
+        "Hosted env template checks and targeted formatting checks passed",
+        "Python syntax, git diff whitespace and systemd unit validation passed (unrelated distribution CPUAccounting warnings)"
+      ],
+      "apiState": "Both units remain stopped/disabled. Infrastructure is active. Production acceptance cannot be completed without missing prerequisites.",
+      "readonlyProbe": "Initial probe assumed the old testnet manifest contained runtimeRawAbiSha256 and stopped on its schema rejection; corrected probe verified both obsolete-schema and stale-pin rejection. No settings or chain state changed.",
+      "frontendDns": "app.daclify.com and testnet.app.daclify.com still unresolved on 2026-10-09"
+    },
+    "apiEnvDirectory": "/data/daclify-env",
+    "envRelocation": {
+      "date": "2026-10-09",
+      "authorization": "User requested private API credentials under /data rather than /etc/daclify",
+      "files": ["/data/daclify-env/mainnet.env", "/data/daclify-env/testnet.env"],
+      "permissions": "root-owned directory 0700; files 0600",
+      "migration": "Moved with byte-for-byte contents preserved; old /etc/daclify API env files removed",
+      "configuration": "Installed systemd LoadCredential paths, preflight fallback, start wrapper and runbook updated; daemon reloaded; APIs remain inactive",
+      "credentialCheck": "Real systemd LoadCredential delivery uses service-user ACLs with mode 0440. The former 0077 mask incorrectly rejected it; fixed only for the exact read-only api.env inside the resolved /run/credentials directory. Ordinary source env files remain private.",
+      "validation": [
+        "Moved files preserve exact bytes; source directory 0700 and files 0600 root-owned; old API env paths absent",
+        "Typecheck, build and lint passed",
+        "10 targeted tests across 3 files passed",
+        "2 Python release checks and systemd unit validation passed",
+        "Both real systemd transient services accepted their own loaded credential through the compiled preflight and were denied direct source access",
+        "Both root start wrappers read relocated files and retained the selected-release gate; actual APIs remained inactive",
+        "Credential directory is outside Git; remaining source/unit references use the new API env paths"
+      ],
+      "checkHistory": [
+        "Initial real credential check identified and rejected the systemd ACL mask",
+        "One follow-up ran before the build completed and hit a stale compiled module; repeated after successful build completion"
+      ]
+    },
+    "githubPushAttempt": {
+      "date": "2026-10-09",
+      "branch": "dev",
+      "commit": "dc229ab723fc969ea64b2b520f11006fc111602e",
+      "result": "Browser authentication completed; git push --set-upstream origin dev succeeded. Remote refs/heads/dev verified against the exact local commit.",
+      "tracking": "origin/dev",
+      "scope": "Created dev from the updated main commit. Local uncommitted deployment changes were preserved and remain outside this push."
+    },
+    "testnetConfigurationCheck": {
+      "date": "2026-10-09",
+      "authorization": "User finished private testnet env settings and requested verification; frontend setup is explicitly pending",
+      "credentials": "Read privately; no secret values printed or committed. Env remains root-owned 0600 in directory 0700; mainnet/testnet credential separation passed.",
+      "passed": [
+        "All required core env values present and relay key parses",
+        "Relay key matches live active authority",
+        "Actual testnet RPC chain ID matches configured network",
+        "GET_CODE_HASH feature active and runtime/Hub/relay/all five module resources meet floors",
+        "Dedicated non-administrative DB role, own database, denied cross-database access; 36 migrations and zero app accounts",
+        "Pinata authentication and public-file listing HTTP 200",
+        "Stripe test key reads active one-time Price, compatible with the legacy payment checkout",
+        "SMTP DNS/TCP/TLS/authentication verification; no email sent",
+        "OpenRouter authentication HTTP 200",
+        "Optional unconfigured Connect/hosting/storage/RAM/archive/Telegram features remain disabled"
+      ],
+      "blockers": [
+        "PINATA_ACCOUNT_ID and CONTENT_GATEWAY_KEY are missing; requested private completion",
+        "Recorded 0.5 development manifest lacks required raw ABI pin; it is stale for the 0.7 API",
+        "Runtime and all five module hashes, plus runtime binary ABI hash, differ from current SDK pins",
+        "No enabled test-mode Stripe webhook destination exactly matching https://testnet.api.daclify.com/v1/billing/stripe/webhook",
+        "Deployment tools remain local and no testnet release is selected"
+      ],
+      "contentReadiness": "No gateway allowance selected or registered; content reads require a verified funded allowance. A nonzero free upload allowance is configured, but this alone does not qualify gateway access.",
+      "notVerified": [
+        "Frontend/browser/CORS/network selector: user has not configured frontend",
+        "SMTP sender acceptance and deliverability",
+        "Actual signed Stripe webhook delivery/fulfilment",
+        "Pinata upload/retrieval, gateway restrictions and independent account ownership",
+        "Docs assistant model invocation",
+        "Real API startup/public v1 network response"
+      ],
+      "apiState": "Stopped/disabled; public testnet v1/network returns 503. No contracts, authorities or assets changed.",
+      "fix": "Preflight now requires the gateway key when Pinata is configured and reuses the canonical PinataStorage constructor for gateway URL/key validation; configuration regression checks added.",
+      "regressionChecks": [
+        "Typecheck, TypeScript build and lint passed",
+        "6 host-preflight tests passed, including missing Pinata key and malformed gateway checks"
+      ]
+    },
+    "testnetContractUpgrade": {
+      "date": "2026-10-09",
+      "authorization": "User requested the latest testnet contracts and privately supplied the existing controller key; mainnet and authority changes remain outside this action.",
+      "sourceCore": "73b1f7a4790b62d2113cf160241a4e43a433d640",
+      "sourceModules": "afbc7dc2516333026fe24c7ee6b772b7fca2e8d5",
+      "version": "0.8.0-alpha.1",
+      "privateSnapshot": "/data/daclify-upgrades/testnet/snapshot-2026-10-09T12-28-30-061Z",
+      "preconditions": "Actual old code/ABI hashes verified; all existing rows round-trip under the new ABIs; no module state or active ballots; owner key matches all eight accounts and creator active authority.",
+      "plan": "Runtime first; all changed module binaries, catalogue and DAO installation pins atomic in the second transaction. Unchanged Hub/Names skipped.",
+      "ram": [
+        {
+          "account": "daclifycore1",
+          "bytes": 770048
+        },
+        {
+          "account": "daclifydecid",
+          "bytes": 692224
+        },
+        {
+          "account": "daclifyworks",
+          "bytes": 311296
+        },
+        {
+          "account": "daclifygrant",
+          "bytes": 131072
+        }
+      ],
+      "quotedTestnetRamTlos": "108.9953",
+      "verification": {
+        "transactions": [
+          {
+            "transactionId": "2808bb322ed63def297c38372f1e9e19d2ca9f47aa62fe925f66ddb3bc54f3a6",
+            "blockNum": 449296595
+          },
+          {
+            "transactionId": "d8aecd88bc4dee7098cb3064b0621268469bfffe4eb01179cd1cb08557dc94ca",
+            "blockNum": 449296608
+          }
+        ],
+        "irreversible": true,
+        "dataPreserved": true,
+        "authoritiesUnchanged": true,
+        "tableScopes": 18,
+        "rows": 39,
+        "onlyRowChanges": ["catalogue.code_hash", "modules.code_hash"]
+      },
+      "checks": [
+        "Core 99 files / 565 tests passed",
+        "Modules full run 143/144 passed with one 60-second emulator timeout; unchanged 5,000-row assertions passed after allowing 180 seconds (2/2 focused cases)",
+        "Core build/strict types and lint passed; modules strict types and lint passed",
+        "Actual historical upgrade on owned Spring 1.2.2 fixture passed, preserving claims/liabilities/nonces and exercising receiver-owned payout preparation",
+        "Two live compute_transaction simulations executed without mutating public chain state",
+        "All eight deployed code/raw ABI hashes, all 18 primary scopes/39 rows and every existing authority independently verified after irreversible confirmation"
+      ],
+      "checkHistory": [
+        "Initial full suites exposed missing historical/reference-token/frontend/native fixtures; reproduced these instead of weakening tests",
+        "Native bootstrap required CONFIGURABLE_WASM_LIMITS2, matching the target chain",
+        "Native historical drill required owner-funded token row preparation under the new payout policy; fixture corrected",
+        "Combined contract transaction exceeded Spring decompression bound; split runtime and module/pin stages",
+        "Dry run caught catalogue updates ordered after installation pins; listings now precede installation updates",
+        "An immediate post-commit RPC read returned old module rows; independent verification confirmed the new pins and all unchanged data. Read-only checks now allow bounded replica catch-up; no transaction was repeated."
+      ],
+      "qualification": "Development/testnet evidence only. Failed/uncompleted advanced RAM-controller fixture run is not release qualification; full production gates remain held."
+    },
+    "testnetProviderCompletion": {
+      "date": "2026-10-09",
+      "pinata": "Authenticated account identity saved privately from the supplied JWT; user supplied gateway key; canonical env check passes. No gateway funding allowance selected or fabricated.",
+      "stripe": "Enabled test-mode legacy billing webhook created and read back at the exact testnet API URL. Four Checkout events subscribed, API version matches the installed adapter, signing secret atomically saved in private testnet.env with a private backup.",
+      "stripeDelivery": "No test checkout or charge created; public signature/route verification awaits API startup.",
+      "configuration": "Canonical testnet env validation passed, with five configured modules. Mainnet credentials remain incomplete."
+    }
+  }
 }

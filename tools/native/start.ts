@@ -158,7 +158,7 @@ for (const account of accountNames) {
   cleos(['wallet', 'import', '--private-key', signer.privateKey]);
   cleos(['create', 'account', 'eosio', account, signer.publicKey, signer.publicKey]);
 }
-await activateFixtureFeatures(name, url);
+await activateFixtureFeatures(name, url, ['CONFIGURABLE_WASM_LIMITS2']);
 cleos([
   'set',
   'contract',
