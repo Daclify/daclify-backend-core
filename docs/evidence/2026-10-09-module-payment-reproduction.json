@@ -1,0 +1,9 @@
+{
+  "checkedAt": "2026-10-09T16:22:57.885Z",
+  "compiledRuntimeHash": "f40c696e86ab532ca57ea073265a982f694f9f21f8de53300b51365e83711878",
+  "case": "A listed 2.0000 TLOS module is enabled for DAO 1 without any payment.",
+  "installationSucceeded": true,
+  "modulePaymentReceiptCount": 0,
+  "classification": "Known missing paid-access enforcement; free first-party modules are not affected.",
+  "limits": "VERT contract execution. This is not a live purchase or a full paid module usage test."
+}

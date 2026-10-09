@@ -56,7 +56,7 @@ export const HubDeploymentRowSchema = z.object({
   code_hash: ChainIdSchema,
   abi_hash: ChainIdSchema,
   metadata: z.string().max(4096),
-  listed: z.boolean(),
+  listed: RuntimeTableSchemas.members.shape.active,
 });
 export const DirectoryEntrySchema = z.strictObject({
   reference: DaoRefSchema,

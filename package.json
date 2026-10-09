@@ -1,6 +1,6 @@
 {
   "name": "@daclify/backend-core",
-  "version": "0.9.0-alpha.2",
+  "version": "0.9.0-alpha.3",
   "license": "AGPL-3.0-only",
   "type": "module",
   "description": "Daclify core services and Antelope runtime",
@@ -46,8 +46,8 @@
     "test:native:paid": "vitest run --config vitest.native.config.ts tests/native/dao-presets.test.ts"
   },
   "dependencies": {
-    "@daclify/core-protocol": "file:.artifacts/daclify-core-protocol-0.9.0-alpha.2.tgz",
-    "@daclify/modules": "file:../daclify-backend-modules/.artifacts/daclify-modules-0.9.0-alpha.2.tgz",
+    "@daclify/core-protocol": "file:.artifacts/daclify-core-protocol-0.9.0-alpha.3.tgz",
+    "@daclify/modules": "file:../daclify-backend-modules/.artifacts/daclify-modules-0.9.0-alpha.3.tgz",
     "@fastify/cookie": "11.1.2",
     "@fastify/cors": "11.3.0",
     "@noble/curves": "2.4.0",

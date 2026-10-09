@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { registryDirectory, HubMetadataSchema } from '../protocol/directory.js';
+import {
+  registryDirectory,
+  HubMetadataSchema,
+  HubDeploymentRowSchema,
+} from '../protocol/directory.js';
 const chainId = 'ab'.repeat(32);
 const metadata = {
   schemaVersion: 1,
@@ -25,6 +29,20 @@ const row = {
   listed: true,
 };
 describe('public Hub metadata routing', () => {
+  it.each([true, 1])('accepts native listed=%s and includes the registered DAO', (listed) => {
+    expect(registryDirectory([{ ...row, listed }], chainId).entries).toHaveLength(1);
+    expect(HubDeploymentRowSchema.parse({ ...row, listed }).listed).toBe(true);
+  });
+  it.each([false, 0])('normalizes native listed=%s and excludes unlisted deployments', (listed) => {
+    expect(registryDirectory([{ ...row, listed }], chainId)).toEqual({ entries: [], skipped: 0 });
+    expect(HubDeploymentRowSchema.parse({ ...row, listed }).listed).toBe(false);
+  });
+  it.each([2, -1, '0', '1', 'false', null])(
+    'rejects malformed listed=%s at the registry boundary',
+    (listed) => {
+      expect(HubDeploymentRowSchema.safeParse({ ...row, listed }).success).toBe(false);
+    },
+  );
   it('accepts native RPC integer IDs and displays only public registry data', () => {
     const result = registryDirectory([row], chainId);
     expect(result.entries[0]?.portal).toEqual({

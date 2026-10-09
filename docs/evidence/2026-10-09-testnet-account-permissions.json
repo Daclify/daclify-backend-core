@@ -1,0 +1,3304 @@
+{
+  "startedAt": "2026-10-09T16:17:06.781Z",
+  "finishedAt": "2026-10-09T16:17:12.051Z",
+  "rpcUrl": "https://testnet.telos.caleos.io",
+  "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+  "blockWindow": {
+    "start": 449319446,
+    "end": 449319455,
+    "lastIrreversible": 449319453
+  },
+  "atomic": false,
+  "accounts": [
+    {
+      "name": "daclifycore1",
+      "role": "runtime",
+      "owned": true,
+      "account": {
+        "account_name": "daclifycore1",
+        "head_block_num": 449319447,
+        "head_block_time": "2026-10-09T16:17:07.500",
+        "privileged": false,
+        "last_code_update": "2026-10-09T13:06:35.000",
+        "created": "2026-10-07T14:42:05.000",
+        "core_liquid_balance": "0.0000 TLOS",
+        "ram_quota": 9160050,
+        "net_weight": 50000,
+        "cpu_weight": 200000,
+        "net_limit": {
+          "used": 48000,
+          "available": 17844336,
+          "max": 17892336,
+          "last_usage_update_time": "2026-10-09T12:25:29.000",
+          "current_used": 40278
+        },
+        "cpu_limit": {
+          "used": 84394,
+          "available": 12987814,
+          "max": 13072208,
+          "last_usage_update_time": "2026-10-09T12:25:29.000",
+          "current_used": 70818
+        },
+        "ram_usage": 9092424,
+        "permissions": [
+          {
+            "perm_name": "active",
+            "parent": "owner",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS7ok2fwomKVXNs2cjKayquoT5EVxzLLVtq4bXSJvtL5QYbLXEbJ",
+                  "weight": 1
+                }
+              ],
+              "accounts": [
+                {
+                  "permission": {
+                    "actor": "daclifycore1",
+                    "permission": "eosio.code"
+                  },
+                  "weight": 1
+                }
+              ],
+              "waits": []
+            },
+            "linked_actions": []
+          },
+          {
+            "perm_name": "execctx",
+            "parent": "active",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [],
+              "accounts": [
+                {
+                  "permission": {
+                    "actor": "daclifycore1",
+                    "permission": "eosio.code"
+                  },
+                  "weight": 1
+                }
+              ],
+              "waits": []
+            },
+            "linked_actions": [
+              {
+                "account": "daclifycore1",
+                "action": "setdaogov"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "addmember"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "setadmit"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "addsession"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "delsession"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "rotatekey"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "setmeta"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "setprofile"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "putdoc"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "putjson"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "commitepoch"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "rotateepoch"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "linknative"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "unlinknat"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "linkevm"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "unlinkevm"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "setactive"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "setroles"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "grantkey"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "withdraw"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "unstake"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "modconfig"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "setcredits"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "confirmext"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "govfees"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "govcreate"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "govlist"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "govunlist"
+              },
+              {
+                "account": "daclifycore1",
+                "action": "govmodcopy"
+              },
+              {
+                "account": "daclifydecid",
+                "action": "open"
+              },
+              {
+                "account": "daclifydecid",
+                "action": "vote"
+              },
+              {
+                "account": "daclifydecid",
+                "action": "openwork"
+              },
+              {
+                "account": "daclifydecid",
+                "action": "openaward"
+              },
+              {
+                "account": "daclifydecid",
+                "action": "newelect"
+              },
+              {
+                "account": "daclifydecid",
+                "action": "nominate"
+              },
+              {
+                "account": "daclifydecid",
+                "action": "startelect"
+              },
+              {
+                "account": "daclifydecid",
+                "action": "recall"
+              },
+              {
+                "account": "daclifyworks",
+                "action": "propose"
+              },
+              {
+                "account": "daclifyworks",
+                "action": "accept"
+              },
+              {
+                "account": "daclifyworks",
+                "action": "submitwork"
+              },
+              {
+                "account": "daclifyworks",
+                "action": "review"
+              },
+              {
+                "account": "daclifyworks",
+                "action": "cancel"
+              },
+              {
+                "account": "daclifyworks",
+                "action": "offeragr"
+              },
+              {
+                "account": "daclifyworks",
+                "action": "acceptagr"
+              },
+              {
+                "account": "daclifypayr1",
+                "action": "commit"
+              },
+              {
+                "account": "daclifypayr1",
+                "action": "edit"
+              },
+              {
+                "account": "daclifygrant",
+                "action": "newround"
+              },
+              {
+                "account": "daclifygrant",
+                "action": "applygrant"
+              },
+              {
+                "account": "daclifygrant",
+                "action": "amend"
+              },
+              {
+                "account": "daclifygrant",
+                "action": "submitapp"
+              },
+              {
+                "account": "daclifygrant",
+                "action": "reviewapp"
+              },
+              {
+                "account": "daclifygrant",
+                "action": "closeapp"
+              },
+              {
+                "account": "daclifygrant",
+                "action": "closeround"
+              },
+              {
+                "account": "daclifyendor",
+                "action": "applyjoin"
+              },
+              {
+                "account": "daclifyendor",
+                "action": "witness"
+              },
+              {
+                "account": "daclifyendor",
+                "action": "unwitness"
+              },
+              {
+                "account": "daclifyendor",
+                "action": "admit"
+              }
+            ]
+          },
+          {
+            "perm_name": "owner",
+            "parent": "",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS7UgPy96qydxpAFWPMRnmRuNSrtLrVBnbNk5Gc9TfSMwgSn1VAa",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            },
+            "linked_actions": []
+          }
+        ],
+        "total_resources": {
+          "owner": "daclifycore1",
+          "net_weight": "5.0000 TLOS",
+          "cpu_weight": "20.0000 TLOS",
+          "ram_bytes": 9158650
+        },
+        "self_delegated_bandwidth": null,
+        "refund_request": null,
+        "voter_info": null,
+        "rex_info": null,
+        "subjective_cpu_bill_limit": {
+          "used": 0,
+          "available": 0,
+          "max": 0,
+          "last_usage_update_time": "2000-01-01T00:00:00.000",
+          "current_used": 0
+        },
+        "eosio_any_linked_actions": []
+      },
+      "code": {
+        "account_name": "daclifycore1",
+        "code_hash": "f40c696e86ab532ca57ea073265a982f694f9f21f8de53300b51365e83711878"
+      }
+    },
+    {
+      "name": "daclifyhubv1",
+      "role": "hub",
+      "owned": true,
+      "account": {
+        "account_name": "daclifyhubv1",
+        "head_block_num": 449319448,
+        "head_block_time": "2026-10-09T16:17:08.000",
+        "privileged": false,
+        "last_code_update": "2026-10-07T14:43:22.000",
+        "created": "2026-10-07T14:42:07.000",
+        "ram_quota": 1049974,
+        "net_weight": 10000,
+        "cpu_weight": 20000,
+        "net_limit": {
+          "used": 22649,
+          "available": 3555818,
+          "max": 3578467,
+          "last_usage_update_time": "2026-10-07T14:43:22.000",
+          "current_used": 0
+        },
+        "cpu_limit": {
+          "used": 1108,
+          "available": 1306112,
+          "max": 1307220,
+          "last_usage_update_time": "2026-10-07T14:43:22.000",
+          "current_used": 0
+        },
+        "ram_usage": 608760,
+        "permissions": [
+          {
+            "perm_name": "active",
+            "parent": "owner",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS6rVrFKp5wYig4V37bCHmRmTXQH4kKKtppLyqFo5iavsC8cCdHq",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            },
+            "linked_actions": []
+          },
+          {
+            "perm_name": "owner",
+            "parent": "",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS7UgPy96qydxpAFWPMRnmRuNSrtLrVBnbNk5Gc9TfSMwgSn1VAa",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            },
+            "linked_actions": []
+          }
+        ],
+        "total_resources": {
+          "owner": "daclifyhubv1",
+          "net_weight": "1.0000 TLOS",
+          "cpu_weight": "2.0000 TLOS",
+          "ram_bytes": 1048574
+        },
+        "self_delegated_bandwidth": null,
+        "refund_request": null,
+        "voter_info": null,
+        "rex_info": null,
+        "subjective_cpu_bill_limit": {
+          "used": 0,
+          "available": 0,
+          "max": 0,
+          "last_usage_update_time": "2000-01-01T00:00:00.000",
+          "current_used": 0
+        },
+        "eosio_any_linked_actions": []
+      },
+      "code": {
+        "account_name": "daclifyhubv1",
+        "code_hash": "5f05cac05cd0bc3ea057402df7aef3e0c3fb3f9373094d1ad47605b377ab6bee"
+      }
+    },
+    {
+      "name": "daclifydecid",
+      "role": "decide",
+      "owned": true,
+      "account": {
+        "account_name": "daclifydecid",
+        "head_block_num": 449319448,
+        "head_block_time": "2026-10-09T16:17:08.000",
+        "privileged": false,
+        "last_code_update": "2026-10-09T13:06:48.000",
+        "created": "2026-10-07T14:43:24.000",
+        "ram_quota": 2790770,
+        "net_weight": 10000,
+        "cpu_weight": 20000,
+        "net_limit": {
+          "used": 48689,
+          "available": 3529778,
+          "max": 3578467,
+          "last_usage_update_time": "2026-10-07T14:43:26.500",
+          "current_used": 0
+        },
+        "cpu_limit": {
+          "used": 22864,
+          "available": 1284356,
+          "max": 1307220,
+          "last_usage_update_time": "2026-10-07T14:43:26.500",
+          "current_used": 0
+        },
+        "ram_usage": 2722841,
+        "permissions": [
+          {
+            "perm_name": "active",
+            "parent": "owner",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS7zXp7pNqzoxoDipydyMaTCGncMx8oWekCrMBSRLgbt9ej5C4ys",
+                  "weight": 1
+                }
+              ],
+              "accounts": [
+                {
+                  "permission": {
+                    "actor": "daclifydecid",
+                    "permission": "eosio.code"
+                  },
+                  "weight": 1
+                }
+              ],
+              "waits": []
+            },
+            "linked_actions": []
+          },
+          {
+            "perm_name": "owner",
+            "parent": "",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS7UgPy96qydxpAFWPMRnmRuNSrtLrVBnbNk5Gc9TfSMwgSn1VAa",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            },
+            "linked_actions": []
+          }
+        ],
+        "total_resources": {
+          "owner": "daclifydecid",
+          "net_weight": "1.0000 TLOS",
+          "cpu_weight": "2.0000 TLOS",
+          "ram_bytes": 2789370
+        },
+        "self_delegated_bandwidth": null,
+        "refund_request": null,
+        "voter_info": null,
+        "rex_info": null,
+        "subjective_cpu_bill_limit": {
+          "used": 0,
+          "available": 0,
+          "max": 0,
+          "last_usage_update_time": "2000-01-01T00:00:00.000",
+          "current_used": 0
+        },
+        "eosio_any_linked_actions": []
+      },
+      "code": {
+        "account_name": "daclifydecid",
+        "code_hash": "aabbaa9a70a042a7747c55fe33d100eb0475961b2e8e42ce29e4f76ff41c39cc"
+      }
+    },
+    {
+      "name": "daclifyworks",
+      "role": "works",
+      "owned": true,
+      "account": {
+        "account_name": "daclifyworks",
+        "head_block_num": 449319448,
+        "head_block_time": "2026-10-09T16:17:08.000",
+        "privileged": false,
+        "last_code_update": "2026-10-09T13:06:48.000",
+        "created": "2026-10-07T14:43:29.000",
+        "ram_quota": 1361264,
+        "net_weight": 10000,
+        "cpu_weight": 20000,
+        "net_limit": {
+          "used": 21513,
+          "available": 3556954,
+          "max": 3578467,
+          "last_usage_update_time": "2026-10-07T14:43:31.000",
+          "current_used": 0
+        },
+        "cpu_limit": {
+          "used": 1066,
+          "available": 1306154,
+          "max": 1307220,
+          "last_usage_update_time": "2026-10-07T14:43:31.000",
+          "current_used": 0
+        },
+        "ram_usage": 1295474,
+        "permissions": [
+          {
+            "perm_name": "active",
+            "parent": "owner",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS64hxhNnDQxqcg8ffC4c8qbCo4mKiaNAtP8x7Bv1PuK6oZD4Twx",
+                  "weight": 1
+                }
+              ],
+              "accounts": [
+                {
+                  "permission": {
+                    "actor": "daclifyworks",
+                    "permission": "eosio.code"
+                  },
+                  "weight": 1
+                }
+              ],
+              "waits": []
+            },
+            "linked_actions": []
+          },
+          {
+            "perm_name": "owner",
+            "parent": "",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS7UgPy96qydxpAFWPMRnmRuNSrtLrVBnbNk5Gc9TfSMwgSn1VAa",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            },
+            "linked_actions": []
+          }
+        ],
+        "total_resources": {
+          "owner": "daclifyworks",
+          "net_weight": "1.0000 TLOS",
+          "cpu_weight": "2.0000 TLOS",
+          "ram_bytes": 1359864
+        },
+        "self_delegated_bandwidth": null,
+        "refund_request": null,
+        "voter_info": null,
+        "rex_info": null,
+        "subjective_cpu_bill_limit": {
+          "used": 0,
+          "available": 0,
+          "max": 0,
+          "last_usage_update_time": "2000-01-01T00:00:00.000",
+          "current_used": 0
+        },
+        "eosio_any_linked_actions": []
+      },
+      "code": {
+        "account_name": "daclifyworks",
+        "code_hash": "9e4117b18393b0de1a090acf87788d908419ecb5dc85e8354a28dacb707bc308"
+      }
+    },
+    {
+      "name": "daclifypayr1",
+      "role": "payroll",
+      "owned": true,
+      "account": {
+        "account_name": "daclifypayr1",
+        "head_block_num": 449319448,
+        "head_block_time": "2026-10-09T16:17:08.000",
+        "privileged": false,
+        "last_code_update": "2026-10-09T13:06:48.000",
+        "created": "2026-10-07T14:43:33.500",
+        "ram_quota": 1049973,
+        "net_weight": 10000,
+        "cpu_weight": 20000,
+        "net_limit": {
+          "used": 12785,
+          "available": 3565682,
+          "max": 3578467,
+          "last_usage_update_time": "2026-10-07T14:43:36.000",
+          "current_used": 0
+        },
+        "cpu_limit": {
+          "used": 2680,
+          "available": 1304540,
+          "max": 1307220,
+          "last_usage_update_time": "2026-10-07T14:43:36.000",
+          "current_used": 0
+        },
+        "ram_usage": 850625,
+        "permissions": [
+          {
+            "perm_name": "active",
+            "parent": "owner",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS8UtbkcxHvLij7WBFryC4EonBmNpcs87Pq9pvXbaot8h9uS9QgR",
+                  "weight": 1
+                }
+              ],
+              "accounts": [
+                {
+                  "permission": {
+                    "actor": "daclifypayr1",
+                    "permission": "eosio.code"
+                  },
+                  "weight": 1
+                }
+              ],
+              "waits": []
+            },
+            "linked_actions": []
+          },
+          {
+            "perm_name": "owner",
+            "parent": "",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS7UgPy96qydxpAFWPMRnmRuNSrtLrVBnbNk5Gc9TfSMwgSn1VAa",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            },
+            "linked_actions": []
+          }
+        ],
+        "total_resources": {
+          "owner": "daclifypayr1",
+          "net_weight": "1.0000 TLOS",
+          "cpu_weight": "2.0000 TLOS",
+          "ram_bytes": 1048573
+        },
+        "self_delegated_bandwidth": null,
+        "refund_request": null,
+        "voter_info": null,
+        "rex_info": null,
+        "subjective_cpu_bill_limit": {
+          "used": 0,
+          "available": 0,
+          "max": 0,
+          "last_usage_update_time": "2000-01-01T00:00:00.000",
+          "current_used": 0
+        },
+        "eosio_any_linked_actions": []
+      },
+      "code": {
+        "account_name": "daclifypayr1",
+        "code_hash": "4db6a327656d81fb055da26f359beb6d97cb4f3bb172b1efbd1e71c59ff7a8e7"
+      }
+    },
+    {
+      "name": "daclifyrelay",
+      "role": "relay/settler",
+      "owned": true,
+      "account": {
+        "account_name": "daclifyrelay",
+        "head_block_num": 449319448,
+        "head_block_time": "2026-10-09T16:17:08.000",
+        "privileged": false,
+        "last_code_update": "1970-01-01T00:00:00.000",
+        "created": "2026-10-07T14:43:38.000",
+        "ram_quota": 17781,
+        "net_weight": 10000,
+        "cpu_weight": 20000,
+        "net_limit": {
+          "used": 876,
+          "available": 3577591,
+          "max": 3578467,
+          "last_usage_update_time": "2026-10-07T15:06:56.500",
+          "current_used": 0
+        },
+        "cpu_limit": {
+          "used": 4171,
+          "available": 1303049,
+          "max": 1307220,
+          "last_usage_update_time": "2026-10-07T15:06:56.500",
+          "current_used": 0
+        },
+        "ram_usage": 2996,
+        "permissions": [
+          {
+            "perm_name": "active",
+            "parent": "owner",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS8j1MA7Evt5628RaKn5zF1GPwB3RqY1gXeqxq9z56Cmh7ozkcdU",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            },
+            "linked_actions": []
+          },
+          {
+            "perm_name": "owner",
+            "parent": "",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS7UgPy96qydxpAFWPMRnmRuNSrtLrVBnbNk5Gc9TfSMwgSn1VAa",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            },
+            "linked_actions": []
+          }
+        ],
+        "total_resources": {
+          "owner": "daclifyrelay",
+          "net_weight": "1.0000 TLOS",
+          "cpu_weight": "2.0000 TLOS",
+          "ram_bytes": 16381
+        },
+        "self_delegated_bandwidth": null,
+        "refund_request": null,
+        "voter_info": null,
+        "rex_info": null,
+        "subjective_cpu_bill_limit": {
+          "used": 0,
+          "available": 0,
+          "max": 0,
+          "last_usage_update_time": "2000-01-01T00:00:00.000",
+          "current_used": 0
+        },
+        "eosio_any_linked_actions": []
+      },
+      "code": {
+        "account_name": "daclifyrelay",
+        "code_hash": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "name": "daclifyfees1",
+      "role": "fees/publisher",
+      "owned": true,
+      "account": {
+        "account_name": "daclifyfees1",
+        "head_block_num": 449319448,
+        "head_block_time": "2026-10-09T16:17:08.000",
+        "privileged": false,
+        "last_code_update": "1970-01-01T00:00:00.000",
+        "created": "2026-10-07T14:43:41.000",
+        "core_liquid_balance": "1243.5234 TLOS",
+        "ram_quota": 17781,
+        "net_weight": 10000,
+        "cpu_weight": 20000,
+        "net_limit": {
+          "used": 0,
+          "available": 3578467,
+          "max": 3578467,
+          "last_usage_update_time": "2026-10-07T14:43:41.000",
+          "current_used": 0
+        },
+        "cpu_limit": {
+          "used": 0,
+          "available": 1307220,
+          "max": 1307220,
+          "last_usage_update_time": "2026-10-07T14:43:41.000",
+          "current_used": 0
+        },
+        "ram_usage": 2996,
+        "permissions": [
+          {
+            "perm_name": "active",
+            "parent": "owner",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS5niDjEJrdAoXskaB75PQ5BdBTiW3S7VTJdvuSgoEUvBomjxWYA",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            },
+            "linked_actions": []
+          },
+          {
+            "perm_name": "owner",
+            "parent": "",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS7UgPy96qydxpAFWPMRnmRuNSrtLrVBnbNk5Gc9TfSMwgSn1VAa",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            },
+            "linked_actions": []
+          }
+        ],
+        "total_resources": {
+          "owner": "daclifyfees1",
+          "net_weight": "1.0000 TLOS",
+          "cpu_weight": "2.0000 TLOS",
+          "ram_bytes": 16381
+        },
+        "self_delegated_bandwidth": null,
+        "refund_request": null,
+        "voter_info": null,
+        "rex_info": null,
+        "subjective_cpu_bill_limit": {
+          "used": 0,
+          "available": 0,
+          "max": 0,
+          "last_usage_update_time": "2000-01-01T00:00:00.000",
+          "current_used": 0
+        },
+        "eosio_any_linked_actions": []
+      },
+      "code": {
+        "account_name": "daclifyfees1",
+        "code_hash": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "name": "daclifygrant",
+      "role": "grants",
+      "owned": true,
+      "account": {
+        "account_name": "daclifygrant",
+        "head_block_num": 449319448,
+        "head_block_time": "2026-10-09T16:17:08.000",
+        "privileged": false,
+        "last_code_update": "2026-10-09T13:06:48.000",
+        "created": "2026-10-07T14:43:42.000",
+        "ram_quota": 1181042,
+        "net_weight": 10000,
+        "cpu_weight": 20000,
+        "net_limit": {
+          "used": 19017,
+          "available": 3559450,
+          "max": 3578467,
+          "last_usage_update_time": "2026-10-07T14:43:44.000",
+          "current_used": 0
+        },
+        "cpu_limit": {
+          "used": 2224,
+          "available": 1304996,
+          "max": 1307220,
+          "last_usage_update_time": "2026-10-07T14:43:44.000",
+          "current_used": 0
+        },
+        "ram_usage": 1113801,
+        "permissions": [
+          {
+            "perm_name": "active",
+            "parent": "owner",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS54ppWwQiknZc4HA2BmWw33ACYZ6aJNefYrUeb5JBJphpdoZDqc",
+                  "weight": 1
+                }
+              ],
+              "accounts": [
+                {
+                  "permission": {
+                    "actor": "daclifygrant",
+                    "permission": "eosio.code"
+                  },
+                  "weight": 1
+                }
+              ],
+              "waits": []
+            },
+            "linked_actions": []
+          },
+          {
+            "perm_name": "owner",
+            "parent": "",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS7UgPy96qydxpAFWPMRnmRuNSrtLrVBnbNk5Gc9TfSMwgSn1VAa",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            },
+            "linked_actions": []
+          }
+        ],
+        "total_resources": {
+          "owner": "daclifygrant",
+          "net_weight": "1.0000 TLOS",
+          "cpu_weight": "2.0000 TLOS",
+          "ram_bytes": 1179642
+        },
+        "self_delegated_bandwidth": null,
+        "refund_request": null,
+        "voter_info": null,
+        "rex_info": null,
+        "subjective_cpu_bill_limit": {
+          "used": 0,
+          "available": 0,
+          "max": 0,
+          "last_usage_update_time": "2000-01-01T00:00:00.000",
+          "current_used": 0
+        },
+        "eosio_any_linked_actions": []
+      },
+      "code": {
+        "account_name": "daclifygrant",
+        "code_hash": "e973f83fbe27e548d4ef14733f511d705d066db74a32a5ff65ca7f005af138fa"
+      }
+    },
+    {
+      "name": "daclifyendor",
+      "role": "endorse",
+      "owned": true,
+      "account": {
+        "account_name": "daclifyendor",
+        "head_block_num": 449319448,
+        "head_block_time": "2026-10-09T16:17:08.000",
+        "privileged": false,
+        "last_code_update": "2026-10-09T13:06:48.000",
+        "created": "2026-10-07T14:43:46.000",
+        "ram_quota": 1049972,
+        "net_weight": 10000,
+        "cpu_weight": 20000,
+        "net_limit": {
+          "used": 14465,
+          "available": 3564002,
+          "max": 3578467,
+          "last_usage_update_time": "2026-10-07T14:43:48.000",
+          "current_used": 0
+        },
+        "cpu_limit": {
+          "used": 3698,
+          "available": 1303522,
+          "max": 1307220,
+          "last_usage_update_time": "2026-10-07T14:43:48.000",
+          "current_used": 0
+        },
+        "ram_usage": 842305,
+        "permissions": [
+          {
+            "perm_name": "active",
+            "parent": "owner",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS8MiTQKpsshbq2HiF734kbRUiAHgATZUgNd3E5MW3K5SpandAqn",
+                  "weight": 1
+                }
+              ],
+              "accounts": [
+                {
+                  "permission": {
+                    "actor": "daclifyendor",
+                    "permission": "eosio.code"
+                  },
+                  "weight": 1
+                }
+              ],
+              "waits": []
+            },
+            "linked_actions": []
+          },
+          {
+            "perm_name": "owner",
+            "parent": "",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS7UgPy96qydxpAFWPMRnmRuNSrtLrVBnbNk5Gc9TfSMwgSn1VAa",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            },
+            "linked_actions": []
+          }
+        ],
+        "total_resources": {
+          "owner": "daclifyendor",
+          "net_weight": "1.0000 TLOS",
+          "cpu_weight": "2.0000 TLOS",
+          "ram_bytes": 1048572
+        },
+        "self_delegated_bandwidth": null,
+        "refund_request": null,
+        "voter_info": null,
+        "rex_info": null,
+        "subjective_cpu_bill_limit": {
+          "used": 0,
+          "available": 0,
+          "max": 0,
+          "last_usage_update_time": "2000-01-01T00:00:00.000",
+          "current_used": 0
+        },
+        "eosio_any_linked_actions": []
+      },
+      "code": {
+        "account_name": "daclifyendor",
+        "code_hash": "e1a0f64dc42c8e8ad1d324cf92d1dfe01cebba77b130fb2be74ba9ee4d88df48"
+      }
+    },
+    {
+      "name": "daclifynames",
+      "role": "names",
+      "owned": true,
+      "account": {
+        "account_name": "daclifynames",
+        "head_block_num": 449319448,
+        "head_block_time": "2026-10-09T16:17:08.000",
+        "privileged": false,
+        "last_code_update": "2026-10-07T14:43:51.000",
+        "created": "2026-10-07T14:43:49.500",
+        "ram_quota": 1049973,
+        "net_weight": 10000,
+        "cpu_weight": 20000,
+        "net_limit": {
+          "used": 24713,
+          "available": 3553754,
+          "max": 3578467,
+          "last_usage_update_time": "2026-10-07T14:47:04.500",
+          "current_used": 0
+        },
+        "cpu_limit": {
+          "used": 5292,
+          "available": 1301928,
+          "max": 1307220,
+          "last_usage_update_time": "2026-10-07T14:47:04.500",
+          "current_used": 0
+        },
+        "ram_usage": 757681,
+        "permissions": [
+          {
+            "perm_name": "active",
+            "parent": "owner",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS69VqqJriHn5K5KaH78FjXVuge4vj9XtUKaW4NnH7bJJwj4qQrk",
+                  "weight": 1
+                }
+              ],
+              "accounts": [
+                {
+                  "permission": {
+                    "actor": "daclifynames",
+                    "permission": "eosio.code"
+                  },
+                  "weight": 1
+                }
+              ],
+              "waits": []
+            },
+            "linked_actions": []
+          },
+          {
+            "perm_name": "owner",
+            "parent": "",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS7UgPy96qydxpAFWPMRnmRuNSrtLrVBnbNk5Gc9TfSMwgSn1VAa",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            },
+            "linked_actions": []
+          }
+        ],
+        "total_resources": {
+          "owner": "daclifynames",
+          "net_weight": "1.0000 TLOS",
+          "cpu_weight": "2.0000 TLOS",
+          "ram_bytes": 1048573
+        },
+        "self_delegated_bandwidth": null,
+        "refund_request": null,
+        "voter_info": null,
+        "rex_info": null,
+        "subjective_cpu_bill_limit": {
+          "used": 0,
+          "available": 0,
+          "max": 0,
+          "last_usage_update_time": "2000-01-01T00:00:00.000",
+          "current_used": 0
+        },
+        "eosio_any_linked_actions": []
+      },
+      "code": {
+        "account_name": "daclifynames",
+        "code_hash": "fd9348525842ff918beb9db3e7c4aa5e8e9cbba2d0bf786836494c2c17cf5869"
+      }
+    },
+    {
+      "name": "3boidanimus3",
+      "role": "funded deployer / linked user wallet",
+      "owned": false,
+      "account": {
+        "account_name": "3boidanimus3",
+        "head_block_num": 449319448,
+        "head_block_time": "2026-10-09T16:17:08.000",
+        "privileged": false,
+        "last_code_update": "1970-01-01T00:00:00.000",
+        "created": "2020-08-16T21:51:48.000",
+        "core_liquid_balance": "103181.8580 TLOS",
+        "ram_quota": 1193537,
+        "net_weight": 200000,
+        "cpu_weight": 200000,
+        "net_limit": {
+          "used": 409695,
+          "available": 71159649,
+          "max": 71569344,
+          "last_usage_update_time": "2026-10-09T13:06:48.000",
+          "current_used": 355543
+        },
+        "cpu_limit": {
+          "used": 115791,
+          "available": 12956417,
+          "max": 13072208,
+          "last_usage_update_time": "2026-10-09T13:06:48.000",
+          "current_used": 100486
+        },
+        "ram_usage": 29271,
+        "permissions": [
+          {
+            "perm_name": "active",
+            "parent": "owner",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS5LQ6tMoP9F1TRqGBuupNtHzmfvC83e9DQQcb66on68cLMkr3en",
+                  "weight": 1
+                },
+                {
+                  "key": "EOS7UgPy96qydxpAFWPMRnmRuNSrtLrVBnbNk5Gc9TfSMwgSn1VAa",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            },
+            "linked_actions": []
+          },
+          {
+            "perm_name": "oracle",
+            "parent": "active",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS5g5EES9ivaSuh3cKj2RzCvv651Dmo5q1FnXioRRKbfAB2t3KZH",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            },
+            "linked_actions": [
+              {
+                "account": "rng.oracle",
+                "action": "submitrand"
+              },
+              {
+                "account": "delphioracle",
+                "action": "write"
+              }
+            ]
+          },
+          {
+            "perm_name": "owner",
+            "parent": "",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS7tq5Yf26xjbxqX6wsMJRAHMhRt8J91icxAUw7iUpo4QR6mX2Di",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            },
+            "linked_actions": []
+          }
+        ],
+        "total_resources": {
+          "owner": "3boidanimus3",
+          "net_weight": "20.0000 TLOS",
+          "cpu_weight": "20.0000 TLOS",
+          "ram_bytes": 1192137
+        },
+        "self_delegated_bandwidth": {
+          "from": "3boidanimus3",
+          "to": "3boidanimus3",
+          "net_weight": "20.0000 TLOS",
+          "cpu_weight": "20.0000 TLOS"
+        },
+        "refund_request": null,
+        "voter_info": {
+          "owner": "3boidanimus3",
+          "proxy": "",
+          "producers": [],
+          "staked": 960000,
+          "last_stake": 0,
+          "last_vote_weight": "0.00000000000000000",
+          "proxied_vote_weight": "0.00000000000000000",
+          "is_proxy": 0,
+          "flags1": 0,
+          "reserved2": 0,
+          "reserved3": "0 ",
+          "self_stake_boost": 0
+        },
+        "rex_info": null,
+        "subjective_cpu_bill_limit": {
+          "used": 0,
+          "available": 0,
+          "max": 0,
+          "last_usage_update_time": "2000-01-01T00:00:00.000",
+          "current_used": 0
+        },
+        "eosio_any_linked_actions": []
+      },
+      "code": {
+        "account_name": "3boidanimus3",
+        "code_hash": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "name": "eosio",
+      "role": "external dependency or registered owner",
+      "owned": false,
+      "account": {
+        "account_name": "eosio",
+        "head_block_num": 449319448,
+        "head_block_time": "2026-10-09T16:17:08.000",
+        "privileged": true,
+        "last_code_update": "2026-07-01T18:06:41.500",
+        "created": "2019-08-07T12:00:00.000",
+        "core_liquid_balance": "1069625.9495 TLOS",
+        "ram_quota": -1,
+        "net_weight": -1,
+        "cpu_weight": -1,
+        "net_limit": {
+          "used": -1,
+          "available": -1,
+          "max": -1,
+          "last_usage_update_time": "2026-10-09T16:17:08.000",
+          "current_used": -1
+        },
+        "cpu_limit": {
+          "used": -1,
+          "available": -1,
+          "max": -1,
+          "last_usage_update_time": "2026-10-09T16:17:08.000",
+          "current_used": -1
+        },
+        "ram_usage": 23781332,
+        "permissions": [
+          {
+            "perm_name": "active",
+            "parent": "owner",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS51cem57Wm8ua8Hx9CCbc1mJDtko2NEB1jbLWjv5hKdeFkj7jAX",
+                  "weight": 1
+                },
+                {
+                  "key": "EOS6vnfc2nMt1KvvmXFnCoo7XqASJTJ7p3PD23nnbZH1V6GrxTpdV",
+                  "weight": 1
+                },
+                {
+                  "key": "EOS7xyPWfh6743fhZ46zQQcXSctddoqG65d44YsyRnCJCs54mJLrH",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            },
+            "linked_actions": []
+          },
+          {
+            "perm_name": "owner",
+            "parent": "",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS7xyPWfh6743fhZ46zQQcXSctddoqG65d44YsyRnCJCs54mJLrH",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            },
+            "linked_actions": []
+          },
+          {
+            "perm_name": "rngorc.test",
+            "parent": "active",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [],
+              "accounts": [
+                {
+                  "permission": {
+                    "actor": "eosio",
+                    "permission": "eosio.code"
+                  },
+                  "weight": 1
+                }
+              ],
+              "waits": []
+            },
+            "linked_actions": []
+          }
+        ],
+        "total_resources": null,
+        "self_delegated_bandwidth": null,
+        "refund_request": null,
+        "voter_info": {
+          "owner": "eosio",
+          "proxy": "",
+          "producers": [
+            "amsterdam",
+            "argentinatls",
+            "bp.adex",
+            "bp.boid",
+            "caleosblocks",
+            "cryptolions1",
+            "eostribeprod",
+            "kainosblkpro",
+            "nation.tlos",
+            "persiantelos",
+            "sirforksalot",
+            "swapsicledex",
+            "telosarabia1",
+            "teloscentral",
+            "telosgermany",
+            "telosglobal1",
+            "telosgreenbp",
+            "telosmadrid1",
+            "telosuknodes",
+            "tlosimperabp",
+            "votedutcheos",
+            "votetelosusa"
+          ],
+          "staked": 14314000,
+          "last_stake": 14314000,
+          "last_vote_weight": "11945967.74971034750342369",
+          "proxied_vote_weight": "0.00000000000000000",
+          "is_proxy": 0,
+          "flags1": 0,
+          "reserved2": 0,
+          "reserved3": "0 "
+        },
+        "rex_info": null,
+        "subjective_cpu_bill_limit": {
+          "used": 0,
+          "available": 0,
+          "max": 0,
+          "last_usage_update_time": "2000-01-01T00:00:00.000",
+          "current_used": 0
+        },
+        "eosio_any_linked_actions": []
+      },
+      "code": {
+        "account_name": "eosio",
+        "code_hash": "48d74c3df9f5c9952c0f87ab6c01e1c6dfe621429f59932ecf609b5d81e668e4"
+      }
+    },
+    {
+      "name": "eosio.token",
+      "role": "external dependency or registered owner",
+      "owned": false,
+      "account": {
+        "account_name": "eosio.token",
+        "head_block_num": 449319448,
+        "head_block_time": "2026-10-09T16:17:08.000",
+        "privileged": false,
+        "last_code_update": "2022-11-28T22:18:21.000",
+        "created": "2019-08-15T22:24:21.500",
+        "core_liquid_balance": "3000.0000 TLOS",
+        "ram_quota": -1,
+        "net_weight": -1,
+        "cpu_weight": -1,
+        "net_limit": {
+          "used": -1,
+          "available": -1,
+          "max": -1,
+          "last_usage_update_time": "2022-11-28T22:18:21.000",
+          "current_used": -1
+        },
+        "cpu_limit": {
+          "used": -1,
+          "available": -1,
+          "max": -1,
+          "last_usage_update_time": "2022-11-28T22:18:21.000",
+          "current_used": -1
+        },
+        "ram_usage": 163601,
+        "permissions": [
+          {
+            "perm_name": "active",
+            "parent": "owner",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [],
+              "accounts": [
+                {
+                  "permission": {
+                    "actor": "eosio",
+                    "permission": "active"
+                  },
+                  "weight": 1
+                }
+              ],
+              "waits": []
+            },
+            "linked_actions": []
+          },
+          {
+            "perm_name": "owner",
+            "parent": "",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [],
+              "accounts": [
+                {
+                  "permission": {
+                    "actor": "eosio",
+                    "permission": "active"
+                  },
+                  "weight": 1
+                }
+              ],
+              "waits": []
+            },
+            "linked_actions": []
+          }
+        ],
+        "total_resources": null,
+        "self_delegated_bandwidth": null,
+        "refund_request": null,
+        "voter_info": null,
+        "rex_info": null,
+        "subjective_cpu_bill_limit": {
+          "used": 0,
+          "available": 0,
+          "max": 0,
+          "last_usage_update_time": "2000-01-01T00:00:00.000",
+          "current_used": 0
+        },
+        "eosio_any_linked_actions": []
+      },
+      "code": {
+        "account_name": "eosio.token",
+        "code_hash": "e7aa90a489446616f9bf0f1d0368f849722c7d36054d910e8f378ce9d2b618f1"
+      }
+    },
+    {
+      "name": "eosio.evm",
+      "role": "external dependency or registered owner",
+      "owned": false,
+      "account": {
+        "account_name": "eosio.evm",
+        "head_block_num": 449319448,
+        "head_block_time": "2026-10-09T16:17:08.000",
+        "privileged": false,
+        "last_code_update": "2024-07-27T20:11:36.500",
+        "created": "2020-11-28T04:58:39.000",
+        "core_liquid_balance": "85179190.2789 TLOS",
+        "ram_quota": 3364185054,
+        "net_weight": 1000000,
+        "cpu_weight": 1000000,
+        "net_limit": {
+          "used": 449,
+          "available": 357846275,
+          "max": 357846724,
+          "last_usage_update_time": "2025-07-02T12:27:27.500",
+          "current_used": 0
+        },
+        "cpu_limit": {
+          "used": 1232,
+          "available": 65359809,
+          "max": 65361041,
+          "last_usage_update_time": "2025-07-02T12:27:27.500",
+          "current_used": 0
+        },
+        "ram_usage": 606577467,
+        "permissions": [
+          {
+            "perm_name": "active",
+            "parent": "owner",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS7jh9wxkHPtxbLhurKRaofLBdkMZhCrymwDR5WFUEZpUxsf4pgk",
+                  "weight": 1
+                }
+              ],
+              "accounts": [
+                {
+                  "permission": {
+                    "actor": "eosio.evm",
+                    "permission": "eosio.code"
+                  },
+                  "weight": 1
+                },
+                {
+                  "permission": {
+                    "actor": "ethevmcreate",
+                    "permission": "active"
+                  },
+                  "weight": 1
+                }
+              ],
+              "waits": []
+            },
+            "linked_actions": []
+          },
+          {
+            "perm_name": "owner",
+            "parent": "",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [],
+              "accounts": [
+                {
+                  "permission": {
+                    "actor": "eosio",
+                    "permission": "active"
+                  },
+                  "weight": 1
+                }
+              ],
+              "waits": []
+            },
+            "linked_actions": []
+          }
+        ],
+        "total_resources": {
+          "owner": "eosio.evm",
+          "net_weight": "100.0000 TLOS",
+          "cpu_weight": "100.0000 TLOS",
+          "ram_bytes": 3364183654
+        },
+        "self_delegated_bandwidth": null,
+        "refund_request": null,
+        "voter_info": {
+          "owner": "eosio.evm",
+          "proxy": "",
+          "producers": [],
+          "staked": 4000,
+          "last_stake": 0,
+          "last_vote_weight": "0.00000000000000000",
+          "proxied_vote_weight": "0.00000000000000000",
+          "is_proxy": 0,
+          "flags1": 0,
+          "reserved2": 0,
+          "reserved3": "0 "
+        },
+        "rex_info": null,
+        "subjective_cpu_bill_limit": {
+          "used": 0,
+          "available": 0,
+          "max": 0,
+          "last_usage_update_time": "2000-01-01T00:00:00.000",
+          "current_used": 0
+        },
+        "eosio_any_linked_actions": []
+      },
+      "code": {
+        "account_name": "eosio.evm",
+        "code_hash": "85ca9de3bac8ebb23ed3b304e8c1b898c268819374ff29a21bdeffc5dee24b5e"
+      }
+    },
+    {
+      "name": "delphioracle",
+      "role": "external dependency or registered owner",
+      "owned": false,
+      "account": {
+        "account_name": "delphioracle",
+        "head_block_num": 449319448,
+        "head_block_time": "2026-10-09T16:17:08.000",
+        "privileged": false,
+        "last_code_update": "2023-11-30T17:05:20.000",
+        "created": "2020-01-09T05:48:35.500",
+        "core_liquid_balance": "869.4552 TLOS",
+        "ram_quota": 2078895,
+        "net_weight": 300000,
+        "cpu_weight": 300000,
+        "net_limit": {
+          "used": 194646,
+          "available": 107159371,
+          "max": 107354017,
+          "last_usage_update_time": "2023-11-30T17:05:24.000",
+          "current_used": 0
+        },
+        "cpu_limit": {
+          "used": 25418,
+          "available": 19582894,
+          "max": 19608312,
+          "last_usage_update_time": "2023-11-30T17:05:24.000",
+          "current_used": 0
+        },
+        "ram_usage": 1423435,
+        "permissions": [
+          {
+            "perm_name": "active",
+            "parent": "owner",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS5p1Ya3QCyzoQhUh7phDfuh8awpwpXMMuXcmkm7L3pPnaL1uxUy",
+                  "weight": 1
+                },
+                {
+                  "key": "EOS5vTDGVpwpAJtpvVWG4RUKYC8JDBU9xc2F1ekRqZgFf3Gk9mWPY",
+                  "weight": 1
+                },
+                {
+                  "key": "EOS8ek6TD4kiwbVdSaCyVN5bbYiK1PusfFUdoq8VkmFJE27bbcqem",
+                  "weight": 1
+                }
+              ],
+              "accounts": [
+                {
+                  "permission": {
+                    "actor": "delphioracle",
+                    "permission": "eosio.code"
+                  },
+                  "weight": 1
+                }
+              ],
+              "waits": []
+            },
+            "linked_actions": []
+          },
+          {
+            "perm_name": "owner",
+            "parent": "",
+            "required_auth": {
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "EOS8ek6TD4kiwbVdSaCyVN5bbYiK1PusfFUdoq8VkmFJE27bbcqem",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            },
+            "linked_actions": []
+          }
+        ],
+        "total_resources": {
+          "owner": "delphioracle",
+          "net_weight": "30.0000 TLOS",
+          "cpu_weight": "30.0000 TLOS",
+          "ram_bytes": 2077495
+        },
+        "self_delegated_bandwidth": {
+          "from": "delphioracle",
+          "to": "delphioracle",
+          "net_weight": "30.0000 TLOS",
+          "cpu_weight": "30.0000 TLOS"
+        },
+        "refund_request": null,
+        "voter_info": {
+          "owner": "delphioracle",
+          "proxy": "",
+          "producers": ["telosgermany", "telosgreenbp", "telosunlimit", "votetelosusa"],
+          "staked": 600000,
+          "last_stake": 600000,
+          "last_vote_weight": "25936.36270721974142361",
+          "proxied_vote_weight": "0.00000000000000000",
+          "is_proxy": 1,
+          "flags1": 0,
+          "reserved2": 0,
+          "reserved3": "0 ",
+          "self_stake_boost": 0
+        },
+        "rex_info": null,
+        "subjective_cpu_bill_limit": {
+          "used": 0,
+          "available": 0,
+          "max": 0,
+          "last_usage_update_time": "2000-01-01T00:00:00.000",
+          "current_used": 0
+        },
+        "eosio_any_linked_actions": []
+      },
+      "code": {
+        "account_name": "delphioracle",
+        "code_hash": "b8d773857b5025c3074f0c98bc5f4074b85e7d22e525e46eeb32fbe454a5e00c"
+      }
+    }
+  ],
+  "registry": [
+    {
+      "id": 0,
+      "runtime": "daclifycore1",
+      "owner": "daclifycore1",
+      "chain_id": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+      "interface_version": 1,
+      "code_hash": "35b7018872391f8eb883b7b75e1ecad91325bceaae77e9207fc5403c4b2838b0",
+      "abi_hash": "e786287e4241c6f5923150ba6e571f5005e71d6fff1864ab0b6642e6f3f34e6b",
+      "metadata": "{\"schemaVersion\":1,\"title\":\"Daclify Telos testnet\",\"description\":\"Shared Daclify testnet deployment\"}",
+      "listed": 1
+    }
+  ],
+  "globals": {
+    "settings": [
+      {
+        "chain_id": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+        "interface_version": 1
+      }
+    ],
+    "daos": [
+      {
+        "id": 1,
+        "owner": "daclifycore1",
+        "metadata": "{\"schemaVersion\":2,\"title\":\"Daclify DAO\",\"description\":\"Daclify platform governance on Telos testnet: fees, first-party modules and platform policy.\",\"purpose\":\"community\",\"setup\":{\"presetId\":\"community\",\"presetVersion\":1,\"participantMode\":\"humans\",\"governance\":{\"weight\":\"member\",\"duration\":259200,\"quorumBasisPoints\":5000,\"approvalBasisPoints\":5001,\"governedWorks\":true,\"maxCommitment\":\"0\",\"dailyCommitment\":\"0\",\"guardian\":\"\"}}}",
+        "privacy": 0,
+        "token_contract": "eosio.token",
+        "token_symbol": "4,TLOS",
+        "credit_supply": 0,
+        "member_count": 1,
+        "max_member": 1,
+        "active_ballots": 0,
+        "available": 0,
+        "reserved": 0,
+        "claims": 0,
+        "staked": 0,
+        "eligible_credits": 0,
+        "eligible_stake": 0,
+        "admin_count": 1,
+        "key_epoch": 1,
+        "history_policy": 0
+      },
+      {
+        "id": "4899240341166052780",
+        "owner": "daclifycore1",
+        "metadata": "{\"schemaVersion\":2,\"title\":\"Daclify testnet smoke DAO\",\"description\":\"Automated public-testnet payment and governance rehearsal. Synthetic test member.\",\"purpose\":\"community\",\"setup\":{\"presetId\":\"community\",\"presetVersion\":1,\"participantMode\":\"humans\",\"governance\":{\"weight\":\"member\",\"duration\":259200,\"quorumBasisPoints\":5000,\"approvalBasisPoints\":5001,\"governedWorks\":true,\"maxCommitment\":\"0\",\"dailyCommitment\":\"0\",\"guardian\":\"\"}}}",
+        "privacy": 0,
+        "token_contract": "eosio.token",
+        "token_symbol": "4,TLOS",
+        "credit_supply": 0,
+        "member_count": 1,
+        "max_member": 1,
+        "active_ballots": 0,
+        "available": 0,
+        "reserved": 0,
+        "claims": 0,
+        "staked": 0,
+        "eligible_credits": 0,
+        "eligible_stake": 0,
+        "admin_count": 1,
+        "key_epoch": 1,
+        "history_policy": 0
+      },
+      {
+        "id": "10462019581746745784",
+        "owner": "daclifycore1",
+        "metadata": "{\"schemaVersion\":2,\"title\":\"Daclify testnet Stripe smoke DAO\",\"description\":\"Automated public-testnet payment and governance rehearsal. Synthetic test member.\",\"purpose\":\"community\",\"setup\":{\"presetId\":\"community\",\"presetVersion\":1,\"participantMode\":\"humans\",\"governance\":{\"weight\":\"member\",\"duration\":259200,\"quorumBasisPoints\":5000,\"approvalBasisPoints\":5001,\"governedWorks\":true,\"maxCommitment\":\"0\",\"dailyCommitment\":\"0\",\"guardian\":\"\"}}}",
+        "privacy": 0,
+        "token_contract": "eosio.token",
+        "token_symbol": "4,TLOS",
+        "credit_supply": 0,
+        "member_count": 1,
+        "max_member": 1,
+        "active_ballots": 0,
+        "available": 0,
+        "reserved": 0,
+        "claims": 0,
+        "staked": 0,
+        "eligible_credits": 0,
+        "eligible_stake": 0,
+        "admin_count": 1,
+        "key_epoch": 1,
+        "history_policy": 0
+      }
+    ],
+    "catalogue": [
+      {
+        "account": "daclifydecid",
+        "publisher": "daclifyfees1",
+        "party": 0,
+        "complies": 1,
+        "price": "0.0000 TLOS",
+        "code_hash": "aabbaa9a70a042a7747c55fe33d100eb0475961b2e8e42ce29e4f76ff41c39cc",
+        "title": "Decide"
+      },
+      {
+        "account": "daclifyendor",
+        "publisher": "daclifyfees1",
+        "party": 0,
+        "complies": 1,
+        "price": "0.0000 TLOS",
+        "code_hash": "e1a0f64dc42c8e8ad1d324cf92d1dfe01cebba77b130fb2be74ba9ee4d88df48",
+        "title": "Endorsement admission"
+      },
+      {
+        "account": "daclifygrant",
+        "publisher": "daclifyfees1",
+        "party": 0,
+        "complies": 1,
+        "price": "0.0000 TLOS",
+        "code_hash": "e973f83fbe27e548d4ef14733f511d705d066db74a32a5ff65ca7f005af138fa",
+        "title": "Grants rounds"
+      },
+      {
+        "account": "daclifypayr1",
+        "publisher": "daclifyfees1",
+        "party": 0,
+        "complies": 1,
+        "price": "0.0000 TLOS",
+        "code_hash": "4db6a327656d81fb055da26f359beb6d97cb4f3bb172b1efbd1e71c59ff7a8e7",
+        "title": "Payroll"
+      },
+      {
+        "account": "daclifyworks",
+        "publisher": "daclifyfees1",
+        "party": 0,
+        "complies": 1,
+        "price": "0.0000 TLOS",
+        "code_hash": "9e4117b18393b0de1a090acf87788d908419ecb5dc85e8354a28dacb707bc308",
+        "title": "Works"
+      }
+    ],
+    "createcfg": [
+      {
+        "shared_usd": 2000,
+        "independent_usd": 5000,
+        "premium_bps": 2000,
+        "settler": "daclifyrelay",
+        "median": 176,
+        "precision": 4,
+        "observed_at": 1791548722
+      }
+    ],
+    "feecfg": [
+      {
+        "third_party_bps": 500,
+        "first_party_bps": 10000,
+        "treasury": "daclifyfees1",
+        "token_contract": "eosio.token",
+        "token_symbol": "4,TLOS",
+        "names": "daclifynames"
+      }
+    ],
+    "mktcfg": [
+      {
+        "bump_bps": 2000,
+        "quote_premium_bps": 2000,
+        "dao_id": 1
+      }
+    ],
+    "capcfg": [],
+    "seatcfg": [],
+    "paycfg": [],
+    "resourcecfg": [],
+    "ramreserve": [],
+    "ramobs": [],
+    "govpolicies": [
+      {
+        "dao_id": 1,
+        "revision": 1,
+        "config": {
+          "participant_mode": 0,
+          "decide": "daclifydecid",
+          "guardian": "",
+          "kind": 0,
+          "duration": 259200,
+          "quorum": 5000,
+          "approval": 5001,
+          "governed_works": 1,
+          "max_commitment": 0,
+          "daily_commitment": 0
+        }
+      },
+      {
+        "dao_id": "4899240341166052780",
+        "revision": 1,
+        "config": {
+          "participant_mode": 0,
+          "decide": "daclifydecid",
+          "guardian": "",
+          "kind": 0,
+          "duration": 259200,
+          "quorum": 5000,
+          "approval": 5001,
+          "governed_works": 1,
+          "max_commitment": 0,
+          "daily_commitment": 0
+        }
+      },
+      {
+        "dao_id": "10462019581746745784",
+        "revision": 1,
+        "config": {
+          "participant_mode": 0,
+          "decide": "daclifydecid",
+          "guardian": "",
+          "kind": 0,
+          "duration": 259200,
+          "quorum": 5000,
+          "approval": 5001,
+          "governed_works": 1,
+          "max_commitment": 0,
+          "daily_commitment": 0
+        }
+      }
+    ],
+    "ramlimits": [],
+    "rampools": []
+  },
+  "daoModules": {
+    "1": [
+      {
+        "account": "daclifydecid",
+        "version": 1,
+        "actions": [
+          "open",
+          "vote",
+          "openwork",
+          "openaward",
+          "newelect",
+          "nominate",
+          "startelect",
+          "recall"
+        ],
+        "grants": ["govlock"],
+        "code_hash": "aabbaa9a70a042a7747c55fe33d100eb0475961b2e8e42ce29e4f76ff41c39cc"
+      },
+      {
+        "account": "daclifyendor",
+        "version": 1,
+        "actions": ["applyjoin", "witness", "unwitness", "admit"],
+        "grants": ["admit"],
+        "code_hash": "e1a0f64dc42c8e8ad1d324cf92d1dfe01cebba77b130fb2be74ba9ee4d88df48"
+      },
+      {
+        "account": "daclifygrant",
+        "version": 1,
+        "actions": [
+          "newround",
+          "applygrant",
+          "amend",
+          "submitapp",
+          "reviewapp",
+          "closeapp",
+          "closeround"
+        ],
+        "grants": ["awardwork"],
+        "code_hash": "e973f83fbe27e548d4ef14733f511d705d066db74a32a5ff65ca7f005af138fa"
+      },
+      {
+        "account": "daclifypayr1",
+        "version": 1,
+        "actions": ["commit", "edit"],
+        "grants": ["reserve", "approve"],
+        "code_hash": "4db6a327656d81fb055da26f359beb6d97cb4f3bb172b1efbd1e71c59ff7a8e7"
+      },
+      {
+        "account": "daclifyworks",
+        "version": 1,
+        "actions": ["propose", "accept", "submitwork", "review", "cancel", "offeragr", "acceptagr"],
+        "grants": ["reserve", "approve", "cancel"],
+        "code_hash": "9e4117b18393b0de1a090acf87788d908419ecb5dc85e8354a28dacb707bc308"
+      }
+    ],
+    "4899240341166052780": [
+      {
+        "account": "daclifydecid",
+        "version": 1,
+        "actions": [
+          "open",
+          "vote",
+          "openwork",
+          "openaward",
+          "newelect",
+          "nominate",
+          "startelect",
+          "recall"
+        ],
+        "grants": ["govlock"],
+        "code_hash": "aabbaa9a70a042a7747c55fe33d100eb0475961b2e8e42ce29e4f76ff41c39cc"
+      },
+      {
+        "account": "daclifyworks",
+        "version": 1,
+        "actions": ["propose", "accept", "submitwork", "review", "cancel", "offeragr", "acceptagr"],
+        "grants": ["reserve", "approve", "cancel"],
+        "code_hash": "9e4117b18393b0de1a090acf87788d908419ecb5dc85e8354a28dacb707bc308"
+      }
+    ],
+    "10462019581746745784": [
+      {
+        "account": "daclifydecid",
+        "version": 1,
+        "actions": [
+          "open",
+          "vote",
+          "openwork",
+          "openaward",
+          "newelect",
+          "nominate",
+          "startelect",
+          "recall"
+        ],
+        "grants": ["govlock"],
+        "code_hash": "aabbaa9a70a042a7747c55fe33d100eb0475961b2e8e42ce29e4f76ff41c39cc"
+      },
+      {
+        "account": "daclifyworks",
+        "version": 1,
+        "actions": ["propose", "accept", "submitwork", "review", "cancel", "offeragr", "acceptagr"],
+        "grants": ["reserve", "approve", "cancel"],
+        "code_hash": "9e4117b18393b0de1a090acf87788d908419ecb5dc85e8354a28dacb707bc308"
+      }
+    ]
+  },
+  "platformStatus": {
+    "gatewayAllowance": {
+      "state": "unconfigured",
+      "startsAt": null,
+      "endsAt": null,
+      "byteLimit": "0",
+      "reservedBytes": "0",
+      "requestLimit": "0",
+      "requests": "0",
+      "fundingQualification": "unconfigured"
+    },
+    "checkedAt": "2026-10-09T16:17:11.826Z",
+    "apiVersion": "0.8.0-alpha.1",
+    "moduleVersion": "0.8.0-alpha.1",
+    "chain": {
+      "network": {
+        "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+        "rpcUrl": "https://testnet.telos.caleos.io",
+        "runtime": "daclifycore1",
+        "hub": "daclifyhubv1",
+        "environment": "testnet",
+        "interfaceVersion": 1,
+        "coreVersion": "0.8.0-alpha.1",
+        "capabilities": [
+          "internal-k1",
+          "native-linked",
+          "encrypted-documents",
+          "native-sign-in",
+          "evm-eoa-governance",
+          "shared-dao-create",
+          "dao-presets",
+          "guarded-agents",
+          "governance-policy"
+        ]
+      },
+      "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+      "chainMatches": true,
+      "headBlock": 449319454,
+      "irreversibleBlock": 449319452,
+      "headTime": "2026-10-09T16:17:11.000",
+      "contracts": [
+        {
+          "account": "daclifycore1",
+          "moduleId": null,
+          "codeHash": "f40c696e86ab532ca57ea073265a982f694f9f21f8de53300b51365e83711878",
+          "expectedHash": "f40c696e86ab532ca57ea073265a982f694f9f21f8de53300b51365e83711878",
+          "verified": true,
+          "ramBytes": 9160050,
+          "ramUsed": 9092424,
+          "permissions": [
+            {
+              "name": "active",
+              "parent": "owner",
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "PUB_K1_7ok2fwomKVXNs2cjKayquoT5EVxzLLVtq4bXSJvtL5QYZdu4m2",
+                  "weight": 1
+                }
+              ],
+              "accounts": [
+                {
+                  "actor": "daclifycore1",
+                  "permission": "eosio.code",
+                  "weight": 1
+                }
+              ],
+              "waits": []
+            },
+            {
+              "name": "execctx",
+              "parent": "active",
+              "threshold": 1,
+              "keys": [],
+              "accounts": [
+                {
+                  "actor": "daclifycore1",
+                  "permission": "eosio.code",
+                  "weight": 1
+                }
+              ],
+              "waits": []
+            },
+            {
+              "name": "owner",
+              "parent": "",
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "PUB_K1_7UgPy96qydxpAFWPMRnmRuNSrtLrVBnbNk5Gc9TfSMwgSxEVJB",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            }
+          ]
+        },
+        {
+          "account": "daclifyhubv1",
+          "moduleId": null,
+          "codeHash": "5f05cac05cd0bc3ea057402df7aef3e0c3fb3f9373094d1ad47605b377ab6bee",
+          "expectedHash": null,
+          "verified": false,
+          "ramBytes": 1049974,
+          "ramUsed": 608760,
+          "permissions": [
+            {
+              "name": "active",
+              "parent": "owner",
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "PUB_K1_6rVrFKp5wYig4V37bCHmRmTXQH4kKKtppLyqFo5iavsC66FP8m",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            },
+            {
+              "name": "owner",
+              "parent": "",
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "PUB_K1_7UgPy96qydxpAFWPMRnmRuNSrtLrVBnbNk5Gc9TfSMwgSxEVJB",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            }
+          ]
+        },
+        {
+          "account": "daclifydecid",
+          "moduleId": "decide",
+          "codeHash": "aabbaa9a70a042a7747c55fe33d100eb0475961b2e8e42ce29e4f76ff41c39cc",
+          "expectedHash": "aabbaa9a70a042a7747c55fe33d100eb0475961b2e8e42ce29e4f76ff41c39cc",
+          "verified": true,
+          "ramBytes": 2790770,
+          "ramUsed": 2722841,
+          "permissions": [
+            {
+              "name": "active",
+              "parent": "owner",
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "PUB_K1_7zXp7pNqzoxoDipydyMaTCGncMx8oWekCrMBSRLgbt9eds2fh3",
+                  "weight": 1
+                }
+              ],
+              "accounts": [
+                {
+                  "actor": "daclifydecid",
+                  "permission": "eosio.code",
+                  "weight": 1
+                }
+              ],
+              "waits": []
+            },
+            {
+              "name": "owner",
+              "parent": "",
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "PUB_K1_7UgPy96qydxpAFWPMRnmRuNSrtLrVBnbNk5Gc9TfSMwgSxEVJB",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            }
+          ]
+        },
+        {
+          "account": "daclifyworks",
+          "moduleId": "works",
+          "codeHash": "9e4117b18393b0de1a090acf87788d908419ecb5dc85e8354a28dacb707bc308",
+          "expectedHash": "9e4117b18393b0de1a090acf87788d908419ecb5dc85e8354a28dacb707bc308",
+          "verified": true,
+          "ramBytes": 1361264,
+          "ramUsed": 1295474,
+          "permissions": [
+            {
+              "name": "active",
+              "parent": "owner",
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "PUB_K1_64hxhNnDQxqcg8ffC4c8qbCo4mKiaNAtP8x7Bv1PuK6ocGSeLd",
+                  "weight": 1
+                }
+              ],
+              "accounts": [
+                {
+                  "actor": "daclifyworks",
+                  "permission": "eosio.code",
+                  "weight": 1
+                }
+              ],
+              "waits": []
+            },
+            {
+              "name": "owner",
+              "parent": "",
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "PUB_K1_7UgPy96qydxpAFWPMRnmRuNSrtLrVBnbNk5Gc9TfSMwgSxEVJB",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            }
+          ]
+        },
+        {
+          "account": "daclifypayr1",
+          "moduleId": "payroll",
+          "codeHash": "4db6a327656d81fb055da26f359beb6d97cb4f3bb172b1efbd1e71c59ff7a8e7",
+          "expectedHash": "4db6a327656d81fb055da26f359beb6d97cb4f3bb172b1efbd1e71c59ff7a8e7",
+          "verified": true,
+          "ramBytes": 1049973,
+          "ramUsed": 850625,
+          "permissions": [
+            {
+              "name": "active",
+              "parent": "owner",
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "PUB_K1_8UtbkcxHvLij7WBFryC4EonBmNpcs87Pq9pvXbaot8h9v8ve6M",
+                  "weight": 1
+                }
+              ],
+              "accounts": [
+                {
+                  "actor": "daclifypayr1",
+                  "permission": "eosio.code",
+                  "weight": 1
+                }
+              ],
+              "waits": []
+            },
+            {
+              "name": "owner",
+              "parent": "",
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "PUB_K1_7UgPy96qydxpAFWPMRnmRuNSrtLrVBnbNk5Gc9TfSMwgSxEVJB",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            }
+          ]
+        },
+        {
+          "account": "daclifygrant",
+          "moduleId": "grants-rounds",
+          "codeHash": "e973f83fbe27e548d4ef14733f511d705d066db74a32a5ff65ca7f005af138fa",
+          "expectedHash": "e973f83fbe27e548d4ef14733f511d705d066db74a32a5ff65ca7f005af138fa",
+          "verified": true,
+          "ramBytes": 1181042,
+          "ramUsed": 1113801,
+          "permissions": [
+            {
+              "name": "active",
+              "parent": "owner",
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "PUB_K1_54ppWwQiknZc4HA2BmWw33ACYZ6aJNefYrUeb5JBJphpdqjc8k",
+                  "weight": 1
+                }
+              ],
+              "accounts": [
+                {
+                  "actor": "daclifygrant",
+                  "permission": "eosio.code",
+                  "weight": 1
+                }
+              ],
+              "waits": []
+            },
+            {
+              "name": "owner",
+              "parent": "",
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "PUB_K1_7UgPy96qydxpAFWPMRnmRuNSrtLrVBnbNk5Gc9TfSMwgSxEVJB",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            }
+          ]
+        },
+        {
+          "account": "daclifyendor",
+          "moduleId": "endorsement-admission",
+          "codeHash": "e1a0f64dc42c8e8ad1d324cf92d1dfe01cebba77b130fb2be74ba9ee4d88df48",
+          "expectedHash": "e1a0f64dc42c8e8ad1d324cf92d1dfe01cebba77b130fb2be74ba9ee4d88df48",
+          "verified": true,
+          "ramBytes": 1049972,
+          "ramUsed": 842305,
+          "permissions": [
+            {
+              "name": "active",
+              "parent": "owner",
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "PUB_K1_8MiTQKpsshbq2HiF734kbRUiAHgATZUgNd3E5MW3K5SpcfLref",
+                  "weight": 1
+                }
+              ],
+              "accounts": [
+                {
+                  "actor": "daclifyendor",
+                  "permission": "eosio.code",
+                  "weight": 1
+                }
+              ],
+              "waits": []
+            },
+            {
+              "name": "owner",
+              "parent": "",
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "PUB_K1_7UgPy96qydxpAFWPMRnmRuNSrtLrVBnbNk5Gc9TfSMwgSxEVJB",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            }
+          ]
+        },
+        {
+          "account": "daclifyrelay",
+          "moduleId": null,
+          "codeHash": "0000000000000000000000000000000000000000000000000000000000000000",
+          "expectedHash": null,
+          "verified": false,
+          "ramBytes": 17781,
+          "ramUsed": 2996,
+          "permissions": [
+            {
+              "name": "active",
+              "parent": "owner",
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "PUB_K1_8j1MA7Evt5628RaKn5zF1GPwB3RqY1gXeqxq9z56Cmh7oPsAmg",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            },
+            {
+              "name": "owner",
+              "parent": "",
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "PUB_K1_7UgPy96qydxpAFWPMRnmRuNSrtLrVBnbNk5Gc9TfSMwgSxEVJB",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            }
+          ]
+        },
+        {
+          "account": "daclifyfees1",
+          "moduleId": null,
+          "codeHash": "0000000000000000000000000000000000000000000000000000000000000000",
+          "expectedHash": null,
+          "verified": false,
+          "ramBytes": 17781,
+          "ramUsed": 2996,
+          "permissions": [
+            {
+              "name": "active",
+              "parent": "owner",
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "PUB_K1_5niDjEJrdAoXskaB75PQ5BdBTiW3S7VTJdvuSgoEUvBogUSAs7",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            },
+            {
+              "name": "owner",
+              "parent": "",
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "PUB_K1_7UgPy96qydxpAFWPMRnmRuNSrtLrVBnbNk5Gc9TfSMwgSxEVJB",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            }
+          ]
+        },
+        {
+          "account": "daclifynames",
+          "moduleId": null,
+          "codeHash": "fd9348525842ff918beb9db3e7c4aa5e8e9cbba2d0bf786836494c2c17cf5869",
+          "expectedHash": null,
+          "verified": false,
+          "ramBytes": 1049973,
+          "ramUsed": 757681,
+          "permissions": [
+            {
+              "name": "active",
+              "parent": "owner",
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "PUB_K1_69VqqJriHn5K5KaH78FjXVuge4vj9XtUKaW4NnH7bJJwjEoFsD",
+                  "weight": 1
+                }
+              ],
+              "accounts": [
+                {
+                  "actor": "daclifynames",
+                  "permission": "eosio.code",
+                  "weight": 1
+                }
+              ],
+              "waits": []
+            },
+            {
+              "name": "owner",
+              "parent": "",
+              "threshold": 1,
+              "keys": [
+                {
+                  "key": "PUB_K1_7UgPy96qydxpAFWPMRnmRuNSrtLrVBnbNk5Gc9TfSMwgSxEVJB",
+                  "weight": 1
+                }
+              ],
+              "accounts": [],
+              "waits": []
+            }
+          ]
+        }
+      ],
+      "catalogue": [
+        {
+          "account": "daclifydecid",
+          "publisher": "daclifyfees1",
+          "party": 0,
+          "complies": 1,
+          "price": "0.0000 TLOS",
+          "code_hash": "aabbaa9a70a042a7747c55fe33d100eb0475961b2e8e42ce29e4f76ff41c39cc",
+          "title": "Decide"
+        },
+        {
+          "account": "daclifyendor",
+          "publisher": "daclifyfees1",
+          "party": 0,
+          "complies": 1,
+          "price": "0.0000 TLOS",
+          "code_hash": "e1a0f64dc42c8e8ad1d324cf92d1dfe01cebba77b130fb2be74ba9ee4d88df48",
+          "title": "Endorsement admission"
+        },
+        {
+          "account": "daclifygrant",
+          "publisher": "daclifyfees1",
+          "party": 0,
+          "complies": 1,
+          "price": "0.0000 TLOS",
+          "code_hash": "e973f83fbe27e548d4ef14733f511d705d066db74a32a5ff65ca7f005af138fa",
+          "title": "Grants rounds"
+        },
+        {
+          "account": "daclifypayr1",
+          "publisher": "daclifyfees1",
+          "party": 0,
+          "complies": 1,
+          "price": "0.0000 TLOS",
+          "code_hash": "4db6a327656d81fb055da26f359beb6d97cb4f3bb172b1efbd1e71c59ff7a8e7",
+          "title": "Payroll"
+        },
+        {
+          "account": "daclifyworks",
+          "publisher": "daclifyfees1",
+          "party": 0,
+          "complies": 1,
+          "price": "0.0000 TLOS",
+          "code_hash": "9e4117b18393b0de1a090acf87788d908419ecb5dc85e8354a28dacb707bc308",
+          "title": "Works"
+        }
+      ],
+      "fees": {
+        "third_party_bps": 500,
+        "first_party_bps": 10000,
+        "treasury": "daclifyfees1",
+        "token_contract": "eosio.token",
+        "token_symbol": "4,TLOS",
+        "names": "daclifynames"
+      },
+      "market": {
+        "bump_bps": 2000,
+        "quote_premium_bps": 2000,
+        "dao_id": "1"
+      },
+      "creation": {
+        "shared_usd": 2000,
+        "independent_usd": 5000,
+        "premium_bps": 2000,
+        "settler": "daclifyrelay",
+        "median": "176",
+        "precision": 4,
+        "observed_at": 1791548722
+      },
+      "hosting": null,
+      "seatPricing": null,
+      "paymentPolicy": null,
+      "resourcePolicy": null,
+      "ramReserve": null,
+      "runtimeSettings": {
+        "chain_id": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+        "interface_version": 1
+      },
+      "rateFresh": false,
+      "platformDao": {
+        "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+        "contract": "daclifycore1",
+        "daoId": "1",
+        "interfaceVersion": 1
+      },
+      "sharedAvailable": true,
+      "independentAvailable": false
+    },
+    "rpc": "reachable",
+    "database": {
+      "state": "reachable",
+      "migrations": [
+        {
+          "namespace": "archive",
+          "name": "001_exports.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "archive",
+          "name": "002_transport.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "archive",
+          "name": "003_backups.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "archive",
+          "name": "004_anchor_binding.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "archive",
+          "name": "005_retention_groups.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "001_core.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "002_hosted_content.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "003_service_payments.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "004_sign_in_methods.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "005_evm_links.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "006_creation_orders.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "007_signin_attempts.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "008_account_control.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "009_telegram_oidc.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "010_signin_context.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "011_native_login.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "012_evm_signin.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "013_credential_history.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "014_telegram_destination.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "015_wallet_accounts.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "016_connected_payments.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "017_shared_hosting.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "018_operator_payments.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "019_hosting_snapshots.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "020_hosting_invoice_dependencies.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "021_checkout_return_snapshot.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "022_storage_ledger.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "023_storage_billing.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "024_asset_reservations.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "025_archive_storage_holds.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "026_ram_card_orders.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "027_storage_retention.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "028_retention_staging.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "029_archive_retention_groups.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "030_storage_notice_checks.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        },
+        {
+          "namespace": "core",
+          "name": "031_gateway_allowances.sql",
+          "appliedAt": "2026-10-09T10:41:36.086Z"
+        }
+      ]
+    },
+    "limits": {
+      "sponsoredWritesPerAccount": 60,
+      "sponsoredWritesGlobal": 600,
+      "windowMs": 60000,
+      "uploadBytes": 5242880
+    },
+    "services": [
+      {
+        "id": "card-ram",
+        "name": "Card RAM provisioning",
+        "configured": false,
+        "qualification": "not-qualified",
+        "detail": "Dedicated verified payments and a segregated operator reserve; live qualification is separate."
+      },
+      {
+        "id": "hosting",
+        "name": "Shared hosting subscriptions",
+        "configured": false,
+        "qualification": "not-qualified",
+        "detail": "Paid capacity activates only after verified invoice settlement and an on-chain receipt. Live qualification is separate."
+      },
+      {
+        "id": "connect",
+        "name": "DAO merchant payments",
+        "configured": false,
+        "qualification": "not-qualified",
+        "detail": "Each DAO owns its merchant account. Daclify Connect fees apply only to eligible card checkouts through this service."
+      },
+      {
+        "id": "storage",
+        "name": "Pinata / hosted storage",
+        "configured": true,
+        "qualification": "not-qualified",
+        "detail": "Configured storage does not prove Pinata credentials or availability."
+      },
+      {
+        "id": "storage-retention",
+        "name": "Guarded storage retention",
+        "configured": false,
+        "qualification": "not-qualified",
+        "detail": "Operator-enabled cleanup requires separate live-provider qualification and complete pin/payment recovery. It never erases native identities, claims or purchased RAM."
+      },
+      {
+        "id": "storage-notices",
+        "name": "Storage reminders",
+        "configured": false,
+        "qualification": "not-qualified",
+        "detail": "Current administrator and paired email are checked before a period-bound reminder. Retries can duplicate an email; in-app notices remain available."
+      },
+      {
+        "id": "storage-alerts",
+        "name": "Storage operator alerts",
+        "configured": false,
+        "qualification": "not-qualified",
+        "detail": "Scope-bound removal/recovery incidents notify the configured operator. Staged bytes remain protected; mail delivery needs separate qualification."
+      },
+      {
+        "id": "storage-billing",
+        "name": "Prepaid pinned storage",
+        "configured": false,
+        "qualification": "not-qualified",
+        "detail": "Separate monthly capacity with exact recurring approval; live qualification and cleanup are separate."
+      },
+      {
+        "id": "card",
+        "name": "Card payments",
+        "configured": true,
+        "qualification": "not-qualified",
+        "detail": "Verified Stripe webhooks attest card settlement; the configured settler is trusted."
+      },
+      {
+        "id": "google",
+        "name": "Google sign-in",
+        "configured": false,
+        "qualification": "not-qualified",
+        "detail": "Provider configuration only; live qualification is separate."
+      },
+      {
+        "id": "telegram",
+        "name": "Telegram sign-in",
+        "configured": true,
+        "qualification": "not-qualified",
+        "detail": "Provider configuration only; live qualification is separate."
+      },
+      {
+        "id": "docs",
+        "name": "Documentation assistant",
+        "configured": true,
+        "qualification": "not-qualified",
+        "detail": "Optional assistant; generated documentation is always available."
+      },
+      {
+        "id": "managed",
+        "name": "Managed signing and recovery",
+        "configured": false,
+        "qualification": "not-qualified",
+        "detail": "OpenBao remains a candidate. Production managed custody is not qualified."
+      }
+    ],
+    "defaults": {
+      "sharedUsdCents": 0,
+      "independentUsdCents": 5000,
+      "tlosPremiumBps": 2000
+    }
+  },
+  "deploymentChecks": {
+    "expectedContextLinks": [
+      {
+        "account": "daclifycore1",
+        "action": "archapprove"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "archrevoke"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "setdaogov"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "addmember"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "setadmit"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "addsession"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "delsession"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "rotatekey"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "setmeta"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "setprofile"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "putdoc"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "putjson"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "restoredoc"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "commitepoch"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "rotateepoch"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "linknative"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "unlinknat"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "linkevm"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "unlinkevm"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "setactive"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "setroles"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "grantkey"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "withdraw"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "unstake"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "modconfig"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "setcredits"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "confirmext"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "govfees"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "govpayfees"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "govhosted"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "govseatfee"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "govresources"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "govcreate"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "govlist"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "govunlist"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "govmodcopy"
+      },
+      {
+        "account": "daclifydecid",
+        "action": "open"
+      },
+      {
+        "account": "daclifydecid",
+        "action": "vote"
+      },
+      {
+        "account": "daclifydecid",
+        "action": "openwork"
+      },
+      {
+        "account": "daclifydecid",
+        "action": "openaward"
+      },
+      {
+        "account": "daclifydecid",
+        "action": "newelect"
+      },
+      {
+        "account": "daclifydecid",
+        "action": "nominate"
+      },
+      {
+        "account": "daclifydecid",
+        "action": "startelect"
+      },
+      {
+        "account": "daclifydecid",
+        "action": "recall"
+      },
+      {
+        "account": "daclifyworks",
+        "action": "propose"
+      },
+      {
+        "account": "daclifyworks",
+        "action": "accept"
+      },
+      {
+        "account": "daclifyworks",
+        "action": "submitwork"
+      },
+      {
+        "account": "daclifyworks",
+        "action": "review"
+      },
+      {
+        "account": "daclifyworks",
+        "action": "cancel"
+      },
+      {
+        "account": "daclifyworks",
+        "action": "offeragr"
+      },
+      {
+        "account": "daclifyworks",
+        "action": "acceptagr"
+      },
+      {
+        "account": "daclifypayr1",
+        "action": "commit"
+      },
+      {
+        "account": "daclifypayr1",
+        "action": "edit"
+      },
+      {
+        "account": "daclifygrant",
+        "action": "newround"
+      },
+      {
+        "account": "daclifygrant",
+        "action": "applygrant"
+      },
+      {
+        "account": "daclifygrant",
+        "action": "amend"
+      },
+      {
+        "account": "daclifygrant",
+        "action": "submitapp"
+      },
+      {
+        "account": "daclifygrant",
+        "action": "reviewapp"
+      },
+      {
+        "account": "daclifygrant",
+        "action": "closeapp"
+      },
+      {
+        "account": "daclifygrant",
+        "action": "closeround"
+      },
+      {
+        "account": "daclifyendor",
+        "action": "applyjoin"
+      },
+      {
+        "account": "daclifyendor",
+        "action": "witness"
+      },
+      {
+        "account": "daclifyendor",
+        "action": "unwitness"
+      },
+      {
+        "account": "daclifyendor",
+        "action": "admit"
+      }
+    ],
+    "missingContextLinks": [
+      {
+        "account": "daclifycore1",
+        "action": "archapprove"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "archrevoke"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "restoredoc"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "govpayfees"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "govhosted"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "govseatfee"
+      },
+      {
+        "account": "daclifycore1",
+        "action": "govresources"
+      }
+    ],
+    "hubRuntimeHashMatches": false,
+    "hubAdvertisedCodeHash": "35b7018872391f8eb883b7b75e1ecad91325bceaae77e9207fc5403c4b2838b0",
+    "actualRuntimeCodeHash": "f40c696e86ab532ca57ea073265a982f694f9f21f8de53300b51365e83711878",
+    "hubAdvertisedAbiHash": "e786287e4241c6f5923150ba6e571f5005e71d6fff1864ab0b6642e6f3f34e6b",
+    "actualRuntimeAbiHash": "a7f5fe4b28aa5cd33ac243ee2baf2a9c78dae7f20b9009f35523754c30561051",
+    "hubRuntimeAbiMatches": false,
+    "rawRegistryParseErrors": [
+      {
+        "path": [0, "listed"],
+        "expected": "boolean",
+        "code": "invalid_type"
+      }
+    ],
+    "hubGatewayParseErrors": [
+      {
+        "path": [0, "listed"],
+        "expected": "boolean",
+        "code": "invalid_type"
+      }
+    ],
+    "liveDirectory": {
+      "checkedAt": "2026-10-09T16:22:58.846Z",
+      "httpStatus": 400,
+      "body": {
+        "code": "INPUT_INVALID",
+        "message": "Check the supplied fields."
+      }
+    }
+  },
+  "localKeyRoleComparison": {
+    "scope": "Mac .env.testnet only, server custody unknown",
+    "keys": [
+      {
+        "configuredField": "BOOTSTRAP_PRIVATE_KEY",
+        "publicKey": "PUB_K1_7ok2fwomKVXNs2cjKayquoT5EVxzLLVtq4bXSJvtL5QYZdu4m2",
+        "liveAuthorities": ["daclifycore1@active"]
+      },
+      {
+        "configuredField": "RELAY_PRIVATE_KEY",
+        "publicKey": "PUB_K1_8j1MA7Evt5628RaKn5zF1GPwB3RqY1gXeqxq9z56Cmh7oPsAmg",
+        "liveAuthorities": ["daclifyrelay@active"]
+      }
+    ]
+  }
+}
