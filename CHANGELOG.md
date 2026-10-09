@@ -2,6 +2,8 @@
 
 ## Unreleased — RAM, prepaid storage and Archive
 
+- Guard activation now verifies existing credentials, claims and pending holds plus pinned module completion checks. Bounded completion-only adoption preserves already-metered legacy counters.
+
 Native RAM purchases verify actual acquisition; card orders use a separate funded operator reserve. Physically backed per-DAO/payer allocations, native counters, finite financial/election holds, bounded legacy adoption and explicit growth enforcement preserve existing record layouts and signing domains. Works acceptance reserves fixed review/submission reference slots. Full-claim withdrawals are the emergency exit; partial withdrawals need ordinary capacity.
 
 Prepaid pinned storage has immutable pricing/period agreements, verified CID ownership/reference accounting, 30-day grace, notices and fenced opt-in cleanup. The Archive service adds encrypted backups, native approval/revocation, constrained poll/document pruning, retained trusted decoders and original-kit recovery. Shared gateway requests require a manually funded, bounded allowance.

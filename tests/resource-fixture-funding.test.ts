@@ -84,21 +84,24 @@ it('leaves sufficient balances untouched and verifies actual issuer execution fo
   );
   await expect(fundResourceFixture()).rejects.toThrow('CHAIN_ACTION_REJECTED');
 });
-it('expands only the synthetic fixture market when repeated tests deplete its byte reserve', async () => {
-  fixture.tables.mockResolvedValueOnce({
-    rows: [{ base: { balance: '58737625 RAM' } }],
-    more: false,
-  });
-  fixture.tables.mockResolvedValueOnce({ rows: [{ max_ram_size: '4294967296' }], more: false });
-  await fundResourceFixture();
-  expect(fixture.exec).toHaveBeenCalledWith(
-    'docker',
-    expect.arrayContaining([
-      'daclify-resources-native',
-      'setram',
-      '["6442450944"]',
-      'eosio@active',
-    ]),
-    { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] },
-  );
-});
+it.each(['58737625 RAM', '649872420 RAM'])(
+  'expands only the synthetic fixture market before a large population allocation: %s',
+  async (balance) => {
+    fixture.tables.mockResolvedValueOnce({
+      rows: [{ base: { balance } }],
+      more: false,
+    });
+    fixture.tables.mockResolvedValueOnce({ rows: [{ max_ram_size: '4294967296' }], more: false });
+    await fundResourceFixture();
+    expect(fixture.exec).toHaveBeenCalledWith(
+      'docker',
+      expect.arrayContaining([
+        'daclify-resources-native',
+        'setram',
+        '["6442450944"]',
+        'eosio@active',
+      ]),
+      { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] },
+    );
+  },
+);

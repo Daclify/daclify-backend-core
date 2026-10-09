@@ -30,7 +30,8 @@ export async function fundResourceFixture() {
     .length(1)
     .parse(market.rows)[0];
   if (!reserve) throw new Error('RESOURCE_FIXTURE_MARKET_REQUIRED');
-  if (BigInt(reserve.base.balance.split(' ')[0] ?? '') < 536870912n) {
+  // Keep the synthetic reserve above the population fixture's multi-payer batch.
+  if (BigInt(reserve.base.balance.split(' ')[0] ?? '') < 2147483648n) {
     const global = await api.v1.chain.get_table_rows({
       code: 'eosio',
       scope: 'eosio',

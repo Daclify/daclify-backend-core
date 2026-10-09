@@ -55,7 +55,7 @@ class ram_table:public eosio::multi_index<Table,Row,Indices...>{
     switch(static_cast<uint64_t>(Table)){case "docsrcs"_n.value:case "docrefs"_n.value:case "docheads"_n.value:case "docclocks"_n.value:case "docstate"_n.value:case "docscan"_n.value:case "ramentitle"_n.value:case "ramholds"_n.value:case "ramclmholds"_n.value:case "ramlimits"_n.value:case "ramgrants"_n.value:case "raminherit"_n.value:case "archives"_n.value:case "archpos"_n.value:case "ramalloc"_n.value:case "members"_n.value:case "actors"_n.value:case "sessions"_n.value:case "evmbindings"_n.value:case "modules"_n.value:case "documents"_n.value:case "epochs"_n.value:case "keygrants"_n.value:case "govlocks"_n.value:case "obligations"_n.value:case "receipts"_n.value:return true;default:return false;}
   }
   bool protected_table()const{
-    if constexpr(is_module)return static_cast<uint64_t>(Table)=="termholds"_n.value||static_cast<uint64_t>(Table)=="terms"_n.value||static_cast<uint64_t>(Table)=="pollends"_n.value;
+    if constexpr(is_module)return static_cast<uint64_t>(Table)=="controls"_n.value||static_cast<uint64_t>(Table)=="termholds"_n.value||static_cast<uint64_t>(Table)=="terms"_n.value||static_cast<uint64_t>(Table)=="pollends"_n.value;
     switch(static_cast<uint64_t>(Table)){case "docsrcs"_n.value:case "docrefs"_n.value:case "receipts"_n.value:case "ramholds"_n.value:case "ramclmholds"_n.value:case "actors"_n.value:case "sessions"_n.value:case "evmbindings"_n.value:return true;default:return false;}
   }
   ram_migration_cursor capture(const Row& row){

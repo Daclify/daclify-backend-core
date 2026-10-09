@@ -399,6 +399,24 @@ export const ServiceResponseRoutes = [
 }[];
 
 export const ContractFailureMessages = {
+  RAM_QUOTA_ACTIVE:
+    'The operator must disable this DAO’s RAM guard before legacy completion adoption.',
+  RAM_CREDENTIAL_REQUIRED:
+    'The operator must complete legacy signing and recovery adoption before enabling this DAO’s RAM guard.',
+  RAM_CLAIM_HOLD_REQUIRED:
+    'The operator must provide a physical completion hold for existing claims before enabling this DAO’s RAM guard.',
+  RAM_OBLIGATION_HOLD_REQUIRED:
+    'The operator must provide physical completion holds for pending obligations before enabling this DAO’s RAM guard.',
+  RAM_COMPLETION_SCAN_LIMIT:
+    'This DAO needs bounded legacy completion qualification before its RAM guard can be enabled.',
+  RAM_WORK_REFS_REQUIRED:
+    'The operator must reserve document references for accepted work before enabling this DAO’s RAM guard.',
+  RAM_PAYROLL_CONTROL_REQUIRED:
+    'The operator must adopt existing Payroll settlement controls before enabling this DAO’s RAM guard.',
+  RAM_ELECTION_HOLD_REQUIRED:
+    'The operator must reserve finalization capacity for active elections before enabling this DAO’s RAM guard.',
+  RAM_POLL_END_REQUIRED:
+    'The operator must adopt ordinary poll completion markers before enabling this DAO’s RAM guard.',
   RAM_ORDINARY_EXHAUSTED:
     'This DAO needs additional ordinary RAM before this write or partial withdrawal. A full-claim withdrawal can use its reserved hold.',
   RAM_DAO_EXHAUSTED:

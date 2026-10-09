@@ -176,7 +176,9 @@ public:
     action(permission_level{get_self(),"active"_n},get_self(),"checkrampool"_n,std::make_tuple(payer)).send();
   }
   ACTION inheritram(uint64_t dao_id,name payer,uint64_t activity_headroom,uint64_t identity_headroom,uint64_t completion_headroom){
-    require_auth(get_self());ram_migration_settings migration(get_self(),get_self().value);check(migration.exists()&&!migration.get().active,"RAM_MIGRATION_INCOMPLETE");dao_rows.get(dao_id,"DAO_UNKNOWN");
+    require_auth(get_self());ram_migration_settings migration(get_self(),get_self().value);
+    if(migration.exists())check(!migration.get().active,"RAM_MIGRATION_INCOMPLETE");else{require_migration_family(get_self(),dao_id,"oldobs"_n);require_migration_family(get_self(),dao_id,"oldclaims"_n);}
+    dao_rows.get(dao_id,"DAO_UNKNOWN");
     ram_inherited inherited(get_self(),dao_id);auto prior=inherited.find(payer.value);
     if(prior!=inherited.end()){check(prior->activity_headroom==activity_headroom&&prior->identity_headroom==identity_headroom&&prior->completion_headroom==completion_headroom,"RAM_GRANT_IMMUTABLE");return;}
     ram_limits prior_limits(get_self(),dao_id);check(prior_limits.find(payer.value)==prior_limits.end(),"RAM_INHERITED_ALLOCATION");
@@ -195,8 +197,15 @@ public:
     ram_observer_settings observer(get_self(),get_self().value);auto cfg=observer.get();check(cfg.runtime_hash==get_code_hash(get_self()),"RAM_SOURCE_CODE");
     ram_quota_settings saved(get_self(),dao_id);const bool existed=saved.exists();if(existed&&saved.get().enabled==enabled)return;
     ram_pools pools(get_self(),get_self().value);
-    if(enabled){check_ram_pool(get_self(),pools.get(get_self().value,"RAM_POOL_UNKNOWN"));modules installed(get_self(),dao_id);
-      for(const auto& grant:installed)check_ram_pool(get_self(),pools.get(grant.account.value,"RAM_POOL_UNKNOWN"));
+    if(enabled){
+      members people(get_self(),dao_id);participants identities(get_self(),dao_id);ram_holds holds(get_self(),dao_id);ram_claim_holds legacy(get_self(),dao_id);
+      auto ready=holds.get_index<"byrecipient"_n>();auto inherited=legacy.get_index<"byrecipient"_n>();uint32_t count=0;
+      for(const auto& person:people){check(++count<=5000,"RAM_COMPLETION_SCAN_LIMIT");check(identities.find(person.id)!=identities.end(),"RAM_CREDENTIAL_REQUIRED");
+        if(person.claim>0){auto current=ready.find(person.id);auto old=inherited.find(person.id);check((current!=ready.end()&&current->ready&&current->padding.size()>=512)||(old!=inherited.end()&&old->ready&&old->padding.size()>=512),"RAM_CLAIM_HOLD_REQUIRED");}}
+      obligations pending(get_self(),dao_id);count=0;for(const auto& debt:pending){check(++count<=5000,"RAM_COMPLETION_SCAN_LIMIT");if(debt.status<=1){auto held=holds.find(debt.id);check(held!=holds.end()&&!held->ready&&held->recipient==debt.recipient&&held->padding.size()>=1024,"RAM_OBLIGATION_HOLD_REQUIRED");}}
+      check_ram_pool(get_self(),pools.get(get_self().value,"RAM_POOL_UNKNOWN"));modules installed(get_self(),dao_id);
+      uint32_t module_count=0;for(const auto& grant:installed){check(++module_count<=5,"RAM_MIGRATION_SOURCE_LIMIT");check(get_code_hash(grant.account)==grant.code_hash,"MODULE_CODE");
+        action(permission_level{get_self(),"active"_n},grant.account,"checkquota"_n,std::make_tuple(get_self(),dao_id)).send();check_ram_pool(get_self(),pools.get(grant.account.value,"RAM_POOL_UNKNOWN"));}
       ram_counters used(get_self(),dao_id);
       for(const auto& row:used)check_ram_pool(get_self(),pools.get(row.payer.value,"RAM_POOL_UNKNOWN"));
     }
@@ -270,9 +279,11 @@ public:
     check(false,"RAM_MIGRATION_TABLE");
   }
   ACTION adoptram(uint64_t dao_id,bool claims,uint32_t limit){
-    require_auth(get_self());check(ram_backfill_active(get_self()),"RAM_MIGRATION_INACTIVE");dao_rows.get(dao_id,"DAO_UNKNOWN");check(limit>=1&&limit<=25,"RAM_MIGRATION_BATCH");
-    if(claims)require_migration_family(get_self(),dao_id,"adoptobs"_n);
-    const auto table=claims?"adoptclaims"_n:"adoptobs"_n;auto progress=migration_cursor(get_self(),get_self(),dao_id,table,false,0,0);if(progress.complete)return;
+    require_auth(get_self());dao_rows.get(dao_id,"DAO_UNKNOWN");check(limit>=1&&limit<=25,"RAM_MIGRATION_BATCH");
+    const bool backfill=ram_backfill_active(get_self());if(!backfill){check(!ram_quota_enabled(get_self(),dao_id),"RAM_QUOTA_ACTIVE");check(ram_observer_settings(get_self(),get_self().value).get().runtime_hash==get_code_hash(get_self()),"RAM_SOURCE_CODE");}
+    const auto debts_stage=backfill?"adoptobs"_n:"oldobs"_n;const auto claims_stage=backfill?"adoptclaims"_n:"oldclaims"_n;
+    if(claims)require_migration_family(get_self(),dao_id,debts_stage);
+    const auto table=claims?claims_stage:debts_stage;auto progress=migration_cursor(get_self(),get_self(),dao_id,table,false,0,0);if(progress.complete)return;
     uint32_t count=0;bool complete=false;
     if(claims){
       members people(get_self(),dao_id);auto it=progress.advanced?people.upper_bound(progress.cursor):people.begin();

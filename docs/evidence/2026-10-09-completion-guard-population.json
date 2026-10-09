@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 2,
+  "runtime": "ramobs3grlel",
+  "chainId": "d9f6e8c655703ba364f0ee82b4fd0631350475747b1924396c8fbef2558b8f51",
+  "coreCodeHash": "c762b54b8f8225f9f0a906cd0b208d675bc4fb9e5bc4572872fb192a54f219f7",
+  "moduleCodeHashes": {
+    "decide": "1ca2ac6de52772a42ca29b4689ede3f9b30f707b845e3a4e30f70069c5a940d5",
+    "works": "edb0197c26542f6d61aa3ae2e94377109d5e39e5dd09f7ee9476b06f8778053c",
+    "payroll": "4db6a327656d81fb055da26f359beb6d97cb4f3bb172b1efbd1e71c59ff7a8e7",
+    "grants-rounds": "e973f83fbe27e548d4ef14733f511d705d066db74a32a5ff65ca7f005af138fa",
+    "endorsement-admission": "e1a0f64dc42c8e8ad1d324cf92d1dfe01cebba77b130fb2be74ba9ee4d88df48"
+  },
+  "population": {
+    "daos": 200,
+    "membersPerDao": 200
+  },
+  "membershipCount": 40000,
+  "enforcedDaos": 200,
+  "measurements": [
+    {
+      "payer": "ramobs3grlel",
+      "baselineBytes": "9073149",
+      "usedBytes": "42253263",
+      "quotaBytes": "268436854",
+      "allocatedBytes": "114688000",
+      "nativeDeltaBytes": "33180114",
+      "accountedDeltaBytes": "33180114"
+    },
+    {
+      "payer": "rdecid3grlel",
+      "baselineBytes": "2719771",
+      "usedBytes": "2869187",
+      "quotaBytes": "33555831",
+      "allocatedBytes": "13107200",
+      "nativeDeltaBytes": "149416",
+      "accountedDeltaBytes": "149416"
+    },
+    {
+      "payer": "rworks3grlel",
+      "baselineBytes": "1284424",
+      "usedBytes": "1407080",
+      "quotaBytes": "33555831",
+      "allocatedBytes": "13107200",
+      "nativeDeltaBytes": "122656",
+      "accountedDeltaBytes": "122656"
+    },
+    {
+      "payer": "rpayrl3grlel",
+      "baselineBytes": "850625",
+      "usedBytes": "1046593",
+      "quotaBytes": "33555831",
+      "allocatedBytes": "9830400",
+      "nativeDeltaBytes": "195968",
+      "accountedDeltaBytes": "195968"
+    },
+    {
+      "payer": "rgrant3grlel",
+      "baselineBytes": "1113801",
+      "usedBytes": "1180145",
+      "quotaBytes": "33555831",
+      "allocatedBytes": "13107200",
+      "nativeDeltaBytes": "66344",
+      "accountedDeltaBytes": "66344"
+    },
+    {
+      "payer": "rendor3grlel",
+      "baselineBytes": "842305",
+      "usedBytes": "920049",
+      "quotaBytes": "33555831",
+      "allocatedBytes": "9830400",
+      "nativeDeltaBytes": "77744",
+      "accountedDeltaBytes": "77744"
+    }
+  ],
+  "samples": [
+    {
+      "stage": "rdecid3grlel:exclusive-code-binding-baseline",
+      "bytes": "2719771"
+    },
+    {
+      "stage": "rworks3grlel:exclusive-code-binding-baseline",
+      "bytes": "1284424"
+    },
+    {
+      "stage": "rpayrl3grlel:exclusive-code-binding-baseline",
+      "bytes": "850625"
+    },
+    {
+      "stage": "rgrant3grlel:exclusive-code-binding-baseline",
+      "bytes": "1113801"
+    },
+    {
+      "stage": "rendor3grlel:exclusive-code-binding-baseline",
+      "bytes": "842305"
+    },
+    {
+      "stage": "ramobs3grlel:code-permissions-initial-settings",
+      "bytes": "9073149"
+    },
+    {
+      "stage": "ramobs3grlel:200-daos-and-automatic-six-payer-allocations",
+      "bytes": "9916751"
+    },
+    {
+      "stage": "ramobs3grlel:40000-active-memberships",
+      "bytes": "40063951"
+    },
+    {
+      "stage": "ramobs3grlel:200-explicitly-enforced-daos",
+      "bytes": "40108951"
+    },
+    {
+      "stage": "ramobs3grlel:all-module-mutations-complete",
+      "bytes": "42253263"
+    },
+    {
+      "stage": "rdecid3grlel:all-module-mutations-complete",
+      "bytes": "2869187"
+    },
+    {
+      "stage": "rworks3grlel:all-module-mutations-complete",
+      "bytes": "1407080"
+    },
+    {
+      "stage": "rpayrl3grlel:all-module-mutations-complete",
+      "bytes": "1046593"
+    },
+    {
+      "stage": "rgrant3grlel:all-module-mutations-complete",
+      "bytes": "1180145"
+    },
+    {
+      "stage": "rendor3grlel:all-module-mutations-complete",
+      "bytes": "920049"
+    }
+  ],
+  "representativeOperationsPerDao": 11,
+  "limits": [
+    "200 disposable identities reused across DAOs model memberships, not 40000 distinct people.",
+    "One representative workflow per DAO; not throughput, complete lifecycle or projected activity volumes.",
+    "Representative writes use active per-DAO guards and receipt/reference holds; exhaustion, legacy backfill and live billing are qualified separately, not by this population run.",
+    "Free capacity, included payer split and market supply are synthetic owned-fixture settings."
+  ],
+  "runtimeScope": "13377172899349943568"
+}
