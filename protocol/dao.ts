@@ -199,6 +199,13 @@ export const GovernanceStateSchema = z.strictObject({
   guardian: RuntimeTableSchemas.guards.nullable(),
   budget: RuntimeTableSchemas.budgets.nullable(),
   admission: RuntimeTableSchemas.admpolicies.nullable().default(null),
+  executivePolicy: RuntimeTableSchemas.execpols.nullable().default(null),
+  executives: z.array(RuntimeTableSchemas.executives).default([]),
+  executiveMembers: z.array(RuntimeTableSchemas.members).default([]),
+  excludedVoters: z.array(RuntimeTableSchemas.nonvoters).default([]),
+  nativeGovernance: RuntimeTableSchemas.nativegov.nullable().default(null),
+  nativeSetupEligible: z.boolean().default(false),
+  executiveHandover: RuntimeTableSchemas.execpending.nullable().default(null),
 });
 export function defaultDaoSetup(presetId: DaoPurpose = 'community'): DaoSetup {
   const preset = DaoPresets.find((preset) => preset.id === presetId);

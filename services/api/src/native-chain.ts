@@ -356,6 +356,11 @@ export class NativeChainGateway implements ChainGateway {
         'native-linked',
         'encrypted-documents',
         ...(actions.includes('authproof') ? ['native-sign-in'] : []),
+        ...(actions.includes('handover') &&
+        actions.includes('refreshgov') &&
+        actions.includes('electexec')
+          ? ['executive-authority']
+          : []),
         ...(actions.includes('submitevm') && actions.includes('linkevm')
           ? ['evm-eoa-governance']
           : []),
@@ -1671,21 +1676,62 @@ export class NativeChainGateway implements ChainGateway {
     }
     return page.daos;
   }
+  async nativeGovernanceWalletInUse(chainId: string, account: string): Promise<boolean> {
+    if (chainId !== this.config.chainId) return false;
+    await this.checkWalletChain();
+    const abi = await this.api.v1.chain.get_abi(this.config.runtime);
+    if (!abi.abi?.tables.some((table) => table.name === 'nativegov')) return false;
+    const cfg = (await this.table('nativegov', this.config.runtime, '0', 1))[0];
+    if (!cfg?.handed_over) return false;
+    const offices = await this.table('executives', cfg.dao_id, '0', 8);
+    const bindings = await Promise.all(
+      offices.map(async (office) => {
+        const [people, actors] = await Promise.all([
+          this.table('members', cfg.dao_id, office.member_id, 1),
+          this.table('actors', cfg.dao_id, office.member_id, 1),
+        ]);
+        const member = people[0],
+          actor = actors[0];
+        return (
+          member?.id === office.member_id &&
+          member.active &&
+          member.native_account === account &&
+          !(actor?.id === office.member_id && actor.revoked)
+        );
+      }),
+    );
+    return bindings.some(Boolean);
+  }
   async governance(daoId: string): Promise<GovernanceState> {
     const dao = await this.dao(daoId);
-    const [policies, actors, sessions, guardians, budgets, admission] = await Promise.all([
+    const abi = await this.api.v1.chain.get_abi(this.config.runtime);
+    const available = new Set(abi.abi?.tables.map((table) => table.name));
+    const [
+      policies,
+      actors,
+      sessions,
+      guardians,
+      budgets,
+      admission,
+      executivePolicies,
+      executives,
+      excludedVoters,
+      nativeGovernance,
+      executiveHandovers,
+      market,
+    ] = await Promise.all([
       this.table('govpolicies', this.config.runtime, daoId, 1),
       this.table('actors', daoId, '0', 5000),
       this.table('sessions', daoId, '0', 5000),
       this.table('guards', this.config.runtime, daoId, 1),
       this.table('budgets', this.config.runtime, daoId, 1),
-      this.api.v1.chain
-        .get_abi(this.config.runtime)
-        .then((result) =>
-          result.abi?.tables.some((table) => table.name === 'admpolicies')
-            ? this.table('admpolicies', this.config.runtime, daoId, 1)
-            : [],
-        ),
+      available.has('admpolicies') ? this.table('admpolicies', this.config.runtime, daoId, 1) : [],
+      available.has('execpols') ? this.table('execpols', this.config.runtime, daoId, 1) : [],
+      available.has('executives') ? this.table('executives', daoId, '0', 8) : [],
+      available.has('nonvoters') ? this.table('nonvoters', daoId, '0', 5000) : [],
+      available.has('nativegov') ? this.table('nativegov', this.config.runtime, '0', 1) : [],
+      available.has('execpending') ? this.table('execpending', this.config.runtime, daoId, 1) : [],
+      available.has('mktcfg') ? this.table('mktcfg', this.config.runtime, '0', 1) : [],
     ]);
     return GovernanceStateSchema.parse({
       dao: dao.reference,
@@ -1695,6 +1741,19 @@ export class NativeChainGateway implements ChainGateway {
       guardian: guardians.find((row) => row.dao_id === daoId) ?? null,
       budget: budgets.find((row) => row.dao_id === daoId) ?? null,
       admission: admission.find((row) => row.dao_id === daoId) ?? null,
+      executivePolicy: executivePolicies.find((row) => row.dao_id === daoId) ?? null,
+      executives,
+      excludedVoters,
+      executiveMembers: (
+        await Promise.all(
+          executives.map((office) => this.table('members', daoId, office.member_id, 1)),
+        )
+      ).flat(),
+      nativeGovernance: nativeGovernance.find((row) => row.dao_id === daoId) ?? null,
+      executiveHandover: executiveHandovers.find((row) => row.dao_id === daoId) ?? null,
+      nativeSetupEligible:
+        market.some((row) => row.dao_id === daoId) ||
+        nativeGovernance.some((row) => row.dao_id === daoId),
     });
   }
   async dao(daoId: string): Promise<DaoSummary> {
@@ -2145,12 +2204,29 @@ export class NativeChainGateway implements ChainGateway {
     const info = await this.api.v1.chain.get_info();
     if (info.chain_id.toString() !== this.config.chainId)
       throw new ApiError('CHAIN_ID_MISMATCH', 503);
+    let creationPermission = 'active';
+    if (bootstrap.owner === this.config.runtime) {
+      const owner = await this.api.v1.chain.get_account(bootstrap.owner);
+      const service = owner.permissions.find((p) => p.perm_name.toString() === 'service');
+      if (service) {
+        const auth = service.required_auth;
+        if (
+          auth.threshold.toNumber() !== 1 ||
+          auth.keys.length !== 1 ||
+          auth.accounts.length ||
+          auth.waits.length ||
+          !auth.keys[0]?.key.equals(bootstrap.key.toPublic())
+        )
+          throw new ApiError('BOOTSTRAP_UNAVAILABLE', 503);
+        creationPermission = 'service';
+      }
+    }
     const actions = [
       Action.from({
         account: this.config.runtime,
         name: paid ? 'createpaid' : 'createdao',
         authorization: [
-          { actor: bootstrap.owner, permission: 'active' },
+          { actor: bootstrap.owner, permission: creationPermission },
           ...(paid && this.config.relayActor !== bootstrap.owner
             ? [{ actor: this.config.relayActor, permission: 'active' }]
             : []),
@@ -2179,7 +2255,7 @@ export class NativeChainGateway implements ChainGateway {
       Action.from({
         account: this.config.runtime,
         name: 'enroll',
-        authorization: [{ actor: bootstrap.owner, permission: 'active' }],
+        authorization: [{ actor: bootstrap.owner, permission: creationPermission }],
         data: encodeAction('enroll', {
           dao_id: id,
           member_id: '1',
@@ -2197,7 +2273,7 @@ export class NativeChainGateway implements ChainGateway {
         Action.from({
           account: this.config.runtime,
           name: 'initgov',
-          authorization: [{ actor: bootstrap.owner, permission: 'active' }],
+          authorization: [{ actor: bootstrap.owner, permission: creationPermission }],
           data: encodeAction('initgov', {
             dao_id: id,
             settings: governanceSettings(setup, decide.account),
@@ -2208,7 +2284,7 @@ export class NativeChainGateway implements ChainGateway {
         actions[2] = Action.from({
           account: this.config.runtime,
           name: 'enrollagent',
-          authorization: [{ actor: bootstrap.owner, permission: 'active' }],
+          authorization: [{ actor: bootstrap.owner, permission: creationPermission }],
           data: encodeAction('enrollagent', {
             dao_id: id,
             member_id: '1',
@@ -2225,7 +2301,7 @@ export class NativeChainGateway implements ChainGateway {
           Action.from({
             account: this.config.runtime,
             name: 'setmodule',
-            authorization: [{ actor: bootstrap.owner, permission: 'active' }],
+            authorization: [{ actor: bootstrap.owner, permission: creationPermission }],
             data: encodeAction('setmodule', { ...installation, dao_id: id }),
           }),
         );

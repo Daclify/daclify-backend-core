@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.8.0-alpha.1 · interface 1.
+Package 0.9.0-alpha.1 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -374,9 +374,35 @@ Only the requested question and optional previous bot answer, together with publ
 
 Telegram delivery is at most once per update in normal operation. A PostgreSQL receipt is claimed before inference and sending to prevent repeat replies and duplicate model calls on webhook retries. A crash or uncertain send can lose a reply; retry /docs manually. There is no automatic repeated send. Use separate bot identities for testnet and mainnet because one bot has one webhook. A webhook conflict is refused rather than silently replacing another integration.
 
+## Executive authority, inactivity and wallet handover
+
+Membership, voting eligibility, application administrator roles and native executive office are separate. Wallet pairing alone never appoints an executive. Native executive authority requires an active, non-revoked member in the appointed roster with a paired Telos Zero account. An EVM, email or Telegram pairing is not a native Antelope permission entry. After native handover, the governing DAO’s administrator rights follow its eligible paired executive roster. Shared DAO administrator roles remain separate. App administrator actions are individually signed; native ownership changes require the configured quorum.
+
+Shared DAOs govern their own records. Only the deployment’s governing DAO changes runtime and managed contract account permissions: Daclify DAO on the shared platform, or the governing DAO of an independent runtime. The existing deployment authority appoints initial internal member IDs. Existing data stays readable and retains its prior voting eligibility until changed.
+
+Native ownership setup is explicit. The current runtime owner signs the nativeOwnershipSetupActions transaction once, locking native setcode/setabi to owner and calling setnativegov, naming the governing DAO, managed contract accounts and the hosting service public key. Until an appointed executive pairs a wallet and current account owners sign handover, bootstrap permissions remain unchanged. Use handoverOwnerActions together with handover in ONE transaction; never broadcast its temporary owner delegations separately. Failure rolls back every action. Handover removes bootstrap keys from managed owner/active authorities and cannot revert automatically to bootstrap.
+
+The govern permission contains eligible paired executives. Runtime owner delegates to govern or runtime contract code; runtime active delegates to govern or runtime code. Managed contract owner delegates to runtime govern; managed active delegates to runtime govern or its own code. Backend DAO creation uses a service child permission linked only to the creation, initialization, enrollment and installation actions. It does not satisfy owner or govern and cannot enroll platform members or configure platform modules without native active quorum authority. Settler, oracle and fee-wallet permissions are separate unless deliberately included in an owner-reviewed deployment plan.
+
+The default inactivity timeout is 30 days, configurable from one minute to one year, or disabled with zero. The default native threshold requires all active eligible paired executives. One remaining active executive can control the deployment, including upgrades and root changes. When all are inactive, their paired authorities remain as fallback; a returning appointed executive can sign heartbeat to become active and synchronize the effective quorum. Ordinary members and replaced executives cannot claim office with a heartbeat.
+
+Time passing alone cannot rewrite blockchain permissions. syncexec is callable by any signed native payer; refreshgov uses an existing signed member instruction through the app relayer. Member instructions, wallet binding changes and executive heartbeats refresh relevant native authority. The UI shows the last synchronized native threshold separately from recorded activity. A service outage does not prevent direct native refresh or paired-wallet control.
+
+The final eligible paired native executive cannot unlink, deactivate, be revoked or be replaced with a roster without a paired controller after handover. Replace the wallet with linknative using existing member authorization and proof of the incoming wallet in one transaction. If any update fails, the binding, nonce, credential changes and permissions roll back. Removed wallets immediately lose their delegated govern authority on a successful chain transaction. Changing an account’s own keys still requires its own native recovery authority.
+
+Login pairing is a service record; DAO wallet binding is on-chain. Sign-in pairing removal or replacement is blocked while the old wallet is still an active native executive binding on this service. First replace or remove the on-chain binding. For independent deployments, verify each deployment separately; removing a sign-in credential does not revoke authority on another operator’s chain or contracts. A failed or unavailable chain check must not silently authorize executive sign-in removal.
+
+An explicitly configured Decide election titled Executives can schedule native executive handover. Other election titles remain representative offices and grant no executive powers. The pinned Decide grant electexec is required. Winning rosters activate at term start through synchronization. With no eligible paired successor, the outgoing roster holds authority; the pending elected roster can activate through synchronization after an eligible successor pairs, while the term is still valid. Expired, recalled, superseded and already consumed results cannot replay an old handover. Recalling the final native controller is blocked until a replacement is available.
+
+Voting eligibility uses setvoter and a separate exclusion table. Excluded members remain members and may retain application access. Decide excludes their member, credit and stake weights from new ballot denominators and rejects their votes. Active ballots block eligibility changes. Native executive inactivity does not automatically remove ordinary voting eligibility.
+
+Native governance depends on reviewed, upgradeable contract code because runtime code has owner delegation. Explicit owner authority can replace this model, including the safety guards. Keep adequate native RAM and external recovery material; pairing and signing-key recovery do not recover document decryption keys. These mechanisms do not make a compromised client or a malicious authorized executive harmless.
+
+Handover includes expected signer accounts, threshold and executive-policy revision. A changed roster or activity state rejects stale owner approval. Managed executive accounts trust their custody provider with the Daclify signing key; that key can authorize paired-wallet replacement and therefore change native control. Choose user-controlled executive accounts when this authority must not be delegated to a provider.
+
 ## runtime contract
 
-Source ABI JSON SHA-256: `f263203034d46b332021e7e837bdde670b3cce8c5aaa65ab767410bf9ee9a316`.
+Source ABI JSON SHA-256: `019b8689886580633b4f1861c1656b07dcfbbf075956e73fe175d4f860c62a2d`.
 
 ### Action: addmember
 
@@ -419,6 +445,15 @@ Source ABI JSON SHA-256: `f263203034d46b332021e7e837bdde670b3cce8c5aaa65ab767410
 | dao_id | uint64 |
 | claims | bool |
 | limit | uint32 |
+
+### Action: appoint
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| member_ids | uint64[] |
+| inactivity_seconds | uint32 |
+| quorum_bps | uint16 |
 
 ### Action: approveob
 
@@ -623,6 +658,17 @@ Source ABI JSON SHA-256: `f263203034d46b332021e7e837bdde670b3cce8c5aaa65ab767410
 | dao_id | uint64 |
 | source | name |
 | tables | name[] |
+
+### Action: electexec
+
+| Field | ABI type |
+| --- | --- |
+| source | name |
+| dao_id | uint64 |
+| election_id | uint64 |
+| member_ids | uint64[] |
+| starts | uint32 |
+| ends | uint32 |
 
 ### Action: enroll
 
@@ -837,6 +883,23 @@ Source ABI JSON SHA-256: `f263203034d46b332021e7e837bdde670b3cce8c5aaa65ab767410
 | dao_id | uint64 |
 | member_id | uint64 |
 
+### Action: handover
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| expected_signers | name[] |
+| expected_threshold | uint32 |
+| expected_revision | uint64 |
+
+### Action: heartbeat
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+
 ### Action: inheritram
 
 | Field | ABI type |
@@ -1006,6 +1069,23 @@ Source ABI JSON SHA-256: `f263203034d46b332021e7e837bdde670b3cce8c5aaa65ab767410
 | expected_old_hash | checksum256 |
 | expected_new_hash | checksum256 |
 
+### Action: recallexec
+
+| Field | ABI type |
+| --- | --- |
+| source | name |
+| dao_id | uint64 |
+| election_id | uint64 |
+| member_id | uint64 |
+
+### Action: refreshgov
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+
 ### Action: reserve
 
 | Field | ABI type |
@@ -1154,6 +1234,17 @@ Source ABI JSON SHA-256: `f263203034d46b332021e7e837bdde670b3cce8c5aaa65ab767410
 | dao_id | uint64 |
 | enabled | bool |
 
+### Action: setexecs
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| member_ids | uint64[] |
+| inactivity_seconds | uint32 |
+| quorum_bps | uint16 |
+
 ### Action: setfees
 
 | Field | ABI type |
@@ -1205,6 +1296,14 @@ Source ABI JSON SHA-256: `f263203034d46b332021e7e837bdde670b3cce8c5aaa65ab767410
 | actions | name[] |
 | grants | name[] |
 | code_hash | checksum256 |
+
+### Action: setnativegov
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| contracts | name[] |
+| service_key | public_key |
 
 ### Action: setoracle
 
@@ -1278,6 +1377,16 @@ Source ABI JSON SHA-256: `f263203034d46b332021e7e837bdde670b3cce8c5aaa65ab767410
 | admin | bool |
 | reviewer | bool |
 
+### Action: setvoter
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| target | uint64 |
+| can_vote | bool |
+
 ### Action: submit
 
 | Field | ABI type |
@@ -1308,6 +1417,12 @@ Source ABI JSON SHA-256: `f263203034d46b332021e7e837bdde670b3cce8c5aaa65ab767410
 | request | instruction |
 | session_id | uint64 |
 | sig | signature |
+
+### Action: syncexec
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
 
 ### Action: unlinkevm
 
@@ -1619,6 +1734,35 @@ Source ABI JSON SHA-256: `f263203034d46b332021e7e837bdde670b3cce8c5aaa65ab767410
 | epoch | uint64 |
 | active | bool |
 
+### Table: execpending
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| election_id | uint64 |
+| starts | uint32 |
+| ends | uint32 |
+| members | uint64[] |
+
+### Table: execpols
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| inactivity_seconds | uint32 |
+| quorum_bps | uint16 |
+| revision | uint64 |
+| last_election_start | uint32 |
+
+### Table: executives
+
+| Field | ABI type |
+| --- | --- |
+| member_id | uint64 |
+| last_active | uint32 |
+| office_epoch | uint64 |
+| election_id | uint64 |
+
 ### Table: feecfg
 
 | Field | ABI type |
@@ -1723,6 +1867,24 @@ Source ABI JSON SHA-256: `f263203034d46b332021e7e837bdde670b3cce8c5aaa65ab767410
 | actions | name[] |
 | grants | name[] |
 | code_hash | checksum256 |
+
+### Table: nativegov
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| contracts | name[] |
+| service_key | public_key |
+| handed_over | bool |
+| signers | name[] |
+| threshold | uint32 |
+| admin_members | uint64[] |
+
+### Table: nonvoters
+
+| Field | ABI type |
+| --- | --- |
+| member_id | uint64 |
 
 ### Table: obligations
 
@@ -10936,6 +11098,289 @@ Response:
           "type": "null"
         }
       ]
+    },
+    "executivePolicy": {
+      "default": null,
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "dao_id": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "inactivity_seconds": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "quorum_bps": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "revision": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "last_election_start": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            }
+          },
+          "required": [
+            "dao_id",
+            "inactivity_seconds",
+            "quorum_bps",
+            "revision",
+            "last_election_start"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "executives": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "member_id": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "last_active": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295
+          },
+          "office_epoch": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "election_id": {
+            "type": "string",
+            "maxLength": 20
+          }
+        },
+        "required": [
+          "member_id",
+          "last_active",
+          "office_epoch",
+          "election_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "executiveMembers": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "native_account": {
+            "type": "string",
+            "maxLength": 13
+          },
+          "signing_key": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "encryption_key": {
+            "type": "string",
+            "maxLength": 16384
+          },
+          "custody": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          },
+          "nonce": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "credits": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "admin": {
+            "type": "boolean"
+          },
+          "reviewer": {
+            "type": "boolean"
+          },
+          "stake": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "claim": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "join_epoch": {
+            "type": "string",
+            "maxLength": 20
+          }
+        },
+        "required": [
+          "id",
+          "native_account",
+          "signing_key",
+          "encryption_key",
+          "custody",
+          "nonce",
+          "credits",
+          "active",
+          "admin",
+          "reviewer",
+          "stake",
+          "claim",
+          "join_epoch"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "excludedVoters": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "member_id": {
+            "type": "string",
+            "maxLength": 20
+          }
+        },
+        "required": [
+          "member_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "nativeGovernance": {
+      "default": null,
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "dao_id": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "contracts": {
+              "maxItems": 64,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 13
+              }
+            },
+            "service_key": {
+              "type": "string",
+              "maxLength": 128
+            },
+            "handed_over": {
+              "type": "boolean"
+            },
+            "signers": {
+              "maxItems": 64,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 13
+              }
+            },
+            "threshold": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "admin_members": {
+              "maxItems": 64,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 20
+              }
+            }
+          },
+          "required": [
+            "dao_id",
+            "contracts",
+            "service_key",
+            "handed_over",
+            "signers",
+            "threshold",
+            "admin_members"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nativeSetupEligible": {
+      "default": false,
+      "type": "boolean"
+    },
+    "executiveHandover": {
+      "default": null,
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "dao_id": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "election_id": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "starts": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "ends": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 4294967295
+            },
+            "members": {
+              "maxItems": 64,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 20
+              }
+            }
+          },
+          "required": [
+            "dao_id",
+            "election_id",
+            "starts",
+            "ends",
+            "members"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   },
   "required": [
@@ -10945,7 +11390,14 @@ Response:
     "sessions",
     "guardian",
     "budget",
-    "admission"
+    "admission",
+    "executivePolicy",
+    "executives",
+    "executiveMembers",
+    "excludedVoters",
+    "nativeGovernance",
+    "nativeSetupEligible",
+    "executiveHandover"
   ],
   "additionalProperties": false
 }

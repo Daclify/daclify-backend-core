@@ -40,6 +40,7 @@ export function registerNativeRoutes(
   sessionCookie: (reply: FastifyReply, token: string) => void,
   discover?: (wallet: WalletIdentity) => Promise<UserMembership[]>,
   audience: string = origin,
+  governanceWalletInUse?: (chainId: string, account: string) => Promise<boolean>,
 ): void {
   const secure = new URL(origin).protocol === 'https:',
     attemptCookie = secure ? '__Host-daclify_native_attempt' : 'daclify_native_attempt';
@@ -170,6 +171,13 @@ export function registerNativeRoutes(
             [current.id, identity.chainId],
           )
         ).rows[0];
+        if (
+          previous &&
+          previous.native_account !== identity.account &&
+          governanceWalletInUse &&
+          (await governanceWalletInUse(identity.chainId, previous.native_account))
+        )
+          throw new ApiError('NATIVE_EXECUTIVE_BINDING_REQUIRED', 409);
         await client.query(
           'INSERT INTO native_links(account_id,chain_id,native_account,permission) VALUES($1,$2,$3,$4) ON CONFLICT(account_id,chain_id) DO UPDATE SET native_account=EXCLUDED.native_account,permission=EXCLUDED.permission,created_at=now()',
           [current.id, identity.chainId, identity.account, identity.permission],
@@ -217,6 +225,11 @@ export function registerNativeRoutes(
         )
       ).rows[0];
       if (!removed) throw new ApiError('CREDENTIAL_UNKNOWN', 404);
+      if (
+        governanceWalletInUse &&
+        (await governanceWalletInUse(input.chainId, removed.native_account))
+      )
+        throw new ApiError('NATIVE_EXECUTIVE_BINDING_REQUIRED', 409);
       await revokeCredentialSessions(
         client,
         current.id,

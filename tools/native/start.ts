@@ -36,6 +36,7 @@ const key = PrivateKey.generate('K1');
 const accountNames = [
   'alice',
   'bob',
+  'carol',
   'relay',
   'daclifycore',
   'daclifyhub',

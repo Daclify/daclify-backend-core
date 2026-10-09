@@ -4,7 +4,7 @@ Strict boundary schemas, full DAO references, integer amounts, account and encry
 
 Import schemas from `@daclify/core-protocol`, contract codecs from `@daclify/core-protocol/sdk`, and the build-time generator from `@daclify/core-protocol/compiler`. Generated contract types and runtime validators originate from the same compiled C++ ABI. Native RPC reads normalize exact integer transport, `0`/`1` booleans, and legacy public keys; instruction inputs remain strict.
 
-The current development package is 0.8.0-alpha.1 with contract interface 1. `AccountSchema` includes vault accounts with public keys and user-controlled wallet-only accounts with both key fields null; narrow that union before signing or encryption. `VaultAccountSchema` and `JoinIdentitySchema` still require keys. Wallet recovery retains chain DAO/member IDs while a rebuilt service can have a new account UUID. Vault-attachment schemas bind origin, session intent and incoming keys; the API separately verifies current wallet control and signing-key possession.
+The current development package is 0.9.0-alpha.1 with contract interface 1. `AccountSchema` includes vault accounts with public keys and user-controlled wallet-only accounts with both key fields null; narrow that union before signing or encryption. `VaultAccountSchema` and `JoinIdentitySchema` still require keys. Wallet recovery retains chain DAO/member IDs while a rebuilt service can have a new account UUID. Vault-attachment schemas bind origin, session intent and incoming keys; the API separately verifies current wallet control and signing-key possession.
 
 The development version is unreleased and its interfaces may change. Released consumers must pin an immutable registry version and a tested release manifest. The package does not represent a production security audit or a deployed chain capability.
 
@@ -21,3 +21,5 @@ combining this SDK with proprietary code; there is no blanket module exception.
 
 
 `nativeTokenOpenAction(token,wallet,destination)` encodes the standard native token `open` action with the receiving wallet as both owner and RAM payer. It validates the producer-owned asset and native identity, exact chain and destination. Preparation does not pair an identity or authorize a withdrawal. Tokens without the qualified standard `open`/`accounts` layout need operator review; an existing row alone does not qualify arbitrary token RAM behavior.
+
+Executive actions and tables are ABI-generated. `nativeOwnershipSetupActions` prepares owner-only code/ABI links plus immutable governance configuration. `handoverOwnerActions` stages existing owner authority for atomic handover; include it and `handover` in one transaction, never broadcast staging separately. The handover action requires the expected signer roster, threshold and policy revision to reject stale approval. See [upgrade 0.9](https://github.com/Daclify/daclify-backend-core/blob/dev/docs/operations/upgrade-0.9.md).

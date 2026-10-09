@@ -49,8 +49,10 @@ it('seals complete scope coverage in bounded batches and retries without changin
   const scoped = families.split('#define DACLIFY_RAM_SCOPED(X)')[1]?.split('inline std::vector')[0];
   if (!global || !scoped) throw new Error('MIGRATION_FAMILY_MANIFEST');
   const labels = (text: string) => [...text.matchAll(/X\("([a-z]+)",/g)].map((m) => m[1]);
-  expect(labels(global)).toHaveLength(28);
-  expect(labels(scoped)).toHaveLength(26);
+  expect(labels(global)).toHaveLength(31);
+  expect(labels(global)).toEqual(expect.arrayContaining(['execpols', 'nativegov', 'execpending']));
+  expect(labels(scoped)).toEqual(expect.arrayContaining(['executives', 'nonvoters']));
+  expect(labels(scoped)).toHaveLength(28);
   for (const table of labels(global))
     await send(runtime, 'scanram', [0, table, 25], 'daclifycore@active');
   for (const id of [1, 2])

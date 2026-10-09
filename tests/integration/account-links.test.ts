@@ -28,7 +28,12 @@ const jwk = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.ex
   format: 'jwk',
 });
 const encryptionKey = { kty: 'EC' as const, crv: 'P-256' as const, x: jwk.x, y: jwk.y };
+let executiveBinding: 'bound' | 'unbound' | 'unavailable' = 'unbound';
 const chain: ChainGateway = {
+  nativeGovernanceWalletInUse: async () => {
+    if (executiveBinding === 'unavailable') throw new Error('Chain check unavailable');
+    return executiveBinding === 'bound';
+  },
   governance: async () => {
     throw new Error('Not part of this fixture');
   },
@@ -382,4 +387,62 @@ describe('documentation assistant route', () => {
     expect(asked.json()).toMatchObject({ status: 'answered', topicId: 'accounts' });
     expect(calls.length).toBeGreaterThan(0);
   });
+});
+
+it('preserves sign-in pairing when native executive authority remains or chain verification fails', async () => {
+  const owner = await login(app);
+  await pool.query(
+    "INSERT INTO native_links(account_id,chain_id,native_account,permission) VALUES($1,$2,'alice','active')",
+    [owner.session.account.id, 'ab'.repeat(32)],
+  );
+  executiveBinding = 'bound';
+  try {
+    const rejected = await controlledInject(app, owner.key, {
+      method: 'POST',
+      url: '/v1/account/native/unlink',
+      headers: headers(owner.cookie, owner.session.csrfToken),
+      payload: { chainId: 'ab'.repeat(32) },
+    });
+    expect(rejected.statusCode).toBe(409);
+    expect(rejected.json()).toMatchObject({ code: 'NATIVE_EXECUTIVE_BINDING_REQUIRED' });
+    expect(
+      (
+        await pool.query('SELECT native_account FROM native_links WHERE account_id=$1', [
+          owner.session.account.id,
+        ])
+      ).rows,
+    ).toHaveLength(1);
+    executiveBinding = 'unavailable';
+    const failed = await controlledInject(app, owner.key, {
+      method: 'POST',
+      url: '/v1/account/native/unlink',
+      headers: headers(owner.cookie, owner.session.csrfToken),
+      payload: { chainId: 'ab'.repeat(32) },
+    });
+    expect(failed.statusCode).toBeGreaterThanOrEqual(500);
+    expect(
+      (
+        await pool.query('SELECT native_account FROM native_links WHERE account_id=$1', [
+          owner.session.account.id,
+        ])
+      ).rows,
+    ).toHaveLength(1);
+    executiveBinding = 'unbound';
+    const removed = await controlledInject(app, owner.key, {
+      method: 'POST',
+      url: '/v1/account/native/unlink',
+      headers: headers(owner.cookie, owner.session.csrfToken),
+      payload: { chainId: 'ab'.repeat(32) },
+    });
+    expect(removed.statusCode).toBe(204);
+    expect(
+      (
+        await pool.query('SELECT native_account FROM native_links WHERE account_id=$1', [
+          owner.session.account.id,
+        ])
+      ).rows,
+    ).toHaveLength(0);
+  } finally {
+    executiveBinding = 'unbound';
+  }
 });

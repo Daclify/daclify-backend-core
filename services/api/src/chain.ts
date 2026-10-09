@@ -73,6 +73,7 @@ export interface ChainGateway {
     memberId: string,
   ): Promise<z.infer<typeof RuntimeTableSchemas.evmbindings> | null>;
   relayEvm?(account: Account, input: EvmRelay): Promise<{ transactionId: string }>;
+  nativeGovernanceWalletInUse?(chainId: string, account: string): Promise<boolean>;
   governance(daoId: string): Promise<GovernanceState>;
   execute(input: ExecutionRequest): Promise<ExecutionResult>;
   treasury(daoId: string): Promise<Treasury>;

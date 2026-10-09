@@ -399,6 +399,31 @@ export const ServiceResponseRoutes = [
 }[];
 
 export const ContractFailureMessages = {
+  NATIVE_EXECUTIVE_ROLES:
+    'Administrator rights on this governing DAO follow the eligible paired executive roster. Change executive office or pairing instead.',
+  SERVICE_KEY_EXECUTIVE:
+    'Use separate keys: the hosting service key must not control an executive native wallet.',
+  LAST_NATIVE_EXECUTIVE:
+    'The final paired native executive cannot leave. Replace the wallet atomically or appoint another paired executive first.',
+  LAST_EXECUTIVE: 'Appoint a replacement before removing the final executive.',
+  EXECUTIVE_REQUIRED: 'Only a currently appointed executive can confirm executive activity.',
+  NATIVE_GOVERNANCE_REQUIRED:
+    'This deployment requires a native executive quorum transaction for appointments.',
+  NATIVE_EXECUTIVE_REQUIRED:
+    'An appointed executive must pair a Telos Zero account before native handover.',
+  NATIVE_HANDOVER_CHANGED:
+    'The executive roster, wallet bindings or quorum changed. Prepare and review a fresh handover transaction.',
+  NATIVE_HANDOVER:
+    'Native governance has already been handed over or this is a different governing DAO.',
+  EXECUTIVE_HANDOVER_PENDING:
+    'A successor roster is already pending. Activate or cancel it before scheduling another.',
+  EXECUTIVE_TERM: 'This executive result is expired, superseded or already applied.',
+  VOTER_INELIGIBLE:
+    'You are a DAO member without voting rights. Ask the DAO administrator about its admission policy.',
+  EXECUTIVE_LIMIT: 'Select between one and eight unique eligible executive members.',
+  EXECUTIVE_POLICY:
+    'Choose an inactivity timeout between one minute and one year, or disable it with zero, and a quorum from 1% to 100%.',
+
   PAYOUT_TOKEN_ROW_REQUIRED:
     'The receiving wallet must prepare its balance row for this token and precision before payment. Preparation pays the wallet’s RAM cost; it does not authorize a withdrawal.',
   PAYOUT_WALLET_REQUIRED:

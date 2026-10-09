@@ -144,3 +144,5 @@ export function makeInstruction(
     data: Array.from(data, (byte) => byte.toString(16).padStart(2, '0')).join(''),
   };
 }
+
+export { handoverOwnerActions, nativeOwnershipSetupActions } from './executives.js';

@@ -1,4 +1,8 @@
 export const CoreContextActions = [
+  'setexecs',
+  'heartbeat',
+  'refreshgov',
+  'setvoter',
   'archapprove',
   'archrevoke',
   'setdaogov',

@@ -1103,6 +1103,7 @@ export async function createServer(
     sessionCookie,
     chain.walletMemberships?.bind(chain),
     audience,
+    chain.nativeGovernanceWalletInUse?.bind(chain),
   );
   const docsAssistant = createDocsAssistant(options.docs);
   registerDocsRoutes(app, docsAssistant);

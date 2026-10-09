@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = 'f263203034d46b332021e7e837bdde670b3cce8c5aaa65ab767410bf9ee9a316';
+export const runtimeAbiHash = '019b8689886580633b4f1861c1656b07dcfbbf075956e73fe175d4f860c62a2d';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -148,6 +148,28 @@ export const runtimeAbi = {
         {
           "name": "limit",
           "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "appoint",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_ids",
+          "type": "uint64[]"
+        },
+        {
+          "name": "inactivity_seconds",
+          "type": "uint32"
+        },
+        {
+          "name": "quorum_bps",
+          "type": "uint16"
         }
       ]
     },
@@ -1488,6 +1510,36 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "electexec",
+      "base": "",
+      "fields": [
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "election_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_ids",
+          "type": "uint64[]"
+        },
+        {
+          "name": "starts",
+          "type": "uint32"
+        },
+        {
+          "name": "ends",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
       "name": "enroll",
       "base": "",
       "fields": [
@@ -1634,6 +1686,90 @@ export const runtimeAbi = {
         {
           "name": "active",
           "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "excluded_voter",
+      "base": "",
+      "fields": [
+        {
+          "name": "member_id",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "executive_handover",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "election_id",
+          "type": "uint64"
+        },
+        {
+          "name": "starts",
+          "type": "uint32"
+        },
+        {
+          "name": "ends",
+          "type": "uint32"
+        },
+        {
+          "name": "members",
+          "type": "uint64[]"
+        }
+      ]
+    },
+    {
+      "name": "executive_policy",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "inactivity_seconds",
+          "type": "uint32"
+        },
+        {
+          "name": "quorum_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "revision",
+          "type": "uint64"
+        },
+        {
+          "name": "last_election_start",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "executive_record",
+      "base": "",
+      "fields": [
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "last_active",
+          "type": "uint32"
+        },
+        {
+          "name": "office_epoch",
+          "type": "uint64"
+        },
+        {
+          "name": "election_id",
+          "type": "uint64"
         }
       ]
     },
@@ -2312,6 +2448,46 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "handover",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "expected_signers",
+          "type": "name[]"
+        },
+        {
+          "name": "expected_threshold",
+          "type": "uint32"
+        },
+        {
+          "name": "expected_revision",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "heartbeat",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
       "name": "hosted_policy",
       "base": "",
       "fields": [
@@ -2747,6 +2923,40 @@ export const runtimeAbi = {
         {
           "name": "code_hash",
           "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "native_governance",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "contracts",
+          "type": "name[]"
+        },
+        {
+          "name": "service_key",
+          "type": "public_key"
+        },
+        {
+          "name": "handed_over",
+          "type": "bool"
+        },
+        {
+          "name": "signers",
+          "type": "name[]"
+        },
+        {
+          "name": "threshold",
+          "type": "uint32"
+        },
+        {
+          "name": "admin_members",
+          "type": "uint64[]"
         }
       ]
     },
@@ -3617,6 +3827,46 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "recallexec",
+      "base": "",
+      "fields": [
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "election_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "refreshgov",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
       "name": "reserve",
       "base": "",
       "fields": [
@@ -4091,6 +4341,36 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "setexecs",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_ids",
+          "type": "uint64[]"
+        },
+        {
+          "name": "inactivity_seconds",
+          "type": "uint32"
+        },
+        {
+          "name": "quorum_bps",
+          "type": "uint16"
+        }
+      ]
+    },
+    {
       "name": "setfees",
       "base": "",
       "fields": [
@@ -4211,6 +4491,24 @@ export const runtimeAbi = {
         {
           "name": "code_hash",
           "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "setnativegov",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "contracts",
+          "type": "name[]"
+        },
+        {
+          "name": "service_key",
+          "type": "public_key"
         }
       ]
     },
@@ -4405,6 +4703,32 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "setvoter",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "target",
+          "type": "uint64"
+        },
+        {
+          "name": "can_vote",
+          "type": "bool"
+        }
+      ]
+    },
+    {
       "name": "submit",
       "base": "",
       "fields": [
@@ -4469,6 +4793,16 @@ export const runtimeAbi = {
         {
           "name": "sig",
           "type": "signature"
+        }
+      ]
+    },
+    {
+      "name": "syncexec",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
         }
       ]
     },
@@ -4593,6 +4927,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "appoint",
+      "type": "appoint",
+      "ricardian_contract": ""
+    },
+    {
       "name": "approveob",
       "type": "approveob",
       "ricardian_contract": ""
@@ -4695,6 +5034,11 @@ export const runtimeAbi = {
     {
       "name": "docsrc",
       "type": "docsrc",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "electexec",
+      "type": "electexec",
       "ricardian_contract": ""
     },
     {
@@ -4803,6 +5147,16 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "handover",
+      "type": "handover",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "heartbeat",
+      "type": "heartbeat",
+      "ricardian_contract": ""
+    },
+    {
       "name": "inheritram",
       "type": "inheritram",
       "ricardian_contract": ""
@@ -4885,6 +5239,16 @@ export const runtimeAbi = {
     {
       "name": "rebindramobs",
       "type": "rebindramobs",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "recallexec",
+      "type": "recallexec",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "refreshgov",
+      "type": "refreshgov",
       "ricardian_contract": ""
     },
     {
@@ -4973,6 +5337,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "setexecs",
+      "type": "setexecs",
+      "ricardian_contract": ""
+    },
+    {
       "name": "setfees",
       "type": "setfees",
       "ricardian_contract": ""
@@ -5000,6 +5369,11 @@ export const runtimeAbi = {
     {
       "name": "setmodule",
       "type": "setmodule",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "setnativegov",
+      "type": "setnativegov",
       "ricardian_contract": ""
     },
     {
@@ -5043,6 +5417,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "setvoter",
+      "type": "setvoter",
+      "ricardian_contract": ""
+    },
+    {
       "name": "submit",
       "type": "submit",
       "ricardian_contract": ""
@@ -5060,6 +5439,11 @@ export const runtimeAbi = {
     {
       "name": "submitsess",
       "type": "submitsess",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "syncexec",
+      "type": "syncexec",
       "ricardian_contract": ""
     },
     {
@@ -5251,6 +5635,27 @@ export const runtimeAbi = {
       "key_types": []
     },
     {
+      "name": "execpending",
+      "type": "executive_handover",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "execpols",
+      "type": "executive_policy",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "executives",
+      "type": "executive_record",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "feecfg",
       "type": "fee_config",
       "index_type": "i64",
@@ -5316,6 +5721,20 @@ export const runtimeAbi = {
     {
       "name": "modules",
       "type": "module_record",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "nativegov",
+      "type": "native_governance",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "nonvoters",
+      "type": "excluded_voter",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -5573,6 +5992,12 @@ export interface adoptram {
   dao_id: string;
   claims: boolean;
   limit: number;
+}
+export interface appoint {
+  dao_id: string;
+  member_ids: string[];
+  inactivity_seconds: number;
+  quorum_bps: number;
 }
 export interface approveob {
   dao_id: string;
@@ -5930,6 +6355,14 @@ export interface document_state {
   cursor: string;
   complete: boolean;
 }
+export interface electexec {
+  source: string;
+  dao_id: string;
+  election_id: string;
+  member_ids: string[];
+  starts: number;
+  ends: number;
+}
 export interface enroll {
   dao_id: string;
   member_id: string;
@@ -5969,6 +6402,29 @@ export interface evm_binding_record {
   address: string;
   epoch: string;
   active: boolean;
+}
+export interface excluded_voter {
+  member_id: string;
+}
+export interface executive_handover {
+  dao_id: string;
+  election_id: string;
+  starts: number;
+  ends: number;
+  members: string[];
+}
+export interface executive_policy {
+  dao_id: string;
+  inactivity_seconds: number;
+  quorum_bps: number;
+  revision: string;
+  last_election_start: number;
+}
+export interface executive_record {
+  member_id: string;
+  last_active: number;
+  office_epoch: string;
+  election_id: string;
 }
 export interface fee_config {
   third_party_bps: number;
@@ -6151,6 +6607,17 @@ export interface guardrevoke {
   dao_id: string;
   member_id: string;
 }
+export interface handover {
+  dao_id: string;
+  expected_signers: string[];
+  expected_threshold: number;
+  expected_revision: string;
+}
+export interface heartbeat {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+}
 export interface hosted_policy {
   free_members: number;
   settler: string;
@@ -6269,6 +6736,15 @@ export interface module_record {
   actions: string[];
   grants: string[];
   code_hash: string;
+}
+export interface native_governance {
+  dao_id: string;
+  contracts: string[];
+  service_key: string;
+  handed_over: boolean;
+  signers: string[];
+  threshold: number;
+  admin_members: string[];
 }
 export interface obligation_record {
   id: string;
@@ -6505,6 +6981,17 @@ export interface rebindramobs {
   expected_old_hash: string;
   expected_new_hash: string;
 }
+export interface recallexec {
+  source: string;
+  dao_id: string;
+  election_id: string;
+  member_id: string;
+}
+export interface refreshgov {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+}
 export interface reserve {
   dao_id: string;
   source: string;
@@ -6634,6 +7121,14 @@ export interface setdaoquota {
   dao_id: string;
   enabled: boolean;
 }
+export interface setexecs {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  member_ids: string[];
+  inactivity_seconds: number;
+  quorum_bps: number;
+}
 export interface setfees {
   third_party_bps: number;
   first_party_bps: number;
@@ -6667,6 +7162,11 @@ export interface setmodule {
   actions: string[];
   grants: string[];
   code_hash: string;
+}
+export interface setnativegov {
+  dao_id: string;
+  contracts: string[];
+  service_key: string;
 }
 export interface setoracle {
   median: string;
@@ -6720,6 +7220,13 @@ export interface settings {
   chain_id: string;
   interface_version: number;
 }
+export interface setvoter {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  target: string;
+  can_vote: boolean;
+}
 export interface submit {
   request: instruction;
   sig: string;
@@ -6738,6 +7245,9 @@ export interface submitsess {
   request: instruction;
   session_id: string;
   sig: string;
+}
+export interface syncexec {
+  dao_id: string;
 }
 export interface unlinkevm {
   runtime: string;
@@ -6771,6 +7281,7 @@ export interface RuntimeActions {
   addsession: addsession;
   admitfrom: admitfrom;
   adoptram: adoptram;
+  appoint: appoint;
   approveob: approveob;
   archapprove: archapprove;
   archattest: archattest;
@@ -6792,6 +7303,7 @@ export interface RuntimeActions {
   docref: docref;
   docscanstep: docscanstep;
   docsrc: docsrc;
+  electexec: electexec;
   enroll: enroll;
   enrollagent: enrollagent;
   finishram: finishram;
@@ -6813,6 +7325,8 @@ export interface RuntimeActions {
   guardpause: guardpause;
   guardrecover: guardrecover;
   guardrevoke: guardrevoke;
+  handover: handover;
+  heartbeat: heartbeat;
   inheritram: inheritram;
   init: init;
   initgov: initgov;
@@ -6830,6 +7344,8 @@ export interface RuntimeActions {
   putjson: putjson;
   ramadjust: ramadjust;
   rebindramobs: rebindramobs;
+  recallexec: recallexec;
+  refreshgov: refreshgov;
   reserve: reserve;
   restoredoc: restoredoc;
   resumecap: resumecap;
@@ -6847,12 +7363,14 @@ export interface RuntimeActions {
   setcrrate: setcrrate;
   setdaogov: setdaogov;
   setdaoquota: setdaoquota;
+  setexecs: setexecs;
   setfees: setfees;
   setgov: setgov;
   sethosted: sethosted;
   setmeta: setmeta;
   setmodcopy: setmodcopy;
   setmodule: setmodule;
+  setnativegov: setnativegov;
   setoracle: setoracle;
   setpolicy: setpolicy;
   setprofile: setprofile;
@@ -6861,10 +7379,12 @@ export interface RuntimeActions {
   setrampool: setrampool;
   setresources: setresources;
   setroles: setroles;
+  setvoter: setvoter;
   submit: submit;
   submitevm: submitevm;
   submitnat: submitnat;
   submitsess: submitsess;
+  syncexec: syncexec;
   unlinkevm: unlinkevm;
   unlinknat: unlinknat;
   unlistmod: unlistmod;

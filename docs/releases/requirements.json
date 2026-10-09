@@ -345,6 +345,26 @@
         "tests/release-artifact.test.ts",
         "tests/release-package.test.ts"
       ]
+    },
+    {
+      "id": "WP02-EXECUTIVE-STATE",
+      "suite": "vert",
+      "tests": ["tests/executives.test.ts"]
+    },
+    {
+      "id": "WP02-EXECUTIVE-AUTHORITY",
+      "suite": "native",
+      "tests": ["tests/native/executives.test.ts"]
+    },
+    {
+      "id": "WP02-EXECUTIVE-LOGIN",
+      "suite": "integration",
+      "tests": ["tests/integration/account-links.test.ts"]
+    },
+    {
+      "id": "WP02-EXECUTIVE-PLANS",
+      "suite": "unit",
+      "tests": ["tests/executive-authority.test.ts"]
     }
   ]
 }

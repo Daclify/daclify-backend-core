@@ -1,6 +1,7 @@
 #include "admission.hpp"
 #include "records.hpp"
 #include "governance.hpp"
+#include "executives.hpp"
 #include "creation.hpp"
 #include "evm_authorization.hpp"
 #include "telos_resources.hpp"
@@ -11,6 +12,7 @@
 #include "ram_families.hpp"
 #include "token_payout.hpp"
 #include <eosio/transaction.hpp>
+#include <eosio/permission.hpp>
 #define JSON_NOEXCEPTION
 #define JSON_HAS_FILESYSTEM 0
 #define JSON_HAS_EXPERIMENTAL_FILESYSTEM 0
@@ -426,6 +428,53 @@ public:
     const auto& d=dao_rows.get(dao_id);check(d.max_member<std::numeric_limits<uint64_t>::max(),"MEMBER_LIMIT");
     enroll_member(dao_id,d.max_member+1,name{},signing_key,encryption_key,custody,kind,operator_label,false);
   }
+  ACTION appoint(uint64_t dao_id,std::vector<uint64_t> member_ids,uint32_t inactivity_seconds,uint16_t quorum_bps){
+    const auto& d=dao_rows.get(dao_id,"DAO_UNKNOWN");native_governance_settings native(get_self(),get_self().value);
+    if(native.exists()&&native.get().dao_id==dao_id)require_auth(permission_level{get_self(),native.get().handed_over?"govern"_n:"owner"_n});else require_auth(d.owner);
+    replace_executives(dao_id,member_ids,inactivity_seconds,quorum_bps);cancel_executive_handover(dao_id);refresh_native_governance(dao_id);
+  }
+  ACTION setexecs(name runtime,uint64_t dao_id,uint64_t member_id,std::vector<uint64_t> member_ids,uint32_t inactivity_seconds,uint16_t quorum_bps){
+    check(get_sender()==get_self(),"ACTOR_SENDER");authorized_actor(runtime,dao_id,member_id,true);native_governance_settings native(get_self(),get_self().value);
+    check(!native.exists()||native.get().dao_id!=dao_id,"NATIVE_GOVERNANCE_REQUIRED");replace_executives(dao_id,member_ids,inactivity_seconds,quorum_bps);cancel_executive_handover(dao_id);
+  }
+  ACTION setnativegov(uint64_t dao_id,std::vector<name> contracts,public_key service_key){
+    require_auth(permission_level{get_self(),"owner"_n});dao_rows.get(dao_id,"DAO_UNKNOWN");native_governance_settings native(get_self(),get_self().value);check(!native.exists(),"NATIVE_GOVERNANCE_IMMUTABLE");
+    check(contracts.size()<=16,"NATIVE_CONTRACT_LIMIT");std::sort(contracts.begin(),contracts.end());check(std::adjacent_find(contracts.begin(),contracts.end())==contracts.end(),"NATIVE_CONTRACT_DUPLICATE");for(auto account:contracts)check(account!=get_self()&&is_account(account),"NATIVE_CONTRACT");
+    native.set(native_governance{dao_id,contracts,service_key,false,{},0},get_self());
+  }
+  ACTION handover(uint64_t dao_id,std::vector<name> expected_signers,uint32_t expected_threshold,uint64_t expected_revision){
+    require_auth(permission_level{get_self(),"owner"_n});native_governance_settings native(get_self(),get_self().value);auto cfg=native.get();check(cfg.dao_id==dao_id&&!cfg.handed_over,"NATIVE_HANDOVER");for(auto account:cfg.contracts)require_auth(permission_level{account,"owner"_n});
+    auto effective=effective_native_executives(dao_id);check(!effective.first.empty(),"NATIVE_EXECUTIVE_REQUIRED");std::vector<name> actual;for(auto signer:effective.first)actual.push_back(signer.actor);check(actual==expected_signers&&effective.second==expected_threshold&&executive_policies(get_self(),get_self().value).get(dao_id).revision==expected_revision,"NATIVE_HANDOVER_CHANGED");
+    permission_level elected{get_self(),"govern"_n},code{get_self(),"eosio.code"_n};
+    update_native_authority(get_self(),"govern"_n,"owner"_n,delegated_authority(effective.first,effective.second));
+    update_native_authority(get_self(),"service"_n,"active"_n,native_authority{1,{{cfg.service_key,1}},{},{}});
+    for(auto action_name:{"createdao"_n,"createpaid"_n,"initgov"_n,"enroll"_n,"enrollagent"_n,"setmodule"_n})action(permission_level{get_self(),"owner"_n},"eosio"_n,"linkauth"_n,std::make_tuple(get_self(),get_self(),action_name,"service"_n)).send();
+    action(permission_level{get_self(),"owner"_n},"eosio"_n,"linkauth"_n,std::make_tuple(get_self(),get_self(),"appoint"_n,"govern"_n)).send();
+    update_native_authority(get_self(),"active"_n,"owner"_n,delegated_authority({elected,code}));
+    for(auto account:cfg.contracts){update_native_authority(account,"active"_n,"owner"_n,delegated_authority({elected,{account,"eosio.code"_n}}));update_native_authority(account,"owner"_n,name{},delegated_authority({elected}));}
+    update_native_authority(get_self(),"owner"_n,name{},delegated_authority({elected,code}));
+    members admins(get_self(),dao_id);for(auto it=admins.begin();it!=admins.end();++it)if(it->admin)admins.modify(it,same_payer,[](auto& r){r.admin=false;});
+    dao_rows.modify(dao_rows.get(dao_id),same_payer,[&](auto& r){r.owner=get_self();r.admin_count=0;});
+    cfg.handed_over=true;cfg.signers.clear();for(const auto& signer:effective.first)cfg.signers.push_back(signer.actor);cfg.threshold=effective.second;native.set(cfg,get_self());synchronize_executive_admins(dao_id,cfg.signers);
+  }
+  ACTION heartbeat(name runtime,uint64_t dao_id,uint64_t member_id){
+    check(get_sender()==get_self(),"ACTOR_SENDER");authorized_actor(runtime,dao_id,member_id);executives rows(get_self(),dao_id);auto it=rows.find(member_id);check(it!=rows.end(),"EXECUTIVE_REQUIRED");rows.modify(it,same_payer,[](auto& r){r.last_active=current_time_point().sec_since_epoch();});refresh_native_governance(dao_id);
+  }
+  ACTION refreshgov(name runtime,uint64_t dao_id,uint64_t member_id){check(get_sender()==get_self(),"ACTOR_SENDER");authorized_actor(runtime,dao_id,member_id);activate_executive_handover(dao_id);refresh_native_governance(dao_id);}
+  ACTION syncexec(uint64_t dao_id){dao_rows.get(dao_id,"DAO_UNKNOWN");activate_executive_handover(dao_id);refresh_native_governance(dao_id);}
+  ACTION electexec(name source,uint64_t dao_id,uint64_t election_id,std::vector<uint64_t> member_ids,uint32_t starts,uint32_t ends){
+    require_source(dao_id,source,"electexec"_n);const auto policy=gov_policies(get_self(),get_self().value).get(dao_id,"POLICY_UNKNOWN");check(policy.config.decide==source,"POLICY_DECIDE");executive_policies policies(get_self(),get_self().value);check(policies.find(dao_id)!=policies.end(),"EXECUTIVE_POLICY_UNKNOWN");
+    check(starts<ends&&current_time_point().sec_since_epoch()<ends&&starts>policies.get(dao_id).last_election_start,"EXECUTIVE_TERM");validate_executive_roster(dao_id,member_ids,false);executive_handovers rows(get_self(),get_self().value);auto old=rows.find(dao_id);check(old==rows.end(),"EXECUTIVE_HANDOVER_PENDING");rows.emplace(get_self(),[&](auto& r){r={dao_id,election_id,starts,ends,member_ids};});
+    activate_executive_handover(dao_id);refresh_native_governance(dao_id);
+  }
+  ACTION recallexec(name source,uint64_t dao_id,uint64_t election_id,uint64_t member_id){
+    require_source(dao_id,source,"electexec"_n);const auto policy=gov_policies(get_self(),get_self().value).get(dao_id,"POLICY_UNKNOWN");check(policy.config.decide==source,"POLICY_DECIDE");
+    executive_handovers pending(get_self(),get_self().value);auto next=pending.find(dao_id);if(next!=pending.end()&&next->election_id==election_id)cancel_executive_handover(dao_id);
+    executives offices(get_self(),dao_id);auto office=offices.find(member_id);if(office==offices.end()||office->election_id!=election_id)return;check(std::next(offices.begin())!=offices.end(),"LAST_EXECUTIVE");offices.erase(office);check_native_controller(dao_id);refresh_native_governance(dao_id);
+  }
+  ACTION setvoter(name runtime,uint64_t dao_id,uint64_t member_id,uint64_t target,bool can_vote){
+    check(get_sender()==get_self(),"ACTOR_SENDER");authorized_actor(runtime,dao_id,member_id,true);const auto& d=dao_rows.get(dao_id);check(d.active_ballots==0,"GOVERNANCE_LOCKED");members(get_self(),dao_id).get(target,"MEMBER_UNKNOWN");nonvoters rows(get_self(),dao_id);auto old=rows.find(target);check(can_vote==(old!=rows.end()),"ALREADY_IN_STATE");if(can_vote)rows.erase(old);else rows.emplace(get_self(),[&](auto& r){r.member_id=target;});
+  }
   ACTION initgov(uint64_t dao_id,gov_settings settings) {
     const auto& d=dao_rows.get(dao_id,"DAO_UNKNOWN");require_auth(d.owner);check(d.max_member==0,"BOOTSTRAP_ONLY");
     gov_policies rows(get_self(),get_self().value);check(rows.find(dao_id)==rows.end(),"POLICY_EXISTS");validate_policy(settings);
@@ -465,12 +514,12 @@ public:
   }
   ACTION guardrevoke(uint64_t dao_id,uint64_t member_id) {
     require_guardian(dao_id);participants rows(get_self(),dao_id);const auto& p=rows.get(member_id,"AGENT_UNKNOWN");check(p.kind==1,"AGENT_REQUIRED");
-    rows.modify(p,same_payer,[&](auto& r){r.revoked=true;r.credential_epoch=add64(r.credential_epoch,1);});
+    rows.modify(p,same_payer,[&](auto& r){r.revoked=true;r.credential_epoch=add64(r.credential_epoch,1);});check_native_controller(dao_id);refresh_native_governance(dao_id);
   }
   ACTION guardrecover(uint64_t dao_id,uint64_t member_id,public_key signing_key) {
     require_guardian(dao_id);participants rows(get_self(),dao_id);const auto& p=rows.get(member_id,"AGENT_UNKNOWN");check(p.kind==1&&p.revoked,"AGENT_RECOVERY");
     check_unique_key(dao_id,signing_key);members people(get_self(),dao_id);const auto& m=people.get(member_id,"MEMBER_UNKNOWN");
-    people.modify(m,same_payer,[&](auto& r){r.signing_key=signing_key;r.native_account=name{};});
+    people.modify(m,same_payer,[&](auto& r){r.signing_key=signing_key;r.native_account=name{};});check_native_controller(dao_id);refresh_native_governance(dao_id);
     evm_bindings bindings(get_self(),dao_id);auto binding=bindings.find(member_id);if(binding!=bindings.end())bindings.modify(binding,same_payer,[](auto& r){r.active=false;r.epoch=add64(r.epoch,1);});
     rows.modify(p,same_payer,[&](auto& r){r.revoked=false;r.credential_epoch=add64(r.credential_epoch,1);});
   }
@@ -484,7 +533,7 @@ public:
   }
 private:
   void enroll_member(uint64_t dao_id,uint64_t member_id,name native_account,public_key signing_key,const std::string& encryption_key,uint8_t custody,uint8_t kind,const std::string& operator_label,bool owner_auth=true,bool endorsed=false) {
-    const auto& d=dao_rows.get(dao_id,"DAO_UNKNOWN"); if(owner_auth)require_auth(d.owner);
+    const auto& d=dao_rows.get(dao_id,"DAO_UNKNOWN"); if(owner_auth){require_auth(d.owner);native_governance_settings native(get_self(),get_self().value);if(native.exists()&&native.get().handed_over&&native.get().dao_id==dao_id)require_auth(permission_level{get_self(),"active"_n});}
     check_member_capacity(d);
     admission_policies admission(get_self(),get_self().value);auto rule=admission.find(dao_id);check(endorsed||rule==admission.end()||rule->mode==0||rule->admin_override,"ADMISSION_REQUIRED");
     gov_policies policies(get_self(),get_self().value);auto policy=policies.find(dao_id);
@@ -560,7 +609,7 @@ public:
     dao_rows.modify(d,same_payer,[&](auto& r){r.credit_supply=add64(r.credit_supply,quantity);r.eligible_credits=add64(r.eligible_credits,quantity);});
   }
   ACTION setmodule(uint64_t dao_id,name account,uint16_t version,std::vector<name> actions,std::vector<name> grants,checksum256 code_hash) {
-    const auto& d=dao_rows.get(dao_id,"DAO_UNKNOWN");require_auth(d.owner);install_module(dao_id,account,version,actions,grants,code_hash);
+    const auto& d=dao_rows.get(dao_id,"DAO_UNKNOWN");require_auth(d.owner);native_governance_settings native(get_self(),get_self().value);if(native.exists()&&native.get().handed_over&&native.get().dao_id==dao_id)require_auth(permission_level{get_self(),"active"_n});install_module(dao_id,account,version,actions,grants,code_hash);
   }
   ACTION modconfig(name runtime,uint64_t dao_id,uint64_t member_id,name account,uint16_t version,std::vector<name> actions,std::vector<name> grants,checksum256 code_hash) {
     authorized_actor(runtime,dao_id,member_id,true);install_module(dao_id,account,version,actions,grants,code_hash);
@@ -732,11 +781,11 @@ public:
     check(get_sender()==get_self(),"ACTOR_SENDER");
     authorized_actor(runtime,dao_id,member_id);require_auth(account);check(is_account(account),"NATIVE_ACCOUNT");members rows(get_self(),dao_id);
     auto index=rows.get_index<"bynative"_n>();auto linked=index.find(account.value);check(linked==index.end()||linked->id==member_id,"CREDENTIAL_EXISTS");
-    const auto& m=rows.get(member_id);check(m.native_account!=account,"ALREADY_IN_STATE");bump_credentials(dao_id,member_id);rows.modify(m,same_payer,[&](auto& r){r.native_account=account;});
+    const auto& m=rows.get(member_id);check(m.native_account!=account,"ALREADY_IN_STATE");bump_credentials(dao_id,member_id);rows.modify(m,same_payer,[&](auto& r){r.native_account=account;});activate_executive_handover(dao_id);check_native_controller(dao_id);refresh_native_governance(dao_id);
   }
   ACTION unlinknat(name runtime,uint64_t dao_id,uint64_t member_id) {
     check(get_sender()==get_self(),"ACTOR_SENDER");authorized_actor(runtime,dao_id,member_id);
-    members rows(get_self(),dao_id);const auto& m=rows.get(member_id);check(m.native_account.value,"NATIVE_UNLINKED");bump_credentials(dao_id,member_id);rows.modify(m,same_payer,[](auto& r){r.native_account=name{};});
+    members rows(get_self(),dao_id);const auto& m=rows.get(member_id);check(m.native_account.value,"NATIVE_UNLINKED");bump_credentials(dao_id,member_id);rows.modify(m,same_payer,[](auto& r){r.native_account=name{};});check_native_controller(dao_id);refresh_native_governance(dao_id);
   }
   ACTION linkevm(name runtime,uint64_t dao_id,uint64_t member_id,uint64_t evm_chain_id,checksum160 address,uint64_t epoch,uint64_t nonce,uint32_t expires,std::vector<char> proof) {
     check(get_sender()==get_self(),"ACTOR_SENDER");authorized_actor(runtime,dao_id,member_id);check((evm_chain_id==40||evm_chain_id==41)&&address!=checksum160{},"EVM_CHAIN_ADDRESS");
@@ -758,10 +807,10 @@ public:
     if(active)check_member_capacity(d);
     if(active)check(d.active_ballots==0,"GOVERNANCE_LOCKED");if(!active&&m.admin)check(d.admin_count>1,"LAST_ADMIN");
     dao_rows.modify(d,same_payer,[&](auto& r){if(active){r.member_count++;if(m.admin)r.admin_count++;r.eligible_credits=add64(r.eligible_credits,m.credits);r.eligible_stake=add_amount(r.eligible_stake,m.stake);}else{r.member_count--;if(m.admin)r.admin_count--;r.eligible_credits-=m.credits;r.eligible_stake=add_amount(r.eligible_stake,-m.stake);if(r.privacy)r.key_epoch=add64(r.key_epoch,1);}});
-    rows.modify(m,same_payer,[&](auto& r){r.active=active;});
+    rows.modify(m,same_payer,[&](auto& r){r.active=active;});check_native_controller(dao_id);refresh_native_governance(dao_id);
   }
   ACTION setroles(name runtime,uint64_t dao_id,uint64_t member_id,uint64_t target,bool admin,bool reviewer) {
-    authorized_actor(runtime,dao_id,member_id,true);const auto& d=dao_rows.get(dao_id);members rows(get_self(),dao_id);const auto& m=rows.get(target,"MEMBER_UNKNOWN");check(m.active,"MEMBER_INACTIVE");
+    authorized_actor(runtime,dao_id,member_id,true);const auto& d=dao_rows.get(dao_id);members rows(get_self(),dao_id);const auto& m=rows.get(target,"MEMBER_UNKNOWN");check(m.active,"MEMBER_INACTIVE");native_governance_settings native(get_self(),get_self().value);if(native.exists()&&native.get().handed_over&&native.get().dao_id==dao_id)check(admin==m.admin,"NATIVE_EXECUTIVE_ROLES");
     if(m.admin&&!admin)check(d.admin_count>1,"LAST_ADMIN");
     if(m.admin!=admin)dao_rows.modify(d,same_payer,[&](auto& r){if(admin)r.admin_count++;else r.admin_count--;});
     rows.modify(m,same_payer,[&](auto& r){r.admin=admin;r.reviewer=reviewer;});
@@ -1116,7 +1165,7 @@ private:
   uint64_t obligation_id(obligations& rows,name source,uint64_t id){auto index=rows.get_index<"bysource"_n>();const auto& o=index.get(source_hash(source,id),"OBLIGATION_UNKNOWN");check(o.source==source&&o.source_id==id,"OBLIGATION_DOMAIN");return o.id;}
   void install_module(uint64_t dao_id,name account,uint16_t version,const std::vector<name>& actions,const std::vector<name>& grants,checksum256 code_hash) {
     check(is_account(account)&&account!=get_self(),"MODULE_ACCOUNT");check(version==1&&actions.size()<=16&&grants.size()<=16,"MODULE_VERSION_OR_LIMIT");
-    for(auto grant:grants)check(grant=="reserve"_n||grant=="approve"_n||grant=="cancel"_n||grant=="govlock"_n||grant=="awardwork"_n||grant=="admit"_n,"MODULE_GRANT_UNKNOWN");
+    for(auto grant:grants)check(grant=="reserve"_n||grant=="approve"_n||grant=="cancel"_n||grant=="govlock"_n||grant=="awardwork"_n||grant=="admit"_n||grant=="electexec"_n,"MODULE_GRANT_UNKNOWN");
     auto unique=[](const auto& list){for(size_t i=0;i<list.size();i++){check(list[i].value>0,"MODULE_ACTION");for(size_t j=i+1;j<list.size();j++)check(list[i]!=list[j],"DUPLICATE_GRANT");}};unique(actions);unique(grants);
     // Clearing both lists removes a module after its code has changed. Any remaining
     // action or grant must pin the hash of the code loaded at that account.
@@ -1136,7 +1185,45 @@ private:
   // account's executing contract sets get_sender, so the key cannot skip the module.
   // The stored hash must still match that contract, so replacing its code drops the grant.
   void require_source(uint64_t dao_id,name source,name grant){check(get_sender()==source,"SOURCE_SENDER");require_auth(source);modules rows(get_self(),dao_id);const auto& installed=rows.get(source.value,"MODULE_DISABLED");check(std::find(installed.grants.begin(),installed.grants.end(),grant)!=installed.grants.end(),"MODULE_GRANT");check_pinned(installed,source);}
+  void validate_executive_roster(uint64_t dao_id,const std::vector<uint64_t>& ids,bool require_paired=true){
+    check(!ids.empty()&&ids.size()<=8,"EXECUTIVE_LIMIT");std::set<uint64_t> unique;members people(get_self(),dao_id);bool paired=false;for(auto id:ids){check(unique.insert(id).second,"EXECUTIVE_DUPLICATE");const auto& m=people.get(id,"MEMBER_UNKNOWN");check(m.active,"MEMBER_INACTIVE");check_agent_authority(get_self(),dao_id,id);paired|=m.native_account.value!=0;}
+    native_governance_settings native(get_self(),get_self().value);if(native.exists()){auto cfg=native.get();if(require_paired&&cfg.dao_id==dao_id&&cfg.handed_over)check(paired,"LAST_NATIVE_EXECUTIVE");}
+  }
+  void replace_executives(uint64_t dao_id,const std::vector<uint64_t>& ids,uint32_t timeout,uint16_t quorum){
+    validate_executive_roster(dao_id,ids);check((timeout==0||(timeout>=60&&timeout<=31536000))&&quorum>=1&&quorum<=10000,"EXECUTIVE_POLICY");
+    executive_policies policies(get_self(),get_self().value);auto old=policies.find(dao_id);uint64_t epoch=old==policies.end()?1:add64(old->revision,1);if(old==policies.end())policies.emplace(get_self(),[&](auto& r){r={dao_id,timeout,quorum,epoch};});else policies.modify(old,same_payer,[&](auto& r){r.inactivity_seconds=timeout;r.quorum_bps=quorum;r.revision=epoch;});
+    executives rows(get_self(),dao_id);std::vector<executive_record> roster;for(auto id:ids){auto existing=rows.find(id);roster.push_back({id,existing==rows.end()?uint32_t(current_time_point().sec_since_epoch()):existing->last_active,epoch,0});}for(auto it=rows.begin();it!=rows.end();)it=rows.erase(it);for(const auto& e:roster)rows.emplace(get_self(),[&](auto& r){r=e;});
+  }
+  std::pair<std::vector<permission_level>,uint32_t> effective_native_executives(uint64_t dao_id){
+    executive_policies policies(get_self(),get_self().value);const auto& policy=policies.get(dao_id,"EXECUTIVE_POLICY_UNKNOWN");executives offices(get_self(),dao_id);members people(get_self(),dao_id);participants actors(get_self(),dao_id);std::vector<permission_level> live,all;
+    for(const auto& office:offices){const auto& m=people.get(office.member_id);auto actor=actors.find(office.member_id);if(!m.active||!m.native_account.value||(actor!=actors.end()&&actor->revoked))continue;native_governance_settings native(get_self(),get_self().value);if(native.exists())check(!check_permission_authorization(m.native_account,"active"_n,std::set<public_key>{native.get().service_key},std::set<permission_level>{},microseconds{0}),"SERVICE_KEY_EXECUTIVE");permission_level signer{m.native_account,"active"_n};all.push_back(signer);if(executive_active(office,policy))live.push_back(signer);}
+    auto selected=live.empty()?all:live;std::sort(selected.begin(),selected.end(),[](const auto& a,const auto& b){return a.actor<b.actor;});return {selected,uint32_t((selected.size()*policy.quorum_bps+9999)/10000)};
+  }
+  void check_native_controller(uint64_t dao_id){native_governance_settings native(get_self(),get_self().value);if(!native.exists())return;auto cfg=native.get();if(cfg.dao_id==dao_id&&cfg.handed_over)check(!effective_native_executives(dao_id).first.empty(),"LAST_NATIVE_EXECUTIVE");}
+  void update_native_authority(name account,name permission,name parent,const native_authority& authority){action(permission_level{account,"owner"_n},"eosio"_n,"updateauth"_n,std::make_tuple(account,permission,parent,authority)).send();}
+  void synchronize_executive_admins(uint64_t dao_id,const std::vector<name>& signers){
+    native_governance_settings native(get_self(),get_self().value);auto cfg=native.get();if(!cfg.handed_over||cfg.dao_id!=dao_id)return;executives offices(get_self(),dao_id);members people(get_self(),dao_id);std::vector<uint64_t> selected;
+    for(const auto& office:offices){const auto& m=people.get(office.member_id);if(m.active&&std::find(signers.begin(),signers.end(),m.native_account)!=signers.end())selected.push_back(m.id);}
+    for(auto id:cfg.admin_members)if(std::find(selected.begin(),selected.end(),id)==selected.end()){const auto& m=people.get(id);if(m.admin)people.modify(m,same_payer,[](auto& r){r.admin=false;});}
+    for(auto id:selected){const auto& m=people.get(id);if(!m.admin)people.modify(m,same_payer,[](auto& r){r.admin=true;});}
+    if(cfg.admin_members!=selected){dao_rows.modify(dao_rows.get(dao_id),same_payer,[&](auto& r){r.admin_count=selected.size();});cfg.admin_members=selected;native.set(cfg,get_self());}
+  }
+  void refresh_native_governance(uint64_t dao_id){
+    native_governance_settings native(get_self(),get_self().value);if(!native.exists())return;auto cfg=native.get();if(cfg.dao_id!=dao_id||!cfg.handed_over)return;auto effective=effective_native_executives(dao_id);check(!effective.first.empty(),"LAST_NATIVE_EXECUTIVE");std::vector<name> signers;for(auto signer:effective.first)signers.push_back(signer.actor);synchronize_executive_admins(dao_id,signers);cfg=native.get();if(signers==cfg.signers&&effective.second==cfg.threshold)return;
+    update_native_authority(get_self(),"govern"_n,"owner"_n,delegated_authority(effective.first,effective.second));cfg.signers=signers;cfg.threshold=effective.second;native.set(cfg,get_self());
+  }
+  void cancel_executive_handover(uint64_t dao_id){executive_handovers rows(get_self(),get_self().value);auto found=rows.find(dao_id);if(found==rows.end())return;executive_policies policies(get_self(),get_self().value);const auto& p=policies.get(dao_id);policies.modify(p,same_payer,[&](auto& r){r.last_election_start=std::max(r.last_election_start,found->starts);});rows.erase(found);}
+  void activate_executive_handover(uint64_t dao_id){
+    executive_handovers rows(get_self(),get_self().value);auto found=rows.find(dao_id);if(found==rows.end()||current_time_point().sec_since_epoch()<found->starts)return;
+    if(current_time_point().sec_since_epoch()>=found->ends){cancel_executive_handover(dao_id);return;}
+    auto next=*found;members people(get_self(),dao_id);participants actors(get_self(),dao_id);bool paired=false;
+    for(auto id:next.members){auto m=people.find(id);auto a=actors.find(id);if(m==people.end()||!m->active||(a!=actors.end()&&a->revoked))return;paired|=m->native_account.value!=0;}
+    native_governance_settings native(get_self(),get_self().value);if(native.exists()&&native.get().dao_id==dao_id&&native.get().handed_over&&!paired)return;
+    executive_policies policies(get_self(),get_self().value);auto policy=policies.get(dao_id);replace_executives(dao_id,next.members,policy.inactivity_seconds,policy.quorum_bps);policies.modify(policies.get(dao_id),same_payer,[&](auto& r){r.last_election_start=next.starts;});
+    executives offices(get_self(),dao_id);for(auto it=offices.begin();it!=offices.end();++it)offices.modify(it,same_payer,[&](auto& r){r.election_id=next.election_id;});rows.erase(found);
+  }
   void validate_instruction(const instruction& r) {
+    activate_executive_handover(r.dao_id);refresh_native_governance(r.dao_id);
     auto c=configuration();check(r.version==c.interface_version&&r.chain_id==c.chain_id&&r.deployment==get_self(),"INSTRUCTION_DOMAIN");
     const auto& d=dao_rows.get(r.dao_id,"DAO_UNKNOWN");(void)d;
     check_agent_authority(get_self(),r.dao_id,r.member_id,r.target==get_self()&&(r.action=="withdraw"_n||r.action=="unstake"_n));
@@ -1145,18 +1232,21 @@ private:
     auto now=current_time_point().sec_since_epoch();check(r.expires>now&&uint64_t(r.expires)<=uint64_t(now)+900,"EXPIRED_OR_TOO_LONG");
     check(r.data.size()>=24&&r.data.size()<=16384,"PAYLOAD_SIZE");auto context=unpack<actor_context>(r.data);
     check(context.runtime==get_self()&&context.dao_id==r.dao_id&&context.member_id==r.member_id,"PAYLOAD_DOMAIN");
-    if(r.target==get_self())check(r.action=="archapprove"_n||r.action=="archrevoke"_n||r.action=="govresources"_n||r.action=="govhosted"_n||r.action=="govseatfee"_n||r.action=="govpayfees"_n||r.action=="govcreate"_n||r.action=="govlist"_n||r.action=="govunlist"_n||r.action=="govmodcopy"_n||r.action=="addmember"_n||r.action=="setadmit"_n||r.action=="setdaogov"_n||r.action=="addsession"_n||r.action=="delsession"_n||r.action=="setmeta"_n||r.action=="setprofile"_n||r.action=="restoredoc"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="unlinknat"_n||r.action=="linkevm"_n||r.action=="unlinkevm"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n||r.action=="govfees"_n,"ACTION_UNSUPPORTED");
+    if(r.target==get_self())check(r.action=="refreshgov"_n||r.action=="setexecs"_n||r.action=="heartbeat"_n||r.action=="setvoter"_n||r.action=="archapprove"_n||r.action=="archrevoke"_n||r.action=="govresources"_n||r.action=="govhosted"_n||r.action=="govseatfee"_n||r.action=="govpayfees"_n||r.action=="govcreate"_n||r.action=="govlist"_n||r.action=="govunlist"_n||r.action=="govmodcopy"_n||r.action=="addmember"_n||r.action=="setadmit"_n||r.action=="setdaogov"_n||r.action=="addsession"_n||r.action=="delsession"_n||r.action=="setmeta"_n||r.action=="setprofile"_n||r.action=="restoredoc"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="unlinknat"_n||r.action=="linkevm"_n||r.action=="unlinkevm"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n||r.action=="govfees"_n,"ACTION_UNSUPPORTED");
     else { modules rows(get_self(),r.dao_id);const auto& installed=rows.get(r.target.value,"MODULE_DISABLED");check(std::find(installed.actions.begin(),installed.actions.end(),r.action)!=installed.actions.end(),"ACTION_UNSUPPORTED");check_pinned(installed,r.target); }
   }
   void dispatch(const instruction& r) {
     members rows(get_self(),r.dao_id);const auto& m=rows.get(r.member_id);rows.modify(m,same_payer,[](auto& row){row.nonce++;});
     action outgoing;outgoing.account=r.target;outgoing.name=r.action;outgoing.authorization={{get_self(),"execctx"_n}};outgoing.data=r.data;
     if(r.target==get_self()&&r.action=="linknative"_n){auto data=unpack<std::tuple<name,uint64_t,uint64_t,name>>(r.data);auto incoming=std::get<3>(data);require_auth(incoming);outgoing.authorization.push_back(permission_level{incoming,"active"_n});}
+    executives offices(get_self(),r.dao_id);auto office=offices.find(r.member_id);if(office!=offices.end())offices.modify(office,same_payer,[](auto& e){e.last_active=current_time_point().sec_since_epoch();});
+    refresh_native_governance(r.dao_id);
     outgoing.send();
   }
 };
 extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
   if(code==receiver){switch(action_name){
+    EOSIO_DISPATCH_HELPER(runtime,(appoint)(setexecs)(setnativegov)(handover)(heartbeat)(refreshgov)(syncexec)(electexec)(recallexec)(setvoter))
     EOSIO_DISPATCH_HELPER(runtime,(authproof)(unlinknat)(linkevm)(unlinkevm)(submitevm)(setadmit)(admitfrom))
     EOSIO_DISPATCH_HELPER(runtime,(docsrc)(docref)(docscanstep)(backfilldocs)(prunedocs)(restoredoc))
     EOSIO_DISPATCH_HELPER(runtime,(beginram)(scanram)(adoptram)(sealram)(setarchcfg)(archattest)(archapprove)(archrevoke)(archstep)(clearholds)(initramobs)(rebindramobs)(setramauto)(setrampool)(grantdaoram)(inheritram)(setdaoquota)(checkdaoram)(checkrampool)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram)(fulfilram))

@@ -12,9 +12,10 @@ namespace daclify {
  X("budgets",commitment_budgets) X("admpolicies",admission_policies) \
  X("resourcecfg",resource_settings) X("archcfg",archive_settings) X("rampools",ram_pools) \
  X("ramauto",ram_auto_settings) X("ramorders",ram_orders) X("ramintent",ram_intent_settings) \
- X("ramreserve",ram_reserve_settings) X("ramcards",ram_cards)
+ X("ramreserve",ram_reserve_settings) X("ramcards",ram_cards) \
+ X("execpols",executive_policies) X("nativegov",native_governance_settings) X("execpending",executive_handovers)
 #define DACLIFY_RAM_SCOPED(X) \
- X("members",members) X("actors",participants) X("sessions",scoped_sessions) \
+ X("executives",executives) X("nonvoters",nonvoters) X("members",members) X("actors",participants) X("sessions",scoped_sessions) \
  X("evmbindings",evm_bindings) X("modules",modules) X("obligations",obligations) \
  X("receipts",finance_receipts) X("documents",documents) X("epochs",epochs) \
  X("keygrants",key_grants) X("govlocks",governance_locks) X("docrefs",document_references) \
