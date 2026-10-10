@@ -62,11 +62,11 @@ Interfaces: existing quote/service shapes expose rail-specific live prices; nati
 
 Files: frontend `src/views/Names.vue`, relevant browser cases, version/dependency metadata; core/ frontend guides/evidence and version/release metadata.
 
-- [ ] Test and update the pricing explanation and unchanged consent/backup safeguards.
-- [ ] Package and pin the development producer artifact; verify frontend type/templates/browser/accessibility checks.
-- [ ] Review the connected implementation inline, verify pre-upgrade state and simulate the checked Names upgrade and resource purchases.
-- [ ] Apply the authorized testnet feature without authority changes; deploy API/frontend and replace the observation command only after their checks pass.
-- [ ] Verify live quotes and provider/net-margin evidence, commit/integrate to dev, attempt publication and record exact limits.
+- [x] Test and update the pricing explanation and unchanged consent/backup safeguards.
+- [x] Package and pin the development producer artifact; verify frontend type/templates/browser/accessibility checks.
+- [x] Review the connected implementation inline, verify pre-upgrade state and simulate the checked Names upgrade and resource purchases.
+- [x] Apply the authorized testnet feature without authority changes; deploy API/frontend and replace the observation command only after their checks pass.
+- [x] Verify live quotes and provider/net-margin evidence, commit/integrate to dev, attempt publication and record exact limits.
 
 ## Execution ledger
 
@@ -86,3 +86,7 @@ Files: frontend `src/views/Names.vue`, relevant browser cases, version/dependenc
 - Final core run initially passed 694/695; static deploy-profile test incorrectly required a generated local-chain file. It now validates the static profile directly; signed real-chain permission/resource qualification remains separate. Full rerun passed: 115 files, 695 tests.
 
 - Inline connected-code review checked actual-spend ordering, inbound-transfer guards, integer ranges, captured-fee source/mode/refund binding, legacy layouts and code pins. No production authority/asset changes or unreviewed provider automation were added.
+
+- Testnet activated irreversibly at block 449478991; code, policy and unchanged authority/legacy rows/100 TLOS reserve verified. API and frontend deployed and public quotes verified. Typed five-minute updater completed a real irreversible observation refresh.
+- Post-deployment real API → released SDK → signed native simulation passed; deployed public desktop/mobile pages passed accessibility and overflow checks. Customer account/payment broadcasts remain outside this qualification.
+- All three implementations integrated into dev. Remote publication pending the push result; no main/production release.

@@ -1,0 +1,126 @@
+{
+  "verifiedAt": "2026-10-10T14:28:33.322Z",
+  "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+  "scope": "Signed compute_transaction simulation; no transaction broadcast",
+  "simulatedReceipt": {
+    "transactionId": "a7fc04636aa19fb9d210c166b0ae0449aea651ff9597739dc5919b5fe62d5ee7",
+    "blockNum": 449479201
+  },
+  "quote": {
+    "accountName": "dacux1111111",
+    "kind": "basic",
+    "listed": false,
+    "seller": "daclifyfees1",
+    "party": "first-party",
+    "price": "71.5910 TLOS",
+    "usdCents": 142,
+    "platformBps": 10000,
+    "suffix": null,
+    "bumpBps": 2000,
+    "quotePremiumBps": 2000,
+    "ramBytes": 30720,
+    "netStake": "0.5000 TLOS",
+    "cpuStake": "0.5000 TLOS",
+    "priceFromOracle": true,
+    "sales": 0,
+    "nextPrice": null,
+    "nextUsdCents": null
+  },
+  "nativeActions": [
+    {
+      "account": "daclifynames",
+      "name": "intend"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer"
+    },
+    {
+      "account": "eosio",
+      "name": "newaccount"
+    },
+    {
+      "account": "eosio",
+      "name": "buyrambytes"
+    },
+    {
+      "account": "eosio",
+      "name": "delegatebw"
+    },
+    {
+      "account": "daclifynames",
+      "name": "checkprofit"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer"
+    }
+  ],
+  "balancesUnchanged": true,
+  "salesUnchanged": true,
+  "nativeAccountNotCreated": true
+}

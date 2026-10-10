@@ -1,5 +1,5 @@
 {
-  "preparedAt": "2026-10-10T14:24:08.004Z",
+  "preparedAt": "2026-10-10T14:26:47.449Z",
   "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
   "network": "testnet",
   "oldCodeHash": "2dbc9321083bf50a7be7202c11aa8bb4de5705c85700d4fb4934faf62bcca590",
@@ -40,7 +40,7 @@
         "runtime": "daclifycore1",
         "median": "176",
         "quoted_precision": 4,
-        "observed_at": 1791642243
+        "observed_at": 1791642382
       }
     },
     {

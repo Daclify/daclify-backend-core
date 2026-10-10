@@ -1,0 +1,33 @@
+{
+  "appliedAt": "2026-10-10T14:26:50.610Z",
+  "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+  "receipt": {
+    "transactionId": "dc5a61772251208ef970fca962fb4a22890d5e7a063d7bd4486e478a357c68aa",
+    "blockNum": 449478991
+  },
+  "irreversible": true,
+  "oldCodeHash": "2dbc9321083bf50a7be7202c11aa8bb4de5705c85700d4fb4934faf62bcca590",
+  "newCodeHash": "b5a00d14a69b03b3be3b812b07d57c4ce2d5b0d8ca9acf7d5078e66e65e8b225",
+  "profitPolicy": {
+    "version": 1,
+    "minimum_usd_cents": 100,
+    "card_fee_bps": 515,
+    "card_fixed_usd_cents": 29,
+    "fee_observed_at": 1791504000
+  },
+  "oracle": {
+    "bump_bps": 2000,
+    "quote_premium_bps": 2000,
+    "median": "176",
+    "quoted_precision": 4,
+    "observed_at": 1791642382
+  },
+  "authoritiesUnchanged": true,
+  "balancesUnchanged": true,
+  "tiersSalesListingsSuffixesIntentsUnchanged": true,
+  "runtimePinsUnchanged": true,
+  "reserve": [
+    "100.0000 TLOS"
+  ],
+  "noTokenTransfers": true
+}
