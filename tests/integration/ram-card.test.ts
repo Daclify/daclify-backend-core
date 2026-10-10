@@ -68,6 +68,7 @@ function fixture() {
   };
   const checkoutId = 'cs_test_' + randomUUID().replaceAll('-', ''),
     paymentId = 'pi_' + randomUUID().replaceAll('-', '');
+  const observedAt = Math.floor(Date.now() / 1000);
   let reserve = '100.0000 TLOS';
   let admin = true,
     paid = false,
@@ -110,7 +111,7 @@ function fixture() {
         settler: 'relay',
         median: '10000',
         precision: 4,
-        observed_at: Math.floor(Date.now() / 1000),
+        observed_at: observedAt,
       },
       runtimeSettings: null,
       resourcePolicy: policy,

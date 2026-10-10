@@ -20,7 +20,12 @@ import {
 } from '@wharfkit/antelope';
 import { z } from 'zod';
 import { ModuleCodeHashes } from '@daclify/modules/sdk';
-import { RuntimeCodeHash, RuntimeRawAbiHash, RuntimeTableSchemas } from '../../sdk/index.js';
+import {
+  NamesCodeHash,
+  RuntimeCodeHash,
+  RuntimeRawAbiHash,
+  RuntimeTableSchemas,
+} from '../../sdk/index.js';
 import { parseEnvFile } from '../../services/api/src/env-file.js';
 import { executedChainResult } from '../../services/api/src/chain-result.js';
 import { waitForIrreversibleBlock } from '../../services/api/src/chain-confirmation.js';
@@ -97,12 +102,7 @@ const definitions = [
     '../daclify-backend-modules/.artifacts/contracts',
     ModuleCodeHashes['endorsement-admission'],
   ],
-  [
-    'daclifynames',
-    'names',
-    '.artifacts/contracts',
-    'fd9348525842ff918beb9db3e7c4aa5e8e9cbba2d0bf786836494c2c17cf5869',
-  ],
+  ['daclifynames', 'names', '.artifacts/contracts', NamesCodeHash],
 ] as const;
 const targets = definitions.map(([account, contract, directory, codeHash]) => {
   const prior = summary.accounts.find((item) => item.account === account);
