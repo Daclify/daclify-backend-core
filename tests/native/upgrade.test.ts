@@ -163,7 +163,8 @@ it('upgrades actual old rows, preserves claims and liabilities, and invalidates 
           account,
           version: 1,
           actions: [...ModulePermissions[id].actions],
-          grants: [...ModulePermissions[id].grants],
+          // Preserve baseline permissions; it predates the executive-election grant.
+          grants: id === 'decide' ? ['govlock'] : [...ModulePermissions[id].grants],
           code_hash: hashes[id],
         }),
       );
