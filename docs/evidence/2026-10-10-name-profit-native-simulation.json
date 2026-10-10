@@ -1,0 +1,153 @@
+{
+  "verifiedAt": "2026-10-10T14:20:54.583Z",
+  "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+  "scope": "Signed read-only compute_transaction: Names upgrade and real Telos system resource provisioning",
+  "oldCodeHash": "2dbc9321083bf50a7be7202c11aa8bb4de5705c85700d4fb4934faf62bcca590",
+  "newCodeHash": "b5a00d14a69b03b3be3b812b07d57c4ce2d5b0d8ca9acf7d5078e66e65e8b225",
+  "simulatedReceipt": {
+    "transactionId": "cfe97a0cde0ea87b33b7c3754e5f3de4523b5f5c9d1a25fe37df82163796c1de",
+    "blockNum": 449478275
+  },
+  "nativeSimulatedReceipt": {
+    "transactionId": "d42e52698334de5c1734a0dff1742de16229b63b6f7ea580b84d847024be45a1",
+    "blockNum": 449478281
+  },
+  "underpaidNetUsdCents": 104,
+  "minimumProfitUsdCents": 100,
+  "cardUsdCents": 142,
+  "verifiedNetUsdCents": 105,
+  "resourceCostEstimateMinor": "27587",
+  "nativeQuoteMinor": "715910",
+  "rejections": [
+    "NAME_PROFIT_LOW",
+    "NAME_NET_REQUIRED"
+  ],
+  "codeUnchanged": true,
+  "balancesUnchanged": true,
+  "salesUnchanged": true,
+  "nativeActions": [
+    {
+      "account": "eosio",
+      "name": "setcode",
+      "receiver": "eosio"
+    },
+    {
+      "account": "eosio",
+      "name": "setabi",
+      "receiver": "eosio"
+    },
+    {
+      "account": "daclifynames",
+      "name": "setoracle",
+      "receiver": "daclifynames"
+    },
+    {
+      "account": "daclifynames",
+      "name": "setprofit",
+      "receiver": "daclifynames"
+    },
+    {
+      "account": "daclifynames",
+      "name": "fulfillnet",
+      "receiver": "daclifynames"
+    },
+    {
+      "account": "eosio",
+      "name": "newaccount",
+      "receiver": "eosio"
+    },
+    {
+      "account": "eosio",
+      "name": "buyrambytes",
+      "receiver": "eosio"
+    },
+    {
+      "account": "eosio",
+      "name": "delegatebw",
+      "receiver": "eosio"
+    },
+    {
+      "account": "daclifynames",
+      "name": "checkprofit",
+      "receiver": "daclifynames"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer",
+      "receiver": "eosio.token"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer",
+      "receiver": "eosio.token"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer",
+      "receiver": "eosio.token"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer",
+      "receiver": "daclifynames"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer",
+      "receiver": "eosio.ram"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer",
+      "receiver": "daclifynames"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer",
+      "receiver": "eosio.ramfee"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer",
+      "receiver": "eosio.ramfee"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer",
+      "receiver": "eosio.rex"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer",
+      "receiver": "eosio.token"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer",
+      "receiver": "daclifynames"
+    },
+    {
+      "account": "eosio.token",
+      "name": "transfer",
+      "receiver": "eosio.stake"
+    }
+  ],
+  "bootstrapActions": [
+    {
+      "account": "eosio",
+      "name": "setcode"
+    },
+    {
+      "account": "eosio",
+      "name": "setabi"
+    },
+    {
+      "account": "daclifynames",
+      "name": "setoracle"
+    },
+    {
+      "account": "daclifynames",
+      "name": "setprofit"
+    }
+  ]
+}

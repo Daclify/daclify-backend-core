@@ -1,3 +1,5 @@
+import { NamesActionSchemas, NamesTableSchemas } from '../../../sdk/generated/names-schemas.js';
+import { namesAbi, NamesCodeHash } from '../../../sdk/names.js';
 import {
   ContentPageQuerySchema,
   DaoContentSchema,
@@ -3023,41 +3025,52 @@ export class NativeChainGateway implements ChainGateway {
     const namesAccount = await this.namesAccount();
     if (await this.saleForReference(namesAccount, purchase.reference)) return;
     const quote = await this.nameQuote(purchase.accountName);
-    if (quote.usdCents !== purchase.usdCents || quote.usdCents < 1) {
-      throw new ApiError('NAME_PRICE', 409);
-    }
-    const response = await fetch(`${this.config.rpcUrl}/v1/chain/get_abi`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ account_name: namesAccount }),
-      signal: AbortSignal.timeout(10000),
+    const policyRows = await readChainRows({
+      rpcUrl: this.config.rpcUrl,
+      code: namesAccount,
+      scope: namesAccount,
+      table: 'profitcfg',
+      limit: 1,
     });
-    const body: unknown = await response.json().catch(() => undefined);
-    const abiValue = z.object({ abi: z.unknown() }).safeParse(body);
+    const policy =
+      policyRows.status === 'rows' && policyRows.rows.length > 0
+        ? NamesTableSchemas.profitcfg.parse(policyRows.rows[0])
+        : undefined;
+    const dynamic =
+      policy !== undefined &&
+      quote.kind === 'basic' &&
+      quote.party === 'first-party' &&
+      !quote.listed &&
+      !quote.suffix;
     if (
-      !response.ok ||
-      !abiValue.success ||
-      typeof abiValue.data.abi !== 'object' ||
-      abiValue.data.abi === null
-    ) {
+      dynamic &&
+      (await this.api.v1.chain.get_raw_abi(namesAccount)).code_hash.toString() !== NamesCodeHash
+    )
       throw new ApiError('NAMES_UNCONFIGURED', 503);
-    }
+    if (dynamic && purchase.netUsdCents === undefined) throw new ApiError('NAME_NET_REQUIRED', 409);
+    if (!dynamic && (quote.usdCents !== purchase.usdCents || quote.usdCents < 1))
+      throw new ApiError('NAME_PRICE', 409);
+    const actionName = dynamic ? 'fulfillnet' : 'fulfill';
+    const value = {
+      settler: this.config.relayActor,
+      account_name: purchase.accountName,
+      owner_key: purchase.ownerKey,
+      active_key: purchase.activeKey,
+      usd_cents: purchase.usdCents,
+      reference: purchase.reference,
+    };
+    const input = dynamic
+      ? NamesActionSchemas.fulfillnet.parse({ ...value, net_usd_cents: purchase.netUsdCents })
+      : NamesActionSchemas.fulfill.parse(value);
     const data = Serializer.encode({
-      abi: ABI.from(JSON.stringify(abiValue.data.abi)),
-      type: 'fulfill',
-      object: {
-        settler: this.config.relayActor,
-        account_name: purchase.accountName,
-        owner_key: purchase.ownerKey,
-        active_key: purchase.activeKey,
-        usd_cents: purchase.usdCents,
-        reference: purchase.reference,
-      },
+      abi: ABI.from(namesAbi),
+      type: actionName,
+      object: input,
     }).array;
     try {
       await this.pushEncoded(
         namesAccount,
-        'fulfill',
+        actionName,
         data,
         this.config.relayActor,
         this.config.relayKey,

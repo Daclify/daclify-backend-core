@@ -1,10 +1,20 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const namesAbiHash = '3a195c05737dfb18c1f4d0d5b4668659f054f4a355ae695541f5239816a5c172';
+export const namesAbiHash = '305adfdfbb331b15a8788a1ed2f80cb5ca4970f6100ba2da9bd8d3bfb90c342d';
 export const namesAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
   "structs": [
+    {
+      "name": "checkprofit",
+      "base": "",
+      "fields": [
+        {
+          "name": "sale_id",
+          "type": "uint64"
+        }
+      ]
+    },
     {
       "name": "delname",
       "base": "",
@@ -77,6 +87,40 @@ export const namesAbi = {
         },
         {
           "name": "usd_cents",
+          "type": "uint32"
+        },
+        {
+          "name": "reference",
+          "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "fulfillnet",
+      "base": "",
+      "fields": [
+        {
+          "name": "settler",
+          "type": "name"
+        },
+        {
+          "name": "account_name",
+          "type": "name"
+        },
+        {
+          "name": "owner_key",
+          "type": "public_key"
+        },
+        {
+          "name": "active_key",
+          "type": "public_key"
+        },
+        {
+          "name": "usd_cents",
+          "type": "uint32"
+        },
+        {
+          "name": "net_usd_cents",
           "type": "uint32"
         },
         {
@@ -246,6 +290,70 @@ export const namesAbi = {
       ]
     },
     {
+      "name": "profit_check",
+      "base": "",
+      "fields": [
+        {
+          "name": "sale_id",
+          "type": "uint64"
+        },
+        {
+          "name": "before_balance",
+          "type": "int64"
+        },
+        {
+          "name": "gross_units",
+          "type": "int64"
+        },
+        {
+          "name": "net_usd_cents",
+          "type": "uint32"
+        },
+        {
+          "name": "minimum_usd_cents",
+          "type": "uint32"
+        },
+        {
+          "name": "median",
+          "type": "uint64"
+        },
+        {
+          "name": "quoted_precision",
+          "type": "uint8"
+        },
+        {
+          "name": "rail",
+          "type": "uint8"
+        }
+      ]
+    },
+    {
+      "name": "profit_row",
+      "base": "",
+      "fields": [
+        {
+          "name": "version",
+          "type": "uint8"
+        },
+        {
+          "name": "minimum_usd_cents",
+          "type": "uint32"
+        },
+        {
+          "name": "card_fee_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "card_fixed_usd_cents",
+          "type": "uint32"
+        },
+        {
+          "name": "fee_observed_at",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
       "name": "regname",
       "base": "",
       "fields": [
@@ -388,6 +496,36 @@ export const namesAbi = {
       ]
     },
     {
+      "name": "setprofit",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "version",
+          "type": "uint8"
+        },
+        {
+          "name": "minimum_usd_cents",
+          "type": "uint32"
+        },
+        {
+          "name": "card_fee_bps",
+          "type": "uint16"
+        },
+        {
+          "name": "card_fixed_usd_cents",
+          "type": "uint32"
+        },
+        {
+          "name": "fee_observed_at",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
       "name": "setrates",
       "base": "",
       "fields": [
@@ -520,6 +658,11 @@ export const namesAbi = {
   ],
   "actions": [
     {
+      "name": "checkprofit",
+      "type": "checkprofit",
+      "ricardian_contract": ""
+    },
+    {
       "name": "delname",
       "type": "delname",
       "ricardian_contract": ""
@@ -537,6 +680,11 @@ export const namesAbi = {
     {
       "name": "fulfill",
       "type": "fulfill",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "fulfillnet",
+      "type": "fulfillnet",
       "ricardian_contract": ""
     },
     {
@@ -567,6 +715,11 @@ export const namesAbi = {
     {
       "name": "setpolicy",
       "type": "setpolicy",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "setprofit",
+      "type": "setprofit",
       "ricardian_contract": ""
     },
     {
@@ -615,6 +768,20 @@ export const namesAbi = {
       "key_types": []
     },
     {
+      "name": "profitcfg",
+      "type": "profit_row",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "profitcheck",
+      "type": "profit_check",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "sales",
       "type": "sale_row",
       "index_type": "i64",
@@ -640,6 +807,9 @@ export const namesAbi = {
   "ricardian_clauses": [],
   "action_results": []
 } satisfies ABI.Def;
+export interface checkprofit {
+  sale_id: string;
+}
 export interface delname {
   seller: string;
   account_name: string;
@@ -660,6 +830,15 @@ export interface fulfill {
   owner_key: string;
   active_key: string;
   usd_cents: number;
+  reference: string;
+}
+export interface fulfillnet {
+  settler: string;
+  account_name: string;
+  owner_key: string;
+  active_key: string;
+  usd_cents: number;
+  net_usd_cents: number;
   reference: string;
 }
 export interface init {
@@ -705,6 +884,23 @@ export interface policy_row {
   quoted_precision: number;
   observed_at: number;
 }
+export interface profit_check {
+  sale_id: string;
+  before_balance: string;
+  gross_units: string;
+  net_usd_cents: number;
+  minimum_usd_cents: number;
+  median: string;
+  quoted_precision: number;
+  rail: number;
+}
+export interface profit_row {
+  version: number;
+  minimum_usd_cents: number;
+  card_fee_bps: number;
+  card_fixed_usd_cents: number;
+  fee_observed_at: number;
+}
 export interface regname {
   seller: string;
   account_name: string;
@@ -743,6 +939,14 @@ export interface setpolicy {
   bump_bps: number;
   quote_premium_bps: number;
 }
+export interface setprofit {
+  runtime: string;
+  version: number;
+  minimum_usd_cents: number;
+  card_fee_bps: number;
+  card_fixed_usd_cents: number;
+  fee_observed_at: number;
+}
 export interface setrates {
   runtime: string;
   third_party_bps: number;
@@ -779,16 +983,19 @@ export interface tier_row {
   cpu_stake: string;
 }
 export interface NamesActions {
+  checkprofit: checkprofit;
   delname: delname;
   delsuffix: delsuffix;
   editname: editname;
   fulfill: fulfill;
+  fulfillnet: fulfillnet;
   init: init;
   intend: intend;
   regname: regname;
   regsuffix: regsuffix;
   setoracle: setoracle;
   setpolicy: setpolicy;
+  setprofit: setprofit;
   setrates: setrates;
   setsettler: setsettler;
   settier: settier;

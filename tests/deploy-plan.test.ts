@@ -16,7 +16,12 @@ afterEach(() => {
 
 describe('deployment environments', () => {
   it('keeps develop on the fixture and production on the we accounts', async () => {
-    const develop = await loadEnvironment('develop');
+    // Static profile checks do not require a running fixture's generated chain identity.
+    const develop = parseEnvironment(
+      JSON.parse(
+        readFileSync(new URL('../tools/deploy/environments/develop.json', import.meta.url), 'utf8'),
+      ),
+    );
     const production = await loadEnvironment('production');
     expect(develop.accounts.map((account) => account.name)).toEqual([
       'daclifycore',

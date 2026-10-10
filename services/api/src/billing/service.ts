@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import { verifiedNamePayment } from './name-payment.js';
 import type { CreationService } from '../creation.js';
 import { creationCardEvent } from './creation.js';
 import { createHash } from 'node:crypto';
@@ -69,7 +71,7 @@ export class StripeBilling {
     return { id: session.id, url: requireCheckoutUrl(session.url) };
   }
   async startNameCheckout(
-    input: Omit<NamePurchase, 'reference'> & { accountId: string },
+    input: Omit<NamePurchase, 'reference' | 'netUsdCents'> & { accountId: string },
   ): Promise<{ url: string }> {
     const urls = nameReturnUrls(this.origin);
     const session = await this.stripe.checkout.sessions.create(
@@ -114,7 +116,24 @@ export class StripeBilling {
     const decision = classifyStripeEvent(event);
     if (decision.kind === 'purchase') {
       if (!this.names) throw new Error('NAMES_UNCONFIGURED');
-      await this.names.fulfillName(decision.purchase);
+      const id = z
+        .object({
+          data: z.object({ object: z.object({ id: z.string().regex(/^cs_[A-Za-z0-9_]+$/) }) }),
+        })
+        .parse(event).data.object.id;
+      const purchase = await verifiedNamePayment(
+        {
+          session: (id) => this.stripe.checkout.sessions.retrieve(id),
+          intent: (id) =>
+            this.stripe.paymentIntents.retrieve(id, {
+              expand: ['latest_charge.balance_transaction'],
+            }),
+        },
+        id,
+        decision.purchase,
+        this.config.secretKey.startsWith('sk_live_'),
+      );
+      await this.names.fulfillName(purchase);
       return;
     }
     if (decision.kind === 'invalid') throw new Error('SERVICE_EVENT_SHAPE');

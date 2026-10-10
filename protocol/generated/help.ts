@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle={
   "producer": "core",
-  "packageVersion": "0.10.0-alpha.1",
+  "packageVersion": "0.10.0-alpha.2",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -176,7 +176,7 @@ export const CoreHelpBundle={
       "paragraphs": [
         "Modules that a DAO can turn on are listed in the runtime catalogue. A listing is stored only when it accepts the platform fee rule. A DAO cannot enable a module that is missing from that catalogue or whose code no longer matches the listing.",
         "A first-party module is published by the platform treasury. Its usage charge, when one is set, is kept at the first-party rate stored in the runtime fee configuration. A third-party module is published by someone else. Its usage charge pays the platform the third-party rate in that same configuration, and the rest goes to the publisher. The rate can be changed later. The next payment uses the rate that is current, not the rate from the day the module was listed.",
-        "The Telos nameservice sells new native accounts from its own contract. A 12-character name without a dot uses the basic tier. Its dollar price is stored on chain. When a TLOS conversion rate is stored beside it, the TLOS price is that dollar amount converted at the rate plus the quote premium. The account is created with the CPU, NET, and RAM stored on that tier. A name that contains a dot can be sold only when the longest suffix is connected. The suffix owner sets the price in TLOS or dollars with regsuffix. Each sale raises that price by the bump rate, and the platform keeps the third-party rate. A shorter name without a dot uses the premium tier. Someone can still list one exact name with regname. Prices, suffixes, fee rates, and completed sales stay on chain, so a new server can read them after the application database is gone. A Daclify DAO admin changes the platform cut, the bump, and the quote premium with govfees after the runtime links that DAO. Until then the runtime account can change them.",
+        "The Telos nameservice sells new native accounts from its own contract. A 12-character name without a dot uses the basic tier. An enabled minimum-profit policy adjusts first-party basic totals to current RAM, CPU, NET and TLOS costs. Card checkout includes a processing-fee allowance; actual captured payment fees are verified before creation. Native checkout retains the configured conversion premium. If verified net revenue cannot cover actual provisioning costs and the required margin, the chain rolls back creation for payment review. Older deployments without this policy retain their stored dollar price and conversion rules. The account is created with the CPU, NET, and RAM stored on that tier. A name that contains a dot can be sold only when the longest suffix is connected. The suffix owner sets the price in TLOS or dollars with regsuffix. Each sale raises that price by the bump rate, and the platform keeps the third-party rate. A shorter name without a dot uses the premium tier. Someone can still list one exact name with regname. Prices, suffixes, fee rates, and completed sales stay on chain, so a new server can read them after the application database is gone. A Daclify DAO admin changes the platform cut, the bump, and the quote premium with govfees after the runtime links that DAO. Until then the runtime account can change them.",
         "Card checkout uses the dollar amount stored on chain for that name. The browser creates the new account keys and does not send the private keys to the server. After the card payment is confirmed, the names contract records the sale and creates the account. A card session that never reaches the chain remains with the card processor. Returning from the card page does not by itself create the account. If the on-chain price changes before confirmation, the account is not created.",
         "Names has Find a name and Manage & sell views. Suggestions are not availability guarantees; request a fresh chain quote before payment. Back up distinct owner and active private keys before native-wallet or supported card checkout. Private keys stay in the browser. Existing native accounts are not sold or transferred by this marketplace.",
         "An individual sells through their own native account. A DAO sells through a native account whose owner/active authority is governed by its own executives or quorum. A shared DAO administrator has no authority over the shared runtime account and needs a separate native seller account. Native proceeds go to that seller. Quorum-controlled listings and permission setup are exported as unsigned transactions for review and multisignature approval.",
@@ -4937,8 +4937,17 @@ export const CoreHelpBundle={
     {
       "name": "names",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "3a195c05737dfb18c1f4d0d5b4668659f054f4a355ae695541f5239816a5c172",
+      "sourceAbiHash": "305adfdfbb331b15a8788a1ed2f80cb5ca4970f6100ba2da9bd8d3bfb90c342d",
       "actions": [
+        {
+          "name": "checkprofit",
+          "fields": [
+            {
+              "name": "sale_id",
+              "type": "uint64"
+            }
+          ]
+        },
         {
           "name": "delname",
           "fields": [
@@ -5007,6 +5016,39 @@ export const CoreHelpBundle={
             },
             {
               "name": "usd_cents",
+              "type": "uint32"
+            },
+            {
+              "name": "reference",
+              "type": "checksum256"
+            }
+          ]
+        },
+        {
+          "name": "fulfillnet",
+          "fields": [
+            {
+              "name": "settler",
+              "type": "name"
+            },
+            {
+              "name": "account_name",
+              "type": "name"
+            },
+            {
+              "name": "owner_key",
+              "type": "public_key"
+            },
+            {
+              "name": "active_key",
+              "type": "public_key"
+            },
+            {
+              "name": "usd_cents",
+              "type": "uint32"
+            },
+            {
+              "name": "net_usd_cents",
               "type": "uint32"
             },
             {
@@ -5138,6 +5180,35 @@ export const CoreHelpBundle={
             {
               "name": "quote_premium_bps",
               "type": "uint16"
+            }
+          ]
+        },
+        {
+          "name": "setprofit",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "version",
+              "type": "uint8"
+            },
+            {
+              "name": "minimum_usd_cents",
+              "type": "uint32"
+            },
+            {
+              "name": "card_fee_bps",
+              "type": "uint16"
+            },
+            {
+              "name": "card_fixed_usd_cents",
+              "type": "uint32"
+            },
+            {
+              "name": "fee_observed_at",
+              "type": "uint32"
             }
           ]
         },
@@ -5319,6 +5390,68 @@ export const CoreHelpBundle={
             {
               "name": "observed_at",
               "type": "uint32"
+            }
+          ]
+        },
+        {
+          "name": "profitcfg",
+          "fields": [
+            {
+              "name": "version",
+              "type": "uint8"
+            },
+            {
+              "name": "minimum_usd_cents",
+              "type": "uint32"
+            },
+            {
+              "name": "card_fee_bps",
+              "type": "uint16"
+            },
+            {
+              "name": "card_fixed_usd_cents",
+              "type": "uint32"
+            },
+            {
+              "name": "fee_observed_at",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
+          "name": "profitcheck",
+          "fields": [
+            {
+              "name": "sale_id",
+              "type": "uint64"
+            },
+            {
+              "name": "before_balance",
+              "type": "int64"
+            },
+            {
+              "name": "gross_units",
+              "type": "int64"
+            },
+            {
+              "name": "net_usd_cents",
+              "type": "uint32"
+            },
+            {
+              "name": "minimum_usd_cents",
+              "type": "uint32"
+            },
+            {
+              "name": "median",
+              "type": "uint64"
+            },
+            {
+              "name": "quoted_precision",
+              "type": "uint8"
+            },
+            {
+              "name": "rail",
+              "type": "uint8"
             }
           ]
         },

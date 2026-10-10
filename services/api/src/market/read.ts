@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { NamesTableSchemas } from '../../../../sdk/generated/names-schemas.js';
+import { ramMarketCost } from '../../../../protocol/resources.js';
+import { basicNamePrice } from './pricing.js';
 import { NativeAccountSchema } from '../../../../protocol/base.js';
 import { ApiError } from '../errors.js';
 import {
@@ -120,6 +123,7 @@ export interface ListedModule {
   detail: string;
 }
 export interface NameTier {
+  tlosQuote?: string | null;
   kind: 'basic' | 'premium';
   price: string;
   usdCents: number;
@@ -307,7 +311,8 @@ export function quoteName(input: {
     };
   }
   if (input.accountName.includes('.')) throw new MarketRuleError('SUFFIX');
-  const converted = kind === 'basic' ? oracleTlos(tier.usdCents, input.policy) : null;
+  const converted =
+    kind === 'basic' ? (tier.tlosQuote ?? oracleTlos(tier.usdCents, input.policy)) : null;
   return {
     ...base,
     listed: false,
@@ -462,6 +467,7 @@ export interface NamesChainState {
   listings: NameListing[];
   suffixes: NameSuffix[];
   policy?: NamePolicy;
+  profitPolicy?: z.infer<typeof NamesTableSchemas.profitcfg>;
 }
 
 export async function loadNames(
@@ -478,11 +484,12 @@ export async function loadNames(
   if (config.status === 'missing' || config.rows.length === 0) return undefined;
   const saved = NamesConfigRow.safeParse(config.rows[0]);
   if (!saved.success) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
-  const [tiers, listings, policy, suffixes] = await Promise.all([
+  const [tiers, listings, policy, suffixes, profit] = await Promise.all([
     readChainRows({ rpcUrl, code: names, scope: names, table: 'tiers', limit: 10 }),
     readChainRows({ rpcUrl, code: names, scope: names, table: 'namelist', limit: 100 }),
     readChainRows({ rpcUrl, code: names, scope: names, table: 'policy', limit: 1 }),
     readChainRows({ rpcUrl, code: names, scope: names, table: 'suffixes', limit: 100 }),
+    readChainRows({ rpcUrl, code: names, scope: names, table: 'profitcfg', limit: 1 }),
   ]);
   if (tiers.status === 'missing' || listings.status === 'missing') return undefined;
   const policyRow =
@@ -497,7 +504,7 @@ export async function loadNames(
         observedAt: policyRow.data.observed_at,
       }
     : undefined;
-  return {
+  const state: NamesChainState = {
     thirdPartyBps: saved.data.third_party_bps,
     tokenContract: saved.data.token_contract,
     firstPartyBps: saved.data.first_party_bps,
@@ -547,6 +554,92 @@ export async function loadNames(
             ];
           }),
   };
+  if (profit.status === 'rows' && profit.rows.length > 0) {
+    const result = NamesTableSchemas.profitcfg.safeParse(profit.rows[0]);
+    if (
+      !result.success ||
+      result.data.version !== 1 ||
+      result.data.minimum_usd_cents < 100 ||
+      result.data.card_fee_bps >= 10000
+    )
+      throw new ApiError('NAME_PROFIT_POLICY', 503);
+    state.profitPolicy = result.data;
+    const tier = state.tiers.find((row) => row.kind === 'basic');
+    if (tier) {
+      const now = Math.floor(Date.now() / 1000);
+      if (
+        !savedPolicy ||
+        savedPolicy.median <= 0n ||
+        savedPolicy.observedAt > now ||
+        now - savedPolicy.observedAt > 900
+      )
+        throw new ApiError('ORACLE_STALE', 503);
+      const market = await readChainRows({
+        rpcUrl,
+        code: 'eosio',
+        scope: 'eosio',
+        table: 'rammarket',
+        limit: 2,
+      });
+      const shape = z.object({
+        supply: z.literal('10000000000.0000 RAMCORE'),
+        base: z.object({
+          balance: z.string().regex(/^[1-9][0-9]* RAM$/),
+          weight: z.preprocess(
+            (value) => (typeof value === 'string' ? Number(value) : value),
+            z.literal(0.5),
+          ),
+        }),
+        quote: z.object({
+          balance: z.string().regex(/^(0|[1-9][0-9]*)\.[0-9]{4} TLOS$/),
+          weight: z.preprocess(
+            (value) => (typeof value === 'string' ? Number(value) : value),
+            z.literal(0.5),
+          ),
+        }),
+      });
+      const ram =
+        market.status === 'rows' && market.rows.length === 1
+          ? shape.safeParse(market.rows[0])
+          : undefined;
+      if (!ram?.success) throw new ApiError('NAME_RAM_MARKET', 503);
+      const net = parseAsset(tier.netStake ?? '0.0000 TLOS');
+      const cpu = parseAsset(tier.cpuStake ?? '0.0000 TLOS');
+      if (
+        state.tokenContract !== 'eosio.token' ||
+        net.symbol !== 'TLOS' ||
+        cpu.symbol !== 'TLOS' ||
+        net.precision !== 4 ||
+        cpu.precision !== 4
+      )
+        throw new ApiError('TOKEN_IDENTITY', 503);
+      const cost =
+        ramMarketCost(
+          BigInt(tier.ramBytes),
+          parseAsset(ram.data.base.balance).minor,
+          parseAsset(ram.data.quote.balance).minor,
+        ) +
+        net.minor +
+        cpu.minor;
+      const price = basicNamePrice({
+        resourceTlosMinor: cost,
+        median: savedPolicy.median,
+        quotedPrecision: savedPolicy.quotedPrecision,
+        tlosPrecision: 4,
+        minimumProfitUsdCents: result.data.minimum_usd_cents,
+        cardFeeBps: result.data.card_fee_bps,
+        cardFixedUsdCents: result.data.card_fixed_usd_cents,
+        nativePremiumBps: savedPolicy.quotePremiumBps,
+      });
+      tier.price = formatTlosMinor(price.nativeTlosMinor);
+      tier.tlosQuote = tier.price;
+      tier.usdCents =
+        result.data.fee_observed_at <= now && now - result.data.fee_observed_at <= 7 * 86400
+          ? price.cardUsdCents
+          : 0;
+    }
+  }
+  return state;
 }
 
 export async function loadMarketPolicy(

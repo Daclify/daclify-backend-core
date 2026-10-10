@@ -415,6 +415,19 @@ export const ServiceResponseRoutes = [
 }[];
 
 export const ContractFailureMessages = {
+  NAME_PROFIT_LOW:
+    'The payment no longer covers current account costs. Account creation is on hold for payment review.',
+  NAME_NET_REQUIRED: 'Payment fees must be verified before this account can be created.',
+  NAME_FEE_PENDING:
+    'Payment processing fees are still being confirmed. Please wait for account creation.',
+  NAME_RECEIPT_INVALID:
+    'The payment could not be verified. Contact support with your payment receipt.',
+  NAME_PROFIT_POLICY: 'Account pricing is temporarily unavailable. Please try again later.',
+  NAME_RAM_MARKET: 'Current account resource costs are unavailable. Please try again later.',
+  NAME_RESOURCE_FLOAT: 'Account provisioning is temporarily unavailable. Please try again later.',
+  NAME_PROFIT_PENDING: 'Another account creation is being finalized. Please try again.',
+  NAME_FEE_REFERENCE: 'Card pricing is temporarily unavailable. Please try again later.',
+
   NATIVE_EXECUTIVE_ROLES:
     'Administrator rights on this governing DAO follow the eligible paired executive roster. Change executive office or pairing instead.',
   SERVICE_KEY_EXECUTIVE:

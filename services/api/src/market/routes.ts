@@ -53,6 +53,7 @@ export interface MarketChain {
     ownerKey: string;
     activeKey: string;
     usdCents: number;
+    netUsdCents?: number;
     reference: string;
   }): Promise<void>;
 }
@@ -216,7 +217,8 @@ export async function readNameService(rpcUrl: string, runtime: string) {
       ramBytes: tier.ramBytes,
       netStake: tier.netStake ?? '0.0000 TLOS',
       cpuStake: tier.cpuStake ?? '0.0000 TLOS',
-      tlosQuote: tier.kind === 'basic' ? oracleTlos(tier.usdCents, names.policy) : null,
+      tlosQuote:
+        tier.kind === 'basic' ? (tier.tlosQuote ?? oracleTlos(tier.usdCents, names.policy)) : null,
     })),
     listings: names.listings,
     suffixes: names.suffixes,

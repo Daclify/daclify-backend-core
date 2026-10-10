@@ -61,7 +61,8 @@ describe('Telos name checkout', () => {
       },
     ]);
     expect(params.metadata).toMatchObject({ purpose: 'name', usd_cents: '500' });
-    expect(Object.hasOwn(params, 'payment_method_types')).toBe(false);
+    expect(params.payment_method_types).toEqual(['card']);
+    expect(params.adaptive_pricing).toEqual({ enabled: false });
   });
 
   it('classifies a paid name session before the service-payment shape check', () => {

@@ -1,0 +1,73 @@
+{
+  "preparedAt": "2026-10-10T14:24:08.004Z",
+  "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+  "network": "testnet",
+  "oldCodeHash": "2dbc9321083bf50a7be7202c11aa8bb4de5705c85700d4fb4934faf62bcca590",
+  "newCodeHash": "b5a00d14a69b03b3be3b812b07d57c4ce2d5b0d8ca9acf7d5078e66e65e8b225",
+  "actions": [
+    {
+      "account": "eosio",
+      "name": "setcode",
+      "authorization": [
+        {
+          "actor": "daclifynames",
+          "permission": "owner"
+        }
+      ],
+      "wasmSha256": "b5a00d14a69b03b3be3b812b07d57c4ce2d5b0d8ca9acf7d5078e66e65e8b225"
+    },
+    {
+      "account": "eosio",
+      "name": "setabi",
+      "authorization": [
+        {
+          "actor": "daclifynames",
+          "permission": "owner"
+        }
+      ],
+      "abiJsonSha256": "056f5b2f3eb7cdce35e2fc718893e0d223f2c62c4cf402b8812c57039d09bbf3"
+    },
+    {
+      "account": "daclifynames",
+      "name": "setoracle",
+      "authorization": [
+        {
+          "actor": "daclifycore1",
+          "permission": "active"
+        }
+      ],
+      "data": {
+        "runtime": "daclifycore1",
+        "median": "176",
+        "quoted_precision": 4,
+        "observed_at": 1791642243
+      }
+    },
+    {
+      "account": "daclifynames",
+      "name": "setprofit",
+      "authorization": [
+        {
+          "actor": "daclifycore1",
+          "permission": "active"
+        }
+      ],
+      "data": {
+        "runtime": "daclifycore1",
+        "version": 1,
+        "minimum_usd_cents": 100,
+        "card_fee_bps": 515,
+        "card_fixed_usd_cents": 29,
+        "fee_observed_at": 1791504000
+      }
+    }
+  ],
+  "preserved": {
+    "permissionsHash": "2f861c842ff7a12b6c2c6be64f875fa6baa7223e9adfd61101b0855dd3ca2235",
+    "balance": [
+      "100.0000 TLOS"
+    ],
+    "tablesHash": "018a0d8988a46ca99390e2a99c9d88e987fa1a1c81b94f5bd9c4a2f2842c6df7"
+  },
+  "noTokenTransfers": true
+}

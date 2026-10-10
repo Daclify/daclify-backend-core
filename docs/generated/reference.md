@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.10.0-alpha.1 · interface 1.
+Package 0.10.0-alpha.2 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -210,7 +210,7 @@ Modules that a DAO can turn on are listed in the runtime catalogue. A listing is
 
 A first-party module is published by the platform treasury. Its usage charge, when one is set, is kept at the first-party rate stored in the runtime fee configuration. A third-party module is published by someone else. Its usage charge pays the platform the third-party rate in that same configuration, and the rest goes to the publisher. The rate can be changed later. The next payment uses the rate that is current, not the rate from the day the module was listed.
 
-The Telos nameservice sells new native accounts from its own contract. A 12-character name without a dot uses the basic tier. Its dollar price is stored on chain. When a TLOS conversion rate is stored beside it, the TLOS price is that dollar amount converted at the rate plus the quote premium. The account is created with the CPU, NET, and RAM stored on that tier. A name that contains a dot can be sold only when the longest suffix is connected. The suffix owner sets the price in TLOS or dollars with regsuffix. Each sale raises that price by the bump rate, and the platform keeps the third-party rate. A shorter name without a dot uses the premium tier. Someone can still list one exact name with regname. Prices, suffixes, fee rates, and completed sales stay on chain, so a new server can read them after the application database is gone. A Daclify DAO admin changes the platform cut, the bump, and the quote premium with govfees after the runtime links that DAO. Until then the runtime account can change them.
+The Telos nameservice sells new native accounts from its own contract. A 12-character name without a dot uses the basic tier. An enabled minimum-profit policy adjusts first-party basic totals to current RAM, CPU, NET and TLOS costs. Card checkout includes a processing-fee allowance; actual captured payment fees are verified before creation. Native checkout retains the configured conversion premium. If verified net revenue cannot cover actual provisioning costs and the required margin, the chain rolls back creation for payment review. Older deployments without this policy retain their stored dollar price and conversion rules. The account is created with the CPU, NET, and RAM stored on that tier. A name that contains a dot can be sold only when the longest suffix is connected. The suffix owner sets the price in TLOS or dollars with regsuffix. Each sale raises that price by the bump rate, and the platform keeps the third-party rate. A shorter name without a dot uses the premium tier. Someone can still list one exact name with regname. Prices, suffixes, fee rates, and completed sales stay on chain, so a new server can read them after the application database is gone. A Daclify DAO admin changes the platform cut, the bump, and the quote premium with govfees after the runtime links that DAO. Until then the runtime account can change them.
 
 Card checkout uses the dollar amount stored on chain for that name. The browser creates the new account keys and does not send the private keys to the server. After the card payment is confirmed, the names contract records the sale and creates the account. A card session that never reaches the chain remains with the card processor. Returning from the card page does not by itself create the account. If the on-chain price changes before confirmation, the account is not created.
 
@@ -2337,7 +2337,13 @@ Source ABI JSON SHA-256: `ae70e5f0f7af1f1a9ded1b8ce193c5e6cab1808799f4e11c7e9ad1
 
 ## names contract
 
-Source ABI JSON SHA-256: `3a195c05737dfb18c1f4d0d5b4668659f054f4a355ae695541f5239816a5c172`.
+Source ABI JSON SHA-256: `305adfdfbb331b15a8788a1ed2f80cb5ca4970f6100ba2da9bd8d3bfb90c342d`.
+
+### Action: checkprofit
+
+| Field | ABI type |
+| --- | --- |
+| sale_id | uint64 |
 
 ### Action: delname
 
@@ -2371,6 +2377,18 @@ Source ABI JSON SHA-256: `3a195c05737dfb18c1f4d0d5b4668659f054f4a355ae695541f523
 | owner_key | public_key |
 | active_key | public_key |
 | usd_cents | uint32 |
+| reference | checksum256 |
+
+### Action: fulfillnet
+
+| Field | ABI type |
+| --- | --- |
+| settler | name |
+| account_name | name |
+| owner_key | public_key |
+| active_key | public_key |
+| usd_cents | uint32 |
+| net_usd_cents | uint32 |
 | reference | checksum256 |
 
 ### Action: init
@@ -2426,6 +2444,17 @@ Source ABI JSON SHA-256: `3a195c05737dfb18c1f4d0d5b4668659f054f4a355ae695541f523
 | runtime | name |
 | bump_bps | uint16 |
 | quote_premium_bps | uint16 |
+
+### Action: setprofit
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| version | uint8 |
+| minimum_usd_cents | uint32 |
+| card_fee_bps | uint16 |
+| card_fixed_usd_cents | uint32 |
+| fee_observed_at | uint32 |
 
 ### Action: setrates
 
@@ -2497,6 +2526,29 @@ Source ABI JSON SHA-256: `3a195c05737dfb18c1f4d0d5b4668659f054f4a355ae695541f523
 | median | uint64 |
 | quoted_precision | uint8 |
 | observed_at | uint32 |
+
+### Table: profitcfg
+
+| Field | ABI type |
+| --- | --- |
+| version | uint8 |
+| minimum_usd_cents | uint32 |
+| card_fee_bps | uint16 |
+| card_fixed_usd_cents | uint32 |
+| fee_observed_at | uint32 |
+
+### Table: profitcheck
+
+| Field | ABI type |
+| --- | --- |
+| sale_id | uint64 |
+| before_balance | int64 |
+| gross_units | int64 |
+| net_usd_cents | uint32 |
+| minimum_usd_cents | uint32 |
+| median | uint64 |
+| quoted_precision | uint8 |
+| rail | uint8 |
 
 ### Table: sales
 

@@ -1,0 +1,17 @@
+{
+  "verifiedAt": "2026-10-10T14:14:31.681Z",
+  "scope": "Actual Stripe sandbox PaymentIntent capture and balance transaction; no Names checkout, no customer email and no chain fulfillment",
+  "livemode": false,
+  "grossUsdCents": 142,
+  "balanceCurrency": "eur",
+  "balanceAmount": 127,
+  "actualFee": 32,
+  "balanceNet": 95,
+  "exchangeRate": 0.892698,
+  "verifiedNetUsdCents": 106,
+  "resourceCostUsdCents": 5,
+  "marginUsdCents": 101,
+  "intentId": "pi_3UP12eCzS2gO7W4S0LHsA65K",
+  "chargeId": "ch_3UP12eCzS2gO7W4S0kGJKZCZ",
+  "balanceId": "txn_3UP12eCzS2gO7W4S0eQixDE1"
+}

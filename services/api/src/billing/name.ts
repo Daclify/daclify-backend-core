@@ -11,6 +11,7 @@ export interface NamePurchase {
   ownerKey: string;
   activeKey: string;
   usdCents: number;
+  netUsdCents?: number;
   reference: string;
 }
 
@@ -39,8 +40,8 @@ export function nameReference(checkoutId: string): string {
 export function nameReturnUrls(origin: string): { successUrl: string; cancelUrl: string } {
   const base = new URL(origin);
   return {
-    successUrl: new URL('/marketplace?names=submitted', base).toString(),
-    cancelUrl: new URL('/marketplace?names=cancelled', base).toString(),
+    successUrl: new URL('/names?names=submitted', base).toString(),
+    cancelUrl: new URL('/names?names=cancelled', base).toString(),
   };
 }
 
@@ -62,6 +63,8 @@ export function nameCheckoutParams(input: {
   }
   return {
     mode: 'payment',
+    payment_method_types: ['card'],
+    adaptive_pricing: { enabled: false },
     client_reference_id: input.accountId,
     success_url: input.successUrl,
     cancel_url: input.cancelUrl,

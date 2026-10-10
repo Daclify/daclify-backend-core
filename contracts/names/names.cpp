@@ -1,4 +1,5 @@
 #include "authority.hpp"
+#include "token_payout.hpp"
 #include <eosio/asset.hpp>
 #include <eosio/eosio.hpp>
 #include <eosio/singleton.hpp>
@@ -81,6 +82,39 @@ public:
     EOSLIB_SERIALIZE(policy_row,(bump_bps)(quote_premium_bps)(median)(quoted_precision)(observed_at))
   };
   using policies = singleton<"policy"_n, policy_row>;
+  TABLE profit_row {
+    uint8_t version;
+    uint32_t minimum_usd_cents;
+    uint16_t card_fee_bps;
+    uint32_t card_fixed_usd_cents;
+    uint32_t fee_observed_at;
+    EOSLIB_SERIALIZE(profit_row,(version)(minimum_usd_cents)(card_fee_bps)(card_fixed_usd_cents)(fee_observed_at))
+  };
+  using profits = singleton<"profitcfg"_n, profit_row>;
+  TABLE profit_check {
+    uint64_t sale_id;
+    int64_t before_balance;
+    int64_t gross_units;
+    uint32_t net_usd_cents;
+    uint32_t minimum_usd_cents;
+    uint64_t median;
+    uint8_t quoted_precision;
+    uint8_t rail;
+    EOSLIB_SERIALIZE(profit_check,(sale_id)(before_balance)(gross_units)(net_usd_cents)(minimum_usd_cents)(median)(quoted_precision)(rail))
+  };
+  using profit_checks = singleton<"profitcheck"_n, profit_check>;
+  struct connector {
+    asset balance;
+    double weight;
+    EOSLIB_SERIALIZE(connector,(balance)(weight))
+  };
+  struct ram_market {
+    asset supply;
+    connector base;
+    connector quote;
+    uint64_t primary_key() const { return supply.symbol.raw(); }
+    EOSLIB_SERIALIZE(ram_market,(supply)(base)(quote))
+  };
   // The owner of an existing account connects it and sells names that end with it.
   TABLE suffix_row {
     name suffix;
@@ -246,6 +280,46 @@ public:
     row.observed_at = observed_at;
     saved.set(row, get_self());
   }
+  ACTION setprofit(name runtime, uint8_t version, uint32_t minimum_usd_cents, uint16_t card_fee_bps, uint32_t card_fixed_usd_cents, uint32_t fee_observed_at) {
+    const auto cfg = load();
+    check(runtime == cfg.runtime, "RUNTIME");
+    require_auth(runtime);
+    check(version == 1 && minimum_usd_cents >= 100 && minimum_usd_cents <= 100000000 && card_fee_bps < 10000 && card_fixed_usd_cents <= 1000000, "NAME_PROFIT_POLICY");
+    check(cfg.token_contract == "eosio.token"_n && cfg.token_symbol == symbol("TLOS", 4), "TOKEN_IDENTITY");
+    check(fee_observed_at > 0 && fee_observed_at <= current_time_point().sec_since_epoch(), "NAME_FEE_REFERENCE");
+    profits(get_self(), get_self().value).set(profit_row{version, minimum_usd_cents, card_fee_bps, card_fixed_usd_cents, fee_observed_at}, get_self());
+  }
+  ACTION fulfillnet(name settler, name account_name, public_key owner_key, public_key active_key, uint32_t usd_cents, uint32_t net_usd_cents, checksum256 reference) {
+    const auto cfg = load();
+    check(settler == cfg.settler, "FEE_ACCOUNT");
+    require_auth(settler);
+    check(reference != checksum256(), "REFERENCE");
+    check(usd_cents > 0 && usd_cents <= 100000000 && net_usd_cents > 0 && net_usd_cents <= usd_cents, "NAME_NET_REQUIRED");
+    const auto chosen = offer_for(account_name);
+    check(chosen.profit, "NAME_PROFIT_POLICY");
+    finish(settler, account_name, chosen, owner_key, active_key, asset(0, cfg.token_symbol), usd_cents, 1, reference, net_usd_cents);
+  }
+  ACTION checkprofit(uint64_t sale_id) {
+    require_auth(get_self());
+    profit_checks pending(get_self(), get_self().value);
+    check(pending.exists(), "NAME_PROFIT_PENDING");
+    const auto guard = pending.get();
+    check(guard.sale_id == sale_id, "NAME_PROFIT_PENDING");
+    const auto cfg = load();
+    const __int128 spent = (__int128)guard.before_balance - liquid_balance(cfg) - guard.gross_units;
+    check(spent >= 0 && spent <= 1000000000000, "NAME_PROFIT_LOW");
+    const __int128 scale = pow10(guard.quoted_precision + cfg.token_symbol.precision());
+    __int128 margin;
+    if (guard.rail == 0) {
+      check(guard.gross_units >= spent, "NAME_PROFIT_LOW");
+      margin = ((__int128)guard.gross_units - spent) * guard.median * 100 / scale;
+    } else {
+      const __int128 cost = spent * guard.median * 100;
+      margin = (__int128)guard.net_usd_cents - (cost + scale - 1) / scale;
+    }
+    check(margin >= guard.minimum_usd_cents, "NAME_PROFIT_LOW");
+    pending.remove();
+  }
   ACTION intend(name buyer, name account_name, public_key owner_key, public_key active_key) {
     require_auth(buyer);
     check_name(account_name);
@@ -270,12 +344,14 @@ public:
     check(reference != checksum256(), "REFERENCE");
     check(usd_cents > 0 && usd_cents <= 100000000, "PRICE");
     const auto offer = offer_for(account_name);
+    check(!offer.profit, "NAME_NET_REQUIRED");
     check(usd_cents == offer.usd_cents, "PRICE");
     const auto zero = asset(0, cfg.token_symbol);
     finish(settler, account_name, offer, owner_key, active_key, zero, usd_cents, 1, reference);
   }
   [[eosio::on_notify("*::transfer")]] void ontransfer(name from, name to, asset quantity, std::string memo) {
     if (to != get_self() || from == get_self()) return;
+    check(!profit_checks(get_self(), get_self().value).exists(), "NAME_PROFIT_PENDING");
     check(quantity.is_valid() && quantity.amount > 0, "ASSET_QUANTITY");
     // A float deposit stays on the contract and pays RAM for later account creation.
     if (memo == "float") return;
@@ -305,6 +381,7 @@ private:
     asset cpu_stake;
     bool listed;
     name suffix;
+    bool profit = false;
   };
   namescfg load() const {
     settings saved(get_self(), get_self().value);
@@ -351,8 +428,48 @@ private:
     }
     check(account_name.to_string().find('.') == std::string::npos, "SUFFIX");
     asset price = tier.price;
+    if (is_basic(account_name) && profits(get_self(), get_self().value).exists()) {
+      const auto profit = profits(get_self(), get_self().value).get();
+      const auto policy = fresh_policy(cfg.token_symbol);
+      const int64_t resources = resource_cost(tier, cfg);
+      const __int128 scale = pow10(policy.quoted_precision + cfg.token_symbol.precision());
+      const __int128 cost = (__int128)resources * policy.median * 100;
+      const __int128 minimum = (cost + scale - 1) / scale + profit.minimum_usd_cents;
+      check(minimum > 0 && minimum <= 100000000, "PRICE_LIMIT");
+      const __int128 numerator = (minimum + profit.card_fixed_usd_cents) * 10000;
+      const __int128 card = (numerator + 9999 - profit.card_fee_bps) / (10000 - profit.card_fee_bps);
+      check(card <= 100000000, "PRICE_LIMIT");
+      const auto now = current_time_point().sec_since_epoch();
+      const bool fee_fresh = profit.fee_observed_at <= now && now - profit.fee_observed_at <= 7 * 86400;
+      return offer{cfg.treasury, 0, tlos_for_usd((uint32_t)minimum, cfg.token_symbol), fee_fresh ? (uint32_t)card : 0, tier.ram_bytes, tier.net_stake, tier.cpu_stake, false, name(), true};
+    }
     if (is_basic(account_name) && tier.usd_cents > 0 && current_policy().median > 0) price = tlos_for_usd(tier.usd_cents, cfg.token_symbol);
     return offer{cfg.treasury, 0, price, tier.usd_cents, tier.ram_bytes, tier.net_stake, tier.cpu_stake, false, name()};
+  }
+  int64_t liquid_balance(const namescfg& cfg) const {
+    multi_index<"accounts"_n, daclify::payout_token_balance> rows(cfg.token_contract, get_self().value);
+    const auto& balance = rows.get(cfg.token_symbol.code().raw(), "NAME_RESOURCE_FLOAT");
+    check(balance.balance.symbol == cfg.token_symbol && balance.balance.amount >= 0, "TOKEN_IDENTITY");
+    return balance.balance.amount;
+  }
+  policy_row fresh_policy(symbol token_symbol) const {
+    const auto policy = current_policy();
+    const auto now = current_time_point().sec_since_epoch();
+    check(policy.median > 0 && policy.observed_at <= now && now - policy.observed_at <= 900, "ORACLE_STALE");
+    check(policy.quoted_precision + token_symbol.precision() <= 24, "PRICE_SCALE");
+    return policy;
+  }
+  int64_t resource_cost(const tier_row& tier, const namescfg& cfg) const {
+    multi_index<"rammarket"_n, ram_market> market("eosio"_n, "eosio"_n.value);
+    const auto& ram = market.get(symbol("RAMCORE", 4).raw(), "NAME_RAM_MARKET");
+    check(ram.base.balance.symbol == symbol("RAM", 0) && ram.quote.balance.symbol == cfg.token_symbol && ram.base.weight == 0.5 && ram.quote.weight == 0.5, "NAME_RAM_MARKET");
+    check(ram.base.balance.amount > tier.ram_bytes && ram.quote.balance.amount > 0 && ram.quote.balance.amount <= 1000000000000000000, "NAME_RAM_MARKET");
+    const __int128 denominator = ram.base.balance.amount - tier.ram_bytes;
+    const __int128 numerator = (__int128)ram.quote.balance.amount * tier.ram_bytes;
+    const __int128 net = (numerator + denominator - 1) / denominator;
+    const __int128 resources = (net * 200 + 198) / 199 + 2 + tier.net_stake.amount + tier.cpu_stake.amount;
+    check(resources > 0 && resources <= 1000000000000, "PRICE_LIMIT");
+    return (int64_t)resources;
   }
   policy_row current_policy() const {
     policies saved(get_self(), get_self().value);
@@ -417,7 +534,7 @@ private:
       action(permission_level{get_self(), "active"_n}, "eosio"_n, "delegatebw"_n, std::make_tuple(get_self(), account_name, chosen.net_stake, chosen.cpu_stake, true)).send();
     }
   }
-  void finish(name payer, name account_name, const offer& chosen, public_key owner_key, public_key active_key, asset gross, uint32_t usd_cents, uint8_t rail, checksum256 reference) {
+  void finish(name payer, name account_name, const offer& chosen, public_key owner_key, public_key active_key, asset gross, uint32_t usd_cents, uint8_t rail, checksum256 reference, uint32_t net_usd_cents = 0) {
     const auto cfg = load();
     const uint16_t bps = chosen.party == 0 ? cfg.first_party_bps : cfg.third_party_bps;
     const __int128 fee = (__int128)gross.amount * bps / 10000;
@@ -463,15 +580,23 @@ private:
         row.sales_count = item.sales_count + 1;
       });
     }
+    if (chosen.profit) {
+      profit_checks pending(get_self(), get_self().value);
+      check(!pending.exists(), "NAME_PROFIT_PENDING");
+      const auto profit = profits(get_self(), get_self().value).get();
+      const auto policy = fresh_policy(cfg.token_symbol);
+      pending.set(profit_check{id, liquid_balance(cfg), gross.amount, net_usd_cents, profit.minimum_usd_cents, policy.median, policy.quoted_precision, rail}, get_self());
+    }
     pay(cfg.treasury, platform_fee, "Daclify name fee");
     pay(chosen.seller, seller_share, "Daclify name sale");
     open_account(account_name, owner_key, active_key, chosen);
+    if (chosen.profit) action(permission_level{get_self(), "active"_n}, get_self(), "checkprofit"_n, std::make_tuple(id)).send();
   }
 };
 extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action) {
   if (code == receiver) {
     switch (action) {
-      EOSIO_DISPATCH_HELPER(names, (init)(setrates)(setsettler)(settier)(regname)(regsuffix)(editname)(delname)(delsuffix)(setpolicy)(setoracle)(intend)(fulfill))
+      EOSIO_DISPATCH_HELPER(names, (init)(setrates)(setsettler)(settier)(regname)(regsuffix)(editname)(delname)(delsuffix)(setpolicy)(setoracle)(setprofit)(intend)(fulfill)(fulfillnet)(checkprofit))
     }
   } else if (action == "transfer"_n.value) {
     execute_action(name(receiver), name(code), &names::ontransfer);
