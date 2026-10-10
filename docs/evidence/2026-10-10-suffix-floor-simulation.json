@@ -1,0 +1,61 @@
+{
+  "verifiedAt": "2026-10-10T14:49:03.985Z",
+  "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+  "scope": "Signed read-only native compute_transaction; real testnet contract permissions. Registration floor and first-party account provisioning.",
+  "oldCodeHash": "b5a00d14a69b03b3be3b812b07d57c4ce2d5b0d8ca9acf7d5078e66e65e8b225",
+  "newCodeHash": "76714f4a8980b8405fb79e64a127c7492558960ebe63a79185ce6d3cb0a38c8a",
+  "abiUnchanged": true,
+  "basicNativePrice": "71.5910 TLOS",
+  "basicUsdCents": 142,
+  "evidence": [
+    {
+      "label": "native-below-floor",
+      "price": "71.5909 TLOS",
+      "usdCents": 0,
+      "outcome": "NAME_PRICE_FLOOR"
+    },
+    {
+      "label": "usd-below-floor",
+      "price": "0.0000 TLOS",
+      "usdCents": 141,
+      "outcome": "NAME_PRICE_FLOOR"
+    },
+    {
+      "label": "native-equal-floor",
+      "price": "71.5910 TLOS",
+      "usdCents": 0,
+      "outcome": "accepted",
+      "receipt": {
+        "transactionId": "bb345a9c93ed349a7a4e691704cd0109d3c14bbe579b8b1d98b12c1f3d4f3c14",
+        "blockNum": 449481658
+      }
+    },
+    {
+      "label": "usd-equal-floor",
+      "price": "0.0000 TLOS",
+      "usdCents": 142,
+      "outcome": "accepted",
+      "receipt": {
+        "transactionId": "9c7f35e0315c3143a12ace92e3494525b6d0974762f5f366196aebc558b64d28",
+        "blockNum": 449481659
+      }
+    },
+    {
+      "label": "both-equal-floor",
+      "price": "71.5910 TLOS",
+      "usdCents": 142,
+      "outcome": "accepted",
+      "receipt": {
+        "transactionId": "35741678a71d426f2ff283c269cdaf05876a279f972c9f80025472df364b3370",
+        "blockNum": 449481660
+      }
+    }
+  ],
+  "nativeReceipt": {
+    "transactionId": "77d22d9dd8b25ab52bc6e063b93607cdfedf5b6a4fa92f9a9ed9e663e3980461",
+    "blockNum": 449481661
+  },
+  "tablesBalancesAuthoritiesUnchanged": true,
+  "noBroadcast": true,
+  "suffixAccountCreation": "Compiled-contract sale tests only; no short suffix owner authority was changed or borrowed."
+}

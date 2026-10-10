@@ -192,6 +192,7 @@ public:
     check_price(price, cfg.token_symbol);
     check(usd_cents <= 100000000, "PRICE_LIMIT");
     check(price.amount > 0 || usd_cents > 0, "PRICE");
+    if (account_name.suffix() != account_name) check_floor(price, usd_cents);
     listings rows(get_self(), get_self().value);
     check(rows.find(account_name.value) == rows.end(), "NAME_LISTED");
     sales sold(get_self(), get_self().value);
@@ -217,6 +218,7 @@ public:
     check_price(price, cfg.token_symbol);
     check(usd_cents <= 100000000, "PRICE_LIMIT");
     check(price.amount > 0 || usd_cents > 0, "PRICE");
+    check_floor(price, usd_cents);
     suffixes rows(get_self(), get_self().value);
     auto it = rows.find(suffix.value);
     auto write = [&](auto& row) {
@@ -239,6 +241,7 @@ public:
     const auto& item = rows.get(account_name.value, "NAME_LISTED");
     check(item.seller == seller, "SELLER");
     check(item.sold == 0 && !is_account(account_name), "NAME_SOLD");
+    if (account_name.suffix() != account_name) check_floor(price, usd_cents);
     rows.modify(item, same_payer, [&](auto& row) { row.price = price; row.usd_cents = usd_cents; row.accepts = 1; });
   }
   ACTION delname(name seller, name account_name) {
@@ -415,20 +418,25 @@ private:
     auto listing = listed.find(account_name.value);
     if (listing != listed.end()) {
       check(listing->sold == 0 && listing->accepts == 1, "FEE_RULE");
-      return offer{listing->seller, 1, listing->price, listing->usd_cents, tier.ram_bytes, tier.net_stake, tier.cpu_stake, true, name()};
+      auto chosen = offer{listing->seller, 1, listing->price, listing->usd_cents, tier.ram_bytes, tier.net_stake, tier.cpu_stake, true, name()};
+      return account_name.suffix() != account_name ? with_floor(chosen) : chosen;
     }
     const name suffix = suffix_for(account_name);
     if (suffix.value) {
       check(suffix == account_name.suffix(), "NATIVE_SUFFIX_REQUIRED");
       suffixes linked(get_self(), get_self().value);
       const auto& item = linked.get(suffix.value, "SUFFIX");
-      asset price = item.price;
-      if (price.amount == 0 && item.usd_cents > 0 && current_policy().median > 0) price = tlos_for_usd(item.usd_cents, cfg.token_symbol);
-      return offer{item.seller, 1, price, item.usd_cents, tier.ram_bytes, tier.net_stake, tier.cpu_stake, false, suffix};
+      auto chosen = with_floor(offer{item.seller, 1, item.price, item.usd_cents, tier.ram_bytes, tier.net_stake, tier.cpu_stake, false, suffix});
+      if (chosen.price.amount == 0 && chosen.usd_cents > 0 && current_policy().median > 0) chosen.price = tlos_for_usd(chosen.usd_cents, cfg.token_symbol);
+      return chosen;
     }
     check(account_name.to_string().find('.') == std::string::npos, "SUFFIX");
+    return tier_offer(tier, is_basic(account_name));
+  }
+  offer tier_offer(const tier_row& tier, bool basic) const {
+    const auto cfg = load();
     asset price = tier.price;
-    if (is_basic(account_name) && profits(get_self(), get_self().value).exists()) {
+    if (basic && profits(get_self(), get_self().value).exists()) {
       const auto profit = profits(get_self(), get_self().value).get();
       const auto policy = fresh_policy(cfg.token_symbol);
       const int64_t resources = resource_cost(tier, cfg);
@@ -443,8 +451,32 @@ private:
       const bool fee_fresh = profit.fee_observed_at <= now && now - profit.fee_observed_at <= 7 * 86400;
       return offer{cfg.treasury, 0, tlos_for_usd((uint32_t)minimum, cfg.token_symbol), fee_fresh ? (uint32_t)card : 0, tier.ram_bytes, tier.net_stake, tier.cpu_stake, false, name(), true};
     }
-    if (is_basic(account_name) && tier.usd_cents > 0 && current_policy().median > 0) price = tlos_for_usd(tier.usd_cents, cfg.token_symbol);
+    if (basic && tier.usd_cents > 0 && current_policy().median > 0) price = tlos_for_usd(tier.usd_cents, cfg.token_symbol);
     return offer{cfg.treasury, 0, price, tier.usd_cents, tier.ram_bytes, tier.net_stake, tier.cpu_stake, false, name()};
+  }
+  offer basic_offer() const {
+    tiers rows(get_self(), get_self().value);
+    return tier_offer(rows.get(0, "TIER_UNSET"), true);
+  }
+  void check_floor(asset price, uint32_t usd_cents) const {
+    const auto minimum = basic_offer();
+    if (price.amount > 0) {
+      check(minimum.price.amount > 0, "TIER_UNSET");
+      check(price.amount >= minimum.price.amount, "NAME_PRICE_FLOOR");
+    }
+    if (usd_cents > 0) {
+      check(minimum.usd_cents > 0, "NAME_FEE_REFERENCE");
+      check(usd_cents >= minimum.usd_cents, "NAME_PRICE_FLOOR");
+    }
+  }
+  offer with_floor(offer chosen) const {
+    const auto minimum = basic_offer();
+    if (chosen.price.amount > 0) {
+      check(minimum.price.amount > 0, "TIER_UNSET");
+      if (chosen.price.amount < minimum.price.amount) chosen.price = minimum.price;
+    }
+    if (chosen.usd_cents > 0) chosen.usd_cents = minimum.usd_cents == 0 ? 0 : std::max(chosen.usd_cents, minimum.usd_cents);
+    return chosen;
   }
   int64_t liquid_balance(const namescfg& cfg) const {
     multi_index<"accounts"_n, daclify::payout_token_balance> rows(cfg.token_contract, get_self().value);
@@ -571,8 +603,8 @@ private:
       suffixes linked(get_self(), get_self().value);
       const auto& item = linked.get(chosen.suffix.value, "SUFFIX");
       const auto policy = current_policy();
-      const int64_t next_price = raise_units(item.price.amount, policy.bump_bps, 1000000000000);
-      const int64_t next_usd = raise_units((int64_t)item.usd_cents, policy.bump_bps, 100000000);
+      const int64_t next_price = raise_units(item.price.amount > 0 ? chosen.price.amount : 0, policy.bump_bps, 1000000000000);
+      const int64_t next_usd = raise_units(item.usd_cents > 0 ? std::max(item.usd_cents, chosen.usd_cents) : 0, policy.bump_bps, 100000000);
       check(item.sales_count < std::numeric_limits<uint32_t>::max(), "SALE_LIMIT");
       linked.modify(item, same_payer, [&](auto& row) {
         row.price = asset(next_price, item.price.symbol);

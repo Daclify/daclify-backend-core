@@ -415,6 +415,8 @@ export const ServiceResponseRoutes = [
 }[];
 
 export const ContractFailureMessages = {
+  NAME_PRICE_FLOOR:
+    'Suffix accounts must be priced at least as high as a normal basic account. Refresh the current minimum and update your price.',
   NAME_PROFIT_LOW:
     'The payment no longer covers current account costs. Account creation is on hold for payment review.',
   NAME_NET_REQUIRED: 'Payment fees must be verified before this account can be created.',

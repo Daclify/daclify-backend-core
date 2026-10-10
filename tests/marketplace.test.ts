@@ -309,6 +309,114 @@ describe('module catalogue fees', () => {
 });
 
 describe('Telos name sales', () => {
+  it('rejects suffix prices below either nonzero basic rail, including dotted exact-name edits', async () => {
+    await expect(
+      send(names, 'regsuffix', ['bob', '0.9999 TLOS', 0, 1], 'bob@active'),
+    ).rejects.toThrow('NAME_PRICE_FLOOR');
+    await expect(
+      send(names, 'regsuffix', ['bob', '0.0000 TLOS', 499, 1], 'bob@active'),
+    ).rejects.toThrow('NAME_PRICE_FLOOR');
+    await send(names, 'regsuffix', ['bob', '1.0000 TLOS', 500, 1], 'bob@active');
+    await expect(
+      send(names, 'regsuffix', ['bob', '2.0000 TLOS', 499, 1], 'bob@active'),
+    ).rejects.toThrow('NAME_PRICE_FLOOR');
+    await expect(
+      send(names, 'regname', ['bob', 'cheap.bob', '0.9999 TLOS', 0, 1], 'bob@active'),
+    ).rejects.toThrow('NAME_PRICE_FLOOR');
+    await send(names, 'regname', ['bob', 'fair.bob', '1.0000 TLOS', 500, 1], 'bob@active');
+    await expect(
+      send(names, 'editname', ['bob', 'fair.bob', '0.0000 TLOS', 499, 1], 'bob@active'),
+    ).rejects.toThrow('NAME_PRICE_FLOOR');
+    await send(names, 'editname', ['bob', 'fair.bob', '2.0000 TLOS', 0, 1], 'bob@active');
+  });
+  it('charges the rising basic floor for existing suffixes and raises the charged price after a sale', async () => {
+    await send(names, 'regsuffix', ['bob', '1.0000 TLOS', 500, 1], 'bob@active');
+    await send(names, 'setoracle', ['daclifycore', 50000, 4, 1], 'daclifycore@active');
+    await send(
+      names,
+      'intend',
+      ['carol', 'aa.bob', ownerKey.toPublic().toString(), activeKey.toPublic().toString()],
+      'carol@active',
+    );
+    await expect(
+      send(token, 'transfer', ['carol', 'names', '1.0000 TLOS', 'buy:aa.bob'], 'carol@active'),
+    ).rejects.toThrow('PRICE');
+    expect(balance('carol')).toBe('100.0000 TLOS');
+    await send(token, 'transfer', ['carol', 'names', '1.2000 TLOS', 'buy:aa.bob'], 'carol@active');
+    expect(saleRow.parse(row(names, 'sales', names.toBigInt(), 1n))).toMatchObject({
+      seller: 'bob',
+      platform_fee: '0.0600 TLOS',
+      usd_cents: 500,
+    });
+    expect(
+      z
+        .object({ price: z.string(), usd_cents: z.number() })
+        .parse(row(names, 'suffixes', names.toBigInt(), BigInt(Name.from('bob').value.toString()))),
+    ).toEqual({ price: '1.4400 TLOS', usd_cents: 600 });
+  });
+  it('enforces a rising floor on existing dotted listings during USD fulfillment', async () => {
+    await send(names, 'regname', ['bob', 'fair.bob', '1.0000 TLOS', 500, 1], 'bob@active');
+    await send(
+      names,
+      'settier',
+      [0, '2.0000 TLOS', 1000, 4096, '0.0000 TLOS', '0.0000 TLOS'],
+      'names@active',
+    );
+    await expect(
+      send(
+        names,
+        'fulfill',
+        [
+          'relay',
+          'fair.bob',
+          ownerKey.toPublic().toString(),
+          activeKey.toPublic().toString(),
+          500,
+          reference,
+        ],
+        'relay@active',
+      ),
+    ).rejects.toThrow('PRICE');
+    await send(
+      names,
+      'fulfill',
+      [
+        'relay',
+        'fair.bob',
+        ownerKey.toPublic().toString(),
+        activeKey.toPublic().toString(),
+        1000,
+        reference,
+      ],
+      'relay@active',
+    );
+    expect(saleRow.parse(row(names, 'sales', names.toBigInt(), 1n)).usd_cents).toBe(1000);
+  });
+  it('floors a USD-only suffix before native conversion and preserves its unset native rail', async () => {
+    await send(names, 'regsuffix', ['bob', '0.0000 TLOS', 500, 1], 'bob@active');
+    await send(
+      names,
+      'settier',
+      [0, '2.0000 TLOS', 1000, 4096, '0.0000 TLOS', '0.0000 TLOS'],
+      'names@active',
+    );
+    await send(names, 'setoracle', ['daclifycore', 50000, 4, 1], 'daclifycore@active');
+    await send(
+      names,
+      'intend',
+      ['carol', 'aa.bob', ownerKey.toPublic().toString(), activeKey.toPublic().toString()],
+      'carol@active',
+    );
+    await expect(
+      send(token, 'transfer', ['carol', 'names', '1.2000 TLOS', 'buy:aa.bob'], 'carol@active'),
+    ).rejects.toThrow('PRICE');
+    await send(token, 'transfer', ['carol', 'names', '2.4000 TLOS', 'buy:aa.bob'], 'carol@active');
+    expect(
+      z
+        .object({ price: z.string(), usd_cents: z.number() })
+        .parse(row(names, 'suffixes', names.toBigInt(), BigInt(Name.from('bob').value.toString()))),
+    ).toEqual({ price: '0.0000 TLOS', usd_cents: 1200 });
+  });
   it('lets only the seller change or remove unsold listings and suffixes', async () => {
     await send(names, 'regname', ['bob', 'premname', '2.0000 TLOS', 0, 1], 'bob@active');
     await expect(

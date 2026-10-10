@@ -1,0 +1,18 @@
+{
+  "appliedAt": "2026-10-10T14:49:06.913Z",
+  "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+  "receipt": {
+    "transactionId": "0ceb3ca7bc59d06720a21ec032b06acf031cba345e7b7b525200cb7f33b5e1f6",
+    "blockNum": 449481664
+  },
+  "irreversible": true,
+  "oldCodeHash": "b5a00d14a69b03b3be3b812b07d57c4ce2d5b0d8ca9acf7d5078e66e65e8b225",
+  "newCodeHash": "76714f4a8980b8405fb79e64a127c7492558960ebe63a79185ce6d3cb0a38c8a",
+  "abiUnchanged": true,
+  "policiesTiersSalesListingsSuffixesIntentsUnchanged": true,
+  "permissionsUnchanged": true,
+  "balance": [
+    "100.0000 TLOS"
+  ],
+  "noTokenTransfers": true
+}

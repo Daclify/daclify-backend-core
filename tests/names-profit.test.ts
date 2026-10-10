@@ -95,6 +95,53 @@ beforeEach(async () => {
   );
 });
 describe('Names minimum profit', () => {
+  it('uses the same resource and exchange-rate floor for suffix registrations', async () => {
+    await profit();
+    await expect(
+      send(names, 'regsuffix', ['carol', '71.5909 TLOS', 0, 1], 'carol@active'),
+    ).rejects.toThrow('NAME_PRICE_FLOOR');
+    await expect(
+      send(names, 'regsuffix', ['carol', '0.0000 TLOS', 141, 1], 'carol@active'),
+    ).rejects.toThrow('NAME_PRICE_FLOOR');
+    await send(names, 'regsuffix', ['carol', '71.5910 TLOS', 142, 1], 'carol@active');
+    await send(
+      system,
+      'setmarket',
+      [
+        '10000000000.0000 RAMCORE',
+        '20963900417 RAM',
+        '2387955.6942 TLOS',
+        '3.5174 TLOS',
+        'eosio.token',
+      ],
+      'eosio@active',
+    );
+    await expect(
+      send(names, 'regsuffix', ['carol', '71.5910 TLOS', 0, 1], 'carol@active'),
+    ).rejects.toThrow('NAME_PRICE_FLOOR');
+    await send(names, 'regsuffix', ['carol', '73.6364 TLOS', 0, 1], 'carol@active');
+    await send(names, 'setoracle', ['daclifycore', 88, 4, now], 'daclifycore@active');
+    await expect(
+      send(names, 'regsuffix', ['carol', '73.6364 TLOS', 0, 1], 'carol@active'),
+    ).rejects.toThrow('NAME_PRICE_FLOOR');
+    await send(names, 'regsuffix', ['carol', '141.8182 TLOS', 0, 1], 'carol@active');
+  });
+  it('requires a fresh oracle for a suffix floor and keeps native-only registration when card fee evidence expires', async () => {
+    await send(
+      names,
+      'setprofit',
+      ['daclifycore', 1, 100, 515, 29, now - 8 * 86400],
+      'daclifycore@active',
+    );
+    await send(names, 'regsuffix', ['carol', '71.5910 TLOS', 0, 1], 'carol@active');
+    await expect(
+      send(names, 'regsuffix', ['carol', '71.5910 TLOS', 142, 1], 'carol@active'),
+    ).rejects.toThrow('NAME_FEE_REFERENCE');
+    await send(names, 'setoracle', ['daclifycore', 176, 4, now - 901], 'daclifycore@active');
+    await expect(
+      send(names, 'regsuffix', ['carol', '80.0000 TLOS', 0, 1], 'carol@active'),
+    ).rejects.toThrow('ORACLE_STALE');
+  });
   it('refuses a gross-only card attestation after policy activation', async () => {
     await profit();
     await expect(

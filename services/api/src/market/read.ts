@@ -239,6 +239,26 @@ export function oracleTlos(usdCents: number, policy: NamePolicy | undefined): st
   );
 }
 
+function suffixFloor(
+  price: string,
+  usdCents: number,
+  tiers: readonly NameTier[],
+  policy: NamePolicy | undefined,
+): { price: string; usdCents: number } {
+  const basic = tiers.find((tier) => tier.kind === 'basic');
+  if (!basic) throw new MarketRuleError('TIER_UNSET');
+  const minimum = basic.tlosQuote ?? oracleTlos(basic.usdCents, policy) ?? basic.price;
+  const amount = parseAsset(price),
+    floor = parseAsset(minimum);
+  if (amount.precision !== floor.precision || amount.symbol !== floor.symbol)
+    throw new Error('PRICE');
+  if (amount.minor > 0n && floor.minor === 0n) throw new MarketRuleError('TIER_UNSET');
+  return {
+    price: amount.minor > 0n && amount.minor < floor.minor ? minimum : price,
+    usdCents: usdCents === 0 || basic.usdCents === 0 ? 0 : Math.max(usdCents, basic.usdCents),
+  };
+}
+
 export function quoteName(input: {
   accountName: string;
   tiers: readonly NameTier[];
@@ -278,8 +298,9 @@ export function quoteName(input: {
       listed: true,
       seller: listing.seller,
       party: 'third-party',
-      price: listing.price,
-      usdCents: listing.usdCents,
+      ...(input.accountName.includes('.')
+        ? suffixFloor(listing.price, listing.usdCents, input.tiers, input.policy)
+        : { price: listing.price, usdCents: listing.usdCents }),
       platformBps: input.thirdPartyBps,
       suffix: null,
       priceFromOracle: false,
@@ -287,10 +308,11 @@ export function quoteName(input: {
   }
   const suffix = matchingSuffix(input.accountName, input.suffixes ?? []);
   if (suffix) {
-    const stored = parseAsset(suffix.price);
-    const converted = stored.minor === 0n ? oracleTlos(suffix.usdCents, input.policy) : null;
+    const effective = suffixFloor(suffix.price, suffix.usdCents, input.tiers, input.policy);
+    const stored = parseAsset(effective.price);
+    const converted = stored.minor === 0n ? oracleTlos(effective.usdCents, input.policy) : null;
     const nextUsd =
-      suffix.usdCents > 0 ? Number(raisedMinor(BigInt(suffix.usdCents), bumpBps)) : null;
+      effective.usdCents > 0 ? Number(raisedMinor(BigInt(effective.usdCents), bumpBps)) : null;
     const nextStored =
       stored.minor > 0n
         ? formatAsset(raisedMinor(stored.minor, bumpBps), stored.precision, stored.symbol)
@@ -300,8 +322,8 @@ export function quoteName(input: {
       listed: false,
       seller: suffix.seller,
       party: 'third-party',
-      price: converted ?? suffix.price,
-      usdCents: suffix.usdCents,
+      price: converted ?? effective.price,
+      usdCents: effective.usdCents,
       platformBps: input.thirdPartyBps,
       suffix: suffix.suffix,
       priceFromOracle: converted !== null,
