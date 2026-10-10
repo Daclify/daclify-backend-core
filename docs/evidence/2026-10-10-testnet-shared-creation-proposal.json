@@ -1,0 +1,49 @@
+{
+  "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+  "unsigned": true,
+  "reason": "Align testnet shared creation with the existing free setup and 10-member product policy; preserve independent fee, premium and settler",
+  "before": {
+    "creation": {
+      "shared_usd": 2000,
+      "independent_usd": 5000,
+      "premium_bps": 2000,
+      "settler": "daclifyrelay",
+      "median": "176",
+      "precision": 4,
+      "observed_at": 1791548722
+    },
+    "hosting": null
+  },
+  "actions": [
+    {
+      "account": "daclifycore1",
+      "name": "setcreate",
+      "authorization": [
+        {
+          "actor": "daclifycore1",
+          "permission": "active"
+        }
+      ],
+      "data": {
+        "shared_usd": 0,
+        "independent_usd": 5000,
+        "premium_bps": 2000,
+        "settler": "daclifyrelay"
+      }
+    },
+    {
+      "account": "daclifycore1",
+      "name": "sethosted",
+      "authorization": [
+        {
+          "actor": "daclifycore1",
+          "permission": "active"
+        }
+      ],
+      "data": {
+        "free_members": 10,
+        "settler": "daclifyrelay"
+      }
+    }
+  ]
+}

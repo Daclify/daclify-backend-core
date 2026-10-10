@@ -88,7 +88,9 @@ Set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `STRIPE_PRICE_ID` together
 
 ## Local API
 
-`npm run dev` loads `.env` and listens on `API_PORT` (3008 in the examples). The frontend dev server proxies `/v1` to `127.0.0.1:3008`. `npm run dev:local` is the disposable native fixture API used by browser tests. `npm run native:start` starts that fixture chain. Do not reset a fixture that already holds state you need.
+`npm run dev` loads `.env` and listens on `API_PORT` (3008 in the examples). `API_HOST` defaults to `127.0.0.1`; set a private interface IP or `0.0.0.0` when an external reverse proxy needs to reach the API. The frontend dev server proxies `/v1` to `127.0.0.1:3008`. `npm run dev:local` is the disposable native fixture API used by browser tests. `npm run native:start` starts that fixture chain. Do not reset a fixture that already holds state you need.
+
+The [workspace testnet server setup](docs/evidence/2026-10-10-workspace-testnet-server.md) records the continuing `/data` development server on API port 9090 and frontend port 9091, including its external HAProxy routing and actual verification results.
 
 Secrets stay in the gitignored environment files. Use `.env.testnet` for the testnet API and `.env.deploy.testnet` only for the deployment key; the API refuses a deployer key. Do not print secrets or commit `.artifacts/deploy/*-keys.json`. The [operations guide](docs/operations.md) describes the planned Netlify frontend and separate mainnet/testnet API services on one Hetzner VM; source availability does not establish a deployed service.
 

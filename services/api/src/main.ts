@@ -62,6 +62,7 @@ const configuration = z
     BOOTSTRAP_OWNER: z.string().optional(),
     BOOTSTRAP_PRIVATE_KEY: z.string().optional(),
     NETWORK_ENVIRONMENT: z.enum(['local', 'testnet', 'mainnet']),
+    API_HOST: z.union([z.ipv4(), z.ipv6()]).default('127.0.0.1'),
     API_PORT: z.coerce.number().int().min(1).max(65535).default(3008),
     PINATA_JWT: z.string().min(1).optional(),
     PINATA_STORAGE_SCOPE: ProviderScopeSchema.optional(),
@@ -253,7 +254,7 @@ const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
   ...(docs ? { docs } : {}),
   ...(telegramDocs ? { telegramDocs } : {}),
 });
-await app.listen({ host: '127.0.0.1', port: env.API_PORT });
+await app.listen({ host: env.API_HOST, port: env.API_PORT });
 const worker = content ? startContentWorker(pool, content) : undefined;
 const hostingWorker = hosting ? startHostingWorker(pool, hosting) : undefined;
 const storageWorker = hostedStorage ? startStorageWorker(pool, hostedStorage) : undefined;
@@ -281,5 +282,5 @@ process.on('SIGINT', () => {
   void shutdown();
 });
 console.log(
-  `Daclify API listening on 127.0.0.1:${env.API_PORT}; ${env.NETWORK_ENVIRONMENT} configuration.`,
+  `Daclify API listening on ${env.API_HOST}:${env.API_PORT}; ${env.NETWORK_ENVIRONMENT} configuration.`,
 );
