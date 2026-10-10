@@ -54,7 +54,7 @@ Sandbox products/webhooks follow [Stripe's product API](https://docs.stripe.com/
 
 Shared creation still uses `shared_usd=2000`, with no hosted-member policy. The existing application/product policy is free shared setup with ten member slots. [Two schema-validated unsigned actions](2026-10-10-testnet-shared-creation-proposal.json) propose that alignment while preserving independent pricing, premium and settler. They have **not** been broadcast; the user has been asked to choose the testnet policy.
 
-Names has zero tiers, zero suffixes and zero listings. A real quote cannot succeed until the operator selects a basic-name price/resources or establishes an offer. A user pricing decision is pending; no tier price was invented or changed. TLOS rate observations are also stale and require an operator update for conversion-dependent quotes.
+Names has zero tiers, zero suffixes and zero listings; a correctly formed real quote request returned HTTP 409 `TIER_UNSET`. A real quote cannot succeed until the operator selects a basic-name price/resources or establishes an offer. A user pricing decision is pending; no tier price was invented or changed. TLOS rate observations are also stale and require an operator update for conversion-dependent quotes.
 
 ## Reproducible evidence
 
@@ -63,3 +63,7 @@ Sanitized logs are under `/data/daclify-runtime`: `provider-readiness.jsonl`, `s
 Core typecheck and lint passed. Provider/sign-in unit selection passed 73 tests. Notification/pricing/configuration selection passed 6 tests, native proof selection passed 2, and environment/host preflight selection passed 10. These disjoint selections total 91 tests. These use fixtures where stated and do not establish physical-wallet, live-card-settlement or destructive-cleanup qualification. Full WASM/native and live recurring-payment suites were not run.
 
 The private environment and backups remain outside Git and frontend source. Runtime configuration uses the existing systemd environment-file path. Public frontend delivery is recorded in its sibling [UX evidence](../../../daclify-frontend/docs/evidence/2026-10-10-user-setup-and-services.md).
+
+## Source delivery
+
+Core setup and qualification are committed locally on `dev` as `63ef7c0`. The API binding/default, example and original server record are included with these qualification documents. Core build also passed before this commit. `git push origin dev` failed because this server has no GitHub authentication (`could not read Username`, terminal prompts disabled). Remote publication is pending; no main branch was changed.
