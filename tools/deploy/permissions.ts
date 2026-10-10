@@ -4,7 +4,7 @@ import { ModulePermissions } from '@daclify/modules';
 import { ABI, Action, Authority, API } from '@wharfkit/antelope';
 import { deploymentAccounts, type DeployEnvironment } from './environment.js';
 import { SYSTEM_ABI } from '../../sdk/system-abi.js';
-import { z } from 'zod';
+import { nativeOwnershipAccount } from '../../sdk/executives.js';
 export function contextPermissionPlan(
   runtimeInput: string,
   modules: readonly { id: keyof typeof ModulePermissions; account: string }[],
@@ -61,14 +61,7 @@ export function deploymentContextPermissionPlan(environment: DeployEnvironment) 
   return contextPermissionPlan(runtime.name, modules);
 }
 
-export function permissionAuditAccount(value: unknown): API.v1.AccountObject {
-  // The pinned SDK omits eosio.any links, so inspect raw metadata before decoding.
-  const metadata = z.object({ eosio_any_linked_actions: z.array(z.unknown()) }).safeParse(value);
-  if (!metadata.success) throw new Error('PERMISSION_LINKS_UNAVAILABLE');
-  if (metadata.data.eosio_any_linked_actions.length)
-    throw new Error('PERMISSION_ANY_LINK_REVIEW_REQUIRED');
-  return API.v1.AccountObject.from(value);
-}
+export const permissionAuditAccount = nativeOwnershipAccount;
 
 function accountLinks(account: API.v1.AccountObject) {
   if (account.permissions.some((permission) => permission.linked_actions === undefined))

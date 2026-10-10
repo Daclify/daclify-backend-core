@@ -517,3 +517,26 @@ it('runs independent owned nodes without sharing peer ports or chain identities'
     await second.stop();
   }
 });
+
+it.each(['linkauth', 'unlinkauth'] as const)(
+  'module code cannot weaken owner-linked upgrades using %s',
+  async (name) => {
+    const state = await tree();
+    await lockUpgrade(state);
+    const object =
+      name === 'linkauth'
+        ? { account: state.module, code: 'eosio', type: 'setabi', requirement: 'active' }
+        : { account: state.module, code: 'eosio', type: 'setabi' };
+    await expect(inline(state.module, state.module, 'active', name, object)).rejects.toThrow(
+      'NATIVE_AUTH_REJECTED',
+    );
+    const owner = (await fixture().api.v1.chain.get_account(state.module)).permissions.find(
+      (row) => row.perm_name.toString() === 'owner',
+    );
+    expect(
+      owner?.linked_actions?.some(
+        (link) => link.account.toString() === 'eosio' && link.action?.toString() === 'setabi',
+      ),
+    ).toBe(true);
+  },
+);

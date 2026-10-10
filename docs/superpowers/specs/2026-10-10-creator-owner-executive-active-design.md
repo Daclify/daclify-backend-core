@@ -1,12 +1,12 @@
 # Creator recovery and executive active authority
 
-Status: proposed replacement for the native authority tree in the [2026-10-09 specification](2026-10-09-executive-authority.md). The user selected configurable quorum and executive upgrades through active on 2026-10-10. This document makes the remaining implementation and migration scope reviewable; it does not authorize live authority changes.
+Status: approved replacement for the native authority tree in the [2026-10-09 specification](2026-10-09-executive-authority.md). The user selected configurable quorum and executive upgrades through active on 2026-10-10. This document makes the remaining implementation and migration scope reviewable; it does not authorize live authority changes.
 
 ## Intended behavior
 
 The creator retains recovery control of the runtime owner. The governing DAO's eligible paired executives control runtime active using its existing configurable quorum. The seven other deployed contract accounts delegate ownership to runtime active. Ordinary DAO membership, browser login, service credentials and module execution remain separate from native governance.
 
-For testnet, the committed creator is `3boidanimus3`, not the illustrative `3boidanimud3` in the request. Confirm the intended creator and initial executive roster against the signing proposal before any handover. The creator account currently exists with two keys in active, threshold one; this proposal delegates to that account authority rather than copying a public key.
+For testnet, the committed creator is `3boidanimus3`, not the illustrative `3boidanimud3` in the request. The user confirmed this creator on 2026-10-10. Confirm the initial executive roster against the signing proposal before any handover. The creator account currently exists with two keys in active, threshold one; this proposal delegates to that account authority rather than copying a public key.
 
 ## Authority tree
 
@@ -38,7 +38,7 @@ This does not make active immutable. Executives can update active, and permitted
 - Managed owner delegates to runtime active; managed active preserves only the necessary own-code entry alongside that delegate. Use the configured inline-code roles, not an unconditional own-code grant to every account.
 - Native executive appointment after handover uses active. The restricted service credential cannot appoint executives, upgrade contracts, alter owner/active or authorize treasury withdrawals through an unrelated link.
 - Retain the existing governing-DAO restriction, delayed election activation, last-controller protection, paired-wallet consent, all-inactive fallback, stale signer/quorum/revision checks and atomic rollback. Do not change their persisted interpretation during this migration.
-- Remove reliance on govern in the new tree. Never silently reinterpret an already handed-over legacy deployment; refuse it until an explicit reviewed migration is available. Actual testnet currently has no nativegov row.
+- Remove reliance on govern in the new tree. Never silently reinterpret an already handed-over legacy deployment; refuse it until an explicit reviewed migration is available. Actual testnet currently has no nativegov row. If an old native policy is upgraded, freeze that governing DAO’s member instructions except withdrawal/unstake until explicit migration; preserve public settlement of approved liabilities.
 
 ## SDK, API and UI changes required
 
@@ -67,4 +67,4 @@ The creator/executive bindings and current chain state must be re-read before si
 
 ## Decision boundary
 
-Approve this replacement policy before implementing the C++/SDK/UI migration. Live testnet signing is a subsequent decision after exact authorities, roster, release hashes and native evidence are available. The current audit implements safe diagnostics, catalogue compatibility and the behavior-preserving wallet-consent fix, and tests the proposed hierarchy on disposable native nodes; it does not invoke existing handover or change keys.
+The user approved implementation of this replacement policy and confirmed 3boidanimus3 on 2026-10-10. Live testnet signing is a subsequent decision after exact authorities, roster, release hashes and native evidence are available. The current audit implements safe diagnostics, catalogue compatibility and the behavior-preserving wallet-consent fix, and tests the proposed hierarchy on disposable native nodes; it does not invoke existing handover or change keys.

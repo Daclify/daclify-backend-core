@@ -345,6 +345,15 @@ export class NativeChainGateway implements ChainGateway {
       throw new ApiError('CHAIN_UNAVAILABLE', 503);
     });
     const actions = abi?.actions.map((action) => Name.from(action.name).toString()) ?? [];
+    const ownershipPolicy = [
+      ['setnativegov', ['creator', 'inline_code']],
+      ['handover', ['expected_creator', 'expected_policy_version']],
+    ] as const;
+    const creatorOwnership = ownershipPolicy.every(([action, fields]) => {
+      const type = abi?.actions.find((row) => row.name.toString() === action)?.type;
+      const shape = abi?.structs.find((row) => row.name === type);
+      return fields.every((field) => shape?.fields.some((row) => row.name === field));
+    });
     const presets = await this.supportsPresets(actions);
     return NetworkSchema.parse({
       chainId: this.config.chainId,
@@ -355,6 +364,7 @@ export class NativeChainGateway implements ChainGateway {
       interfaceVersion: 1,
       coreVersion: VERSION,
       capabilities: [
+        ...(creatorOwnership ? ['creator-owner-executive-active'] : []),
         'internal-k1',
         'native-linked',
         'encrypted-documents',

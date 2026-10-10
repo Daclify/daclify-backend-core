@@ -437,6 +437,27 @@ export const ContractFailureMessages = {
   NAME_PROFIT_PENDING: 'Another account creation is being finalized. Please try again.',
   NAME_FEE_REFERENCE: 'Card pricing is temporarily unavailable. Please try again later.',
 
+  NATIVE_CONTEXT_REVIEW_REQUIRED:
+    'Restore the code-only execution context and complete core member-action links before handover.',
+  NATIVE_POLICY_MIGRATION_REQUIRED:
+    'This deployment uses an unsupported native ownership policy. An explicit reviewed migration is required.',
+  NATIVE_CREATOR:
+    'Choose a separate existing creator recovery account outside the managed contract set.',
+  NATIVE_INLINE_CODE: 'Inline code authority must name unique managed contract accounts.',
+  NATIVE_EXECUTIVE_ACCOUNT:
+    'An executive wallet cannot be the runtime or one of its managed contracts.',
+  SERVICE_KEY_CREATOR: 'The hosting service key must not control creator recovery.',
+  NATIVE_OWNERSHIP_RUNTIME_REQUIRED:
+    'The deployed runtime does not match the reviewed ownership release. Upgrade and verify its code and ABI before preparing ownership changes.',
+  NATIVE_AUTHORITY_REVIEW_REQUIRED:
+    'Current authorities or permission links need operator review before handover.',
+  NATIVE_HANDOVER_ACCOUNTS:
+    'Read a complete fresh snapshot of the runtime and every managed contract account.',
+  NATIVE_HANDOVER_STATE: 'Native ownership has already been handed over.',
+  NATIVE_EXECUTIVE_QUORUM: 'Select one to eight distinct executive wallets and a reachable quorum.',
+  NATIVE_OWNER_REQUIRED: 'A valid owner and active authority are required for every account.',
+  NATIVE_OWNER_THRESHOLD_UNSUPPORTED:
+    'The current owner threshold cannot be safely staged for handover.',
   NATIVE_EXECUTIVE_ROLES:
     'Administrator rights on this governing DAO follow the eligible paired executive roster. Change executive office or pairing instead.',
   SERVICE_KEY_EXECUTIVE:

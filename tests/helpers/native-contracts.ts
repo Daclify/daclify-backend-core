@@ -9,6 +9,8 @@ import {
   makeInstruction,
   RuntimeCodeHash,
   RuntimeTableSchemas,
+  nativeHandoverActions,
+  nativeOwnershipSetupActions,
 } from '../../sdk/index.js';
 import { nativeProcess, type NativeProcess, type NativePushResult } from './native-process.js';
 
@@ -33,7 +35,7 @@ export const testnetMissingLinks = [
   'govresources',
 ];
 
-export async function nativeContracts() {
+export async function nativeContracts(legacyRuntime = false) {
   const f: NativeProcess = await nativeProcess();
   try {
     const abis = new Map<string, ABI>();
@@ -45,14 +47,27 @@ export async function nativeContracts() {
       'recovery',
       'daclifycore',
       'daclifyhub',
+      'names',
       'eosio.token',
       ...nativeModules.map((module) => module.account),
     ])
       await f.create(account);
-    abis.set('daclifycore', await f.deploy('daclifycore', '.artifacts/contracts/runtime'));
+    abis.set(
+      'daclifycore',
+      await f.deploy(
+        'daclifycore',
+        legacyRuntime ? '.artifacts/ownership-policy1/runtime' : '.artifacts/contracts/runtime',
+      ),
+    );
     abis.set('daclifyhub', await f.deploy('daclifyhub', '.artifacts/contracts/hub'));
+    abis.set('names', await f.deploy('names', '.artifacts/contracts/names'));
     abis.set('eosio.token', await f.deploy('eosio.token', '.artifacts/contracts/testtoken'));
-    if ((await f.api.v1.chain.get_raw_abi('daclifycore')).code_hash.toString() !== RuntimeCodeHash)
+    if (
+      (await f.api.v1.chain.get_raw_abi('daclifycore')).code_hash.toString() !==
+      (legacyRuntime
+        ? 'ecdb1e3dab7fb57502dd9ea8cde447a00892f20f4d30fa373f02c072eca03f40'
+        : RuntimeCodeHash)
+    )
       throw new Error('FIXTURE_RUNTIME_RELEASE_MISMATCH');
     for (const module of nativeModules) {
       // Binary artifacts only; public pinned SDK hashes define the accepted release.
@@ -317,63 +332,66 @@ export async function nativeContracts() {
       };
     }
     async function executiveTree() {
-      // Simulates the reviewed native tree; production handover/synchronization is pending.
-      const active = Authority.from({
-        threshold: 2,
-        keys: [],
-        waits: [],
-        accounts: [
-          { permission: { actor: 'alice', permission: 'active' }, weight: 1 },
-          { permission: { actor: 'bob', permission: 'active' }, weight: 1 },
-          { permission: { actor: 'daclifycore', permission: 'eosio.code' }, weight: 2 },
-        ],
-      });
-      active.sort();
-      await f.update('daclifycore', 'active', 'owner', active);
-      await f.update(
+      const governing = await dummyDao();
+      await call(
         'daclifycore',
-        'owner',
-        '',
-        Authority.from({
-          threshold: 1,
-          keys: [],
-          waits: [],
-          accounts: [{ permission: { actor: 'recovery', permission: 'active' }, weight: 1 }],
-        }),
+        'appoint',
+        {
+          dao_id: governing.daoId,
+          member_ids: ['1', '2'],
+          inactivity_seconds: 0,
+          quorum_bps: 10000,
+        },
+        'alice',
       );
-      for (const account of ['daclifyhub', ...nativeModules.map((module) => module.account)]) {
-        const owner = Authority.from({
-          threshold: 1,
-          keys: [],
-          waits: [],
-          accounts: [{ permission: { actor: 'daclifycore', permission: 'active' }, weight: 1 }],
-        });
-        const operational = Authority.from({
-          threshold: 1,
-          keys: [],
-          waits: [],
-          accounts: [
-            ...owner.accounts,
-            ...(account === 'daclifyhub'
-              ? []
-              : [{ permission: { actor: account, permission: 'eosio.code' }, weight: 1 }]),
-          ],
-        });
-        operational.sort();
-        await f.update(account, 'active', 'owner', operational);
-        await f.update(account, 'owner', '', owner);
-        await f.push(
-          ['setcode', 'setabi'].map((type) =>
-            f.system(
-              'linkauth',
-              { account, code: 'eosio', type, requirement: 'owner' },
-              account,
-              'owner',
-            ),
-          ),
-          [f.key('alice'), f.key('bob')],
+      for (const [member, account] of [
+        ['1', 'alice'],
+        ['2', 'bob'],
+      ] as const)
+        await governing.act(
+          'daclifycore',
+          'linknative',
+          encodeAction('linknative', { ...governing.actor(member), account }),
+          member,
+          account,
         );
-      }
+      const managed = ['daclifyhub', 'names', ...nativeModules.map((module) => module.account)];
+      await f.push(
+        nativeOwnershipSetupActions('daclifycore', {
+          dao_id: governing.daoId,
+          contracts: managed,
+          creator: 'recovery',
+          inline_code: ['names', ...nativeModules.map((module) => module.account)],
+          service_key: f.key('relay').toPublic().toString(),
+        }),
+        [f.key('daclifycore')],
+      );
+      const rows = await f.api.v1.chain.get_table_rows({
+        code: 'daclifycore',
+        scope: 'daclifycore',
+        table: 'nativegov',
+        limit: 1,
+      });
+      const cfg = RuntimeTableSchemas.nativegov.parse(rows.rows[0]);
+      await f.push(
+        nativeHandoverActions(
+          'daclifycore',
+          cfg,
+          {
+            dao_id: governing.daoId,
+            expected_signers: ['alice', 'bob'],
+            expected_threshold: 2,
+            expected_revision: '1',
+            expected_creator: 'recovery',
+            expected_policy_version: 2,
+          },
+          await Promise.all(
+            ['daclifycore', ...managed].map((account) => f.api.v1.chain.get_account(account)),
+          ),
+        ),
+        ['daclifycore', ...managed].map((account) => f.key(account)),
+      );
+      return governing;
     }
     return Object.assign(f, { abi, call, context, gateway, dummyDao, executiveTree });
   } catch (error) {

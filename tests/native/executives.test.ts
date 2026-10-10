@@ -16,9 +16,9 @@ import {
   Transaction,
   Action,
 } from '@wharfkit/antelope';
-import { RuntimeTableSchemas } from '../../sdk/generated/schemas.js';
+import { RuntimeTableSchemas, RuntimeActionSchemas } from '../../sdk/generated/schemas.js';
 import { fixtureNetwork } from '../../tools/native/network.js';
-import { handoverOwnerActions, nativeOwnershipSetupActions } from '../../sdk/executives.js';
+import { nativeHandoverActions, nativeOwnershipSetupActions } from '../../sdk/executives.js';
 import { fixtureKey } from '../../tools/native/keys.js';
 const network = fixtureNetwork(),
   api = new APIClient({ url: network.url });
@@ -29,6 +29,8 @@ const memberKeys = [
   PrivateKey.generate('K1'),
 ];
 const dao = '66001';
+const managed = ['works', 'decide', 'payroll', 'grants', 'endorse'];
+const bootstrapOwners = ['daclifycore', ...managed];
 const serviceKey = PrivateKey.generate('K1');
 async function push(
   action: string,
@@ -45,7 +47,9 @@ async function push(
   const definition = contractAbi.structs.find((s) => s.name === action);
   if (!definition) throw new Error('FIXTURE_ACTION');
   if (action === 'handover' && Array.isArray(data) && data.length === 1)
-    data = [dao, ['alice', 'bob'], 2, 1];
+    data = [dao, ['alice', 'bob'], 2, 1, 'carol', 2];
+  if (action === 'handover' && Array.isArray(data) && data.length === 4)
+    data = [...data, 'carol', 2];
   const object = Array.isArray(data)
     ? Object.fromEntries(definition.fields.map((field, index) => [field.name, data[index]]))
     : data;
@@ -55,18 +59,26 @@ async function push(
     authorization: authorization.map((value) => PermissionLevel.from(value)),
     data: Serializer.encode({ abi: contractAbi, type: action, object }),
   });
-  const staging =
-    action === 'handover'
-      ? await handoverOwnerActions(
-          'daclifycore',
-          await Promise.all(
-            ['daclifycore', 'works', 'decide'].map((account) => api.v1.chain.get_account(account)),
-          ),
-        )
-      : [];
+  let actions = [request];
+  if (action === 'handover') {
+    const rows = await api.v1.chain.get_table_rows({
+      code: 'daclifycore',
+      scope: 'daclifycore',
+      table: 'nativegov',
+      limit: 1,
+    });
+    actions = nativeHandoverActions(
+      'daclifycore',
+      RuntimeTableSchemas.nativegov.parse(rows.rows[0]),
+      RuntimeActionSchemas.handover.parse(object),
+      await Promise.all(bootstrapOwners.map((account) => api.v1.chain.get_account(account))),
+    );
+    const final = actions.at(-1);
+    if (final) final.authorization = request.authorization;
+  }
   const transaction = Transaction.from({
     ...info.getTransactionHeader(60),
-    actions: [...staging, request],
+    actions,
   });
   try {
     return await api.v1.chain.push_transaction(
@@ -143,7 +155,11 @@ async function permission(account: string, name: string) {
   return {
     threshold: row.required_auth.threshold.toNumber(),
     keys: row.required_auth.keys.map((k) => k.key.toString()),
-    accounts: row.required_auth.accounts.map((p) => p.permission.toString()),
+    accounts: row.required_auth.accounts
+      .filter(
+        (p) => p.permission.permission.toString() !== 'eosio.code' || account !== 'daclifycore',
+      )
+      .map((p) => p.permission.toString()),
   };
 }
 beforeAll(async () => {
@@ -214,7 +230,9 @@ beforeAll(async () => {
     ...info.getTransactionHeader(60),
     actions: nativeOwnershipSetupActions('daclifycore', {
       dao_id: dao,
-      contracts: ['works', 'decide'],
+      contracts: managed,
+      creator: 'carol',
+      inline_code: managed,
       service_key: serviceKey.toPublic().toString(),
     }),
   });
@@ -231,8 +249,8 @@ it('keeps bootstrap permissions until an appointed executive pairs a native acco
     push(
       'handover',
       [dao],
-      ['daclifycore@owner', 'works@owner', 'decide@owner'],
-      [fixtureKey('daclifycore'), fixtureKey('works'), fixtureKey('decide')],
+      bootstrapOwners.map((account) => account + '@owner'),
+      bootstrapOwners.map(fixtureKey),
     ),
   ).rejects.toThrow('NATIVE_EXECUTIVE_REQUIRED');
   expect(await permission('daclifycore', 'owner')).toEqual(before);
@@ -245,17 +263,17 @@ it('keeps bootstrap permissions until an appointed executive pairs a native acco
     push(
       'handover',
       [dao, ['bob'], 1, 1],
-      ['daclifycore@owner', 'works@owner', 'decide@owner'],
-      [fixtureKey('daclifycore'), fixtureKey('works'), fixtureKey('decide')],
+      bootstrapOwners.map((account) => account + '@owner'),
+      bootstrapOwners.map(fixtureKey),
     ),
   ).rejects.toThrow('NATIVE_HANDOVER_CHANGED');
   await push(
     'handover',
     [dao],
-    ['daclifycore@owner', 'works@owner', 'decide@owner'],
-    [fixtureKey('daclifycore'), fixtureKey('works'), fixtureKey('decide')],
+    bootstrapOwners.map((account) => account + '@owner'),
+    bootstrapOwners.map(fixtureKey),
   );
-  expect(await permission('daclifycore', 'govern')).toMatchObject({
+  expect(await permission('daclifycore', 'active')).toMatchObject({
     threshold: 2,
     accounts: ['alice@active', 'bob@active'],
     keys: [],
@@ -265,20 +283,20 @@ it('keeps bootstrap permissions until an appointed executive pairs a native acco
     'NATIVE_EXECUTIVE_ROLES',
   );
   expect(await permission('works', 'owner')).toMatchObject({
-    accounts: ['daclifycore@govern'],
+    accounts: ['daclifycore@active'],
     keys: [],
   });
   expect(await permission('works', 'active')).toMatchObject({
-    accounts: ['daclifycore@govern', 'works@eosio.code'],
+    accounts: ['daclifycore@active', 'works@eosio.code'],
     keys: [],
   });
 });
 it('rejects a service key or a single executive changing the executive roster', async () => {
   await expect(
-    push('appoint', [dao, [1], 60, 10000], ['daclifycore@govern'], [serviceKey]),
+    push('appoint', [dao, [1], 60, 10000], ['daclifycore@active'], [serviceKey]),
   ).rejects.toThrow();
   await expect(
-    push('appoint', [dao, [1], 60, 10000], ['daclifycore@govern'], [fixtureKey('alice')]),
+    push('appoint', [dao, [1], 60, 10000], ['daclifycore@active'], [fixtureKey('alice')]),
   ).rejects.toThrow();
 });
 it('accepts executive activity signed directly by the paired wallet without a vault key', async () => {
@@ -321,7 +339,7 @@ it('allows the scoped hosting service to create a separate shared DAO', async ()
   await expect(
     push(
       'setnativegov',
-      ['66002', [], fixtureKey('daclifycore').toPublic()],
+      ['66002', [], fixtureKey('daclifycore').toPublic(), 'carol', []],
       ['daclifycore@service'],
       [serviceKey],
     ),
@@ -330,19 +348,19 @@ it('allows the scoped hosting service to create a separate shared DAO', async ()
 it('removes a departed wallet transitively from runtime and module owner authority', async () => {
   await act('unlinknat', {}, 2);
   expect((await member(2)).admin).toBe(false);
-  expect(await permission('daclifycore', 'govern')).toMatchObject({
+  expect(await permission('daclifycore', 'active')).toMatchObject({
     threshold: 1,
     accounts: ['alice@active'],
   });
   await expect(
-    push('appoint', [dao, [1], 60, 10000], ['daclifycore@govern'], [fixtureKey('bob')]),
+    push('appoint', [dao, [1], 60, 10000], ['daclifycore@active'], [fixtureKey('bob')]),
   ).rejects.toThrow();
 });
 it('blocks the final paired controller unlink, deactivation and replacement with an unpaired roster', async () => {
   await expect(act('unlinknat', {}, 1)).rejects.toThrow('LAST_NATIVE_EXECUTIVE');
   await expect(act('setactive', { target: 1, active: false }, 1)).rejects.toThrow();
   await expect(
-    push('appoint', [dao, [3], 60, 10000], ['daclifycore@govern'], [fixtureKey('alice')]),
+    push('appoint', [dao, [3], 60, 10000], ['daclifycore@active'], [fixtureKey('alice')]),
   ).rejects.toThrow('LAST_NATIVE_EXECUTIVE');
   expect((await member(1)).native_account).toBe('alice');
 });
@@ -351,19 +369,19 @@ it('atomically replaces the final paired wallet and invalidates its former nativ
   expect((await member(1)).native_account).toBe('alice');
   await act('linknative', { account: 'bob' }, 1, 'bob');
   expect((await member(1)).native_account).toBe('bob');
-  expect(await permission('daclifycore', 'govern')).toMatchObject({
+  expect(await permission('daclifycore', 'active')).toMatchObject({
     threshold: 1,
     accounts: ['bob@active'],
   });
   await expect(
-    push('appoint', [dao, [1], 60, 10000], ['daclifycore@govern'], [fixtureKey('alice')]),
+    push('appoint', [dao, [1], 60, 10000], ['daclifycore@active'], [fixtureKey('alice')]),
   ).rejects.toThrow();
-  await push('appoint', [dao, [1], 60, 10000], ['daclifycore@govern'], [fixtureKey('bob')]);
+  await push('appoint', [dao, [1], 60, 10000], ['daclifycore@active'], [fixtureKey('bob')]);
 });
 it('refreshes an expired co-executive while the caller stays active, then restores returning weight', async () => {
   await act('linknative', { account: 'alice' }, 2, 'alice');
-  await push('appoint', [dao, [1, 2], 60, 10000], ['daclifycore@govern'], [fixtureKey('bob')]);
-  expect(await permission('daclifycore', 'govern')).toMatchObject({
+  await push('appoint', [dao, [1, 2], 60, 10000], ['daclifycore@active'], [fixtureKey('bob')]);
+  expect(await permission('daclifycore', 'active')).toMatchObject({
     threshold: 2,
     accounts: ['alice@active', 'bob@active'],
   });
@@ -373,14 +391,14 @@ it('refreshes an expired co-executive while the caller stays active, then restor
     await new Promise((resolve) => setTimeout(resolve, 15000));
   }
   await push('syncexec', [dao], ['relay@active'], [fixtureKey('relay')]);
-  expect(await permission('daclifycore', 'govern')).toMatchObject({
+  expect(await permission('daclifycore', 'active')).toMatchObject({
     threshold: 1,
     accounts: ['bob@active'],
   });
   expect((await member(2)).admin).toBe(false);
   await act('heartbeat', {}, 2);
   expect((await member(2)).admin).toBe(true);
-  expect(await permission('daclifycore', 'govern')).toMatchObject({
+  expect(await permission('daclifycore', 'active')).toMatchObject({
     threshold: 2,
     accounts: ['alice@active', 'bob@active'],
   });
@@ -388,7 +406,7 @@ it('refreshes an expired co-executive while the caller stays active, then restor
 it('lets the first returning executive reactivate when every executive is inactive', async () => {
   await new Promise((resolve) => setTimeout(resolve, 62000));
   await act('heartbeat', {}, 1);
-  expect(await permission('daclifycore', 'govern')).toMatchObject({
+  expect(await permission('daclifycore', 'active')).toMatchObject({
     threshold: 1,
     accounts: ['bob@active'],
   });
@@ -457,7 +475,7 @@ it('schedules an unpaired elected successor and retains control until that membe
   await act('linknative', { account: 'carol' }, 3, 'carol');
   expect((await member(3)).admin).toBe(true);
   expect((await member(1)).admin).toBe(false);
-  expect(await permission('daclifycore', 'govern')).toMatchObject({
+  expect(await permission('daclifycore', 'active')).toMatchObject({
     threshold: 1,
     accounts: ['carol@active'],
   });

@@ -12,7 +12,7 @@ it('ships searchable permission examples and a safe offline illustration in the 
   expect(svg).toContain('<title');
   expect(svg).toContain('<desc');
   expect(svg).not.toMatch(/<script|<foreignObject|onload=|href="https?:/);
-  for (const name of ['owner', 'active', 'govern', 'execctx', 'service', 'eosio.code'])
+  for (const name of ['owner', 'active', 'creator', 'execctx', 'service', 'eosio.code'])
     expect(svg).toContain(name);
   const manifest = z
     .object({ exports: z.record(z.string(), z.unknown()) })

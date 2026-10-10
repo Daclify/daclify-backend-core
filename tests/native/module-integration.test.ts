@@ -22,7 +22,8 @@ import {
   makeInstruction,
   instructionDigest,
   nativeOwnershipSetupActions,
-  handoverOwnerActions,
+  nativeHandoverActions,
+  RuntimeTableSchemas,
   RuntimeCodeHash,
   RuntimeRawAbiHash,
 } from '../../sdk/index.js';
@@ -138,28 +139,35 @@ beforeAll(async () => {
   const setup = nativeOwnershipSetupActions('daclifycore', {
     dao_id: first.daoId,
     contracts: managed,
+    creator: 'carol',
+    inline_code: [...modules],
     service_key: serviceKey.toPublic().toString(),
   });
   await push(setup, [fixtureKey('daclifycore')]);
-  const staging = handoverOwnerActions(
-    'daclifycore',
-    await Promise.all(
-      ['daclifycore', ...managed].map((account) => rpc.v1.chain.get_account(account)),
+  const rows = await rpc.v1.chain.get_table_rows({
+    code: 'daclifycore',
+    scope: 'daclifycore',
+    table: 'nativegov',
+    limit: 1,
+  });
+  await push(
+    nativeHandoverActions(
+      'daclifycore',
+      RuntimeTableSchemas.nativegov.parse(rows.rows[0]),
+      {
+        dao_id: first.daoId,
+        expected_signers: ['alice', 'bob'],
+        expected_threshold: 2,
+        expected_revision: '1',
+        expected_creator: 'carol',
+        expected_policy_version: 2,
+      },
+      await Promise.all(
+        ['daclifycore', ...managed].map((account) => rpc.v1.chain.get_account(account)),
+      ),
     ),
+    ['daclifycore', ...managed].map(fixtureKey),
   );
-  const call = action(
-    'daclifycore',
-    'handover',
-    encodeAction('handover', {
-      dao_id: first.daoId,
-      expected_signers: ['alice', 'bob'],
-      expected_threshold: 2,
-      expected_revision: '1',
-    }),
-    'daclifycore@owner',
-  );
-  for (const account of managed) call.authorization.push(PermissionLevel.from(account + '@owner'));
-  await push([...staging, call], ['daclifycore', ...managed].map(fixtureKey));
 }, 120000);
 
 it.each(managed)(
@@ -169,7 +177,7 @@ it.each(managed)(
       parent: '',
       threshold: 1,
       keys: [],
-      accounts: [{ permission: 'daclifycore@govern', weight: 1 }],
+      accounts: [{ permission: 'daclifycore@active', weight: 1 }],
     });
     const active = await authority(account, 'active');
     expect(active).toEqual({
@@ -177,37 +185,30 @@ it.each(managed)(
       threshold: 1,
       keys: [],
       accounts: [
-        { permission: 'daclifycore@govern', weight: 1 },
-        { permission: account + '@eosio.code', weight: 1 },
+        { permission: 'daclifycore@active', weight: 1 },
+        ...(modules.some((module) => module === account)
+          ? [{ permission: account + '@eosio.code', weight: 1 }]
+          : []),
       ].sort((a, b) => a.permission.localeCompare(b.permission)),
     });
   },
 );
 
 it('retains 2-of-2 executives, a separate service child and code-only execution context', async () => {
-  const rootAccounts = [
-    { permission: 'daclifycore@eosio.code', weight: 1 },
-    { permission: 'daclifycore@govern', weight: 1 },
-  ];
   expect(await authority('daclifycore', 'owner')).toEqual({
     parent: '',
     threshold: 1,
     keys: [],
-    accounts: rootAccounts,
+    accounts: [{ permission: 'carol@active', weight: 1 }],
   });
   expect(await authority('daclifycore', 'active')).toEqual({
-    parent: 'owner',
-    threshold: 1,
-    keys: [],
-    accounts: rootAccounts,
-  });
-  expect(await authority('daclifycore', 'govern')).toEqual({
     parent: 'owner',
     threshold: 2,
     keys: [],
     accounts: [
       { permission: 'alice@active', weight: 1 },
       { permission: 'bob@active', weight: 1 },
+      { permission: 'daclifycore@eosio.code', weight: 2 },
     ],
   });
   expect(await authority('daclifycore', 'execctx')).toEqual({
@@ -235,7 +236,7 @@ it('retains 2-of-2 executives, a separate service child and code-only execution 
               inactivity_seconds: 2592000,
               quorum_bps: 10000,
             }),
-            'daclifycore@govern',
+            'daclifycore@active',
           ),
         ],
         [key],

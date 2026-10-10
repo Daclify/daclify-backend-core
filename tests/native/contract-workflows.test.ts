@@ -33,14 +33,14 @@ beforeAll(async () => {
   owned = await nativeContracts();
   first = await owned.dummyDao('alice');
   second = await owned.dummyDao('bob');
-  await owned.executiveTree();
   const account = await owned.api.v1.chain.get_account('daclifycore');
   beforeRepair = auditContextPermission(owned.context, account);
-  await owned.push(contextLinkRepairActions(owned.context, account), [owned.key('recovery')]);
+  await owned.push(contextLinkRepairActions(owned.context, account), [owned.key('daclifycore')]);
   afterRepair = auditContextPermission(
     owned.context,
     await owned.api.v1.chain.get_account('daclifycore'),
   );
+  await owned.executiveTree();
   await first.document();
   await second.document();
 }, 90000);

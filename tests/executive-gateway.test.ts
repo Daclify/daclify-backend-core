@@ -1,5 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { PrivateKey } from '@wharfkit/antelope';
+import { ABI } from '@wharfkit/antelope';
+import { runtimeAbi } from '../sdk/generated/runtime.js';
 import { NativeChainGateway } from '../services/api/src/native-chain.js';
 const chainId = 'ab'.repeat(32),
   key = PrivateKey.generate('K1').toPublic().toString();
@@ -135,4 +137,26 @@ it('rejects unavailable authoritative state instead of permitting removal', asyn
     }),
   );
   await expect(gateway().nativeGovernanceWalletInUse(chainId, 'alice')).rejects.toThrow();
+});
+
+it('advertises the creator ownership policy only when both versioned ABI actions contain its fields', async () => {
+  for (const supported of [true, false]) {
+    const abi = ABI.from(runtimeAbi);
+    if (!supported) {
+      const action = abi.structs.find((row) => row.name === 'handover');
+      if (!action) throw new Error('Fixture ABI missing');
+      action.fields = action.fields.filter((row) => row.name !== 'expected_creator');
+    }
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.endsWith('get_abi')) return Response.json({ account_name: 'daclifycore', abi });
+        if (url.endsWith('get_table_rows')) return Response.json({ rows: [], more: false });
+        throw new Error('Unexpected fixture RPC');
+      }),
+    );
+    const network = await gateway().network();
+    expect(network.capabilities.includes('executive-authority')).toBe(true);
+    expect(network.capabilities.includes('creator-owner-executive-active')).toBe(supported);
+  }
 });

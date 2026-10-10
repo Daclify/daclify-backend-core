@@ -16,6 +16,7 @@ export { RuntimeCodeHash, RuntimeRawAbiHash } from './generated/releases.js';
 export { runtimeAbi, runtimeAbiHash } from './generated/runtime.js';
 export type { RuntimeActions, instruction } from './generated/runtime.js';
 export { RuntimeActionSchemas, RuntimeTableSchemas } from './generated/schemas.js';
+export { CoreContextActions } from './permissions.js';
 export { governanceSettings } from './dao.js';
 export * from './recovery.js';
 export {
@@ -153,4 +154,13 @@ export function makeInstruction(
   };
 }
 
-export { handoverOwnerActions, nativeOwnershipSetupActions } from './executives.js';
+export {
+  type NativeOwnershipState,
+  NativeOwnershipPolicyVersion,
+  NativeServiceActions,
+  nativeHandoverActions,
+  nativeOwnershipSetupActions,
+  nativeOwnershipAuthorities,
+  nativeOwnershipAccount,
+  assertNativeOwnershipRuntime,
+} from './executives.js';

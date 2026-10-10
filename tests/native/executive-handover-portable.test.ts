@@ -1,9 +1,11 @@
 import { afterAll, beforeAll, expect, it } from 'vitest';
-import { Action, PrivateKey } from '@wharfkit/antelope';
+import { PrivateKey, Authority, Serializer } from '@wharfkit/antelope';
 import {
   encodeAction,
   nativeOwnershipSetupActions,
-  handoverOwnerActions,
+  nativeHandoverActions,
+  nativeOwnershipAuthorities,
+  RuntimeTableSchemas,
 } from '../../sdk/index.js';
 import { contextLinkRepairActions } from '../../tools/deploy/permissions.js';
 import {
@@ -13,10 +15,10 @@ import {
   type DummyDao,
 } from '../helpers/native-contracts.js';
 
-// Characterizes the existing govern handover, not the proposed creator-owner migration.
+// Exercises the actual versioned creator-owner/executive-active handover.
 let owned: NativeContracts | undefined;
 let governing: DummyDao, tenant: DummyDao;
-const managed = ['daclifyhub', ...nativeModules.map((module) => module.account)];
+const managed = ['daclifyhub', 'names', ...nativeModules.map((module) => module.account)];
 const serviceKey = PrivateKey.generate('K1');
 const fixture = () => {
   if (!owned) throw new Error('NATIVE_FIXTURE_REQUIRED');
@@ -44,30 +46,35 @@ async function appoint(
     'appoint',
     { dao_id: governing.daoId, member_ids: members, inactivity_seconds: 60, quorum_bps: quorum },
     'daclifycore',
-    'govern',
+    'active',
     signers,
   );
 }
 async function handover(signers = ['alice', 'bob'], threshold = 2, revision = '1') {
   const f = fixture(),
     accounts = ['daclifycore', ...managed];
-  const stages = handoverOwnerActions(
+  const rows = await f.api.v1.chain.get_table_rows({
+    code: 'daclifycore',
+    scope: 'daclifycore',
+    table: 'nativegov',
+    limit: 1,
+  });
+  const config = RuntimeTableSchemas.nativegov.parse(rows.rows[0]);
+  const actions = nativeHandoverActions(
     'daclifycore',
-    await Promise.all(accounts.map((account) => f.api.v1.chain.get_account(account))),
-  );
-  const action = Action.from({
-    account: 'daclifycore',
-    name: 'handover',
-    authorization: accounts.map((actor) => ({ actor, permission: 'owner' })),
-    data: encodeAction('handover', {
+    config,
+    {
       dao_id: governing.daoId,
       expected_signers: signers,
       expected_threshold: threshold,
       expected_revision: revision,
-    }),
-  });
+      expected_creator: 'recovery',
+      expected_policy_version: 2,
+    },
+    await Promise.all(accounts.map((account) => f.api.v1.chain.get_account(account))),
+  );
   return f.push(
-    [...stages, action],
+    actions,
     accounts.map((account) => f.key(account)),
   );
 }
@@ -98,6 +105,8 @@ beforeAll(async () => {
     nativeOwnershipSetupActions('daclifycore', {
       dao_id: governing.daoId,
       contracts: managed,
+      creator: 'recovery',
+      inline_code: ['names', ...nativeModules.map((module) => module.account)],
       service_key: serviceKey.toPublic().toString(),
     }),
     [owned.key('daclifycore')],
@@ -122,38 +131,100 @@ it.each([
   },
 );
 
-it('performs the existing handover atomically and explicitly removes bootstrap ownership', async () => {
+it('preserves creator recovery when the actual contract performs handover', async () => {
   await handover();
-  const root = await permissions('daclifycore');
-  expect(root.find((row) => row.name === 'govern')).toMatchObject({
-    parent: 'owner',
-    threshold: 2,
-    keys: [],
-    accounts: [
-      { permission: 'alice@active', weight: 1 },
-      { permission: 'bob@active', weight: 1 },
-    ],
-  });
-  expect(root.find((row) => row.name === 'owner')).toMatchObject({
-    parent: '',
+  expect((await permissions('daclifycore')).find((row) => row.name === 'owner')).toMatchObject({
     threshold: 1,
     keys: [],
-    accounts: [
-      { permission: 'daclifycore@eosio.code', weight: 1 },
-      { permission: 'daclifycore@govern', weight: 1 },
-    ],
+    accounts: [{ permission: 'recovery@active', weight: 1 }],
   });
+});
+
+it('installs the complete policy without bootstrap keys or a govern permission', async () => {
+  const expected = nativeOwnershipAuthorities(
+    'daclifycore',
+    {
+      creator: 'recovery',
+      contracts: managed,
+      inline_code: ['names', ...nativeModules.map((module) => module.account)],
+    },
+    ['alice', 'bob'],
+    2,
+  );
+  for (const plan of expected) {
+    const actual = await fixture().api.v1.chain.get_account(plan.account);
+    for (const name of ['owner', 'active'] as const)
+      expect(
+        actual.permissions
+          .find((row) => row.perm_name.toString() === name)
+          ?.required_auth.equals(Authority.from(plan[name])),
+      ).toBe(true);
+    expect(actual.permissions.some((row) => row.perm_name.toString() === 'govern')).toBe(false);
+    const upgradeLinks = actual.permissions
+      .find((row) => row.perm_name.toString() === plan.upgradePermission)
+      ?.linked_actions?.filter((link) => link.account.toString() === 'eosio')
+      .map((link) => link.action?.toString());
+    expect(upgradeLinks).toEqual(expect.arrayContaining(['setcode', 'setabi']));
+  }
   expect((await governing.member('2')).admin).toBe(true);
   expect((await tenant.member('2')).admin).toBe(false);
 });
 
+it('requires executive quorum for a real runtime ABI upgrade and prevents replacing creator owner', async () => {
+  const f = fixture(),
+    abi = Serializer.encode({ object: f.abi('daclifycore') });
+  const upgrade = f.system('setabi', { account: 'daclifycore', abi }, 'daclifycore', 'active');
+  await expect(f.push([upgrade], [f.key('alice')])).rejects.toThrow('NATIVE_AUTH_REJECTED');
+  await f.push([upgrade], [f.key('alice'), f.key('bob')]);
+  const owner = (await f.api.v1.chain.get_account('daclifycore')).permissions.find(
+    (row) => row.perm_name.toString() === 'owner',
+  );
+  if (!owner) throw new Error('Fixture owner required');
+  const change = f.system(
+    'updateauth',
+    { account: 'daclifycore', permission: 'owner', parent: '', auth: owner.required_auth },
+    'daclifycore',
+    'active',
+  );
+  await expect(f.push([change], [f.key('alice'), f.key('bob')])).rejects.toThrow(
+    'NATIVE_AUTH_REJECTED',
+  );
+});
+
+it('permits creator recovery to restore active while keeping owner creator-only', async () => {
+  const f = fixture(),
+    active = (await f.api.v1.chain.get_account('daclifycore')).permissions.find(
+      (row) => row.perm_name.toString() === 'active',
+    );
+  if (!active) throw new Error('Fixture active required');
+  await f.push(
+    [
+      f.system(
+        'updateauth',
+        {
+          account: 'daclifycore',
+          permission: 'active',
+          parent: 'owner',
+          auth: active.required_auth,
+        },
+        'daclifycore',
+        'owner',
+      ),
+    ],
+    [f.key('recovery')],
+  );
+  expect((await permissions('daclifycore')).find((row) => row.name === 'owner')?.accounts).toEqual([
+    { permission: 'recovery@active', weight: 1 },
+  ]);
+});
+
 it.each(managed)(
-  '%s delegates owner to the actual legacy executive quorum after handover',
+  '%s delegates owner to the runtime active quorum after handover',
   async (account) => {
     expect((await permissions(account)).find((row) => row.name === 'owner')).toMatchObject({
       threshold: 1,
       keys: [],
-      accounts: [{ permission: 'daclifycore@govern', weight: 1 }],
+      accounts: [{ permission: 'daclifycore@active', weight: 1 }],
     });
     await expect(
       fixture().push(
@@ -196,7 +267,13 @@ it('lets the scoped service create a separate DAO without granting native govern
     f.call(
       'daclifycore',
       'setnativegov',
-      { dao_id: '99001', contracts: [], service_key: serviceKey.toPublic() },
+      {
+        dao_id: '99001',
+        contracts: [],
+        service_key: serviceKey.toPublic(),
+        creator: 'recovery',
+        inline_code: [],
+      },
       'daclifycore',
       'service',
       [serviceKey],
@@ -211,7 +288,13 @@ it('prevents a shared tenant from claiming executive control or escalating ordin
     f.call(
       'daclifycore',
       'setnativegov',
-      { dao_id: tenant.daoId, contracts: managed, service_key: serviceKey.toPublic() },
+      {
+        dao_id: tenant.daoId,
+        contracts: managed,
+        service_key: serviceKey.toPublic(),
+        creator: 'recovery',
+        inline_code: ['names'],
+      },
       'bob',
     ),
   ).rejects.toThrow('NATIVE_AUTH_REJECTED');
@@ -227,11 +310,11 @@ it('prevents a shared tenant from claiming executive control or escalating ordin
 
 it('keeps quorum configurable and synchronizes the actual permission immediately', async () => {
   await appoint(['1', '2'], 5000);
-  expect((await permissions('daclifycore')).find((row) => row.name === 'govern')).toMatchObject({
+  expect((await permissions('daclifycore')).find((row) => row.name === 'active')).toMatchObject({
     threshold: 1,
   });
   await appoint(['1', '2'], 10000, [fixture().key('alice')]);
-  expect((await permissions('daclifycore')).find((row) => row.name === 'govern')).toMatchObject({
+  expect((await permissions('daclifycore')).find((row) => row.name === 'active')).toMatchObject({
     threshold: 2,
   });
 });
@@ -244,9 +327,12 @@ it('removes a departing wallet from transitive native control while retaining th
     '2',
   );
   expect((await governing.member('2')).admin).toBe(false);
-  expect((await permissions('daclifycore')).find((row) => row.name === 'govern')).toMatchObject({
+  expect((await permissions('daclifycore')).find((row) => row.name === 'active')).toMatchObject({
     threshold: 1,
-    accounts: [{ permission: 'alice@active', weight: 1 }],
+    accounts: [
+      { permission: 'alice@active', weight: 1 },
+      { permission: 'daclifycore@eosio.code', weight: 1 },
+    ],
   });
   await expect(appoint(['1'], 10000, [fixture().key('bob')])).rejects.toThrow(
     'NATIVE_AUTH_REJECTED',
@@ -272,9 +358,12 @@ it('moves the final controller to an incoming wallet only with both consents, le
   );
   await expect(governing.submit(request)).rejects.toThrow('NATIVE_AUTH_REJECTED');
   await governing.submit(request, '1', 'carol');
-  expect((await permissions('daclifycore')).find((row) => row.name === 'govern')).toMatchObject({
+  expect((await permissions('daclifycore')).find((row) => row.name === 'active')).toMatchObject({
     threshold: 1,
-    accounts: [{ permission: 'carol@active', weight: 1 }],
+    accounts: [
+      { permission: 'carol@active', weight: 1 },
+      { permission: 'daclifycore@eosio.code', weight: 1 },
+    ],
   });
   await expect(appoint(['1'], 10000, [fixture().key('alice')])).rejects.toThrow(
     'NATIVE_AUTH_REJECTED',

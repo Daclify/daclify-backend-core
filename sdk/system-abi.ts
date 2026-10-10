@@ -55,6 +55,15 @@ export const SYSTEM_ABI = {
       ],
     },
     {
+      name: 'unlinkauth',
+      base: '',
+      fields: [
+        { name: 'account', type: 'name' },
+        { name: 'code', type: 'name' },
+        { name: 'type', type: 'name' },
+      ],
+    },
+    {
       name: 'updateauth',
       base: '',
       fields: [

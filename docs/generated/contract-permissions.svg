@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1120" height="1370" viewBox="0 0 1120 1370" role="img" aria-labelledby="title description">
   <title id="title">Daclify contract permissions and module interaction map</title>
-  <desc id="description">Illustrative configuration after native executive handover. Alice and Bob jointly satisfy runtime govern. Runtime owner and active also trust runtime code. Managed module owner trusts runtime govern; module active trusts govern or its own code. Service and execution permissions are separate children of active. A member's signed instruction passes through Runtime to installed modules. Grants and Decide authorize Works funding; Works and Payroll create Runtime obligations and claims. Runtime pays through the token contract. The Hub is discovery and grants no authority over registered independent deployments.</desc>
+  <desc id="description">Illustrative configuration after native executive handover. Alice and Bob jointly satisfy runtime active. Creator active alone controls runtime owner. Runtime code has active weight equal to quorum. Managed owner trusts runtime active; inline senders additionally trust own code in active. Service and execution permissions are separate children of active. A member's signed instruction passes through Runtime to installed modules. Grants and Decide authorize Works funding; Works and Payroll create Runtime obligations and claims. Runtime pays through the token contract. The Hub is discovery and grants no authority over registered independent deployments.</desc>
   <defs>
     <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L9 5L0 10" fill="none" stroke="#e8b971" stroke-width="1.5"/></marker>
     <style>
@@ -16,7 +16,7 @@
   </defs>
   <rect width="1120" height="1370" rx="20" fill="#110f0e"/>
   <text x="40" y="56" class="title">daclify · contracts &amp; permissions</text>
-  <text x="40" y="88" class="small">Example after handover · core 0.9 · illustrative account names · not live-chain status</text>
+  <text x="40" y="88" class="small">Example after handover · core 0.13 · illustrative account names · not live-chain status</text>
 
   <text x="40" y="139" class="heading">1. Who controls the deployment?</text>
   <rect x="40" y="158" width="440" height="85" class="box"/>
@@ -25,21 +25,21 @@
   <path d="M480 200H610" class="line"/>
   <text x="492" y="184" class="label">2 of 2</text>
   <rect x="625" y="158" width="455" height="85" class="box"/>
-  <text x="645" y="191">daclifycore1@govern</text>
-  <text x="645" y="222" class="small">Parent: owner · executive quorum</text>
+  <text x="645" y="191">daclifycore1@active</text>
+  <text x="645" y="222" class="small">Executive quorum + own code weight 2</text>
 
   <path d="M850 243V265H260V286" class="line"/>
   <path d="M850 243V286" class="line"/>
   <rect x="40" y="300" width="510" height="142" class="box"/>
   <text x="60" y="334" class="heading">Runtime account</text>
-  <text x="60" y="368">owner: govern OR own eosio.code</text>
-  <text x="60" y="400">active: govern OR own eosio.code</text>
-  <text x="60" y="428" class="small">Contract code can refresh root permissions.</text>
+  <text x="60" y="368">owner: creator@active only</text>
+  <text x="60" y="400">active: executive quorum + own code</text>
+  <text x="60" y="428" class="small">Code refreshes active; creator controls owner.</text>
   <rect x="580" y="300" width="500" height="142" class="box"/>
   <text x="600" y="334" class="heading">Each managed module account</text>
-  <text x="600" y="368">owner: runtime@govern</text>
-  <text x="600" y="400">active: govern OR own eosio.code</text>
-  <text x="600" y="428" class="small">No module bootstrap key remains.</text>
+  <text x="600" y="368">owner: runtime@active</text>
+  <text x="600" y="400">active: runtime@active + inline code</text>
+  <text x="600" y="428" class="small">Upgrades: owner; no bootstrap key remains.</text>
 
   <rect x="40" y="465" width="510" height="104" class="muted"/>
   <text x="60" y="499">execctx · child of active</text>

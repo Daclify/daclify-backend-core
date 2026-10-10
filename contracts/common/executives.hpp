@@ -1,5 +1,6 @@
 #pragma once
 #include "governance.hpp"
+#include <eosio/binary_extension.hpp>
 namespace daclify {
 struct [[eosio::table("execpols"),eosio::contract("runtime")]] executive_policy {
  uint64_t dao_id; uint32_t inactivity_seconds=2592000; uint16_t quorum_bps=10000; uint64_t revision=1;uint32_t last_election_start=0;
@@ -18,9 +19,14 @@ struct [[eosio::table("nonvoters"),eosio::contract("runtime")]] excluded_voter {
  EOSLIB_SERIALIZE(excluded_voter,(member_id))
 };
 using nonvoters=ram_table<"nonvoters"_n,excluded_voter>;
+struct native_ownership_policy {
+ uint16_t policy_version;name creator;std::vector<name> inline_code;
+ EOSLIB_SERIALIZE(native_ownership_policy,(policy_version)(creator)(inline_code))
+};
 struct [[eosio::table("nativegov"),eosio::contract("runtime")]] native_governance {
  uint64_t dao_id;std::vector<name> contracts;public_key service_key;bool handed_over=false;std::vector<name> signers;uint32_t threshold=0;std::vector<uint64_t> admin_members;
- EOSLIB_SERIALIZE(native_governance,(dao_id)(contracts)(service_key)(handed_over)(signers)(threshold)(admin_members))
+ eosio::binary_extension<native_ownership_policy> ownership;
+ EOSLIB_SERIALIZE(native_governance,(dao_id)(contracts)(service_key)(handed_over)(signers)(threshold)(admin_members)(ownership))
 };
 using native_governance_settings=ram_singleton<"nativegov"_n,native_governance>;
 struct [[eosio::table("execpending"),eosio::contract("runtime")]] executive_handover {

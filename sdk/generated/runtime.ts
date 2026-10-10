@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = '019b8689886580633b4f1861c1656b07dcfbbf075956e73fe175d4f860c62a2d';
+export const runtimeAbiHash = 'a1a4b59c21d460c0e9bbea58f233c82df9eab73b1239719c11bede7e2db0f29f';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -2466,6 +2466,14 @@ export const runtimeAbi = {
         {
           "name": "expected_revision",
           "type": "uint64"
+        },
+        {
+          "name": "expected_creator",
+          "type": "name"
+        },
+        {
+          "name": "expected_policy_version",
+          "type": "uint16"
         }
       ]
     },
@@ -2957,6 +2965,28 @@ export const runtimeAbi = {
         {
           "name": "admin_members",
           "type": "uint64[]"
+        },
+        {
+          "name": "ownership",
+          "type": "native_ownership_policy$"
+        }
+      ]
+    },
+    {
+      "name": "native_ownership_policy",
+      "base": "",
+      "fields": [
+        {
+          "name": "policy_version",
+          "type": "uint16"
+        },
+        {
+          "name": "creator",
+          "type": "name"
+        },
+        {
+          "name": "inline_code",
+          "type": "name[]"
         }
       ]
     },
@@ -4509,6 +4539,14 @@ export const runtimeAbi = {
         {
           "name": "service_key",
           "type": "public_key"
+        },
+        {
+          "name": "creator",
+          "type": "name"
+        },
+        {
+          "name": "inline_code",
+          "type": "name[]"
         }
       ]
     },
@@ -6612,6 +6650,8 @@ export interface handover {
   expected_signers: string[];
   expected_threshold: number;
   expected_revision: string;
+  expected_creator: string;
+  expected_policy_version: number;
 }
 export interface heartbeat {
   runtime: string;
@@ -6745,6 +6785,12 @@ export interface native_governance {
   signers: string[];
   threshold: number;
   admin_members: string[];
+  ownership: native_ownership_policy | undefined;
+}
+export interface native_ownership_policy {
+  policy_version: number;
+  creator: string;
+  inline_code: string[];
 }
 export interface obligation_record {
   id: string;
@@ -7167,6 +7213,8 @@ export interface setnativegov {
   dao_id: string;
   contracts: string[];
   service_key: string;
+  creator: string;
+  inline_code: string[];
 }
 export interface setoracle {
   median: string;

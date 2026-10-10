@@ -1,6 +1,6 @@
 # Smart contracts and permissions
 
-These examples describe the executable model introduced in core 0.9.0-alpha.1. They are **illustrations after a reviewed handover**, not a statement that the current Telos testnet or mainnet accounts have already been changed.
+These examples describe the executable model introduced in core 0.13.0-alpha.1. They are **illustrations after a reviewed handover**, not a statement that the current Telos testnet or mainnet accounts have already been changed.
 
 ![Daclify contract permissions and module interaction map](../generated/contract-permissions.svg)
 
@@ -18,7 +18,7 @@ Sharing a physical module account shares that account's upgrade authority, even 
 
 Each deployment account starts with native `owner` and `active` authorities controlled by the bootstrap operator. Executives are initially appointed by the current DAO deployment authority. Pairing a native account by an ordinary member does not appoint an executive.
 
-`setnativegov` requires the runtime's exact owner permission and fixes the governing DAO, managed accounts and separate service public key. The current owners then review and sign the staged owner-delegation actions and `handover` in **one transaction**. At least one appointed, active member with a paired native account is required. The expected signers, threshold and policy revision prevent a stale handover.
+`setnativegov` requires the runtime's exact owner permission and fixes the governing DAO, managed accounts, creator recovery account, inline-code roles and separate service public key. The current owners then review and sign the staged owner-delegation actions and `handover` in **one transaction**. At least one appointed, active member with a paired native account is required. The expected creator, policy version, signers, threshold and policy revision prevent a stale handover.
 
 ## After handover: example with Alice and Bob
 
@@ -26,19 +26,18 @@ Two eligible active executives, Alice and Bob, and a 100% executive quorum produ
 
 | Account and permission | Parent | Threshold and permitted authority |
 | --- | --- | --- |
-| `daclifycore1@govern` | owner | 2: `alice@active` weight 1 + `bob@active` weight 1 |
-| `daclifycore1@owner` | none | 1: `daclifycore1@govern` OR `daclifycore1@eosio.code` |
-| `daclifycore1@active` | owner | 1: `daclifycore1@govern` OR `daclifycore1@eosio.code` |
+| `daclifycore1@owner` | none | 1: `3boidanimus3@active` |
+| `daclifycore1@active` | owner | 2: `alice@active` weight 1 + `bob@active` weight 1 + `daclifycore1@eosio.code` weight 2 |
 | `daclifycore1@execctx` | active | 1: `daclifycore1@eosio.code` only; no signing keys |
 | `daclifycore1@service` | active | 1: the separate configured service key |
-| `works@owner` | none | 1: `daclifycore1@govern`; no module bootstrap key |
-| `works@active` | owner | 1: `daclifycore1@govern` OR `works@eosio.code` |
+| `works@owner` | none | 1: `daclifycore1@active`; no module bootstrap key |
+| `works@active` | owner | 1: `daclifycore1@active` OR `works@eosio.code` |
 
-The same managed-account pattern applies to Decide, Payroll, Grants, Endorsement and any Hub/Names account explicitly included in the configuration. External accounts such as `eosio.token`, the Antelope system contract, and users' wallets retain their own authorities.
+The managed delegate applies to Decide, Payroll, Grants, Endorsement and explicitly included Hub/Names accounts. Hub has no own-code entry; the modules and Names do. External accounts such as `eosio.token`, the Antelope system contract, and users' wallets retain their own authorities.
 
 A permission parent can satisfy its child. A child does not grant its signers the parent's authority. In particular, possessing the service key does not authorize active or owner operations. The service permission is linked only to the selected creation/bootstrap service actions; enrollment and module installation for the governing DAO still require runtime active authority.
 
-The runtime's own code is also root authority. This is what allows contract-enforced activity and election changes to update native permissions. Consequently, a runtime code upgrade is a root-trust decision, and a contract bug in that path can affect the whole deployment. Module code has active inline capability on its own account; it has no owner capability through its own code.
+Runtime code carries active quorum weight and transitive ownership of the managed contracts. It can synchronize active but cannot replace creator-only runtime owner. A runtime upgrade therefore changes a privileged deployment-wide trust boundary. Module code has active inline capability on its own account; it has no owner capability through its own code.
 
 ## What links to what
 
@@ -69,3 +68,7 @@ If all eligible paired executives are inactive, the fallback retains their recov
 ## Verification
 
 Run the reproducible local recipe in [contract integration evidence](../evidence/2026-10-09-contract-integration.md). VERT exercises compiled WASM state and rejection paths. The dedicated native suite checks real signatures, permission thresholds, code-authorized inline calls, handover and complete module settlement. Neither establishes a live Telos deployment or external payment/provider availability.
+
+Runtime upgrades require active quorum; creator owner remains a recovery override. Managed code/ABI upgrades require owner, delegated to runtime active, so their own inline code cannot upgrade itself. Hub does not receive own-code authority; configured inline senders do. The service key must not control an executive or creator recovery authority. Legacy nativegov rows lack ownership policy metadata and require an explicit reviewed migration; the new runtime permits existing withdrawal/unstake exits but refuses native controller mutations on those rows. New proposals verify exact WASM and raw ABI release hashes and full permission-link snapshots.
+
+If the creator is also an executive, their owner recovery authority can bypass executive quorum. Keep that distinction visible when assessing native signatures. Testnet creator active currently includes the shared bootstrap key; this handover does not rotate the creator’s own keys.

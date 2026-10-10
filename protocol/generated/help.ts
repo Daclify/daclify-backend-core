@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle={
   "producer": "core",
-  "packageVersion": "0.12.0-alpha.2",
+  "packageVersion": "0.13.0-alpha.1",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -343,16 +343,17 @@ export const CoreHelpBundle={
       "paragraphs": [
         "Membership, voting eligibility, application administrator roles and native executive office are separate. Wallet pairing alone never appoints an executive. Native executive authority requires an active, non-revoked member in the appointed roster with a paired Telos Zero account. An EVM, email or Telegram pairing is not a native Antelope permission entry. After native handover, the governing DAO’s administrator rights follow its eligible paired executive roster. Shared DAO administrator roles remain separate. App administrator actions are individually signed; native ownership changes require the configured quorum.",
         "Shared DAOs govern their own records. Only the deployment’s governing DAO changes runtime and managed contract account permissions: Daclify DAO on the shared platform, or the governing DAO of an independent runtime. The existing deployment authority appoints initial internal member IDs. Existing data stays readable and retains its prior voting eligibility until changed.",
-        "Native ownership setup is explicit. The current runtime owner signs the nativeOwnershipSetupActions transaction once, locking native setcode/setabi to owner and calling setnativegov, naming the governing DAO, managed contract accounts and the hosting service public key. Until an appointed executive pairs a wallet and current account owners sign handover, bootstrap permissions remain unchanged. Use handoverOwnerActions together with handover in ONE transaction; never broadcast its temporary owner delegations separately. Failure rolls back every action. Handover removes bootstrap keys from managed owner/active authorities and cannot revert automatically to bootstrap.",
-        "The govern permission contains eligible paired executives. Runtime owner delegates to govern or runtime contract code; runtime active delegates to govern or runtime code. Managed contract owner delegates to runtime govern; managed active delegates to runtime govern or its own code. Backend DAO creation uses a service child permission linked only to the creation, initialization, enrollment and installation actions. It does not satisfy owner or govern and cannot enroll platform members or configure platform modules without native active quorum authority. Settler, oracle and fee-wallet permissions are separate unless deliberately included in an owner-reviewed deployment plan.",
-        "The default inactivity timeout is 30 days, configurable from one minute to one year, or disabled with zero. The default native threshold requires all active eligible paired executives. One remaining active executive can control the deployment, including upgrades and root changes. When all are inactive, their paired authorities remain as fallback; a returning appointed executive can sign heartbeat to become active and synchronize the effective quorum. Ordinary members and replaced executives cannot claim office with a heartbeat.",
+        "Native ownership policy 2 is explicit. The current runtime owner signs nativeOwnershipSetupActions, naming the governing DAO, creator recovery account, managed contracts, inline-code roles and separate service public key. Setup temporarily links runtime upgrades to owner. nativeHandoverActions returns all temporary owner grants and handover in ONE transaction. Owners review its exact release hashes, account snapshots, creator, executive quorum and policy revision. Never broadcast staging alone. Failure rolls back every action; successful handover removes direct bootstrap keys.",
+        "Runtime owner delegates only to creator@active. Runtime active contains eligible paired executives at the configurable quorum and runtime@eosio.code weighted to that quorum. Managed owner and active delegate to runtime active; own code appears in active only for configured inline senders. Runtime upgrades require active; managed upgrades require owner so their own code cannot replace themselves. Creator recovery can override active. Backend service is a separate child of active linked only to six creation/bootstrap actions and cannot control creator or executive wallet authorities. Relay, treasury and settler roles remain separately configured.",
+        "The default inactivity timeout is 30 days, configurable from one minute to one year, or disabled with zero. The default native threshold requires all active eligible paired executives. One remaining active executive can control the deployment, including runtime upgrades and active changes; creator-only owner recovery remains separate. When all are inactive, their paired authorities remain as fallback; a returning appointed executive can sign heartbeat to become active and synchronize the effective quorum. Ordinary members and replaced executives cannot claim office with a heartbeat.",
         "Time passing alone cannot rewrite blockchain permissions. syncexec is callable by any signed native payer; refreshgov uses an existing signed member instruction through the app relayer. Member instructions, wallet binding changes and executive heartbeats refresh relevant native authority. The UI shows the last synchronized native threshold separately from recorded activity. A service outage does not prevent direct native refresh or paired-wallet control.",
-        "The final eligible paired native executive cannot unlink, deactivate, be revoked or be replaced with a roster without a paired controller after handover. Replace the wallet with linknative using existing member authorization and proof of the incoming wallet in one transaction. If any update fails, the binding, nonce, credential changes and permissions roll back. Removed wallets immediately lose their delegated govern authority on a successful chain transaction. Changing an account’s own keys still requires its own native recovery authority.",
+        "The final eligible paired native executive cannot unlink, deactivate, be revoked or be replaced with a roster without a paired controller after handover. Replace the wallet with linknative using existing member authorization and proof of the incoming wallet in one transaction. If any update fails, the binding, nonce, credential changes and permissions roll back. Removed wallets immediately lose their delegated active authority on a successful chain transaction. Changing an account’s own keys still requires its own native recovery authority.",
         "Login pairing is a service record; DAO wallet binding is on-chain. Sign-in pairing removal or replacement is blocked while the old wallet is still an active native executive binding on this service. First replace or remove the on-chain binding. For independent deployments, verify each deployment separately; removing a sign-in credential does not revoke authority on another operator’s chain or contracts. A failed or unavailable chain check must not silently authorize executive sign-in removal.",
         "An explicitly configured Decide election titled Executives can schedule native executive handover. Other election titles remain representative offices and grant no executive powers. The pinned Decide grant electexec is required. Winning rosters activate at term start through synchronization. With no eligible paired successor, the outgoing roster holds authority; the pending elected roster can activate through synchronization after an eligible successor pairs, while the term is still valid. Expired, recalled, superseded and already consumed results cannot replay an old handover. Recalling the final native controller is blocked until a replacement is available.",
         "Voting eligibility uses setvoter and a separate exclusion table. Excluded members remain members and may retain application access. Decide excludes their member, credit and stake weights from new ballot denominators and rejects their votes. Active ballots block eligibility changes. Native executive inactivity does not automatically remove ordinary voting eligibility.",
-        "Native governance depends on reviewed, upgradeable contract code because runtime code has owner delegation. Explicit owner authority can replace this model, including the safety guards. Keep adequate native RAM and external recovery material; pairing and signing-key recovery do not recover document decryption keys. These mechanisms do not make a compromised client or a malicious authorized executive harmless.",
-        "Handover includes expected signer accounts, threshold and executive-policy revision. A changed roster or activity state rejects stale owner approval. Managed executive accounts trust their custody provider with the Daclify signing key; that key can authorize paired-wallet replacement and therefore change native control. Choose user-controlled executive accounts when this authority must not be delegated to a provider."
+        "Native governance depends on reviewed, upgradeable contract code because runtime code has quorum-weighted active delegation and transitive ownership of managed contracts. Explicit owner authority can replace this model, including the safety guards. Keep adequate native RAM and external recovery material; pairing and signing-key recovery do not recover document decryption keys. These mechanisms do not make a compromised client or a malicious authorized executive harmless.",
+        "Handover includes expected signer accounts, threshold and executive-policy revision. A changed roster or activity state rejects stale owner approval. Managed executive accounts trust their custody provider with the Daclify signing key; that key can authorize paired-wallet replacement and therefore change native control. Choose user-controlled executive accounts when this authority must not be delegated to a provider.",
+        "Unsupported legacy ownership metadata blocks new controller changes until an explicit reviewed migration. Existing financial exits remain available. Native ownership proposals require the exact matching runtime WASM and raw ABI; an old contract may accept extra serialized fields without applying the new policy."
       ]
     },
     {
@@ -361,9 +362,9 @@ export const CoreHelpBundle={
       "paragraphs": [
         "Shared deployments: the Daclify DAO controls platform contract code and native account authorities. Hosted DAO administrators control their own DAO settings, membership and treasury operations through the runtime. Hosting a DAO does not make its members platform contract owners.",
         "For an independent deployment, the DAO configures its own runtime, module accounts, executive roster and service/execution links. Registering an API endpoint or portal with the Hub is discovery only and grants the Hub no treasury or root authority. Sharing a physical module account also shares its upgrade authority; use your own module accounts for independent control.",
-        "Before handover, bootstrap owner and active authorities remain with the deployment operator. Appointing an executive requires the current DAO deployment authority. Pairing a native account by an ordinary member does not appoint them. setnativegov fixes the governing DAO, managed accounts and service key. Current owners approve the staged owner delegations plus handover in one transaction, with an expected signer/threshold/revision snapshot.",
-        "After handover, two active eligible paired executives Alice and Bob at a 100% quorum give daclifycore1@govern a threshold of 2, with alice@active and bob@active each weight 1. govern is a child of owner. Runtime owner and active each have threshold 1: runtime@govern OR runtime@eosio.code. Runtime code therefore has root authority and a runtime upgrade is a root-trust decision.",
-        "A managed module example: works@owner has threshold 1 delegated to daclifycore1@govern. works@active has threshold 1 delegated to runtime@govern OR works@eosio.code. Old module bootstrap keys are removed. The same pattern applies to each explicitly configured managed module, Hub or Names account. External token/system accounts and member wallets retain their own authorities.",
+        "Before handover, bootstrap owner and active authorities remain with the deployment operator. Appointing an executive requires the current DAO deployment authority. Pairing a native account by an ordinary member does not appoint them. setnativegov fixes the governing DAO, creator, managed accounts, inline-code roles and service key. Current owners approve the staged owner delegations plus handover in one transaction, with an expected creator/policy/signer/threshold/revision snapshot.",
+        "After handover, creator@active alone controls runtime owner. Two executives Alice and Bob at 100% quorum give runtime active threshold 2, each wallet weight 1 and runtime@eosio.code weight 2. Runtime code maintains active using active authorization; it cannot update creator-only owner. Native upgrades use active quorum, with owner recovery override. This example describes ownership policy 2 in core 0.13.",
+        "A managed module has owner threshold 1 delegated to runtime@active. Its active delegates to runtime@active and its own eosio.code only when it sends inline actions. Hub receives no own-code entry. Managed setcode/setabi are owner-linked, preventing module code from upgrading itself through active. Direct bootstrap keys are removed. External system/token accounts and member wallets keep their own authorities.",
         "Runtime execctx is a child of active, with threshold 1 and only runtime@eosio.code. Supported member actions are linked to execctx. Runtime service is a separate child of active with the configured service key and selected creation/bootstrap links. A child cannot authorize its parent. Governing-DAO enrollment and module installation still require runtime active authority.",
         "A vault-signed instruction or authenticated linked native-wallet instruction enters Runtime. Runtime checks deployment, DAO, signature, nonce, expiry, member status and allowed action, then calls the module inline under runtime@execctx. The module checks its actual sender, installed action, pinned code hash, member role and agent restrictions.",
         "Callbacks use module@active, authorized inline by that module’s own eosio.code. Runtime additionally checks the actual module sender, current code pin and exact callback grant. Signing directly with a module key or executive quorum cannot counterfeit the inline sender. Public finalization and due settlement read existing authoritative records; relayers cannot invent approval.",
@@ -501,7 +502,7 @@ export const CoreHelpBundle={
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "019b8689886580633b4f1861c1656b07dcfbbf075956e73fe175d4f860c62a2d",
+      "sourceAbiHash": "a1a4b59c21d460c0e9bbea58f233c82df9eab73b1239719c11bede7e2db0f29f",
       "actions": [
         {
           "name": "addmember",
@@ -1717,6 +1718,14 @@ export const CoreHelpBundle={
             {
               "name": "expected_revision",
               "type": "uint64"
+            },
+            {
+              "name": "expected_creator",
+              "type": "name"
+            },
+            {
+              "name": "expected_policy_version",
+              "type": "uint16"
             }
           ]
         },
@@ -2689,6 +2698,14 @@ export const CoreHelpBundle={
             {
               "name": "service_key",
               "type": "public_key"
+            },
+            {
+              "name": "creator",
+              "type": "name"
+            },
+            {
+              "name": "inline_code",
+              "type": "name[]"
             }
           ]
         },
@@ -4151,6 +4168,10 @@ export const CoreHelpBundle={
             {
               "name": "admin_members",
               "type": "uint64[]"
+            },
+            {
+              "name": "ownership",
+              "type": "native_ownership_policy$"
             }
           ]
         },
@@ -16335,6 +16356,34 @@ export const CoreHelpBundle={
                       "type": "string",
                       "maxLength": 20
                     }
+                  },
+                  "ownership": {
+                    "type": "object",
+                    "properties": {
+                      "policy_version": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 65535
+                      },
+                      "creator": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "inline_code": {
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 13
+                        }
+                      }
+                    },
+                    "required": [
+                      "policy_version",
+                      "creator",
+                      "inline_code"
+                    ],
+                    "additionalProperties": false
                   }
                 },
                 "required": [
