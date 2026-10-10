@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "kind": "testnet development verification; not a qualified production release",
+  "verifiedAt": "2026-10-10T15:39:40.601373+00:00",
+  "packages": {
+    "coreProtocol": {
+      "version": "0.11.0-alpha.2",
+      "sha256": "4f457a58ee0ccf6f3708231a5af6c98230e5c16669fe9043efe284a625be8086"
+    },
+    "modulesSdk": {
+      "version": "0.9.0-alpha.13",
+      "sha256": "c1c36d9aa6a3d78b85177ec7e11ba2aea80b1413fe176b383124fd0b20829911",
+      "contractVersion": "0.9.0-alpha.5"
+    },
+    "frontend": {
+      "version": "0.11.0-alpha.2",
+      "indexSha256": "fcd242c3fccd34fdc4f0210724d3d17710ef4294b0f5e3ef4abe2e2f235df684"
+    }
+  },
+  "namesCodeHash": "23b956f5dad7e1e27e5afb997dd0274c7b5987e5419bdca5f4dbc214b2fca6f9",
+  "implementationCommits": {
+    "core": "6c56a32",
+    "modules": "13a7086",
+    "frontend": "2c89aa6"
+  },
+  "preservedConcurrentCommits": [
+    "c55a7f7",
+    "c54ff96"
+  ],
+  "checks": {
+    "coreFull": {
+      "tests": 716,
+      "passed": 715,
+      "timeouts": 1,
+      "timeoutFileRetry": {
+        "tests": 19,
+        "passed": 19,
+        "originalTimeLimitMs": 20000
+      }
+    },
+    "modulesFull": {
+      "tests": 162,
+      "passed": 159,
+      "timeouts": 3,
+      "timeoutFilesRetry": {
+        "tests": 19,
+        "passed": 19,
+        "originalTimeLimitMs": 5000
+      }
+    },
+    "mergedCoreFocused": {
+      "tests": 35,
+      "passed": 35
+    },
+    "mergedFrontendUnit": {
+      "tests": 182,
+      "passed": 182
+    },
+    "mergedNamesBrowser": {
+      "tests": 16,
+      "passed": 16
+    },
+    "nativeReadOnlyScenarios": 8,
+    "publicNamesViewports": [
+      1440,
+      390
+    ],
+    "publicAccessibilityViolations": 0,
+    "lintTypesDocsBuild": "passed"
+  },
+  "limits": [
+    "No actual name purchase was broadcast; native qualifications use signed read-only compute_transaction.",
+    "Full dotted suffix creation is compiled-contract coverage; native third-party provisioning uses an exact 12-character listing.",
+    "Third-party card settlement is disabled without seller routing.",
+    "First-party captured fiat covers costs but provisioning still needs TLOS working capital; no automatic fiat-to-TLOS conversion."
+  ]
+}

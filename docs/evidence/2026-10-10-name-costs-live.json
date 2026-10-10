@@ -1,5 +1,5 @@
 {
-  "verifiedAt": "2026-10-10T15:32:18.788Z",
+  "verifiedAt": "2026-10-10T15:36:40.689Z",
   "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
   "scope": "Signed read-only native Telos resource provisioning, real permissions and token transfers",
   "oldCodeHash": "76714f4a8980b8405fb79e64a127c7492558960ebe63a79185ce6d3cb0a38c8a",
@@ -34,20 +34,20 @@
   ],
   "receipts": [
     {
-      "transactionId": "1f935200feb350c85c33bd6fcc896bfb23f1a1cc6e2b5b60c65d563e660650ff",
-      "blockNum": 449486843
+      "transactionId": "18fb7f09a6a41a6aa77ba3b5d2bf72c642b428b5340c76bc4034f85be831af71",
+      "blockNum": 449487368
     },
     {
-      "transactionId": "c11a6ba4516591089ff22f4cf6949fa4d2c6a6956fe874cc0416fe7b3f96eecd",
-      "blockNum": 449486845
+      "transactionId": "382d3d4e337b3c6628e3f1e8d877657d9048d1ac63ed2f1900f646aa04c89300",
+      "blockNum": 449487369
     },
     {
-      "transactionId": "9bf34b43a874a8f4edcb8b205529336a31c796ef09a003b65843996c8475c7db",
-      "blockNum": 449486846
+      "transactionId": "ef64b361903144f77347db3262374ecca377c0fcf1b563d2988d3b5504a23305",
+      "blockNum": 449487370
     },
     {
-      "transactionId": "59981e80d4dce24f15cd8b2e3b86136c8a512f778a6d9990e8f4cc8d2c6bd701",
-      "blockNum": 449486848
+      "transactionId": "9064c2193992cfd893812b1d4f2149bedb88c3e5f5caf3d16ba865159ce21d6c",
+      "blockNum": 449487370
     }
   ],
   "tablesBalancesAuthoritiesUnchanged": true,
