@@ -48,7 +48,7 @@
 - [ ] Run targeted tests and record the expected missing-feature failures.
 - [x] Implement canonical records and minimal Web Crypto helpers; keep recovery secrets in browser memory.
 - [x] Run targeted tests, protocol typecheck and frontend typecheck against the new artifact.
-- [ ] Commit the tested interfaces and helpers.
+- [x] Commit the tested interfaces and helpers.
 
 ## Task 2: Preserving database state and fresh-login claims
 
@@ -60,7 +60,7 @@
 - [ ] Run in a new owned loopback database ending _test; establish the expected failures without touching testnet data.
 - [x] Implement migration constraints, bounded method list/lookup, transactional claims and credential-currentness checks; issue grants only after actual login proof verification.
 - [x] Verify migration preservation/repeated application, existing paired-login tests and the new adversarial suite.
-- [ ] Commit the database/API behavior.
+- [x] Commit the database/API behavior.
 
 ## Task 3: Wallet and passkey unlocking mechanisms
 
@@ -72,7 +72,7 @@
 - [ ] Run tests to confirm the missing paths fail.
 - [x] Implement dedicated signing paths and PRF extraction. Require reproducible enrollment and original-key round trips; retain explicit operator/client support gates.
 - [x] Run wallet/WebAuthn/crypto unit tests. Prepare actual-client probes that report compatibility without printing signatures or keys; report real-client checks separately from mocks.
-- [ ] Commit supported mechanisms and honest unavailable states.
+- [x] Commit supported mechanisms and honest unavailable states.
 
 ## Task 4: Assisted key handoff and independent encrypted persistence
 
@@ -84,7 +84,7 @@
 - [ ] Run tests and identify intended failures.
 - [x] Implement P-256 enrollment handoff, OpenBao key wrapping, encrypted metadata persistence and explicit per-method assisted consent; fail closed rather than issue local-only success receipts.
 - [ ] Run crypto/provider-boundary tests and real PostgreSQL full-access tests for paired email, Telegram and other verified supported providers.
-- [ ] Commit assisted recovery with unconfigured deployments visibly unavailable.
+- [x] Commit assisted recovery with unconfigured deployments visibly unavailable.
 
 ## Task 5: Account choices and passwordless new-device flow
 
@@ -96,7 +96,7 @@
 - [ ] Run browser cases to establish failures.
 - [x] Implement accessible settings and all login completion hooks, context guards and honest storage/custody outage behavior. Preserve legacy password/kit fallback separately.
 - [ ] Run frontend verification and selected desktop/mobile browser journeys, including historical private-document access and wrong-key denial.
-- [ ] Commit the complete user flow and documentation copy.
+- [x] Commit the complete user flow and documentation copy.
 
 ## Task 6: Encrypted existing-device approval and disaster restore
 
@@ -108,7 +108,7 @@
 - [ ] Run intended failures.
 - [x] Implement client encryption, bounded server transport and accessible approval/verification UI. Prepare a separately hosted OpenBao runbook/configuration and encrypted off-host snapshot/restore tooling.
 - [x] Verify two fresh browser contexts and a source-host-loss simulation using owned disposable services. Actual independent-host credentials and real-client qualification remain required before enabling hosted features.
-- [ ] Commit transfer and restore tooling/evidence.
+- [x] Commit transfer and restore tooling/evidence.
 
 ## Task 7: Compatibility, complete verification and delivery
 
@@ -119,7 +119,7 @@ Implementation and local/public-testnet evidence: [verification report](../../ev
 - [x] Update producer references and practical enrollment/recovery/permission/security guides; publish pinned compatible artifacts and preserve legacy decoding fixtures.
 - [ ] Run core/frontend verify, required PostgreSQL recovery/upgrade/provider tests, focused browser/accessibility journeys and security review of the final diff.
 - [x] Record actual passed/failed/skipped/unrun qualification separately. Resolve important review findings with regression tests.
-- [ ] Commit/push dev and deliver verified testnet source/client changes within existing authorization. Do not activate assisted custody, qualified-wallet claims or independent-backup guarantees without their actual prerequisites.
+- [x] Commit/push dev and deliver verified testnet source/client changes within existing authorization. Do not activate assisted custody, qualified-wallet claims or independent-backup guarantees without their actual prerequisites.
 - [ ] If external prerequisites are missing, provide the concrete setup artifacts and request only the access needed to qualify/activate them; continue all independent implementation first.
 
 ## Execution ledger
@@ -130,3 +130,5 @@ Implementation and local/public-testnet evidence: [verification report](../../ev
 - Observed prerequisite: the current testnet env has Pinata configuration but no recovery custody configuration. No secrets were printed. Asked whether to prepare an OpenBao setup while independent implementation continues.
 
 Final review: permanent consent precedes DEK delivery; restored methods remain quarantined; foreign local kits remain separate; PRF is requested at registration and accepts BufferSource. Actual-client probes are manual disposable staging journeys described in the OpenBao runbook; no client report is fabricated to bypass production gates.
+
+Delivery completed: core `2225411`, modules `eb9b7a4` and frontend `f015f75` were committed and pushed to `dev`; testnet build/restart and actual public device-transfer browser/API checks passed. Frontend concurrent contract-diagram changes remain unstaged and preserved. Historical RED checklist items retain their original evidence status; implemented mechanisms and current verification are recorded in the verification report. Hosted activation waits for actual separate-host/off-site/client evidence, with the concrete OpenBao setup ready.
