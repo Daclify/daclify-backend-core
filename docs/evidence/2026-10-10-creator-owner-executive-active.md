@@ -16,29 +16,29 @@ UI displays configured creator recovery, effective q/n, wallet accounts, managed
 
 ## Artifact pins
 
-| Artifact | Version / SHA256 |
-| --- | --- |
-| Core / public SDK | 0.13.0-alpha.1 |
-| Module SDK / help | 0.9.0-alpha.17; module contract binaries remain 0.9.0-alpha.5 |
-| Runtime WASM | 0943069c7a09dcde50ce36037671bd2487289d392dbe334bf08d4251952e0bad |
-| Runtime raw ABI | 50ab00d5e3e61a5e1fa4339a2edecaa005cd1edd7f28268aa87c7d8195fa4e63 |
-| Core development SDK tarball | e574fbf3b5ced33c0a42a863145481ddbe87adf0d20f1c6e83cd81af801026f9 |
+| Artifact                       | Version / SHA256                                                 |
+| ------------------------------ | ---------------------------------------------------------------- |
+| Core / public SDK              | 0.13.0-alpha.1                                                   |
+| Module SDK / help              | 0.9.0-alpha.17; module contract binaries remain 0.9.0-alpha.5    |
+| Runtime WASM                   | 0943069c7a09dcde50ce36037671bd2487289d392dbe334bf08d4251952e0bad |
+| Runtime raw ABI                | 50ab00d5e3e61a5e1fa4339a2edecaa005cd1edd7f28268aa87c7d8195fa4e63 |
+| Core development SDK tarball   | e574fbf3b5ced33c0a42a863145481ddbe87adf0d20f1c6e83cd81af801026f9 |
 | Module development SDK tarball | b0f46807062081ec892237ed903d85cf9f6e81c9cfa21ceeac2365bc0a6347d6 |
-| Preceding policy-1 runtime | ecdb1e3dab7fb57502dd9ea8cde447a00892f20f4d30fa373f02c072eca03f40 |
+| Preceding policy-1 runtime     | ecdb1e3dab7fb57502dd9ea8cde447a00892f20f4d30fa373f02c072eca03f40 |
 
 The preceding binary was rebuilt from full source revision 8a2c5f94622c219814d2bbd0689f49ac6ea12d65 using pinned CDT 4.1.1 and matched its saved hash. Core compiled all eleven contracts/fixtures with the pinned compiler. The actual five module binaries match the public module SDK hashes and run in native workflows; their source/binaries were not changed or freshly compiled in this policy work. SDK packaging is explicitly development packaging, not immutable production qualification. Consumer archives and lock integrity are pinned; installed SDK executables match the built producer output.
 
 ## Checks
 
-| Check | Result |
-| --- | --- |
-| Core default suite, two workers, 90-second timeout | 769/769 tests, 124 files passed |
-| Module default suite, one worker, 90-second default; existing large case keeps its explicit timeout | 163/163 tests, 27 files passed |
-| Frontend default suite, two workers, 90-second timeout | 209/209 tests, 38 files passed |
-| Final desktop/mobile browser fixtures | 16/16 passed, including accessible offline permission guide, owner/quorum disclosures, atomic handover download, legacy block and exact release mismatch |
-| Final full owned native permission suite | 108/108 tests, six files passed; no skips; 256.70 seconds |
-| Core/module strict types, lint, generated docs checks and builds; frontend Vue template/type/build and lint | Passed |
-| Changed-file formatting and git diff whitespace checks | Passed |
+| Check                                                                                                       | Result                                                                                                                                                   |
+| ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Core default suite, two workers, 90-second timeout                                                          | 769/769 tests, 124 files passed                                                                                                                          |
+| Module default suite, one worker, 90-second default; existing large case keeps its explicit timeout         | 163/163 tests, 27 files passed                                                                                                                           |
+| Frontend default suite, two workers, 90-second timeout                                                      | 209/209 tests, 38 files passed                                                                                                                           |
+| Final desktop/mobile browser fixtures                                                                       | 16/16 passed, including accessible offline permission guide, owner/quorum disclosures, atomic handover download, legacy block and exact release mismatch |
+| Final full owned native permission suite                                                                    | 108/108 tests, six files passed; no skips; 256.70 seconds                                                                                                |
+| Core/module strict types, lint, generated docs checks and builds; frontend Vue template/type/build and lint | Passed                                                                                                                                                   |
+| Changed-file formatting and git diff whitespace checks                                                      | Passed                                                                                                                                                   |
 
 There are 18 additional core unit/API cases and 19 additional native cases over the preceding audit baseline, plus six additional desktop/mobile browser executions. Native nodes use real Spring 1.2.2, actual compiled C++/ABI, distinct disposable signatures and dummy DAOs, and RAM_RESTRICTIONS / RESTRICT_ACTION_TO_SELF alongside the other required features. The workflow fixture now uses actual policy-2 handover, rather than manually installing a hypothetical tree. The authority-probe fixture independently tests primitive authorization and hostile inline calls, including attempts to weaken or unlink owner-protected upgrades.
 
@@ -57,3 +57,5 @@ The governing DAO is 1. Public reads show no nativegov, no executive policy and 
 See the [operator guide](../operations/creator-owner-executive-active.md) and [native recipe](../operations/native-permission-tests.md). Signing exact live proposals is a separate subsequent decision under the approved specification. Current code, tests and proposal preparation do not authorize live authority changes.
 
 Implementation delivery: core ce6725e, modules 24c2f87 and frontend f014bd8 were pushed to origin/dev. Remote refs matched local HEAD, and all three worktrees were clean at verification. A subsequent documentation-only commit completes this execution record; no release or live rollout follows from these pushes.
+
+Subsequent explicit user authorization selected `3boidanimus3` as the initial executive and approved up to 4 testnet TLOS for required RAM. The policy is now deployed and handed over on testnet; see [the separate live rollout evidence](2026-10-10-native-ownership-testnet-rollout.md). The unsigned packet above describes the pre-rollout state and must not be reused.

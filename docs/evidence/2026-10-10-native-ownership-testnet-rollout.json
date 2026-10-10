@@ -1,0 +1,900 @@
+{
+  "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+  "upgrade": {
+    "transactionId": "341f910626c5a9995a53a1d2efb09563c46a5914f264455e28dc131bcc874840",
+    "blockNum": 449530503
+  },
+  "handOver": {
+    "transactionId": "08a8c0061f1b6e897e9748c4ff9e8ce6fec228ee2de0b7892401882122ac07a3",
+    "blockNum": 449530510
+  },
+  "irreversible": true,
+  "creator": "3boidanimus3",
+  "executives": [
+    "3boidanimus3"
+  ],
+  "quorumBps": 10000,
+  "quorumConfigurable": true,
+  "policyVersion": 2,
+  "runtimeCodeHash": "0943069c7a09dcde50ce36037671bd2487289d392dbe334bf08d4251952e0bad",
+  "runtimeRawAbiHash": "50ab00d5e3e61a5e1fa4339a2edecaa005cd1edd7f28268aa87c7d8195fa4e63",
+  "existingTables": 19,
+  "existingRows": 44,
+  "existingDataPreserved": true,
+  "managed": [
+    "daclifydecid",
+    "daclifyendor",
+    "daclifygrant",
+    "daclifyhubv1",
+    "daclifynames",
+    "daclifypayr1",
+    "daclifyworks"
+  ],
+  "servicePublicKey": "PUB_K1_8j1MA7Evt5628RaKn5zF1GPwB3RqY1gXeqxq9z56Cmh7oPsAmg",
+  "ramPurchase": {
+    "payer": "3boidanimus3",
+    "receiver": "daclifycore1",
+    "bytes": 65536,
+    "approvedMaximumUnits": "40000",
+    "spentUnits": "37512",
+    "observedBalanceDecreaseUnits": "37512",
+    "balanceDecreaseMatchesQuote": true,
+    "symbol": "TLOS",
+    "precision": 4
+  },
+  "permissionProbes": {
+    "readOnly": true,
+    "checks": [
+      {
+        "check": "duplicate shared-key signatures rejected",
+        "exception": "tx_duplicate_sig",
+        "status": 500
+      },
+      {
+        "check": "one shared-key signature satisfies both authorities",
+        "exception": "eosio_assert_message_exception",
+        "status": 200
+      },
+      {
+        "check": "creator executive upgrade authority",
+        "allowed": true,
+        "status": 200
+      },
+      {
+        "check": "service upgrade authority",
+        "allowed": false,
+        "status": 401
+      },
+      {
+        "check": "old runtime operator upgrade authority",
+        "allowed": false,
+        "status": 401
+      }
+    ]
+  },
+  "authorities": [
+    {
+      "account": "daclifycore1",
+      "permissions": [
+        {
+          "perm_name": "active",
+          "parent": "owner",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [],
+            "accounts": [
+              {
+                "permission": {
+                  "actor": "3boidanimus3",
+                  "permission": "active"
+                },
+                "weight": 1
+              },
+              {
+                "permission": {
+                  "actor": "daclifycore1",
+                  "permission": "eosio.code"
+                },
+                "weight": 1
+              }
+            ],
+            "waits": []
+          },
+          "linked_actions": [
+            {
+              "account": "eosio",
+              "action": "setcode"
+            },
+            {
+              "account": "eosio",
+              "action": "setabi"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "appoint"
+            }
+          ]
+        },
+        {
+          "perm_name": "execctx",
+          "parent": "active",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [],
+            "accounts": [
+              {
+                "permission": {
+                  "actor": "daclifycore1",
+                  "permission": "eosio.code"
+                },
+                "weight": 1
+              }
+            ],
+            "waits": []
+          },
+          "linked_actions": [
+            {
+              "account": "daclifycore1",
+              "action": "setdaogov"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "addmember"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "setadmit"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "addsession"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "delsession"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "rotatekey"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "setmeta"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "setprofile"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "putdoc"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "putjson"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "commitepoch"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "rotateepoch"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "linknative"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "unlinknat"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "linkevm"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "unlinkevm"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "setactive"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "setroles"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "grantkey"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "withdraw"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "unstake"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "modconfig"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "setcredits"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "confirmext"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "govfees"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "govcreate"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "govlist"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "govunlist"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "govmodcopy"
+            },
+            {
+              "account": "daclifydecid",
+              "action": "open"
+            },
+            {
+              "account": "daclifydecid",
+              "action": "vote"
+            },
+            {
+              "account": "daclifydecid",
+              "action": "openwork"
+            },
+            {
+              "account": "daclifydecid",
+              "action": "openaward"
+            },
+            {
+              "account": "daclifydecid",
+              "action": "newelect"
+            },
+            {
+              "account": "daclifydecid",
+              "action": "nominate"
+            },
+            {
+              "account": "daclifydecid",
+              "action": "startelect"
+            },
+            {
+              "account": "daclifydecid",
+              "action": "recall"
+            },
+            {
+              "account": "daclifyworks",
+              "action": "propose"
+            },
+            {
+              "account": "daclifyworks",
+              "action": "accept"
+            },
+            {
+              "account": "daclifyworks",
+              "action": "submitwork"
+            },
+            {
+              "account": "daclifyworks",
+              "action": "review"
+            },
+            {
+              "account": "daclifyworks",
+              "action": "cancel"
+            },
+            {
+              "account": "daclifyworks",
+              "action": "offeragr"
+            },
+            {
+              "account": "daclifyworks",
+              "action": "acceptagr"
+            },
+            {
+              "account": "daclifypayr1",
+              "action": "commit"
+            },
+            {
+              "account": "daclifypayr1",
+              "action": "edit"
+            },
+            {
+              "account": "daclifygrant",
+              "action": "newround"
+            },
+            {
+              "account": "daclifygrant",
+              "action": "applygrant"
+            },
+            {
+              "account": "daclifygrant",
+              "action": "amend"
+            },
+            {
+              "account": "daclifygrant",
+              "action": "submitapp"
+            },
+            {
+              "account": "daclifygrant",
+              "action": "reviewapp"
+            },
+            {
+              "account": "daclifygrant",
+              "action": "closeapp"
+            },
+            {
+              "account": "daclifygrant",
+              "action": "closeround"
+            },
+            {
+              "account": "daclifyendor",
+              "action": "applyjoin"
+            },
+            {
+              "account": "daclifyendor",
+              "action": "witness"
+            },
+            {
+              "account": "daclifyendor",
+              "action": "unwitness"
+            },
+            {
+              "account": "daclifyendor",
+              "action": "admit"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "setexecs"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "heartbeat"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "refreshgov"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "setvoter"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "archapprove"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "archrevoke"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "restoredoc"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "govpayfees"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "govhosted"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "govseatfee"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "govresources"
+            }
+          ]
+        },
+        {
+          "perm_name": "owner",
+          "parent": "",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [],
+            "accounts": [
+              {
+                "permission": {
+                  "actor": "3boidanimus3",
+                  "permission": "active"
+                },
+                "weight": 1
+              }
+            ],
+            "waits": []
+          },
+          "linked_actions": []
+        },
+        {
+          "perm_name": "service",
+          "parent": "active",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [
+              {
+                "key": "PUB_K1_8j1MA7Evt5628RaKn5zF1GPwB3RqY1gXeqxq9z56Cmh7oPsAmg",
+                "weight": 1
+              }
+            ],
+            "accounts": [],
+            "waits": []
+          },
+          "linked_actions": [
+            {
+              "account": "daclifycore1",
+              "action": "createdao"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "createpaid"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "initgov"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "enroll"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "enrollagent"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "setmodule"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "account": "daclifydecid",
+      "permissions": [
+        {
+          "perm_name": "active",
+          "parent": "owner",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [],
+            "accounts": [
+              {
+                "permission": {
+                  "actor": "daclifycore1",
+                  "permission": "active"
+                },
+                "weight": 1
+              },
+              {
+                "permission": {
+                  "actor": "daclifydecid",
+                  "permission": "eosio.code"
+                },
+                "weight": 1
+              }
+            ],
+            "waits": []
+          },
+          "linked_actions": []
+        },
+        {
+          "perm_name": "owner",
+          "parent": "",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [],
+            "accounts": [
+              {
+                "permission": {
+                  "actor": "daclifycore1",
+                  "permission": "active"
+                },
+                "weight": 1
+              }
+            ],
+            "waits": []
+          },
+          "linked_actions": [
+            {
+              "account": "eosio",
+              "action": "setcode"
+            },
+            {
+              "account": "eosio",
+              "action": "setabi"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "account": "daclifyendor",
+      "permissions": [
+        {
+          "perm_name": "active",
+          "parent": "owner",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [],
+            "accounts": [
+              {
+                "permission": {
+                  "actor": "daclifycore1",
+                  "permission": "active"
+                },
+                "weight": 1
+              },
+              {
+                "permission": {
+                  "actor": "daclifyendor",
+                  "permission": "eosio.code"
+                },
+                "weight": 1
+              }
+            ],
+            "waits": []
+          },
+          "linked_actions": []
+        },
+        {
+          "perm_name": "owner",
+          "parent": "",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [],
+            "accounts": [
+              {
+                "permission": {
+                  "actor": "daclifycore1",
+                  "permission": "active"
+                },
+                "weight": 1
+              }
+            ],
+            "waits": []
+          },
+          "linked_actions": [
+            {
+              "account": "eosio",
+              "action": "setcode"
+            },
+            {
+              "account": "eosio",
+              "action": "setabi"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "account": "daclifygrant",
+      "permissions": [
+        {
+          "perm_name": "active",
+          "parent": "owner",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [],
+            "accounts": [
+              {
+                "permission": {
+                  "actor": "daclifycore1",
+                  "permission": "active"
+                },
+                "weight": 1
+              },
+              {
+                "permission": {
+                  "actor": "daclifygrant",
+                  "permission": "eosio.code"
+                },
+                "weight": 1
+              }
+            ],
+            "waits": []
+          },
+          "linked_actions": []
+        },
+        {
+          "perm_name": "owner",
+          "parent": "",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [],
+            "accounts": [
+              {
+                "permission": {
+                  "actor": "daclifycore1",
+                  "permission": "active"
+                },
+                "weight": 1
+              }
+            ],
+            "waits": []
+          },
+          "linked_actions": [
+            {
+              "account": "eosio",
+              "action": "setcode"
+            },
+            {
+              "account": "eosio",
+              "action": "setabi"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "account": "daclifyhubv1",
+      "permissions": [
+        {
+          "perm_name": "active",
+          "parent": "owner",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [],
+            "accounts": [
+              {
+                "permission": {
+                  "actor": "daclifycore1",
+                  "permission": "active"
+                },
+                "weight": 1
+              }
+            ],
+            "waits": []
+          },
+          "linked_actions": []
+        },
+        {
+          "perm_name": "owner",
+          "parent": "",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [],
+            "accounts": [
+              {
+                "permission": {
+                  "actor": "daclifycore1",
+                  "permission": "active"
+                },
+                "weight": 1
+              }
+            ],
+            "waits": []
+          },
+          "linked_actions": [
+            {
+              "account": "eosio",
+              "action": "setcode"
+            },
+            {
+              "account": "eosio",
+              "action": "setabi"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "account": "daclifynames",
+      "permissions": [
+        {
+          "perm_name": "active",
+          "parent": "owner",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [],
+            "accounts": [
+              {
+                "permission": {
+                  "actor": "daclifycore1",
+                  "permission": "active"
+                },
+                "weight": 1
+              },
+              {
+                "permission": {
+                  "actor": "daclifynames",
+                  "permission": "eosio.code"
+                },
+                "weight": 1
+              }
+            ],
+            "waits": []
+          },
+          "linked_actions": []
+        },
+        {
+          "perm_name": "owner",
+          "parent": "",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [],
+            "accounts": [
+              {
+                "permission": {
+                  "actor": "daclifycore1",
+                  "permission": "active"
+                },
+                "weight": 1
+              }
+            ],
+            "waits": []
+          },
+          "linked_actions": [
+            {
+              "account": "eosio",
+              "action": "setcode"
+            },
+            {
+              "account": "eosio",
+              "action": "setabi"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "account": "daclifypayr1",
+      "permissions": [
+        {
+          "perm_name": "active",
+          "parent": "owner",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [],
+            "accounts": [
+              {
+                "permission": {
+                  "actor": "daclifycore1",
+                  "permission": "active"
+                },
+                "weight": 1
+              },
+              {
+                "permission": {
+                  "actor": "daclifypayr1",
+                  "permission": "eosio.code"
+                },
+                "weight": 1
+              }
+            ],
+            "waits": []
+          },
+          "linked_actions": []
+        },
+        {
+          "perm_name": "owner",
+          "parent": "",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [],
+            "accounts": [
+              {
+                "permission": {
+                  "actor": "daclifycore1",
+                  "permission": "active"
+                },
+                "weight": 1
+              }
+            ],
+            "waits": []
+          },
+          "linked_actions": [
+            {
+              "account": "eosio",
+              "action": "setcode"
+            },
+            {
+              "account": "eosio",
+              "action": "setabi"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "account": "daclifyworks",
+      "permissions": [
+        {
+          "perm_name": "active",
+          "parent": "owner",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [],
+            "accounts": [
+              {
+                "permission": {
+                  "actor": "daclifycore1",
+                  "permission": "active"
+                },
+                "weight": 1
+              },
+              {
+                "permission": {
+                  "actor": "daclifyworks",
+                  "permission": "eosio.code"
+                },
+                "weight": 1
+              }
+            ],
+            "waits": []
+          },
+          "linked_actions": []
+        },
+        {
+          "perm_name": "owner",
+          "parent": "",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [],
+            "accounts": [
+              {
+                "permission": {
+                  "actor": "daclifycore1",
+                  "permission": "active"
+                },
+                "weight": 1
+              }
+            ],
+            "waits": []
+          },
+          "linked_actions": [
+            {
+              "account": "eosio",
+              "action": "setcode"
+            },
+            {
+              "account": "eosio",
+              "action": "setabi"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "namesPriceUpdater": {
+    "state": "paused-awaiting-authorization-design",
+    "readOnly": true,
+    "timer": "disabled",
+    "actions": [
+      "setoracle"
+    ],
+    "checks": [
+      {
+        "check": "service Names price authority",
+        "allowed": false,
+        "status": 401
+      },
+      {
+        "check": "creator executive Names price authority",
+        "allowed": true,
+        "status": 200
+      }
+    ],
+    "unsignedUpdate": ".artifacts/native-ownership-names-price-unsigned.json"
+  }
+}

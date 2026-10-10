@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { generateKeyPairSync, randomUUID } from 'node:crypto';
 import { Action, Authority, Checksum256, PrivateKey, Serializer } from '@wharfkit/antelope';
 import { ModulePermissions } from '@daclify/modules';
 import {
@@ -11,6 +12,8 @@ import {
   ModuleCodeHashes,
 } from '@daclify/modules/sdk';
 import { encodeAction } from '../../sdk/index.js';
+import { AccountSchema, CreateDaoSchema } from '../../protocol/api.js';
+import { NativeChainGateway } from '../../services/api/src/native-chain.js';
 import {
   auditContextPermission,
   contextLinkRepairActions,
@@ -978,3 +981,59 @@ it('completes Grants → Decide → Works → Runtime plus Payroll with isolated
   await expect(withdraw()).rejects.toThrow('INSUFFICIENT_CLAIM');
   expect(await second.totals()).toMatchObject({ available: '100000', reserved: '0', claims: '0' });
 }, 100000);
+
+it('creates an ordered DAO when service and settlement use the same signing key', async () => {
+  const f = fixture();
+  const executives = [f.key('alice'), f.key('bob')];
+  await f.call(
+    'daclifycore',
+    'setcreate',
+    { shared_usd: 0, independent_usd: 5000, premium_bps: 2000, settler: 'relay' },
+    'daclifycore',
+    'active',
+    executives,
+  );
+  await f.call(
+    'daclifycore',
+    'sethosted',
+    { free_members: 10, settler: 'relay' },
+    'daclifycore',
+    'active',
+    executives,
+  );
+  const account = AccountSchema.parse({
+    id: randomUUID(),
+    custody: 'user-controlled',
+    signingKey: PrivateKey.generate('K1').toPublic().toString(),
+    encryptionKey: generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.export({
+      format: 'jwk',
+    }),
+  });
+  const reference = 'c7'.repeat(32);
+  await f.call('daclifycore', 'orderfree', { reference, creator: account.signingKey }, 'relay');
+  const gateway = new NativeChainGateway({
+    chainId: f.chainId,
+    rpcUrl: f.url,
+    runtime: 'daclifycore',
+    hub: null,
+    environment: 'local',
+    relayActor: 'relay',
+    relayKey: f.key('relay'),
+    bootstrap: { owner: 'daclifycore', key: f.key('relay') },
+  });
+  const result = await gateway.createDao(
+    account,
+    CreateDaoSchema.parse({
+      metadata: { schemaVersion: 1, title: 'Shared signer DAO' },
+      privacy: 'public',
+      token: { chainId: f.chainId, contract: 'eosio.token', symbol: 'TLOS', precision: 4 },
+    }),
+    { reference, daoId: '95001' },
+  );
+  expect(result.reference.daoId).toBe('95001');
+  expect(result.members).toBe(1);
+  expect((await gateway.table('members', '95001'))[0]?.signing_key).toBe(account.signingKey);
+  expect(
+    (await gateway.table('createords', 'daclifycore')).find((row) => row.reference === reference),
+  ).toMatchObject({ used: true, dao_id: '95001' });
+});

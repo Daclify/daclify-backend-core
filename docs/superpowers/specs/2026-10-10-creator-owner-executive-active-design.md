@@ -1,25 +1,25 @@
 # Creator recovery and executive active authority
 
-Status: approved replacement for the native authority tree in the [2026-10-09 specification](2026-10-09-executive-authority.md). The user selected configurable quorum and executive upgrades through active on 2026-10-10. This document makes the remaining implementation and migration scope reviewable; it does not authorize live authority changes.
+Status: implemented and deployed on testnet under separate user rollout authorization on 2026-10-10. This replaces the native authority tree in the [2026-10-09 specification](2026-10-09-executive-authority.md). The user selected configurable quorum, executive upgrades through active and `3boidanimus3` as the sole initial executive. See the [rollout evidence](../../evidence/2026-10-10-native-ownership-testnet-rollout.md). Production deployment remains separate.
 
 ## Intended behavior
 
 The creator retains recovery control of the runtime owner. The governing DAO's eligible paired executives control runtime active using its existing configurable quorum. The seven other deployed contract accounts delegate ownership to runtime active. Ordinary DAO membership, browser login, service credentials and module execution remain separate from native governance.
 
-For testnet, the committed creator is `3boidanimus3`, not the illustrative `3boidanimud3` in the request. The user confirmed this creator on 2026-10-10. Confirm the initial executive roster against the signing proposal before any handover. The creator account currently exists with two keys in active, threshold one; this proposal delegates to that account authority rather than copying a public key.
+For testnet, the committed creator is `3boidanimus3`, not the illustrative `3boidanimud3` in the request. The user confirmed this creator and the initial executive roster on 2026-10-10. Existing active administrator member 1 of platform DAO 1 was already paired to this account. The creator account has two keys in active, threshold one; ownership delegates to that account authority rather than copying a public key.
 
 ## Authority tree
 
 Let `n` be the eligible, distinct executive account count and `q = ceil(n × quorum_bps / 10000)`. Existing controller/inactivity rules determine eligibility; default quorum requires all eligible executives. Both values must be nonzero.
 
-| Account / permission | Parent | Threshold and signers |
-| --- | --- | --- |
-| Runtime owner | none | Threshold 1; creator@active weight 1; no contract code or operator key |
-| Runtime active | owner | Threshold q; each executive account@active weight 1; runtime@eosio.code weight q; no operator key |
-| Runtime execctx | active | Threshold 1; runtime@eosio.code weight 1; explicit member-action links |
-| Runtime service | active | Threshold 1; reviewed service key; six existing creation/bootstrap links only |
-| Managed contract owner | none | Threshold 1; runtime@active weight 1 |
-| Managed contract active | owner | Threshold 1; runtime@active weight 1; own eosio.code weight 1 only where the contract sends inline actions |
+| Account / permission    | Parent | Threshold and signers                                                                                      |
+| ----------------------- | ------ | ---------------------------------------------------------------------------------------------------------- |
+| Runtime owner           | none   | Threshold 1; creator@active weight 1; no contract code or operator key                                     |
+| Runtime active          | owner  | Threshold q; each executive account@active weight 1; runtime@eosio.code weight q; no operator key          |
+| Runtime execctx         | active | Threshold 1; runtime@eosio.code weight 1; explicit member-action links                                     |
+| Runtime service         | active | Threshold 1; reviewed service key; six existing creation/bootstrap links only                              |
+| Managed contract owner  | none   | Threshold 1; runtime@active weight 1                                                                       |
+| Managed contract active | owner  | Threshold 1; runtime@active weight 1; own eosio.code weight 1 only where the contract sends inline actions |
 
 Managed contracts on testnet: Hub, Decide, Works, Payroll, Grants, Endorse and Names. Hub currently sends no inline actions and needs no own-code entry. The five modules and Names need theirs for callbacks, payouts and native account/resource operations. Relay and Fees have no deployed code and are excluded from this contract migration. Their configured settler/treasury responsibilities continue with their existing authorities pending a separate service-scope review.
 

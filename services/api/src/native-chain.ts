@@ -2417,9 +2417,12 @@ export class NativeChainGateway implements ChainGateway {
       const result = await this.api.v1.chain.push_transaction(
         SignedTransaction.from({
           ...transaction,
+          // One signing key can satisfy both account authorities; duplicate keys are rejected.
           signatures: [
             bootstrap.key.signDigest(transaction.signingDigest(info.chain_id)),
-            ...(paid && this.config.relayActor !== bootstrap.owner
+            ...(paid &&
+            this.config.relayActor !== bootstrap.owner &&
+            !this.config.relayKey.toPublic().equals(bootstrap.key.toPublic())
               ? [this.config.relayKey.signDigest(transaction.signingDigest(info.chain_id))]
               : []),
           ],

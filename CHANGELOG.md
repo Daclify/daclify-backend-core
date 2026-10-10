@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.0-alpha.1 development — creator recovery and executive active ownership
+
+Keep runtime owner with creator@active, synchronize runtime active to configurable executive quorum plus threshold-weighted eosio.code, and delegate managed contract owner/active to runtime active. Preserve versioned legacy ownership metadata and require reviewed atomic handover with current wallet bindings, release pins and policy revision. Testnet now uses `3boidanimus3` as creator and initial executive; production rollout remains separate.
+
+Sign order-backed DAO creation once per distinct signing key when bootstrap service and relay authorities share a key. Preserve both account authorizations and receipt consumption. Add a real native DAO-creation regression and record irreversible testnet deployment, permission and data-preservation evidence.
+
 ## 0.12.0-alpha.2 development — native permission review and wallet consent
 
 Fix incoming native-wallet linking on chains with RESTRICT_ACTION_TO_SELF: verify exact incoming active consent in outer dispatch and preserve validated execctx-only inline calls. ABI, tables and instruction signing domains remain unchanged. Remove the VERT wallet-code workaround and activate strict inline/RAM restrictions in native fixtures. Rebuild and pin the development runtime; contract/API rollout must be coordinated and is not performed here.
