@@ -1,6 +1,6 @@
 {
   "name": "@daclify/backend-core",
-  "version": "0.12.0-alpha.1",
+  "version": "0.12.0-alpha.2",
   "license": "AGPL-3.0-only",
   "type": "module",
   "description": "Daclify core services and Antelope runtime",
@@ -22,6 +22,7 @@
     "codegen": "tsx tools/codegen/abi.ts",
     "test:native": "vitest run --config vitest.native.config.ts",
     "test:native:modules": "vitest run --config vitest.native.config.ts tests/native/permission.test.ts tests/native/module-integration.test.ts",
+    "test:native:permissions": "vitest run --config vitest.native.config.ts tests/native/permission-tree.test.ts tests/native/contract-workflows.test.ts tests/native/executive-handover-portable.test.ts",
     "test:providers": "vitest run --config vitest.providers.config.ts",
     "native:start": "tsx tools/native/start.ts",
     "package:protocol": "tsx tools/release/package.ts --development",
@@ -29,6 +30,7 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "dev:local": "tsx tools/native/api.ts",
     "deploy": "tsx tools/deploy/deploy.ts",
+    "audit:permissions": "tsx tools/deploy/audit-permissions.ts",
     "price:tlos": "tsx tools/deploy/price.ts",
     "storage:claim": "tsx tools/content/reconcile.ts",
     "archive:verify": "tsx tools/archive/verify.ts",
@@ -47,8 +49,8 @@
     "price:names": "tsx tools/deploy/names-rate.ts"
   },
   "dependencies": {
-    "@daclify/core-protocol": "file:.artifacts/daclify-core-protocol-0.12.0-alpha.1.tgz",
-    "@daclify/modules": "file:../daclify-backend-modules/.artifacts/daclify-modules-0.9.0-alpha.14.tgz",
+    "@daclify/core-protocol": "file:.artifacts/daclify-core-protocol-0.12.0-alpha.2.tgz",
+    "@daclify/modules": "file:../daclify-backend-modules/.artifacts/daclify-modules-0.9.0-alpha.16.tgz",
     "@fastify/cookie": "11.1.2",
     "@fastify/cors": "11.3.0",
     "@noble/curves": "2.4.0",

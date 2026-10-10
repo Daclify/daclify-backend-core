@@ -779,7 +779,8 @@ public:
   }
   ACTION linknative(name runtime,uint64_t dao_id,uint64_t member_id,name account) {
     check(get_sender()==get_self(),"ACTOR_SENDER");
-    authorized_actor(runtime,dao_id,member_id);require_auth(account);check(is_account(account),"NATIVE_ACCOUNT");members rows(get_self(),dao_id);
+    // Dispatch verifies incoming consent before the inline call; strict native chains do not inherit it.
+    authorized_actor(runtime,dao_id,member_id);check(is_account(account),"NATIVE_ACCOUNT");members rows(get_self(),dao_id);
     auto index=rows.get_index<"bynative"_n>();auto linked=index.find(account.value);check(linked==index.end()||linked->id==member_id,"CREDENTIAL_EXISTS");
     const auto& m=rows.get(member_id);check(m.native_account!=account,"ALREADY_IN_STATE");bump_credentials(dao_id,member_id);rows.modify(m,same_payer,[&](auto& r){r.native_account=account;});activate_executive_handover(dao_id);check_native_controller(dao_id);refresh_native_governance(dao_id);
   }
@@ -1238,7 +1239,7 @@ private:
   void dispatch(const instruction& r) {
     members rows(get_self(),r.dao_id);const auto& m=rows.get(r.member_id);rows.modify(m,same_payer,[](auto& row){row.nonce++;});
     action outgoing;outgoing.account=r.target;outgoing.name=r.action;outgoing.authorization={{get_self(),"execctx"_n}};outgoing.data=r.data;
-    if(r.target==get_self()&&r.action=="linknative"_n){auto data=unpack<std::tuple<name,uint64_t,uint64_t,name>>(r.data);auto incoming=std::get<3>(data);require_auth(incoming);outgoing.authorization.push_back(permission_level{incoming,"active"_n});}
+    if(r.target==get_self()&&r.action=="linknative"_n){auto data=unpack<std::tuple<name,uint64_t,uint64_t,name>>(r.data);require_auth(permission_level{std::get<3>(data),"active"_n});}
     executives offices(get_self(),r.dao_id);auto office=offices.find(r.member_id);if(office!=offices.end())offices.modify(office,same_payer,[](auto& e){e.last_active=current_time_point().sec_since_epoch();});
     refresh_native_governance(r.dao_id);
     outgoing.send();

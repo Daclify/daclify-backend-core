@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { Blockchain } from '@proton/vert';
 import { ABI, Checksum256, PrivateKey, Serializer } from '@wharfkit/antelope';
 import { z } from 'zod';
-import { loadContract, row, send, allowFixtureInheritedAuth } from './helpers/vert.js';
+import { loadContract, row, send } from './helpers/vert.js';
 import { RuntimeTableSchemas } from '../sdk/index.js';
 
 const artifact = '.artifacts/contracts/runtime';
@@ -89,7 +89,6 @@ describe('signing-key rotation without a second member', () => {
     expect(daoSchema.parse(row(runtime, 'daos', runtime.toBigInt(), 1n)).member_count).toBe(1);
   });
   it('links a native wallet without a second member or a second vote', async () => {
-    allowFixtureInheritedAuth(chain, 'bob', 'daclifycore');
     await send(
       runtime,
       'submit',

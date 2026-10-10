@@ -100,29 +100,6 @@ export function loadContract(chain: Blockchain, name: string, artifact: string):
 export function contractAbi(path: string): ABI {
   return ABI.from(readFileSync(`${path}.abi`, 'utf8'));
 }
-export function allowFixtureInheritedAuth(
-  chain: Blockchain,
-  accountName: string,
-  runtimeName: string,
-): void {
-  // VERT does not propagate a parent's supplied authority into an inline action.
-  // State-transition fixtures bridge that emulator gap; native tests check real incoming consent.
-  const account = chain.accounts[accountName];
-  if (!account) throw new Error('FIXTURE_ACCOUNT_REQUIRED');
-  account.setPermissions([
-    ...account.permissions.filter((permission) => permission.perm_name.toString() !== 'active'),
-    API.v1.AccountPermission.from({
-      perm_name: 'active',
-      parent: 'owner',
-      required_auth: {
-        threshold: 1,
-        keys: [],
-        waits: [],
-        accounts: [{ permission: { actor: runtimeName, permission: 'eosio.code' }, weight: 1 }],
-      },
-    }),
-  ]);
-}
 export async function send(
   account: Account,
   action: string,

@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.12.0-alpha.1 · interface 1.
+Package 0.12.0-alpha.2 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 

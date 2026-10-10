@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.0-alpha.2 development — native permission review and wallet consent
+
+Fix incoming native-wallet linking on chains with RESTRICT_ACTION_TO_SELF: verify exact incoming active consent in outer dispatch and preserve validated execctx-only inline calls. ABI, tables and instruction signing domains remain unchanged. Remove the VERT wallet-code workaround and activate strict inline/RAM restrictions in native fixtures. Rebuild and pin the development runtime; contract/API rollout must be coordinated and is not performed here.
+
+Add a read-only deployment permission audit, guarded unsigned missing-link proposals, canonical deploy-plan reuse and ABI/action coverage. Add extensive real-node permission, handover, multi-DAO, five-module, replay, rollback and financial workflow tests using disposable localhost Spring 1.2.2 fixtures and optional pinned local CDT 4.1.1. Consume module SDK 0.9.0-alpha.16 with exact reviewed core compatibility. Record actual testnet findings and a proposed creator-owner/executive-active design. No live authorities, assets or services changed; production handover remains the existing govern policy.
+
 ## 0.12.0-alpha.1 development — password-free devices and original-key recovery
 
 Add opt-in full-key access through selected paired methods, private wallet/PRF wrappers, explicit assisted authority, fresh one-use session-bound grants and encrypted existing-device approval. Preserve original account IDs, signing/document keys and JSON fallbacks. Add independent encrypted backup storage, gated OpenBao setup, permanent assisted consent before key handoff, strict-privacy checks and quarantine after database restore. Hosted recovery stays off until actual independent storage/restore and client qualification passes. Contracts and on-chain authorities are unchanged.

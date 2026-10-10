@@ -59,7 +59,9 @@ export async function activateFixtureFeatures(
   const sender = features.get('GET_SENDER');
   const codeHash = features.get('GET_CODE_HASH');
   const crypto = features.get('CRYPTO_PRIMITIVES');
-  if (!preactivate || !sender || !codeHash || !crypto)
+  const ramRestrictions = features.get('RAM_RESTRICTIONS');
+  const restrictSelf = features.get('RESTRICT_ACTION_TO_SELF');
+  if (!preactivate || !sender || !codeHash || !crypto || !ramRestrictions || !restrictSelf)
     throw new Error('Required native protocol features unavailable');
   if (!(await activated(preactivate))) {
     await rpc(url, '/v1/producer/schedule_protocol_feature_activations', {
@@ -68,9 +70,6 @@ export async function activateFixtureFeatures(
     await wait(preactivate);
   }
   const pending: string[] = [];
-  if (!(await activated(sender))) pending.push(sender);
-  if (!(await activated(codeHash))) pending.push(codeHash);
-  if (!(await activated(crypto))) pending.push(crypto);
   const required = new Map(supported.map((feature) => [feature.feature_digest, feature]));
   const visiting = new Set<string>();
   async function queue(digest: string): Promise<void> {
@@ -83,6 +82,9 @@ export async function activateFixtureFeatures(
     visiting.delete(digest);
     pending.push(digest);
   }
+  // Match the public chain's authorization rules; inherited inline auth hides defects.
+  for (const digest of [sender, codeHash, crypto, ramRestrictions, restrictSelf])
+    await queue(digest);
   for (const feature of extraFeatures) {
     const digest = features.get(feature);
     if (!digest) throw new Error('Required system protocol feature unavailable');

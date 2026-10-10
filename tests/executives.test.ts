@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { Blockchain } from '@proton/vert';
 import { ABI, Checksum256, PrivateKey, Serializer } from '@wharfkit/antelope';
 import { z } from 'zod';
-import { loadContract, row, send, allowFixtureInheritedAuth } from './helpers/vert.js';
+import { loadContract, row, send } from './helpers/vert.js';
 let chain: Blockchain, core: ReturnType<typeof loadContract>;
 const keys = Array.from({ length: 4 }, () => PrivateKey.generate('K1'));
 async function act(action: string, fields: object, member = 1, native?: string) {
@@ -83,7 +83,6 @@ it('replaced executives cannot reactivate their previous office', async () => {
 });
 it('pairing an ordinary member never appoints an executive', async () => {
   await send(core, 'appoint', [1, [1], 60, 10000], 'alice@active');
-  allowFixtureInheritedAuth(chain, 'bob', 'daclifycore');
   await act('linknative', { account: 'bob' }, 2, 'bob');
   expect(row(core, 'members', 1n, 2n)).toMatchObject({ native_account: 'bob' });
   expect(row(core, 'executives', 1n, 2n)).toBeUndefined();

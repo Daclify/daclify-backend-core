@@ -4,7 +4,7 @@ import { PrivateKey } from '@wharfkit/antelope';
 import { CID } from 'multiformats/cid';
 import { sha256 } from 'multiformats/hashes/sha2';
 import { z } from 'zod';
-import { loadContract, send, row, allowFixtureInheritedAuth } from './helpers/vert.js';
+import { loadContract, send, row } from './helpers/vert.js';
 import { makeInstruction, encodeAction, instructionDigest } from '../sdk/index.js';
 let runtime: ReturnType<typeof loadContract>;
 let cid: string;
@@ -114,7 +114,6 @@ describe('credential ownership and offboarding', () => {
         ['daclifycore@active', 'alice@active'],
       ),
     ).rejects.toThrow('ACTOR_SENDER');
-    allowFixtureInheritedAuth(runtime.bc, 'alice', 'daclifycore');
     const request = makeInstruction(
       { chainId: 'ab'.repeat(32), contract: 'daclifycore', daoId: '1', interfaceVersion: 1 },
       '1',

@@ -1,0 +1,38 @@
+# Run native permission and dummy DAO tests
+
+From backend core, run `npm run test:native:permissions`. These tests start and stop their own Spring 1.2.2 nodes. They require the real compiled binaries in core `.artifacts/contracts` and the five module binaries in the sibling modules `.artifacts/contracts`. Missing artifacts or a missing/wrong node version fail the run.
+
+The suite covers creator recovery, executive quorum, code/ABI upgrades, parent/child permission links, code weights, service isolation, legacy handover, strict incoming-wallet consent, replay, module sender/grant/code checks, cross-DAO isolation, rollback and a complete Grants/Decide/Works/Payroll payout flow. A ballot genuinely waits for its 60-second chain deadline. Each node has a distinct generated genesis, disposable signers, private temporary configuration and random loopback HTTP/P2P ports; the suite never selects an existing or public chain.
+
+## Pinned tools without Docker
+
+The canonical [Dockerfile](../../tools/build/Dockerfile) pins these official Linux amd64 archives:
+
+| Tool | Archive | SHA256 |
+| --- | --- | --- |
+| CDT 4.1.1 | [cdt_4.1.1-1_amd64.deb](https://github.com/AntelopeIO/cdt/releases/download/v4.1.1/cdt_4.1.1-1_amd64.deb) | d946e6b64f297442d19e486401aa49f956080b07a1fa6335f29976106175b588 |
+| Spring 1.2.2 | [antelope-spring_1.2.2_amd64.deb](https://github.com/AntelopeIO/spring/releases/download/v1.2.2/antelope-spring_1.2.2_amd64.deb) | 531ed1c965f94dd7732f5e900401f132170769c45b7589819a0ba1336627687a |
+
+Verify the downloaded archive checksums before use. Extract them to an owned directory using `dpkg-deb -x`; host installation or a persistent node service is unnecessary. The extracted node is `spring/usr/bin/nodeos`, and the compiler is `cdt/usr/opt/cdt/4.1.1/bin/cdt-cpp`. Supply the host's libatomic shared library or an extracted compatible libatomic1 directory if needed.
+
+For the extracted tools used in the dated review on this VM:
+
+```sh
+DACLIFY_CDT_BINARY=/data/daclify-runtime/toolchain-review/cdt/usr/opt/cdt/4.1.1/bin/cdt-cpp \
+DACLIFY_NATIVE_LIBS=/data/daclify-runtime/toolchain-review/libs/usr/lib/x86_64-linux-gnu \
+npm run build:contracts
+
+npm run codegen
+
+DACLIFY_NATIVE_NODEOS=/data/daclify-runtime/toolchain-review/spring/usr/bin/nodeos \
+DACLIFY_NATIVE_LIBS=/data/daclify-runtime/toolchain-review/libs/usr/lib/x86_64-linux-gnu \
+npm run test:native:permissions
+```
+
+Use your own extracted paths elsewhere. Without DACLIFY_CDT_BINARY, the existing contract build uses its pinned Docker image. Without DACLIFY_NATIVE_NODEOS, the new tests look for nodeos on PATH. Both paths verify the pinned tool version. The compiler rebuild includes authorityprobe as a test fixture; it is absent from production deployment profiles and the catalogue.
+
+## Scope of evidence
+
+The proposed creator-owner/executive-active tree is manually configured in the authority and module workflow fixtures. These tests establish native hierarchy and interoperability, including real signature verification. They do not implement the pending production handover migration. A separate fixture exercises the actual existing govern-based handover and its stale-state/last-controller safeguards.
+
+The six required native features include RAM_RESTRICTIONS and RESTRICT_ACTION_TO_SELF, matching the observed public testnet authorization rules. Dummy token/account fixtures do not qualify Telos system resource pricing, live providers, external custody or browser wallet/multisig signing. Those remain separate suites and operational checks. The [dated audit](../evidence/2026-10-10-testnet-permission-review.md) records exact results and boundaries.

@@ -18,6 +18,7 @@ Shared creation includes 10 active members. Paid slots 1–40 cost $1/month each
 
 - [Development checkouts and tests](docs/development.md) covers Node, bootstrap, the local fixture, and which suite proves what.
 - [Operations](docs/operations.md) covers the three deploy profiles, testnet account names, Stripe, the TLOS quote, and the frontend network switch.
+- [Deployment permission audit](docs/operations/testnet-permission-audit.md) compares actual execution/upgrade links and prepares unsigned missing-link repairs without keys or broadcasts.
 - [Implementation limits](docs/evidence/implementation-limits.md) records what has been exercised and what is still held.
 - [Documentation index](docs/README.md) points at the plan, the architecture, and the generated reference.
 - [Public protocol package](sdk/README.md) is the boundary other repositories import.

@@ -1,6 +1,6 @@
 {
   "producer": "core",
-  "packageVersion": "0.12.0-alpha.1",
+  "packageVersion": "0.12.0-alpha.2",
   "interfaceVersion": 1,
   "topics": [
     {

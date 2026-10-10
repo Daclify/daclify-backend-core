@@ -13,7 +13,7 @@ import {
   type DeployName,
 } from './environment.js';
 import { deployerKey, keyFilePath, loadOrCreateActiveKeys, type ActiveKey } from './keys.js';
-import { contextPermissionPlan } from './permissions.js';
+import { deploymentContextPermissionPlan } from './permissions.js';
 import { planDeployment, type AccountView } from './plan.js';
 import { deploymentSend } from './send.js';
 import { waitForIrreversibleBlock } from '../../services/api/src/chain-confirmation.js';
@@ -61,26 +61,9 @@ async function deploy(name: DeployName, setContract: boolean, send: boolean): Pr
   const changes = planDeployment(environment, views, setContract);
   const runtime = environment.accounts[0];
   if (!runtime) throw new Error('DEPLOY_RUNTIME');
-  const modules = deploymentAccounts(environment).flatMap<
-    Parameters<typeof contextPermissionPlan>[1][number]
-  >((account) => {
-    const id =
-      account.contract === 'grants'
-        ? 'grants-rounds'
-        : account.contract === 'endorse'
-          ? 'endorsement-admission'
-          : account.contract;
-    return id === 'decide' ||
-      id === 'works' ||
-      id === 'payroll' ||
-      id === 'grants-rounds' ||
-      id === 'endorsement-admission'
-      ? [{ id, account: account.name }]
-      : [];
-  });
   console.log(
     'Context authority plan (review and apply separately with each account controller): ' +
-      JSON.stringify(contextPermissionPlan(runtime.name, modules)),
+      JSON.stringify(deploymentContextPermissionPlan(environment)),
   );
   console.log(`Environment ${environment.name} on ${environment.rpcUrl}`);
   console.log(`Chain ${environment.chainId} matches.`);
