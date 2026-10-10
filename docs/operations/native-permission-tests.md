@@ -2,15 +2,17 @@
 
 From backend core, run `npm run test:native:permissions`. These tests start and stop their own Spring 1.2.2 nodes. They require the real compiled binaries in core `.artifacts/contracts` and the five module binaries in the sibling modules `.artifacts/contracts`. Missing artifacts or a missing/wrong node version fail the run.
 
+The owned suite also includes Names oracle scope, observations, executive quorum and revocation in `tests/native/names-oracle-permission.test.ts`. It uses the actual Names binary; it needs no shared Docker Names fixture.
+
 The suite covers creator recovery, executive quorum, code/ABI upgrades, parent/child permission links, code weights, service isolation, actual policy-2 handover and legacy-policy upgrade refusal, strict incoming-wallet consent, replay, module sender/grant/code checks, cross-DAO isolation, rollback and a complete Grants/Decide/Works/Payroll payout flow. A ballot genuinely waits for its 60-second chain deadline. Each node has a distinct generated genesis, disposable signers, private temporary configuration and random loopback HTTP/P2P ports; the suite never selects an existing or public chain.
 
 ## Pinned tools without Docker
 
 The canonical [Dockerfile](../../tools/build/Dockerfile) pins these official Linux amd64 archives:
 
-| Tool | Archive | SHA256 |
-| --- | --- | --- |
-| CDT 4.1.1 | [cdt_4.1.1-1_amd64.deb](https://github.com/AntelopeIO/cdt/releases/download/v4.1.1/cdt_4.1.1-1_amd64.deb) | d946e6b64f297442d19e486401aa49f956080b07a1fa6335f29976106175b588 |
+| Tool         | Archive                                                                                                                          | SHA256                                                           |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| CDT 4.1.1    | [cdt_4.1.1-1_amd64.deb](https://github.com/AntelopeIO/cdt/releases/download/v4.1.1/cdt_4.1.1-1_amd64.deb)                        | d946e6b64f297442d19e486401aa49f956080b07a1fa6335f29976106175b588 |
 | Spring 1.2.2 | [antelope-spring_1.2.2_amd64.deb](https://github.com/AntelopeIO/spring/releases/download/v1.2.2/antelope-spring_1.2.2_amd64.deb) | 531ed1c965f94dd7732f5e900401f132170769c45b7589819a0ba1336627687a |
 
 Verify the downloaded archive checksums before use. Extract them to an owned directory using `dpkg-deb -x`; host installation or a persistent node service is unnecessary. The extracted node is `spring/usr/bin/nodeos`, and the compiler is `cdt/usr/opt/cdt/4.1.1/bin/cdt-cpp`. Supply the host's libatomic shared library or an extracted compatible libatomic1 directory if needed.

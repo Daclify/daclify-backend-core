@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.13.0-alpha.1 · interface 1.
+Package 0.13.0-alpha.2 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -231,6 +231,8 @@ Before selling a suffix or special exact name, the seller owner reviews a namesa
 The reviewed names upgrade adds editname, delname and delsuffix for seller-authorized changes. Unsold exact listings may be repriced or removed. Existing sale receipts and created accounts remain unchanged. Removing a suffix stops its future fulfillment; coordinate pending purchases first. Native TLOS purchases are atomic: creation or authorization failure rolls the transfer back. The UI checks the names code hash before requesting any broadcast.
 
 Third-party name card checkout is disabled because this names checkout has no seller merchant routing. Enter a positive TLOS sale price. Daclify Connect for DAO module products does not automatically route native names revenue. First-party basic-name card checkout remains separate and needs its configured billing/fulfillment service. Premium names use native TLOS checkout so a failed namespace/auction claim rolls back payment.
+
+Automatic Names price observations use a dedicated oracle child under the names contract active authority. Only observeprice and observefee are linked to it. The publisher cannot change minimum profit, percentage fees, bump or quote premiums, treasury, contract code or parent authorities. Executive governance can replace or revoke this child. Antelope also lets a child rotate its own key; this does not expand its action scope. Prices must be newer than the last observation and no more than 15 minutes old; fixed card-fee observations remain valid for seven days. An unavailable feed keeps its last valid observation until expiry, after which affected quotes are unavailable. The publisher is trusted for observed prices.
 
 ## Free creation and approved hosting capacity
 
@@ -2352,7 +2354,7 @@ Source ABI JSON SHA-256: `ae70e5f0f7af1f1a9ded1b8ce193c5e6cab1808799f4e11c7e9ad1
 
 ## names contract
 
-Source ABI JSON SHA-256: `739308f575543610825db64ac6187eaadb4e7a8000b2b10ade975eb321db6c0c`.
+Source ABI JSON SHA-256: `0e0d996e5ac592ba29a1d1531a575d88d2370d314123b8489326318ed9e0cba8`.
 
 ### Action: checkprofit
 
@@ -2429,6 +2431,21 @@ Source ABI JSON SHA-256: `739308f575543610825db64ac6187eaadb4e7a8000b2b10ade975e
 | account_name | name |
 | owner_key | public_key |
 | active_key | public_key |
+
+### Action: observefee
+
+| Field | ABI type |
+| --- | --- |
+| card_fixed_usd_cents | uint32 |
+| observed_at | uint32 |
+
+### Action: observeprice
+
+| Field | ABI type |
+| --- | --- |
+| median | uint64 |
+| quoted_precision | uint8 |
+| observed_at | uint32 |
 
 ### Action: regname
 

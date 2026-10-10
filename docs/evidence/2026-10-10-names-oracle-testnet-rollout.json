@@ -1,0 +1,72 @@
+{
+  "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+  "transactionId": "6e43dc66a5bf0da349206f898054750838e0c5ba9af5000110ee20504cdcd67a",
+  "blockNum": 449535209,
+  "irreversible": true,
+  "account": "daclifynames",
+  "oraclePublicKey": "PUB_K1_7TucuWPkrjeEqio2Y5p1UuECw4d3QKW2o87YLkH4J46wmjsj2p",
+  "codeHash": "f23bbd7f9dd7643a3cfcbe06bf39545e01a522434502d0857e08611d16121902",
+  "rawAbiHash": "1c57626378c943ec3c97c6bb8fe20b8c25b9c49cabd9b65634c10c11cca86b02",
+  "rootGovernancePreserved": true,
+  "ownerActivePreserved": true,
+  "existingTables": 4,
+  "existingRows": 4,
+  "existingDataPreserved": true,
+  "noAssetMovement": true,
+  "firstObservation": {
+    "state": "updated",
+    "transactionId": "9b3108caa899c958bf886a5f10dd0d6f3d9a1a769a18381d0ae686653f50252e",
+    "blockNum": 449535289,
+    "irreversible": true,
+    "observedAt": 1791670563
+  },
+  "permissionChecks": {
+    "readOnly": true,
+    "unsigned": true,
+    "checks": [
+      {
+        "check": "observeprice",
+        "allowed": true,
+        "status": 200
+      },
+      {
+        "check": "observefee",
+        "allowed": true,
+        "status": 200
+      },
+      {
+        "check": "Names upgrade",
+        "allowed": false,
+        "status": 401
+      },
+      {
+        "check": "pricing policy",
+        "allowed": false,
+        "status": 401
+      },
+      {
+        "check": "executive appointment",
+        "allowed": false,
+        "status": 401
+      },
+      {
+        "check": "Names parent authority",
+        "allowed": false,
+        "status": 401
+      }
+    ]
+  },
+  "quote": {
+    "httpStatus": 200,
+    "schemaValidatedInDesktopAndMobile": true
+  },
+  "timer": {
+    "enabled": true,
+    "lastServiceResult": "success"
+  },
+  "packages": {
+    "core": "0.13.0-alpha.2",
+    "modules": "0.9.0-alpha.18",
+    "frontend": "0.13.0-alpha.2"
+  }
+}

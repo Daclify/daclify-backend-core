@@ -2,13 +2,15 @@ import assert from 'node:assert/strict';
 import {
   ABI,
   Action,
-  APIClient,
+  Authority,
   PrivateKey,
   SignedTransaction,
   Transaction,
 } from '@wharfkit/antelope';
 import { NamesActionSchemas, NamesTableSchemas } from '../../sdk/generated/names-schemas.js';
-import { NamesCodeHash, namesAbi } from '../../sdk/names.js';
+import { NameOracleActions, NamesCodeHash, namesAbi } from '../../sdk/names.js';
+import { nativeOwnershipAccount } from '../../sdk/executives.js';
+import { createRpcClient } from '../../services/api/src/rpc.js';
 import { RuntimeCodeHash, RuntimeRawAbiHash } from '../../sdk/index.js';
 import { readDelphiPair, readDelphiRate } from '../../services/api/src/delphi.js';
 import { eurCardFee } from '../../services/api/src/market/eur-reference.js';
@@ -32,7 +34,7 @@ assert(runtime && names, 'NAMES_UNCONFIGURED');
 assert.equal(process.env.NETWORK_ENVIRONMENT, 'testnet');
 assert.equal(process.env.CHAIN_ID, environment.chainId);
 assert.equal(process.env.CHAIN_RPC_URL, environment.rpcUrl);
-const api = new APIClient({ url: environment.rpcUrl });
+const api = createRpcClient(environment.rpcUrl);
 const [runtimeAbi, namesRaw, policyRows, profitRows, pair, rate] = await Promise.all([
   api.v1.chain.get_raw_abi(runtime),
   api.v1.chain.get_raw_abi(names),
@@ -54,17 +56,16 @@ const policy = NamesTableSchemas.policy.parse(policyRows.rows[0]);
 const profit = NamesTableSchemas.profitcfg.parse(profitRows.rows[0]);
 const actions: Action[] = [];
 const abi = ABI.from(namesAbi);
-const authorization = [{ actor: runtime, permission: 'active' }];
+const authorization = [{ actor: names, permission: 'oracle' }];
 const observation = Math.floor(rate.observedAt.getTime() / 1000);
 if (observation > policy.observed_at)
   actions.push(
     Action.from(
       {
         account: names,
-        name: 'setoracle',
+        name: 'observeprice',
         authorization,
-        data: NamesActionSchemas.setoracle.parse({
-          runtime,
+        data: NamesActionSchemas.observeprice.parse({
           median: rate.median.toString(),
           quoted_precision: pair.quotedPrecision,
           observed_at: observation,
@@ -87,15 +88,11 @@ try {
       Action.from(
         {
           account: names,
-          name: 'setprofit',
+          name: 'observefee',
           authorization,
-          data: NamesActionSchemas.setprofit.parse({
-            runtime,
-            version: profit.version,
-            minimum_usd_cents: profit.minimum_usd_cents,
-            card_fee_bps: profit.card_fee_bps,
+          data: NamesActionSchemas.observefee.parse({
             card_fixed_usd_cents: fee.fixedUsdCents,
-            fee_observed_at: fee.observedAt,
+            observed_at: fee.observedAt,
           }),
         },
         abi,
@@ -121,15 +118,28 @@ if (!actions.length) {
     }),
   );
 } else {
-  assert(process.env.BOOTSTRAP_PRIVATE_KEY, 'BOOTSTRAP_KEY_REQUIRED');
-  const key = PrivateKey.from(process.env.BOOTSTRAP_PRIVATE_KEY);
-  const account = await api.v1.chain.get_account(runtime);
-  const active = account.permissions.find((p) => p.perm_name.toString() === 'active');
+  assert(process.env.NAMES_RATE_PRIVATE_KEY, 'NAMES_RATE_KEY_REQUIRED');
+  const key = PrivateKey.from(process.env.NAMES_RATE_PRIVATE_KEY);
+  const account = nativeOwnershipAccount(
+    await api.call({ path: '/v1/chain/get_account', params: { account_name: names } }),
+  );
+  const oracle = account.permissions.find((p) => p.perm_name.toString() === 'oracle');
   assert(
-    active?.required_auth.keys.some(
-      (k) =>
-        k.key.equals(key.toPublic()) && Number(k.weight) >= Number(active.required_auth.threshold),
-    ),
+    oracle?.parent.toString() === 'active' &&
+      oracle.required_auth.equals(
+        Authority.from({
+          threshold: 1,
+          keys: [{ key: key.toPublic(), weight: 1 }],
+          accounts: [],
+          waits: [],
+        }),
+      ) &&
+      oracle.linked_actions?.length === NameOracleActions.length &&
+      NameOracleActions.every((name) =>
+        oracle.linked_actions?.some(
+          (link) => link.account.toString() === names && link.action?.toString() === name,
+        ),
+      ),
     'NAMES_RATE_AUTHORITY',
   );
   const info = await api.v1.chain.get_info();

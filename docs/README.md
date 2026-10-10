@@ -1,8 +1,10 @@
 # Daclify documentation
 
-Current development version: **0.10.0-alpha.1**, contract interface 1. This is a development checkpoint; immutable publication, live provider/client qualification and hosted operations remain separate gates.
+Current development version: **0.13.0-alpha.2**, contract interface 1. This is a development checkpoint; immutable publication, live provider/client qualification and hosted operations remain separate gates.
 
 See [vault login v3 rollout](operations/login-v3.md) for the coordinated API/frontend update and preserved account/recovery state.
+
+See [creator recovery and executive active ownership](operations/creator-owner-executive-active.md) for deployed native governance, and [Names observation permissions](operations/names-oracle.md) for the separate price updater.
 
 ## Start with the task
 

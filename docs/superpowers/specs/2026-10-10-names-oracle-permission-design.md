@@ -1,0 +1,15 @@
+# Names observation permission
+
+Status: the user selected a separate, narrowly scoped price-update permission after the testnet ownership rollout. Execute inline under the workspace's continuous implementation instruction.
+
+Restore automatic Names quotes without giving its updater executive or recovery authority. The implementation choice is a dedicated key in `daclifynames@oracle`, a child of the existing delegated active authority. Root owner/active, executive quorum and the six creation-service links stay as deployed. Only `observeprice` and `observefee` link to this permission.
+
+`observeprice(uint64_t median, uint8_t quoted_precision, uint32_t observed_at)` requires Names@oracle, accepts a positive median at most 1000000000000 and precision at most 18, requires an observation newer than the saved price and no older than 900 seconds, and rejects future observations. It updates only median, precision and time in the existing policy singleton. Governance-controlled bump and quote premiums remain intact.
+
+`observefee(uint32_t card_fixed_usd_cents, uint32_t observed_at)` requires Names@oracle and an existing version-1 profit policy. It accepts at most 1000000 cents, a nondecreasing observation no older than seven days, and no future date. It updates only the fixed card-fee observation and its date. Minimum profit and percentage fees remain under the existing `setprofit` executive action. No row layouts change; existing actions remain compatible.
+
+The public Names SDK supplies the exact child authority and two action links. Install after native ownership handover; the pre-handover planner continues requiring explicit review of additional managed permissions. The automatic command uses `NAMES_RATE_PRIVATE_KEY` and Names@oracle, verifies exact authority and links before signing, consumes the same Delphi and ECB readers, and retains the last valid fee estimate during ECB outages. Its private environment is separate from the API configuration. Rotation/revocation remains controlled by delegated Names active; no oracle key enters owner or active.
+
+Test real compiled C++ values and native permission evaluation: correct writes, policy preservation, malformed/stale/future/replayed input, unrelated actions, upgrades, withdrawals, authority changes, two-executive approval and key revocation. Update producer-owned ABI/schema/docs and versioned consumer artifacts, then simulate and apply the exact reviewed testnet Names upgrade plus child permission. Preserve other authorities, binaries and existing data. Re-enable the timer and verify fresh HTTPS quotes and the UI's real permission tree. No new token transfer or RAM purchase is planned; simulation must establish resource sufficiency.
+
+Antelope permits an existing child to rotate its own authority, but that cannot change its parent or action links. Executive active can always replace or revoke the child; the updater verifies the exact configured key before signing. The publisher is trusted to supply market observations; this adds no cryptographic proof of external feed correctness. Production rollout is outside this authorization.

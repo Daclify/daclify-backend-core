@@ -87,3 +87,7 @@ not all other native families. Real provider login/payment ceremonies and browse
 wallet or multisig signing were not repeated. Creator account keys were not rotated;
 its existing shared bootstrap key still has the documented transitive recovery role.
 This is testnet evidence, not a production release.
+
+The user subsequently selected a dedicated observation permission. Names price
+refresh and quotes are restored; see the [separate Names oracle rollout evidence](2026-10-10-names-oracle-testnet-rollout.md). The pause above records the earlier
+integration failure and its authority boundary.

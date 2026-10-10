@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const namesAbiHash = '739308f575543610825db64ac6187eaadb4e7a8000b2b10ade975eb321db6c0c';
+export const namesAbiHash = '0e0d996e5ac592ba29a1d1531a575d88d2370d314123b8489326318ed9e0cba8';
 export const namesAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -270,6 +270,38 @@ export const namesAbi = {
         {
           "name": "token_symbol",
           "type": "symbol"
+        }
+      ]
+    },
+    {
+      "name": "observefee",
+      "base": "",
+      "fields": [
+        {
+          "name": "card_fixed_usd_cents",
+          "type": "uint32"
+        },
+        {
+          "name": "observed_at",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "observeprice",
+      "base": "",
+      "fields": [
+        {
+          "name": "median",
+          "type": "uint64"
+        },
+        {
+          "name": "quoted_precision",
+          "type": "uint8"
+        },
+        {
+          "name": "observed_at",
+          "type": "uint32"
         }
       ]
     },
@@ -759,6 +791,16 @@ export const namesAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "observefee",
+      "type": "observefee",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "observeprice",
+      "type": "observeprice",
+      "ricardian_contract": ""
+    },
+    {
       "name": "regname",
       "type": "regname",
       "ricardian_contract": ""
@@ -948,6 +990,15 @@ export interface namescfg {
   token_contract: string;
   token_symbol: string;
 }
+export interface observefee {
+  card_fixed_usd_cents: number;
+  observed_at: number;
+}
+export interface observeprice {
+  median: string;
+  quoted_precision: number;
+  observed_at: number;
+}
 export interface policy_row {
   bump_bps: number;
   quote_premium_bps: number;
@@ -1075,6 +1126,8 @@ export interface NamesActions {
   fulfillnet: fulfillnet;
   init: init;
   intend: intend;
+  observefee: observefee;
+  observeprice: observeprice;
   regname: regname;
   regsuffix: regsuffix;
   setoracle: setoracle;

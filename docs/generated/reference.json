@@ -1,6 +1,6 @@
 {
   "producer": "core",
-  "packageVersion": "0.13.0-alpha.1",
+  "packageVersion": "0.13.0-alpha.2",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -184,7 +184,8 @@
         "An individual sells through their own native account. A DAO sells through a native account whose owner/active authority is governed by its own executives or quorum. A shared DAO administrator has no authority over the shared runtime account and needs a separate native seller account. Native proceeds go to that seller. Quorum-controlled listings and permission setup are exported as unsigned transactions for review and multisignature approval.",
         "Before selling a suffix or special exact name, the seller owner reviews a namesale child under active, containing only the reviewed names contract eosio.code authority, and links it only to eosio::newaccount. Root owner/active authority is preserved. Existing namesale permissions and newaccount links must be reviewed before replacement. The names contract uses the actual final native suffix as creator; dotted suffix registrations are rejected. A short undotted name still needs the native seller to have won a closed native auction. This delegated child cannot authorize token transfers.",
         "The reviewed names upgrade adds editname, delname and delsuffix for seller-authorized changes. Unsold exact listings may be repriced or removed. Existing sale receipts and created accounts remain unchanged. Removing a suffix stops its future fulfillment; coordinate pending purchases first. Native TLOS purchases are atomic: creation or authorization failure rolls the transfer back. The UI checks the names code hash before requesting any broadcast.",
-        "Third-party name card checkout is disabled because this names checkout has no seller merchant routing. Enter a positive TLOS sale price. Daclify Connect for DAO module products does not automatically route native names revenue. First-party basic-name card checkout remains separate and needs its configured billing/fulfillment service. Premium names use native TLOS checkout so a failed namespace/auction claim rolls back payment."
+        "Third-party name card checkout is disabled because this names checkout has no seller merchant routing. Enter a positive TLOS sale price. Daclify Connect for DAO module products does not automatically route native names revenue. First-party basic-name card checkout remains separate and needs its configured billing/fulfillment service. Premium names use native TLOS checkout so a failed namespace/auction claim rolls back payment.",
+        "Automatic Names price observations use a dedicated oracle child under the names contract active authority. Only observeprice and observefee are linked to it. The publisher cannot change minimum profit, percentage fees, bump or quote premiums, treasury, contract code or parent authorities. Executive governance can replace or revoke this child. Antelope also lets a child rotate its own key; this does not expand its action scope. Prices must be newer than the last observation and no more than 15 minutes old; fixed card-fee observations remain valid for seven days. An unavailable feed keeps its last valid observation until expiry, after which affected quotes are unavailable. The publisher is trusted for observed prices."
       ]
     },
     {
@@ -4960,7 +4961,7 @@
     {
       "name": "names",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "739308f575543610825db64ac6187eaadb4e7a8000b2b10ade975eb321db6c0c",
+      "sourceAbiHash": "0e0d996e5ac592ba29a1d1531a575d88d2370d314123b8489326318ed9e0cba8",
       "actions": [
         {
           "name": "checkprofit",
@@ -5128,6 +5129,36 @@
             {
               "name": "active_key",
               "type": "public_key"
+            }
+          ]
+        },
+        {
+          "name": "observefee",
+          "fields": [
+            {
+              "name": "card_fixed_usd_cents",
+              "type": "uint32"
+            },
+            {
+              "name": "observed_at",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
+          "name": "observeprice",
+          "fields": [
+            {
+              "name": "median",
+              "type": "uint64"
+            },
+            {
+              "name": "quoted_precision",
+              "type": "uint8"
+            },
+            {
+              "name": "observed_at",
+              "type": "uint32"
             }
           ]
         },

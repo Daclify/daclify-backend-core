@@ -308,6 +308,34 @@ public:
     check(fee_observed_at > 0 && fee_observed_at <= current_time_point().sec_since_epoch(), "NAME_FEE_REFERENCE");
     profits(get_self(), get_self().value).set(profit_row{version, minimum_usd_cents, card_fee_bps, card_fixed_usd_cents, fee_observed_at}, get_self());
   }
+  ACTION observeprice(uint64_t median, uint8_t quoted_precision, uint32_t observed_at) {
+    require_auth(permission_level{get_self(), "oracle"_n});
+    load();
+    check(median > 0 && median <= 1000000000000, "ORACLE");
+    check(quoted_precision <= 18, "PRICE_SCALE");
+    policies saved(get_self(), get_self().value);
+    check(saved.exists(), "ORACLE_UNCONFIGURED");
+    auto row = saved.get();
+    const auto now = current_time_point().sec_since_epoch();
+    check(observed_at > row.observed_at && observed_at <= now && now - observed_at <= 900, "ORACLE_TIMESTAMP");
+    row.median = median;
+    row.quoted_precision = quoted_precision;
+    row.observed_at = observed_at;
+    saved.set(row, get_self());
+  }
+  ACTION observefee(uint32_t card_fixed_usd_cents, uint32_t observed_at) {
+    require_auth(permission_level{get_self(), "oracle"_n});
+    load();
+    profits saved(get_self(), get_self().value);
+    check(saved.exists(), "NAME_PROFIT_POLICY");
+    auto row = saved.get();
+    check(row.version == 1, "NAME_PROFIT_POLICY");
+    const auto now = current_time_point().sec_since_epoch();
+    check(card_fixed_usd_cents <= 1000000 && observed_at > 0 && observed_at >= row.fee_observed_at && observed_at <= now && now - observed_at <= 604800, "NAME_FEE_REFERENCE");
+    row.card_fixed_usd_cents = card_fixed_usd_cents;
+    row.fee_observed_at = observed_at;
+    saved.set(row, get_self());
+  }
   ACTION fulfillnet(name settler, name account_name, public_key owner_key, public_key active_key, uint32_t usd_cents, uint32_t net_usd_cents, checksum256 reference) {
     const auto cfg = load();
     check(settler == cfg.settler, "FEE_ACCOUNT");
@@ -702,7 +730,7 @@ private:
 extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action) {
   if (code == receiver) {
     switch (action) {
-      EOSIO_DISPATCH_HELPER(names, (init)(setrates)(setsettler)(settier)(regname)(regsuffix)(editname)(delname)(delsuffix)(setpolicy)(setoracle)(setprofit)(intend)(fulfill)(fulfillnet)(checkprofit)(closepay))
+      EOSIO_DISPATCH_HELPER(names, (init)(setrates)(setsettler)(settier)(regname)(regsuffix)(editname)(delname)(delsuffix)(setpolicy)(setoracle)(setprofit)(observeprice)(observefee)(intend)(fulfill)(fulfillnet)(checkprofit)(closepay))
     }
   } else if (action == "transfer"_n.value) {
     execute_action(name(receiver), name(code), &names::ontransfer);

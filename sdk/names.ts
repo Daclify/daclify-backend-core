@@ -1,4 +1,4 @@
-import { ABI, Action, Asset } from '@wharfkit/antelope';
+import { ABI, Action, Asset, PublicKey } from '@wharfkit/antelope';
 import { NativeAccountSchema } from '../protocol/base.js';
 import { namesAbi, type NamesActions } from './generated/names.js';
 import { NamesActionSchemas } from './generated/names-schemas.js';
@@ -7,6 +7,40 @@ import { NameQuoteSchema } from '../protocol/service-api.js';
 import type { z } from 'zod';
 export { namesAbi } from './generated/names.js';
 export { NamesCodeHash } from './generated/names-release.js';
+export const NameOracleActions = ['observeprice', 'observefee'] as const;
+export function nameOraclePermissionActions(contractInput: string, keyInput: string): Action[] {
+  const contract = NativeAccountSchema.parse(contractInput),
+    key = PublicKey.from(keyInput);
+  const authorization = [{ actor: contract, permission: 'active' }],
+    abi = ABI.from(SYSTEM_ABI);
+  return [
+    Action.from(
+      {
+        account: 'eosio',
+        name: 'updateauth',
+        authorization,
+        data: {
+          account: contract,
+          permission: 'oracle',
+          parent: 'active',
+          auth: { threshold: 1, keys: [{ key, weight: 1 }], accounts: [], waits: [] },
+        },
+      },
+      abi,
+    ),
+    ...NameOracleActions.map((type) =>
+      Action.from(
+        {
+          account: 'eosio',
+          name: 'linkauth',
+          authorization,
+          data: { account: contract, code: contract, type, requirement: 'oracle' },
+        },
+        abi,
+      ),
+    ),
+  ];
+}
 export function nameSellerAction<
   K extends 'regsuffix' | 'regname' | 'editname' | 'delname' | 'delsuffix',
 >(contract: string, action: K, value: NamesActions[K]): Action {

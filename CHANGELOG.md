@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.0-alpha.2 development — restricted Names price observations
+
+Add Names observeprice/observefee and a dedicated oracle child linked only to those observations. Preserve executive pricing policy, owner/active, upgrade controls and singleton row layouts. The updater uses a separate key and checks exact authority and links. Test observation bounds and real native scope, quorum and revocation; restore testnet quotes with matching SDK/help artifacts.
+
 ## 0.13.0-alpha.1 development — creator recovery and executive active ownership
 
 Keep runtime owner with creator@active, synchronize runtime active to configurable executive quorum plus threshold-weighted eosio.code, and delegate managed contract owner/active to runtime active. Preserve versioned legacy ownership metadata and require reviewed atomic handover with current wallet bindings, release pins and policy revision. Testnet now uses `3boidanimus3` as creator and initial executive; production rollout remains separate.

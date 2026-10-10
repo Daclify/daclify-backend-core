@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { ABI, Serializer } from '@wharfkit/antelope';
-import { nameSellerAction, nameCreationPermissionActions } from '../sdk/names.js';
+import {
+  nameSellerAction,
+  nameCreationPermissionActions,
+  nameOraclePermissionActions,
+} from '../sdk/names.js';
 import { SYSTEM_ABI } from '../sdk/system-abi.js';
 describe('native name seller instructions', () => {
   it('exports only a code-only child and newaccount link, preserving owner and active', () => {
@@ -52,4 +56,26 @@ describe('native name seller instructions', () => {
       }).authorization[0]?.actor.toString(),
     ).toBe('alice');
   });
+});
+
+it('installs an observation-only child without rewriting Names owner or active', () => {
+  const key = 'PUB_K1_8j1MA7Evt5628RaKn5zF1GPwB3RqY1gXeqxq9z56Cmh7oPsAmg';
+  const actions = nameOraclePermissionActions('names', key);
+  const decoded = actions.map((action) =>
+    JSON.parse(JSON.stringify(action.decodeData(ABI.from(SYSTEM_ABI)))),
+  );
+  expect(decoded).toEqual([
+    {
+      account: 'names',
+      permission: 'oracle',
+      parent: 'active',
+      auth: { threshold: 1, keys: [{ key, weight: 1 }], accounts: [], waits: [] },
+    },
+    { account: 'names', code: 'names', type: 'observeprice', requirement: 'oracle' },
+    { account: 'names', code: 'names', type: 'observefee', requirement: 'oracle' },
+  ]);
+  expect(actions.every((action) => action.authorization[0]?.toString() === 'names@active')).toBe(
+    true,
+  );
+  expect(() => nameOraclePermissionActions('names', 'not-a-key')).toThrow();
 });
