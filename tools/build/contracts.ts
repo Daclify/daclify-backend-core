@@ -27,6 +27,8 @@ for (const contract of [
       'daclify-v2-toolchain:4.1.1-spring1.2.2',
       'cdt-cpp',
       `contracts/${contract}/${contract}.cpp`,
+      // Names fits the existing testnet RAM allocation with size optimization.
+      ...(contract === 'names' ? ['-O=s'] : []),
       '-I',
       'contracts/common',
       '-I',

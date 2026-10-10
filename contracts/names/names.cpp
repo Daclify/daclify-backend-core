@@ -103,6 +103,22 @@ public:
     EOSLIB_SERIALIZE(profit_check,(sale_id)(before_balance)(gross_units)(net_usd_cents)(minimum_usd_cents)(median)(quoted_precision)(rail))
   };
   using profit_checks = singleton<"profitcheck"_n, profit_check>;
+  // Separate versioned receipts preserve existing sales and guard row encodings.
+  TABLE provision_row {
+    uint64_t id;
+    uint8_t version;
+    uint8_t party;
+    name treasury;
+    asset resource_cost;
+    asset seller_share;
+    uint32_t resource_cents;
+    uint32_t net_cents;
+    uint32_t seller_cents;
+    uint8_t state;
+    uint64_t primary_key() const { return id; }
+    EOSLIB_SERIALIZE(provision_row,(id)(version)(party)(treasury)(resource_cost)(seller_share)(resource_cents)(net_cents)(seller_cents)(state))
+  };
+  using provisions = multi_index<"saleprov"_n, provision_row>;
   struct connector {
     asset balance;
     double weight;
@@ -299,7 +315,8 @@ public:
     check(reference != checksum256(), "REFERENCE");
     check(usd_cents > 0 && usd_cents <= 100000000 && net_usd_cents > 0 && net_usd_cents <= usd_cents, "NAME_NET_REQUIRED");
     const auto chosen = offer_for(account_name);
-    check(chosen.profit, "NAME_PROFIT_POLICY");
+    check(chosen.party == 0, "NAME_CARD_ROUTING");
+    if (!chosen.profit) check(usd_cents == chosen.usd_cents, "PRICE");
     finish(settler, account_name, chosen, owner_key, active_key, asset(0, cfg.token_symbol), usd_cents, 1, reference, net_usd_cents);
   }
   ACTION checkprofit(uint64_t sale_id) {
@@ -309,18 +326,68 @@ public:
     const auto guard = pending.get();
     check(guard.sale_id == sale_id, "NAME_PROFIT_PENDING");
     const auto cfg = load();
-    const __int128 spent = (__int128)guard.before_balance - liquid_balance(cfg) - guard.gross_units;
-    check(spent >= 0 && spent <= 1000000000000, "NAME_PROFIT_LOW");
-    const __int128 scale = pow10(guard.quoted_precision + cfg.token_symbol.precision());
-    __int128 margin;
+    provisions costs(get_self(), get_self().value);
+    const auto& provision = costs.get(sale_id, "NAME_SETTLEMENT_STAGE");
+    check(provision.version == 1 && provision.state == 0, "NAME_SETTLEMENT_STAGE");
+    sales sold(get_self(), get_self().value);
+    const auto& sale = sold.get(sale_id, "NAME_SETTLEMENT_STAGE");
+    const __int128 spent = (__int128)guard.before_balance - liquid_balance(cfg);
+    check(spent >= 0 && spent <= 1000000000000, "NAME_COST_LOW");
+    int64_t fee_units = 0, seller_units = 0;
+    uint32_t cost_cents = 0, platform_cents = 0, seller_cents = 0;
     if (guard.rail == 0) {
-      check(guard.gross_units >= spent, "NAME_PROFIT_LOW");
-      margin = ((__int128)guard.gross_units - spent) * guard.median * 100 / scale;
+      check(guard.gross_units >= spent, "NAME_COST_LOW");
+      const __int128 remaining = (__int128)guard.gross_units - spent;
+      const __int128 fee = (provision.party == 1 ? guard.gross_units : remaining) * sale.bps / 10000;
+      check(fee <= remaining, "NAME_COST_LOW");
+      fee_units = (int64_t)fee;
+      seller_units = (int64_t)(remaining - fee);
+      if (guard.minimum_usd_cents > 0) {
+        const __int128 scale = pow10(guard.quoted_precision + cfg.token_symbol.precision());
+        check(remaining * guard.median * 100 / scale >= guard.minimum_usd_cents, "NAME_PROFIT_LOW");
+      }
     } else {
-      const __int128 cost = spent * guard.median * 100;
-      margin = (__int128)guard.net_usd_cents - (cost + scale - 1) / scale;
+      check(provision.party == 0, "NAME_CARD_ROUTING");
+      check(spent == 0 || guard.net_usd_cents > 0, "NAME_NET_REQUIRED");
+      if (spent > 0) {
+        const __int128 scale = pow10(guard.quoted_precision + cfg.token_symbol.precision());
+        const __int128 cost = (spent * guard.median * 100 + scale - 1) / scale;
+        check(cost <= guard.net_usd_cents, "NAME_COST_LOW");
+        cost_cents = (uint32_t)cost;
+      }
+      const uint32_t available = (guard.net_usd_cents > 0 ? guard.net_usd_cents : sale.usd_cents) - cost_cents;
+      check(available >= guard.minimum_usd_cents, "NAME_PROFIT_LOW");
+      platform_cents = (uint32_t)((uint64_t)available * sale.bps / 10000);
+      seller_cents = available - platform_cents;
     }
-    check(margin >= guard.minimum_usd_cents, "NAME_PROFIT_LOW");
+    sold.modify(sale, same_payer, [&](auto& row) {
+      row.platform_fee = asset(fee_units, cfg.token_symbol);
+      row.platform_cents = platform_cents;
+    });
+    costs.modify(provision, same_payer, [&](auto& row) {
+      row.resource_cost = asset((int64_t)spent, cfg.token_symbol);
+      row.seller_share = asset(seller_units, cfg.token_symbol);
+      row.resource_cents = cost_cents;
+      row.net_cents = guard.net_usd_cents;
+      row.seller_cents = seller_cents;
+      row.state = 1;
+    });
+    pay(provision.treasury, asset(fee_units, cfg.token_symbol), "Daclify name fee");
+    pay(sale.seller, asset(seller_units, cfg.token_symbol), "Daclify name sale");
+    action(permission_level{get_self(), "active"_n}, get_self(), "closepay"_n, std::make_tuple(sale_id)).send();
+  }
+  ACTION closepay(uint64_t sale_id) {
+    require_auth(get_self());
+    profit_checks pending(get_self(), get_self().value);
+    check(pending.exists(), "NAME_PROFIT_PENDING");
+    const auto guard = pending.get();
+    check(guard.sale_id == sale_id, "NAME_PROFIT_PENDING");
+    provisions costs(get_self(), get_self().value);
+    const auto& provision = costs.get(sale_id, "NAME_SETTLEMENT_STAGE");
+    check(provision.version == 1 && provision.state == 1, "NAME_SETTLEMENT_STAGE");
+    const int64_t outgoing = guard.rail == 0 ? guard.gross_units : provision.resource_cost.amount;
+    check(liquid_balance(load()) == guard.before_balance - outgoing, "NAME_COST_LOW");
+    costs.modify(provision, same_payer, [](auto& row) { row.state = 2; });
     pending.remove();
   }
   ACTION intend(name buyer, name account_name, public_key owner_key, public_key active_key) {
@@ -347,6 +414,7 @@ public:
     check(reference != checksum256(), "REFERENCE");
     check(usd_cents > 0 && usd_cents <= 100000000, "PRICE");
     const auto offer = offer_for(account_name);
+    check(offer.party == 0, "NAME_CARD_ROUTING");
     check(!offer.profit, "NAME_NET_REQUIRED");
     check(usd_cents == offer.usd_cents, "PRICE");
     const auto zero = asset(0, cfg.token_symbol);
@@ -480,9 +548,10 @@ private:
   }
   int64_t liquid_balance(const namescfg& cfg) const {
     multi_index<"accounts"_n, daclify::payout_token_balance> rows(cfg.token_contract, get_self().value);
-    const auto& balance = rows.get(cfg.token_symbol.code().raw(), "NAME_RESOURCE_FLOAT");
-    check(balance.balance.symbol == cfg.token_symbol && balance.balance.amount >= 0, "TOKEN_IDENTITY");
-    return balance.balance.amount;
+    const auto balance = rows.find(cfg.token_symbol.code().raw());
+    if (balance == rows.end()) return 0;
+    check(balance->balance.symbol == cfg.token_symbol && balance->balance.amount >= 0, "TOKEN_IDENTITY");
+    return balance->balance.amount;
   }
   policy_row fresh_policy(symbol token_symbol) const {
     const auto policy = current_policy();
@@ -568,12 +637,10 @@ private:
   }
   void finish(name payer, name account_name, const offer& chosen, public_key owner_key, public_key active_key, asset gross, uint32_t usd_cents, uint8_t rail, checksum256 reference, uint32_t net_usd_cents = 0) {
     const auto cfg = load();
+    check(rail == 0 || chosen.party == 0, "NAME_CARD_ROUTING");
+    profit_checks pending(get_self(), get_self().value);
+    check(!pending.exists(), "NAME_PROFIT_PENDING");
     const uint16_t bps = chosen.party == 0 ? cfg.first_party_bps : cfg.third_party_bps;
-    const __int128 fee = (__int128)gross.amount * bps / 10000;
-    check(fee >= 0 && fee <= gross.amount, "FEE_SPLIT");
-    const asset platform_fee((int64_t)fee, gross.symbol);
-    const asset seller_share(gross.amount - (int64_t)fee, gross.symbol);
-    const uint32_t platform_cents = (uint32_t)(((uint64_t)usd_cents * bps) / 10000);
     sales sold(get_self(), get_self().value);
     auto refs = sold.get_index<"byref"_n>();
     check(refs.find(reference) == refs.end(), "REFERENCE_USED");
@@ -587,9 +654,9 @@ private:
       row.seller = chosen.seller;
       row.owner_key = owner_key;
       row.gross = gross;
-      row.platform_fee = platform_fee;
+      row.platform_fee = asset(0, cfg.token_symbol);
       row.usd_cents = usd_cents;
-      row.platform_cents = platform_cents;
+      row.platform_cents = 0;
       row.bps = bps;
       row.rail = rail;
       row.reference = reference;
@@ -612,23 +679,30 @@ private:
         row.sales_count = item.sales_count + 1;
       });
     }
-    if (chosen.profit) {
-      profit_checks pending(get_self(), get_self().value);
-      check(!pending.exists(), "NAME_PROFIT_PENDING");
-      const auto profit = profits(get_self(), get_self().value).get();
-      const auto policy = fresh_policy(cfg.token_symbol);
-      pending.set(profit_check{id, liquid_balance(cfg), gross.amount, net_usd_cents, profit.minimum_usd_cents, policy.median, policy.quoted_precision, rail}, get_self());
-    }
-    pay(cfg.treasury, platform_fee, "Daclify name fee");
-    pay(chosen.seller, seller_share, "Daclify name sale");
+    provisions costs(get_self(), get_self().value);
+    costs.emplace(get_self(), [&](auto& row) {
+      row.id = id;
+      row.version = 1;
+      row.party = chosen.party;
+      row.treasury = cfg.treasury;
+      row.resource_cost = asset(0, cfg.token_symbol);
+      row.seller_share = asset(0, cfg.token_symbol);
+      row.resource_cents = 0;
+      row.net_cents = net_usd_cents;
+      row.seller_cents = 0;
+      row.state = 0;
+    });
+    const auto policy = chosen.profit || net_usd_cents > 0 ? fresh_policy(cfg.token_symbol) : current_policy();
+    const uint32_t minimum = chosen.profit ? profits(get_self(), get_self().value).get().minimum_usd_cents : 0;
+    pending.set(profit_check{id, liquid_balance(cfg), gross.amount, net_usd_cents, minimum, policy.median, policy.quoted_precision, rail}, get_self());
     open_account(account_name, owner_key, active_key, chosen);
-    if (chosen.profit) action(permission_level{get_self(), "active"_n}, get_self(), "checkprofit"_n, std::make_tuple(id)).send();
+    action(permission_level{get_self(), "active"_n}, get_self(), "checkprofit"_n, std::make_tuple(id)).send();
   }
 };
 extern "C" void apply(uint64_t receiver, uint64_t code, uint64_t action) {
   if (code == receiver) {
     switch (action) {
-      EOSIO_DISPATCH_HELPER(names, (init)(setrates)(setsettler)(settier)(regname)(regsuffix)(editname)(delname)(delsuffix)(setpolicy)(setoracle)(setprofit)(intend)(fulfill)(fulfillnet)(checkprofit))
+      EOSIO_DISPATCH_HELPER(names, (init)(setrates)(setsettler)(settier)(regname)(regsuffix)(editname)(delname)(delsuffix)(setpolicy)(setoracle)(setprofit)(intend)(fulfill)(fulfillnet)(checkprofit)(closepay))
     }
   } else if (action == "transfer"_n.value) {
     execute_action(name(receiver), name(code), &names::ontransfer);

@@ -1,0 +1,24 @@
+# Customer-funded account creation implementation
+
+Use executing-plans inline. Sub-agent delegation is unauthorized.
+
+Goal: native account purchases fund actual provisioning, then the confirmed commission, then seller proceeds.
+
+Spec: ../specs/2026-10-10-name-creation-costs.md.
+
+1. [x] Write failing compiled-contract tests for actual costs deducted from seller proceeds, zero starting reserve, insufficient payment/commission rollback, first-party reserve conservation, fiat coverage, callback deposits and cleanup/replay. Confirm the existing financial baseline and red failures.
+2. [x] Stage provisioning before payouts in contracts/names/names.cpp; use checkprofit for actual-cost calculation and self-authorized closepay for final balance verification/cleanup. Add a versioned saleprov receipt without changing existing rows/action encodings. Keep third-party cards blocked. Extend tests/names-profit.test.ts, tests/marketplace.test.ts and actual native checks.
+3. [x] Update public errors, seller/buyer copy and canonical guides. Regenerate Names ABI/schema/code pins and immutable development packages; pin modules/frontend consumers. Verify full suites, strict types, lint/docs/build and browser seller cost disclosures.
+4. [ ] Review connected accounting inline, qualify the testnet upgrade and actual resource allocation using signed read-only native transactions, then apply the checked code while preserving state/authorities/reserve. Integrate dev, deploy API/frontend, resume the observation timer, verify public behavior and push dev to GitHub.
+
+Review focus: use actual outgoing resource tokens, not the estimate; never recover costs twice; percentage is calculated on full third-party gross; buyer payment and settlement roll back atomically; do not describe captured fiat as immediate native reserve replenishment. Existing sale rows remain exact; new receipt presence/version identifies the new accounting semantics. USD reference amounts on native sales are references, not actual fiat payouts.
+
+Ledger: starting core b37bd6a, modules 534bb82, frontend 99312f6 in existing clean isolated worktrees. User confirmed full-gross commission. GitHub authentication was completed in the preceding task and dev branches are synchronized.
+
+2026-10-10 execution: baseline 30 focused tests passed. Five new financial/security tests failed against the previous WASM for the intended reasons, then passed after settlement changes. Focused contract/API suite: 35 passed. Initial complete suites: core 716 passed; frontend 179 passed; desktop/mobile Names browser 14 passed. Final size-optimized build and updated immutable consumer pins are being reverified.
+
+Native qualification: eight signed read-only Telos compute scenarios passed against code 23b956f5dad7e1e27e5afb997dd0274c7b5987e5419bdca5f4dbc214b2fca6f9. A third-party 71.5910 TLOS exact-name sale spends 2.7583 on resources, pays 3.5795 commission and 65.2532 to the seller. Empty-reserve and first-party native cases pass; card net 105 cents passes and 104 fails the $1 margin. Existing ABI layouts, balance, permissions and inventory are preserved. Full dotted suffix creation is covered by compiled tests; the native probe uses a 12-character exact listing without requesting a short account owner key.
+
+The initial 108,770-byte build exceeded Names RAM quota. CDT -O=s produces 89,644 bytes and passes the same native scenarios within existing RAM. The build tool records that option; no RAM purchase or reserve transfer is required. Superseded local artifacts 0.11.0-alpha.0/0.9.0-alpha.11 remain immutable and unused; final pins are core/frontend 0.11.0-alpha.1, modules SDK 0.9.0-alpha.12 (module contract version unchanged). Module full-suite setup initially failed on missing compiled historical fixtures; the exact retained historical commits were rebuilt before rerunning, without modifying contracts or tests.
+
+Final validation: optimized core full suite 715/716 passed with one pre-existing governance timeout under concurrent load; its entire 19-test file then passed in isolation at the original 20-second limit. Modules full suite 159/162 passed with three five-second timeouts; all three affected files (19 tests) passed in isolation at the original five-second limit. No assertion or time limit was changed. Frontend final 179/179 passed; desktop/mobile Names browser final 14/14 passed. Core lint, strict types, docs consistency and build passed; module lint/docs/build passed; frontend types, lint and testnet build passed. Inline connected review confirmed that costs are measured before payouts, commission uses third-party full gross, no costs are charged twice, the guard covers callback transfers through closepay, old serialization stays readable, card net is mandatory and third-party cards stay blocked.

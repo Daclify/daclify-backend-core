@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle={
   "producer": "core",
-  "packageVersion": "0.10.0-alpha.3",
+  "packageVersion": "0.11.0-alpha.1",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -176,7 +176,8 @@ export const CoreHelpBundle={
       "paragraphs": [
         "Modules that a DAO can turn on are listed in the runtime catalogue. A listing is stored only when it accepts the platform fee rule. A DAO cannot enable a module that is missing from that catalogue or whose code no longer matches the listing.",
         "A first-party module is published by the platform treasury. Its usage charge, when one is set, is kept at the first-party rate stored in the runtime fee configuration. A third-party module is published by someone else. Its usage charge pays the platform the third-party rate in that same configuration, and the rest goes to the publisher. The rate can be changed later. The next payment uses the rate that is current, not the rate from the day the module was listed.",
-        "The Telos nameservice sells new native accounts from its own contract. A 12-character name without a dot uses the basic tier. An enabled minimum-profit policy adjusts first-party basic totals to current RAM, CPU, NET and TLOS costs. Card checkout includes a processing-fee allowance; actual captured payment fees are verified before creation. Native checkout retains the configured conversion premium. If verified net revenue cannot cover actual provisioning costs and the required margin, the chain rolls back creation for payment review. Older deployments without this policy retain their stored dollar price and conversion rules. The account is created with the CPU, NET, and RAM stored on that tier. A name that contains a dot can be sold only when the longest suffix is connected. The suffix owner sets the price in TLOS or dollars with regsuffix. Suffix accounts, including dotted exact listings, must cost at least the current normal basic-account price on each supplied rail. New and edited offers reject a lower price; older offers automatically use the higher current minimum at purchase. Zero leaves a rail unset. Each sale raises the effective price by the bump rate, and the platform keeps the third-party rate. A shorter name without a dot uses the premium tier. Someone can still list one exact name with regname. Prices, suffixes, fee rates, and completed sales stay on chain, so a new server can read them after the application database is gone. A Daclify DAO admin changes the platform cut, the bump, and the quote premium with govfees after the runtime links that DAO. Until then the runtime account can change them.",
+        "The Telos nameservice sells new native accounts from its own contract. A 12-character name without a dot uses the basic tier. An enabled minimum-profit policy adjusts first-party basic totals to current RAM, CPU, NET and TLOS costs. Card checkout includes a processing-fee allowance; actual captured payment fees are verified before creation. Native checkout retains the configured conversion premium. If verified net revenue cannot cover actual provisioning costs and the required margin, the chain rolls back creation for payment review. Older deployments without this policy retain their stored dollar price and conversion rules. The account is created with the CPU, NET, and RAM stored on that tier. A name that contains a dot can be sold only when the longest suffix is connected. The suffix owner sets the price in TLOS or dollars with regsuffix. Suffix accounts, including dotted exact listings, must cost at least the current normal basic-account price on each supplied rail. New and edited offers reject a lower price; older offers automatically use the higher current minimum at purchase. Zero leaves a rail unset. Each sale raises the effective price by the bump rate, and the customer payment covers actual RAM and CPU/NET first. Daclify takes the configured third-party percentage of the full sale price; the seller receives the full price minus actual resources and that fee. For a $10 sale with $2 in resources and a 5% fee, resources receive $2, Daclify earns $0.50 and the seller receives $7.50. Insufficient payment rolls back native creation and payouts. A shorter name without a dot uses the premium tier. Someone can still list one exact name with regname. Prices, suffixes, fee rates, and completed sales stay on chain, so a new server can read them after the application database is gone. A Daclify DAO admin changes the platform cut, the bump, and the quote premium with govfees after the runtime links that DAO. Until then the runtime account can change them.",
+        "New settlements have a version 1 saleprov receipt recording actual resource cost and seller proceeds. Native settlement conserves the Names reserve: incoming customer TLOS funds resources and payouts. Card fulfillment requires verified proceeds after processing fees; fiat covers the resource expense but cannot replenish TLOS without conversion. Card creation needs TLOS working capital. Third-party card sales remain unavailable until seller routing is implemented. Legacy sale receipts keep their original meaning.",
         "Card checkout uses the dollar amount stored on chain for that name. The browser creates the new account keys and does not send the private keys to the server. After the card payment is confirmed, the names contract records the sale and creates the account. A card session that never reaches the chain remains with the card processor. Returning from the card page does not by itself create the account. If the on-chain price changes before confirmation, the account is not created.",
         "Names has Find a name and Manage & sell views. Suggestions are not availability guarantees; request a fresh chain quote before payment. Back up distinct owner and active private keys before native-wallet or supported card checkout. Private keys stay in the browser. Existing native accounts are not sold or transferred by this marketplace.",
         "An individual sells through their own native account. A DAO sells through a native account whose owner/active authority is governed by its own executives or quorum. A shared DAO administrator has no authority over the shared runtime account and needs a separate native seller account. Native proceeds go to that seller. Quorum-controlled listings and permission setup are exported as unsigned transactions for review and multisignature approval.",
@@ -4937,10 +4938,19 @@ export const CoreHelpBundle={
     {
       "name": "names",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "305adfdfbb331b15a8788a1ed2f80cb5ca4970f6100ba2da9bd8d3bfb90c342d",
+      "sourceAbiHash": "739308f575543610825db64ac6187eaadb4e7a8000b2b10ade975eb321db6c0c",
       "actions": [
         {
           "name": "checkprofit",
+          "fields": [
+            {
+              "name": "sale_id",
+              "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "closepay",
           "fields": [
             {
               "name": "sale_id",
@@ -5451,6 +5461,51 @@ export const CoreHelpBundle={
             },
             {
               "name": "rail",
+              "type": "uint8"
+            }
+          ]
+        },
+        {
+          "name": "saleprov",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uint64"
+            },
+            {
+              "name": "version",
+              "type": "uint8"
+            },
+            {
+              "name": "party",
+              "type": "uint8"
+            },
+            {
+              "name": "treasury",
+              "type": "name"
+            },
+            {
+              "name": "resource_cost",
+              "type": "asset"
+            },
+            {
+              "name": "seller_share",
+              "type": "asset"
+            },
+            {
+              "name": "resource_cents",
+              "type": "uint32"
+            },
+            {
+              "name": "net_cents",
+              "type": "uint32"
+            },
+            {
+              "name": "seller_cents",
+              "type": "uint32"
+            },
+            {
+              "name": "state",
               "type": "uint8"
             }
           ]

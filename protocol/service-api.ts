@@ -415,6 +415,11 @@ export const ServiceResponseRoutes = [
 }[];
 
 export const ContractFailureMessages = {
+  NAME_COST_LOW:
+    'The payment does not cover actual account resources and the platform fee. No native purchase was completed.',
+  NAME_CARD_ROUTING: 'Third-party names use TLOS until seller card payment routing is available.',
+  NAME_SETTLEMENT_STAGE:
+    'Account settlement could not be finalized. Please contact support with your receipt.',
   NAME_PRICE_FLOOR:
     'Suffix accounts must be priced at least as high as a normal basic account. Refresh the current minimum and update your price.',
   NAME_PROFIT_LOW:
