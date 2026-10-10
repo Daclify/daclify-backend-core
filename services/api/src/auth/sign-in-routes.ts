@@ -57,7 +57,7 @@ export function registerSignInRoutes(
   providers: ProviderConfiguration | undefined,
   signIn: SignInConfiguration | undefined,
   session: (token: string | undefined, csrf?: string) => Promise<Account>,
-  sessionCookie: (reply: FastifyReply, token: string) => void,
+  sessionCookie: (reply: FastifyReply, token: string, site?: string) => Promise<void>,
 ): void {
   const admit = createWindowLimiter(20, 10 * 60_000, 2000);
   const confirm = createWindowLimiter(60, 10 * 60_000, 6000);
@@ -171,7 +171,7 @@ export function registerSignInRoutes(
     if (!telegram?.botToken) throw new ApiError('PROVIDER_UNCONFIGURED', 503);
     const input = ProofSchema.parse(request.body);
     const result = await openLinkedSession(pool, verifyTelegram(input.proof, telegram.botToken));
-    sessionCookie(reply, result.token);
+    await sessionCookie(reply, result.token);
     return { account: result.account, csrfToken: result.csrfToken };
   });
   app.post('/v1/sign-in/email/start', async (request) => {
@@ -213,7 +213,7 @@ export function registerSignInRoutes(
   app.post('/v1/sign-in/email/login', async (request, reply) => {
     const input = EmailCodeSchema.parse(request.body);
     const result = await confirmEmailLogin(pool, input.email, input.code, context(request));
-    sessionCookie(reply, result.token);
+    await sessionCookie(reply, result.token);
     return { account: result.account, csrfToken: result.csrfToken };
   });
   function site(request: FastifyRequest): string {
@@ -245,7 +245,7 @@ export function registerSignInRoutes(
       PasskeyLoginSchema.parse(request.body),
       context(request),
     );
-    sessionCookie(reply, result.token);
+    await sessionCookie(reply, result.token);
     return { account: result.account, csrfToken: result.csrfToken };
   });
   app.post('/v1/sign-in/remove', async (request, reply) => {

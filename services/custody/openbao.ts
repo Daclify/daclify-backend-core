@@ -41,7 +41,7 @@ export function canonicalR1(compact: Uint8Array): Uint8Array {
 export class OpenBaoCustody {
   constructor(
     readonly address: string,
-    private readonly token: string,
+    private readonly token: string | (() => Promise<string>),
   ) {
     const url = new URL(address);
     if (
@@ -49,13 +49,15 @@ export class OpenBaoCustody {
       !(url.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(url.hostname))
     )
       throw new Error('Custody requires TLS outside local tests');
-    if (!token) throw new Error('Custody token required');
+    if (typeof token === 'string' && !token) throw new Error('Custody token required');
   }
   private async request(path: string, data?: object): Promise<unknown> {
     try {
+      const token = typeof this.token === 'function' ? await this.token() : this.token;
+      if (!token || /[\r\n]/.test(token)) throw new Error('Custody token invalid');
       const response = await fetch(`${this.address}/v1/transit/${path}`, {
         method: data ? 'POST' : 'GET',
-        headers: { 'X-Vault-Token': this.token, 'content-type': 'application/json' },
+        headers: { 'X-Vault-Token': token, 'content-type': 'application/json' },
         redirect: 'error',
         ...(data ? { body: JSON.stringify(data) } : {}),
         signal: AbortSignal.timeout(10000),
@@ -126,8 +128,14 @@ export class OpenBaoCustody {
       exportable: false,
       allow_plaintext_backup: false,
     });
+    return this.wrapExisting(name, bytes);
+  }
+  async wrapExisting(name: string, bytes: Uint8Array): Promise<string> {
+    if (bytes.byteLength > 4096) throw new Error('Content key payload too large');
     return WrappedSchema.parse(
-      await this.request(`encrypt/${key}`, { plaintext: Buffer.from(bytes).toString('base64') }),
+      await this.request(`encrypt/content-${keyName(name)}`, {
+        plaintext: Buffer.from(bytes).toString('base64'),
+      }),
     ).data.ciphertext;
   }
   async unwrap(name: string, ciphertext: string): Promise<Uint8Array> {

@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle={
   "producer": "core",
-  "packageVersion": "0.11.0-alpha.2",
+  "packageVersion": "0.12.0-alpha.1",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -22,8 +22,8 @@ export const CoreHelpBundle={
         "Sign in with your Daclify keys or a previously paired supported email, Telegram, passkey, Telos Zero account or Telos EVM wallet. A currently activated on-chain wallet can also reconstruct wallet-only access after the service database is lost. Signing in and recovering service access do not create membership or grant new permissions in a DAO. Provider availability depends on server configuration; complete Google browser login remains unfinished.",
         "Adding or removing a sign-in method requires a fresh proof from existing Daclify keys or an already verified paired wallet, plus proof of the incoming credential. Review the exact credential before confirming. Removal revokes sessions opened with that credential; history is available in Account → Sign-in.",
         "A paired native or EVM wallet can authorize governance after explicit activation for the same member in each DAO. It adds no member or voting weight. Private documents still require the separate encryption keys.",
-        "User-controlled accounts keep encrypted signing and decryption keys in your browser. Restore an encrypted kit using either the vault password saved with that kit or its separate recovery code, shown as the recovery credential during setup. Choose a new password for this device; the original signing and decryption keys stay the same. Social login and publicly visible wallet signatures cannot recover or derive these keys.",
-        "Managed recovery delegates signing and decryption recovery to an operator. OpenBao remains the open-source candidate; production custody is gated on isolated service, audit, provider and recovery qualification.",
+        "User-controlled accounts keep encrypted signing and decryption keys in your browser. Restore an encrypted kit using either the vault password saved with that kit or its separate recovery code, shown as the recovery credential during setup. Choose a new password for this device; the original signing and decryption keys stay the same. A publicly visible login signature cannot derive these keys. Explicitly enabled full-access methods can restore the original keys on another device, without a vault password.",
+        "Managed recovery delegates signing and decryption recovery to an operator. The prepared OpenBao service remains disabled until independent service, audit, backup and restore qualification passes. Users choose full-access methods and consent explicitly to operator recovery authority.",
         "Accounts with vault keys can share Account → Keys → Public join identity with a DAO administrator. Never share recovery kits or their credentials. A saved service-to-member association can survive DAO signing-key rotation while its database exists; a lost mapping cannot make an old signing key current again. Current chain permissions and wallet bindings remain authoritative.",
         "The Users directory reads public DAO membership records, so members appear before they publish a profile. Native accounts shared across DAO memberships appear once, with available published profile details; internal members without a native account or profile appear as Member plus their public member ID. Each card opens its DAO-specific public record. Sign in to keep your own card first and edit your profile or account pairings. The paginated directory reads at most 50 members from one DAO per request; Load more users continues into the next page or DAO. Unpublished profile details remain absent and private service identities are never used for discovery. Your profile is shown first when you sign in; opening another user gives the same public view without your editing and pairing controls.",
         "Open your own user card and choose Edit profile & account to edit your public profile, set avatar/background IPFS CIDs, manage recovery keys, pair sign-in credentials and manage wallet links. A browser signer must be authorized for the selected membership to publish. Email and social contact fields entered in this public profile are public on-chain; they are distinct from private service login pairings."
@@ -74,7 +74,7 @@ export const CoreHelpBundle={
         "Telos EVM EOA login uses server-issued ERC-4361 messages. Direct DAO governance uses different EIP-712 signed bytes and on-chain K1/Keccak primitives. Chains 40/41 are supported; ERC-1271 wallets, EVM assets/payouts and cross-chain settlement are unavailable.",
         "To configure Telegram website login for Daclify, register the real HTTPS frontend and exact API callback in BotFather Login Widget. Configure TELEGRAM_OIDC_CLIENT_ID, TELEGRAM_OIDC_CLIENT_SECRET and TELEGRAM_OIDC_REDIRECT_URI together on the backend; the callback path is /v1/sign-in/telegram/oidc/callback. Use RS256. Restart the API. The bot token is separate from the OIDC client secret. OIDC pairing and Mini App launch setup are separate steps; do not share secrets in support chat.",
         "To configure Daclify email delivery, set SMTP_HOST, SMTP_PORT, SMTP_TLS_MODE and SMTP_FROM, with SMTP_USERNAME and SMTP_PASSWORD when required by the provider. Use starttls with port 587 or tls with port 465; testnet and mainnet require TLS. Restart the API and exercise delivery to an actual test mailbox. Setting SMTP fields does not prove deliverability. Never put these credentials in the frontend.",
-        "Daclify content hosting uses backend PINATA_JWT, PINATA_STORAGE_SCOPE and CONTENT_GATEWAY together. The storage scope is a stable local ledger label, not a Pinata account or group ID. Use separate Pinata accounts and storage scopes for testnet and mainnet. Private content is encrypted before publication; support cannot recover document keys. Provider credentials stay outside source control and support questions.",
+        "Daclify content hosting uses backend PINATA_JWT, PINATA_STORAGE_SCOPE and CONTENT_GATEWAY together. The storage scope is a stable local ledger label, not a Pinata account or group ID. Use separate Pinata accounts and storage scopes for testnet and mainnet. Private content is encrypted before publication; support cannot recover user-controlled document keys; explicitly consented Daclify-assisted recovery grants operator access to that vault. Provider credentials stay outside source control and support questions.",
         "For a Netlify Daclify testnet frontend, deploy the frontend dev branch, publish dist, and use npm run build -- --mode testnet. Set VITE_NETWORK=testnet and VITE_API_TESTNET to the testnet HTTPS API origin. Production uses VITE_NETWORK=production and VITE_API_PRODUCTION pointing to the mainnet API. VITE variables are public. Configure the backend FRONTEND_ORIGIN and any explicit FRONTEND_ADDITIONAL_ORIGINS to allow the actual frontend origins, then restart the API. Frontend build settings do not select the backend blockchain network."
       ]
     },
@@ -82,8 +82,11 @@ export const CoreHelpBundle={
       "id": "recovery",
       "title": "Recover keys and blockchain access",
       "paragraphs": [
-        "User-controlled signing and P-256 decryption private keys are encrypted in this browser’s local vault and downloaded recovery kit. The kit contains a local envelope protected by the vault password saved when the kit was downloaded and a recovery envelope protected by the separate recovery code. In Account, choose Recover from an encrypted kit, select the original JSON, enter that kit’s vault password or matching recovery code, and choose a new vault password of at least 12 characters. Restore and sign in verifies the original keys and protects them with the new device password. A password change does not update older downloaded kits. Older clients require the separate recovery credential; refresh the app to use password recovery. Both envelopes use PBKDF2-SHA256 with 600,000 iterations and AES-256-GCM. The API stores public keys, not these private keys or your vault password.",
-        "The contracts retain DAO membership, permissions, balances, document CIDs, key-epoch commitments and per-member encrypted epoch-key grants. Large encrypted document bytes are on IPFS. A recovered original decryption key opens its surviving grants and ciphertext; a wallet signature or a replacement encryption key cannot decrypt old content. Keep the encrypted kit and recovery credential in separate safe places and retain durable IPFS pins or a content export.",
+        "In Account → Sign-in → Full access on another device, choose which paired methods may unlock your original signing and private-document keys. Pairing alone grants sign-in only. Once enabled, sign in through that method on another device; no JSON file or vault password is needed. Keys stay in unlocked browser memory and lock when idle. Existing account IDs and DAO rights stay the same.",
+        "Wallet-protected recovery uses a separate private unlock signature that the wallet must reproduce; keep it private and never broadcast it. Passkey-protected recovery requires a supported PRF authenticator. Both require actual client qualification. Daclify-assisted recovery can use any supported paired method, including email or Telegram, but explicitly authorizes Daclify to recover signing and document keys. This is off by default and unavailable until independent storage and OpenBao recovery are qualified. Disabling assisted recovery cannot undo past operator access; strict private DAO policy blocks assisted vaults.",
+        "If another device is unlocked, request approval from Account → Keys on the new device. Open the QR/link on the unlocked device, compare both verification codes and approve. The encrypted transfer expires in five minutes and can be claimed once. The link contains no unlocking key or polling secret. Recognize the receiving device before approval.",
+        "User-controlled signing and P-256 decryption private keys are encrypted in this browser’s local vault and downloaded recovery kit. The kit contains a local envelope protected by the vault password saved when the kit was downloaded and a recovery envelope protected by the separate recovery code. In Account, choose Recover from an encrypted kit, select the original JSON, enter that kit’s vault password or matching recovery code, and choose a new vault password of at least 12 characters. Restore and sign in verifies the original keys and protects them with the new device password. A password change does not update older downloaded kits. Older clients require the separate recovery credential; refresh the app to use password recovery. Both envelopes use PBKDF2-SHA256 with 600,000 iterations and AES-256-GCM. The JSON fallback does not send your password or plaintext private keys to the API.",
+        "The contracts retain DAO membership, permissions, balances, document CIDs, key-epoch commitments and per-member encrypted epoch-key grants. Large encrypted document bytes are on IPFS. A recovered original decryption key opens its surviving grants and ciphertext; a public login signature or a replacement encryption key cannot decrypt old content. Keep the encrypted kit and recovery credential in separate safe places and retain durable IPFS pins or a content export.",
         "After losing the service database, connect a Telos Zero wallet or supported Telos EVM EOA and sign a fresh browser-bound challenge. The API verifies wallet control and finds current bindings in the configured runtime. It reconstructs wallet-only service access with no claimed vault keys, no new membership or creation fee. Each DAO’s current binding and permissions are checked again. Matching public signing keys in another DAO do not grant wallet access there.",
         "A recovered wallet profile has a new service ID; the chain membership ID stays unchanged. Restore the original encrypted kit and confirm with the wallet to attach your proved vault identity to that same recovered profile. You can instead create new keys for new DAOs; new keys do not recover old private documents or change existing contract keys. Both current wallet control and incoming signing-key possession are required. An already registered vault identity is not silently merged with another service profile.",
         "Google, Telegram and email pairings, passkey public credentials, wallet sign-in pairings and service sessions are PostgreSQL records. Blockchain governance bindings are separate. These pairing metadata columns are not application-encrypted. Restrict database access and encrypt off-host backups. Lost social pairings require a verified database restore or explicit re-pairing after recovering control. Do not publish email addresses, Telegram IDs or raw provider tokens on the public chain. Restore does not make an old session or provider proof fresh.",
@@ -92,7 +95,7 @@ export const CoreHelpBundle={
         "Wallet-only profiles must retain a blockchain control credential. Removing the last one is rejected transactionally. Unlinking or revoking a governance binding on chain removes the corresponding access; an old service pairing does not restore it. Inactive memberships do not gain new governance rights; existing exit rights remain governed by the contract.",
         "Operators need encrypted off-host PostgreSQL backups, a separate secret/configuration backup, retained provider and IPFS credentials, and tested restore drills. Revoke all restored sessions and pending login/control challenges before exposing a restored API. A stale backup can restore removed social pairings; reconfirm them if revocation history is uncertain. Jobs and payment records need reconciliation with the chain and provider before workers resume.",
         "After recovering current administrator access, Resources can rebuild hosted document, public-card and Archive references in bounded batches from surviving chain references and Daclify-owned provider inventory. Every imported object needs verified size and committed bytes. Repeated CIDs count once per DAO; released hosting is not silently resumed. This restores neither Stripe payments nor social pairings and never uploads or deletes a file. Missing original file pins still need your independent copies.",
-        "Managed signing and decryption recovery remain unqualified and unavailable. OpenBao is a candidate, not a working production recovery guarantee. If every wallet key, vault recovery path and independent backup is lost, Daclify cannot manufacture the missing secrets."
+        "The prepared assisted-recovery service remains disabled until actual independent-host and off-site restore qualification passes. Restore a current database, retained encrypted backup and original key-service material on a replacement host; revoke restored sessions and quarantine full-access methods until current pairing/revocation history is reconciled. A stale snapshot must not revive a revoked pairing. If every wallet key, vault recovery path and independent backup is lost, Daclify cannot manufacture the missing secrets."
       ]
     },
     {
@@ -5625,6 +5628,1775 @@ export const CoreHelpBundle={
     }
   ],
   "api": [
+    {
+      "method": "POST",
+      "path": "/v1/account/recovery/device",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "recipient": {
+            "type": "object",
+            "properties": {
+              "kty": {
+                "type": "string",
+                "const": "EC"
+              },
+              "crv": {
+                "type": "string",
+                "const": "P-256"
+              },
+              "x": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              },
+              "y": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              }
+            },
+            "required": [
+              "kty",
+              "crv",
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "recipient"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "request": {
+            "type": "object",
+            "properties": {
+              "signingPublicKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "encryptionPublicKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "accountId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "origin": {
+                "type": "string",
+                "maxLength": 512,
+                "format": "uri"
+              },
+              "recipient": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "fingerprint": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "expires": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              }
+            },
+            "required": [
+              "signingPublicKey",
+              "encryptionPublicKey",
+              "version",
+              "id",
+              "accountId",
+              "origin",
+              "recipient",
+              "fingerprint",
+              "expires"
+            ],
+            "additionalProperties": false
+          },
+          "pollToken": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$"
+          }
+        },
+        "required": [
+          "request",
+          "pollToken"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "recovery"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/account/recovery/device/:id",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "signingPublicKey": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "encryptionPublicKey": {
+            "type": "object",
+            "properties": {
+              "kty": {
+                "type": "string",
+                "const": "EC"
+              },
+              "crv": {
+                "type": "string",
+                "const": "P-256"
+              },
+              "x": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              },
+              "y": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              }
+            },
+            "required": [
+              "kty",
+              "crv",
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
+          },
+          "version": {
+            "type": "number",
+            "const": 1
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "origin": {
+            "type": "string",
+            "maxLength": 512,
+            "format": "uri"
+          },
+          "recipient": {
+            "type": "object",
+            "properties": {
+              "kty": {
+                "type": "string",
+                "const": "EC"
+              },
+              "crv": {
+                "type": "string",
+                "const": "P-256"
+              },
+              "x": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              },
+              "y": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              }
+            },
+            "required": [
+              "kty",
+              "crv",
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
+          },
+          "fingerprint": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "expires": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "signingPublicKey",
+          "encryptionPublicKey",
+          "version",
+          "id",
+          "accountId",
+          "origin",
+          "recipient",
+          "fingerprint",
+          "expires"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "recovery"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account/recovery/device/approve",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "fingerprint": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "payload": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "ephemeralKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "salt": {
+                "type": "string",
+                "maxLength": 44
+              },
+              "envelope": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "algorithm": {
+                    "type": "string",
+                    "const": "AES-256-GCM"
+                  },
+                  "iv": {
+                    "type": "string",
+                    "maxLength": 16
+                  },
+                  "ciphertext": {
+                    "type": "string",
+                    "maxLength": 16384
+                  }
+                },
+                "required": [
+                  "version",
+                  "algorithm",
+                  "iv",
+                  "ciphertext"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "version",
+              "ephemeralKey",
+              "salt",
+              "envelope"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "fingerprint",
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "approved": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "approved"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "recovery"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account/recovery/device/poll",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "pollToken": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$"
+          }
+        },
+        "required": [
+          "id",
+          "pollToken"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "request": {
+            "type": "object",
+            "properties": {
+              "signingPublicKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "encryptionPublicKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "accountId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "origin": {
+                "type": "string",
+                "maxLength": 512,
+                "format": "uri"
+              },
+              "recipient": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "fingerprint": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "expires": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              }
+            },
+            "required": [
+              "signingPublicKey",
+              "encryptionPublicKey",
+              "version",
+              "id",
+              "accountId",
+              "origin",
+              "recipient",
+              "fingerprint",
+              "expires"
+            ],
+            "additionalProperties": false
+          },
+          "payload": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "ephemeralKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "salt": {
+                    "type": "string",
+                    "maxLength": 44
+                  },
+                  "envelope": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "algorithm": {
+                        "type": "string",
+                        "const": "AES-256-GCM"
+                      },
+                      "iv": {
+                        "type": "string",
+                        "maxLength": 16
+                      },
+                      "ciphertext": {
+                        "type": "string",
+                        "maxLength": 16384
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "algorithm",
+                      "iv",
+                      "ciphertext"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "version",
+                  "ephemeralKey",
+                  "salt",
+                  "envelope"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "request",
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "recovery"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account/recovery/device/cancel",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "pollToken": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$"
+          }
+        },
+        "required": [
+          "id",
+          "pollToken"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "cancelled": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "cancelled"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "recovery"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/account/recovery",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "methods": {
+            "maxItems": 64,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "credentialKey": {
+                  "type": "string",
+                  "minLength": 3,
+                  "maxLength": 2048,
+                  "pattern": "^(email|telegram|google|passkey|native|evm):[^\\u0000-\\u001f\\u007f]+$"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "email",
+                    "telegram",
+                    "google",
+                    "passkey",
+                    "native",
+                    "evm"
+                  ]
+                },
+                "subject": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "chainId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "mode": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "wallet-protected",
+                        "passkey-protected",
+                        "daclify-assisted"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "availableModes": {
+                  "maxItems": 3,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "wallet-protected",
+                      "passkey-protected",
+                      "daclify-assisted"
+                    ]
+                  }
+                },
+                "reason": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 512
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "credentialKey",
+                "kind",
+                "subject",
+                "chainId",
+                "mode",
+                "availableModes",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "assistedEver": {
+            "type": "boolean"
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "methods",
+          "assistedEver",
+          "configured",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "recovery"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account/recovery/enable",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "context": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "accountId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "origin": {
+                "type": "string",
+                "maxLength": 512,
+                "format": "uri"
+              },
+              "credentialKey": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 2048,
+                "pattern": "^(email|telegram|google|passkey|native|evm):[^\\u0000-\\u001f\\u007f]+$"
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "wallet-protected",
+                  "passkey-protected",
+                  "daclify-assisted"
+                ]
+              },
+              "signingPublicKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "encryptionPublicKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "salt": {
+                "type": "string",
+                "maxLength": 44
+              }
+            },
+            "required": [
+              "version",
+              "id",
+              "accountId",
+              "origin",
+              "credentialKey",
+              "mode",
+              "signingPublicKey",
+              "encryptionPublicKey",
+              "salt"
+            ],
+            "additionalProperties": false
+          },
+          "envelope": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "algorithm": {
+                "type": "string",
+                "const": "AES-256-GCM"
+              },
+              "iv": {
+                "type": "string",
+                "maxLength": 16
+              },
+              "ciphertext": {
+                "type": "string",
+                "maxLength": 16384
+              }
+            },
+            "required": [
+              "version",
+              "algorithm",
+              "iv",
+              "ciphertext"
+            ],
+            "additionalProperties": false
+          },
+          "clientKeyWrap": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "algorithm": {
+                "type": "string",
+                "const": "AES-256-GCM"
+              },
+              "iv": {
+                "type": "string",
+                "maxLength": 16
+              },
+              "ciphertext": {
+                "type": "string",
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "version",
+              "algorithm",
+              "iv",
+              "ciphertext"
+            ],
+            "additionalProperties": false
+          },
+          "assistedHandoff": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "keyGrant": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "ephemeralKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "salt": {
+                    "type": "string",
+                    "maxLength": 44
+                  },
+                  "envelope": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "algorithm": {
+                        "type": "string",
+                        "const": "AES-256-GCM"
+                      },
+                      "iv": {
+                        "type": "string",
+                        "maxLength": 16
+                      },
+                      "ciphertext": {
+                        "type": "string",
+                        "maxLength": 64
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "algorithm",
+                      "iv",
+                      "ciphertext"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "version",
+                  "ephemeralKey",
+                  "salt",
+                  "envelope"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "keyGrant"
+            ],
+            "additionalProperties": false
+          },
+          "assistedConsent": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "context",
+          "envelope"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "methods": {
+            "maxItems": 64,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "credentialKey": {
+                  "type": "string",
+                  "minLength": 3,
+                  "maxLength": 2048,
+                  "pattern": "^(email|telegram|google|passkey|native|evm):[^\\u0000-\\u001f\\u007f]+$"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "email",
+                    "telegram",
+                    "google",
+                    "passkey",
+                    "native",
+                    "evm"
+                  ]
+                },
+                "subject": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "chainId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "mode": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "wallet-protected",
+                        "passkey-protected",
+                        "daclify-assisted"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "availableModes": {
+                  "maxItems": 3,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "wallet-protected",
+                      "passkey-protected",
+                      "daclify-assisted"
+                    ]
+                  }
+                },
+                "reason": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 512
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "credentialKey",
+                "kind",
+                "subject",
+                "chainId",
+                "mode",
+                "availableModes",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "assistedEver": {
+            "type": "boolean"
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "methods",
+          "assistedEver",
+          "configured",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "recovery"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account/recovery/disable",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "credentialKey": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 2048,
+            "pattern": "^(email|telegram|google|passkey|native|evm):[^\\u0000-\\u001f\\u007f]+$"
+          },
+          "keepKitFallback": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "credentialKey"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "methods": {
+            "maxItems": 64,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "credentialKey": {
+                  "type": "string",
+                  "minLength": 3,
+                  "maxLength": 2048,
+                  "pattern": "^(email|telegram|google|passkey|native|evm):[^\\u0000-\\u001f\\u007f]+$"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "email",
+                    "telegram",
+                    "google",
+                    "passkey",
+                    "native",
+                    "evm"
+                  ]
+                },
+                "subject": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "chainId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "mode": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "wallet-protected",
+                        "passkey-protected",
+                        "daclify-assisted"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "availableModes": {
+                  "maxItems": 3,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "wallet-protected",
+                      "passkey-protected",
+                      "daclify-assisted"
+                    ]
+                  }
+                },
+                "reason": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 512
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "credentialKey",
+                "kind",
+                "subject",
+                "chainId",
+                "mode",
+                "availableModes",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "assistedEver": {
+            "type": "boolean"
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "methods",
+          "assistedEver",
+          "configured",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "recovery"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account/recovery/assisted/options",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "context": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "accountId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "origin": {
+                "type": "string",
+                "maxLength": 512,
+                "format": "uri"
+              },
+              "credentialKey": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 2048,
+                "pattern": "^(email|telegram|google|passkey|native|evm):[^\\u0000-\\u001f\\u007f]+$"
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "wallet-protected",
+                  "passkey-protected",
+                  "daclify-assisted"
+                ]
+              },
+              "signingPublicKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "encryptionPublicKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "salt": {
+                "type": "string",
+                "maxLength": 44
+              }
+            },
+            "required": [
+              "version",
+              "id",
+              "accountId",
+              "origin",
+              "credentialKey",
+              "mode",
+              "signingPublicKey",
+              "encryptionPublicKey",
+              "salt"
+            ],
+            "additionalProperties": false
+          },
+          "assistedConsent": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "context",
+          "assistedConsent"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "recipient": {
+            "type": "object",
+            "properties": {
+              "kty": {
+                "type": "string",
+                "const": "EC"
+              },
+              "crv": {
+                "type": "string",
+                "const": "P-256"
+              },
+              "x": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              },
+              "y": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              }
+            },
+            "required": [
+              "kty",
+              "crv",
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
+          },
+          "expires": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "id",
+          "recipient",
+          "expires"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "recovery"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account/recovery/claim",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "grant": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$"
+          },
+          "recipient": {
+            "type": "object",
+            "properties": {
+              "kty": {
+                "type": "string",
+                "const": "EC"
+              },
+              "crv": {
+                "type": "string",
+                "const": "P-256"
+              },
+              "x": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              },
+              "y": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              }
+            },
+            "required": [
+              "kty",
+              "crv",
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "grant",
+          "recipient"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "backup": {
+            "type": "object",
+            "properties": {
+              "context": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "origin": {
+                    "type": "string",
+                    "maxLength": 512,
+                    "format": "uri"
+                  },
+                  "credentialKey": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 2048,
+                    "pattern": "^(email|telegram|google|passkey|native|evm):[^\\u0000-\\u001f\\u007f]+$"
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "wallet-protected",
+                      "passkey-protected",
+                      "daclify-assisted"
+                    ]
+                  },
+                  "signingPublicKey": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  "encryptionPublicKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "salt": {
+                    "type": "string",
+                    "maxLength": 44
+                  }
+                },
+                "required": [
+                  "version",
+                  "id",
+                  "accountId",
+                  "origin",
+                  "credentialKey",
+                  "mode",
+                  "signingPublicKey",
+                  "encryptionPublicKey",
+                  "salt"
+                ],
+                "additionalProperties": false
+              },
+              "envelope": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "algorithm": {
+                    "type": "string",
+                    "const": "AES-256-GCM"
+                  },
+                  "iv": {
+                    "type": "string",
+                    "maxLength": 16
+                  },
+                  "ciphertext": {
+                    "type": "string",
+                    "maxLength": 16384
+                  }
+                },
+                "required": [
+                  "version",
+                  "algorithm",
+                  "iv",
+                  "ciphertext"
+                ],
+                "additionalProperties": false
+              },
+              "keyWrap": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "client"
+                      },
+                      "envelope": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "algorithm": {
+                            "type": "string",
+                            "const": "AES-256-GCM"
+                          },
+                          "iv": {
+                            "type": "string",
+                            "maxLength": 16
+                          },
+                          "ciphertext": {
+                            "type": "string",
+                            "maxLength": 64
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "algorithm",
+                          "iv",
+                          "ciphertext"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "envelope"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "service"
+                      },
+                      "ciphertext": {
+                        "type": "string",
+                        "maxLength": 8192,
+                        "pattern": "^vault:v[1-9][0-9]*:[A-Za-z0-9+/]+={0,2}$"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "ciphertext"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "context",
+              "envelope",
+              "keyWrap"
+            ],
+            "additionalProperties": false
+          },
+          "keyGrant": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "ephemeralKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "salt": {
+                    "type": "string",
+                    "maxLength": 44
+                  },
+                  "envelope": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "algorithm": {
+                        "type": "string",
+                        "const": "AES-256-GCM"
+                      },
+                      "iv": {
+                        "type": "string",
+                        "maxLength": 16
+                      },
+                      "ciphertext": {
+                        "type": "string",
+                        "maxLength": 64
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "algorithm",
+                      "iv",
+                      "ciphertext"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "version",
+                  "ephemeralKey",
+                  "salt",
+                  "envelope"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "backup",
+          "keyGrant"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "recovery"
+    },
     {
       "method": "GET",
       "path": "/v1/storage/curation",
@@ -18028,6 +19800,1775 @@ export const CoreHelpBundle={
       "helpTopic": "modules"
     },
     {
+      "method": "POST",
+      "path": "/v1/account/recovery/device",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "recipient": {
+            "type": "object",
+            "properties": {
+              "kty": {
+                "type": "string",
+                "const": "EC"
+              },
+              "crv": {
+                "type": "string",
+                "const": "P-256"
+              },
+              "x": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              },
+              "y": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              }
+            },
+            "required": [
+              "kty",
+              "crv",
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "recipient"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "request": {
+            "type": "object",
+            "properties": {
+              "signingPublicKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "encryptionPublicKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "accountId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "origin": {
+                "type": "string",
+                "maxLength": 512,
+                "format": "uri"
+              },
+              "recipient": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "fingerprint": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "expires": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              }
+            },
+            "required": [
+              "signingPublicKey",
+              "encryptionPublicKey",
+              "version",
+              "id",
+              "accountId",
+              "origin",
+              "recipient",
+              "fingerprint",
+              "expires"
+            ],
+            "additionalProperties": false
+          },
+          "pollToken": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$"
+          }
+        },
+        "required": [
+          "request",
+          "pollToken"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/account/recovery/device/:id",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "signingPublicKey": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "encryptionPublicKey": {
+            "type": "object",
+            "properties": {
+              "kty": {
+                "type": "string",
+                "const": "EC"
+              },
+              "crv": {
+                "type": "string",
+                "const": "P-256"
+              },
+              "x": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              },
+              "y": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              }
+            },
+            "required": [
+              "kty",
+              "crv",
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
+          },
+          "version": {
+            "type": "number",
+            "const": 1
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "origin": {
+            "type": "string",
+            "maxLength": 512,
+            "format": "uri"
+          },
+          "recipient": {
+            "type": "object",
+            "properties": {
+              "kty": {
+                "type": "string",
+                "const": "EC"
+              },
+              "crv": {
+                "type": "string",
+                "const": "P-256"
+              },
+              "x": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              },
+              "y": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              }
+            },
+            "required": [
+              "kty",
+              "crv",
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
+          },
+          "fingerprint": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "expires": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "signingPublicKey",
+          "encryptionPublicKey",
+          "version",
+          "id",
+          "accountId",
+          "origin",
+          "recipient",
+          "fingerprint",
+          "expires"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account/recovery/device/approve",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "fingerprint": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "payload": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "ephemeralKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "salt": {
+                "type": "string",
+                "maxLength": 44
+              },
+              "envelope": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "algorithm": {
+                    "type": "string",
+                    "const": "AES-256-GCM"
+                  },
+                  "iv": {
+                    "type": "string",
+                    "maxLength": 16
+                  },
+                  "ciphertext": {
+                    "type": "string",
+                    "maxLength": 16384
+                  }
+                },
+                "required": [
+                  "version",
+                  "algorithm",
+                  "iv",
+                  "ciphertext"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "version",
+              "ephemeralKey",
+              "salt",
+              "envelope"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "fingerprint",
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "approved": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "approved"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account/recovery/device/poll",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "pollToken": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$"
+          }
+        },
+        "required": [
+          "id",
+          "pollToken"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "request": {
+            "type": "object",
+            "properties": {
+              "signingPublicKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "encryptionPublicKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "accountId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "origin": {
+                "type": "string",
+                "maxLength": 512,
+                "format": "uri"
+              },
+              "recipient": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "fingerprint": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "expires": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              }
+            },
+            "required": [
+              "signingPublicKey",
+              "encryptionPublicKey",
+              "version",
+              "id",
+              "accountId",
+              "origin",
+              "recipient",
+              "fingerprint",
+              "expires"
+            ],
+            "additionalProperties": false
+          },
+          "payload": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "ephemeralKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "salt": {
+                    "type": "string",
+                    "maxLength": 44
+                  },
+                  "envelope": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "algorithm": {
+                        "type": "string",
+                        "const": "AES-256-GCM"
+                      },
+                      "iv": {
+                        "type": "string",
+                        "maxLength": 16
+                      },
+                      "ciphertext": {
+                        "type": "string",
+                        "maxLength": 16384
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "algorithm",
+                      "iv",
+                      "ciphertext"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "version",
+                  "ephemeralKey",
+                  "salt",
+                  "envelope"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "request",
+          "payload"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account/recovery/device/cancel",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "pollToken": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$"
+          }
+        },
+        "required": [
+          "id",
+          "pollToken"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "cancelled": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "cancelled"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/account/recovery",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "methods": {
+            "maxItems": 64,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "credentialKey": {
+                  "type": "string",
+                  "minLength": 3,
+                  "maxLength": 2048,
+                  "pattern": "^(email|telegram|google|passkey|native|evm):[^\\u0000-\\u001f\\u007f]+$"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "email",
+                    "telegram",
+                    "google",
+                    "passkey",
+                    "native",
+                    "evm"
+                  ]
+                },
+                "subject": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "chainId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "mode": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "wallet-protected",
+                        "passkey-protected",
+                        "daclify-assisted"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "availableModes": {
+                  "maxItems": 3,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "wallet-protected",
+                      "passkey-protected",
+                      "daclify-assisted"
+                    ]
+                  }
+                },
+                "reason": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 512
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "credentialKey",
+                "kind",
+                "subject",
+                "chainId",
+                "mode",
+                "availableModes",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "assistedEver": {
+            "type": "boolean"
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "methods",
+          "assistedEver",
+          "configured",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account/recovery/enable",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "context": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "accountId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "origin": {
+                "type": "string",
+                "maxLength": 512,
+                "format": "uri"
+              },
+              "credentialKey": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 2048,
+                "pattern": "^(email|telegram|google|passkey|native|evm):[^\\u0000-\\u001f\\u007f]+$"
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "wallet-protected",
+                  "passkey-protected",
+                  "daclify-assisted"
+                ]
+              },
+              "signingPublicKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "encryptionPublicKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "salt": {
+                "type": "string",
+                "maxLength": 44
+              }
+            },
+            "required": [
+              "version",
+              "id",
+              "accountId",
+              "origin",
+              "credentialKey",
+              "mode",
+              "signingPublicKey",
+              "encryptionPublicKey",
+              "salt"
+            ],
+            "additionalProperties": false
+          },
+          "envelope": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "algorithm": {
+                "type": "string",
+                "const": "AES-256-GCM"
+              },
+              "iv": {
+                "type": "string",
+                "maxLength": 16
+              },
+              "ciphertext": {
+                "type": "string",
+                "maxLength": 16384
+              }
+            },
+            "required": [
+              "version",
+              "algorithm",
+              "iv",
+              "ciphertext"
+            ],
+            "additionalProperties": false
+          },
+          "clientKeyWrap": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "algorithm": {
+                "type": "string",
+                "const": "AES-256-GCM"
+              },
+              "iv": {
+                "type": "string",
+                "maxLength": 16
+              },
+              "ciphertext": {
+                "type": "string",
+                "maxLength": 64
+              }
+            },
+            "required": [
+              "version",
+              "algorithm",
+              "iv",
+              "ciphertext"
+            ],
+            "additionalProperties": false
+          },
+          "assistedHandoff": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "keyGrant": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "ephemeralKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "salt": {
+                    "type": "string",
+                    "maxLength": 44
+                  },
+                  "envelope": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "algorithm": {
+                        "type": "string",
+                        "const": "AES-256-GCM"
+                      },
+                      "iv": {
+                        "type": "string",
+                        "maxLength": 16
+                      },
+                      "ciphertext": {
+                        "type": "string",
+                        "maxLength": 64
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "algorithm",
+                      "iv",
+                      "ciphertext"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "version",
+                  "ephemeralKey",
+                  "salt",
+                  "envelope"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "keyGrant"
+            ],
+            "additionalProperties": false
+          },
+          "assistedConsent": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "context",
+          "envelope"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "methods": {
+            "maxItems": 64,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "credentialKey": {
+                  "type": "string",
+                  "minLength": 3,
+                  "maxLength": 2048,
+                  "pattern": "^(email|telegram|google|passkey|native|evm):[^\\u0000-\\u001f\\u007f]+$"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "email",
+                    "telegram",
+                    "google",
+                    "passkey",
+                    "native",
+                    "evm"
+                  ]
+                },
+                "subject": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "chainId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "mode": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "wallet-protected",
+                        "passkey-protected",
+                        "daclify-assisted"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "availableModes": {
+                  "maxItems": 3,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "wallet-protected",
+                      "passkey-protected",
+                      "daclify-assisted"
+                    ]
+                  }
+                },
+                "reason": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 512
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "credentialKey",
+                "kind",
+                "subject",
+                "chainId",
+                "mode",
+                "availableModes",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "assistedEver": {
+            "type": "boolean"
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "methods",
+          "assistedEver",
+          "configured",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account/recovery/disable",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "credentialKey": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 2048,
+            "pattern": "^(email|telegram|google|passkey|native|evm):[^\\u0000-\\u001f\\u007f]+$"
+          },
+          "keepKitFallback": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "credentialKey"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "methods": {
+            "maxItems": 64,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "credentialKey": {
+                  "type": "string",
+                  "minLength": 3,
+                  "maxLength": 2048,
+                  "pattern": "^(email|telegram|google|passkey|native|evm):[^\\u0000-\\u001f\\u007f]+$"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "email",
+                    "telegram",
+                    "google",
+                    "passkey",
+                    "native",
+                    "evm"
+                  ]
+                },
+                "subject": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "chainId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "mode": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "wallet-protected",
+                        "passkey-protected",
+                        "daclify-assisted"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "availableModes": {
+                  "maxItems": 3,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "wallet-protected",
+                      "passkey-protected",
+                      "daclify-assisted"
+                    ]
+                  }
+                },
+                "reason": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 512
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "credentialKey",
+                "kind",
+                "subject",
+                "chainId",
+                "mode",
+                "availableModes",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "assistedEver": {
+            "type": "boolean"
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "methods",
+          "assistedEver",
+          "configured",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account/recovery/assisted/options",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "context": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "accountId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "origin": {
+                "type": "string",
+                "maxLength": 512,
+                "format": "uri"
+              },
+              "credentialKey": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 2048,
+                "pattern": "^(email|telegram|google|passkey|native|evm):[^\\u0000-\\u001f\\u007f]+$"
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "wallet-protected",
+                  "passkey-protected",
+                  "daclify-assisted"
+                ]
+              },
+              "signingPublicKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "encryptionPublicKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "salt": {
+                "type": "string",
+                "maxLength": 44
+              }
+            },
+            "required": [
+              "version",
+              "id",
+              "accountId",
+              "origin",
+              "credentialKey",
+              "mode",
+              "signingPublicKey",
+              "encryptionPublicKey",
+              "salt"
+            ],
+            "additionalProperties": false
+          },
+          "assistedConsent": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "context",
+          "assistedConsent"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "recipient": {
+            "type": "object",
+            "properties": {
+              "kty": {
+                "type": "string",
+                "const": "EC"
+              },
+              "crv": {
+                "type": "string",
+                "const": "P-256"
+              },
+              "x": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              },
+              "y": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              }
+            },
+            "required": [
+              "kty",
+              "crv",
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
+          },
+          "expires": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "id",
+          "recipient",
+          "expires"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account/recovery/claim",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "grant": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$"
+          },
+          "recipient": {
+            "type": "object",
+            "properties": {
+              "kty": {
+                "type": "string",
+                "const": "EC"
+              },
+              "crv": {
+                "type": "string",
+                "const": "P-256"
+              },
+              "x": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              },
+              "y": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              }
+            },
+            "required": [
+              "kty",
+              "crv",
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "grant",
+          "recipient"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "backup": {
+            "type": "object",
+            "properties": {
+              "context": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "accountId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "origin": {
+                    "type": "string",
+                    "maxLength": 512,
+                    "format": "uri"
+                  },
+                  "credentialKey": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 2048,
+                    "pattern": "^(email|telegram|google|passkey|native|evm):[^\\u0000-\\u001f\\u007f]+$"
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "wallet-protected",
+                      "passkey-protected",
+                      "daclify-assisted"
+                    ]
+                  },
+                  "signingPublicKey": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  "encryptionPublicKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "salt": {
+                    "type": "string",
+                    "maxLength": 44
+                  }
+                },
+                "required": [
+                  "version",
+                  "id",
+                  "accountId",
+                  "origin",
+                  "credentialKey",
+                  "mode",
+                  "signingPublicKey",
+                  "encryptionPublicKey",
+                  "salt"
+                ],
+                "additionalProperties": false
+              },
+              "envelope": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "algorithm": {
+                    "type": "string",
+                    "const": "AES-256-GCM"
+                  },
+                  "iv": {
+                    "type": "string",
+                    "maxLength": 16
+                  },
+                  "ciphertext": {
+                    "type": "string",
+                    "maxLength": 16384
+                  }
+                },
+                "required": [
+                  "version",
+                  "algorithm",
+                  "iv",
+                  "ciphertext"
+                ],
+                "additionalProperties": false
+              },
+              "keyWrap": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "client"
+                      },
+                      "envelope": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "algorithm": {
+                            "type": "string",
+                            "const": "AES-256-GCM"
+                          },
+                          "iv": {
+                            "type": "string",
+                            "maxLength": 16
+                          },
+                          "ciphertext": {
+                            "type": "string",
+                            "maxLength": 64
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "algorithm",
+                          "iv",
+                          "ciphertext"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "envelope"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "service"
+                      },
+                      "ciphertext": {
+                        "type": "string",
+                        "maxLength": 8192,
+                        "pattern": "^vault:v[1-9][0-9]*:[A-Za-z0-9+/]+={0,2}$"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "ciphertext"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "context",
+              "envelope",
+              "keyWrap"
+            ],
+            "additionalProperties": false
+          },
+          "keyGrant": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "ephemeralKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "salt": {
+                    "type": "string",
+                    "maxLength": 44
+                  },
+                  "envelope": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "algorithm": {
+                        "type": "string",
+                        "const": "AES-256-GCM"
+                      },
+                      "iv": {
+                        "type": "string",
+                        "maxLength": 16
+                      },
+                      "ciphertext": {
+                        "type": "string",
+                        "maxLength": 64
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "algorithm",
+                      "iv",
+                      "ciphertext"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "version",
+                  "ephemeralKey",
+                  "salt",
+                  "envelope"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "backup",
+          "keyGrant"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
       "method": "GET",
       "path": "/v1/people/members",
       "query": {
@@ -23341,6 +26882,10 @@ export const CoreHelpBundle={
               "/v1/payments/operator",
               "/v1/payments/operator/revoke",
               "/v1/account/vault",
+              "/v1/account/recovery/enable",
+              "/v1/account/recovery/assisted/options",
+              "/v1/account/recovery/disable",
+              "/v1/account/recovery/device/approve",
               "/v1/auth/providers/link",
               "/v1/auth/providers/unlink",
               "/v1/sign-in/email/confirm",

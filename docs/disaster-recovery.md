@@ -30,9 +30,9 @@ Ordinary human-member key rotation is authorized by that member; an administrato
 
 Pairing records contain provider identifiers, including email subjects where used. They are not application-encrypted database columns. Restrict database/backup access and encrypt off-host backups; do not put this metadata on the public chain. A provider identifier alone is not sufficient to reconstruct its original pairing.
 
-The local vault uses PBKDF2-SHA256 (600,000 iterations), independent random salts/nonces and AES-256-GCM. The recovery kit has both local and recovery ciphertext envelopes and public keys. The app does not upload the kit, password, recovery credential or user-controlled decryption private key. Plaintext keys are used in client memory while unlocked. The recovery credential must survive independently of the device and downloaded kit.
+The local vault uses PBKDF2-SHA256 (600,000 iterations), independent random salts/nonces and AES-256-GCM. The recovery kit has both local and recovery ciphertext envelopes and public keys. The JSON fallback does not upload a password, recovery credential or plaintext private keys. Explicit full-access enrollment uploads an encrypted copy of the original signing and document keys. Wallet/PRF modes wrap its unlocking key on the client; assisted mode explicitly authorizes the operator to unwrap a spare unlocking key through OpenBao. Plaintext keys are used in client memory while unlocked. The recovery credential must survive independently of the device and downloaded kit.
 
-Managed custody is not qualified or enabled. The `custody.managed_keys` schema is not a claim that production OpenBao recovery is deployed.
+Hosted recovery remains disabled until independent-host, off-site backup and actual client qualification passes. See the [prepared OpenBao setup and source-loss restore procedure](../ops/recovery/README.md). Existing-device approval transfers the original keys once without a JSON/password on the receiving device. After database restore, revoke all restored ceremonies and quarantine every full-access method until current ownership and revocation history is reconciled.
 
 ## No service database survives
 
@@ -86,7 +86,7 @@ Source recovery and local tests do not substitute for configured off-host backup
 - Durable IPFS pinning and a portable encrypted content export or independently pinned copy; a CID identifies content but does not keep it available.
 - Vault-kit recovery on another device, and wallet recovery against an empty database without contract redeployment.
 
-No process can restore a private secret after every private key, recovery credential and independent backup has been destroyed. DAO trustees or operator-assisted decryption recovery would be a separate, explicitly disclosed privacy policy; this change does not add one silently.
+No process can restore a private secret after every private key, recovery credential and independent backup has been destroyed. Operator-assisted recovery is an explicit opt-in privacy choice; it permanently changes the vault’s reported authority and blocks strict user-controlled DAO admission.
 
 ## Hosted capacity and merchant recovery
 

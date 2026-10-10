@@ -11,6 +11,7 @@ import { NativeChainGateway } from './native-chain.js';
 import { migrate } from './store.js';
 import { createServer } from './server.js';
 import { PinataStorage } from './content/pinata.js';
+import { readRecoveryConfiguration } from './auth/recovery-config.js';
 import { readPinataStorageScope } from './content/config.js';
 import { GatewayAllowance } from './content/gateway-allowance.js';
 import { ContentService } from './content/service.js';
@@ -232,7 +233,9 @@ const storageNotices =
         noticeMail,
       )
     : undefined;
+const recovery = await readRecoveryConfiguration(process.env);
 const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
+  ...(recovery ? { recovery } : {}),
   origins,
   creation,
   ...(storageAlerts ? { storageAlerts: true } : {}),

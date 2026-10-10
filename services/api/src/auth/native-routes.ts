@@ -37,7 +37,7 @@ export function registerNativeRoutes(
   cookieName: string,
   network: () => Promise<Network>,
   session: (token: string | undefined, csrf?: string) => Promise<Account>,
-  sessionCookie: (reply: FastifyReply, token: string) => void,
+  sessionCookie: (reply: FastifyReply, token: string, site?: string) => Promise<void>,
   discover?: (wallet: WalletIdentity) => Promise<UserMembership[]>,
   audience: string = origin,
   governanceWalletInUse?: (chainId: string, account: string) => Promise<boolean>,
@@ -209,7 +209,7 @@ export function registerNativeRoutes(
         credential(identity.chainId, identity.account),
       );
     });
-    sessionCookie(reply, opened.token);
+    await sessionCookie(reply, opened.token);
     reply.clearCookie(attemptCookie, { path: '/' });
     return { account: opened.account, csrfToken: opened.csrfToken };
   });

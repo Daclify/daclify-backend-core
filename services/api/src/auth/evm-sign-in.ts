@@ -30,7 +30,7 @@ export function registerEvmSignInRoutes(
   origin: string,
   cookieName: string,
   session: (token: string | undefined, csrf?: string) => Promise<Account>,
-  sessionCookie: (reply: FastifyReply, token: string) => void,
+  sessionCookie: (reply: FastifyReply, token: string, site?: string) => Promise<void>,
   discover?: (wallet: WalletIdentity) => Promise<UserMembership[]>,
   audience: string = origin,
 ): void {
@@ -157,7 +157,7 @@ export function registerEvmSignInRoutes(
       );
       return insertAccountSession(client, accountId, `evm:${chainId}:${row.address}`);
     });
-    sessionCookie(reply, result.token);
+    await sessionCookie(reply, result.token);
     reply.clearCookie(attemptCookie, { path: '/' });
     return { account: result.account, csrfToken: result.csrfToken };
   });

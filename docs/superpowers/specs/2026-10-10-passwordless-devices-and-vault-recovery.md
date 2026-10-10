@@ -1,6 +1,6 @@
 # Passwordless device access and original-key recovery
 
-Date: 2026-10-10. Status: proposed design for review. This document does not implement or qualify a new key-recovery method, independent backup destination, or deployment.
+Date: 2026-10-10. Status: approved for inline implementation by the user on 2026-10-10. Approval does not qualify a recovery mechanism, independent backup destination, or production deployment.
 
 ## User requirements and established decisions
 
@@ -155,3 +155,5 @@ Each supported enrolled full-access method must independently pass the fresh-dev
 - [Ethereum signed-data standard](https://eips.ethereum.org/EIPS/eip-191), for message/transaction separation.
 - [RFC 6979](https://www.rfc-editor.org/rfc/rfc6979), for deterministic signing rather than an assumption about all ECDSA wallets.
 - [IPFS pinning documentation](https://docs.ipfs.tech/how-to/pin-files/), for retention and remote pinning requirements.
+
+Implementation clarification: assisted consent is permanently committed in a fresh account-control ceremony before any original unlocking material is delivered. Failed storage after consent cannot erase reported operator authority. Restored recovery methods are quarantined until current pairing/revocation history is reconciled or the original vault reenrolls.

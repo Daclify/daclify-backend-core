@@ -162,6 +162,31 @@ const request = CreateDaoSchema.parse({
   privacy: 'public',
   token: { chainId: network.chainId, contract: 'eosio.token', symbol: 'TLOS', precision: 4 },
 });
+it('blocks strict-private creation after assisted authority was enabled and reports honest custody for public creation', async () => {
+  await pool.query(
+    'INSERT INTO vault_recovery_state(account_id,assisted_ever) VALUES($1,true) ON CONFLICT(account_id) DO UPDATE SET assisted_ever=true',
+    [account.id],
+  );
+  try {
+    await expect(
+      service.prepare(account, {
+        requestId: randomUUID(),
+        deployment: 'shared',
+        method: 'tlos',
+        request: { ...request, privacy: 'encrypted-user-controlled' },
+      }),
+    ).rejects.toMatchObject({ code: 'CUSTODY_POLICY' });
+    const view = await service.prepare(account, {
+      requestId: randomUUID(),
+      deployment: 'shared',
+      method: 'tlos',
+      request,
+    });
+    expect(view.creator.custody).toBe('managed');
+  } finally {
+    await pool.query('DELETE FROM vault_recovery_state WHERE account_id=$1', [account.id]);
+  }
+});
 describe('creation order PostgreSQL ownership and settlement', () => {
   it('persists immutable requests and rejects cross-account access, unpaid fulfillment and independent checkout', async () => {
     const input = {

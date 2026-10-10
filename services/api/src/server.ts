@@ -40,6 +40,8 @@ import {
   type ProviderConfiguration,
 } from './auth/linking.js';
 import { verifyGoogle, verifyTelegram } from './providers/proofs.js';
+import { RecoveryService, type RecoveryConfiguration } from './auth/recovery.js';
+import { registerRecoveryRoutes } from './auth/recovery-routes.js';
 import { registerSignInRoutes, type SignInConfiguration } from './auth/sign-in-routes.js';
 import { registerEvmRoutes } from './auth/evm-routes.js';
 import { registerNativeRoutes } from './auth/native-routes.js';
@@ -88,6 +90,7 @@ export async function createServer(
   origin: string,
   options: {
     content?: ContentService;
+    recovery?: RecoveryConfiguration;
     gatewayAllowance?: GatewayAllowance;
     storageAlerts?: boolean;
     providers?: ProviderConfiguration;
@@ -121,6 +124,8 @@ export async function createServer(
   const secure = new URL(origin).protocol === 'https:';
   const sameSite = secure ? 'none' : 'strict';
   const cookieName = secure ? '__Host-daclify_session' : 'daclify_session';
+  const recoveryCookie = secure ? '__Host-daclify_recovery' : 'daclify_recovery';
+  const recovery = new RecoveryService(pool, chain, options.recovery);
   const app = Fastify({
     logger: false,
     bodyLimit: 65536,
@@ -155,6 +160,7 @@ export async function createServer(
   await app.register(cors, {
     origin: origins,
     credentials: true,
+    exposedHeaders: ['x-daclify-recovery-grant'],
     methods: ['GET', 'POST'],
     allowedHeaders: [
       'content-type',
@@ -210,6 +216,20 @@ export async function createServer(
       throw new ApiError('CSRF_REQUIRED', 403);
     return account;
   }
+  registerRecoveryRoutes(app, recovery, cookieName, session, origin);
+  app.addHook('onSend', async (request, reply, payload) => {
+    if (request.routeOptions.url === '/v1/sign-in/session' && reply.statusCode < 400) {
+      const token = request.cookies[cookieName],
+        grant = request.cookies[recoveryCookie];
+      if (
+        token &&
+        grant &&
+        (await recovery.validateLoginGrant(token, grant, request.headers.origin ?? origin))
+      )
+        reply.header('x-daclify-recovery-grant', grant);
+    }
+    return payload;
+  });
   app.post('/v1/account/control', async (request) => {
     const token = request.cookies[cookieName];
     const account = await session(
@@ -917,7 +937,7 @@ export async function createServer(
     const input = ChallengeRequestSchema.parse(request.body);
     return createChallenge(pool, input, request.headers.origin ?? origin, audience);
   });
-  function sessionCookie(reply: FastifyReply, token: string): void {
+  async function sessionCookie(reply: FastifyReply, token: string, site?: string): Promise<void> {
     reply.setCookie(cookieName, token, {
       path: '/',
       httpOnly: true,
@@ -925,6 +945,20 @@ export async function createServer(
       sameSite,
       maxAge: 43200,
     });
+    const grant = await recovery.issueLoginGrant(
+      token,
+      site ?? reply.request.headers.origin ?? origin,
+    );
+    if (grant) {
+      reply.header('x-daclify-recovery-grant', grant);
+      reply.setCookie(recoveryCookie, grant, {
+        path: '/',
+        httpOnly: true,
+        secure,
+        sameSite,
+        maxAge: 300,
+      });
+    } else if (options.recovery) reply.clearCookie(recoveryCookie, { path: '/', secure, sameSite });
   }
   async function providerPrincipal(input: z.infer<typeof ProviderProofSchema>) {
     if (input.provider === 'google') {
@@ -946,7 +980,7 @@ export async function createServer(
       input.encryptionKey,
       { origin: request.headers.origin ?? origin, audience },
     );
-    sessionCookie(reply, result.token);
+    await sessionCookie(reply, result.token);
     return { account: result.account, csrfToken: result.csrfToken };
   });
   app.post(ApiRoutes.providerLink.path, async (request) => {
@@ -960,7 +994,7 @@ export async function createServer(
   app.post(ApiRoutes.providerLogin.path, async (request, reply) => {
     const input = ProviderProofSchema.parse(request.body);
     const result = await openLinkedSession(pool, await providerPrincipal(input));
-    sessionCookie(reply, result.token);
+    await sessionCookie(reply, result.token);
     return { account: result.account, csrfToken: result.csrfToken };
   });
   app.post(ApiRoutes.providerUnlink.path, async (request, reply) => {

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { RecoveryRoutes } from './recovery.js';
 import {
   ChallengeRequestSchema,
   ChallengeSchema,
@@ -44,6 +45,7 @@ import {
 } from './resources.js';
 import { StorageCurationRoutes } from './storage-retention.js';
 export const ApiRoutes = {
+  ...RecoveryRoutes,
   ...StorageCurationRoutes,
   ramCardQuote: {
     method: 'POST',

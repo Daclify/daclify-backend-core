@@ -2,6 +2,11 @@
 -- Retain account/provider records and replay markers; invalidate every restored live ceremony.
 BEGIN;
 UPDATE sessions SET revoked_at=COALESCE(revoked_at,now());
+DELETE FROM vault_recovery_grants;
+DELETE FROM vault_recovery_handoffs;
+DELETE FROM vault_recovery_devices;
+-- Keep encrypted originals, but do not resurrect permissions from stale pairings.
+UPDATE vault_recovery_methods SET quarantined=true;
 UPDATE challenges SET consumed_at=COALESCE(consumed_at,now()),expires_at=now();
 UPDATE signin_challenges SET consumed_at=COALESCE(consumed_at,now()),expires_at=now();
 UPDATE account_control_intents SET consumed_at=COALESCE(consumed_at,now()),expires_at=now();

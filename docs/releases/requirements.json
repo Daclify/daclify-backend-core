@@ -384,6 +384,20 @@
         "tests/documentation.test.ts",
         "tests/telegram-docs.test.ts"
       ]
+    },
+    {
+      "id": "PASSWORDLESS-ORIGINAL-KEY-RECOVERY",
+      "tests": [
+        "tests/recovery-schema.test.ts",
+        "tests/recovery-crypto.test.ts",
+        "tests/device-recovery-crypto.test.ts",
+        "tests/recovery-storage.test.ts",
+        "tests/recovery-config.test.ts",
+        "tests/openbao-recovery.test.ts",
+        "tests/integration/vault-recovery.test.ts",
+        "tests/integration/creation.test.ts"
+      ],
+      "suite": "unit"
     }
   ]
 }

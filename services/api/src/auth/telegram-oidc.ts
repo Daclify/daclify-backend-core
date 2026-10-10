@@ -129,7 +129,7 @@ export function registerTelegramOidcRoutes(
   cookieName: string,
   configuration: TelegramOidcConfiguration | undefined,
   session: (token: string | undefined, csrf?: string) => Promise<Account>,
-  sessionCookie: (reply: FastifyReply, token: string) => void,
+  sessionCookie: (reply: FastifyReply, token: string, site?: string) => Promise<void>,
 ): void {
   const secure = new URL(origin).protocol === 'https:';
   const browserCookie = secure ? '__Host-daclify_telegram_attempt' : 'daclify_telegram_attempt';
@@ -273,7 +273,7 @@ export function registerTelegramOidcRoutes(
       if (attempt.return_to) target.searchParams.set('returnTo', attempt.return_to);
       if (attempt.purpose === 'login') {
         const opened = await openLinkedSession(pool, principal);
-        sessionCookie(reply, opened.token);
+        await sessionCookie(reply, opened.token, attempt.frontend_origin ?? undefined);
         target.searchParams.set('telegram', 'complete');
         reply.clearCookie(browserCookie, { path: '/', secure, sameSite: secure ? 'none' : 'lax' });
       } else {

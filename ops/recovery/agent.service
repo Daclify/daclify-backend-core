@@ -1,0 +1,23 @@
+[Unit]
+Description=Renew Daclify recovery API token
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# Use the same dedicated OS account as the API so the token remains mode 0600.
+User=daclify
+Group=daclify
+RuntimeDirectory=daclify-recovery
+RuntimeDirectoryMode=0700
+ExecStart=/usr/local/bin/bao agent -config=/etc/daclify-recovery/agent.hcl
+Restart=on-failure
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/run/daclify-recovery /etc/daclify-recovery
+LimitCORE=0
+
+[Install]
+WantedBy=multi-user.target

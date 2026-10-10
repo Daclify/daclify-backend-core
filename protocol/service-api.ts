@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { RecoveryRoutes } from './recovery.js';
 import { PeopleRoutes } from './people.js';
 import { PaymentRoutes, BrokerRoutes } from './payments.js';
 import { StorageBillingRoutes } from './storage.js';
@@ -213,6 +214,7 @@ export const DocsAnswerSchema = z.strictObject({
 });
 
 export const ServiceResponseRoutes = [
+  ...Object.values(RecoveryRoutes),
   PeopleRoutes.members,
   PeopleRoutes.list,
   ...Object.values(StorageBillingRoutes),

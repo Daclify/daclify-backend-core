@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.0-alpha.1 development — password-free devices and original-key recovery
+
+Add opt-in full-key access through selected paired methods, private wallet/PRF wrappers, explicit assisted authority, fresh one-use session-bound grants and encrypted existing-device approval. Preserve original account IDs, signing/document keys and JSON fallbacks. Add independent encrypted backup storage, gated OpenBao setup, permanent assisted consent before key handoff, strict-privacy checks and quarantine after database restore. Hosted recovery stays off until actual independent storage/restore and client qualification passes. Contracts and on-chain authorities are unchanged.
+
 ## Unreleased — three-repository audit
 
 Recover polling after synchronous worker failures, cancel rejected provider bodies, and give service-owned native RPC calls a 10-second deadline without following redirects. Unexpected API failures now emit only a fixed failure code and registered route; provider messages, headers and query strings remain excluded. Consume module SDK 0.9.0-alpha.7 with streamed payment-response bounds; module contracts remain 0.9.0-alpha.5. Manual backend verification follows the selected sibling branch rather than silently cloning default branches. No permissions, database semantics or prices change.

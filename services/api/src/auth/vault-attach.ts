@@ -14,7 +14,7 @@ export function registerVaultAttachRoutes(
   origin: string,
   cookieName: string,
   session: (token: string | undefined, csrf?: string) => Promise<Account>,
-  sessionCookie: (reply: FastifyReply, token: string) => void,
+  sessionCookie: (reply: FastifyReply, token: string, site?: string) => Promise<void>,
   audience: string = origin,
 ): void {
   const limit = createWindowLimiter(20, 600000, 2000);
@@ -101,7 +101,7 @@ export function registerVaultAttachRoutes(
       if (uniqueViolation(error)) throw new ApiError('VAULT_ALREADY_REGISTERED', 409);
       throw error;
     }
-    sessionCookie(reply, opened.token);
+    await sessionCookie(reply, opened.token);
     return { account: opened.account, csrfToken: opened.csrfToken };
   });
 }

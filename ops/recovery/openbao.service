@@ -1,0 +1,23 @@
+[Unit]
+Description=Daclify independent recovery key service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=openbao
+Group=openbao
+ExecStart=/usr/local/bin/bao server -config=/etc/openbao/openbao.hcl
+Restart=on-failure
+UMask=0077
+StateDirectory=openbao
+LogsDirectory=openbao
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/openbao /var/log/openbao
+LimitCORE=0
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

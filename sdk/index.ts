@@ -17,6 +17,7 @@ export { runtimeAbi, runtimeAbiHash } from './generated/runtime.js';
 export type { RuntimeActions, instruction } from './generated/runtime.js';
 export { RuntimeActionSchemas, RuntimeTableSchemas } from './generated/schemas.js';
 export { governanceSettings } from './dao.js';
+export * from './recovery.js';
 export {
   nameSellerAction,
   namePurchaseActions,

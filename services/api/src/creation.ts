@@ -13,6 +13,8 @@ import type { Account } from '../../../protocol/api.js';
 import type { NativeChainGateway } from './native-chain.js';
 import type { StripeBilling } from './billing/service.js';
 import { ApiError } from './errors.js';
+import { withTransaction } from './auth/account-session.js';
+import { AccountSchema } from '../../../protocol/api.js';
 type Chain = Pick<
   NativeChainGateway,
   | 'validateCreation'
@@ -60,18 +62,28 @@ export class CreationService {
       .digest('hex');
     const daoId = BigInt('0x' + randomBytes(8).toString('hex')).toString();
     if (daoId === '0') throw new ApiError('DAO_ID_RETRY', 503);
-    await this.pool.query(
-      'INSERT INTO creation_orders(id,account_id,reference,dao_id,chain_id,runtime,request) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(id) DO NOTHING',
-      [
-        input.requestId,
-        account.id,
-        reference,
-        daoId,
-        status.network.chainId,
-        status.network.runtime,
-        input,
-      ],
-    );
+    await withTransaction(this.pool, async (client) => {
+      await client.query('SELECT id FROM accounts WHERE id=$1 FOR UPDATE', [account.id]);
+      if (input.request.privacy === 'encrypted-user-controlled' && !input.request.foundingAgent) {
+        const state = await client.query(
+          'SELECT 1 FROM vault_recovery_state WHERE account_id=$1 AND assisted_ever',
+          [account.id],
+        );
+        if (state.rowCount) throw new ApiError('CUSTODY_POLICY', 403);
+      }
+      await client.query(
+        'INSERT INTO creation_orders(id,account_id,reference,dao_id,chain_id,runtime,request) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(id) DO NOTHING',
+        [
+          input.requestId,
+          account.id,
+          reference,
+          daoId,
+          status.network.chainId,
+          status.network.runtime,
+          input,
+        ],
+      );
+    });
     return this.lock(account.id, input.requestId, async (row) => {
       if (!isDeepStrictEqual(row.request, input))
         throw new ApiError('CREATION_ORDER_CONFLICT', 409);
@@ -178,10 +190,14 @@ export class CreationService {
       if (!order?.paid) throw new ApiError('CREATION_PAYMENT_REQUIRED', 409);
       if (order.creator !== account.signingKey) throw new ApiError('CREATION_OWNER', 403);
       if (!order.used)
-        await this.chain.createDao(account, row.request.request, {
-          reference: row.reference,
-          daoId: row.dao_id,
-        });
+        await this.chain.createDao(
+          AccountSchema.parse({ id: account.id, ...(await this.creator(account.id)) }),
+          row.request.request,
+          {
+            reference: row.reference,
+            daoId: row.dao_id,
+          },
+        );
       return this.view(row);
     });
   }
@@ -232,7 +248,11 @@ export class CreationService {
       signing_key: string;
       encryption_key: unknown;
       custody: string;
-    }>('SELECT signing_key,encryption_key,custody FROM accounts WHERE id=$1', [accountId]);
+    }>(
+      `SELECT a.signing_key,a.encryption_key,CASE WHEN r.assisted_ever THEN 'managed' ELSE a.custody END AS custody
+      FROM accounts a LEFT JOIN vault_recovery_state r ON r.account_id=a.id WHERE a.id=$1`,
+      [accountId],
+    );
     const row = result.rows[0];
     if (!row) throw new ApiError('CREATION_OWNER', 403);
     return { signingKey: row.signing_key, encryptionKey: row.encryption_key, custody: row.custody };
