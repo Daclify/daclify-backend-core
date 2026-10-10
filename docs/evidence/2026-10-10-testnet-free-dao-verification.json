@@ -1,0 +1,30 @@
+{
+  "verifiedAt": "2026-10-10T13:35:53.879Z",
+  "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+  "daoId": "7010534441818256360",
+  "memberCount": "1",
+  "foundingMemberActive": true,
+  "freeMemberSlots": 10,
+  "entitlements": [],
+  "metadata": {
+    "schemaVersion": 2,
+    "title": "Disposable service qualification 2026-10-10",
+    "description": "Disposable testnet DAO for verifying free setup and ten member slots. No funds or personal profile.",
+    "purpose": "community",
+    "setup": {
+      "presetId": "community",
+      "presetVersion": 1,
+      "participantMode": "humans",
+      "governance": {
+        "weight": "member",
+        "duration": 259200,
+        "quorumBasisPoints": 5000,
+        "approvalBasisPoints": 5001,
+        "governedWorks": true,
+        "maxCommitment": "0",
+        "dailyCommitment": "0",
+        "guardian": ""
+      }
+    }
+  }
+}

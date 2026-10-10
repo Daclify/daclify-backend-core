@@ -1,0 +1,60 @@
+{
+  "appliedAt": "2026-10-10T13:37:44.099Z",
+  "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+  "receipt": {
+    "transactionId": "9a232e1093e979ad7fc360686dcc3e167fb6062c1fa515e6b643845552151bba",
+    "blockNum": 449473102
+  },
+  "irreversible": true,
+  "before": {
+    "settings": {
+      "runtime": "daclifycore1",
+      "settler": "daclifyrelay",
+      "treasury": "daclifyfees1",
+      "third_party_bps": 500,
+      "first_party_bps": 10000,
+      "token_contract": "eosio.token",
+      "token_symbol": "4,TLOS"
+    },
+    "policy": {
+      "bump_bps": 2000,
+      "quote_premium_bps": 2000,
+      "median": "176",
+      "quoted_precision": 4,
+      "observed_at": 1791548722
+    },
+    "tiers": [],
+    "reserve": []
+  },
+  "after": {
+    "settings": {
+      "runtime": "daclifycore1",
+      "settler": "daclifyrelay",
+      "treasury": "daclifyfees1",
+      "third_party_bps": 500,
+      "first_party_bps": 10000,
+      "token_contract": "eosio.token",
+      "token_symbol": "4,TLOS"
+    },
+    "policy": {
+      "bump_bps": 2000,
+      "quote_premium_bps": 2000,
+      "median": "176",
+      "quoted_precision": 4,
+      "observed_at": 1791639443
+    },
+    "tiers": [
+      {
+        "kind": 0,
+        "price": "0.0000 TLOS",
+        "usd_cents": 100,
+        "ram_bytes": 30720,
+        "net_stake": "0.5000 TLOS",
+        "cpu_stake": "0.5000 TLOS"
+      }
+    ],
+    "reserve": [
+      "100.0000 TLOS"
+    ]
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+  "unsigned": true,
+  "requiresUserReview": false,
+  "preparedAt": "2026-10-10T13:36:36.254Z",
+  "before": {
+    "tiers": [],
+    "policy": {
+      "bump_bps": 2000,
+      "quote_premium_bps": 2000,
+      "median": "176",
+      "quoted_precision": 4,
+      "observed_at": 1791548722
+    },
+    "settings": {
+      "runtime": "daclifycore1",
+      "settler": "daclifyrelay",
+      "treasury": "daclifyfees1",
+      "third_party_bps": 500,
+      "first_party_bps": 10000,
+      "token_contract": "eosio.token",
+      "token_symbol": "4,TLOS"
+    },
+    "namesReserve": []
+  },
+  "resourceBasis": "User approved the reviewed package with CPU and NET reduced to 0.5 TLOS each; 30 KiB RAM and the reviewed 100 test-TLOS reserve are retained.",
+  "estimatedPerAccountProvisioning": "2.7587 TLOS",
+  "estimatedAccountsCovered": "36",
+  "nativePriceExample": "68.1819 TLOS",
+  "nativeQuotePremiumBps": 2000,
+  "oracleSource": {
+    "rpcUrl": "https://testnet.telos.caleos.io",
+    "contract": "delphioracle",
+    "pair": "tlosusd",
+    "median": "176",
+    "precision": 4,
+    "observedAt": "2026-10-10T13:36:22.500Z",
+    "maxAgeSeconds": 900
+  },
+  "executionNotes": "Refresh the trusted Delphi observation immediately before execution. A continuous operator update is still needed for conversion-based quotes after 15 minutes. No premium/suffix tier, fee rule, authority, or contract code changes. The float transfer funds account RAM/CPU/NET; it is separate from the $1 sale price.",
+  "expectedNamesCodeHash": "2dbc9321083bf50a7be7202c11aa8bb4de5705c85700d4fb4934faf62bcca590",
+  "actions": [
+    {
+      "account": "eosio.token",
+      "name": "transfer",
+      "authorization": [
+        {
+          "actor": "3boidanimus3",
+          "permission": "active"
+        }
+      ],
+      "data": {
+        "from": "3boidanimus3",
+        "to": "daclifynames",
+        "quantity": "100.0000 TLOS",
+        "memo": "float"
+      }
+    },
+    {
+      "account": "daclifynames",
+      "name": "settier",
+      "authorization": [
+        {
+          "actor": "daclifynames",
+          "permission": "owner"
+        }
+      ],
+      "data": {
+        "kind": 0,
+        "price": "0.0000 TLOS",
+        "usd_cents": 100,
+        "ram_bytes": 30720,
+        "net_stake": "0.5000 TLOS",
+        "cpu_stake": "0.5000 TLOS"
+      }
+    },
+    {
+      "account": "daclifynames",
+      "name": "setoracle",
+      "authorization": [
+        {
+          "actor": "daclifycore1",
+          "permission": "active"
+        }
+      ],
+      "data": {
+        "runtime": "daclifycore1",
+        "median": "176",
+        "quoted_precision": 4,
+        "observed_at": 1791639382
+      }
+    }
+  ],
+  "approval": "User accepted the reviewed package with CPU and NET changed to 0.5 TLOS each; applied state is recorded separately."
+}

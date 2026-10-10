@@ -1,0 +1,68 @@
+{
+  "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+  "appliedAt": "2026-10-10T13:32:19.554Z",
+  "actions": [
+    {
+      "account": "daclifycore1",
+      "name": "setcreate",
+      "authorization": [
+        {
+          "actor": "daclifycore1",
+          "permission": "active"
+        }
+      ],
+      "data": {
+        "shared_usd": 0,
+        "independent_usd": 5000,
+        "premium_bps": 2000,
+        "settler": "daclifyrelay"
+      }
+    },
+    {
+      "account": "daclifycore1",
+      "name": "sethosted",
+      "authorization": [
+        {
+          "actor": "daclifycore1",
+          "permission": "active"
+        }
+      ],
+      "data": {
+        "free_members": 10,
+        "settler": "daclifyrelay"
+      }
+    }
+  ],
+  "receipt": {
+    "transactionId": "e5239a46c5e15dd049911c26ec8703443e648fc377ef0d46ac5eb027e94af4ea",
+    "blockNum": 449472451
+  },
+  "irreversible": true,
+  "before": {
+    "creation": {
+      "shared_usd": 2000,
+      "independent_usd": 5000,
+      "premium_bps": 2000,
+      "settler": "daclifyrelay",
+      "median": "176",
+      "precision": 4,
+      "observed_at": 1791548722
+    },
+    "hosting": null
+  },
+  "after": {
+    "creation": {
+      "shared_usd": 0,
+      "independent_usd": 5000,
+      "premium_bps": 2000,
+      "settler": "daclifyrelay",
+      "median": "176",
+      "precision": 4,
+      "observed_at": 1791548722
+    },
+    "hosting": {
+      "free_members": 10,
+      "settler": "daclifyrelay"
+    }
+  }
+}
