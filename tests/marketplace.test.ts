@@ -354,7 +354,7 @@ describe('Telos name sales', () => {
         .parse(row(names, 'suffixes', names.toBigInt(), BigInt(Name.from('bob').value.toString()))),
     ).toEqual({ price: '1.4400 TLOS', usd_cents: 600 });
   });
-  it('enforces a rising floor on existing dotted listings during USD fulfillment', async () => {
+  it('enforces a rising floor on existing dotted listings during native fulfillment', async () => {
     await send(names, 'regname', ['bob', 'fair.bob', '1.0000 TLOS', 500, 1], 'bob@active');
     await send(
       names,
@@ -362,33 +362,20 @@ describe('Telos name sales', () => {
       [0, '2.0000 TLOS', 1000, 4096, '0.0000 TLOS', '0.0000 TLOS'],
       'names@active',
     );
-    await expect(
-      send(
-        names,
-        'fulfill',
-        [
-          'relay',
-          'fair.bob',
-          ownerKey.toPublic().toString(),
-          activeKey.toPublic().toString(),
-          500,
-          reference,
-        ],
-        'relay@active',
-      ),
-    ).rejects.toThrow('PRICE');
     await send(
       names,
-      'fulfill',
-      [
-        'relay',
-        'fair.bob',
-        ownerKey.toPublic().toString(),
-        activeKey.toPublic().toString(),
-        1000,
-        reference,
-      ],
-      'relay@active',
+      'intend',
+      ['carol', 'fair.bob', ownerKey.toPublic().toString(), activeKey.toPublic().toString()],
+      'carol@active',
+    );
+    await expect(
+      send(token, 'transfer', ['carol', 'names', '1.0000 TLOS', 'buy:fair.bob'], 'carol@active'),
+    ).rejects.toThrow('PRICE');
+    await send(
+      token,
+      'transfer',
+      ['carol', 'names', '2.0000 TLOS', 'buy:fair.bob'],
+      'carol@active',
     );
     expect(saleRow.parse(row(names, 'sales', names.toBigInt(), 1n)).usd_cents).toBe(1000);
   });
@@ -480,7 +467,7 @@ describe('Telos name sales', () => {
     expect(saleRow.parse(row(names, 'sales', names.toBigInt(), 1n))).toMatchObject({
       seller: 'alice',
       platform_fee: '1.0000 TLOS',
-      platform_cents: 500,
+      platform_cents: 0,
       bps: 10000,
       usd_cents: 500,
       rail: 0,
@@ -488,7 +475,7 @@ describe('Telos name sales', () => {
     expect(saleRow.parse(row(names, 'sales', names.toBigInt(), 2n))).toMatchObject({
       seller: 'bob',
       platform_fee: '0.1000 TLOS',
-      platform_cents: 50,
+      platform_cents: 0,
       bps: 500,
       usd_cents: 1000,
       rail: 0,
@@ -582,7 +569,7 @@ describe('Telos name sales', () => {
     expect(saleRow.parse(row(names, 'sales', names.toBigInt(), 2n))).toMatchObject({
       seller: 'bob',
       platform_fee: '0.5000 TLOS',
-      platform_cents: 25,
+      platform_cents: 0,
       bps: 500,
       usd_cents: 500,
     });

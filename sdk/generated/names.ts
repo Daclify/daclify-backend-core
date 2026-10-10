@@ -1,12 +1,22 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const namesAbiHash = '305adfdfbb331b15a8788a1ed2f80cb5ca4970f6100ba2da9bd8d3bfb90c342d';
+export const namesAbiHash = '739308f575543610825db64ac6187eaadb4e7a8000b2b10ade975eb321db6c0c';
 export const namesAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
   "structs": [
     {
       "name": "checkprofit",
+      "base": "",
+      "fields": [
+        {
+          "name": "sale_id",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "closepay",
       "base": "",
       "fields": [
         {
@@ -354,6 +364,52 @@ export const namesAbi = {
       ]
     },
     {
+      "name": "provision_row",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "version",
+          "type": "uint8"
+        },
+        {
+          "name": "party",
+          "type": "uint8"
+        },
+        {
+          "name": "treasury",
+          "type": "name"
+        },
+        {
+          "name": "resource_cost",
+          "type": "asset"
+        },
+        {
+          "name": "seller_share",
+          "type": "asset"
+        },
+        {
+          "name": "resource_cents",
+          "type": "uint32"
+        },
+        {
+          "name": "net_cents",
+          "type": "uint32"
+        },
+        {
+          "name": "seller_cents",
+          "type": "uint32"
+        },
+        {
+          "name": "state",
+          "type": "uint8"
+        }
+      ]
+    },
+    {
       "name": "regname",
       "base": "",
       "fields": [
@@ -663,6 +719,11 @@ export const namesAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "closepay",
+      "type": "closepay",
+      "ricardian_contract": ""
+    },
+    {
       "name": "delname",
       "type": "delname",
       "ricardian_contract": ""
@@ -782,6 +843,13 @@ export const namesAbi = {
       "key_types": []
     },
     {
+      "name": "saleprov",
+      "type": "provision_row",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "sales",
       "type": "sale_row",
       "index_type": "i64",
@@ -808,6 +876,9 @@ export const namesAbi = {
   "action_results": []
 } satisfies ABI.Def;
 export interface checkprofit {
+  sale_id: string;
+}
+export interface closepay {
   sale_id: string;
 }
 export interface delname {
@@ -901,6 +972,18 @@ export interface profit_row {
   card_fixed_usd_cents: number;
   fee_observed_at: number;
 }
+export interface provision_row {
+  id: string;
+  version: number;
+  party: number;
+  treasury: string;
+  resource_cost: string;
+  seller_share: string;
+  resource_cents: number;
+  net_cents: number;
+  seller_cents: number;
+  state: number;
+}
 export interface regname {
   seller: string;
   account_name: string;
@@ -984,6 +1067,7 @@ export interface tier_row {
 }
 export interface NamesActions {
   checkprofit: checkprofit;
+  closepay: closepay;
   delname: delname;
   delsuffix: delsuffix;
   editname: editname;

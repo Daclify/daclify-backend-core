@@ -1,0 +1,57 @@
+{
+  "verifiedAt": "2026-10-10T15:27:26.084Z",
+  "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+  "scope": "Signed read-only native Telos resource provisioning, real permissions and token transfers",
+  "oldCodeHash": "76714f4a8980b8405fb79e64a127c7492558960ebe63a79185ce6d3cb0a38c8a",
+  "newCodeHash": "23b956f5dad7e1e27e5afb997dd0274c7b5987e5419bdca5f4dbc214b2fca6f9",
+  "existingAbiLayoutsPreserved": true,
+  "gross": "71.5910 TLOS",
+  "resourceCost": "2.7583 TLOS",
+  "platformFee": "3.5795 TLOS",
+  "sellerProceeds": "65.2532 TLOS",
+  "nativeReserveConserved": true,
+  "emptyReserveAccepted": true,
+  "firstPartyCardNetUsdCents": 105,
+  "cardProvisioningRequiresNativeFloat": true,
+  "additionalContractRamBytes": 0,
+  "rejections": [
+    {
+      "label": "cost-exceeds-price",
+      "expected": "NAME_COST_LOW"
+    },
+    {
+      "label": "third-party-card",
+      "expected": "NAME_CARD_ROUTING"
+    },
+    {
+      "label": "minimum-card-margin",
+      "expected": "NAME_PROFIT_LOW"
+    },
+    {
+      "label": "gross-only-card",
+      "expected": "NAME_NET_REQUIRED"
+    }
+  ],
+  "receipts": [
+    {
+      "transactionId": "143e799edf0630a8e68d559650047b8e3519ce810a1b2b9d394c461bef928f32",
+      "blockNum": 449486256
+    },
+    {
+      "transactionId": "b43d619de7fdc5506d33586e83da5c3cb515668dc5921a62204535155c6d83e2",
+      "blockNum": 449486258
+    },
+    {
+      "transactionId": "c32f7a76ffd8db57d732cdccbbb753884fe794ebc126fd69f894c48b172fe591",
+      "blockNum": 449486260
+    },
+    {
+      "transactionId": "4aa149d6e2abc4546b425d1dfb227459b2fef3d2d6b7c81e4f9f94c03c122ee0",
+      "blockNum": 449486261
+    }
+  ],
+  "tablesBalancesAuthoritiesUnchanged": true,
+  "policyObservationMayAdvance": true,
+  "noBroadcast": true,
+  "suffixCreation": "Compiled-contract tests; native test uses an exact 12-character third-party listing without borrowing a short suffix owner authority."
+}

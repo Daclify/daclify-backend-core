@@ -3025,6 +3025,7 @@ export class NativeChainGateway implements ChainGateway {
     const namesAccount = await this.namesAccount();
     if (await this.saleForReference(namesAccount, purchase.reference)) return;
     const quote = await this.nameQuote(purchase.accountName);
+    if (quote.party !== 'first-party') throw new ApiError('NAME_CARD_ROUTING', 409);
     const policyRows = await readChainRows({
       rpcUrl: this.config.rpcUrl,
       code: namesAccount,
@@ -3042,15 +3043,12 @@ export class NativeChainGateway implements ChainGateway {
       quote.party === 'first-party' &&
       !quote.listed &&
       !quote.suffix;
-    if (
-      dynamic &&
-      (await this.api.v1.chain.get_raw_abi(namesAccount)).code_hash.toString() !== NamesCodeHash
-    )
+    if ((await this.api.v1.chain.get_raw_abi(namesAccount)).code_hash.toString() !== NamesCodeHash)
       throw new ApiError('NAMES_UNCONFIGURED', 503);
-    if (dynamic && purchase.netUsdCents === undefined) throw new ApiError('NAME_NET_REQUIRED', 409);
+    if (purchase.netUsdCents === undefined) throw new ApiError('NAME_NET_REQUIRED', 409);
     if (!dynamic && (quote.usdCents !== purchase.usdCents || quote.usdCents < 1))
       throw new ApiError('NAME_PRICE', 409);
-    const actionName = dynamic ? 'fulfillnet' : 'fulfill';
+    const actionName = 'fulfillnet';
     const value = {
       settler: this.config.relayActor,
       account_name: purchase.accountName,
@@ -3059,9 +3057,10 @@ export class NativeChainGateway implements ChainGateway {
       usd_cents: purchase.usdCents,
       reference: purchase.reference,
     };
-    const input = dynamic
-      ? NamesActionSchemas.fulfillnet.parse({ ...value, net_usd_cents: purchase.netUsdCents })
-      : NamesActionSchemas.fulfill.parse(value);
+    const input = NamesActionSchemas.fulfillnet.parse({
+      ...value,
+      net_usd_cents: purchase.netUsdCents,
+    });
     const data = Serializer.encode({
       abi: ABI.from(namesAbi),
       type: actionName,
