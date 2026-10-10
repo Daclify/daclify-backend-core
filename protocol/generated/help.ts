@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle={
   "producer": "core",
-  "packageVersion": "0.9.0-alpha.6",
+  "packageVersion": "0.10.0-alpha.1",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -18,6 +18,7 @@ export const CoreHelpBundle={
       "id": "accounts",
       "title": "Two clearly labelled account modes",
       "paragraphs": [
+        "Daclify-key login signs both your public signing key and public encryption key in a short-lived v3 challenge. The app checks the keys and issuing API before asking the vault to sign. An API/frontend update may require refreshing the app and restarting an in-progress login; your existing account, recovery kit and private keys are preserved.",
         "Sign in with your Daclify keys or a previously paired supported email, Telegram, passkey, Telos Zero account or Telos EVM wallet. A currently activated on-chain wallet can also reconstruct wallet-only access after the service database is lost. Signing in and recovering service access do not create membership or grant new permissions in a DAO. Provider availability depends on server configuration; complete Google browser login remains unfinished.",
         "Adding or removing a sign-in method requires a fresh proof from existing Daclify keys or an already verified paired wallet, plus proof of the incoming credential. Review the exact credential before confirming. Removal revokes sessions opened with that credential; history is available in Account → Sign-in.",
         "A paired native or EVM wallet can authorize governance after explicit activation for the same member in each DAO. It adds no member or voting weight. Private documents still require the separate encryption keys.",
@@ -16395,10 +16396,39 @@ export const CoreHelpBundle={
           "signingKey": {
             "type": "string",
             "maxLength": 128
+          },
+          "encryptionKey": {
+            "type": "object",
+            "properties": {
+              "kty": {
+                "type": "string",
+                "const": "EC"
+              },
+              "crv": {
+                "type": "string",
+                "const": "P-256"
+              },
+              "x": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              },
+              "y": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              }
+            },
+            "required": [
+              "kty",
+              "crv",
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
-          "signingKey"
+          "signingKey",
+          "encryptionKey"
         ],
         "additionalProperties": false
       },

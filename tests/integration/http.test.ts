@@ -83,16 +83,19 @@ afterAll(async () => {
 });
 async function login(server = app, browserOrigin = origin) {
   const key = PrivateKey.generate('K1');
+  const jwk = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.export({
+    format: 'jwk',
+  });
   const challengeResponse = await server.inject({
     method: 'POST',
     url: '/v1/auth/challenge',
     headers: { origin: browserOrigin },
-    payload: { signingKey: key.toPublic().toString() },
+    payload: {
+      signingKey: key.toPublic().toString(),
+      encryptionKey: { kty: 'EC', crv: 'P-256', x: jwk.x, y: jwk.y },
+    },
   });
   const challenge = ChallengeSchema.parse(challengeResponse.json());
-  const jwk = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.export({
-    format: 'jwk',
-  });
   const response = await server.inject({
     method: 'POST',
     url: '/v1/auth/login',
@@ -111,6 +114,67 @@ async function login(server = app, browserOrigin = origin) {
   };
 }
 describe('HTTP session boundary', () => {
+  it('rejects unsigned encryption identity substitution at the HTTP boundary without issuing a cookie', async () => {
+    const key = PrivateKey.generate('K1');
+    const original = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.export({
+      format: 'jwk',
+    });
+    const other = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.export({
+      format: 'jwk',
+    });
+    const encryptionKey = { kty: 'EC', crv: 'P-256', x: original.x, y: original.y };
+    const challengeResponse = await app.inject({
+      method: 'POST',
+      url: '/v1/auth/challenge',
+      headers: { origin },
+      payload: { signingKey: key.toPublic().toString(), encryptionKey },
+    });
+    expect(challengeResponse.statusCode).toBe(200);
+    const challenge = ChallengeSchema.parse(challengeResponse.json());
+    const proof = {
+      challengeId: challenge.id,
+      signature: key.signMessage(new TextEncoder().encode(challenge.message)).toString(),
+    };
+    const rejected = await app.inject({
+      method: 'POST',
+      url: '/v1/auth/login',
+      headers: { origin },
+      payload: { ...proof, encryptionKey: { kty: 'EC', crv: 'P-256', x: other.x, y: other.y } },
+    });
+    expect(rejected.statusCode).toBe(401);
+    expect(rejected.json()).toMatchObject({ code: 'AUTH_INVALID' });
+    expect(rejected.cookies).toHaveLength(0);
+    expect(
+      (
+        await pool.query('SELECT id FROM accounts WHERE signing_key=$1', [
+          key.toPublic().toString(),
+        ])
+      ).rowCount,
+    ).toBe(0);
+    const accepted = await app.inject({
+      method: 'POST',
+      url: '/v1/auth/login',
+      headers: { origin },
+      payload: { ...proof, encryptionKey },
+    });
+    expect(accepted.statusCode).toBe(200);
+    expect(SessionSchema.parse(accepted.json()).account.encryptionKey).toEqual(encryptionKey);
+    expect(accepted.cookies).toHaveLength(1);
+  });
+  it('requires the encryption key in a challenge request before persisting it', async () => {
+    const signingKey = PrivateKey.generate('K1').toPublic().toString();
+    const response = await app.inject({
+      method: 'POST',
+      url: '/v1/auth/challenge',
+      headers: { origin },
+      payload: { signingKey },
+    });
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({ code: 'INPUT_INVALID' });
+    expect(
+      (await pool.query('SELECT id FROM challenges WHERE signing_key=$1', [signingKey])).rowCount,
+    ).toBe(0);
+  });
   it('records unexpected failures without logging provider details, headers or query strings', async () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const read = vi

@@ -16,6 +16,7 @@ import { createServer } from '../../services/api/src/server.js';
 import type { ChainGateway } from '../../services/api/src/chain.js';
 import type { ProviderPrincipal } from '../../services/api/src/providers/proofs.js';
 import { ChallengeSchema, NetworkSchema, SessionSchema } from '../../protocol/api.js';
+import { EncryptionPublicKeySchema } from '../../protocol/crypto.js';
 const url = process.env.DATABASE_URL;
 if (
   !url ||
@@ -80,7 +81,12 @@ const unconfigured = await createServer(pool, chain, origin);
 const jwk = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.export({
   format: 'jwk',
 });
-const encryptionKey = { kty: 'EC' as const, crv: 'P-256' as const, x: jwk.x, y: jwk.y };
+const encryptionKey = EncryptionPublicKeySchema.parse({
+  kty: 'EC',
+  crv: 'P-256',
+  x: jwk.x,
+  y: jwk.y,
+});
 beforeAll(() => migrate(pool));
 afterAll(async () => {
   await configured.close();
@@ -101,7 +107,11 @@ function principal(
 }
 async function account() {
   const key = PrivateKey.generate('K1');
-  const challenge = await createChallenge(pool, key.toPublic().toString(), origin);
+  const challenge = await createChallenge(
+    pool,
+    { signingKey: key.toPublic().toString(), encryptionKey },
+    origin,
+  );
   const result = await authenticate(
     pool,
     challenge.id,
@@ -153,7 +163,7 @@ async function httpLogin() {
     method: 'POST',
     url: '/v1/auth/challenge',
     headers: { origin },
-    payload: { signingKey: key.toPublic().toString() },
+    payload: { signingKey: key.toPublic().toString(), encryptionKey },
   });
   const challenge = ChallengeSchema.parse(challengeResponse.json());
   const response = await configured.inject({
@@ -249,7 +259,11 @@ describe('provider session linking', () => {
       principal('telegram', subject, randomUUID()),
     );
     expect(telegramSession.account.id).toBe(first.account.id);
-    const challenge = await createChallenge(pool, first.account.signingKey, origin);
+    const challenge = await createChallenge(
+      pool,
+      { signingKey: first.account.signingKey, encryptionKey },
+      origin,
+    );
     const again = await authenticate(
       pool,
       challenge.id,

@@ -10,7 +10,7 @@ The boundaries are sound enough to preserve: Antelope C++ owns governance/permis
 
 | Area | Execution path and evidence |
 | --- | --- |
-| Identity and access | Login challenge/signature → account/session transaction; CSRF and one-use action-bound proofs; native current permission thresholds; EVM proof/binding checks; social pairing/removal; vault/domain guards. Concurrent login, expiry, recovery, wallet and provider linking are covered by PostgreSQL/unit tests. One first-registration binding defect remains decision-gated below. |
+| Identity and access | Login challenge/signature → account/session transaction; CSRF and one-use action-bound proofs; native current permission thresholds; EVM proof/binding checks; social pairing/removal; vault/domain guards. Concurrent login, expiry, recovery, wallet and provider linking are covered by PostgreSQL/unit tests. The first-registration binding defect was initially decision-gated; its approved follow-up is recorded below. |
 | DAO/module governance | Hub registration → runtime DAO/member identity → pinned module/actions → `execctx` → treasury obligations. Read core dispatch/authority helpers and module actor, document reference, payroll and governance logic. Actual native permission/module tests exercise owner/active handover, isolation and the five first-party modules. |
 | Money and resources | Connect merchant/admin/broker checks → immutable order snapshots → Stripe idempotency/reconciliation/refund reservation; hosting/storage calendar periods and invoice evidence; RAM quote/consent and workers. Integer amounts, database uniqueness/locks and once-only transitions remain authoritative. No commercial rules were changed. |
 | Documents and history | Client encryption/domain guards → bounded document/upload validation → SQL reservations/leases → Pinata → on-chain references; Archive verification and retained schemas; retention reference/lease locks and paid grace windows. Recovery decoders and applied migrations are required data-compatibility inputs. |
@@ -74,8 +74,8 @@ Module SDK/help and frontend are `0.9.0-alpha.7`; the unchanged core protocol is
 
 **Option B:** Preserve the current protocol and document proof-capture assumptions. Avoids rollout work but leaves a verified registration-integrity weakness. Not recommended before production.
 
-The supplied audit prompt, section 15, requires a decision before breaking a public API or changing authentication behavior. Approval was requested asynchronously; no answer was received during the safe-work phase. This protocol change is intentionally unimplemented pending that decision.
+The supplied audit prompt, section 15, requires a decision before breaking a public API or changing authentication behavior. Approval was requested asynchronously; no answer was received during the safe-work phase. The user subsequently approved Option A. The coordinated v3 fix, preserved-state tests and rollout instructions are recorded in [login-key-binding evidence](2026-10-10-login-key-binding.md) and the [operator runbook](../operations/login-v3.md). The verification/version table above remains the original audit checkpoint.
 
 ## Recommended next work
 
-Resolve the binding decision, then execute its migration/compatibility packet. Continue existing live-provider and source-bound release qualification before any production/destructive deployment. Evaluate emulator replacement and larger-dataset performance using their own reproducible compatibility/load evidence.
+The approved binding follow-up is implemented separately, with no database migration or contract redeployment. Continue existing live-provider and source-bound release qualification before any production/destructive deployment. Evaluate emulator replacement and larger-dataset performance using their own reproducible compatibility/load evidence.

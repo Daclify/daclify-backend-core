@@ -169,7 +169,7 @@ it('requires session/CSRF/current administrator and binds the readonly result to
           method: 'POST',
           url: '/v1/auth/challenge',
           headers: { origin },
-          payload: { signingKey: account.signingKey },
+          payload: { signingKey: account.signingKey, encryptionKey: account.encryptionKey },
         })
       ).json(),
     );

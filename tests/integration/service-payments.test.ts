@@ -136,16 +136,19 @@ async function postWebhook(payload: string) {
 
 async function login(): Promise<{ accountId: string; cookie: string; csrfToken: string }> {
   const key = PrivateKey.generate('K1');
+  const jwk = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.export({
+    format: 'jwk',
+  });
   const challengeResponse = await app.inject({
     method: 'POST',
     url: '/v1/auth/challenge',
     headers: { origin },
-    payload: { signingKey: key.toPublic().toString() },
+    payload: {
+      signingKey: key.toPublic().toString(),
+      encryptionKey: { kty: 'EC', crv: 'P-256', x: jwk.x, y: jwk.y },
+    },
   });
   const challenge = ChallengeSchema.parse(challengeResponse.json());
-  const jwk = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.export({
-    format: 'jwk',
-  });
   const response = await app.inject({
     method: 'POST',
     url: '/v1/auth/login',

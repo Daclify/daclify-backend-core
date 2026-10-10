@@ -60,19 +60,22 @@ beforeAll(async () => {
   unlockFixtureWallet(ownedNetwork.container);
   listFirstPartyModule('decide', ModuleCodeHashes.decide, 'Decide');
   await migrate(pool);
+  const jwk = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.export({
+    format: 'jwk',
+  });
   const c = ChallengeSchema.parse(
     (
       await app.inject({
         method: 'POST',
         url: '/v1/auth/challenge',
         headers: { origin },
-        payload: { signingKey: key.toPublic().toString() },
+        payload: {
+          signingKey: key.toPublic().toString(),
+          encryptionKey: { kty: 'EC', crv: 'P-256', x: jwk.x, y: jwk.y },
+        },
       })
     ).json(),
   );
-  const jwk = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.export({
-    format: 'jwk',
-  });
   const response = await app.inject({
     method: 'POST',
     url: '/v1/auth/login',

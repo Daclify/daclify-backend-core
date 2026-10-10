@@ -326,7 +326,11 @@ it('recovers a Telos EVM EOA only through its current on-chain binding', async (
   ).toEqual({ memberships: [] });
 });
 it('still reconstructs root membership independently when the original vault keys survive', async () => {
-  const challenge = await createChallenge(pool, root.toPublic().toString(), origin);
+  const challenge = await createChallenge(
+    pool,
+    { signingKey: root.toPublic().toString(), encryptionKey },
+    origin,
+  );
   const logged = await authenticate(
     pool,
     challenge.id,

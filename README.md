@@ -10,7 +10,7 @@ The implementation is not a production release. `npm run package:release` refuse
 
 Development now uses **`dev`** across core, modules and frontend. Keep sibling app checkouts on `dev`; release to `main` only on an explicit request. The standalone landing page continues using **`main`**. See the [branch workflow](docs/development.md#branches) and [branch integration audit](docs/evidence/2026-10-09-dev-branch-audit.md).
 
-The current development version is **0.9.0-alpha.6**, with contract interface 1. The resource-billing-archives branch adds core migrations 022–031 and hash-tracked Archive migrations 001–005, plus additive C++ state while preserving existing serialized rows and signing/content domains. It implements native/card RAM acquisition, manually funded payer allocations, configured prepaid storage, verified hosted references, public card-image uploads, encrypted Archive backups, native approval/revocation, bounded ordinary-poll pruning and merged history recovery. Hosted ownership/usage can be rebuilt from surviving chain references and provider inventory without inventing payment receipts.
+The current development version is **0.10.0-alpha.1**, with contract interface 1. The resource-billing-archives branch adds core migrations 022–031 and hash-tracked Archive migrations 001–005, plus additive C++ state while preserving existing serialized rows and signing/content domains. It implements native/card RAM acquisition, manually funded payer allocations, configured prepaid storage, verified hosted references, public card-image uploads, encrypted Archive backups, native approval/revocation, bounded ordinary-poll pruning and merged history recovery. Hosted ownership/usage can be rebuilt from surviving chain references and provider inventory without inventing payment receipts.
 
 Complete release/provider qualification remains unfinished. Development code includes physical completion holds, bounded legacy adoption, per-DAO growth limits, source-owned pruning/restoration and tested local recovery; remaining lifecycle/old-release gates are listed in the execution ledger. Pruning and destructive retention stay off by default. Use the [0.8 upgrade guide](docs/operations/upgrade-0.8.md) and [release evidence procedure](docs/operations/release-qualification.md) before any deployment. Existing wallet recovery remains available; social pairings and billing records require database backups.
 
@@ -23,6 +23,7 @@ Shared creation includes 10 active members. Paid slots 1–40 cost $1/month each
 - [Public protocol package](sdk/README.md) is the boundary other repositories import.
 - [DAO presets and guarded agents](docs/dao-presets.md) covers the 0.2 feature, authority boundaries, compatibility and merge order.
 - [Disaster recovery](docs/disaster-recovery.md) explains per-user recovery, document keys, lost login pairings and operator backups.
+- [Vault login v3 rollout](docs/operations/login-v3.md) documents signed encryption-key binding and the coordinated frontend/API upgrade.
 - [Paired login setup](docs/operations/paired-login.md) covers providers and the distinction between service login and on-chain wallet activation.
 - [Recovery verification evidence](docs/evidence/2026-10-07-wallet-recovery.md) records actual database, native-runtime, browser and public-testnet checks.
 
@@ -56,7 +57,7 @@ npm test
 npm run verify
 ```
 
-See the [three-repository audit](docs/evidence/2026-10-10-three-repository-audit.md) for the current verified boundaries and pending decisions. Service-owned native SDK requests abort after 10 seconds and do not follow redirects. Unexpected API errors log only a fixed code and registered route; no provider error text or request data is logged. A timed-out broadcast still needs reconciliation before retrying.
+See the [three-repository audit](docs/evidence/2026-10-10-three-repository-audit.md) for verified boundaries, and the [approved login v3 follow-up](docs/evidence/2026-10-10-login-key-binding.md) for the coordinated key-binding fix. Service-owned native SDK requests abort after 10 seconds and do not follow redirects. Unexpected API errors log only a fixed code and registered route; no provider error text or request data is logged. A timed-out broadcast still needs reconciliation before retrying.
 
 `npm test` does not run `tests/integration`, `tests/providers`, or `tests/native`. Those are `npm run test:integration`, `npm run test:providers`, and `npm run test:native`. Integration tests require an isolated database whose name ends in `_test`. Native qualification uses both `test:native:research` and `test:native:paid` with their matching owned fixture bundles; their bootstrap/payment setup is deliberately different. See the 0.5 upgrade runbook. Browser journeys are run from the frontend repository. Builds and tests run locally. GitHub verification workflows are manual-only, so pushing source does not start CI. See [local checks and Netlify deployments](docs/development.md#local-checks-and-netlify-deployments).
 

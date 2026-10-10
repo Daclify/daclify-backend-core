@@ -532,7 +532,7 @@ it('requires session, CSRF, fresh signed intent and current administrator access
           method: 'POST',
           url: '/v1/auth/challenge',
           headers: { origin },
-          payload: { signingKey: account.signingKey },
+          payload: { signingKey: account.signingKey, encryptionKey: account.encryptionKey },
         })
       ).json(),
     );

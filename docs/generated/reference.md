@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.9.0-alpha.6 · interface 1.
+Package 0.10.0-alpha.1 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -13,6 +13,8 @@ Memberships, voting activity, outcomes, balances, timing, and content hashes rem
 Deactivating a member advances the epoch for future content; an authorized administrator must initialize its new key and grants. This cannot erase plaintext or old keys the member already kept. Re-pinning preserves ciphertext, not confidentiality after a key compromise.
 
 ## Two clearly labelled account modes
+
+Daclify-key login signs both your public signing key and public encryption key in a short-lived v3 challenge. The app checks the keys and issuing API before asking the vault to sign. An API/frontend update may require refreshing the app and restarting an in-progress login; your existing account, recovery kit and private keys are preserved.
 
 Sign in with your Daclify keys or a previously paired supported email, Telegram, passkey, Telos Zero account or Telos EVM wallet. A currently activated on-chain wallet can also reconstruct wallet-only access after the service database is lost. Signing in and recovering service access do not create membership or grant new permissions in a DAO. Provider availability depends on server configuration; complete Google browser login remains unfinished.
 
@@ -13757,10 +13759,39 @@ Request:
     "signingKey": {
       "type": "string",
       "maxLength": 128
+    },
+    "encryptionKey": {
+      "type": "object",
+      "properties": {
+        "kty": {
+          "type": "string",
+          "const": "EC"
+        },
+        "crv": {
+          "type": "string",
+          "const": "P-256"
+        },
+        "x": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43}$"
+        },
+        "y": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43}$"
+        }
+      },
+      "required": [
+        "kty",
+        "crv",
+        "x",
+        "y"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [
-    "signingKey"
+    "signingKey",
+    "encryptionKey"
   ],
   "additionalProperties": false
 }

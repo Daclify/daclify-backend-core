@@ -1,6 +1,8 @@
 # Daclify documentation
 
-Current development version: **0.8.0-alpha.1**, contract interface 1. This is a development checkpoint; immutable publication, live provider/client qualification and hosted operations remain separate gates.
+Current development version: **0.10.0-alpha.1**, contract interface 1. This is a development checkpoint; immutable publication, live provider/client qualification and hosted operations remain separate gates.
+
+See [vault login v3 rollout](operations/login-v3.md) for the coordinated API/frontend update and preserved account/recovery state.
 
 ## Start with the task
 

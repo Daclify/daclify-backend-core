@@ -4,7 +4,7 @@ import { PublicKey, Signature } from '@wharfkit/antelope';
 import {
   AccountSchema,
   VaultAccountSchema,
-  SigningPublicKeySchema,
+  ChallengeRequestSchema,
   LoginMessageSchema,
   type Account,
   type VaultAccount,
@@ -47,26 +47,28 @@ const accountFromRow = (row: AccountRow): Account =>
   });
 export async function createChallenge(
   pool: Pool,
-  key: string,
+  input: ReturnType<typeof ChallengeRequestSchema.parse>,
   origin: string,
   audience: string = origin,
 ): Promise<{ id: string; message: string; expires: string }> {
-  SigningPublicKeySchema.parse(key);
+  const identity = ChallengeRequestSchema.parse(input);
+  const encryptionKey = validEncryptionKey(identity.encryptionKey);
   const id = randomUUID();
   const expires = new Date(Date.now() + 300_000).toISOString();
   const message = JSON.stringify(
     LoginMessageSchema.parse({
-      domain: 'daclify.login.v2',
+      domain: 'daclify.login.v3',
       origin,
       audience,
       challenge: id,
-      signingKey: key,
+      signingKey: identity.signingKey,
+      encryptionKey,
       expires,
     }),
   );
   await pool.query(
     'INSERT INTO challenges(id,signing_key,message,expires_at) VALUES($1,$2,$3,$4)',
-    [id, key, message, expires],
+    [id, identity.signingKey, message, expires],
   );
   return { id, message, expires };
 }
@@ -90,11 +92,15 @@ export async function authenticate(
     let valid = false;
     if (challenge) {
       try {
-        if (context) {
-          const message = LoginMessageSchema.parse(JSON.parse(challenge.message));
-          if (message.origin !== context.origin || message.audience !== context.audience)
-            throw new Error('Wrong audience');
-        }
+        const message = LoginMessageSchema.parse(JSON.parse(challenge.message));
+        if (
+          message.signingKey !== challenge.signing_key ||
+          message.challenge !== challenge.id ||
+          message.expires !== challenge.expires_at.toISOString() ||
+          JSON.stringify(message.encryptionKey) !== JSON.stringify(encryption) ||
+          (context && (message.origin !== context.origin || message.audience !== context.audience))
+        )
+          throw new Error('Wrong login context');
         valid = Signature.from(signature).verifyMessage(
           new TextEncoder().encode(challenge.message),
           PublicKey.from(challenge.signing_key),

@@ -1,5 +1,7 @@
 # Paired login and signing setup
 
+Vault-key login now requires [coordinated v3 key binding](login-v3.md): both public keys are signed, legacy challenges are refused, and existing accounts/keys/sessions are preserved. Update the API and frontend together.
+
 Apply migrations using the existing API startup coordinator. Migration 008 intentionally revokes old service sessions with unknown credential provenance; users sign in again. Migration 010 invalidates old unbound sign-in challenges. Migration 012 leaves legacy EVM pairings unverified until fresh explicit pairing. Migrations 013/014 add credential history and browser return destinations; they do not rewrite keys or member rights. Migration 015 adds wallet-only service profiles, dual-proof vault attachment and last-control-credential constraints. Follow the [0.6 upgrade guide](upgrade-0.6.md) for a coordinated API/frontend update.
 
 Configure SMTP from .env.example. STARTTLS is mandatory on port 587 by default; implicit TLS can use tls mode/465. Plaintext is limited to loopback in local development. Use a dedicated sender and credentials in local/production secret configuration, never frontend environment variables. Test deliverability and failure behavior using actual configured mailboxes before qualification. Pairing codes can be displayed only in local fixtures; email login always requires delivery.

@@ -131,7 +131,7 @@ async function httpLogin(app: typeof local) {
     method: 'POST',
     url: '/v1/auth/challenge',
     headers: { origin },
-    payload: { signingKey: key.toPublic().toString() },
+    payload: { signingKey: key.toPublic().toString(), encryptionKey },
   });
   const challenge = ChallengeSchema.parse(challengeResponse.json());
   const response = await app.inject({

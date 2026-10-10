@@ -35,9 +35,12 @@ export const AccountSchema = z.union([VaultAccountSchema, WalletAccountSchema]);
 export const JoinIdentitySchema = VaultAccountSchema.omit({ id: true }).extend({
   version: z.literal(1),
 });
-export const ChallengeRequestSchema = z.strictObject({ signingKey: SigningPublicKeySchema });
+export const ChallengeRequestSchema = z.strictObject({
+  signingKey: SigningPublicKeySchema,
+  encryptionKey: EncryptionPublicKeySchema,
+});
 export const LoginMessageSchema = ChallengeRequestSchema.extend({
-  domain: z.literal('daclify.login.v2'),
+  domain: z.literal('daclify.login.v3'),
   origin: z.url(),
   audience: ApiOriginSchema,
   challenge: z.uuid(),

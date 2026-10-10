@@ -915,7 +915,7 @@ export async function createServer(
   );
   app.post(ApiRoutes.challenge.path, async (request) => {
     const input = ChallengeRequestSchema.parse(request.body);
-    return createChallenge(pool, input.signingKey, request.headers.origin ?? origin, audience);
+    return createChallenge(pool, input, request.headers.origin ?? origin, audience);
   });
   function sessionCookie(reply: FastifyReply, token: string): void {
     reply.setCookie(cookieName, token, {

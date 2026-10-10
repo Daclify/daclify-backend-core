@@ -29,3 +29,7 @@ Mocked provider responses establish service behavior, not live Stripe/Pinata qua
 ## Execution result
 
 Discovery, safe repairs, regression tests, cleanup, broad verification and inline diff review are complete. See `docs/evidence/2026-10-10-three-repository-audit.md` for the per-finding evidence and exact checks. First-login encryption-key binding remains a confirmed, decision-gated protocol change. No approval arrived during independent work; preserve the current protocol until the user decides.
+
+## Approved follow-up
+
+The user subsequently approved the coordinated login change. The original safe-work baseline above is historical; implementation and isolated verification are complete under [the v3 plan](2026-10-10-login-key-binding.md), with results recorded separately.

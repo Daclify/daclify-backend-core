@@ -145,19 +145,22 @@ beforeAll(async () => {
     ],
     { stdio: ['pipe', 'pipe', 'pipe'] },
   );
+  const jwk = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.export({
+    format: 'jwk',
+  });
   const challenge = ChallengeSchema.parse(
     (
       await app.inject({
         method: 'POST',
         url: '/v1/auth/challenge',
         headers: { origin },
-        payload: { signingKey: key.toPublic().toString() },
+        payload: {
+          signingKey: key.toPublic().toString(),
+          encryptionKey: { kty: 'EC', crv: 'P-256', x: jwk.x, y: jwk.y },
+        },
       })
     ).json(),
   );
-  const jwk = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.export({
-    format: 'jwk',
-  });
   const logged = await app.inject({
     method: 'POST',
     url: '/v1/auth/login',
