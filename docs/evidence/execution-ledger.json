@@ -299,7 +299,10 @@
     "envRelocation": {
       "date": "2026-10-09",
       "authorization": "User requested private API credentials under /data rather than /etc/daclify",
-      "files": ["/data/daclify-env/mainnet.env", "/data/daclify-env/testnet.env"],
+      "files": [
+        "/data/daclify-env/mainnet.env",
+        "/data/daclify-env/testnet.env"
+      ],
       "permissions": "root-owned directory 0700; files 0600",
       "migration": "Moved with byte-for-byte contents preserved; old /etc/daclify API env files removed",
       "configuration": "Installed systemd LoadCredential paths, preflight fallback, start wrapper and runbook updated; daemon reloaded; APIs remain inactive",
@@ -409,7 +412,10 @@
         "authoritiesUnchanged": true,
         "tableScopes": 18,
         "rows": 39,
-        "onlyRowChanges": ["catalogue.code_hash", "modules.code_hash"]
+        "onlyRowChanges": [
+          "catalogue.code_hash",
+          "modules.code_hash"
+        ]
       },
       "checks": [
         "Core 99 files / 565 tests passed",
@@ -533,6 +539,70 @@
         "Email, Telegram message, provider upload or funded Pinata allowance registration",
         "Mainnet API/contract/authority/asset actions or any new testnet contract transaction",
         "Off-VM port probe or independent backup destination"
+      ]
+    },
+    "testnetLoginV3Rollout": {
+      "date": "2026-10-10",
+      "coreCommit": "81cc3ab359149ae132dd6e50c9f471df7bd8d062",
+      "modulesCommit": "df625c15d7ac88d05cb5c4c578b79c2b3cac22d3",
+      "frontendCommit": "69e7634640f460bb5bacffe6e00861bff6389603",
+      "coreVersion": "0.10.0-alpha.1",
+      "modulesSdkVersion": "0.9.0-alpha.8",
+      "moduleContractVersion": "0.9.0-alpha.5",
+      "checks": {
+        "coreUnit": 658,
+        "sqlIntegration": 206,
+        "frontendUnit": 168,
+        "focusedModules": 44,
+        "historicalNativeUpgrade": 1,
+        "buildTypesLintGeneratedPins": "passed"
+      },
+      "harness": "Initial CREATEDB/historical-artifact/moving-oracle and VM timeout failures resolved without weakening assertions. Interrupted overloaded runs are not passes; final sequential suites passed. Historical native grant set retained rather than applying a new grant to the old runtime.",
+      "contracts": {
+        "transactions": [
+          "1b810b0ddc8061cd09712b3e7aeb2aaafd68dd4fab44ddd17d3345c9a6b3705e",
+          "6035aeaf4c1a4734564de6418da104abea8ecb0e21d43e892f3626a31a1654e0"
+        ],
+        "changed": [
+          "runtime",
+          "decide",
+          "names"
+        ],
+        "unchanged": "Hub and four remaining modules",
+        "ramCostTestnetTlos": "59.3138",
+        "rows": 39,
+        "scopes": 18,
+        "preserved": "Existing rows except catalogue/module code hashes; all native permissions and action links unchanged; no executive authority adoption"
+      },
+      "publicAcceptance": {
+        "apiVersion": "0.10.0-alpha.1",
+        "nativeChainMatches": true,
+        "approvedCors": true,
+        "peerCorsDenied": true,
+        "loginV3SignedEncryptionIdentity": true,
+        "encryptionSubstitution": "401 AUTH_INVALID, no cookie/account",
+        "syntheticChallengeRemoved": true,
+        "stripeIgnoredEventValidSignature": 200,
+        "stripeInvalidSignature": 400,
+        "unknownHost": 421,
+        "mainnet": 503,
+        "frontend": "Live entry/network/handbook bundles match updated pinned build"
+      },
+      "database": "37 migration hashes and original account/signing/encryption identities unchanged; no migration/reset/import; fresh private backups retained",
+      "privateConfiguration": "Existing private credentials preserved; root-owned 0600; deploy key remains separate from API credentials",
+      "qualification": "Actual canonical candidate manifest remains qualified=false, publication refused, all 12 production gates held",
+      "cleanup": "Only owned PostgreSQL/native verification containers removed; temporary private 4 GB swap disabled and deleted; application data volume preserved",
+      "receipts": [
+        "/data/daclify-upgrades/testnet/snapshot-2026-10-10T09-13-00-010/",
+        "/root/daclify-rollout-checks/20261010T0913Z/"
+      ],
+      "clientAction": "Refresh existing app tabs and restart pending vault logins; roll forward rather than restoring v2",
+      "notPerformed": [
+        "Live wallet/provider/real checkout qualification",
+        "Paid model call, Telegram message or provider upload",
+        "Pinata funded allowance registration",
+        "Mainnet deployment/authority/assets",
+        "Off-VM backup/probe"
       ]
     }
   }
