@@ -22,7 +22,7 @@ Adding or removing a sign-in method requires a fresh proof from existing Daclify
 
 A paired native or EVM wallet can authorize governance after explicit activation for the same member in each DAO. It adds no member or voting weight. Private documents still require the separate encryption keys.
 
-User-controlled accounts keep encrypted signing and decryption keys in your browser. Recovery requires the encrypted kit and its separate recovery credential. Social login and publicly visible wallet signatures cannot recover or derive these keys.
+User-controlled accounts keep encrypted signing and decryption keys in your browser. Restore an encrypted kit using either the vault password saved with that kit or its separate recovery code, shown as the recovery credential during setup. Choose a new password for this device; the original signing and decryption keys stay the same. Social login and publicly visible wallet signatures cannot recover or derive these keys.
 
 Managed recovery delegates signing and decryption recovery to an operator. OpenBao remains the open-source candidate; production custody is gated on isolated service, audit, provider and recovery qualification.
 
@@ -92,7 +92,7 @@ For a Netlify Daclify testnet frontend, deploy the frontend dev branch, publish 
 
 ## Recover keys and blockchain access
 
-User-controlled signing and P-256 decryption private keys are encrypted in this browser’s local vault and downloaded recovery kit. The password protects the local envelope; the separate recovery credential protects the recovery envelope. Both use PBKDF2-SHA256 with 600,000 iterations and AES-256-GCM. The API stores public keys, not these private keys or your vault password.
+User-controlled signing and P-256 decryption private keys are encrypted in this browser’s local vault and downloaded recovery kit. The kit contains a local envelope protected by the vault password saved when the kit was downloaded and a recovery envelope protected by the separate recovery code. In Account, choose Recover from an encrypted kit, select the original JSON, enter that kit’s vault password or matching recovery code, and choose a new vault password of at least 12 characters. Restore and sign in verifies the original keys and protects them with the new device password. A password change does not update older downloaded kits. Older clients require the separate recovery credential; refresh the app to use password recovery. Both envelopes use PBKDF2-SHA256 with 600,000 iterations and AES-256-GCM. The API stores public keys, not these private keys or your vault password.
 
 The contracts retain DAO membership, permissions, balances, document CIDs, key-epoch commitments and per-member encrypted epoch-key grants. Large encrypted document bytes are on IPFS. A recovered original decryption key opens its surviving grants and ciphertext; a wallet signature or a replacement encryption key cannot decrypt old content. Keep the encrypted kit and recovery credential in separate safe places and retain durable IPFS pins or a content export.
 
