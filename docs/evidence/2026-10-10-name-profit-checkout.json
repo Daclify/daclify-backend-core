@@ -1,0 +1,15 @@
+{
+  "verifiedAt": "2026-10-10T14:36:00.285Z",
+  "scope": "Actual sandbox Names Checkout parameter acceptance, created and expired unpaid; no customer identity, email, private keys retained, charge or native fulfillment",
+  "livemode": false,
+  "sessionId": "cs_test_a1BiHWDlCNsonvmghUcayIjy38oooBqK5BIB65d1X8SJB9xiIk39aI8sLQ",
+  "amountTotal": 142,
+  "currency": "usd",
+  "paymentMethods": [
+    "card"
+  ],
+  "adaptivePricingEnabled": false,
+  "successUrl": "https://testnet.app.daclify.com/names?names=submitted",
+  "cancelUrl": "https://testnet.app.daclify.com/names?names=cancelled",
+  "expired": true
+}
