@@ -61,7 +61,7 @@
 
 - [x] Run complete native permission/module flows against the new actual handover, broad core/module/frontend suites, strict types/lint/docs/build and changed-file formatting.
 - [x] Verify preservation/refusal across old-native policy upgrade; record exact artifact hashes, passed/failed/unrun results and live proposal preconditions.
-- [ ] Review the complete diff inline, commit and push dev in affected repositories. No live rollout follows from these commits.
+- [x] Review the complete diff inline, commit and push dev in affected repositories. No live rollout follows from these commits.
 
 ## Execution ledger
 
@@ -79,3 +79,5 @@
 - Complete final native rerun: 108/108, six files, no failures/skips; 256.70 seconds. Native temporary nodes stopped by fixtures.
 
 - Final disclosure review added a failing browser check for proposed ownership before handover. Corrected configured-creator/effective-quorum wording; final 16/16 desktop/mobile browser checks passed after the change.
+
+- Delivery verified: core ce6725e, modules 24c2f87 and frontend f014bd8 pushed to origin/dev; remote refs matched local HEAD and all three worktrees were clean. No main/tag/registry or live deployment actions. This final ledger update is documentation only.
