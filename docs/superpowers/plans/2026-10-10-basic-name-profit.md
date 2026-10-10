@@ -90,3 +90,5 @@ Files: frontend `src/views/Names.vue`, relevant browser cases, version/dependenc
 - Testnet activated irreversibly at block 449478991; code, policy and unchanged authority/legacy rows/100 TLOS reserve verified. API and frontend deployed and public quotes verified. Typed five-minute updater completed a real irreversible observation refresh.
 - Post-deployment real API → released SDK → signed native simulation passed; deployed public desktop/mobile pages passed accessibility and overflow checks. Customer account/payment broadcasts remain outside this qualification.
 - All three implementations integrated into dev. Remote publication pending the push result; no main/production release.
+
+- Remote publication: all three dev pushes failed with exit 128 because GitHub HTTPS credentials are absent. No secrets were requested or exposed. Local dev and testnet delivery are complete; publication awaits server authentication.
