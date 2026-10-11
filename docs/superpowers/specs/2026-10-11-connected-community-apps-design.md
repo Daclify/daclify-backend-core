@@ -99,6 +99,8 @@ A completion is a member-authorised claim that work was done. It is not proof of
 
 A reusable Community Activity module records completions and nonfinancial review requests without knowing gardening, booking or rota fields. A review names the exact source revision and preserved evidence. The proposed first policy follows existing independent review semantics: one currently authorised administrator or reviewer can approve or request changes, and the submitter cannot approve their own request. Communities needing both managers' approval require an explicitly defined additional policy rather than an inferred executive quorum.
 
+Community Activity is one new reusable contract implementation, with additive app constraints in the existing runtime. A shared deployment can host many DAOs and apps on one reviewed activity contract, with authoritative runtime/DAO/app isolation and explicit payer accounting. Independent deployments may install their own compatible instance. Neither registering an app nor creating a task implies deploying a new contract. Exact deployed accounts, code pins and permissions belong to the qualified deployment packet.
+
 Decide provides community votes. A decision link must bind the exact ballot, app/source revision, evidence commitment and DAO policy; an arbitrary successful ballot is not approval of another task. Native reference registration must preserve evidence required by pending reviews and decisions. Ordinary Decide polls remain advisory and do not execute arbitrary app database operations. The app's backend applies their results according to its explicit business workflow.
 
 Works can later connect funded contributions through its existing contributor, milestone, reservation, independent review and settlement rules. It is not used to emulate a free task approval: current Works milestones require positive funded amounts. No completion event grants money, votes, credits or module installation rights.
@@ -121,6 +123,7 @@ The user chose the product scope above. Proposed implementation calls are regist
 
 ## References
 
+- [Community/project guide](../../connected-community-apps.md) and [reusable mini-app design example](../../examples/community-mini-app-design.md).
 - [Current account and membership routes](../../../protocol/routes.ts), [paired sign-in](../../../services/api/src/auth/sign-in-routes.ts) and [client signing boundary](../../../../daclify-frontend/src/auth/session.ts).
 - [Native session constraints and instruction dispatch](../../../contracts/runtime/runtime.cpp), [scope records](../../../contracts/common/governance.hpp) and [module actor checks](../../../../daclify-backend-modules/contracts/common/module.hpp).
 - [Existing document and role guides](../../guides/topics.json), [DAO presets and scoped credentials](../../dao-presets.md), [RAM accounting](../../ram-accounting.md) and [recovery](../../disaster-recovery.md).

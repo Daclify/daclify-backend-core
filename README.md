@@ -8,6 +8,8 @@ The implementation is not a production release. `npm run package:release` refuse
 
 ## Read next
 
+For communities designing their own apps, see the [connected-app guide](docs/connected-community-apps.md) and [reusable mini-app design example](docs/examples/community-mini-app-design.md). The external-app integration is proposed; these documents do not advertise available login or activity APIs.
+
 Development now uses **`dev`** across core, modules and frontend. Keep sibling app checkouts on `dev`; release to `main` only on an explicit request. The standalone landing page continues using **`main`**. See the [branch workflow](docs/development.md#branches) and [branch integration audit](docs/evidence/2026-10-09-dev-branch-audit.md).
 
 The current development version is **0.13.0-alpha.4**, with contract interface 1. Current `dev` includes core migrations 001–034 and hash-tracked Archive migrations 001–005, plus additive C++ state while preserving existing serialized rows and signing/content domains. It implements native/card RAM acquisition, manually funded payer allocations, configured prepaid storage, verified hosted references, public card-image uploads, encrypted Archive backups, native approval/revocation, bounded ordinary-poll pruning and merged history recovery. Hosted ownership/usage can be rebuilt from surviving chain references and provider inventory without inventing payment receipts.
