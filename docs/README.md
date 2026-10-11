@@ -58,6 +58,7 @@ These record design decisions and acceptance criteria. They are not a substitute
 - [Master plan](superpowers/plans/2026-10-05-daclify-v2-master-plan.md)
 - [Governance hardening plan](superpowers/plans/2026-10-08-governance-hardening.md): qualification, ballot integrity, DAO module selection, arbitration and election methods.
 - [Architecture](superpowers/specs/2026-10-05-daclify-v2-architecture.md)
+- [Connected community apps proposal](superpowers/specs/2026-10-11-connected-community-apps-design.md): several apps per public or private DAO, member authorised completions, compact native records and protected IPFS evidence; external app access remains unimplemented.
 - [Work packages](superpowers/plans/2026-10-05-daclify-v2-work-packages.md)
 - [Foundation plan](superpowers/plans/2026-10-05-daclify-v2-foundation-plan.md)
 - [Evidence and risks](superpowers/plans/2026-10-05-daclify-v2-evidence-and-risks.md)
