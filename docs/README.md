@@ -10,6 +10,8 @@ See [creator recovery and executive active ownership](operations/creator-owner-e
 
 Hosted operators must also configure a [shared gateway allowance](operations/gateway-allowance.md); its application counters do not prove provider funding.
 
+The shared testnet's [IPFS setup and renewal guide](operations/testnet-ipfs.md) covers its confirmed free provider plan, DAO quotas, document/image uploads and current gateway period.
+
 | Task                                                        | Guide                                                                                                                                                                                                     |
 | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Understand the repository split and capabilities            | [Core README](../README.md), [modules README](https://github.com/Daclify/daclify-backend-modules/blob/dev/README.md), [frontend README](https://github.com/Daclify/daclify-frontend/blob/dev/README.md) |

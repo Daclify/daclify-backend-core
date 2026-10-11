@@ -8,7 +8,7 @@ These are application reservations, not a Pinata billing meter. Protocol overhea
 
 ## Register a funded period
 
-1. Verify the paid Pinata plan/account, actual allowance and billing dates. Mainnet and testnet use separate accounts. Confirm that the gateway requires the server-only key; requests without it must fail. Remove alternative browser-origin/public access rules: Pinata combines access controls with **OR**, so another rule can bypass the key. Restrict the provider credential, keep it off the frontend and monitor vendor usage. [Pinata access controls](https://docs.pinata.cloud/gateways/gateway-access-controls), [bandwidth analytics](https://docs.pinata.cloud/sdk/analytics/bandwidth).
+1. Verify the Pinata plan/account, available allowance and provider reset dates. A free plan can fund a bounded testnet pilot; a paid plan is not required by this mechanism. Set application limits below the verified provider allowance, leaving headroom for other clients, verification and recovery. If the remaining monthly allowance or reset date is unknown, use a short, conservative period and monitor actual provider usage before renewing it. Mainnet and testnet use separate accounts. Confirm that the gateway requires the server-only key; requests without it must fail. Remove alternative browser-origin/public access rules: Pinata combines access controls with **OR**, so another rule can bypass the key. Restrict the provider credential and keep it off the frontend. [Pinata access controls](https://docs.pinata.cloud/gateways/gateway-access-controls), [bandwidth analytics](https://docs.pinata.cloud/sdk/analytics/bandwidth).
 2. Apply the reviewed core migrations, including `031_gateway_allowances.sql`. Registration never applies migrations implicitly.
 3. Save a non-secret funding descriptor such as the following. The values are synthetic examples, not a recommended plan, proof of payment or an available allowance:
 
@@ -25,7 +25,7 @@ These are application reservations, not a Pinata billing meter. Protocol overhea
 }
 ```
 
-4. Select the intended private environment file using `DACLIFY_ENV_FILE`, review the plan, then register it only after operator funding is confirmed:
+4. Select the intended private environment file using `DACLIFY_ENV_FILE`, review the plan, then register it only after the operator confirms the provider allowance. For a free plan, the funding reference records that confirmation rather than a payment:
 
 ```sh
 DACLIFY_ENV_FILE=.env.testnet npm run gateway:allowance -- funding.json

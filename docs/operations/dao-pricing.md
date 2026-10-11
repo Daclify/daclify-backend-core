@@ -13,3 +13,5 @@ The API reports effective built-in member and Connect rates when no override is 
 The browser checks the selected chain/runtime and verified runtime code before displaying prices. Refresh clears previous prices while loading. Failed, mismatched or unverified reads show an unavailable state with retry. Stale conversion rates are labelled and are not used to invent TLOS estimates. Payment-provider charges and optional AI services require their own quotes.
 
 Qualification is recorded in [the execution ledger](../superpowers/plans/2026-10-11-dao-pricing-page.md). This is a testnet frontend/API rollout with unchanged public SDK archives and native contracts.
+
+On 2026-10-11, the operator activated testnet's existing native resource policy and Pinata gateway allowance. The page now reports 100 MB included storage per DAO and $1 per additional decimal GB per month. The provider account itself has shared limits; see [testnet IPFS storage](testnet-ipfs.md). The catalogue's legacy TLOS prices do not represent the proposed monthly module fees.
