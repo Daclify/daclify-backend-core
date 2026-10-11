@@ -95,4 +95,4 @@
 **Files:** Explanatory/reference docs, release evidence, durable execution ledger and all changed consumers.
 - [x] Run all repo lint/type/doc/format/build checks and complete unit/SQL/native/frontend suites.
 - [x] Review the cross-repo diff inline, check public desktop/mobile behavior and save exact rollout artifacts. Final verification: 1,547 unit/SQL/native tests plus 104 desktop/mobile browser runs, and the current live UI smoke check passed.
-- [ ] Commit/push `dev` under the workspace workflow; report tested behavior, remaining external checks and the concrete live authority decision.
+- [x] Commit/push `dev` under the workspace workflow; report tested behavior, remaining external checks and the concrete live authority decision.
