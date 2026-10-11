@@ -474,6 +474,37 @@
       "id": "CONNECTED-APPS-BROWSER",
       "suite": "browser",
       "tests": ["../daclify-frontend/tests/e2e/connected-apps.spec.ts"]
+    },
+    {
+      "id": "MONTHLY-MODULE-FEE-GUARD",
+      "suite": "vert",
+      "tests": ["tests/module-fees.test.ts"]
+    },
+    {
+      "id": "MONTHLY-MODULE-FEE-PRICING",
+      "suite": "unit",
+      "tests": ["tests/module-fee-pricing.test.ts", "tests/module-fee-config.test.ts"]
+    },
+    {
+      "id": "MONTHLY-MODULE-FEE-RECEIPTS",
+      "suite": "integration",
+      "tests": ["tests/integration/module-fees.test.ts"]
+    },
+    {
+      "id": "MONTHLY-MODULE-FEE-NATIVE-UPGRADE",
+      "suite": "native",
+      "tests": [
+        "tests/native/module-fees-upgrade.test.ts",
+        "tests/native/service-account-permissions.test.ts"
+      ]
+    },
+    {
+      "id": "MONTHLY-MODULE-FEE-BROWSER",
+      "suite": "browser",
+      "tests": [
+        "../daclify-frontend/tests/e2e/module-access.spec.ts",
+        "../daclify-frontend/tests/e2e/dao-pricing.spec.ts"
+      ]
     }
   ]
 }

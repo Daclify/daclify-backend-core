@@ -75,7 +75,7 @@ it('gives Fees only executive account authority and puts Relay signing in an act
     auth: { threshold: 1, keys: [{ key, weight: 1 }], accounts: [], waits: [] },
   });
   const links = decoded.filter((value) => 'requirement' in value);
-  expect(links.filter((row) => row.requirement === 'operator')).toHaveLength(20);
+  expect(links.filter((row) => row.requirement === 'operator')).toHaveLength(23);
   expect(
     links.some((row) =>
       ['transfer', 'updateauth', 'deleteauth', 'linkauth', 'unlinkauth'].includes(String(row.type)),

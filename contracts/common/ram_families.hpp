@@ -1,12 +1,13 @@
 #pragma once
 #include "ram_migration.hpp"
 #include "connected_apps.hpp"
+#include "module_fees.hpp"
 namespace daclify {
 // Canonical aliases retain their row/index recipes; these lists define required scan coverage.
 #define DACLIFY_RAM_GLOBALS(X) \
  X("settings",config) X("daos",daos) X("profiles",profiles) X("evidence",evidence) \
  X("feecfg",fee_settings) X("paycfg",payment_settings) X("catalogue",catalogue) \
- X("modpays",modpays) X("modcopy",modcopy) X("mktcfg",market_settings) \
+ X("modpays",modpays) X("modcopy",modcopy) X("modfees",module_fee_prices) X("mktcfg",market_settings) \
  X("createcfg",creation_settings) X("createords",creation_orders) \
  X("capcfg",hosted_settings) X("seatcfg",seat_settings) X("daocaps",dao_capacities) \
  X("capreceipts",capacity_receipts) X("govpolicies",gov_policies) X("guards",guardian_states) \
@@ -22,7 +23,7 @@ namespace daclify {
  X("keygrants",key_grants) X("govlocks",governance_locks) X("appregs",connected_apps) X("appscopes",app_scopes) X("docrefs",document_references) \
  X("docheads",document_heads) X("docclocks",document_clocks) X("docstate",document_states) \
  X("docscan",document_scans) X("docsrcs",document_sources) X("archives",archive_anchors) \
- X("archpos",archive_positions) X("ramalloc",ram_allocations) X("ramholds",ram_holds) \
+ X("archpos",archive_positions) X("modterms",module_fee_terms) X("ramalloc",ram_allocations) X("ramholds",ram_holds) \
  X("ramlimits",ram_limits) X("ramgrants",ram_grants) X("ramentitle",ram_entitlements) X("ramclmholds",ram_claim_holds) X("raminherit",ram_inherited)
 inline std::vector<eosio::name> module_ram_families(uint8_t kind){
  switch(kind){

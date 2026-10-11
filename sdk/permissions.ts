@@ -36,6 +36,7 @@ export const CoreContextActions = [
   'govpayfees',
   'govhosted',
   'govseatfee',
+  'govmodfee',
   'govresources',
   'govcreate',
   'govlist',

@@ -5,6 +5,7 @@ import { PeopleRoutes } from './people.js';
 import { PaymentRoutes, BrokerRoutes } from './payments.js';
 import { StorageBillingRoutes } from './storage.js';
 import { HostingRoutes } from './hosting.js';
+import { ModuleFeeRoutes } from './module-fees.js';
 import { DirectoryRoutes } from './directory.js';
 import { SessionSchema, ProviderLinkResultSchema } from './api.js';
 import {
@@ -222,6 +223,7 @@ export const DocsAnswerSchema = z.strictObject({
 });
 
 export const ServiceResponseRoutes = [
+  ...Object.values(ModuleFeeRoutes),
   ...Object.values(RecoveryRoutes),
   PeopleRoutes.members,
   PeopleRoutes.list,
@@ -436,6 +438,12 @@ export const ServiceResponseRoutes = [
 }[];
 
 export const ContractFailureMessages = {
+  MODULE_FEE_REQUIRED:
+    'This module needs renewed access for a DAO above 10 active members. Ask a DAO administrator to open Module access. Existing work can still be completed.',
+  MODULE_TERM_CHANGED:
+    'A newer module payment has already been recorded. Refresh module access before retrying.',
+  MODULE_FEE_REVISION:
+    'The module price changed. Refresh the configured price before approving it.',
   NATIVE_EXECUTIVE_DELEGATION:
     'Choose an independent executive account. An account controlled by core cannot become its own governing executive.',
   NATIVE_CREATOR_DELEGATION:

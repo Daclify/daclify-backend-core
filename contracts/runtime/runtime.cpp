@@ -383,6 +383,35 @@ public:
     platform_actor(runtime,dao_id,member_id);check(first_usd>=50&&first_usd<=99999&&next_usd>0&&next_usd<=first_usd&&rest_usd>0&&rest_usd<=next_usd,"HOSTED_PRICE");
     seat_settings saved(get_self(),get_self().value);auto cfg=saved.exists()?saved.get():seat_policy{};cfg.first_usd=first_usd;cfg.next_usd=next_usd;cfg.rest_usd=rest_usd;cfg.revision=add64(cfg.revision,1);saved.set(cfg,get_self());
   }
+  ACTION govmodfee(name runtime,uint64_t dao_id,uint64_t member_id,name account,uint64_t expected_revision,uint32_t monthly_usd,std::vector<name> actions){
+    platform_actor(runtime,dao_id,member_id);catalogue listings(get_self(),get_self().value);const auto& listing=listings.get(account.value,"MODULE_UNLISTED");check(listing.party==0&&listing.complies==1,"MODULE_FEE_FIRST_PARTY");
+    check((monthly_usd==0||(monthly_usd>=50&&monthly_usd<=99999999))&&!actions.empty()&&actions.size()<=16,"MODULE_FEE_POLICY");
+    for(size_t i=0;i<actions.size();++i){const auto action=actions[i];check(action=="open"_n||action=="newelect"_n||action=="propose"_n||action=="offeragr"_n||action=="commit"_n||action=="newround"_n||action=="applygrant"_n||action=="applyjoin"_n||action=="recordact"_n,"MODULE_FEE_POLICY");for(size_t j=0;j<i;++j)check(actions[j]!=action,"MODULE_FEE_POLICY");}
+    module_fee_prices prices(get_self(),get_self().value);auto found=prices.find(account.value);check((found==prices.end()?0:found->revision)==expected_revision,"MODULE_FEE_REVISION");
+    const auto revision=add64(expected_revision,1);auto write=[&](auto& r){r.account=account;r.monthly_usd=monthly_usd;r.revision=revision;r.actions=actions;};
+    if(found==prices.end()){uint32_t count=0;for(const auto& item:prices){(void)item;check(++count<module_fee_max_plans,"MODULE_FEE_LIMIT");}prices.emplace(get_self(),write);}else prices.modify(found,same_payer,write);
+  }
+  ACTION setmodterm(uint64_t dao_id,name account,checksum256 expected_receipt,uint32_t expires,checksum256 receipt){
+    require_auth(hosted_settings(get_self(),get_self().value).get().settler);dao_rows.get(dao_id,"DAO_UNKNOWN");module_fee_prices(get_self(),get_self().value).get(account.value,"MODULE_FEE_UNCONFIGURED");
+    auto now=current_time_point().sec_since_epoch();check(receipt!=checksum256{}&&expires>now&&uint64_t(expires)<=uint64_t(now)+module_term_max_seconds,"MODULE_TERM_RANGE");
+    module_fee_terms terms(get_self(),dao_id);auto found=terms.find(account.value);
+    if(found!=terms.end()&&found->receipt==receipt){check(found->expires==expires,"MODULE_TERM_CHANGED");check(!found->revoked,"MODULE_TERM_REVOKED");return;}
+    check((found==terms.end()?checksum256{}:found->receipt)==expected_receipt,"MODULE_TERM_CHANGED");
+    check(found==terms.end()||found->revoked||expires>found->expires,"MODULE_TERM_STALE");
+    auto write=[&](auto& r){r.account=account;r.expires=expires;r.receipt=receipt;r.revoked=false;};if(found==terms.end())terms.emplace(get_self(),write);else terms.modify(found,same_payer,write);
+  }
+  ACTION revmodterm(uint64_t dao_id,name account,checksum256 receipt){
+    require_auth(hosted_settings(get_self(),get_self().value).get().settler);module_fee_terms terms(get_self(),dao_id);auto found=terms.find(account.value);
+    if(found!=terms.end()&&found->receipt==receipt&&!found->revoked)terms.modify(found,same_payer,[](auto& r){r.revoked=true;});
+  }
+  ACTION resmodterm(uint64_t dao_id,name account,checksum256 receipt){
+    require_auth(hosted_settings(get_self(),get_self().value).get().settler);module_fee_terms terms(get_self(),dao_id);auto found=terms.find(account.value);
+    if(found!=terms.end()&&found->receipt==receipt&&found->revoked){check(found->expires>current_time_point().sec_since_epoch(),"MODULE_TERM_RANGE");terms.modify(found,same_payer,[](auto& r){r.revoked=false;});}
+  }
+  ACTION clearmterms(uint64_t dao_id,uint64_t after,uint32_t limit){
+    dao_rows.get(dao_id,"DAO_UNKNOWN");check(limit>0&&limit<=25,"MODULE_TERM_CLEANUP");module_fee_terms terms(get_self(),dao_id);auto found=terms.upper_bound(after);auto now=current_time_point().sec_since_epoch();
+    for(uint32_t count=0;found!=terms.end()&&count<limit;++count){if(found->expires<=now)found=terms.erase(found);else ++found;}
+  }
   ACTION orderfree(checksum256 reference,public_key creator) {
     auto cfg=creation_settings(get_self(),get_self().value).get();auto hosted=hosted_settings(get_self(),get_self().value).get();require_auth(cfg.settler);check(hosted.settler==cfg.settler&&cfg.shared_usd==0&&reference!=checksum256(),"CREATION_FREE_PATH");
     creation_orders orders(get_self(),get_self().value);auto index=orders.get_index<"byref"_n>();check(index.find(reference)==index.end(),"CREATION_EXISTS");const auto fees=fee_configuration();
@@ -1293,8 +1322,8 @@ private:
     auto now=current_time_point().sec_since_epoch();check(r.expires>now&&uint64_t(r.expires)<=uint64_t(now)+900,"EXPIRED_OR_TOO_LONG");
     check(r.data.size()>=24&&r.data.size()<=16384,"PAYLOAD_SIZE");auto context=unpack<actor_context>(r.data);
     check(context.runtime==get_self()&&context.dao_id==r.dao_id&&context.member_id==r.member_id,"PAYLOAD_DOMAIN");
-    if(r.target==get_self())check(r.action=="refreshgov"_n||r.action=="setexecs"_n||r.action=="heartbeat"_n||r.action=="setvoter"_n||r.action=="archapprove"_n||r.action=="archrevoke"_n||r.action=="govresources"_n||r.action=="govhosted"_n||r.action=="govseatfee"_n||r.action=="govpayfees"_n||r.action=="govcreate"_n||r.action=="govlist"_n||r.action=="govunlist"_n||r.action=="govmodcopy"_n||r.action=="addmember"_n||r.action=="setadmit"_n||r.action=="setdaogov"_n||r.action=="setapp"_n||r.action=="addappses"_n||r.action=="addsession"_n||r.action=="delsession"_n||r.action=="setmeta"_n||r.action=="setprofile"_n||r.action=="restoredoc"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="unlinknat"_n||r.action=="linkevm"_n||r.action=="unlinkevm"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n||r.action=="govfees"_n,"ACTION_UNSUPPORTED");
-    else { modules rows(get_self(),r.dao_id);const auto& installed=rows.get(r.target.value,"MODULE_DISABLED");check(std::find(installed.actions.begin(),installed.actions.end(),r.action)!=installed.actions.end(),"ACTION_UNSUPPORTED");check_pinned(installed,r.target); }
+    if(r.target==get_self())check(r.action=="refreshgov"_n||r.action=="setexecs"_n||r.action=="heartbeat"_n||r.action=="setvoter"_n||r.action=="archapprove"_n||r.action=="archrevoke"_n||r.action=="govresources"_n||r.action=="govhosted"_n||r.action=="govseatfee"_n||r.action=="govmodfee"_n||r.action=="govpayfees"_n||r.action=="govcreate"_n||r.action=="govlist"_n||r.action=="govunlist"_n||r.action=="govmodcopy"_n||r.action=="addmember"_n||r.action=="setadmit"_n||r.action=="setdaogov"_n||r.action=="setapp"_n||r.action=="addappses"_n||r.action=="addsession"_n||r.action=="delsession"_n||r.action=="setmeta"_n||r.action=="setprofile"_n||r.action=="restoredoc"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="unlinknat"_n||r.action=="linkevm"_n||r.action=="unlinkevm"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n||r.action=="govfees"_n,"ACTION_UNSUPPORTED");
+    else { modules rows(get_self(),r.dao_id);const auto& installed=rows.get(r.target.value,"MODULE_DISABLED");check(std::find(installed.actions.begin(),installed.actions.end(),r.action)!=installed.actions.end(),"ACTION_UNSUPPORTED");check_pinned(installed,r.target);require_module_access(get_self(),r.dao_id,r.target,r.action,d.member_count); }
   }
   void dispatch(const instruction& r) {
     members rows(get_self(),r.dao_id);const auto& m=rows.get(r.member_id);rows.modify(m,same_payer,[](auto& row){row.nonce++;});
@@ -1315,6 +1344,7 @@ extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
     EOSIO_DISPATCH_HELPER(runtime,(beginram)(scanram)(adoptram)(sealram)(setarchcfg)(archattest)(archapprove)(archrevoke)(archstep)(clearholds)(initramobs)(rebindramobs)(setramauto)(setrampool)(grantdaoram)(inheritram)(setdaoquota)(checkdaoram)(checkrampool)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram)(fulfilram))
     EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(setprofile)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(confirmext)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))
     EOSIO_DISPATCH_HELPER(runtime,(sethosted)(govhosted)(govseatfee)(orderfree)(setcapacity)(revokecap)(resumecap))
+    EOSIO_DISPATCH_HELPER(runtime,(govmodfee)(setmodterm)(revmodterm)(resmodterm)(clearmterms))
     EOSIO_DISPATCH_HELPER(runtime,(setapp)(addappses)(pruneappses)(initactivity)(enrollagent)(addmember)(initgov)(setdaogov)(addsession)(delsession)(guardpause)(guardrevoke)(guardrecover)(submitsess)(setfees)(listmod)(unlistmod)(setmodcopy)(setpolicy)(setgov)(setoracle)(govfees)(govpayfees)(setcreate)(govcreate)(setcrrate)(ordercreate)(cardcreate)(createpaid)(govlist)(govunlist)(govmodcopy))
   }}
   else if(action_name=="transfer"_n.value) execute_action(name(receiver),name(code),&runtime::deposit);

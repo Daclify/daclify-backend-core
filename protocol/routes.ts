@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import {ConnectedAppsRoutes} from './connected-apps.js';
+import { ConnectedAppsRoutes } from './connected-apps.js';
 import { RecoveryRoutes } from './recovery.js';
 import { SignupRoutes } from './signup.js';
 import {
@@ -46,7 +46,9 @@ import {
   CardRamOrderSchema,
 } from './resources.js';
 import { StorageCurationRoutes } from './storage-retention.js';
+import { ModuleFeeRoutes } from './module-fees.js';
 export const ApiRoutes = {
+  ...ModuleFeeRoutes,
   ...ConnectedAppsRoutes,
   ...RecoveryRoutes,
   ...SignupRoutes,

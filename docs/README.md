@@ -1,6 +1,6 @@
 # Daclify documentation
 
-Current development version: **0.13.0-alpha.4**, contract interface 1. This is a development checkpoint; immutable publication, live provider/client qualification and hosted operations remain separate gates.
+Current development version: **0.13.0-alpha.7**, contract interface 1. This is a development checkpoint; immutable publication, live provider/client qualification and hosted operations remain separate gates.
 
 See [vault login v3 rollout](operations/login-v3.md) for the coordinated API/frontend update and preserved account/recovery state.
 
@@ -99,3 +99,5 @@ The [remediation guide](operations/project-audit-remediation.md) connects the si
 - [Unified Users and DAO activity](operations/unified-users.md): public identity aggregation, legacy activity initialization, bounded RAM and coordinated testnet cutover.
 
 - [Telos governance entry and operator setup](telos-governance.md).
+
+See [monthly module access](operations/module-fees.md) for governed prices, the free tier and manual calendar-month renewal, and [the testnet qualification](evidence/2026-10-11-monthly-module-fees.md) for the actual sandbox payment/refund, native threshold and live encrypted-document results.
