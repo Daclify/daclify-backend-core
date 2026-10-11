@@ -40,13 +40,13 @@
 
 **Files:** frontend `src/views/TelosGovernance.vue`, `src/components/TelosProducers.vue`, `src/api/client.ts`, `tests/e2e/telos-governance.spec.ts`, navigation/public checks.
 
-- [ ] Add failing browser cases for the three views, leaderboard candidate totals, safe producer links and empty-page continuation.
-- [ ] Implement responsive cards, details and producer view using existing tokens/icons; append load-more results and guard stale requests.
-- [ ] Preserve existing native vote tests and pending evidence; run frontend verify, build and meaningful desktop/mobile browser checks.
+- [x] Add failing browser cases for the three views, leaderboard candidate totals, safe producer links and empty-page continuation.
+- [x] Implement responsive cards, details and producer view using existing tokens/icons; append load-more results and guard stale requests.
+- [x] Preserve existing native vote tests and pending evidence; run frontend verify, build and meaningful desktop/mobile browser checks.
 
 ### Task 3: Delivery
 
-- [ ] Update generated reference/explanatory docs, compatible versions, changelogs and execution evidence.
-- [ ] Review final changes inline, fix material findings, commit and push dev under standing authorization.
-- [ ] Deploy immutable API/frontend artifacts to the existing testnet, preserve recovery qualification and verify all three public views in desktop/mobile browsers.
-- [ ] Record exact results and limitations. Mainnet signing/producer voting remains unqualified.
+- [x] Update generated reference/explanatory docs, compatible versions, changelogs and execution evidence.
+- [x] Review final changes inline, fix material findings, commit and push dev under standing authorization.
+- [x] Deploy immutable API/frontend artifacts to the existing testnet, preserve recovery qualification and verify all three public views in desktop/mobile browsers.
+- [x] Record exact results and limitations. Mainnet signing/producer voting remains unqualified.

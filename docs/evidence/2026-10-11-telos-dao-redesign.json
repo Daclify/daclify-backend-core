@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "environment": "testnet",
+  "versions": {
+    "core": "0.14.0-alpha.2",
+    "modules": "0.10.0-alpha.2",
+    "frontend": "0.14.0-alpha.4"
+  },
+  "sourceCommits": {
+    "daclify-backend-core": "26be1bb55ed9e46f6f201099d13c6056525d6984",
+    "daclify-backend-modules": "9dec7a9d037bbad19e37c081b34d6e9f27b5979d",
+    "daclify-frontend": "9dfb385055f02d41e76db65e646cf79f53add44b"
+  },
+  "unitTests": {
+    "core": 887,
+    "modules": 192,
+    "frontend": 280,
+    "failed": 0
+  },
+  "browserChecks": {
+    "initialTelosAndNavigation": 38,
+    "finalTelos": 28,
+    "accountEntry": 34,
+    "accountSettingsFinal": 2,
+    "legacyFixtureUnavailable": 4
+  },
+  "publicChecks": {
+    "desktop": "passed",
+    "mobile": "passed",
+    "browserErrors": 0,
+    "wrongApiOrigins": 0,
+    "detailsViewportAndBackFocus": "passed"
+  },
+  "recovery": {
+    "originalKeyRecovered": true,
+    "sourceUnavailable": true,
+    "independentHost": false,
+    "leastPrivilegeDenials": 4,
+    "tlsVerified": true,
+    "expiresAt": "2026-10-17T14:46:09.233Z"
+  },
+  "frontendIndexSha256": "f38c860c5b9e546099f36c0c045d545d6add01c1ed99b9b421547f2e56bcb694",
+  "productionQualified": false,
+  "limitations": [
+    "Retained ballot history only; no historical producer schedules.",
+    "Foundation leaderboard and producer signing remain unqualified.",
+    "Actual Anchor/mainnet wallet transactions are unrun.",
+    "Four optional legacy assistant/EVM cases require the absent local API fixture on port 3008."
+  ]
+}
