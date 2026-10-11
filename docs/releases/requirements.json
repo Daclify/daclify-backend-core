@@ -398,6 +398,44 @@
         "tests/integration/creation.test.ts"
       ],
       "suite": "unit"
+    },
+    {
+      "id": "AUDIT-NAMES-LISTING-SAFETY",
+      "suite": "native",
+      "tests": ["tests/native/names-listing-safety.test.ts"]
+    },
+    {
+      "id": "AUDIT-NAMES-CURSORS",
+      "suite": "unit",
+      "tests": ["tests/names-pagination.test.ts", "tests/names-legacy-listing.test.ts"]
+    },
+    {
+      "id": "AUDIT-CHALLENGE-ADMISSION-EXPIRY",
+      "suite": "integration",
+      "tests": ["tests/integration/auth-challenge-limits.test.ts"]
+    },
+    {
+      "id": "AUDIT-GOOGLE-KEY-ROTATION",
+      "suite": "unit",
+      "tests": ["tests/google-key-rotation.test.ts"]
+    },
+    {
+      "id": "AUDIT-PROXY-ADMISSION",
+      "suite": "unit",
+      "tests": ["tests/proxy-trust.test.ts", "tests/window-limiter.test.ts"]
+    },
+    {
+      "id": "AUDIT-SERVICE-AUTHORITY-NATIVE",
+      "suite": "native",
+      "tests": [
+        "tests/native/service-account-permissions.test.ts",
+        "tests/native/ownership-policy-guards.test.ts"
+      ]
+    },
+    {
+      "id": "AUDIT-SERVICE-AUTHORITY-PROPOSAL",
+      "suite": "unit",
+      "tests": ["tests/service-account-permissions.test.ts"]
     }
   ]
 }

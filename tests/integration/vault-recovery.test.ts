@@ -165,15 +165,19 @@ const headers = (owner: { cookie: string; session: { csrfToken: string } }) => (
   'x-csrf-token': owner.session.csrfToken,
 });
 
+let simulatedClient = 0;
 async function owner() {
+  const remoteAddress = `192.0.2.${++simulatedClient}`;
   const key = PrivateKey.generate('K1'),
     encryption = await createRecoveryRecipient();
   const started = await app.inject({
+    remoteAddress,
     method: 'POST',
     url: ApiRoutes.challenge.path,
     headers: { origin },
     payload: { signingKey: key.toPublic().toString(), encryptionKey: encryption.publicKey },
   });
+  expect(started.statusCode).toBe(200);
   const challenge = ChallengeSchema.parse(started.json());
   const logged = await app.inject({
     method: 'POST',

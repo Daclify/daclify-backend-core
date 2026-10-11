@@ -14,3 +14,14 @@ it('bounds anonymous limiter keys and expires per-subject and global capacity', 
   expect(admit('b', 2003)).toBe(true);
   expect(admit('c', 2003)).toBe(false);
 });
+
+it('gives a configured shared proxy aggregate capacity without raising other client limits', () => {
+  const admit = createWindowLimiter(2, 1000, 6, ['192.168.5.1']);
+  expect(admit('203.0.113.8', 1000)).toBe(true);
+  expect(admit('203.0.113.8', 1001)).toBe(true);
+  expect(admit('203.0.113.8', 1002)).toBe(false);
+  for (let i = 0; i < 4; i++) expect(admit('192.168.5.1', 1010 + i)).toBe(true);
+  expect(admit('192.168.5.1', 1014)).toBe(false);
+  expect(admit('203.0.113.9', 1014)).toBe(false);
+  expect(admit('192.168.5.1', 2014)).toBe(true);
+});

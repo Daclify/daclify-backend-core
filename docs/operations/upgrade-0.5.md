@@ -1,6 +1,6 @@
 # Upgrade to 0.5.0-alpha.1
 
-This is the historical 0.4-to-0.5 contract/provider upgrade procedure. The current development version is 0.6.0-alpha.1; use the [0.6 upgrade guide](upgrade-0.6.md) for its additional service migration and wallet recovery. A service rebuild or recovery does not itself require repeating a contract deployment.
+This is the historical 0.4-to-0.5 contract/provider upgrade procedure. The historical [0.6 upgrade guide](upgrade-0.6.md) adds wallet recovery. Current development is 0.13.0-alpha.3; follow [the coordinated remediation guide](project-audit-remediation.md) for its tested runtime/Names and service changes. A service rebuild or recovery does not itself require repeating a contract deployment.
 
 This development release adds paired sign-in, direct Zero/EOA governance, display metadata v3, contribution agreements, spending receipts/reports, Grants rounds, Endorsement admission and representative elections. Deploy the three repositories together. Interface version remains 1; additive action/table/schema capabilities are release-pinned. The frontend checks its own installed module version/hash before offering module actions.
 

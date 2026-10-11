@@ -7,6 +7,25 @@ import {
 } from '../sdk/names.js';
 import { SYSTEM_ABI } from '../sdk/system-abi.js';
 describe('native name seller instructions', () => {
+  it.each(['regname', 'editname'] as const)('rejects ordinary basic names for %s', (action) => {
+    expect(() =>
+      nameSellerAction('names', action, {
+        seller: 'alice',
+        account_name: 'reviewaaaaaa',
+        price: '100.0000 TLOS',
+        usd_cents: 10000,
+        accepts_fee_rule: 1,
+      }),
+    ).toThrow('NAME_BASIC_FIRST_PARTY');
+  });
+  it('still lets a seller remove a legacy basic-name listing', () => {
+    expect(
+      nameSellerAction('names', 'delname', {
+        seller: 'alice',
+        account_name: 'reviewaaaaaa',
+      }).name.toString(),
+    ).toBe('delname');
+  });
   it('exports only a code-only child and newaccount link, preserving owner and active', () => {
     const actions = nameCreationPermissionActions('alice', 'names');
     expect(actions).toHaveLength(2);

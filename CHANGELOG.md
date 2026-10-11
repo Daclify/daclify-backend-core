@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.0-alpha.3 development
+
+Protect ordinary Names offers and seller-funded listing storage; add bounded inventory pages and keyed quotes. Configure exact trusted or shared proxy peers without requiring external HAProxy edits; rate-limit vault challenges, clean expired challenge rows and refresh Google signing keys. Reject circular executive/recovery delegation to core. Add unsigned Relay/Fees governance proposals and scoped relay authorization, with native regression tests. Refresh and hash-check normal module core fixtures. No live authority change is implied by this release.
+
 ## 0.13.0-alpha.2 development — restricted Names price observations
 
 Add Names observeprice/observefee and a dedicated oracle child linked only to those observations. Preserve executive pricing policy, owner/active, upgrade controls and singleton row layouts. The updater uses a separate key and checks exact authority and links. Test observation bounds and real native scope, quorum and revocation; restore testnet quotes with matching SDK/help artifacts.

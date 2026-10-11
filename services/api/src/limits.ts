@@ -5,7 +5,13 @@ export const RESOURCE_CPU_FLOOR_USEC = 1_000;
 export const RESOURCE_NET_FLOOR_BYTES = 512;
 export const RESOURCE_RAM_FLOOR_BYTES = 1_024;
 
-export function createWindowLimiter(limit: number, windowMs: number, globalLimit = limit) {
+export function createWindowLimiter(
+  limit: number,
+  windowMs: number,
+  globalLimit = limit,
+  sharedKeys: readonly string[] = [],
+) {
+  const shared = new Set(sharedKeys);
   const hits = new Map<string, number[]>();
   const all: number[] = [];
   let pruneAt = 0;
@@ -21,7 +27,7 @@ export function createWindowLimiter(limit: number, windowMs: number, globalLimit
     }
     while (all.length > 0 && all[0] !== undefined && all[0] <= start) all.shift();
     const recent = (hits.get(key) ?? []).filter((time) => time > start);
-    if (recent.length >= limit || all.length >= globalLimit) {
+    if (recent.length >= (shared.has(key) ? globalLimit : limit) || all.length >= globalLimit) {
       return false;
     }
     recent.push(now);

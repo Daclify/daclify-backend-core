@@ -4,6 +4,7 @@ import { readFile, mkdir, cp, writeFile, access, rm } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 const core = fileURLToPath(new URL('../', import.meta.url));
 const modules = join(dirname(core), 'daclify-backend-modules');
 const frontend = join(dirname(core), 'daclify-frontend');
@@ -13,6 +14,43 @@ const flags = process.argv.slice(2);
 if (flags.some((flag) => !['--contracts', '--backend-only'].includes(flag)))
   throw new Error('Supported options: --contracts, --backend-only');
 const backendOnly = flags.includes('--backend-only');
+async function refreshCoreFixtures() {
+  const runtime = join(core, '.artifacts/contracts/runtime.wasm');
+  try {
+    await access(runtime);
+  } catch {
+    console.log(
+      'Core contract fixtures unavailable; build with --contracts before running contract tests.',
+    );
+    return;
+  }
+  const sdk: unknown = JSON.parse(
+    execFileSync(
+      process.execPath,
+      [
+        '--input-type=module',
+        '-e',
+        "import { RuntimeCodeHash } from '@daclify/core-protocol/sdk'; process.stdout.write(JSON.stringify({ RuntimeCodeHash }));",
+      ],
+      { cwd: modules, encoding: 'utf8' },
+    ),
+  );
+  if (
+    !record(sdk) ||
+    typeof sdk.RuntimeCodeHash !== 'string' ||
+    createHash('sha256')
+      .update(await readFile(runtime))
+      .digest('hex') !== sdk.RuntimeCodeHash
+  )
+    throw new Error('CORE_FIXTURE_RELEASE_MISMATCH');
+  await mkdir(join(modules, '.artifacts/core-release'), { recursive: true });
+  for (const name of ['runtime', 'testtoken'])
+    for (const extension of ['wasm', 'abi'])
+      await cp(
+        join(core, `.artifacts/contracts/${name}.${extension}`),
+        join(modules, `.artifacts/core-release/${name}.${extension}`),
+      );
+}
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -135,6 +173,7 @@ npm(
   modules,
 );
 npm(['ci', '--ignore-scripts', '--no-audit', '--no-fund'], modules);
+if (!flags.includes('--contracts')) await refreshCoreFixtures();
 npm(['run', 'build'], modules);
 npm(['pack', '--pack-destination', '.artifacts'], modules);
 npm(
@@ -174,13 +213,7 @@ if (flags.includes('--contracts')) {
   npm(['run', 'docs:generate'], modules);
   npm(['run', 'build'], modules);
   npm(['pack', '--pack-destination', '.artifacts'], modules);
-  await mkdir(join(modules, '.artifacts/core-release'), { recursive: true });
-  for (const name of ['runtime', 'testtoken'])
-    for (const extension of ['wasm', 'abi'])
-      await cp(
-        join(core, `.artifacts/contracts/${name}.${extension}`),
-        join(modules, `.artifacts/core-release/${name}.${extension}`),
-      );
+  await refreshCoreFixtures();
   npm(['install', '--save-prod', '--ignore-scripts', moduleTar], core);
   if (!backendOnly) await installFrontendPackages();
 }

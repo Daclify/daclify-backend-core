@@ -157,6 +157,7 @@ export interface NativeChainConfig {
   environment: 'local' | 'testnet' | 'mainnet';
   relayActor: string;
   relayKey: PrivateKey;
+  relayPermission?: 'active' | 'operator';
   bootstrap?: { owner: string; key: PrivateKey };
   modules?: ReadonlyArray<{ id: ModuleDeployment['id']; account: string }>;
 }
@@ -177,6 +178,7 @@ export class NativeChainGateway implements ChainGateway {
     ChainIdSchema.parse(config.chainId);
     NativeAccountSchema.parse(config.runtime);
     NativeAccountSchema.parse(config.relayActor);
+    z.enum(['active', 'operator']).parse(config.relayPermission ?? 'active');
     const url = new URL(config.rpcUrl);
     if (url.username || url.password || url.search || url.hash)
       throw new Error('RPC_PUBLIC_ENDPOINT_REQUIRED');
@@ -2128,7 +2130,20 @@ export class NativeChainGateway implements ChainGateway {
     const transaction = Transaction.from({
       ...info.getTransactionHeader(60),
       actions: [
-        Action.from({ account, name, authorization: [{ actor, permission: 'active' }], data }),
+        Action.from({
+          account,
+          name,
+          authorization: [
+            {
+              actor,
+              permission:
+                actor === this.config.relayActor
+                  ? (this.config.relayPermission ?? 'active')
+                  : 'active',
+            },
+          ],
+          data,
+        }),
       ],
     });
     const signed = SignedTransaction.from({
@@ -2333,7 +2348,12 @@ export class NativeChainGateway implements ChainGateway {
         authorization: [
           { actor: bootstrap.owner, permission: creationPermission },
           ...(paid && this.config.relayActor !== bootstrap.owner
-            ? [{ actor: this.config.relayActor, permission: 'active' }]
+            ? [
+                {
+                  actor: this.config.relayActor,
+                  permission: this.config.relayPermission ?? 'active',
+                },
+              ]
             : []),
         ],
         data: encodeAction(paid ? 'createpaid' : 'createdao', {
@@ -2992,12 +3012,14 @@ export class NativeChainGateway implements ChainGateway {
   marketplace() {
     return readMarketplace(this.config.rpcUrl, this.config.runtime);
   }
-  nameService() {
-    return readNameService(this.config.rpcUrl, this.config.runtime);
+  nameService(query?: import('../../../protocol/service-api.js').NamesInventoryQuery) {
+    return readNameService(this.config.rpcUrl, this.config.runtime, query);
   }
   async nameQuote(accountName: string): Promise<NameQuote> {
     const name = TelosNameSchema.parse(accountName);
-    const service = await this.nameService();
+    const service = await readNameService(this.config.rpcUrl, this.config.runtime, {
+      accountName: name,
+    });
     if (
       !service.configured ||
       !service.treasury ||

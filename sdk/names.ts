@@ -50,6 +50,13 @@ export function nameSellerAction<
   const seller = 'suffix' in data ? data.suffix : data.seller;
   NativeAccountSchema.parse(seller);
   if (seller === target) throw new Error('FEE_ACCOUNT');
+  if (
+    'account_name' in data &&
+    action !== 'delname' &&
+    data.account_name.length === 12 &&
+    !data.account_name.includes('.')
+  )
+    throw new Error('NAME_BASIC_FIRST_PARTY');
   if ('suffix' in data && data.suffix.includes('.')) throw new Error('NATIVE_SUFFIX_REQUIRED');
   if (
     'account_name' in data &&

@@ -63,7 +63,7 @@ import {
 import { IdSchema } from '../../../protocol/base.js';
 import { spendingReport, spendingCsv } from './reporting/spending.js';
 import { ApiError } from './errors.js';
-import { parseFrontendOrigins } from './deployment-config.js';
+import { parseFrontendOrigins, parseSharedProxyIps } from './deployment-config.js';
 import { DaoPresets } from '../../../protocol/dao.js';
 import type { ContentService } from './content/service.js';
 import { PeopleRoutes } from '../../../protocol/people.js';
@@ -106,11 +106,18 @@ export async function createServer(
     payments?: ConnectedPayments;
     apiOrigin?: string;
     operatorPayments?: OperatorPayments;
+    trustedProxyIps?: string[];
+    sharedProxyIps?: string[];
   } = {},
 ) {
+  const sharedProxyIps = parseSharedProxyIps(
+    JSON.stringify(options.sharedProxyIps ?? []),
+    options.trustedProxyIps,
+  );
   const audience = ApiOriginSchema.parse(options.apiOrigin ?? origin);
   const admitCheckout = createWindowLimiter(8, 3_600_000, 80);
   const admitAccountControl = createWindowLimiter(40, 600_000, 4000);
+  const admitChallenge = createWindowLimiter(20, 600_000, 2000, sharedProxyIps);
   const admitPayment = createWindowLimiter(30, 60_000, 3000);
   const admitSponsored = createWindowLimiter(
     SPONSORED_WRITES_PER_WINDOW,
@@ -130,7 +137,7 @@ export async function createServer(
     logger: false,
     bodyLimit: 65536,
     requestTimeout: 15000,
-    trustProxy: ['127.0.0.1', '::1'],
+    trustProxy: options.trustedProxyIps ?? ['127.0.0.1', '::1'],
   });
   app.addContentTypeParser('application/json', { parseAs: 'buffer' }, (request, body, done) => {
     const raw = Buffer.isBuffer(body) ? body : Buffer.from(body);
@@ -315,6 +322,7 @@ export async function createServer(
     options.providers?.telegram?.oidc,
     session,
     sessionCookie,
+    sharedProxyIps,
   );
   function creationService() {
     if (!options.creation) throw new ApiError('DAO_CREATION_UNAVAILABLE', 503);
@@ -651,7 +659,7 @@ export async function createServer(
     if (!options.content) throw new ApiError('STORAGE_UNCONFIGURED', 503);
     return options.content;
   }
-  const reports = createWindowLimiter(20, 60_000, 2000);
+  const reports = createWindowLimiter(20, 60_000, 2000, sharedProxyIps);
   app.get<{ Params: { id: string } }>(ApiRoutes.spendingReport.path, async (request) => {
     if (!reports(request.ip, Date.now())) throw new ApiError('RATE_LIMIT', 429);
     return spendingReport(chain, IdSchema.parse(request.params.id));
@@ -663,7 +671,7 @@ export async function createServer(
       content: spendingCsv(await spendingReport(chain, IdSchema.parse(request.params.id))),
     };
   });
-  const images = createWindowLimiter(100, 60_000, 4000);
+  const images = createWindowLimiter(100, 60_000, 4000, sharedProxyIps);
   const assetWrites = createWindowLimiter(20, 60_000, 2000);
   app.post(ApiRoutes.storageRecover.path, async (request) => {
     const account = await session(
@@ -935,6 +943,7 @@ export async function createServer(
   );
   app.post(ApiRoutes.challenge.path, async (request) => {
     const input = ChallengeRequestSchema.parse(request.body);
+    if (!admitChallenge(request.ip, Date.now())) throw new ApiError('RATE_LIMIT', 429);
     return createChallenge(pool, input, request.headers.origin ?? origin, audience);
   });
   async function sessionCookie(reply: FastifyReply, token: string, site?: string): Promise<void> {
@@ -1128,6 +1137,7 @@ export async function createServer(
     options.signIn,
     session,
     sessionCookie,
+    sharedProxyIps,
   );
   registerEvmRoutes(app, pool, cookieName, session);
   registerVaultAttachRoutes(app, pool, origin, cookieName, session, sessionCookie, audience);
@@ -1140,6 +1150,7 @@ export async function createServer(
     sessionCookie,
     chain.walletMemberships?.bind(chain),
     audience,
+    sharedProxyIps,
   );
   registerNativeRoutes(
     app,
@@ -1152,6 +1163,7 @@ export async function createServer(
     chain.walletMemberships?.bind(chain),
     audience,
     chain.nativeGovernanceWalletInUse?.bind(chain),
+    sharedProxyIps,
   );
   const docsAssistant = createDocsAssistant(options.docs);
   registerDocsRoutes(app, docsAssistant);

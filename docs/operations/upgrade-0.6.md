@@ -1,5 +1,7 @@
 # Upgrade to 0.6.0-alpha.1
 
+This records the named earlier upgrade. For the current development candidate and exact live/staged boundary, see [audit remediation](project-audit-remediation.md) and [its verification](project-audit-remediation-verification.md). Earlier version-specific instructions still apply when migrating from that version.
+
 This development update adds wallet-only account recovery and explicit vault attachment. Update core, modules and frontend together using matching 0.6 protocol/SDK/help artifacts. Contract interface remains 1. Relative to the tested 0.5 code, no C++ action/table layout or WASM changes are introduced; this upgrade does not require contract redeployment, authority changes, module repinning or new DAO creation. If starting from an older contract release, review its separate [0.5 upgrade procedure](upgrade-0.5.md) first.
 
 ## Preserve and prepare

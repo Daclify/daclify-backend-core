@@ -1,5 +1,7 @@
 # Three-repository audit — 2026-10-10
 
+This is the initial dated audit checkpoint. Its confirmed source findings are addressed in [the remediation and verification record](../operations/project-audit-remediation-verification.md); remaining provider/release gates and the pending live rollout are recorded there. Preserve the results below as evidence of this earlier review.
+
 ## Summary and scope
 
 Reviewed current `dev` of core, modules and frontend using Ponytail 5.1.0 full and the supplied audit/implementation prompt. Starting commits were core `3aa83e4`, modules `82c3621`, frontend `6300044`; all matched their remotes and were clean. Work stayed on `dev`, with no delegated agents, production deployment, provider configuration changes, asset movement or authority changes.

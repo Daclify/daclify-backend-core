@@ -76,3 +76,61 @@ it('rejects service authority hidden in creator owner even with a distinct activ
     ),
   ).rejects.toThrow('SERVICE_KEY_CREATOR');
 });
+
+it.each([
+  ['active', 'active'],
+  ['owner', 'active'],
+  ['active', 'owner'],
+  ['owner', 'owner'],
+])('rejects creator %s authority delegated back to core@%s', async (permission, controller) => {
+  const original = Authority.from({
+    threshold: 1,
+    keys: [{ key: f().key('recovery').toPublic(), weight: 1 }],
+    accounts: [],
+    waits: [],
+  });
+  const delegated = Authority.from({
+    threshold: 1,
+    keys: [],
+    waits: [],
+    accounts: [{ permission: { actor: 'daclifycore', permission: controller }, weight: 1 }],
+  });
+  await f().update('recovery', 'active', 'owner', original);
+  await f().update('recovery', permission, permission === 'owner' ? '' : 'owner', delegated);
+  try {
+    await expect(
+      f().call(
+        'daclifycore',
+        'setnativegov',
+        {
+          dao_id: dao.daoId,
+          creator: 'recovery',
+          contracts: ['works'],
+          inline_code: ['works'],
+          service_key: f().key('relay').toPublic(),
+        },
+        'daclifycore',
+        'owner',
+      ),
+    ).rejects.toThrow('NATIVE_CREATOR_DELEGATION');
+    expect(
+      (
+        await f().api.v1.chain.get_table_rows({
+          code: 'daclifycore',
+          scope: 'daclifycore',
+          table: 'nativegov',
+          limit: 1,
+        })
+      ).rows,
+    ).toEqual([]);
+  } finally {
+    await f().update(
+      'recovery',
+      'owner',
+      '',
+      original,
+      permission === 'owner' ? f().key('daclifycore') : f().key('recovery'),
+    );
+    await f().update('recovery', 'active', 'owner', original);
+  }
+});

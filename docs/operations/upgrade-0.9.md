@@ -1,5 +1,7 @@
 # Executive governance adoption — 0.9 development release
 
+This records the named earlier upgrade. For the current development candidate and exact live/staged boundary, see [audit remediation](project-audit-remediation.md) and [its verification](project-audit-remediation-verification.md). Earlier version-specific instructions still apply when migrating from that version.
+
 This is an owner-reviewed adoption procedure. The implementation and local tests do not change existing testnet or mainnet permissions. The 0.9.0-alpha.1 packages are development artifacts, not a qualified production release.
 
 ## Compatibility and preparation

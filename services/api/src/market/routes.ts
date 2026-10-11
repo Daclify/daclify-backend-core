@@ -5,6 +5,10 @@ import type { ChainGateway } from '../chain.js';
 import type { StripeBilling } from '../billing/service.js';
 import { ApiError } from '../errors.js';
 import {
+  NamesInventoryQuerySchema,
+  type NamesInventoryQuery,
+} from '../../../../protocol/service-api.js';
+import {
   MarketRuleError,
   TelosNameSchema,
   loadCatalogue,
@@ -29,7 +33,7 @@ export interface MarketChain {
     treasury: string | null;
     modules: ListedModule[];
   }>;
-  nameService(): Promise<{
+  nameService(query?: NamesInventoryQuery): Promise<{
     contract: string | null;
     tokenContract: string | null;
     configured: boolean;
@@ -40,6 +44,8 @@ export interface MarketChain {
     tiers: Array<NameTier & { netStake: string; cpuStake: string; tlosQuote: string | null }>;
     listings: NameListing[];
     suffixes: NameSuffix[];
+    listingsNext?: string | null;
+    suffixesNext?: string | null;
     bumpBps: number | null;
     quotePremiumBps: number | null;
     oracleMedian: string | null;
@@ -126,8 +132,10 @@ export function registerMarketRoutes(
 ): void {
   const market = isMarketChain(chain) ? chain : undefined;
   app.get('/v1/marketplace', async () => market?.marketplace() ?? absentCatalogue);
-  app.get('/v1/names', async () => ({
-    ...(market ? await market.nameService() : absentNames),
+  app.get('/v1/names', async (request) => ({
+    ...(market
+      ? await market.nameService(NamesInventoryQuerySchema.parse(request.query))
+      : absentNames),
     cardPayments: Boolean(billing),
   }));
   app.get<{ Querystring: { name?: string } }>('/v1/names/quote', async (request) => {
@@ -187,11 +195,15 @@ export async function readMarketplace(rpcUrl: string, runtime: string) {
   return marketplaceView(fees, await loadCatalogue(rpcUrl, runtime));
 }
 
-export async function readNameService(rpcUrl: string, runtime: string) {
+export async function readNameService(
+  rpcUrl: string,
+  runtime: string,
+  query: NamesInventoryQuery & { accountName?: string } = {},
+) {
   const fees = await loadFees(rpcUrl, runtime);
   if (!fees?.names) return absentNames;
   const [names, governance] = await Promise.all([
-    loadNames(rpcUrl, fees.names),
+    loadNames(rpcUrl, fees.names, query),
     loadMarketPolicy(rpcUrl, runtime),
   ]);
   if (!names) return absentNames;
@@ -222,6 +234,8 @@ export async function readNameService(rpcUrl: string, runtime: string) {
     })),
     listings: names.listings,
     suffixes: names.suffixes,
+    listingsNext: names.listingsNext ?? null,
+    suffixesNext: names.suffixesNext ?? null,
     bumpBps: names.policy?.bumpBps ?? 2000,
     quotePremiumBps: names.policy?.quotePremiumBps ?? 2000,
     oracleMedian: median,

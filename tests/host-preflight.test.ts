@@ -98,6 +98,12 @@ function environment() {
 
 it('rejects swapped ports, networks, database roles and unapproved frontend origins', () => {
   expect(validateHostEnvironment('mainnet', environment())).toEqual([]);
+  expect(
+    validateHostEnvironment('mainnet', { ...environment(), GOOGLE_CLIENT_ID: 'google-client' }),
+  ).toEqual([]);
+  expect(
+    validateHostEnvironment('mainnet', { ...environment(), RELAY_PERMISSION: 'operator' }),
+  ).toEqual([]);
   for (const changed of [
     { API_PORT: '3028' },
     { NETWORK_ENVIRONMENT: 'testnet' },
@@ -107,6 +113,10 @@ it('rejects swapped ports, networks, database roles and unapproved frontend orig
     { FRONTEND_ADDITIONAL_ORIGINS: '["https://unapproved.example"]' },
     { CHAIN_ID: '1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f' },
     { DEPLOYER_PRIVATE_KEY: 'fixture' },
+    { RELAY_PERMISSION: 'owner' },
+    { TRUSTED_PROXY_IPS: '["0.0.0.0/0"]' },
+    { SHARED_PROXY_IPS: '["192.168.0.0/16"]' },
+    { SHARED_PROXY_IPS: '["192.168.5.1"]', TRUSTED_PROXY_IPS: '["192.168.5.1"]' },
     { RELAY_PRIVATE_KEY: 'replace-with-real-key' },
   ])
     expect(() => validateHostEnvironment('mainnet', { ...environment(), ...changed })).toThrow();

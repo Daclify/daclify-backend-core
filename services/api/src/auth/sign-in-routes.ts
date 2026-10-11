@@ -58,9 +58,10 @@ export function registerSignInRoutes(
   signIn: SignInConfiguration | undefined,
   session: (token: string | undefined, csrf?: string) => Promise<Account>,
   sessionCookie: (reply: FastifyReply, token: string, site?: string) => Promise<void>,
+  sharedProxyIps: readonly string[] = [],
 ): void {
-  const admit = createWindowLimiter(20, 10 * 60_000, 2000);
-  const confirm = createWindowLimiter(60, 10 * 60_000, 6000);
+  const admit = createWindowLimiter(20, 10 * 60_000, 2000, sharedProxyIps);
+  const confirm = createWindowLimiter(60, 10 * 60_000, 6000, sharedProxyIps);
   app.addHook('preHandler', async (request) => {
     const path = request.routeOptions.url ?? '';
     if (request.method !== 'POST' || !path.startsWith('/v1/sign-in/')) return;

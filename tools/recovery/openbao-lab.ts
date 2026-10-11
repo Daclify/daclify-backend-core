@@ -93,15 +93,13 @@ try {
   });
   const policy = await readFile('ops/recovery/api-policy.hcl', 'utf8');
   await request(source.address, 'sys/policies/acl/daclify-recovery', root, { policy });
-  const issued = z
-    .object({ auth: z.object({ client_token: z.string() }) })
-    .parse(
-      await request(source.address, 'auth/token/create', root, {
-        policies: ['daclify-recovery'],
-        no_default_policy: true,
-        ttl: '1h',
-      }),
-    );
+  const issued = z.object({ auth: z.object({ client_token: z.string() }) }).parse(
+    await request(source.address, 'auth/token/create', root, {
+      policies: ['daclify-recovery'],
+      no_default_policy: true,
+      ttl: '1h',
+    }),
+  );
   const token = issued.auth.client_token,
     provider = new OpenBaoCustody(source.address, token),
     plaintext = crypto.getRandomValues(new Uint8Array(32));

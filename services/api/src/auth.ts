@@ -12,6 +12,23 @@ import {
 import { EncryptionPublicKeySchema } from '../../../protocol/crypto.js';
 import type { Challenge } from './store.js';
 import { ApiError } from './errors.js';
+import { startPollingWorker } from './jobs.js';
+
+export async function cleanupExpiredChallenges(pool: Pool, limit = 500): Promise<number> {
+  if (!Number.isInteger(limit) || limit < 1 || limit > 500) throw new Error('AUTH_CLEANUP_LIMIT');
+  const result = await pool.query(
+    'WITH expired AS (SELECT id FROM challenges WHERE expires_at<=now() ORDER BY expires_at,id LIMIT $1 FOR UPDATE SKIP LOCKED) DELETE FROM challenges c USING expired e WHERE c.id=e.id',
+    [limit],
+  );
+  return result.rowCount ?? 0;
+}
+
+export function startAuthMaintenance(pool: Pool): { stop: () => Promise<void> } {
+  return startPollingWorker(
+    async () => ((await cleanupExpiredChallenges(pool)) === 0 ? 'idle' : 'progress'),
+    'AUTH_MAINTENANCE_UNAVAILABLE',
+  );
+}
 
 const hash = (value: string): Buffer => createHash('sha256').update(value).digest();
 export function validEncryptionKey(

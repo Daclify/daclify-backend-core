@@ -2,6 +2,32 @@ import { z } from 'zod';
 import { ModuleDeploymentSchema } from '@daclify/modules';
 import { NativeAccountSchema } from '../../../protocol/base.js';
 
+function parseProxyIps(value: string | undefined, error: string): string[] {
+  try {
+    const parsed: unknown = value === undefined ? [] : JSON.parse(value);
+    return [
+      ...new Set(
+        z
+          .array(z.union([z.ipv4(), z.ipv6()]))
+          .max(16)
+          .parse(parsed),
+      ),
+    ];
+  } catch {
+    throw new Error(error);
+  }
+}
+
+export function parseTrustedProxyIps(value?: string): string[] {
+  return [...new Set(['127.0.0.1', '::1', ...parseProxyIps(value, 'TRUSTED_PROXY_IPS_INVALID')])];
+}
+
+export function parseSharedProxyIps(value?: string, trusted = parseTrustedProxyIps()): string[] {
+  const shared = parseProxyIps(value, 'SHARED_PROXY_IPS_INVALID');
+  if (shared.some((ip) => trusted.includes(ip))) throw new Error('SHARED_PROXY_IPS_INVALID');
+  return shared;
+}
+
 const ModuleDeploymentConfigSchema = z
   .array(
     z.strictObject({

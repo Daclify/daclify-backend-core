@@ -2,7 +2,7 @@
 
 From backend core, run `npm run test:native:permissions`. These tests start and stop their own Spring 1.2.2 nodes. They require the real compiled binaries in core `.artifacts/contracts` and the five module binaries in the sibling modules `.artifacts/contracts`. Missing artifacts or a missing/wrong node version fail the run.
 
-The owned suite also includes Names oracle scope, observations, executive quorum and revocation in `tests/native/names-oracle-permission.test.ts`. It uses the actual Names binary; it needs no shared Docker Names fixture.
+The owned suite includes Names listing safety, seller RAM, a 102-entry inventory and keyed later quotes, real Relay operator orders and dummy Fees treasury transfers, circular creator/executive delegation through core owner/active, and Hub hash registration. It also includes Names oracle scope, observations, executive quorum and revocation in `tests/native/names-oracle-permission.test.ts`. It uses the actual Names binary; it needs no shared Docker Names fixture.
 
 The suite covers creator recovery, executive quorum, code/ABI upgrades, parent/child permission links, code weights, service isolation, actual policy-2 handover and legacy-policy upgrade refusal, strict incoming-wallet consent, replay, module sender/grant/code checks, cross-DAO isolation, rollback and a complete Grants/Decide/Works/Payroll payout flow. A ballot genuinely waits for its 60-second chain deadline. Each node has a distinct generated genesis, disposable signers, private temporary configuration and random loopback HTTP/P2P ports; the suite never selects an existing or public chain.
 

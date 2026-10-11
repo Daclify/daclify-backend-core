@@ -1,6 +1,6 @@
 # DAO presets and guarded agents
 
-Introduced in 0.2.0-alpha.1 and retained in the current 0.6.0-alpha.1 development prerelease, with contract interface 1. This is not a qualified production release. Follow the current [upgrade guide](operations/upgrade-0.6.md) and [recovery runbook](disaster-recovery.md) for service updates and per-user recovery; the original integration notes below are historical.
+Introduced in 0.2.0-alpha.1 and retained in the current 0.13.0-alpha.3 development prerelease, with contract interface 1. This is not a qualified production release. Follow the current [coordinated remediation guide](operations/project-audit-remediation.md) and [recovery runbook](disaster-recovery.md) for service updates and per-user recovery; the original integration notes below are historical.
 
 Purpose and participants are independent. Choose community, NGO/grants, gaming guild, team/cooperative or custom; then choose human, mixed or guarded-agent participation. Presets initialise modules and an explicitly confirmed policy. They do not certify charitable status, game ownership, model behaviour or operator independence.
 
@@ -38,7 +38,7 @@ Large content continues to use IPFS/Pinata. Encrypt private content before publi
 
 Metadata schema 1 remains readable. Schema 2 preserves the resolved initial preset snapshot. Core adds govpolicies, actors, sessions, guards and budgets; Decide adds executions. Existing DAO/member/ballot/project/milestone layouts remain unchanged. Native execution requires links for the new core callbacks and Decide openwork. The updated local fixture permission tooling demonstrates these links; a real deployment needs a separately prepared, reviewed permission plan. No production permission changes are performed by this branch.
 
-The original feature advanced the public packages and application together to 0.2.0-alpha.1. Its additive API response fields and capabilities can break strict 0.1 clients even though native interface version 1 and existing table encodings remain unchanged. Current 0.6 consumers must use matching protocol/module artifacts; neither the original feature nor the recovery update qualifies old HTTP client compatibility or a production migration.
+The original feature advanced the public packages and application together to 0.2.0-alpha.1. Its additive API response fields and capabilities can break strict 0.1 clients even though native interface version 1 and existing table encodings remain unchanged. Current consumers must use matching protocol/module artifacts; neither the original feature nor the recovery update qualifies old HTTP client compatibility or a production migration.
 
 For coordinated changes, integrate core, modules and frontend together, resolve source conflicts first, then regenerate affected ABI SDKs, code hashes, references and package locks with the development bootstrap. Do not choose one side of generated-file conflicts as the final artifact. Align the prerelease version with other branches before publishing. Existing release gates remain in force.
 

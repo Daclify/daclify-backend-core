@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Uint64Schema } from './base.js';
 import { RecoveryRoutes } from './recovery.js';
 import { PeopleRoutes } from './people.js';
 import { PaymentRoutes, BrokerRoutes } from './payments.js';
@@ -155,6 +156,11 @@ export const NameSuffixSchema = z.strictObject({
   usdCents: z.number().int().nonnegative(),
   sales: z.number().int().nonnegative(),
 });
+export const NamesInventoryQuerySchema = z.strictObject({
+  listingsCursor: Uint64Schema.optional(),
+  suffixesCursor: Uint64Schema.optional(),
+});
+export type NamesInventoryQuery = z.infer<typeof NamesInventoryQuerySchema>;
 export const NamesServiceSchema = z.strictObject({
   contract: z.string().nullable().default(null),
   tokenContract: z.string().nullable().default(null),
@@ -167,6 +173,8 @@ export const NamesServiceSchema = z.strictObject({
   tiers: z.array(NameTierSchema),
   listings: z.array(NameListingSchema),
   suffixes: z.array(NameSuffixSchema),
+  listingsNext: Uint64Schema.nullable().default(null),
+  suffixesNext: Uint64Schema.nullable().default(null),
   bumpBps: z.number().int().nullable(),
   quotePremiumBps: z.number().int().nullable(),
   oracleMedian: z.string().nullable(),
@@ -402,7 +410,12 @@ export const ServiceResponseRoutes = [
     response: EvmLinkSchema,
   },
   { method: 'GET', path: '/v1/marketplace', response: MarketplaceSchema },
-  { method: 'GET', path: '/v1/names', response: NamesServiceSchema },
+  {
+    method: 'GET',
+    path: '/v1/names',
+    query: NamesInventoryQuerySchema,
+    response: NamesServiceSchema,
+  },
   { method: 'GET', path: '/v1/names/quote', response: NameQuoteSchema },
   { method: 'POST', path: '/v1/names/checkout', response: ServiceCheckoutSchema },
   { method: 'GET', path: '/v1/docs/agent', response: DocsAgentStatusSchema },
@@ -417,6 +430,12 @@ export const ServiceResponseRoutes = [
 }[];
 
 export const ContractFailureMessages = {
+  NATIVE_EXECUTIVE_DELEGATION:
+    'Choose an independent executive account. An account controlled by core cannot become its own governing executive.',
+  NATIVE_CREATOR_DELEGATION:
+    'The creator recovery account must have independent authority and cannot delegate back to core.',
+  NAME_BASIC_FIRST_PARTY:
+    'Ordinary 12-character names are sold by the name service. Sellers can list special names or names under their own suffix.',
   NAME_COST_LOW:
     'The payment does not cover actual account resources and the platform fee. No native purchase was completed.',
   NAME_CARD_ROUTING: 'Third-party names use TLOS until seller card payment routing is available.',

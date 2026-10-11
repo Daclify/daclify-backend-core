@@ -2,13 +2,14 @@ import { CreationService } from './creation.js';
 import './load-local-env.js';
 import { Pool } from 'pg';
 import { PrivateKey } from '@wharfkit/antelope';
-import { importJWK } from 'jose';
+import { googleKeyResolver } from './providers/proofs.js';
 import { z } from 'zod';
 import type { ProviderConfiguration } from './auth/linking.js';
 import { readMailDelivery, readMailSender } from './auth/mail.js';
 import { readTelegramOidc } from './auth/telegram-oidc.js';
 import { NativeChainGateway } from './native-chain.js';
 import { migrate } from './store.js';
+import { startAuthMaintenance } from './auth.js';
 import { createServer } from './server.js';
 import { PinataStorage } from './content/pinata.js';
 import { readRecoveryConfiguration } from './auth/recovery-config.js';
@@ -31,7 +32,12 @@ import {
 } from './billing/storage-notices.js';
 import { readRetentionEnabled } from './content/retention-config.js';
 import { Uint64Schema } from '../../../protocol/base.js';
-import { parseFrontendOrigins, parseModuleDeployments } from './deployment-config.js';
+import {
+  parseFrontendOrigins,
+  parseModuleDeployments,
+  parseTrustedProxyIps,
+  parseSharedProxyIps,
+} from './deployment-config.js';
 import { readStripeConfig } from './billing/config.js';
 import { StripeBilling } from './billing/service.js';
 import { readDocsAgent } from './docs/config.js';
@@ -59,12 +65,15 @@ const configuration = z
     RUNTIME_ACCOUNT: z.string(),
     RELAY_ACCOUNT: z.string(),
     RELAY_PRIVATE_KEY: z.string(),
+    RELAY_PERMISSION: z.enum(['active', 'operator']).default('active'),
     HUB_ACCOUNT: z.string().optional(),
     BOOTSTRAP_OWNER: z.string().optional(),
     BOOTSTRAP_PRIVATE_KEY: z.string().optional(),
     NETWORK_ENVIRONMENT: z.enum(['local', 'testnet', 'mainnet']),
     API_HOST: z.union([z.ipv4(), z.ipv6()]).default('127.0.0.1'),
     API_PORT: z.coerce.number().int().min(1).max(65535).default(3008),
+    TRUSTED_PROXY_IPS: z.string().min(2).max(8192).optional(),
+    SHARED_PROXY_IPS: z.string().min(2).max(8192).optional(),
     PINATA_JWT: z.string().min(1).optional(),
     PINATA_STORAGE_SCOPE: ProviderScopeSchema.optional(),
     CONTENT_GATEWAY: z.url().optional(),
@@ -75,7 +84,6 @@ const configuration = z
       .optional(),
     CONTENT_FREE_STORAGE_BYTES: Uint64Schema.default('0'),
     GOOGLE_CLIENT_ID: z.string().min(1).max(256).optional(),
-    GOOGLE_PUBLIC_JWK: z.string().min(1).max(8192).optional(),
     TELEGRAM_BOT_TOKEN: z
       .string()
       .regex(/^\d+:[A-Za-z0-9_-]+$/)
@@ -89,6 +97,8 @@ const configuration = z
   .safeParse({ ...process.env, PINATA_STORAGE_SCOPE: readPinataStorageScope(process.env) });
 if (!configuration.success) throw new Error('API_CONFIGURATION_INVALID');
 const env = configuration.data;
+const trustedProxyIps = parseTrustedProxyIps(env.TRUSTED_PROXY_IPS);
+const sharedProxyIps = parseSharedProxyIps(env.SHARED_PROXY_IPS, trustedProxyIps);
 const origins = parseFrontendOrigins(env.FRONTEND_ORIGIN, env.FRONTEND_ADDITIONAL_ORIGINS);
 if (!!env.BOOTSTRAP_OWNER !== !!env.BOOTSTRAP_PRIVATE_KEY)
   throw new Error('Bootstrap owner and key must be configured together');
@@ -97,8 +107,6 @@ if (!!env.PINATA_JWT !== !!env.CONTENT_GATEWAY || !!env.PINATA_JWT !== !!env.PIN
 if (env.CONTENT_GATEWAY_KEY && !env.PINATA_JWT) throw new Error('PINATA_CONFIGURATION_INVALID');
 if (env.CONTENT_GATEWAY_BUDGET_ID && !env.PINATA_JWT)
   throw new Error('PINATA_CONFIGURATION_INVALID');
-if (!!env.GOOGLE_CLIENT_ID !== !!env.GOOGLE_PUBLIC_JWK)
-  throw new Error('GOOGLE_CONFIGURATION_INVALID');
 function privateKey(value: string): PrivateKey {
   try {
     return PrivateKey.from(value);
@@ -117,6 +125,7 @@ const chain = new NativeChainGateway(
     environment: env.NETWORK_ENVIRONMENT,
     relayActor: env.RELAY_ACCOUNT,
     relayKey: privateKey(env.RELAY_PRIVATE_KEY),
+    relayPermission: env.RELAY_PERMISSION,
     ...(env.BOOTSTRAP_OWNER && env.BOOTSTRAP_PRIVATE_KEY
       ? { bootstrap: { owner: env.BOOTSTRAP_OWNER, key: privateKey(env.BOOTSTRAP_PRIVATE_KEY) } }
       : {}),
@@ -128,18 +137,8 @@ const archiveBackupConfig = readArchiveBackupConfig(process.env);
 if (archiveBackupConfig && !env.PINATA_JWT) throw new Error('ARCHIVE_BACKUP_CONTENT_REQUIRED');
 const providers: ProviderConfiguration = {};
 const telegramOidc = readTelegramOidc(process.env);
-if (env.GOOGLE_CLIENT_ID && env.GOOGLE_PUBLIC_JWK) {
-  try {
-    const parsed: unknown = JSON.parse(env.GOOGLE_PUBLIC_JWK);
-    const jwk = z
-      .object({ kty: z.literal('RSA') })
-      .passthrough()
-      .parse(parsed);
-    providers.google = { clientId: env.GOOGLE_CLIENT_ID, key: await importJWK(jwk, 'RS256') };
-  } catch {
-    throw new Error('GOOGLE_CONFIGURATION_INVALID');
-  }
-}
+if (env.GOOGLE_CLIENT_ID)
+  providers.google = { clientId: env.GOOGLE_CLIENT_ID, key: googleKeyResolver() };
 if (env.TELEGRAM_BOT_USERNAME && !env.TELEGRAM_BOT_TOKEN)
   throw new Error('TELEGRAM_CONFIGURATION_INVALID');
 if (env.TELEGRAM_BOT_TOKEN || telegramOidc) {
@@ -255,9 +254,12 @@ const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
     : {}),
   signIn: { environment: env.NETWORK_ENVIRONMENT, ...(deliverEmail ? { deliverEmail } : {}) },
   ...(docs ? { docs } : {}),
+  trustedProxyIps,
+  sharedProxyIps,
   ...(telegramDocs ? { telegramDocs } : {}),
 });
 await app.listen({ host: env.API_HOST, port: env.API_PORT });
+const authWorker = startAuthMaintenance(pool);
 const worker = content ? startContentWorker(pool, content) : undefined;
 const hostingWorker = hosting ? startHostingWorker(pool, hosting) : undefined;
 const storageWorker = hostedStorage ? startStorageWorker(pool, hostedStorage) : undefined;
@@ -269,6 +271,7 @@ const retentionWorker = content?.retention.cleanupEnabled
   : undefined;
 async function shutdown() {
   await app.close();
+  await authWorker.stop();
   await worker?.stop();
   await hostingWorker?.stop();
   await storageWorker?.stop();

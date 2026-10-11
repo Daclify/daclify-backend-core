@@ -17,3 +17,7 @@ The reviewed testnet service runs the command with `--apply`. It checks the runt
 Executives rotate the child with `updateauth` signed through Names active; existing links do not need reinstalling. Reinstalling an unchanged `linkauth` is rejected by the native chain. Antelope allows a child to rotate its own authority, too, but it cannot change its parent or expand links. Executive active can replace or revoke that child. Update the updater's private key when rotating, and verify all parent authorities and links again.
 
 Owned native checks include `tests/native/names-oracle-permission.test.ts` in `npm run test:native:permissions`. They use actual compiled Names C++ and distinct dummy signatures with two-executive delegated active. They test policy preservation, wrong signatures, scope denial, replay/future/stale observations, upgrade/withdrawal/authority/link denial and executive revocation. VERT additionally checks numeric and freshness boundaries.
+
+## Pin the running release
+
+Run the updater from an archived reviewed source, lockfile and public-artifact snapshot matching live runtime/Names code. Do not point a production timer at the mutable development checkout. The restored testnet timer currently uses `/data/daclify-runtime/releases/oracle-alpha2/daclify-backend-core`; the alpha.3 audit cutover must pause it, upgrade the contracts, advance that snapshot and resume it after pin verification. See [remediation verification](project-audit-remediation-verification.md).

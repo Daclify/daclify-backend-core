@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Blockchain } from '@proton/vert';
-import { API, PublicKey, TimePoint } from '@greymass/eosio';
+import { API, Name as VertName, PublicKey, TimePoint } from '@greymass/eosio';
 import { Asset, Name, PrivateKey } from '@wharfkit/antelope';
 import { z } from 'zod';
 import { loadContract, row, send } from './helpers/vert.js';
@@ -110,6 +110,44 @@ beforeEach(async () => {
   );
 });
 describe('Names minimum profit', () => {
+  it('uses the first-party card offer despite a legacy basic-name seller row', async () => {
+    const table = names.tables.namelist?.(names.toBigInt());
+    if (!table) throw new Error('FIXTURE_TABLE');
+    table.set(scope('reviewaaaaaa'), VertName.from('names'), {
+      account_name: 'reviewaaaaaa',
+      seller: 'bob',
+      price: '100.0000 TLOS',
+      usd_cents: 10000,
+      accepts: 1,
+      sold: 0,
+    });
+    await expect(
+      send(names, 'fulfill', ['relay', 'reviewaaaaaa', key, key, 99, ref], 'relay@active'),
+    ).rejects.toThrow('PRICE');
+  });
+  it('refuses edits of legacy ordinary-name listings', async () => {
+    const table = names.tables.namelist?.(names.toBigInt());
+    if (!table) throw new Error('FIXTURE_TABLE');
+    table.set(scope('reviewaaaaaa'), VertName.from('names'), {
+      account_name: 'reviewaaaaaa',
+      seller: 'bob',
+      price: '100.0000 TLOS',
+      usd_cents: 10000,
+      accepts: 1,
+      sold: 0,
+    });
+    await expect(
+      send(names, 'editname', ['bob', 'reviewaaaaaa', '200.0000 TLOS', 20000, 1], 'bob@active'),
+    ).rejects.toThrow('NAME_BASIC_FIRST_PARTY');
+    await send(names, 'delname', ['bob', 'reviewaaaaaa'], 'bob@active');
+    expect(names.tables.namelist?.(names.toBigInt()).getTableRows()).toEqual([]);
+  });
+  it('refuses a seller takeover of an ordinary first-party account name', async () => {
+    await expect(
+      send(names, 'regname', ['bob', 'reviewaaaaaa', '100.0000 TLOS', 10000, 1], 'bob@active'),
+    ).rejects.toThrow('NAME_BASIC_FIRST_PARTY');
+    expect(names.tables.namelist?.(names.toBigInt()).getTableRows()).toEqual([]);
+  });
   it('funds actual third-party creation before paying a fee on full gross and the seller remainder', async () => {
     await send(
       names,

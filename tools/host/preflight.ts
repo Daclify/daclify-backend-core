@@ -11,6 +11,8 @@ import { parseEnvFile } from '../../services/api/src/env-file.js';
 import {
   parseFrontendOrigins,
   parseModuleDeployments,
+  parseTrustedProxyIps,
+  parseSharedProxyIps,
 } from '../../services/api/src/deployment-config.js';
 import { collectDeployment } from '../../services/api/src/deployment-check.js';
 import { readStripeConfig } from '../../services/api/src/billing/config.js';
@@ -57,6 +59,8 @@ const Manifest = z.object({
 });
 
 export function validateHostEnvironment(environment: HostEnvironment, env: Record<string, string>) {
+  z.enum(['active', 'operator']).parse(env.RELAY_PERMISSION ?? 'active');
+  parseSharedProxyIps(env.SHARED_PROXY_IPS, parseTrustedProxyIps(env.TRUSTED_PROXY_IPS));
   for (const field of [
     'DATABASE_URL',
     'FRONTEND_ORIGIN',
@@ -125,7 +129,7 @@ export function validateHostEnvironment(environment: HostEnvironment, env: Recor
     if (!env.CONTENT_GATEWAY_KEY) throw new Error('CONTENT_GATEWAY_KEY_REQUIRED');
     new PinataStorage(env.PINATA_JWT, env.CONTENT_GATEWAY ?? '', env.CONTENT_GATEWAY_KEY);
   }
-  if (!!env.GOOGLE_CLIENT_ID !== !!env.GOOGLE_PUBLIC_JWK) throw new Error('GOOGLE_CONFIGURATION');
+  if (env.GOOGLE_CLIENT_ID) z.string().min(1).max(256).parse(env.GOOGLE_CLIENT_ID);
   if (env.STRIPE_PRICE_ID || env.STRIPE_WEBHOOK_SECRET) readStripeConfig(env, environment);
   readConnectConfig(env, environment, frontend);
   readHostingConfig(env, environment, frontend);
@@ -261,7 +265,9 @@ async function preflight() {
     .catch(() => {
       throw new Error('RELAY_ACCOUNT_UNAVAILABLE');
     });
-  const permission = relay.permissions.find((row) => row.perm_name.toString() === 'active');
+  const permission = relay.permissions.find(
+    (row) => row.perm_name.toString() === (env.RELAY_PERMISSION ?? 'active'),
+  );
   const publicKey = PrivateKey.from(env.RELAY_PRIVATE_KEY ?? '').toPublic();
   if (!permission || !directKeyAuthorized(permission.required_auth, publicKey))
     throw new Error('RELAY_KEY_AUTHORITY');

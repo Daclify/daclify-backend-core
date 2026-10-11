@@ -1,5 +1,7 @@
 # Upgrade to the 0.8.0-alpha.1 development candidate
 
+This records the named earlier upgrade. For the current development candidate and exact live/staged boundary, see [audit remediation](project-audit-remediation.md) and [its verification](project-audit-remediation-verification.md). Earlier version-specific instructions still apply when migrating from that version.
+
 This candidate adds RAM accounting/acquisition, prepaid pinned storage and the Archive service. Contract interface, member IDs, signed instruction domains and document-encryption domains remain at version 1. Current C++ artifacts are the previously qualified resource packet; the 0.8 metadata bump itself does not change their bytes. Earlier 0.7 production/development deployments can have different binaries: compare exact code and raw ABI hashes, not package labels.
 
 ## Preserve the existing deployment
@@ -22,7 +24,7 @@ Native RAM buys charge one 5% fee, card provisioning one 20% operational markup;
 
 Mainnet and testnet require separate Pinata accounts. Configure stable ownership scope, protected dedicated gateway and a genuinely funded [gateway allowance](gateway-allowance.md). Keep `DACLIFY_STORAGE_CLEANUP_ENABLED=false` through configuration and recovery testing. Archive export/backup does not authorize pruning; exact native availability attestation and administrator approval are separate.
 
-Testnet HTTPS frontend/API addresses are not yet deployed as of 2026-10-09. The planned `https://testnet.app.daclify.com` and `https://testnet.api.daclify.com` are plans, not working callbacks. Register Telegram OIDC and Stripe Connect only after the selected addresses are reachable. A bot token is not an OIDC client. External SMTP, provider products/webhooks and production OpenBao custody require their own tested setup; local Mailpit/OpenBao do not certify production operations.
+The initial 2026-10-09 plan preceded publication. The current workspace serves `https://testnet.app.daclify.com` and `https://testnet.api.daclify.com`; see the [workspace server evidence](../evidence/2026-10-10-workspace-testnet-server.md). Reachability does not qualify provider callbacks. Register Telegram OIDC and Stripe Connect only after the selected addresses are reachable. A bot token is not an OIDC client. External SMTP, provider products/webhooks and production OpenBao custody require their own tested setup; local Mailpit/OpenBao do not certify production operations.
 
 ## Acceptance and cutover
 

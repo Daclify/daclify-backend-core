@@ -41,10 +41,11 @@ export function registerNativeRoutes(
   discover?: (wallet: WalletIdentity) => Promise<UserMembership[]>,
   audience: string = origin,
   governanceWalletInUse?: (chainId: string, account: string) => Promise<boolean>,
+  sharedProxyIps: readonly string[] = [],
 ): void {
   const secure = new URL(origin).protocol === 'https:',
     attemptCookie = secure ? '__Host-daclify_native_attempt' : 'daclify_native_attempt';
-  const limit = createWindowLimiter(20, 600000, 2000);
+  const limit = createWindowLimiter(20, 600000, 2000, sharedProxyIps);
   function control(request: FastifyRequest) {
     return session(
       request.cookies[cookieName],

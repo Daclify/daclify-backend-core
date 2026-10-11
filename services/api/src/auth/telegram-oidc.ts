@@ -130,10 +130,11 @@ export function registerTelegramOidcRoutes(
   configuration: TelegramOidcConfiguration | undefined,
   session: (token: string | undefined, csrf?: string) => Promise<Account>,
   sessionCookie: (reply: FastifyReply, token: string, site?: string) => Promise<void>,
+  sharedProxyIps: readonly string[] = [],
 ): void {
   const secure = new URL(origin).protocol === 'https:';
   const browserCookie = secure ? '__Host-daclify_telegram_attempt' : 'daclify_telegram_attempt';
-  const admit = createWindowLimiter(20, 600_000, 2000);
+  const admit = createWindowLimiter(20, 600_000, 2000, sharedProxyIps);
   const key =
     configuration?.key ??
     createRemoteJWKSet(new URL('https://oauth.telegram.org/.well-known/jwks.json'));

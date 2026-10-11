@@ -1,5 +1,7 @@
 # Vault login v3: signed encryption identity
 
+This records the named earlier upgrade. For the current development candidate and exact live/staged boundary, see [audit remediation](project-audit-remediation.md) and [its verification](project-audit-remediation-verification.md). Earlier version-specific instructions still apply when migrating from that version.
+
 Core protocol/API and frontend development `0.10.0-alpha.1` require a coordinated vault-login update. The modules SDK consumes the matching core SDK; module contracts remain `0.9.0-alpha.5`. No contract deployment, database migration, key rotation or new environment flag is needed for this change.
 
 ## Request and verification

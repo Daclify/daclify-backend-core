@@ -185,7 +185,7 @@ SMTP requires `SMTP_HOST` and `SMTP_FROM`, with `SMTP_USERNAME`/`SMTP_PASSWORD` 
 
 Telegram OIDC requires `TELEGRAM_OIDC_CLIENT_ID`, `TELEGRAM_OIDC_CLIENT_SECRET` and the exact `TELEGRAM_OIDC_REDIRECT_URI` ending `/v1/sign-in/telegram/oidc/callback`. The callback must use HTTPS for testnet/mainnet. Mini Apps require `TELEGRAM_BOT_TOKEN`; the legacy widget additionally needs `TELEGRAM_BOT_USERNAME` without `@`. OIDC does not require these separate bot-token fields in this adapter.
 
-Google uses `GOOGLE_CLIENT_ID` plus `GOOGLE_PUBLIC_JWK` (a public RSA JWK, not an OAuth client secret). Complete browser login and provider-key rotation remain unqualified. `OPENBAO_URL`/`OPENBAO_TOKEN` are custody/provider-test inputs, not a switch that enables managed accounts in the regular API.
+Google uses `GOOGLE_CLIENT_ID` and the official cached JWKS. Fixed `GOOGLE_PUBLIC_JWK` configuration is no longer used; signing-key rotation is regression-tested with real JOSE verification. A real Google browser ceremony remains unqualified. `OPENBAO_URL`/`OPENBAO_TOKEN` are custody/provider-test inputs, not a switch that enables managed accounts in the regular API.
 
 The optional handbook assistant needs a backend-only `OPENROUTER_API_KEY`. Its two model settings are independent:
 
@@ -243,7 +243,7 @@ The selected layout is a Netlify frontend and two independent Node API services 
 | `app.daclify.com`         | Netlify frontend              |
 | `testnet.app.daclify.com` | Netlify testnet frontend      |
 
-This is the agreed target, not evidence that DNS, certificates or the VM are configured. Mainnet must return an unavailable response until its own contracts/keys/providers are ready; never route its hostname to testnet. HAProxy must use exact host routes, reject unknown hosts and avoid retries of mutating requests. Sanitize forwarding headers at HAProxy and implement/test narrow Fastify proxy trust before relying on client-IP rate limits: the current API does not configure `trustProxy`, so it sees the loopback proxy as the client.
+This is the agreed target, not evidence that DNS, certificates or the VM are configured. Mainnet must return an unavailable response until its own contracts/keys/providers are ready; never route its hostname to testnet. HAProxy must use exact host routes, reject unknown hosts and avoid retries of mutating requests. Sanitize forwarding headers at HAProxy and configure `TRUSTED_PROXY_IPS` as a JSON array of exact additional proxy IPs. Fastify trusts loopback by default and stops at the nearest untrusted forwarded client. The hosted VM observes `192.168.5.1`; verify forwarding-header replacement and restrict direct API access before adding that hop. Never trust all private networks or arbitrary forwarding headers. For the unchanged external workspace HAProxy, use `SHARED_PROXY_IPS=["192.168.5.1"]` instead and keep that peer untrusted: anonymous admission uses the existing aggregate ceiling, while authenticated account limits remain. This accommodates the shared peer without pretending to know visitor IPs. See [audit remediation](operations/project-audit-remediation.md).
 
 Automated API certificates need a tested ACME renewal timer and deploy hook that validates HAProxy configuration before reloading its combined certificate PEM. Netlify manages frontend certificates separately. Make DNS changes at the domain's current authoritative provider; being registered at Namecheap does not imply Namecheap DNS is authoritative.
 

@@ -1,6 +1,6 @@
 # Daclify documentation
 
-Current development version: **0.13.0-alpha.2**, contract interface 1. This is a development checkpoint; immutable publication, live provider/client qualification and hosted operations remain separate gates.
+Current development version: **0.13.0-alpha.3**, contract interface 1. This is a development checkpoint; immutable publication, live provider/client qualification and hosted operations remain separate gates.
 
 See [vault login v3 rollout](operations/login-v3.md) for the coordinated API/frontend update and preserved account/recovery state.
 
@@ -12,7 +12,7 @@ Hosted operators must also configure a [shared gateway allowance](operations/gat
 
 | Task                                                        | Guide                                                                                                                                                                                                     |
 | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Understand the repository split and capabilities            | [Core README](../README.md), [modules README](https://github.com/Daclify/daclify-backend-modules/blob/main/README.md), [frontend README](https://github.com/Daclify/daclify-frontend/blob/main/README.md) |
+| Understand the repository split and capabilities            | [Core README](../README.md), [modules README](https://github.com/Daclify/daclify-backend-modules/blob/dev/README.md), [frontend README](https://github.com/Daclify/daclify-frontend/blob/dev/README.md) |
 | Install, build and test sibling checkouts                   | [Development](development.md)                                                                                                                                                                             |
 | Configure networks, providers, payments and hosted services | [Operations](operations.md)                                                                                                                                                                               |
 | Pair login credentials or activate wallet governance        | [Paired login](operations/paired-login.md)                                                                                                                                                                |
@@ -22,7 +22,7 @@ Hosted operators must also configure a [shared gateway allowance](operations/gat
 | Review the earlier contract/module upgrade                  | [Upgrade to 0.5](operations/upgrade-0.5.md)                                                                                                                                                               |
 | Resolve paid creation incidents                             | [Paid creation incidents](operations/paid-creation-incidents.md)                                                                                                                                          |
 | Understand purpose presets, agents and authority            | [DAO presets](dao-presets.md)                                                                                                                                                                             |
-| Inspect exact API/action/table/configuration shapes         | [Generated core reference](generated/reference.md), [module reference](https://github.com/Daclify/daclify-backend-modules/blob/main/docs/generated/reference.md)                                          |
+| Inspect exact API/action/table/configuration shapes         | [Generated core reference](generated/reference.md), [module reference](https://github.com/Daclify/daclify-backend-modules/blob/dev/docs/generated/reference.md)                                          |
 
 The app exposes these product guides at `/docs/:topic`, including `/docs/accounts`, `/docs/providers`, `/docs/recovery`, `/docs/documents`, `/docs/deployments` and `/docs/platform`. Its intended hosted destination is [app.daclify.com/docs](https://app.daclify.com/docs); this link does not certify a deployed app. `/status` reports safe configuration and chain details; configured providers are not qualified integrations.
 
@@ -36,7 +36,7 @@ After changing a guide, regenerate it, rebuild the public development packages a
 
 Stable topic IDs are UI routes and contextual links. `release-0.5` is retained as a compatible topic ID even though its text now explains the current release. The bundles display package and interface versions. Contract module hashes are checked separately; a displayed service version is not proof of deployed runtime provenance.
 
-Use [upgrade 0.8](operations/upgrade-0.8.md) for the current candidate, [release qualification](operations/release-qualification.md) for immutable packaging, and the [acceptance record](evidence/2026-10-09-resource-completion.md) for actual checks and remaining external dependencies.
+Use [audit remediation](operations/project-audit-remediation.md) for the current candidate; [upgrade 0.8](operations/upgrade-0.8.md) remains the historical resource migration, [release qualification](operations/release-qualification.md) for immutable packaging, and the [acceptance record](evidence/2026-10-09-resource-completion.md) for actual checks and remaining external dependencies.
 
 ## Evidence and unresolved qualification
 
@@ -86,3 +86,7 @@ this guidance at `/docs/license`; operators must offer their actual deployed sou
 Resource checkpoint: [RAM accounting, native/card purchases and operator reserve](ram-accounting.md) describes the current implementation and launch gates. DAO Resources exposes native one-time purchases and optional exact-price card checkout, prepaid pinned-storage capacity and verified archive exports. Included pools, new obligation receipt holds, native archive approval/pruning and empty-database history recovery are implemented in development and have bounded owned-fixture verification. Complete completion/external-token qualification, general legacy backfill and live guarded-cleanup/provider proof remain release gates; automatic deletion and release packaging stay disabled.
 
 The [documentation assistant and Telegram group runbook](operations/docs-assistant.md) explains backend-only model configuration, docs-only scope, approved-group webhooks, privacy mode, cost limits and at-most-once reply delivery. App AI needs an OpenRouter key; Telegram chat additionally requires explicit chat allowlists, enablement and webhook registration.
+
+## Current audit and documentation review
+
+The [remediation guide](operations/project-audit-remediation.md) connects the six confirmed fixes, service-account proposal, unchanged external proxy and coordinated runtime/API/frontend cutover. [Verification](operations/project-audit-remediation-verification.md) records actual local/native/read-only-chain evidence. The [documentation review](evidence/2026-10-10-project-documentation-review.md) records stale guidance corrected across all three current repos and separates historical checkpoints from deployed state. The compatibility register remains unqualified; these source fixes do not close provider or production release gates.

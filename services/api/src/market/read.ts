@@ -2,7 +2,11 @@ import { z } from 'zod';
 import { NamesTableSchemas } from '../../../../sdk/generated/names-schemas.js';
 import { ramMarketCost } from '../../../../protocol/resources.js';
 import { basicNamePrice } from './pricing.js';
-import { NativeAccountSchema } from '../../../../protocol/base.js';
+import { NativeAccountSchema, Uint64Schema } from '../../../../protocol/base.js';
+import {
+  NamesInventoryQuerySchema,
+  type NamesInventoryQuery,
+} from '../../../../protocol/service-api.js';
 import { ApiError } from '../errors.js';
 import {
   USD_PRECISION,
@@ -290,7 +294,10 @@ export function quoteName(input: {
     nextPrice: null,
     nextUsdCents: null,
   };
-  const listing = input.listings.find((item) => item.accountName === input.accountName);
+  const listing =
+    kind === 'basic'
+      ? undefined
+      : input.listings.find((item) => item.accountName === input.accountName);
   if (listing?.sold) throw new MarketRuleError('NAME_SOLD');
   if (listing) {
     return {
@@ -406,7 +413,7 @@ export async function readChainRows(input: {
     if (
       next === undefined ||
       (next !== null &&
-        (!/^(0|[1-9][0-9]{0,19})$/.test(next) || BigInt(next) <= BigInt(input.lowerBound ?? '0')))
+        (!Uint64Schema.safeParse(next).success || BigInt(next) <= BigInt(input.lowerBound ?? '0')))
     )
       throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
     return { status: 'rows', rows: parsed.data.rows, next };
@@ -481,6 +488,8 @@ export async function loadCatalogue(rpcUrl: string, runtime: string): Promise<Li
 }
 
 export interface NamesChainState {
+  listingsNext?: string | null;
+  suffixesNext?: string | null;
   tokenContract?: string;
   thirdPartyBps: number;
   firstPartyBps: number;
@@ -495,7 +504,15 @@ export interface NamesChainState {
 export async function loadNames(
   rpcUrl: string,
   names: string,
+  query: NamesInventoryQuery & { accountName?: string } = {},
 ): Promise<NamesChainState | undefined> {
+  const inventory = NamesInventoryQuerySchema.parse({
+    listingsCursor: query.listingsCursor,
+    suffixesCursor: query.suffixesCursor,
+  });
+  const name =
+    query.accountName === undefined ? undefined : TelosNameSchema.parse(query.accountName);
+  const suffix = name?.includes('.') ? name.split('.').at(-1) : undefined;
   const config = await readChainRows({
     rpcUrl,
     code: names,
@@ -508,9 +525,33 @@ export async function loadNames(
   if (!saved.success) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
   const [tiers, listings, policy, suffixes, profit] = await Promise.all([
     readChainRows({ rpcUrl, code: names, scope: names, table: 'tiers', limit: 10 }),
-    readChainRows({ rpcUrl, code: names, scope: names, table: 'namelist', limit: 100 }),
+    readChainRows({
+      rpcUrl,
+      code: names,
+      scope: names,
+      table: 'namelist',
+      ...(name
+        ? { limit: 1, indexPosition: 1, keyType: 'name', lowerBound: name, upperBound: name }
+        : { limit: 100, paginate: true, lowerBound: inventory.listingsCursor ?? '0' }),
+    }),
     readChainRows({ rpcUrl, code: names, scope: names, table: 'policy', limit: 1 }),
-    readChainRows({ rpcUrl, code: names, scope: names, table: 'suffixes', limit: 100 }),
+    name && !suffix
+      ? Promise.resolve<RowResult>({ status: 'rows', rows: [], next: null })
+      : readChainRows({
+          rpcUrl,
+          code: names,
+          scope: names,
+          table: 'suffixes',
+          ...(suffix
+            ? {
+                limit: 1,
+                indexPosition: 1,
+                keyType: 'name',
+                lowerBound: suffix,
+                upperBound: suffix,
+              }
+            : { limit: 100, paginate: true, lowerBound: inventory.suffixesCursor ?? '0' }),
+        }),
     readChainRows({ rpcUrl, code: names, scope: names, table: 'profitcfg', limit: 1 }),
   ]);
   if (tiers.status === 'missing' || listings.status === 'missing') return undefined;
@@ -527,6 +568,8 @@ export async function loadNames(
       }
     : undefined;
   const state: NamesChainState = {
+    listingsNext: listings.next ?? null,
+    suffixesNext: suffixes.next ?? null,
     thirdPartyBps: saved.data.third_party_bps,
     tokenContract: saved.data.token_contract,
     firstPartyBps: saved.data.first_party_bps,
@@ -547,7 +590,7 @@ export async function loadNames(
     listings: listings.rows.flatMap((entry) => {
       const row = ListingRow.safeParse(entry);
       if (!row.success) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
-      if (row.data.accepts !== 1) return [];
+      if (row.data.accepts !== 1 || classifyTelosName(row.data.account_name) === 'basic') return [];
       return [
         {
           accountName: row.data.account_name,

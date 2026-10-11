@@ -46,6 +46,8 @@ it('accepts exact browser origins and rejects wildcard, malformed and remote HTT
 it('documents complete API settings separately from deployment credentials', () => {
   const optional = [
     'FRONTEND_ADDITIONAL_ORIGINS',
+    'TRUSTED_PROXY_IPS',
+    'RELAY_PERMISSION',
     'BOOTSTRAP_OWNER',
     'BOOTSTRAP_PRIVATE_KEY',
     'PINATA_JWT',
@@ -71,7 +73,6 @@ it('documents complete API settings separately from deployment credentials', () 
     'TELEGRAM_DOCS_WEBHOOK_SECRET',
     'TELEGRAM_DOCS_WEBHOOK_URL',
     'GOOGLE_CLIENT_ID',
-    'GOOGLE_PUBLIC_JWK',
     'OPENROUTER_API_KEY',
     'OPENROUTER_MODEL',
     'OPENROUTER_DECISIONS_MODEL',

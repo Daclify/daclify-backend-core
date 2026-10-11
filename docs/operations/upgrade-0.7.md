@@ -1,5 +1,7 @@
 # Upgrade to 0.7.0-alpha.1
 
+This records the named earlier upgrade. For the current development candidate and exact live/staged boundary, see [audit remediation](project-audit-remediation.md) and [its verification](project-audit-remediation-verification.md). Earlier version-specific instructions still apply when migrating from that version.
+
 Update core, modules and frontend together. Update configured `MODULE_DEPLOYMENTS` release versions to the matching 0.7 module package while retaining reviewed existing module WASM hashes; otherwise the frontend correctly holds incompatible module actions. This development update adds free shared creation, graduated member-capacity subscriptions, optional DAO Stripe Connect and Hub-discovered independent portals. Contract interface remains1; the runtime WASM/ABI changes, while pre-0.7 serialized tables and module WASM remain unchanged. The new capacity/receipt tables are not present in 0.6. Never infer deployed compatibility from the API version alone.
 
 ## Prepare

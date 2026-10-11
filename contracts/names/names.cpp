@@ -203,6 +203,7 @@ public:
     const auto cfg = load();
     check(cfg.treasury.value && seller != cfg.treasury, "FEE_PARTY");
     check_name(account_name);
+    check(!is_basic(account_name), "NAME_BASIC_FIRST_PARTY");
     check(account_name.suffix() == account_name || account_name.suffix() == seller, "NATIVE_SUFFIX_REQUIRED");
     check(!is_account(account_name), "NAME_TAKEN");
     check_price(price, cfg.token_symbol);
@@ -214,7 +215,7 @@ public:
     sales sold(get_self(), get_self().value);
     auto names_index = sold.get_index<"byname"_n>();
     check(names_index.find(account_name.value) == names_index.end(), "NAME_SOLD");
-    rows.emplace(get_self(), [&](auto& row) {
+    rows.emplace(seller, [&](auto& row) {
       row.account_name = account_name;
       row.seller = seller;
       row.price = price;
@@ -244,11 +245,12 @@ public:
       row.usd_cents = usd_cents;
       row.accepts = 1;
     };
-    if (it == rows.end()) rows.emplace(get_self(), [&](auto& row) { write(row); row.sales_count = 0; });
-    else rows.modify(it, same_payer, write);
+    if (it == rows.end()) rows.emplace(suffix, [&](auto& row) { write(row); row.sales_count = 0; });
+    else rows.modify(it, suffix, write);
   }
   ACTION editname(name seller, name account_name, asset price, uint32_t usd_cents, uint8_t accepts_fee_rule) {
     require_auth(seller);
+    check(!is_basic(account_name), "NAME_BASIC_FIRST_PARTY");
     const auto cfg = load();
     check(accepts_fee_rule == 1, "FEE_RULE");
     check_price(price, cfg.token_symbol);
@@ -258,7 +260,7 @@ public:
     check(item.seller == seller, "SELLER");
     check(item.sold == 0 && !is_account(account_name), "NAME_SOLD");
     if (account_name.suffix() != account_name) check_floor(price, usd_cents);
-    rows.modify(item, same_payer, [&](auto& row) { row.price = price; row.usd_cents = usd_cents; row.accepts = 1; });
+    rows.modify(item, seller, [&](auto& row) { row.price = price; row.usd_cents = usd_cents; row.accepts = 1; });
   }
   ACTION delname(name seller, name account_name) {
     require_auth(seller);
@@ -512,7 +514,7 @@ private:
     const auto& tier = tier_rows.get(is_basic(account_name) ? 0 : 1, "TIER_UNSET");
     listings listed(get_self(), get_self().value);
     auto listing = listed.find(account_name.value);
-    if (listing != listed.end()) {
+    if (!is_basic(account_name) && listing != listed.end()) {
       check(listing->sold == 0 && listing->accepts == 1, "FEE_RULE");
       auto chosen = offer{listing->seller, 1, listing->price, listing->usd_cents, tier.ram_bytes, tier.net_stake, tier.cpu_stake, true, name()};
       return account_name.suffix() != account_name ? with_floor(chosen) : chosen;

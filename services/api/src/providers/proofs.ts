@@ -1,7 +1,24 @@
-import { jwtVerify, type JWTVerifyGetKey } from 'jose';
+import { createRemoteJWKSet, customFetch, jwtVerify, type JWTVerifyGetKey } from 'jose';
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { ApiError } from '../errors.js';
+import { readBoundedResponse } from '../http.js';
+
+export function googleKeyResolver(): JWTVerifyGetKey {
+  return createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'), {
+    timeoutDuration: 5000,
+    cooldownDuration: 30000,
+    cacheMaxAge: 600000,
+    [customFetch]: async (url, options) => {
+      const response = await fetch(url, options);
+      if (response.status !== 200) return response;
+      return new Response(Uint8Array.from(await readBoundedResponse(response, 65536)), {
+        status: 200,
+        headers: response.headers,
+      });
+    },
+  });
+}
 export interface ProviderPrincipal {
   provider: 'google' | 'telegram';
   subject: string;

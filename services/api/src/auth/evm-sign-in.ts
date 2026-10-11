@@ -33,10 +33,11 @@ export function registerEvmSignInRoutes(
   sessionCookie: (reply: FastifyReply, token: string, site?: string) => Promise<void>,
   discover?: (wallet: WalletIdentity) => Promise<UserMembership[]>,
   audience: string = origin,
+  sharedProxyIps: readonly string[] = [],
 ): void {
   const secure = new URL(origin).protocol === 'https:',
     attemptCookie = secure ? '__Host-daclify_evm_attempt' : 'daclify_evm_attempt',
-    limit = createWindowLimiter(20, 600000, 2000);
+    limit = createWindowLimiter(20, 600000, 2000, sharedProxyIps);
   function control(request: FastifyRequest) {
     return session(
       request.cookies[cookieName],
