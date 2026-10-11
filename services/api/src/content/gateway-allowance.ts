@@ -1,3 +1,4 @@
+import { rollbackTransaction } from '../transaction.js';
 import type { Pool } from 'pg';
 import { z } from 'zod';
 import {
@@ -41,6 +42,7 @@ export async function registerGatewayAllowance(
 ): Promise<void> {
   const value = GatewayFundingSchema.parse(input),
     client = await pool.connect();
+  let discard = false;
   try {
     await client.query('BEGIN');
     await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [
@@ -75,10 +77,10 @@ export async function registerGatewayAllowance(
     }
     await client.query('COMMIT');
   } catch (cause) {
-    await client.query('ROLLBACK');
+    discard = await rollbackTransaction(client);
     throw cause;
   } finally {
-    client.release();
+    client.release(discard);
   }
 }
 export class GatewayAllowance {

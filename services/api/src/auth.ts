@@ -1,3 +1,4 @@
+import { rollbackTransaction } from './transaction.js';
 import type { Pool } from 'pg';
 import { createHash, randomBytes, randomUUID, ECDH, timingSafeEqual } from 'node:crypto';
 import { PublicKey, Signature } from '@wharfkit/antelope';
@@ -98,6 +99,7 @@ export async function authenticate(
 ): Promise<{ account: VaultAccount; token: string; csrfToken: string }> {
   const encryption = validEncryptionKey(encryptionKey);
   const client = await pool.connect();
+  let discard = false;
   try {
     await client.query('BEGIN');
     const challenge = (
@@ -153,10 +155,10 @@ export async function authenticate(
     await client.query('COMMIT');
     return { account, token, csrfToken };
   } catch (error) {
-    await client.query('ROLLBACK');
+    discard = await rollbackTransaction(client);
     throw error;
   } finally {
-    client.release();
+    client.release(discard);
   }
 }
 export async function readSession(pool: Pool, token: string): Promise<Account | undefined> {

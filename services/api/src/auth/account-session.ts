@@ -3,6 +3,7 @@ import type { Pool, PoolClient } from 'pg';
 import { z } from 'zod';
 import { AccountSchema, type Account } from '../../../../protocol/api.js';
 import { ApiError } from '../errors.js';
+import { rollbackTransaction } from '../transaction.js';
 
 interface AccountRow {
   id: string;
@@ -46,11 +47,7 @@ export async function withTransaction<T>(
     await client.query('COMMIT');
     return result;
   } catch (error) {
-    try {
-      await client.query('ROLLBACK');
-    } catch {
-      discard = true;
-    }
+    discard = await rollbackTransaction(client);
     if (
       z
         .object({

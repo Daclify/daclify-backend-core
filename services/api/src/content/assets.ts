@@ -1,3 +1,4 @@
+import { rollbackTransaction } from '../transaction.js';
 import type { Pool } from 'pg';
 import { z } from 'zod';
 import { createHash, randomUUID } from 'node:crypto';
@@ -112,6 +113,7 @@ export class HostedAssets {
       throw new ApiError('ADMIN_REQUIRED', 403);
     const client = await this.pool.connect();
     let row: AssetRow;
+    let discard = false;
     try {
       await client.query('BEGIN');
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
@@ -179,10 +181,10 @@ export class HostedAssets {
       );
       await client.query('COMMIT');
     } catch (cause) {
-      await client.query('ROLLBACK');
+      discard = await rollbackTransaction(client);
       throw cause;
     } finally {
-      client.release();
+      client.release(discard);
     }
     try {
       const pin =
@@ -237,6 +239,7 @@ export class HostedAssets {
       throw new ApiError('DOCUMENT_INTEGRITY', 502);
     const receipt = HostedAssetReceiptSchema.parse({ ...intent(row), cid: pin.cid });
     const client = await this.pool.connect();
+    let discard = false;
     try {
       await client.query('BEGIN');
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
@@ -273,10 +276,10 @@ export class HostedAssets {
       );
       await client.query('COMMIT');
     } catch (cause) {
-      await client.query('ROLLBACK');
+      discard = await rollbackTransaction(client);
       throw cause;
     } finally {
-      client.release();
+      client.release(discard);
     }
     return receipt;
   }

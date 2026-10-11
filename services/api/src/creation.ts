@@ -1,3 +1,4 @@
+import { rollbackTransaction } from './transaction.js';
 import { createHash, randomBytes } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import type { Pool, PoolClient } from 'pg';
@@ -264,6 +265,7 @@ export class CreationService {
   ): Promise<T> {
     z.uuid().parse(id);
     const client = await this.pool.connect();
+    let discard = false;
     try {
       await client.query('BEGIN');
       const result = await client.query(
@@ -275,10 +277,10 @@ export class CreationService {
       await client.query('COMMIT');
       return value;
     } catch (error) {
-      await client.query('ROLLBACK');
+      discard = await rollbackTransaction(client);
       throw error;
     } finally {
-      client.release();
+      client.release(discard);
     }
   }
 }

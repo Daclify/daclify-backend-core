@@ -1,3 +1,4 @@
+import { rollbackTransaction } from '../transaction.js';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import type { Pool } from 'pg';
@@ -167,6 +168,7 @@ export async function recoverStorageReferences(
     let state: z.infer<typeof StorageRecoveryPageSchema>['objects'][number]['state'] =
       'unavailable';
     const client = await pool.connect();
+    let discard = false;
     try {
       const saved = await client.query<Record<string, unknown>>(
         `SELECT o.verified_bytes AS bytes,o.commitment,o.state,r.released_at,(r.kind=$5 AND r.reference_key=$6) AS same_reference FROM hosted_objects o JOIN hosted_references r ON r.object_id=o.id WHERE o.provider_scope=$1 AND o.import_profile=$2 AND o.cid=$3 AND r.dao_key=$4 ORDER BY r.released_at NULLS FIRST,(r.kind=$5 AND r.reference_key=$6) DESC LIMIT 1`,
@@ -216,9 +218,9 @@ export async function recoverStorageReferences(
         }
       }
     } catch {
-      await client.query('ROLLBACK');
+      discard = await rollbackTransaction(client);
     } finally {
-      client.release();
+      client.release(discard);
     }
     objects.push({ referenceKey: reference.referenceKey, cid: descriptor.cid, state });
   }
@@ -240,6 +242,7 @@ export async function recoverStorageReferences(
     )
       throw new ApiError('ADMIN_REQUIRED', 403);
     const client = await pool.connect();
+    let discard = false;
     try {
       await client.query('BEGIN');
       const members = await client.query<{ id: string }>(
@@ -265,10 +268,10 @@ export async function recoverStorageReferences(
       );
       await client.query('COMMIT');
     } catch (cause) {
-      await client.query('ROLLBACK');
+      discard = await rollbackTransaction(client);
       throw cause;
     } finally {
-      client.release();
+      client.release(discard);
     }
   }
   return StorageRecoveryPageSchema.parse({

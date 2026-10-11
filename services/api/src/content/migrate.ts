@@ -1,3 +1,4 @@
+import { rollbackTransaction } from '../transaction.js';
 import { createHash } from 'node:crypto';
 import type { Pool } from 'pg';
 import { z } from 'zod';
@@ -68,6 +69,7 @@ export async function claimLegacyUpload(
   )
     throw new ApiError('DOCUMENT_INTEGRITY', 502);
   const client = await pool.connect();
+  let discard = false;
   try {
     await client.query('BEGIN');
     await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`upload-dao:${row.dao_key}`]);
@@ -96,9 +98,9 @@ export async function claimLegacyUpload(
     );
     await client.query('COMMIT');
   } catch (cause) {
-    await client.query('ROLLBACK');
+    discard = await rollbackTransaction(client);
     throw cause;
   } finally {
-    client.release();
+    client.release(discard);
   }
 }

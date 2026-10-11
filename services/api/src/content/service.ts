@@ -1,3 +1,4 @@
+import { rollbackTransaction } from '../transaction.js';
 import type { Pool } from 'pg';
 import type { Account } from '../../../../protocol/api.js';
 import type { DaoRef } from '../../../../protocol/base.js';
@@ -122,6 +123,7 @@ export class ContentService {
     );
     if (!member) throw new ApiError('MEMBER_REQUIRED', 403);
     const client = await this.pool.connect();
+    let discard = false;
     try {
       await client.query('BEGIN');
       const key = contentDaoKey(dao.reference);
@@ -149,10 +151,10 @@ export class ContentService {
       await client.query('COMMIT');
       return response;
     } catch (cause) {
-      await client.query('ROLLBACK');
+      discard = await rollbackTransaction(client);
       throw cause;
     } finally {
-      client.release();
+      client.release(discard);
     }
   }
   async brandingBytes(daoId: string, slot: 'logo' | 'cover') {
@@ -225,6 +227,7 @@ export class ContentService {
   ): Promise<{ row: UploadRow; created: boolean }> {
     const client = await this.pool.connect();
     const key = contentDaoKey(input.dao);
+    let discard = false;
     try {
       await client.query('BEGIN');
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
@@ -282,10 +285,10 @@ export class ContentService {
       await client.query('COMMIT');
       return { row, created: true };
     } catch (cause) {
-      await client.query('ROLLBACK');
+      discard = await rollbackTransaction(client);
       throw cause;
     } finally {
-      client.release();
+      client.release(discard);
     }
   }
   async #authority(account: Account, input: HostedUpload): Promise<string> {
@@ -378,6 +381,7 @@ export class ContentService {
     if (retrieved.length !== document.bytes || hash(retrieved) !== document.commitment)
       throw new ApiError('DOCUMENT_INTEGRITY', 502);
     const client = await this.pool.connect();
+    let discard = false;
     try {
       await client.query('BEGIN');
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
@@ -431,10 +435,10 @@ export class ContentService {
       }
       await client.query('COMMIT');
     } catch (cause) {
-      await client.query('ROLLBACK');
+      discard = await rollbackTransaction(client);
       throw cause;
     } finally {
-      client.release();
+      client.release(discard);
     }
     return document;
   }

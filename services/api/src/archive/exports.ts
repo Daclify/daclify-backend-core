@@ -1,3 +1,4 @@
+import { rollbackTransaction } from '../transaction.js';
 import { createHash, randomUUID } from 'node:crypto';
 import type { Pool } from 'pg';
 import { z } from 'zod';
@@ -208,6 +209,7 @@ export class ArchiveExports {
     const id = randomUUID(),
       client = await this.pool.connect();
     let savedId: string = id;
+    let discard = false;
     try {
       await client.query('BEGIN');
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
@@ -287,10 +289,10 @@ export class ArchiveExports {
       }
       await client.query('COMMIT');
     } catch (cause) {
-      await client.query('ROLLBACK');
+      discard = await rollbackTransaction(client);
       throw cause;
     } finally {
-      client.release();
+      client.release(discard);
     }
     return this.status(account, savedId);
   }
@@ -332,6 +334,7 @@ export class ArchiveExports {
     const client = await this.pool.connect();
     const lock = `archive-export:${id}`;
     let locked = false;
+    let discard = false;
     try {
       locked =
         (
@@ -419,11 +422,17 @@ export class ArchiveExports {
       await client.query('COMMIT');
       return 'completed';
     } catch (cause) {
-      await client.query('ROLLBACK');
+      discard = await rollbackTransaction(client);
       throw cause;
     } finally {
-      if (locked) await client.query('SELECT pg_advisory_unlock(hashtext($1))', [lock]);
-      client.release();
+      if (locked && !discard) {
+        try {
+          await client.query('SELECT pg_advisory_unlock(hashtext($1))', [lock]);
+        } catch {
+          discard = true;
+        }
+      }
+      client.release(discard);
     }
   }
   private async exportChunk(
@@ -600,6 +609,7 @@ export class ArchiveExports {
     const receipt = await this.backupStore.put(await this.bundle(account, id));
     await this.authorize(account, status.dao);
     const client = await this.pool.connect();
+    let discard = false;
     try {
       await client.query('BEGIN');
       await client.query('SELECT id FROM archive_exports WHERE id=$1 FOR UPDATE', [id]);
@@ -620,10 +630,10 @@ export class ArchiveExports {
       );
       await client.query('COMMIT');
     } catch (cause) {
-      await client.query('ROLLBACK');
+      discard = await rollbackTransaction(client);
       throw cause;
     } finally {
-      client.release();
+      client.release(discard);
     }
     return this.status(account, id);
   }

@@ -1,3 +1,4 @@
+import { rollbackTransaction } from '../transaction.js';
 import type { Pool } from 'pg';
 import type { ContentProvider } from './provider.js';
 
@@ -26,6 +27,7 @@ export async function releaseAbsentUpload(
   // Empty inventory pages cannot release budget; this checks the recorded ID on its configured provider.
   if (await provider.file(row.provider_id)) return false;
   const db = await pool.connect();
+  let discard = false;
   try {
     await db.query('BEGIN');
     await db.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`upload-dao:${daoKey}`]);
@@ -45,9 +47,9 @@ export async function releaseAbsentUpload(
     await db.query('COMMIT');
     return result.rowCount === 1;
   } catch (cause) {
-    await db.query('ROLLBACK');
+    discard = await rollbackTransaction(db);
     throw cause;
   } finally {
-    db.release();
+    db.release(discard);
   }
 }

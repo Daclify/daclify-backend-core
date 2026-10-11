@@ -1,3 +1,4 @@
+import { rollbackTransaction } from '../transaction.js';
 import { createHash } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import type { Pool, PoolClient } from 'pg';
@@ -120,6 +121,7 @@ export class CardRam {
   private async locked<T>(id: string, run: (row: Order, client: PoolClient) => Promise<T>) {
     z.uuid().parse(id);
     const client = await this.pool.connect();
+    let discard = false;
     try {
       await client.query('BEGIN');
       await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [
@@ -136,10 +138,10 @@ export class CardRam {
       await client.query('COMMIT');
       return resultValue;
     } catch (error) {
-      await client.query('ROLLBACK');
+      discard = await rollbackTransaction(client);
       throw error;
     } finally {
-      client.release();
+      client.release(discard);
     }
   }
   async checkout(account: Account, value: unknown) {

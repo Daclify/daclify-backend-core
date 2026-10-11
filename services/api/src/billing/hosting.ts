@@ -1,3 +1,4 @@
+import { rollbackTransaction } from '../transaction.js';
 import { createHash, randomUUID } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
 import type Stripe from 'stripe';
@@ -312,6 +313,7 @@ export class HostedSubscriptions {
         : await this.price(input.dao, pricing);
     const client = await this.pool.connect();
     let change: z.infer<typeof ChangeRow>;
+    let discard = false;
     try {
       await client.query('BEGIN');
       await client.query('SELECT id FROM hosting_subscriptions WHERE id=$1 FOR UPDATE', [row.id]);
@@ -333,10 +335,10 @@ export class HostedSubscriptions {
         throw new ApiError('HOSTING_REQUEST_CONFLICT', 409);
       await client.query('COMMIT');
     } catch (error) {
-      await client.query('ROLLBACK');
+      discard = await rollbackTransaction(client);
       throw error;
     } finally {
-      client.release();
+      client.release(discard);
     }
     if (change.state !== 'pending') return this.view(input.dao);
     if (Date.now() - change.created_at.getTime() > 23 * 3600000)
@@ -676,6 +678,7 @@ export class HostedSubscriptions {
     if (event.livemode !== this.config.livemode || event.account)
       throw new ApiError('HOSTING_RECEIPT_INVALID', 400);
     const client = await this.pool.connect();
+    let discard = false;
     try {
       await client.query('BEGIN');
       await client.query('SELECT pg_advisory_xact_lock($1)', [
@@ -766,10 +769,10 @@ export class HostedSubscriptions {
       ]);
       await client.query('COMMIT');
     } catch (error) {
-      await client.query('ROLLBACK');
+      discard = await rollbackTransaction(client);
       throw error;
     } finally {
-      client.release();
+      client.release(discard);
     }
   }
 }

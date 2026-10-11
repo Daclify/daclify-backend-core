@@ -1,3 +1,4 @@
+import { rollbackTransaction } from '../transaction.js';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
 import { z } from 'zod';
@@ -614,6 +615,7 @@ export class ConnectedPayments {
     row = await this.order(orderId);
     if (row.state !== 'paid' || !row.payment_intent) throw new ApiError('PAYMENT_NOT_PAID', 409);
     const client = await this.pool.connect();
+    let discard = false;
     try {
       await client.query('BEGIN');
       const locked = await client.query<{ refunded_minor: number }>(
@@ -655,10 +657,10 @@ export class ConnectedPayments {
       if (existing.rows[0] && Date.now() - existing.rows[0].created_at.getTime() > 23 * 3600000)
         throw new ApiError('PAYMENT_RECONCILIATION_REQUIRED', 409);
     } catch (error) {
-      await client.query('ROLLBACK');
+      discard = await rollbackTransaction(client);
       throw error;
     } finally {
-      client.release();
+      client.release(discard);
     }
     const refund = await this.stripe.refunds.create(
       {
@@ -695,6 +697,7 @@ export class ConnectedPayments {
     if (event.livemode !== this.config.livemode) throw new ApiError('PAYMENT_MODE', 400);
     if (!event.account) throw new ApiError('PAYMENT_RECEIPT_INVALID', 400);
     const client = await this.pool.connect();
+    let discard = false;
     try {
       await client.query('BEGIN');
       await client.query('SELECT pg_advisory_xact_lock($1)', [
@@ -767,10 +770,10 @@ export class ConnectedPayments {
       ]);
       await client.query('COMMIT');
     } catch (error) {
-      await client.query('ROLLBACK');
+      discard = await rollbackTransaction(client);
       throw error;
     } finally {
-      client.release();
+      client.release(discard);
     }
   }
 }

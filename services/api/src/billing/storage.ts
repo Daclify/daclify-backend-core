@@ -1,3 +1,4 @@
+import { rollbackTransaction } from '../transaction.js';
 import { createHash, randomUUID } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
 import type Stripe from 'stripe';
@@ -323,6 +324,7 @@ export class HostedStorage {
       const price = await this.price(input.dao, pricing),
         id = randomUUID(),
         client = await this.pool.connect();
+      let discard = false;
       try {
         await client.query('BEGIN');
         await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
@@ -351,10 +353,10 @@ export class HostedStorage {
         );
         await client.query('COMMIT');
       } catch (cause) {
-        await client.query('ROLLBACK');
+        discard = await rollbackTransaction(client);
         throw cause;
       } finally {
-        client.release();
+        client.release(discard);
       }
     }
     if (!row.stripe_subscription) {
@@ -430,6 +432,7 @@ export class HostedStorage {
       input.units === 0 ? { key: current.price_key, id: '' } : await this.price(input.dao, pricing);
     const client = await this.pool.connect();
     let change: z.infer<typeof ChangeRow>;
+    let discard = false;
     try {
       await client.query('BEGIN');
       const locked = await client.query<Record<string, unknown>>(
@@ -451,10 +454,10 @@ export class HostedStorage {
       change = ChangeRow.parse(found.rows[0]);
       await client.query('COMMIT');
     } catch (cause) {
-      await client.query('ROLLBACK');
+      discard = await rollbackTransaction(client);
       throw cause;
     } finally {
-      client.release();
+      client.release(discard);
     }
     if (change.state === 'applied' || change.state === 'expired') return this.view(input.dao);
     if (Date.now() - change.created_at.getTime() > 23 * 3600000)
@@ -549,16 +552,17 @@ export class HostedStorage {
   ) {
     if (db === this.pool) {
       const client = await this.pool.connect();
+      let discard = false;
       try {
         await client.query('BEGIN');
         await this.reconcile(row, checkoutHint, client);
         await client.query('COMMIT');
         return;
       } catch (cause) {
-        await client.query('ROLLBACK');
+        discard = await rollbackTransaction(client);
         throw cause;
       } finally {
-        client.release();
+        client.release(discard);
       }
     }
     if (row.provider_scope !== this.config.providerScope)
@@ -836,6 +840,7 @@ export class HostedStorage {
     const event = readStripeEvent(this.stripe, raw, signature, this.config.webhookSecret);
     if (event.livemode !== this.config.livemode) throw new ApiError('BILLING_MODE', 400);
     const client = await this.pool.connect();
+    let discard = false;
     try {
       await client.query('BEGIN');
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [
@@ -941,10 +946,10 @@ export class HostedStorage {
       ]);
       await client.query('COMMIT');
     } catch (cause) {
-      await client.query('ROLLBACK');
+      discard = await rollbackTransaction(client);
       throw cause;
     } finally {
-      client.release();
+      client.release(discard);
     }
   }
 }

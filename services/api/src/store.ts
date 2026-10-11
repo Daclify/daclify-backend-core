@@ -1,3 +1,4 @@
+import { rollbackTransaction } from './transaction.js';
 import type { Pool } from 'pg';
 import { readdir, readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
@@ -18,6 +19,7 @@ export interface Job {
 }
 export async function migrate(pool: Pool): Promise<void> {
   const client = await pool.connect();
+  let discard = false;
   try {
     await client.query('BEGIN');
     await client.query("SELECT pg_advisory_xact_lock(hashtext('daclify-migrations'))");
@@ -52,10 +54,10 @@ export async function migrate(pool: Pool): Promise<void> {
     }
     await client.query('COMMIT');
   } catch (error) {
-    await client.query('ROLLBACK');
+    discard = await rollbackTransaction(client);
     throw error;
   } finally {
-    client.release();
+    client.release(discard);
   }
 }
 export async function leaseJob(

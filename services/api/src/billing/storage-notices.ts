@@ -1,3 +1,4 @@
+import { rollbackTransaction } from '../transaction.js';
 import { createHash, randomUUID } from 'node:crypto';
 import type { Pool } from 'pg';
 import { z } from 'zod';
@@ -49,6 +50,7 @@ export class StorageNotices {
   }
   async queue(now = new Date()): Promise<void> {
     const db = await this.pool.connect();
+    let discard = false;
     try {
       await db.query('BEGIN');
       const rows = await db.query<Record<string, unknown>>(
@@ -76,10 +78,10 @@ export class StorageNotices {
       }
       await db.query('COMMIT');
     } catch (cause) {
-      await db.query('ROLLBACK');
+      discard = await rollbackTransaction(db);
       throw cause;
     } finally {
-      db.release();
+      db.release(discard);
     }
   }
   async process(owner: string): Promise<string> {

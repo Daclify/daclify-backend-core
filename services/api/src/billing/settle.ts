@@ -1,3 +1,4 @@
+import { rollbackTransaction } from '../transaction.js';
 import type { Pool, PoolClient } from 'pg';
 import type { ServiceDecision } from './decision.js';
 
@@ -113,6 +114,7 @@ export class PostgresServicePayments {
     payloadHash: Buffer,
   ): Promise<{ outcome: ServiceOutcome }> {
     const client = await this.pool.connect();
+    let discard = false;
     try {
       await client.query('BEGIN');
       const outcome = await settleServicePayment(
@@ -124,10 +126,10 @@ export class PostgresServicePayments {
       await client.query('COMMIT');
       return outcome;
     } catch (error) {
-      await client.query('ROLLBACK');
+      discard = await rollbackTransaction(client);
       throw error;
     } finally {
-      client.release();
+      client.release(discard);
     }
   }
 

@@ -1,3 +1,4 @@
+import { rollbackTransaction } from '../transaction.js';
 import { createHash, randomUUID } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
 import { z } from 'zod';
@@ -114,6 +115,7 @@ export class StorageRetention {
     const input = StorageCurationRoutes.curation.input.parse(value);
     await this.admin(account, input.dao);
     const db = await this.pool.connect();
+    let discard = false;
     try {
       await db.query('BEGIN');
       await this.lock(db, input.dao);
@@ -137,16 +139,17 @@ export class StorageRetention {
         })),
       });
     } catch (cause) {
-      await db.query('ROLLBACK');
+      discard = await rollbackTransaction(db);
       throw cause;
     } finally {
-      db.release();
+      db.release(discard);
     }
   }
   async retain(account: Account, value: unknown) {
     const input = StorageCurationRoutes.retain.input.parse(value);
     await this.admin(account, input.dao);
     const db = await this.pool.connect();
+    let discard = false;
     try {
       await db.query('BEGIN');
       await this.lock(db, input.dao);
@@ -166,11 +169,11 @@ export class StorageRetention {
       );
       await db.query('COMMIT');
     } catch (cause) {
-      await db.query('ROLLBACK');
+      discard = await rollbackTransaction(db);
       if (cause instanceof RangeError) throw new ApiError(cause.message, 409);
       throw cause;
     } finally {
-      db.release();
+      db.release(discard);
     }
     return this.status(account, { dao: input.dao });
   }
@@ -179,6 +182,7 @@ export class StorageRetention {
     await this.reconcilePayment(dao);
     const db = await this.pool.connect();
     let id: string | undefined;
+    let discard = false;
     try {
       await db.query('BEGIN');
       await this.lock(db, dao);
@@ -228,10 +232,10 @@ export class StorageRetention {
       }
       await db.query('COMMIT');
     } catch (cause) {
-      await db.query('ROLLBACK');
+      discard = await rollbackTransaction(db);
       throw cause;
     } finally {
-      db.release();
+      db.release(discard);
     }
     if (!id) return null;
     try {
@@ -262,6 +266,7 @@ export class StorageRetention {
     )
       throw new ApiError('STORAGE_OBJECT_REVIEW', 409);
     const db = await this.pool.connect();
+    let discard = false;
     try {
       await db.query('BEGIN');
       await this.lock(db, dao);
@@ -321,16 +326,17 @@ export class StorageRetention {
       await db.query('COMMIT');
       return id;
     } catch (cause) {
-      await db.query('ROLLBACK');
+      discard = await rollbackTransaction(db);
       throw cause;
     } finally {
-      db.release();
+      db.release(discard);
     }
   }
   private async revived(row: z.infer<typeof RemovalRow>) {
     for (const dao of row.affected_daos) {
       await this.reconcilePayment(dao);
       const db = await this.pool.connect();
+      let discard = false;
       try {
         await db.query('BEGIN');
         await this.lock(db, dao);
@@ -342,10 +348,10 @@ export class StorageRetention {
         }
         await db.query('COMMIT');
       } catch (cause) {
-        await db.query('ROLLBACK');
+        discard = await rollbackTransaction(db);
         throw cause;
       } finally {
-        db.release();
+        db.release(discard);
       }
     }
     const active = await this.pool.query<{ active: boolean }>(
@@ -476,6 +482,7 @@ export class StorageRetention {
   }
   private async finish(row: z.infer<typeof RemovalRow>, state: 'removed' | 'canceled') {
     const db = await this.pool.connect();
+    let discard = false;
     try {
       await db.query('BEGIN');
       for (const dao of row.affected_daos) {
@@ -514,10 +521,10 @@ export class StorageRetention {
         );
       await db.query('COMMIT');
     } catch (cause) {
-      await db.query('ROLLBACK');
+      discard = await rollbackTransaction(db);
       throw cause;
     } finally {
-      db.release();
+      db.release(discard);
     }
   }
 }
