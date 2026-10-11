@@ -42,8 +42,7 @@ for (const contract of [
             'cdt-cpp',
           ]),
       `contracts/${contract}/${contract}.cpp`,
-      // Names fits the existing testnet RAM allocation with size optimization.
-      ...(contract === 'names' ? ['-O=s'] : []),
+      '-O=s',
       '-I',
       'contracts/common',
       '-I',

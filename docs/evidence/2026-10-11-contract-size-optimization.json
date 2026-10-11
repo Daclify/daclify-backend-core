@@ -1,0 +1,437 @@
+{
+  "dateUtc": "2026-10-11",
+  "purpose": "Default size optimization for current Daclify smart contract builds; development verification only.",
+  "source": {
+    "daclify-backend-core": {
+      "commit": "92b3f20d641d568a1b6eeb7bf7adc7896c796bd0",
+      "changedPaths": [
+        "AGENTS.md",
+        "docs/development.md",
+        "tools/build/contracts.ts",
+        "tools/build/document-archive-fixture.ts"
+      ]
+    },
+    "daclify-backend-modules": {
+      "commit": "7f90546e0ab8b01ada1dc5aa231419a22628d512",
+      "changedPaths": [
+        "AGENTS.md",
+        "tools/build.ts",
+        "tools/build-archive-fixture.ts"
+      ]
+    }
+  },
+  "sourceScope": "Committed core/modules snapshots plus the listed optimization build changes. Unrelated working tree changes were excluded. SDK hashes and development tarballs were regenerated only in the verification copies.",
+  "toolchain": {
+    "cdt": "4.1.1",
+    "spring": "1.2.2",
+    "wasmRuntime": "eos-vm",
+    "compiler": "/data/daclify-runtime/toolchain-review/cdt/usr/opt/cdt/4.1.1/bin/cdt-cpp",
+    "nodeos": "/data/daclify-runtime/toolchain-review/spring/usr/bin/nodeos",
+    "execution": "Pinned local binaries. Docker compiler calls were mapped by a compiler-only adapter to this exact cdt-cpp; the Docker image/container path was not tested."
+  },
+  "build": {
+    "command": "node tools/bootstrap.ts --backend-only --contracts",
+    "result": "passed",
+    "currentContracts": [
+      {
+        "repository": "core",
+        "contract": "runtime",
+        "wasmBytes": 863275,
+        "wasmSha256": "d753aa880af862aab45348f43ce63202c600fc6512f228dc748396ff6e82390e",
+        "optimization": "-O=s"
+      },
+      {
+        "repository": "core",
+        "contract": "hub",
+        "wasmBytes": 56610,
+        "wasmSha256": "81ffd1545d365d94068bacc2665915abb1c9c74e8880b4a5d5d410d194883bc6",
+        "optimization": "-O=s"
+      },
+      {
+        "repository": "core",
+        "contract": "permprobe",
+        "wasmBytes": 14096,
+        "wasmSha256": "55e203406c6e3116bf3fe9df2872072c7ad109e7ade7ff62198b87c5b94f7546",
+        "optimization": "-O=s"
+      },
+      {
+        "repository": "core",
+        "contract": "authorityprobe",
+        "wasmBytes": 8536,
+        "wasmSha256": "5c026228cca26c7c277da5b3f84ab2c6f9a4c5a1fca12485ea2ebedfe86769af",
+        "optimization": "-O=s"
+      },
+      {
+        "repository": "core",
+        "contract": "ramprobe",
+        "wasmBytes": 52359,
+        "wasmSha256": "3b9130fa809305f7561af659bc94155f46595fe44e1f8545724a2ae8e20fd582",
+        "optimization": "-O=s"
+      },
+      {
+        "repository": "core",
+        "contract": "migprobe",
+        "wasmBytes": 62264,
+        "wasmSha256": "8524058964a85ec8f87e3c8318c03d90f101f8decca41a17c31371f46695fa20",
+        "optimization": "-O=s"
+      },
+      {
+        "repository": "core",
+        "contract": "testtoken",
+        "wasmBytes": 14598,
+        "wasmSha256": "f2850ceb7b7c63b94cd3704cefb51ab55743c7c5db09602a3839ff9bb80d9cf0",
+        "optimization": "-O=s"
+      },
+      {
+        "repository": "core",
+        "contract": "boot",
+        "wasmBytes": 2339,
+        "wasmSha256": "e37c5f328358160efc9cb4f55ec3949310febaebd1071543310d4da0d8487f65",
+        "optimization": "-O=s"
+      },
+      {
+        "repository": "core",
+        "contract": "modrelay",
+        "wasmBytes": 9895,
+        "wasmSha256": "894fc9a26a18995aaff02e1b456083349badb3be6603f889c2fb0d5a82fb63a9",
+        "optimization": "-O=s"
+      },
+      {
+        "repository": "core",
+        "contract": "names",
+        "wasmBytes": 91743,
+        "wasmSha256": "29f3155cc67c86871aa862b0ae9168acfdbaadf899721d4f5ef9a7ccaff86a65",
+        "optimization": "-O=s"
+      },
+      {
+        "repository": "core",
+        "contract": "eosstub",
+        "wasmBytes": 24162,
+        "wasmSha256": "2c99c178a7bd03fd3f8a206fe40cb547ce34aed6bbf2786579c64a327049411f",
+        "optimization": "-O=s"
+      },
+      {
+        "repository": "modules",
+        "contract": "decide",
+        "wasmBytes": 255602,
+        "wasmSha256": "fca8424758b0bbec05956d781399b45a9b146662f505c8eaa882dca7247160d7",
+        "optimization": "-O=s"
+      },
+      {
+        "repository": "modules",
+        "contract": "works",
+        "wasmBytes": 118546,
+        "wasmSha256": "2c686e4a9f9938db1057e53cba9f5e87d73415e73b3a15eeecfebf31475bfdee",
+        "optimization": "-O=s"
+      },
+      {
+        "repository": "modules",
+        "contract": "payroll",
+        "wasmBytes": 81651,
+        "wasmSha256": "15f0d440dd8395cc815776a774f58c0bc397e707501d3cde180cec43fb8cf624",
+        "optimization": "-O=s"
+      },
+      {
+        "repository": "modules",
+        "contract": "grants",
+        "wasmBytes": 98870,
+        "wasmSha256": "2677051711f9875508ba5c093818ce12279e7f78970bb9f0118fc034df968540",
+        "optimization": "-O=s"
+      },
+      {
+        "repository": "modules",
+        "contract": "endorse",
+        "wasmBytes": 77704,
+        "wasmSha256": "1a19210ebcf1084a8ce3e3ac78bba2b2d2ec08805d9b1e45bd53ae29379452b8",
+        "optimization": "-O=s"
+      }
+    ],
+    "archiveFixtures": [
+      {
+        "repository": "core",
+        "fixture": ".artifacts/document-aged/runtime",
+        "optimization": "-O=s",
+        "expectedFixtureAction": "agedoc",
+        "result": "compiled"
+      },
+      {
+        "repository": "modules",
+        "fixture": ".artifacts/archive-aged/decide",
+        "optimization": "-O=s",
+        "expectedFixtureAction": "ageterm",
+        "result": "compiled"
+      }
+    ]
+  },
+  "historicalExceptions": [
+    "core legacy-ownership and upgrade fixtures retain original flags and hashes",
+    "module upgrade/document-upgrade fixtures retain original flags and hashes",
+    "external reference token calibration retains original settings"
+  ],
+  "verification": [
+    {
+      "repository": "core",
+      "command": "npm run verify",
+      "result": "passed",
+      "testFiles": 129,
+      "testsPassed": 804,
+      "testsFailed": 0,
+      "testsSkipped": 0,
+      "log": "core-verify.log",
+      "logSha256": "42ccef683d19323f5caf4ec2f84b6ec65d7fb5c98805338886159d81b0fdf67a"
+    },
+    {
+      "repository": "modules",
+      "command": "npm run verify",
+      "result": "passed",
+      "testFiles": 28,
+      "testsPassed": 164,
+      "testsFailed": 0,
+      "testsSkipped": 0,
+      "log": "modules-verify.log",
+      "logSha256": "b58ea62bfe972966eedc2e186b791618006bd30c83b81a6ee546d3c1d713c0b2"
+    },
+    {
+      "repository": "core",
+      "command": "npm run test:native:permissions",
+      "result": "passed",
+      "testFiles": 9,
+      "testsPassed": 136,
+      "testsFailed": 0,
+      "testsSkipped": 0,
+      "log": "native-permissions.log",
+      "logSha256": "ab68f5553266140cc3811a432428499ad46a996ba3d55289ac0063289903e1cf"
+    },
+    {
+      "repository": "core",
+      "command": "npm run format:check",
+      "result": "passed"
+    },
+    {
+      "repository": "core",
+      "command": "npm run build",
+      "result": "passed"
+    },
+    {
+      "repository": "modules",
+      "command": "npm run format:check",
+      "result": "passed"
+    },
+    {
+      "repository": "modules",
+      "command": "npm run build",
+      "result": "passed"
+    }
+  ],
+  "ramMeasurements": [
+    {
+      "contract": "runtime",
+      "baselineWasmBytes": 1012980,
+      "optimizedWasmBytes": 863275,
+      "baselineSha256": "a05da7ad1cf616db6af7129fa036ddbc4ae03423f81c87f5eae17d3c78878213",
+      "optimizedSha256": "d753aa880af862aab45348f43ce63202c600fc6512f228dc748396ff6e82390e",
+      "abiUnchanged": true,
+      "baselineAccountRamBytes": 10155600,
+      "optimizedAccountRamBytes": 8658550,
+      "measuredRamSavingsBytes": 1497050
+    },
+    {
+      "contract": "hub",
+      "baselineWasmBytes": 60465,
+      "optimizedWasmBytes": 56610,
+      "baselineSha256": "5f05cac05cd0bc3ea057402df7aef3e0c3fb3f9373094d1ad47605b377ab6bee",
+      "optimizedSha256": "81ffd1545d365d94068bacc2665915abb1c9c74e8880b4a5d5d410d194883bc6",
+      "abiUnchanged": true,
+      "baselineAccountRamBytes": 607759,
+      "optimizedAccountRamBytes": 569209,
+      "measuredRamSavingsBytes": 38550
+    },
+    {
+      "contract": "names",
+      "baselineWasmBytes": 91743,
+      "optimizedWasmBytes": 91743,
+      "baselineSha256": "29f3155cc67c86871aa862b0ae9168acfdbaadf899721d4f5ef9a7ccaff86a65",
+      "optimizedSha256": "29f3155cc67c86871aa862b0ae9168acfdbaadf899721d4f5ef9a7ccaff86a65",
+      "abiUnchanged": true,
+      "baselineAccountRamBytes": 923547,
+      "optimizedAccountRamBytes": 923547,
+      "measuredRamSavingsBytes": 0
+    },
+    {
+      "contract": "decide",
+      "baselineWasmBytes": 277023,
+      "optimizedWasmBytes": 255602,
+      "baselineSha256": "f99a964c4eadd6d33ff261f79e546bd8a98f41a02785b41994490b319860cbf2",
+      "optimizedSha256": "fca8424758b0bbec05956d781399b45a9b146662f505c8eaa882dca7247160d7",
+      "abiUnchanged": true,
+      "baselineAccountRamBytes": 2777045,
+      "optimizedAccountRamBytes": 2562835,
+      "measuredRamSavingsBytes": 214210
+    },
+    {
+      "contract": "works",
+      "baselineWasmBytes": 128994,
+      "optimizedWasmBytes": 118546,
+      "baselineSha256": "9e4117b18393b0de1a090acf87788d908419ecb5dc85e8354a28dacb707bc308",
+      "optimizedSha256": "2c686e4a9f9938db1057e53cba9f5e87d73415e73b3a15eeecfebf31475bfdee",
+      "abiUnchanged": true,
+      "baselineAccountRamBytes": 1295018,
+      "optimizedAccountRamBytes": 1190538,
+      "measuredRamSavingsBytes": 104480
+    },
+    {
+      "contract": "payroll",
+      "baselineWasmBytes": 84614,
+      "optimizedWasmBytes": 81651,
+      "baselineSha256": "4db6a327656d81fb055da26f359beb6d97cb4f3bb172b1efbd1e71c59ff7a8e7",
+      "optimizedSha256": "15f0d440dd8395cc815776a774f58c0bc397e707501d3cde180cec43fb8cf624",
+      "abiUnchanged": true,
+      "baselineAccountRamBytes": 850169,
+      "optimizedAccountRamBytes": 820539,
+      "measuredRamSavingsBytes": 29630
+    },
+    {
+      "contract": "grants",
+      "baselineWasmBytes": 110818,
+      "optimizedWasmBytes": 98870,
+      "baselineSha256": "e973f83fbe27e548d4ef14733f511d705d066db74a32a5ff65ca7f005af138fa",
+      "optimizedSha256": "2677051711f9875508ba5c093818ce12279e7f78970bb9f0118fc034df968540",
+      "abiUnchanged": true,
+      "baselineAccountRamBytes": 1113345,
+      "optimizedAccountRamBytes": 993865,
+      "measuredRamSavingsBytes": 119480
+    },
+    {
+      "contract": "endorse",
+      "baselineWasmBytes": 83758,
+      "optimizedWasmBytes": 77704,
+      "baselineSha256": "e1a0f64dc42c8e8ad1d324cf92d1dfe01cebba77b130fb2be74ba9ee4d88df48",
+      "optimizedSha256": "1a19210ebcf1084a8ce3e3ac78bba2b2d2ec08805d9b1e45bd53ae29379452b8",
+      "abiUnchanged": true,
+      "baselineAccountRamBytes": 841849,
+      "optimizedAccountRamBytes": 781309,
+      "measuredRamSavingsBytes": 60540
+    }
+  ],
+  "totalMeasuredRamSavingsBytes": 2063940,
+  "ramMethod": "On a fresh owned Spring chain, create one empty account per contract, deploy the exact baseline WASM/ABI, read get_account.ram_usage, replace with the optimized WASM and identical ABI, and read RAM again. Assert each measured delta equals ten times the WASM byte reduction. Names bytecode was already optimized and unchanged.",
+  "cpuMeasurements": {
+    "action": "hub::regdeploy",
+    "metadataPayloadCharacters": 3500,
+    "summaries": {
+      "baseline": {
+        "samples": 30,
+        "medianMicroseconds": 5885,
+        "meanMicroseconds": 5972.2,
+        "minimumMicroseconds": 5372,
+        "maximumMicroseconds": 7368,
+        "rawMicroseconds": [
+          5720,
+          7368,
+          5871,
+          5957,
+          5917,
+          5845,
+          5449,
+          5372,
+          5591,
+          5526,
+          6742,
+          6173,
+          6736,
+          6156,
+          5987,
+          5643,
+          6061,
+          6559,
+          6501,
+          6537,
+          5530,
+          5681,
+          5634,
+          5435,
+          5652,
+          5746,
+          5899,
+          6206,
+          5603,
+          6069
+        ]
+      },
+      "optimized": {
+        "samples": 30,
+        "medianMicroseconds": 6221.5,
+        "meanMicroseconds": 6441.4,
+        "minimumMicroseconds": 5549,
+        "maximumMicroseconds": 12233,
+        "rawMicroseconds": [
+          6061,
+          6048,
+          6221,
+          6057,
+          5944,
+          5973,
+          5731,
+          6891,
+          6800,
+          6473,
+          6820,
+          6499,
+          6780,
+          5907,
+          5669,
+          6056,
+          6123,
+          5807,
+          5868,
+          5549,
+          6316,
+          6787,
+          6579,
+          6426,
+          6222,
+          6862,
+          12233,
+          6224,
+          5799,
+          6517
+        ]
+      }
+    },
+    "limitation": "Local CPU sample on one action; not a complete CPU profile or a guarantee for other actions."
+  },
+  "cpuMedianChangePercent": 5.7179,
+  "cpuInitialConcurrentRun": {
+    "summaries": {
+      "baseline": {
+        "samples": 30,
+        "medianMicroseconds": 7010,
+        "meanMicroseconds": 9018.966666666667,
+        "minimumMicroseconds": 6491,
+        "maximumMicroseconds": 18813
+      },
+      "optimized": {
+        "samples": 30,
+        "medianMicroseconds": 11713,
+        "meanMicroseconds": 11103.733333333334,
+        "minimumMicroseconds": 5859,
+        "maximumMicroseconds": 19408
+      }
+    },
+    "context": "Ran alongside verification checks. High jitter prompted the recorded repeat after the unit checks completed."
+  },
+  "cpuMethod": "Same owned process/account/state; alternate baseline and optimized Hub bytecode across three rounds, with twelve signed regdeploy actions per mode/round. Discard the first two per round; retain thirty receipt CPU samples per mode. JSON metadata includes 3500 repeated text characters. This is one representative large-metadata action, not a full CPU profile.",
+  "measurementScript": {
+    "path": "/data/daclify-runtime/contract-size-default-20261011/daclify-backend-core/.artifacts/size-optimization-measurement.ts",
+    "sha256": "7e113d0b9f1eed6eae3f9393892db5e4ffc9ea750c837e9df01deef725df16e1"
+  },
+  "verificationArtifacts": "/data/daclify-runtime/contract-size-default-20261011",
+  "limits": [
+    "No testnet/mainnet deployment, authority change or RAM trade.",
+    "No current immutable release package or deployment pin was changed.",
+    "The core verify command correctly refused publication: this development checkout is not a qualified release.",
+    "The frontend checkout and its existing dist were used only for manifest collection, not frontend qualification.",
+    "Full Docker-dependent native resource/archive/provider suites were not run; the changed archive fixtures were compiled.",
+    "CPU sampling covers Hub registration only. Size optimization can increase action CPU; native limits and representative CPU profiles remain release gates for further optimizations."
+  ]
+}
