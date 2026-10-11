@@ -1,6 +1,6 @@
 # Quick signup and user-controlled account entry
 
-Date: 2026-10-11. Status: draft. The user requested two account-creation paths. The quick path's immediate key-access policy remains to be confirmed; the recommendation below is an engineering proposal. This document records design work, not an implemented feature or a live provider qualification.
+Date: 2026-10-11. Status: product direction approved by the user on 2026-10-11. The user accepted quick Telegram/email signup with immediate key access through explicitly chosen Daclify-assisted recovery, alongside the existing user-controlled vault path. The implementation details below are engineering proposals. This document records design work, not an implemented feature or a live provider qualification.
 
 ## User requirements
 
@@ -81,10 +81,10 @@ Provider/storage operations are not one database transaction. The implementation
 - Unsupported recovery configuration never produces a working-looking signup button or a false success message. Temporary recovery outage does not downgrade existing account privacy.
 - Desktop/mobile keyboard, focus, busy-state and accessible errors work; destinations survive Telegram redirects. Browser provider mocks and service fixtures are reported separately from real email/Telegram and independent recovery qualification.
 
-## Scope and remaining decision
+## Scope and selected recovery policy
 
 Frontend account entry, provider controls, vault/session helpers, core provider ceremonies, canonical protocol, pending-creation persistence, recovery integration, tests and account help are in scope. Contract/module changes, production rollout, provider purchases and automatic changes to existing accounts' recovery permissions are outside this design.
 
-Confirm whether quick signup should immediately include signing and private-document key access through explicitly chosen Daclify-assisted recovery, as recommended. A login-only account with key setup deferred is a materially different product and must not be labeled full access. Existing recovery/provider operational prerequisites still need their own evidence before live enablement.
+The selected quick-signup path immediately includes signing and private-document key access through explicitly chosen Daclify-assisted recovery. A login-only account with key setup deferred does not satisfy this path. Existing recovery/provider operational prerequisites still need their own evidence before live enablement.
 
 Related design: [Passwordless device access and original-key recovery](2026-10-10-passwordless-devices-and-vault-recovery.md).
