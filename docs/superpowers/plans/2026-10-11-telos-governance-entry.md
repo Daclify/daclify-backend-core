@@ -84,7 +84,7 @@
 - [x] Build/package core protocol and module SDK, install pinned artifacts in consumers and regenerate both documentation bundles. Verify generated schema references/help match their producer.
 - [x] Run complete appropriate unit suites, targeted real-database/signature integration, desktop/mobile browser flow, types/lint/docs/builds and safe live mainnet read probe. Report existing failures by name; provider fixtures are not live Anchor qualification.
 - [x] Review the final connected code/diff inline under Ponytail Full; no delegation. Fix substantive findings with reproducing tests.
-- [ ] Commit scoped changes on each `dev`, push `dev`, and record exact versions/commits/checks/limits in evidence. No live deployment or wallet transaction is authorized.
+- [x] Commit scoped changes on each `dev`, push `dev`, and record exact versions/commits/checks/limits in evidence. No live deployment or wallet transaction is authorized.
 
 ## Execution record
 

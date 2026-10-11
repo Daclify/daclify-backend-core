@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 1,
+  "status": "verified-development",
+  "qualifiedRelease": false,
+  "artifactKind": "unpublished-development",
+  "branch": "dev",
+  "baseCommits": {
+    "core": "39ce29aaac34f784bad2baa04c6316ef72c8af35",
+    "modules": "6962c884cf57a00546edeaf5d1361f4438d02736",
+    "frontend": "7a4a198e11cb440000d174cc08780147cfda6cdd"
+  },
+  "packages": {
+    "core": {
+      "version": "0.14.0-alpha.1",
+      "sha256": "84f8fddf677f0845b5bf6f78f6888d4e832839de7c281984e9a3623a3877cbdc"
+    },
+    "modules": {
+      "version": "0.10.0-alpha.1",
+      "sha256": "b9eb5948ab6539770f730c6977eb0ef66d894fe805da52cdc9d8fec093bffcdd"
+    },
+    "frontend": {
+      "version": "0.14.0-alpha.1"
+    }
+  },
+  "migration": "039_native_signup.sql",
+  "contractSourceChanged": false,
+  "verification": {
+    "unit": {
+      "core": {
+        "files": 143,
+        "tests": 886,
+        "status": "passed",
+        "log": "/tmp/telos-merged-core-tests.log"
+      },
+      "modules": {
+        "files": 31,
+        "tests": 188,
+        "status": "passed",
+        "log": "/tmp/telos-merged-modules-tests.log"
+      },
+      "frontend": {
+        "files": 44,
+        "tests": 280,
+        "status": "passed",
+        "log": "/tmp/telos-layout-frontend-checks.log"
+      }
+    },
+    "integration": {
+      "files": 7,
+      "tests": 79,
+      "status": "passed",
+      "log": "/tmp/telos-merged-integration.log",
+      "proofVerifierReplaced": false,
+      "database": "Owned local PostgreSQL; ephemeral suite databases",
+      "rpc": "Owned HTTP fixtures"
+    },
+    "browser": {
+      "tests": 42,
+      "projects": [
+        "chromium",
+        "mobile-chromium"
+      ],
+      "status": "passed",
+      "log": "/tmp/telos-merged-browser.log",
+      "wallet": "Disposable WharfKit signer using actual K1 signatures; owned HTTP boundaries",
+      "liveWalletQualification": false
+    },
+    "lint": "passed in all three repositories",
+    "types": "passed in all three repositories",
+    "build": "passed in all three repositories",
+    "producerDocs": "passed for core and modules",
+    "frontendBuildAdvisory": "Existing chunk-size advisory; build exits successfully",
+    "additionalOwnedBrowser": {
+      "tests": 32,
+      "status": "passed",
+      "log": "/tmp/telos-layout-browser-owned.log",
+      "scope": "Latest platform controls, pricing navigation and all Telos cases; desktop/mobile"
+    },
+    "additionalLivePlatformBrowser": {
+      "tests": 4,
+      "status": "environment-unavailable",
+      "log": "/tmp/telos-layout-browser.log",
+      "reason": "Expected owned live API at 127.0.0.1:3008 was absent; ECONNREFUSED. Test verifier and product code were not bypassed."
+    }
+  },
+  "liveRead": {
+    "observedAt": "2026-10-11T18:47:13.989Z",
+    "chainId": "4667b205c6838ef70ff7988f6e8257e8be0e1284a2f59699054a018f743b1d11",
+    "source": "https://mainnet.telos.net",
+    "contract": "telos.decide",
+    "codeHash": "8b0e9c21406bddae0805116287e2321c512e081ec221b3c8111be008b03d6d53",
+    "abiHash": "ef5df77a2eb92e7565949fb80a7004c8872d757bcb57e3085d0139c08a0bb55f",
+    "retainedSupportedRecordsOnFirstPage": 17,
+    "hasContinuation": true,
+    "statuses": [
+      "voting",
+      "cancelled",
+      "closed"
+    ],
+    "exactLookupMatches": true,
+    "signingAvailable": false,
+    "coverage": "One bounded source page and one exact lookup; no complete-history claim; no transaction."
+  },
+  "livePagination": {
+    "observedAt": "2026-10-11T18:51:10.461Z",
+    "pages": [
+      {
+        "supportedRecords": 17,
+        "hasContinuation": true
+      },
+      {
+        "supportedRecords": 20,
+        "hasContinuation": true
+      },
+      {
+        "supportedRecords": 17,
+        "hasContinuation": true
+      }
+    ],
+    "coverage": "At most three bounded source pages; no complete archive or endorsement claim; no transactions."
+  },
+  "liveActionAbi": {
+    "observedAt": "2026-10-11T18:56:18.024Z",
+    "contract": "telos.decide",
+    "actions": [
+      "castvote",
+      "regvoter"
+    ],
+    "exactActionFieldsMatch": true,
+    "scope": "Live ABI read only; no code qualification or transaction."
+  },
+  "signingPinsApproved": false,
+  "productionDeploymentPerformed": false,
+  "realChainTransactionSent": false,
+  "unrun": [
+    "Live Anchor approval",
+    "Mainnet vote execution",
+    "Delegated-authority qualification",
+    "Native external Decide WASM qualification",
+    "Production deployment qualification",
+    "Additional full live platform browser fixture (local API 3008 unavailable)"
+  ],
+  "limitations": [
+    "Operator native chain/RPC is the only configured source",
+    "Retained table history only; deleted ballots and cleaned receipts are unavailable",
+    "Public VOTE publisher identity is not an endorsement registry",
+    "Existing voter stake may require refresh in the Telos app",
+    "Transaction-status tracking is provider-dependent"
+  ],
+  "featureCheckpointCommits": {
+    "core": "c6bc09b1df2c66a49c4d3dddf1ed81409918aa47",
+    "modules": "8a8f25d55181ccddd5e420e0b5fe993d2c4f6817",
+    "frontend": "b729ee36c44060ae319424592a8e97d67d41b511"
+  },
+  "featureCheckpointVerification": {
+    "unit": {
+      "core": {
+        "files": 140,
+        "tests": 876,
+        "status": "passed",
+        "log": "/tmp/telos-core-complete-tests.log"
+      },
+      "modules": {
+        "files": 31,
+        "tests": 188,
+        "status": "passed",
+        "log": "/tmp/telos-modules-complete-tests.log"
+      },
+      "frontend": {
+        "files": 43,
+        "tests": 279,
+        "status": "passed",
+        "log": "/tmp/telos-frontend-complete-tests.log"
+      }
+    },
+    "integration": {
+      "files": 6,
+      "tests": 74,
+      "status": "passed",
+      "log": "/tmp/telos-integration-final.log",
+      "proofVerifierReplaced": false,
+      "database": "Owned local PostgreSQL; ephemeral suite databases",
+      "rpc": "Owned HTTP fixtures"
+    },
+    "browser": {
+      "tests": 28,
+      "projects": [
+        "chromium",
+        "mobile-chromium"
+      ],
+      "status": "passed",
+      "log": "/tmp/telos-browser-delivery.log",
+      "wallet": "Disposable WharfKit signer using actual K1 signatures; owned HTTP boundaries",
+      "liveWalletQualification": false
+    },
+    "lint": "passed in all three repositories",
+    "types": "passed in all three repositories",
+    "build": "passed in all three repositories",
+    "producerDocs": "passed for core and modules",
+    "frontendBuildAdvisory": "Existing chunk-size advisory; build exits successfully"
+  },
+  "featureCheckpointPackages": {
+    "core": {
+      "version": "0.14.0-alpha.1",
+      "sha256": "e9c0abd4f21de6d08e6ee6e3b05bd3a5f9386f5a6f5df777c3a60f384f798187"
+    },
+    "modules": {
+      "version": "0.10.0-alpha.1",
+      "sha256": "1866ea0d966bd090f95615306fbfe152bfc584141822db1e6bf46c7ae86ea6b9"
+    },
+    "frontend": {
+      "version": "0.14.0-alpha.1"
+    }
+  },
+  "implementationCommits": {
+    "core": "74f8d0bf07bca4042768fb30003062c915136e28",
+    "modules": "1efcd7c044dff69403321fe495e08c240a2672e6",
+    "frontend": "3553f08728035e75808bdb57d62949d86870cbd2"
+  },
+  "incomingCommits": {
+    "core": "2bf879c",
+    "modules": "91874e8",
+    "frontend": "76e8c76"
+  },
+  "mergedRuntime": {
+    "codeHash": "b0c1826a210d273b3250915b7db0a4c1a4cc70be465153195b52febfb3272fb4",
+    "source": "Separate monthly-module-fee rollout; identical tracked sources and artifact verified before reuse",
+    "compiler": "CDT 4.1.1 -O=s",
+    "qualificationEvidence": "2026-10-11-monthly-module-fees.md"
+  },
+  "testedFeeMergeCommits": {
+    "core": "97efe136d1be63611ae6fab459a8921c4ab00c02",
+    "modules": "1efcd7c044dff69403321fe495e08c240a2672e6",
+    "frontend": "5bdf354ec207207380c80e6188087850499706bd"
+  },
+  "additionalIncomingCommits": {
+    "core": "3d5b9cb",
+    "frontend": "cddac91"
+  },
+  "delivery": {
+    "branch": "dev",
+    "implementationPushed": true,
+    "productionDeployment": false
+  }
+}
