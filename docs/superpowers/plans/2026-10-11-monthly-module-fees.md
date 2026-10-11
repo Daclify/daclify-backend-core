@@ -29,7 +29,7 @@ Interfaces: `govmodfee(runtime,dao_id,member_id,account,expected_revision,monthl
 
 ## Task 2 — verified one-month payments and API
 
-Files: `protocol/module-fees.ts`, `protocol/index.ts`, `protocol/routes.ts`, `migrations/039_module_fees.sql`, `services/api/src/billing/module-fees.ts`, `module-fees-config.ts`, `module-fees-jobs.ts`, `native-chain.ts`, `chain.ts`, `main.ts`, `server.ts`, `tests/module-fee-pricing.test.ts`, `tests/integration/module-fees.test.ts`.
+Files: `protocol/module-fees.ts`, `protocol/index.ts`, `protocol/routes.ts`, `migrations/040_module_fees.sql`, `services/api/src/billing/module-fees.ts`, `module-fees-config.ts`, `module-fees-jobs.ts`, `native-chain.ts`, `chain.ts`, `main.ts`, `server.ts`, `tests/module-fee-pricing.test.ts`, `tests/integration/module-fees.test.ts`.
 
 Interfaces: public `ModuleFeePricingSchema`, `ModuleFeeStatusSchema`, `ModuleFeeApprovalSchema`, `ModuleFeeOrderSchema`, `moduleFeePricingHash`; `ModuleFeeRoutes.moduleFeePricing/moduleFeeStatus/moduleFeeCheckout/moduleFeeOrder`; `ModuleFees.status/checkout/order/reconcileDue` and native gateway pricing/term/attest/revoke readers.
 
