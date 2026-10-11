@@ -7,6 +7,7 @@ Date: 2026-10-11. Status: product direction approved by the user on 2026-10-11. 
 - A new visitor can create a Daclify account quickly using Telegram or email.
 - A new visitor can also use the existing vault-password and recovery-kit flow.
 - Account creation and returning-user login must both accommodate these paths.
+- Users can decline Daclify-assisted recovery during signup and opt out later from account settings. This requirement was added by the user on 2026-10-11.
 
 Build on the existing Vue/TypeScript frontend, core API, provider verifiers and encrypted recovery service. No new authentication platform, module authority or contract change is proposed.
 
@@ -38,6 +39,18 @@ The recommendation is a complete account with keys available immediately, and re
 Present **Create with your own keys** as the second choice. Selecting it reveals the existing vault-password, password generation/copy and required recovery-kit acknowledgment steps. Preserve existing envelopes and kit readers.
 
 The user may later pair Telegram or email with this account through the existing account-control flow. Pairing does not automatically grant those methods access to keys. Full-access enrollment remains an explicit per-method choice with the existing custody disclosure.
+
+### Opting out of assisted recovery
+
+At signup, users can choose **Create with your own keys** instead of accepting assisted recovery. Selecting Telegram or email must never itself grant the recovery service access to keys.
+
+In **Account → Access & recovery**, provide **Turn off Daclify-assisted recovery**. This is an account-wide choice: disable every assisted full-access method, not just the method used for the current login. Require fresh account-control authorization, retain the same account and DAO memberships, and preserve any user-selected client-protected recovery methods.
+
+Before turning off the last full-access recovery route, help the user establish and verify an independent fallback: the existing password-protected vault and encrypted recovery kit, or another qualified client-protected method. The current unlocked browser alone is not a lost-device recovery path. Keep assisted recovery working until the fallback has passed a recovery round trip matching both original public keys; cancellation or failure must leave the existing access working.
+
+Revoke pending assisted recovery grants and handoffs, and prevent further service key releases after successful opt-out, including grants issued before the change. Serialize opt-out with key-release requests at the account boundary. Paired Telegram/email methods can remain enabled for login only; explain that they will no longer unlock the keys on another device. Re-enabling assisted full access requires new explicit consent and fresh account-control proof.
+
+Show the current state as **Daclify-assisted recovery off**, while retaining the permanent history of operator recovery authority. Explain: “Turning this off stops future recovery through Daclify. It cannot erase keys or documents already recovered.” Do not relabel previously assisted keys as never exposed or claim eligibility for strictly user-controlled DAOs. Any actual revocation of authority held through previously recovered keys requires a separately verified key-rotation and document-grant flow; opt-out must not silently perform it.
 
 ### Returning users
 
@@ -78,6 +91,9 @@ Provider/storage operations are not one database transaction. The implementation
 - Cross-browser/origin/account/purpose proof substitution, stale/replayed proofs, guessed/reused email codes and session-only credential enrollment fail.
 - Concurrent creation and retries cannot produce duplicate credential ownership or identities. Provider cancellation, storage failure and expired attempts have a working continuation or cleanup path.
 - Quick creation cannot overwrite another account's saved local vault or persist plaintext keys. Strict private DAO policy rejects incompatible recovery authority.
+- Signup permits declining assisted recovery. Account-wide opt-out removes all assisted routes, preserves client-protected methods and login pairings, and requires a verified independent fallback before removing the last full-access recovery route.
+- Pending grants/handoffs, concurrent key-release requests, removed methods and ordinary login-only sessions cannot obtain new assisted recovery material after opt-out. Cancellation and fallback failure preserve working access; re-enrollment requires fresh consent and authorization.
+- Opt-out retains account/DAO identity and permanent assisted-authority history. The UI distinguishes recovery being off from keys never having been exposed; strict private DAO policy cannot be bypassed by disabling recovery.
 - Unsupported recovery configuration never produces a working-looking signup button or a false success message. Temporary recovery outage does not downgrade existing account privacy.
 - Desktop/mobile keyboard, focus, busy-state and accessible errors work; destinations survive Telegram redirects. Browser provider mocks and service fixtures are reported separately from real email/Telegram and independent recovery qualification.
 

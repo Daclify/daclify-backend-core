@@ -11,6 +11,7 @@ Date: 2026-10-10. Status: approved for inline implementation by the user on 2026
 - A paired Telos Zero or Telos EVM wallet should provide a recovery path. The user proposed storing a backup encrypted using a private wallet signature.
 - Losing the Daclify application server must not destroy the only key backup or the information needed to find it.
 - A user chooses recovery permissions per paired method after seeing who gains recovery power. Do not upload this user's keys to an operator-held wrap or enable it for existing users merely because they requested the feature.
+- Amendment approved by the user on 2026-10-11: users can decline Daclify-assisted recovery at signup and turn it off later for the whole account. Establish and verify an independent fallback before removing the last full-access recovery route. Preserve login pairings, account/DAO identity and permanent assisted-authority history.
 
 The labels, disabled-by-default assisted recovery, optional existing-device approval, and the storage layout below are engineering proposals. A particular paired method is not mandatory.
 
@@ -35,6 +36,8 @@ In the assisted design, the recovery service can recover both signing and docume
 Any enabled recovery route affects the whole shared vault. An account with an assisted route remains operator-recoverable when it is opened through a wallet or passkey. Display this account-wide consequence in the method list, enrollment consent and account summary. Removing an assisted method cannot prove an operator forgot already recovered secrets; never claim retroactive confidentiality.
 
 Pairing grants login under the existing explicit pairing flow. It does not automatically enable original-key recovery. Each row displays its login availability, full-access state, custody label and qualified support. An unavailable recovery mechanism remains visibly unavailable rather than becoming an ineffective toggle. Existing pairings migrate with original-key recovery disabled until enrolled and verified.
+
+Account settings must also offer **Turn off Daclify-assisted recovery** across all assisted methods. Fresh account-control authorization and a verified independent fallback are required before removing the last full-access recovery route. Successful opt-out invalidates pending assisted grants/handoffs and prevents further assisted releases, including races with requests started before the change. Telegram/email can remain paired for login only. Display **Daclify-assisted recovery off** alongside truthful permanent assistance history; disabling recovery cannot erase previously recovered keys or make the old keys eligible for a stricter confidentiality policy. Re-enabling requires fresh consent and authorization. See the [two-path signup design](2026-10-11-two-path-account-entry-design.md#opting-out-of-assisted-recovery).
 
 ## Verified starting point
 
