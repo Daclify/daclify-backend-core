@@ -37,7 +37,7 @@
 
 ### Task 2: Deliver and apply live
 
-- [ ] Run current frontend verify/build and affected browser checks; record wallet/provider limits precisely.
-- [ ] Record source-bound evidence, review final diffs, commit only this task's files and push core `dev`.
-- [ ] Snapshot the current API build and frontend entry point, rebuild/publish the frontend, restart the API through existing tooling, and verify public HTTPS UI/API and active runtime source.
-- [ ] Commit/push deployment evidence and confirm remote heads, service health and cleanup of owned fixtures.
+- [x] Run current frontend verify/build and affected browser checks; record wallet/provider limits precisely.
+- [x] Record source-bound evidence, review final diffs, commit only this task's files and push core `dev`.
+- [x] Snapshot the current API build and frontend entry point, rebuild/publish the frontend, restart the API through existing tooling, and verify public HTTPS UI/API and active runtime source.
+- [x] Commit/push deployment evidence and confirm remote heads, service health and cleanup of owned fixtures.

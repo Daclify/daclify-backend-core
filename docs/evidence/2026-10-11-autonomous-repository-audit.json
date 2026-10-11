@@ -540,5 +540,12 @@
     ]
   },
   "recommendedNextWork": "Qualify real wallet cancellation/connection lifecycle and source-bound release suites; then fault-test the remaining explicit transaction cleanup. Profile actual bundle/database/worker load before structural optimization.",
-  "decisionsRequired": "No additional policy decision is required for the completed bounded repairs. A new deployment or production asset/authority operation remains subject to explicit user authorization."
+  "decisionsRequired": "No additional policy decision is required for the completed bounded repairs. A new deployment or production asset/authority operation remains subject to explicit user authorization.",
+  "followUp": {
+    "completedAt": "2026-10-11T12:06:08.621439+00:00",
+    "evidence": "2026-10-11-transaction-cleanup-testnet-remediation.json",
+    "transactionCleanup": "All 33 remaining sites repaired; archive unlock failure repaired.",
+    "deployment": "Verified live testnet API/frontend from committed source snapshots.",
+    "remaining": "External wallet/provider and native-release qualification, plus pinned development emulator advisories."
+  }
 }

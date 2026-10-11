@@ -1,0 +1,700 @@
+{
+  "schemaVersion": 1,
+  "completedAt": "2026-10-11T12:06:08.621439+00:00",
+  "authorization": "User requested fixing remaining issues, committing/pushing, and applying live.",
+  "source": {
+    "coreCommit": "142fa150fc4756aa746341999f15399479ff6bf6",
+    "frontendCommit": "40bee7b37390522c1fe4ec5db09b7fd8de269896"
+  },
+  "baselineCore": "052eaa3f4854f01e98ad56f91c652d8e4679616b",
+  "implementation": {
+    "remainingCleanupSitesRepaired": 33,
+    "filesWithRemainingSites": 17,
+    "sharedAuthHelperAlsoUsesCleanup": true,
+    "totalCleanupOwners": 34,
+    "archiveUnlockFailureRepaired": true,
+    "newUnitTests": 7,
+    "newRealDatabaseTest": 1,
+    "interfaceSchemaOrContractChanges": false,
+    "sqlReview": {
+      "method": "Inline AST comparison of all query expressions and arguments, excluding rollback cleanup; supplement to behavior tests, not an independent review",
+      "files": [
+        {
+          "file": "services/api/src/archive/exports.ts",
+          "preservedQueryCalls": 39
+        },
+        {
+          "file": "services/api/src/auth.ts",
+          "preservedQueryCalls": 12
+        },
+        {
+          "file": "services/api/src/billing/hosting.ts",
+          "preservedQueryCalls": 46
+        },
+        {
+          "file": "services/api/src/billing/settle.ts",
+          "preservedQueryCalls": 7
+        },
+        {
+          "file": "services/api/src/billing/storage-notices.ts",
+          "preservedQueryCalls": 8
+        },
+        {
+          "file": "services/api/src/billing/storage.ts",
+          "preservedQueryCalls": 53
+        },
+        {
+          "file": "services/api/src/content/assets.ts",
+          "preservedQueryCalls": 19
+        },
+        {
+          "file": "services/api/src/content/gateway-allowance.ts",
+          "preservedQueryCalls": 8
+        },
+        {
+          "file": "services/api/src/content/migrate.ts",
+          "preservedQueryCalls": 7
+        },
+        {
+          "file": "services/api/src/content/orphans.ts",
+          "preservedQueryCalls": 4
+        },
+        {
+          "file": "services/api/src/content/recovery.ts",
+          "preservedQueryCalls": 6
+        },
+        {
+          "file": "services/api/src/content/retention.ts",
+          "preservedQueryCalls": 54
+        },
+        {
+          "file": "services/api/src/content/service.ts",
+          "preservedQueryCalls": 26
+        },
+        {
+          "file": "services/api/src/creation.ts",
+          "preservedQueryCalls": 8
+        },
+        {
+          "file": "services/api/src/payments/service.ts",
+          "preservedQueryCalls": 38
+        },
+        {
+          "file": "services/api/src/resources/card.ts",
+          "preservedQueryCalls": 22
+        },
+        {
+          "file": "services/api/src/store.ts",
+          "preservedQueryCalls": 8
+        },
+        {
+          "file": "services/api/src/auth/account-session.ts",
+          "preservedQueryCalls": 6
+        }
+      ],
+      "changedNonCleanupQueries": 0
+    },
+    "inventory": [
+      {
+        "file": "services/api/src/archive/exports.ts",
+        "line": 211,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/archive/exports.ts",
+        "line": 335,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/archive/exports.ts",
+        "line": 603,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/auth.ts",
+        "line": 101,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/billing/hosting.ts",
+        "line": 315,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/billing/hosting.ts",
+        "line": 679,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/billing/settle.ts",
+        "line": 116,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/billing/storage-notices.ts",
+        "line": 52,
+        "client": "db"
+      },
+      {
+        "file": "services/api/src/billing/storage.ts",
+        "line": 326,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/billing/storage.ts",
+        "line": 433,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/billing/storage.ts",
+        "line": 552,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/billing/storage.ts",
+        "line": 839,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/content/assets.ts",
+        "line": 115,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/content/assets.ts",
+        "line": 240,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/content/gateway-allowance.ts",
+        "line": 44,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/content/migrate.ts",
+        "line": 71,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/content/orphans.ts",
+        "line": 29,
+        "client": "db"
+      },
+      {
+        "file": "services/api/src/content/recovery.ts",
+        "line": 170,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/content/recovery.ts",
+        "line": 243,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/content/retention.ts",
+        "line": 117,
+        "client": "db"
+      },
+      {
+        "file": "services/api/src/content/retention.ts",
+        "line": 150,
+        "client": "db"
+      },
+      {
+        "file": "services/api/src/content/retention.ts",
+        "line": 182,
+        "client": "db"
+      },
+      {
+        "file": "services/api/src/content/retention.ts",
+        "line": 265,
+        "client": "db"
+      },
+      {
+        "file": "services/api/src/content/retention.ts",
+        "line": 334,
+        "client": "db"
+      },
+      {
+        "file": "services/api/src/content/retention.ts",
+        "line": 479,
+        "client": "db"
+      },
+      {
+        "file": "services/api/src/content/service.ts",
+        "line": 125,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/content/service.ts",
+        "line": 228,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/content/service.ts",
+        "line": 381,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/creation.ts",
+        "line": 267,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/payments/service.ts",
+        "line": 617,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/payments/service.ts",
+        "line": 698,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/resources/card.ts",
+        "line": 123,
+        "client": "client"
+      },
+      {
+        "file": "services/api/src/store.ts",
+        "line": 21,
+        "client": "client"
+      }
+    ],
+    "description": "Failed cleanup preserves the operation error and destroys the leased client. Failed archive unlock also destroys the client without hiding a business error; healthy cleanup reuses the client. Existing error mappings and per-object recovery fallback remain."
+  },
+  "regressions": {
+    "red": {
+      "log": "cleanup-red-final.log",
+      "failed": 6,
+      "passed": 1
+    },
+    "green": {
+      "log": "cleanup-green.log",
+      "passed": 12,
+      "failed": 0,
+      "includesExistingSharedHelperTests": 5
+    }
+  },
+  "verification": {
+    "coreVerify": {
+      "command": "npm run verify",
+      "passed": 841,
+      "failed": 0,
+      "log": "core-verify.log"
+    },
+    "snapshotCoreVerify": {
+      "command": "npm run verify",
+      "passed": 841,
+      "failed": 0,
+      "log": "snapshot-core-verify-final.log"
+    },
+    "snapshotReleaseTests": {
+      "command": "vitest run tests/release-manifest.test.ts tests/release-qualification.test.ts",
+      "passed": 19,
+      "failed": 0,
+      "log": "snapshot-release-green.log"
+    },
+    "frontendVerify": {
+      "command": "npm run verify",
+      "passed": 272,
+      "failed": 0,
+      "log": "frontend-verify.log"
+    },
+    "snapshotFrontendVerify": {
+      "command": "npm run verify",
+      "passed": 272,
+      "failed": 0,
+      "log": "snapshot-frontend-verify.log"
+    },
+    "databaseIntegration": {
+      "command": "npm run test:integration",
+      "passed": 233,
+      "failed": 0,
+      "log": "integration.log",
+      "receipt": {
+        "exitCode": 0,
+        "database": "daclify_cleanup_269462_test",
+        "scope": "Full PostgreSQL integration suite; fresh owned local database, deleted after execution"
+      }
+    },
+    "realConnectionLoss": {
+      "command": "npm run test:integration -- tests/integration/transaction-cleanup.test.ts",
+      "passed": 1,
+      "failed": 0,
+      "log": "connection-loss.log",
+      "receipt": {
+        "exitCode": 0,
+        "database": "daclify_cleanup_connection_272919_test",
+        "scope": "Actual PostgreSQL leased-connection termination in an owned test database; deleted afterward"
+      }
+    },
+    "openBaoProvider": {
+      "command": "npm run test:providers -- tests/providers/openbao.test.ts",
+      "passed": 5,
+      "failed": 0,
+      "log": "openbao-provider.log",
+      "receipt": {
+        "exitCode": 0,
+        "scope": "Actual OpenBao process in owned loopback-only memory fixture; no production custody qualification",
+        "cleaned": true,
+        "tokenPersisted": false
+      }
+    },
+    "consumerBrowsers": {
+      "command": "playwright test tests/e2e/contract-resources.spec.ts tests/e2e/account-settings.spec.ts tests/e2e/sign-in-methods.spec.ts tests/e2e/wallet-recovery.spec.ts",
+      "passed": 28,
+      "failed": 0,
+      "log": "frontend-browser.log",
+      "receipt": {
+        "exitCode": 0,
+        "database": "daclify_cleanup_browser_269778_test",
+        "scope": "Owned API/database with virtual WebAuthn/local email, plus HTTP-fixture resource/settings/recovery journeys; API and database cleaned"
+      }
+    },
+    "publicBrowsers": {
+      "command": "npm run test:testnet-public",
+      "passedViewports": 2,
+      "log": "public-browser.log",
+      "scope": "Actual public HTTPS UI/API, no route interception"
+    },
+    "publicResources": {
+      "passedViewports": 2,
+      "log": "public-resources.log",
+      "report": {
+        "checkedAt": "2026-10-11T12:04:12.734Z",
+        "origin": "https://testnet.app.daclify.com",
+        "apiOrigin": "https://testnet.api.daclify.com",
+        "scope": "Real public HTTPS UI/API/RPC; no response fixtures, localhost CORS proxy, wallet connection, signatures or transactions",
+        "reports": [
+          {
+            "viewport": {
+              "width": 1440,
+              "height": 1100
+            },
+            "result": "passed",
+            "totals": "RAM used\n17,170,373 bytes\nRAM allocated\n20,135,154 bytes\nUsed RAM replacement estimate\n$17.42\n983.6954 TLOS",
+            "accounts": 10,
+            "contractAccounts": 8,
+            "ramSlider": "100% current quota; 200% double",
+            "cpuNetViews": "passed",
+            "accessibilityViolations": 0,
+            "fits": true,
+            "errors": [],
+            "misplaced": [],
+            "mutations": 0,
+            "screenshot": "/data/daclify-runtime/audit-remediation-20261011/desktop.png"
+          },
+          {
+            "viewport": {
+              "width": 390,
+              "height": 844
+            },
+            "result": "passed",
+            "totals": "RAM used\n17,170,373 bytes\nRAM allocated\n20,135,154 bytes\nUsed RAM replacement estimate\n$17.42\n983.6954 TLOS",
+            "accounts": 10,
+            "contractAccounts": 8,
+            "ramSlider": "100% current quota; 200% double",
+            "cpuNetViews": "passed",
+            "accessibilityViolations": 0,
+            "fits": true,
+            "errors": [],
+            "misplaced": [],
+            "mutations": 0,
+            "screenshot": "/data/daclify-runtime/audit-remediation-20261011/mobile.png"
+          }
+        ]
+      },
+      "scope": "Actual public HTTPS UI/API/RPC, no wallet connection or transactions"
+    }
+  },
+  "builds": {
+    "core": "core-build.log",
+    "snapshotCore": "snapshot-core-build.log",
+    "snapshotFrontend": "snapshot-frontend-build.log",
+    "deployment": "live-apply.log",
+    "result": "passed",
+    "frontendWarning": "Existing large documentation chunk warning remains; no bundle-size threshold was changed."
+  },
+  "deployment": {
+    "status": "live and verified",
+    "targets": {
+      "api": "https://testnet.api.daclify.com",
+      "frontend": "https://testnet.app.daclify.com"
+    },
+    "snapshot": {
+      "releaseRoot": "/data/daclify-runtime/releases/20261011-audit-remediation",
+      "coreCommit": "142fa150fc4756aa746341999f15399479ff6bf6",
+      "frontendCommit": "40bee7b37390522c1fe4ec5db09b7fd8de269896",
+      "modulesCommit": "be8876ef719b58a39b5c9e061b46ca633e6eeb7f",
+      "pinnedArchives": "Restored exact committed frontend vendor bytes; shared workspace artifacts were not changed",
+      "purpose": "Detached deployment snapshots to exclude concurrent uncommitted documentation/package changes"
+    },
+    "api": {
+      "network": {
+        "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+        "rpcUrl": "https://testnet.telos.caleos.io",
+        "runtime": "daclifycore1",
+        "hub": "daclifyhubv1",
+        "environment": "testnet",
+        "interfaceVersion": 1,
+        "coreVersion": "0.13.0-alpha.4",
+        "capabilities": [
+          "creator-owner-executive-active",
+          "internal-k1",
+          "native-linked",
+          "encrypted-documents",
+          "native-sign-in",
+          "executive-authority",
+          "evm-eoa-governance",
+          "shared-dao-create",
+          "dao-presets",
+          "guarded-agents",
+          "governance-policy"
+        ]
+      },
+      "systemd": "MainPID=282693\nExecMainStatus=0\nWorkingDirectory=/data/daclify-runtime/releases/20261011-audit-remediation/daclify-backend-core\nActiveState=active\n"
+    },
+    "frontend": {
+      "origin": "https://testnet.app.daclify.com",
+      "indexSha256": "25c72bec034e1acc76fe96d5b6514da0a5fb370ae25d348018e2cbe3cfccb0b4",
+      "entryAssetsMatched": 21,
+      "nativeWalletAsset": "/assets/telos-zero-BuEx7c-x.js",
+      "previousEntryAssetsRetained": true
+    },
+    "applyCommand": "DACLIFY_API_SOURCE_DIR=<committed core snapshot> DACLIFY_FRONTEND_SOURCE_DIR=<committed frontend snapshot> daclify-rebuild all",
+    "apiRestarted": true,
+    "caddyOrPostgresRestarted": false,
+    "previousEntryAssetsRetained": true,
+    "databaseMigrationsUnchanged": true,
+    "accountCountBeforeAndAfter": "10",
+    "configurationUnchanged": true,
+    "chainTransactionsSubmittedByDeploymentOrProbes": 0,
+    "accountAuthorityChanges": false,
+    "runtimeRebuildSha256": "346e9a92012177d41da21fd2a49a6d8908934954289352ad5491a4ec7e445dcb",
+    "rollbackArtifacts": [
+      "index.before.html",
+      "api-previous-source.tar.gz",
+      "before-deployment.json"
+    ]
+  },
+  "scopeDecisions": [
+    "Other-session documentation/generated-help/package changes were excluded using detached committed source snapshots and exact committed vendor archives. Their commits and worktree changes were preserved.",
+    "The runtime rebuild helper accepts explicit API/frontend source directories; defaults still select the normal workspace. The API working directory follows the selected checkout. Keep its source snapshot while running.",
+    "No new contract build/deployment or artifact-pin regeneration was included. The existing release gate still reports publication refused/qualified false; this is the authorized development testnet deployment.",
+    "Review was inline as required; no independent-agent review is claimed."
+  ],
+  "dependencies": {
+    "productionReportedAdvisories": 0,
+    "productionLog": "snapshot-production-dependencies.json",
+    "developmentReportedPackageAdvisories": {
+      "info": 0,
+      "low": 2,
+      "moderate": 0,
+      "high": 2,
+      "critical": 0,
+      "total": 4
+    },
+    "developmentAffectedPackages": [
+      "@greymass/eosio",
+      "@proton/vert",
+      "elliptic",
+      "lodash.set"
+    ],
+    "developmentDisposition": "Existing pinned VERT emulator dependency advisories have no npm-provided fix. No unverified emulator replacement was made; they are development dependencies, absent from the production advisory set."
+  },
+  "remainingQualification": [
+    "Actual Anchor/EVM wallet prompts and external SMTP/Telegram/Google/Stripe/Pinata ceremonies remain unqualified. OpenBao checks used an owned loopback memory fixture, not production custody.",
+    "Full native-runtime/supported-release qualification, production load and non-Chromium browsers were not rerun; no contract source/binary changed.",
+    "Pinned VERT development dependency advisories remain a separate toolchain follow-up."
+  ],
+  "setupCorrections": [
+    "Initial snapshot release tests lacked frontend/core build outputs; generation restored them and 19 targeted checks plus the final full snapshot suite passed. The interrupted initial log is retained.",
+    "The owned snapshot cancellation command also terminated its own setup shell; setup was rerun. No live service was targeted by cancellation.",
+    "An API identity probe ran before deployment finished; it was repeated after the restart and confirmed the new PID and snapshot working directory.",
+    "A reused resources checker had a hardcoded old output directory. Current screenshots/report were copied to this task and the old JSON restored from its original log. Prior runtime screenshots were overwritten; original check logs and committed JSON remain intact. The corrected task-local checker accepts its output path."
+  ],
+  "evidenceDirectory": "/data/daclify-runtime/audit-remediation-20261011",
+  "evidenceHashes": [
+    {
+      "file": "before-deployment.json",
+      "sha256": "198584fccaaa84475ae1f4ca476f36f222b932fb6e624d9756127862bdd9a1ab"
+    },
+    {
+      "file": "browser-api.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "browser-result.json",
+      "sha256": "ce7a3ab3ba1556b49eba00c17a4a9fbf88feb69153d4991528ef86e9e90f09ad"
+    },
+    {
+      "file": "cleanup-green.log",
+      "sha256": "efbcf17adc3d7cf54d0ba023c7882404b16f6ed50de90ce335f290e0142632c1"
+    },
+    {
+      "file": "cleanup-inventory.json",
+      "sha256": "1a176889ba8328c5aa3be66ae183f2c340d5c8438c5760e13957ced3ff2b2a10"
+    },
+    {
+      "file": "cleanup-red-final.log",
+      "sha256": "432681f8bb197e656413180455c1bbd2498c3598238c08e41572351d56546efd"
+    },
+    {
+      "file": "cleanup-red.log",
+      "sha256": "b6f7bcbca23af74cd931d6efc750fd3bdeab4f2dc82b0b4ebed9b0208fb90d9e"
+    },
+    {
+      "file": "connection-loss-result.json",
+      "sha256": "ad5bfec317e02759fe1f2b69c14f7fb2f0361d8f133d0a3a36a2ab1a5bf980d2"
+    },
+    {
+      "file": "connection-loss.log",
+      "sha256": "8a78ef7359c5fa2e25e34053bf5e7e4b5f793f2171f4ba96ef48f1438460c419"
+    },
+    {
+      "file": "connection-test-format.log",
+      "sha256": "7de4197700d1ee7262c37cbe13747a9ea36e46fab2b49abf75b820e0713a0949"
+    },
+    {
+      "file": "core-build.log",
+      "sha256": "82fbfb556c1dbef480fc4e914de7b3b5643edd6ad9705ba579bbc2a3f5b43cdf"
+    },
+    {
+      "file": "core-verify.log",
+      "sha256": "2b729c2d90384860ab90b8515c837b5b1f1aba9566e6ff4f32ba09961cf10624"
+    },
+    {
+      "file": "database-after.json",
+      "sha256": "88f919d059eaa66efac20afd9772688fe38912a778f7f22b82ddba50bfb9ec07"
+    },
+    {
+      "file": "database-before.json",
+      "sha256": "5fc3367f7a25121cc53334045a2a46b335bda5bd28a89a55f4948b3a3687d683"
+    },
+    {
+      "file": "deployment-snapshots.json",
+      "sha256": "f7b572220530fd6b3d9a97d067b0d02d1ba8db2334ba435f6c5a48eeddcf1789"
+    },
+    {
+      "file": "final-format.log",
+      "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20"
+    },
+    {
+      "file": "final-lint.log",
+      "sha256": "185fbe43409914c8fc847291d372773e7525221af9a547fd250babb9f418f263"
+    },
+    {
+      "file": "final-typecheck.log",
+      "sha256": "3634398c1ec562ae988b96b5604f6193b8fa6f5dc8c0ece219baeaa1749d3a92"
+    },
+    {
+      "file": "frontend-browser.log",
+      "sha256": "99a3b795c5afae4b979a08a69910a7737e83ca71016619862c497d9a02eb1e2e"
+    },
+    {
+      "file": "frontend-verify.log",
+      "sha256": "0eb40bec3491abb1b5aaa4cca7c28790dede24fa31a4a662cd31da59c479ae77"
+    },
+    {
+      "file": "integration-result.json",
+      "sha256": "3db23cb4cb3e3011267eeabd02812a81357b252af02b92ee9b5eafdc5c1daed3"
+    },
+    {
+      "file": "integration.log",
+      "sha256": "3239ec57c01dd70f9c21ceb5e49ea0f418e5b6c2b160b8177274671b04b6eddf"
+    },
+    {
+      "file": "live-api.json",
+      "sha256": "779d1de35cce76c683b99e0bf7d6c86cb3bc85501d1eea4bf80e8044f8ff1054"
+    },
+    {
+      "file": "live-apply.log",
+      "sha256": "0c722e719d22c590b138da439c890f472cb74e1f49ae4137dadb4d010dafd99d"
+    },
+    {
+      "file": "openbao-provider-result.json",
+      "sha256": "10eebcc0a93ec0d06750ce04ab80c68b9c2de549986ef3bf5509e55f7d893ebf"
+    },
+    {
+      "file": "openbao-provider.log",
+      "sha256": "7ff0064ad424a0bfaf92e9045748eee1253a18a2aa1e6cf94862d49e0189ff9d"
+    },
+    {
+      "file": "public-assets.json",
+      "sha256": "1499b7d507118b71e6cf404820820f06122280f71f6bbfbe5d5c29b7f19c8d9e"
+    },
+    {
+      "file": "public-browser.log",
+      "sha256": "d4b2c13e6067cae8cccce96d0be8092b9a785db369e727252be613eac42cb93d"
+    },
+    {
+      "file": "public-resources.json",
+      "sha256": "7f49a9b42b90b740be2b0e629ea0383d6790ea1f015ab0cb23b2d64ae443efa0"
+    },
+    {
+      "file": "public-resources.log",
+      "sha256": "c65d6b879224e96f4b7ceaee06cd8d6b5575c7455c702ef20549de5fa273a62e"
+    },
+    {
+      "file": "snapshot-all-dependencies.json",
+      "sha256": "9248fcbb0b211a18cc18a24fc6b8d9aafe316f6cfded752a8c6150c684ccd99b"
+    },
+    {
+      "file": "snapshot-core-build.log",
+      "sha256": "82fbfb556c1dbef480fc4e914de7b3b5643edd6ad9705ba579bbc2a3f5b43cdf"
+    },
+    {
+      "file": "snapshot-core-install.log",
+      "sha256": "f487dde4d1167b5ddb85f7af38f004fd33f35f24096360075d98972148927df7"
+    },
+    {
+      "file": "snapshot-core-verify-final.log",
+      "sha256": "6d10feef14a92c9ab08bdf9fbdec8e676d0641f6ab75ebbfd1dd9f1c814b3c60"
+    },
+    {
+      "file": "snapshot-core-verify.log",
+      "sha256": "b6fa862f80fe6befd43528257fe2fb6d89b1969bea046f1a34a3f2ae8d9ac989"
+    },
+    {
+      "file": "snapshot-frontend-build.log",
+      "sha256": "68c0a987911b2894fff64f7c282c3b85e7c2c2ea78cac05a2abbd189c3d16940"
+    },
+    {
+      "file": "snapshot-frontend-install.log",
+      "sha256": "430c44cb9dd0f094a55e9a07507e49a30c7308233a905ab5d36f4780a2719fc0"
+    },
+    {
+      "file": "snapshot-frontend-verify.log",
+      "sha256": "bbdb31807126de3b3d737675e5b9149b8a682c7999807f69124edf849ddc3525"
+    },
+    {
+      "file": "snapshot-production-dependencies.json",
+      "sha256": "033761b77cf39d0c278cadb032de3dbfa24071d6c28684d75bba080ef362dde0"
+    },
+    {
+      "file": "snapshot-release-green.log",
+      "sha256": "5e8ea8e97e214952713ea743f94112d9150c54f6065c4f735783da0e3b439dd8"
+    },
+    {
+      "file": "source-commit.json",
+      "sha256": "afd12ad89a67d454c969dc7eebb36dc852350a010a8f9f9bc10712afaf8d509b"
+    },
+    {
+      "file": "source-format.log",
+      "sha256": "5829ee73e29050c8877a70bc500a291011a6bb26d328819b36e8d818b85e1d24"
+    },
+    {
+      "file": "sql-review.json",
+      "sha256": "e2a0f9113a5fe8939f2a39f1685c1e59980d77f3eeca089876d48f677240b93d"
+    },
+    {
+      "file": "test-format.log",
+      "sha256": "c0b515b36b2aae7b648b7aff0dc40da008108f2a921c96b43b7254fc8eb8a832"
+    },
+    {
+      "file": "typecheck.log",
+      "sha256": "3634398c1ec562ae988b96b5604f6193b8fa6f5dc8c0ece219baeaa1749d3a92"
+    }
+  ]
+}
