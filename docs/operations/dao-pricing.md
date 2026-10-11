@@ -1,6 +1,6 @@
 # DAO pricing page
 
-The Create a DAO screen has a Pricing button that opens `/pricing` in a new tab, preserving the original setup form. Pricing is public and does not require an account.
+The Create a DAO screen has a Pricing button that navigates to `/pricing` in the current tab. Pricing is public and does not require an account. Use its back link or browser Back to return to setup.
 
 The page reads the selected deployment's `/v1/platform/status` and `/v1/modules/pricing` through the pinned public SDK. It shows shared setup pricing, independent deployment contact options, included member capacity, graduated monthly paid slots, storage units, RAM purchase margins and allowances, governed USD monthly module prices, Connect commission and conversion premiums. An expandable section includes configured legacy setup values, TLOS module usage prices, module revenue shares and name resale settings; these are distinguished from an available checkout quote.
 
