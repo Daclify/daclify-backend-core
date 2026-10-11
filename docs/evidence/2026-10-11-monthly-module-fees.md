@@ -41,6 +41,8 @@ The private PostgreSQL backup contains 261,510 bytes, SHA-256 `dc9fa58b1f677a361
 
 The current security fixes on `dev` were merged before deployment. The separately edited Telos-governance/native-signup draft in the original checkouts was preserved. Module fee SQL uses **`040_module_fees.sql`**, leaving draft migration 039 distinct. The migration coordinator tracks each immutable file by name and hash; adding the separate earlier-numbered migration later does not rename or replay 040. Draft `0.14` / module `0.10` source was not deployed by this rollout.
 
+The verified branches were fast-forwarded into remote **`dev`** in all three repositories; `main` was untouched. Local `dev` refs beneath the independent uncommitted draft were deliberately left unchanged. That draft still needs to merge the updated remote `dev`, regenerate fresh combined SDK artifacts and qualify its own subsequent rollout. The running services remain bound to the fee release archive.
+
 ## Actual Stripe sandbox and native access
 
 All payment checks used the actual existing Stripe **sandbox**, hosted Checkout and SDK retrieval of the payment intent, captured charge and refund. No real card charge, provider plan upgrade or real-money transfer was made. A redirect, webhook payload or injected verifier was not accepted as proof.
@@ -52,6 +54,8 @@ The separate owned public DAO `5096066148960770562` enrolled eleven synthetic me
 - Paid creation succeeded in transaction `046c3964fa6f5e7dd59a4004ea9535237693a174256be1e29c30c1d212bd0590`.
 - An actual full sandbox refund revoked the matching term. A new poll again failed at eleven members without consuming the nonce. Voting on a poll created before refund still succeeded: `fcfe6797e903c5c0684dd5d2f8ad7c5d437d39453b2c8e8d404d3c2d3e0a4b4f`.
 - Deactivating only synthetic member 11 restored the authoritative count to ten. A new unpaid poll succeeded: `5a379a0c47547c2d46c3e2094dac939067ad82942371cf8e8594d4bd82f6e357`.
+
+All three fixture polls were subsequently finalized. At **2026-10-11T18:59:04.757Z**, the DAO had **zero active ballots**, ten active synthetic members and the refunded term remained revoked. The final two finalization transactions were `ce8054154c5161a51e9b360fdc9bda0757a8d6470b3cbe5aa7ec671a4f331ca0` and `ff4b96122a71d6df83e70827149696e8782070a8d2fd060f7cb4b7f091048245`. No temporary poll lock was left pending.
 
 The calendar-month expiry, delayed retries, disputes, renewal and native expired-term behavior were also covered by local native/compiled-contract and PostgreSQL tests. A real month-long expiry or live-money dispute was not awaited or claimed.
 

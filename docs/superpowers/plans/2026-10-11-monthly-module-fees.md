@@ -53,7 +53,7 @@ Files: source-bound testnet deployment preparation/tooling, new release/compatib
 - [x] Requalify single-VM testnet recovery against the new exact core artifact and archive/install matched API/frontend sources.
 - [x] Verify real Stripe test-mode one-month payment/term, the 10/11 threshold and native expiry/continuation behavior using owned fixtures; preserve user DAOs and provider objects.
 - [x] Verify encrypted documents live through client encryption/epoch grants, Pinata, native publication and decryption after download; reject unauthorized publication and inspect stored ciphertext/metadata.
-- [ ] Run public browser/signup/apps/regression checks, review the complete diff, record actual results/limits, merge and push `dev` with no unrelated edits.
+- [x] Run public browser/signup/apps/regression checks, review the complete diff, record actual results/limits, integrate and push remote `dev` with no unrelated edits.
 
 ## Execution ledger
 
@@ -85,3 +85,5 @@ Post-upgrade encrypted qualification: owned private DAO `11278252133202098176`, 
 Final modules `npm run verify` passed lint/typecheck/docs and all 30 files / 179 tests. The merged core PostgreSQL suite passed 34 / 276; after the independent native-signup draft appeared, fee SQL was reserved as 040 and its focused migration/HTTP suite passed 2 / 6. Immutable source archives preserve exact deployed versions core alpha.7, modules alpha.23 and frontend alpha.9; draft core/frontend `0.14.0-alpha.1` and modules `0.10.0-alpha.1` source was not deployed.
 
 Single-VM recovery was restored with the source unavailable and requalified against core alpha.7; assisted signup remains available. Qualification expires 2026-10-17T18:38:26.422Z; the earlier AppRole bootstrap expires at 14:46 UTC that day and must be renewed first. Names hit its start limit during cutover, then was reset and successfully ran using the new source; its timer is active. Mainnet and independent-host recovery are not qualified. See [the redacted live report](../../evidence/2026-10-11-monthly-module-fees.md) for exact hashes, transactions and limits.
+
+Delivery: all three verified branches were fast-forwarded into remote `dev`; main was untouched. The original checkouts retain their separately edited Telos-governance/native-signup draft and local refs, with an integration handoff outside source. That draft still needs to merge remote dev and qualify new combined artifacts; it was not silently deployed. All three owned fixture polls were finalized, leaving zero active ballots at 18:59:04 UTC. Final core lint/typecheck/docs verification and diff checks passed.
