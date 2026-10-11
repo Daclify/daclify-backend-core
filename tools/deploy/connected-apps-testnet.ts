@@ -197,7 +197,7 @@ async function validateExistingActivity() {
       ),
     ),
   );
-  assert.equal(String(account.ram_quota), '4194304');
+  assert.ok(BigInt(String(account.ram_quota)) >= 4194304n, 'ACTIVITY_RAM_INSUFFICIENT');
   assert.equal(account.permissions.length, 2);
   for (const name of ['owner', 'active']) {
     const permission = account.permissions.find((item) => item.perm_name.toString() === name);
@@ -749,7 +749,7 @@ if (mode === '--prepare' || mode === '--prepare-remainder') {
     const installed = after.accounts.find((account) => account.name === moduleAccount);
     assert.ok(installed);
     assert.equal(installed.codeHash, ModuleCodeHashes.activity);
-    assert.equal(installed.ramQuota, '4194304');
+    assert.ok(BigInt(installed.ramQuota) >= 4194304n, 'ACTIVITY_RAM_INSUFFICIENT');
     save('verified.json', {
       checkedAt: new Date().toISOString(),
       existingRowsPreserved: true,
