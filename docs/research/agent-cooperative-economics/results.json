@@ -1,0 +1,173 @@
+{
+  "asOf": "2026-10-11",
+  "currency": "USD",
+  "status": "Illustrative assumptions, not observed demand, a forecast, or approved pricing",
+  "scenarios": [
+    {
+      "name": "stress",
+      "price": "29",
+      "refundFraction": "0.10",
+      "inferenceBeforeRetries": "2.1",
+      "searchBeforeRetries": "0.500",
+      "technologyWithRetries": "5.40000",
+      "operatorLabor": "20.0",
+      "retainedRevenue": "26.10",
+      "processing": "1.141",
+      "platformFee": "1.3050",
+      "contribution": "-1.74600",
+      "contributionFractionOfGross": "-0.06020689655172413793103448276",
+      "fixedMonthly": "779",
+      "breakEvenJobs": null,
+      "priceFloorVariable": "31.11380145278450363196125908",
+      "priceFloorAt100Jobs": "40.54479418886198547215496368",
+      "priceFor30PercentMarginAt100Jobs": "63.66920152091254752851711027"
+    },
+    {
+      "name": "base",
+      "price": "49",
+      "refundFraction": "0.05",
+      "inferenceBeforeRetries": "0.63",
+      "searchBeforeRetries": "0.200",
+      "technologyWithRetries": "1.22500",
+      "operatorLabor": "8.0",
+      "retainedRevenue": "46.55",
+      "processing": "1.721",
+      "platformFee": "2.3275",
+      "contribution": "33.27650",
+      "contributionFractionOfGross": "0.6791122448979591836734693878",
+      "fixedMonthly": "779",
+      "breakEvenJobs": "24",
+      "priceFloorVariable": "10.90440755580995993131081855",
+      "priceFloorAt100Jobs": "19.82255294791070406410990269",
+      "priceFor30PercentMarginAt100Jobs": "30.19180470793374019180470793"
+    },
+    {
+      "name": "efficient",
+      "price": "59",
+      "refundFraction": "0.02",
+      "inferenceBeforeRetries": "0.42",
+      "searchBeforeRetries": "0.100",
+      "technologyWithRetries": "0.68200",
+      "operatorLabor": "2.00",
+      "retainedRevenue": "57.82",
+      "processing": "2.011",
+      "platformFee": "2.8910",
+      "contribution": "50.23600",
+      "contributionFractionOfGross": "0.8514576271186440677966101695",
+      "fixedMonthly": "779",
+      "breakEvenJobs": "16",
+      "priceFloorVariable": "3.305986696230598669623059867",
+      "priceFloorAt100Jobs": "11.94235033259423503325942350",
+      "priceFor30PercentMarginAt100Jobs": "17.89368770764119601328903654"
+    }
+  ],
+  "cooperativeVolumes": [
+    {
+      "jobs": 10,
+      "customerEquivalents": "2.5",
+      "grossRevenue": "490",
+      "surplusBeforeAcquisitionAndTax": "-446.23500",
+      "replacementAcquisition": "22.500",
+      "surplusAfterReplacementAcquisitionBeforeTax": "-468.73500"
+    },
+    {
+      "jobs": 25,
+      "customerEquivalents": "6.25",
+      "grossRevenue": "1225",
+      "surplusBeforeAcquisitionAndTax": "52.91250",
+      "replacementAcquisition": "56.2500",
+      "surplusAfterReplacementAcquisitionBeforeTax": "-3.33750"
+    },
+    {
+      "jobs": 100,
+      "customerEquivalents": "25",
+      "grossRevenue": "4900",
+      "surplusBeforeAcquisitionAndTax": "2548.65000",
+      "replacementAcquisition": "225.00",
+      "surplusAfterReplacementAcquisitionBeforeTax": "2323.65000"
+    },
+    {
+      "jobs": 500,
+      "customerEquivalents": "125",
+      "grossRevenue": "24500",
+      "surplusBeforeAcquisitionAndTax": "15859.25000",
+      "replacementAcquisition": "1125.00",
+      "surplusAfterReplacementAcquisitionBeforeTax": "14734.25000"
+    }
+  ],
+  "platform": [
+    {
+      "jobsPerCooperative": "10",
+      "grossServiceGMV": "490",
+      "platformRevenuePerCooperative": "72.2750",
+      "platformCostPerCooperative": "101.721",
+      "platformContributionPerCooperative": "-29.4460",
+      "breakEvenCooperatives": null,
+      "replacementAcquisitionPerCooperative": "25.00",
+      "contributionAfterReplacementAcquisition": "-54.4460",
+      "breakEvenCooperativesAfterAcquisition": null
+    },
+    {
+      "jobsPerCooperative": "25",
+      "grossServiceGMV": "1225",
+      "platformRevenuePerCooperative": "107.1875",
+      "platformCostPerCooperative": "101.721",
+      "platformContributionPerCooperative": "5.4665",
+      "breakEvenCooperatives": "1830",
+      "replacementAcquisitionPerCooperative": "25.00",
+      "contributionAfterReplacementAcquisition": "-19.5335",
+      "breakEvenCooperativesAfterAcquisition": null
+    },
+    {
+      "jobsPerCooperative": "100",
+      "grossServiceGMV": "4900",
+      "platformRevenuePerCooperative": "281.7500",
+      "platformCostPerCooperative": "101.721",
+      "platformContributionPerCooperative": "180.0290",
+      "breakEvenCooperatives": "56",
+      "replacementAcquisitionPerCooperative": "25.00",
+      "contributionAfterReplacementAcquisition": "155.0290",
+      "breakEvenCooperativesAfterAcquisition": "65"
+    },
+    {
+      "jobsPerCooperative": "500",
+      "grossServiceGMV": "24500",
+      "platformRevenuePerCooperative": "1212.7500",
+      "platformCostPerCooperative": "101.721",
+      "platformContributionPerCooperative": "1111.0290",
+      "breakEvenCooperatives": "10",
+      "replacementAcquisitionPerCooperative": "25.00",
+      "contributionAfterReplacementAcquisition": "1086.0290",
+      "breakEvenCooperativesAfterAcquisition": "10"
+    }
+  ],
+  "additionalMemberRewards": [
+    {
+      "additionalRewardPerJob": 0,
+      "contributionAfterRewardAndReplacementAcquisition": "31.02650",
+      "surplusAt100JobsBeforeTax": "2323.65000",
+      "breakEvenJobsAfterAcquisition": "26"
+    },
+    {
+      "additionalRewardPerJob": 8,
+      "contributionAfterRewardAndReplacementAcquisition": "23.02650",
+      "surplusAt100JobsBeforeTax": "1523.65000",
+      "breakEvenJobsAfterAcquisition": "34"
+    },
+    {
+      "additionalRewardPerJob": 20,
+      "contributionAfterRewardAndReplacementAcquisition": "11.02650",
+      "surplusAt100JobsBeforeTax": "323.65000",
+      "breakEvenJobsAfterAcquisition": "71"
+    },
+    {
+      "additionalRewardPerJob": 40,
+      "contributionAfterRewardAndReplacementAcquisition": "-8.97350",
+      "surplusAt100JobsBeforeTax": "-1676.35000",
+      "breakEvenJobsAfterAcquisition": null
+    }
+  ],
+  "illustrativeCustomerContributionLTV": "2662.120",
+  "illustrativeCustomerCACPaybackMonths": "1.352305681186422850960888315",
+  "workingCapitalAt100Jobs": "4484.50000"
+}

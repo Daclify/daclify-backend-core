@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "asOf": "2026-10-11",
+  "currency": "USD",
+  "status": "Illustrative assumptions, not observed demand, a forecast, or approved pricing",
+  "sources": {
+    "modelRateCard": "https://platform.claude.com/docs/en/about-claude/pricing",
+    "searchRateCard": "https://brave.com/search/api/",
+    "usCardRateCard": "https://stripe.com/pricing?rel=canonical",
+    "connectRateCard": "https://stripe.com/connect/pricing"
+  },
+  "rates": {
+    "standardInputPerMillion": "3",
+    "standardOutputPerMillion": "15",
+    "lightInputPerMillion": "1",
+    "lightOutputPerMillion": "5",
+    "searchPerRequest": "0.005",
+    "processingFraction": "0.029",
+    "processingFixed": "0.30",
+    "platformTakeFraction": "0.05",
+    "operatorHourly": "40"
+  },
+  "rateNotes": {
+    "models": "Conservative cost envelope using published Sonnet 4.6 and Haiku 4.5 rates; not a model-selection recommendation. Newer rate cards and measured quality must be evaluated before implementation.",
+    "processing": "US domestic-card illustration. Actual merchant country, payment method, FX, Billing, Connect, disputes and tax change costs.",
+    "platform": "Hypothetical 5% charge on retained external service revenue, with fee reversal on refunds. Not a fee on internal transfers or a claim that the native service workflow currently collects it.",
+    "retry": "Multiplier on inference, search and incremental infrastructure across all charged jobs; refunded jobs still consume resources.",
+    "labor": "Economic opportunity cost of external human operations and exceptions, even with no human DAO members. Not mandatory human approval of agent votes."
+  },
+  "cooperativeFixedMonthly": {
+    "infrastructure": "80",
+    "dataSubscriptions": "50",
+    "backupsAndObservability": "20",
+    "bookkeepingAndAdministration": "100",
+    "proposedDaclifySubscription": "49",
+    "operatorHours": "12"
+  },
+  "platform": {
+    "proposedSubscription": "49",
+    "infrastructurePerCooperative": "20",
+    "supportHoursPerCooperative": "2",
+    "fixedOperatingMonthly": "10000",
+    "cooperativeAcquisitionCost": "500",
+    "monthlyCooperativeChurn": "0.05"
+  },
+  "acquisition": {
+    "jobsPerCustomerMonthly": "4",
+    "customerAcquisitionCost": "180",
+    "monthlyCustomerChurn": "0.05"
+  },
+  "scenarios": [
+    {
+      "name": "stress",
+      "price": "29",
+      "refundFraction": "0.10",
+      "standardInputTokens": "400000",
+      "standardOutputTokens": "40000",
+      "lightInputTokens": "200000",
+      "lightOutputTokens": "20000",
+      "searchRequests": "100",
+      "incrementalInfrastructure": "0.40",
+      "retryMultiplier": "1.80",
+      "operatorMinutes": "30"
+    },
+    {
+      "name": "base",
+      "price": "49",
+      "refundFraction": "0.05",
+      "standardInputTokens": "120000",
+      "standardOutputTokens": "12000",
+      "lightInputTokens": "60000",
+      "lightOutputTokens": "6000",
+      "searchRequests": "40",
+      "incrementalInfrastructure": "0.15",
+      "retryMultiplier": "1.25",
+      "operatorMinutes": "12"
+    },
+    {
+      "name": "efficient",
+      "price": "59",
+      "refundFraction": "0.02",
+      "standardInputTokens": "80000",
+      "standardOutputTokens": "8000",
+      "lightInputTokens": "40000",
+      "lightOutputTokens": "4000",
+      "searchRequests": "20",
+      "incrementalInfrastructure": "0.10",
+      "retryMultiplier": "1.10",
+      "operatorMinutes": "3"
+    }
+  ]
+}

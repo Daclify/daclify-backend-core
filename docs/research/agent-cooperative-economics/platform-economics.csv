@@ -1,0 +1,5 @@
+jobsPerCooperative,grossServiceGMV,platformRevenuePerCooperative,platformCostPerCooperative,platformContributionPerCooperative,breakEvenCooperatives,replacementAcquisitionPerCooperative,contributionAfterReplacementAcquisition,breakEvenCooperativesAfterAcquisition
+10,490,72.2750,101.721,-29.4460,,25.00,-54.4460,
+25,1225,107.1875,101.721,5.4665,1830,25.00,-19.5335,
+100,4900,281.7500,101.721,180.0290,56,25.00,155.0290,65
+500,24500,1212.7500,101.721,1111.0290,10,25.00,1086.0290,10
