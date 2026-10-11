@@ -23,12 +23,19 @@ export async function cleanupExpiredChallenges(pool: Pool, limit = 500): Promise
   );
   return result.rowCount ?? 0;
 }
+export async function cleanupSignupAttempts(pool: Pool): Promise<number> {
+  const result = await pool.query(
+    'WITH expired AS (SELECT id FROM quick_signup_attempts WHERE expires_at<=now() ORDER BY expires_at,id LIMIT 500 FOR UPDATE SKIP LOCKED) DELETE FROM quick_signup_attempts q USING expired e WHERE q.id=e.id',
+  );
+  return result.rowCount ?? 0;
+}
 
 export function startAuthMaintenance(pool: Pool): { stop: () => Promise<void> } {
-  return startPollingWorker(
-    async () => ((await cleanupExpiredChallenges(pool)) === 0 ? 'idle' : 'progress'),
-    'AUTH_MAINTENANCE_UNAVAILABLE',
-  );
+  return startPollingWorker(async () => {
+    const challenges = await cleanupExpiredChallenges(pool),
+      signup = await cleanupSignupAttempts(pool);
+    return challenges + signup === 0 ? 'idle' : 'progress';
+  }, 'AUTH_MAINTENANCE_UNAVAILABLE');
 }
 
 const hash = (value: string): Buffer => createHash('sha256').update(value).digest();
@@ -140,6 +147,14 @@ export async function authenticate(
       )
     ).rows[0];
     if (!row) throw new ApiError('AUTH_INVALID', 401);
+    if (
+      (
+        await client.query('SELECT 1 FROM quick_signup_pending_accounts WHERE account_id=$1', [
+          row.id,
+        ])
+      ).rowCount
+    )
+      throw new ApiError('SIGNUP_INCOMPLETE', 409);
     const account = VaultAccountSchema.parse(accountFromRow(row));
     if (JSON.stringify(account.encryptionKey) !== JSON.stringify(encryption))
       throw new ApiError('KEY_CHANGE_REQUIRED', 409);
@@ -165,7 +180,7 @@ export async function readSession(pool: Pool, token: string): Promise<Account | 
   if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return undefined;
   const row = (
     await pool.query<AccountRow>(
-      'SELECT a.id,a.signing_key,a.custody,a.encryption_key FROM sessions s JOIN accounts a ON a.id=s.account_id WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now()',
+      'SELECT a.id,a.signing_key,a.custody,a.encryption_key FROM sessions s JOIN accounts a ON a.id=s.account_id WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now() AND NOT EXISTS(SELECT 1 FROM quick_signup_pending_accounts p WHERE p.account_id=a.id)',
       [hash(token)],
     )
   ).rows[0];

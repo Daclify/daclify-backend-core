@@ -9,6 +9,7 @@ import type { ProviderPrincipal } from '../providers/proofs.js';
 import { ApiError } from '../errors.js';
 import { createWindowLimiter } from '../limits.js';
 import { readBoundedResponse } from '../http.js';
+import type { TelegramSignupIntegration } from './signup-routes.js';
 import {
   TelegramStartSchema,
   TelegramPairConfirmSchema as IdInput,
@@ -110,7 +111,7 @@ export function readTelegramOidc(
 }
 interface Attempt {
   id: string;
-  purpose: 'login' | 'pair';
+  purpose: 'login' | 'pair' | 'signup';
   account_id: string | null;
   session_hash: Buffer | null;
   verifier: string;
@@ -131,6 +132,7 @@ export function registerTelegramOidcRoutes(
   session: (token: string | undefined, csrf?: string) => Promise<Account>,
   sessionCookie: (reply: FastifyReply, token: string, site?: string) => Promise<void>,
   sharedProxyIps: readonly string[] = [],
+  signup?: TelegramSignupIntegration,
 ): void {
   const secure = new URL(origin).protocol === 'https:';
   const browserCookie = secure ? '__Host-daclify_telegram_attempt' : 'daclify_telegram_attempt';
@@ -153,7 +155,11 @@ export function registerTelegramOidcRoutes(
       ? request.headers['x-csrf-token']
       : '';
   }
-  async function begin(purpose: 'login' | 'pair', request: FastifyRequest, reply: FastifyReply) {
+  async function begin(
+    purpose: 'login' | 'pair' | 'signup',
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ) {
     const config = configured();
     const input = TelegramStartSchema.parse(request.body);
     const site = typeof request.headers.origin === 'string' ? request.headers.origin : origin;
@@ -171,6 +177,10 @@ export function registerTelegramOidcRoutes(
       destination = target.pathname + target.search + target.hash;
     }
     if (!admit(request.ip, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    if (purpose === 'signup') {
+      if (!signup) throw new ApiError('RECOVERY_ASSISTED_UNAVAILABLE', 503);
+      signup.begin(request, reply);
+    }
     const current =
       purpose === 'pair' ? await session(request.cookies[cookieName], csrf(request)) : null;
     const id = randomUUID(),
@@ -219,6 +229,9 @@ export function registerTelegramOidcRoutes(
   );
   app.post('/v1/sign-in/telegram/oidc/pair/start', (request, reply) =>
     begin('pair', request, reply),
+  );
+  app.post('/v1/sign-in/telegram/oidc/signup/start', (request, reply) =>
+    begin('signup', request, reply),
   );
   app.get(callbackPath, async (request, reply) => {
     const config = configured(),
@@ -272,7 +285,18 @@ export function registerTelegramOidcRoutes(
       }
       const target = new URL('/account', attempt.frontend_origin ?? origin);
       if (attempt.return_to) target.searchParams.set('returnTo', attempt.return_to);
-      if (attempt.purpose === 'login') {
+      if (attempt.purpose === 'signup') {
+        if (!signup) throw new ApiError('RECOVERY_ASSISTED_UNAVAILABLE', 503);
+        const verified = await signup.verify(
+          principal,
+          request,
+          reply,
+          attempt.frontend_origin ?? origin,
+        );
+        if (verified.status === 'existing') target.searchParams.set('telegram', 'complete');
+        else target.searchParams.set('signup', verified.id);
+        reply.clearCookie(browserCookie, { path: '/', secure, sameSite: secure ? 'none' : 'lax' });
+      } else if (attempt.purpose === 'login') {
         const opened = await openLinkedSession(pool, principal);
         await sessionCookie(reply, opened.token, attempt.frontend_origin ?? undefined);
         target.searchParams.set('telegram', 'complete');

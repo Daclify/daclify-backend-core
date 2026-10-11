@@ -42,6 +42,8 @@ import {
 import { verifyGoogle, verifyTelegram } from './providers/proofs.js';
 import { RecoveryService, type RecoveryConfiguration } from './auth/recovery.js';
 import { registerRecoveryRoutes } from './auth/recovery-routes.js';
+import { SignupService } from './auth/signup.js';
+import { registerSignupRoutes } from './auth/signup-routes.js';
 import { registerSignInRoutes, type SignInConfiguration } from './auth/sign-in-routes.js';
 import { registerEvmRoutes } from './auth/evm-routes.js';
 import { registerNativeRoutes } from './auth/native-routes.js';
@@ -133,6 +135,7 @@ export async function createServer(
   const cookieName = secure ? '__Host-daclify_session' : 'daclify_session';
   const recoveryCookie = secure ? '__Host-daclify_recovery' : 'daclify_recovery';
   const recovery = new RecoveryService(pool, chain, options.recovery);
+  const signup = new SignupService(pool, origin, audience, options.recovery);
   const app = Fastify({
     logger: false,
     bodyLimit: 65536,
@@ -323,6 +326,16 @@ export async function createServer(
     session,
     sessionCookie,
     sharedProxyIps,
+    registerSignupRoutes(
+      app,
+      pool,
+      origin,
+      options.providers,
+      options.signIn,
+      signup,
+      sessionCookie,
+      sharedProxyIps,
+    ),
   );
   function creationService() {
     if (!options.creation) throw new ApiError('DAO_CREATION_UNAVAILABLE', 503);

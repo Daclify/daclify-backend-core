@@ -40,6 +40,8 @@ import {
   recoveryDeviceFingerprint,
 } from '../../sdk/recovery.js';
 import { controlledInject } from '../helpers/account-control.js';
+import { RecoveryKitSchema } from '../../protocol/crypto.js';
+import { RecoveryService } from '../../services/api/src/auth/recovery.js';
 
 const url = process.env.DATABASE_URL;
 if (
@@ -163,6 +165,297 @@ const headers = (owner: { cookie: string; session: { csrfToken: string } }) => (
   origin,
   cookie: owner.cookie,
   'x-csrf-token': owner.session.csrfToken,
+});
+
+async function assisted(user: Awaited<ReturnType<typeof owner>>, email: string) {
+  const credentialKey = 'email:' + email;
+  await pool.query('INSERT INTO credentials(provider_key,account_id) VALUES($1,$2)', [
+    credentialKey,
+    user.session.account.id,
+  ]);
+  const context = {
+    version: 1 as const,
+    id: crypto.randomUUID(),
+    accountId: user.session.account.id,
+    origin,
+    credentialKey,
+    mode: 'daclify-assisted' as const,
+    signingPublicKey: user.key.toPublic().toString(),
+    encryptionPublicKey: user.secrets.encryptionPrivateKey,
+    salt: randomBytes(32).toString('base64'),
+  };
+  const options = await controlledInject(app, user.key, {
+    method: 'POST',
+    url: '/v1/account/recovery/assisted/options',
+    headers: headers(user),
+    payload: {
+      context: {
+        ...context,
+        encryptionPublicKey: {
+          kty: 'EC',
+          crv: 'P-256',
+          x: context.encryptionPublicKey.x,
+          y: context.encryptionPublicKey.y,
+        },
+      },
+      assistedConsent: true,
+    },
+  });
+  expect(options.statusCode).toBe(200);
+  const handoff = RecoveryAssistedOptionsSchema.parse(options.json());
+  const normalized = {
+    ...context,
+    encryptionPublicKey: {
+      kty: 'EC' as const,
+      crv: 'P-256' as const,
+      x: context.encryptionPublicKey.x,
+      y: context.encryptionPublicKey.y,
+    },
+  };
+  const payload = await createRecoveryPayload(user.secrets, normalized);
+  try {
+    const keyGrant = await sealRecoveryDelivery(
+      payload.key,
+      handoff.recipient,
+      `enroll:${handoff.id}:${recoveryVaultDomain(normalized)}`,
+    );
+    const enabled = await controlledInject(app, user.key, {
+      method: 'POST',
+      url: '/v1/account/recovery/enable',
+      headers: headers(user),
+      payload: {
+        context: normalized,
+        envelope: payload.envelope,
+        assistedHandoff: { id: handoff.id, keyGrant },
+        assistedConsent: true,
+      },
+    });
+    expect(enabled.statusCode).toBe(200);
+    return normalized;
+  } finally {
+    payload.key.fill(0);
+  }
+}
+
+describe('account-wide assisted recovery opt-out', () => {
+  it('removes all assisted methods, retains client recovery and login, and rejects old grants and consent', async () => {
+    recovery.assistedQualified = true;
+    try {
+      const user = await owner();
+      await enroll(user);
+      const firstEmail = `${crypto.randomUUID()}@example.test`,
+        secondEmail = `${crypto.randomUUID()}@example.test`;
+      const context = await assisted(user, firstEmail);
+      await assisted(user, secondEmail);
+      const staleOptions = { context, assistedConsent: true };
+      const pending = await controlledInject(app, user.key, {
+        method: 'POST',
+        url: '/v1/account/recovery/assisted/options',
+        headers: headers(user),
+        payload: staleOptions,
+      });
+      expect(pending.statusCode).toBe(200);
+      const start = await app.inject({
+        method: 'POST',
+        url: '/v1/sign-in/email/login/start',
+        headers: { origin },
+        payload: { email: firstEmail },
+      });
+      const login = await app.inject({
+        method: 'POST',
+        url: '/v1/sign-in/email/login',
+        headers: { origin, cookie: cookies(start) },
+        payload: { email: firstEmail, code: delivered.get(firstEmail) },
+      });
+      const session = SessionSchema.parse(login.json()),
+        grant = login.headers['x-daclify-recovery-grant'];
+      expect(grant).toBeTypeOf('string');
+      const off = await controlledInject(app, user.key, {
+        method: 'POST',
+        url: '/v1/account/recovery/assisted/opt-out',
+        headers: headers(user),
+        payload: {},
+      });
+      expect(off.statusCode).toBe(200);
+      const methods = RecoveryMethodsSchema.parse(off.json());
+      expect(methods.assistedEver).toBe(true);
+      expect(methods.methods.filter((m) => m.mode === 'daclify-assisted')).toHaveLength(0);
+      expect(methods.methods.find((m) => m.credentialKey === user.credentialKey)?.mode).toBe(
+        'wallet-protected',
+      );
+      expect(
+        (
+          await pool.query(
+            'SELECT 1 FROM credentials WHERE account_id=$1 AND provider_key LIKE $2',
+            [session.account.id, 'email:%'],
+          )
+        ).rowCount,
+      ).toBe(2);
+      expect(
+        (
+          await pool.query('SELECT 1 FROM vault_recovery_handoffs WHERE account_id=$1', [
+            session.account.id,
+          ])
+        ).rowCount,
+      ).toBe(0);
+      const recipient = await createRecoveryRecipient();
+      const claim = await app.inject({
+        method: 'POST',
+        url: '/v1/account/recovery/claim',
+        headers: { origin, cookie: cookies(login), 'x-csrf-token': session.csrfToken },
+        payload: { grant, recipient: recipient.publicKey },
+      });
+      expect(claim.statusCode).toBe(401);
+      const stale = await controlledInject(app, user.key, {
+        method: 'POST',
+        url: '/v1/account/recovery/assisted/options',
+        headers: headers(user),
+        payload: staleOptions,
+      });
+      expect(stale.statusCode).toBe(409);
+      const fresh = await controlledInject(app, user.key, {
+        method: 'POST',
+        url: '/v1/account/recovery/assisted/options',
+        headers: headers(user),
+        payload: { ...staleOptions, assistedRevision: 1 },
+      });
+      expect(fresh.statusCode).toBe(200);
+    } finally {
+      recovery.assistedQualified = false;
+    }
+  });
+  it('keeps the last assisted route until an independent kit matching both keys is provided', async () => {
+    recovery.assistedQualified = true;
+    try {
+      const user = await owner();
+      await assisted(user, `${crypto.randomUUID()}@example.test`);
+      const missing = await controlledInject(app, user.key, {
+        method: 'POST',
+        url: '/v1/account/recovery/assisted/opt-out',
+        headers: headers(user),
+        payload: {},
+      });
+      expect(missing.statusCode).toBe(409);
+      const envelope = {
+        version: 1,
+        kdf: 'PBKDF2-SHA256',
+        iterations: 600000,
+        salt: randomBytes(16).toString('base64'),
+        iv: randomBytes(12).toString('base64'),
+        ciphertext: randomBytes(64).toString('base64'),
+      };
+      const kit = RecoveryKitSchema.parse({
+        version: 1,
+        localEnvelope: envelope,
+        recoveryEnvelope: envelope,
+        signingPublicKey: user.key.toPublic().toString(),
+        encryptionPublicKey: user.session.account.encryptionKey,
+      });
+      const wrong = await controlledInject(app, user.key, {
+        method: 'POST',
+        url: '/v1/account/recovery/assisted/opt-out',
+        headers: headers(user),
+        payload: {
+          fallbackKit: {
+            ...kit,
+            signingPublicKey: PrivateKey.generate('K1').toPublic().toString(),
+          },
+        },
+      });
+      expect(wrong.statusCode).toBe(409);
+      await pool.query('UPDATE vault_recovery_methods SET quarantined=true WHERE account_id=$1', [
+        user.session.account.id,
+      ]);
+      const paused = await app.inject({
+        method: 'GET',
+        url: ApiRoutes.recoveryMethods.path,
+        headers: headers(user),
+      });
+      expect(paused.statusCode).toBe(200);
+      const pausedMethods = RecoveryMethodsSchema.parse(paused.json());
+      expect(pausedMethods.assistedEnabled).toBe(true);
+      expect(pausedMethods.methods.every((method) => method.mode === null)).toBe(true);
+      const off = await controlledInject(app, user.key, {
+        method: 'POST',
+        url: '/v1/account/recovery/assisted/opt-out',
+        headers: headers(user),
+        payload: { fallbackKit: kit },
+      });
+      expect(off.statusCode).toBe(200);
+      expect(RecoveryMethodsSchema.parse(off.json()).assistedEver).toBe(true);
+      expect(RecoveryMethodsSchema.parse(off.json()).assistedEnabled).toBe(false);
+    } finally {
+      recovery.assistedQualified = false;
+    }
+  });
+  it('serializes a claim already reading the encrypted backup before account-wide opt-out', async () => {
+    recovery.assistedQualified = true;
+    let release = () => {},
+      reached = () => {};
+    const waiting = new Promise<void>((resolve) => {
+        release = resolve;
+      }),
+      started = new Promise<void>((resolve) => {
+        reached = resolve;
+      });
+    try {
+      const user = await owner();
+      await enroll(user);
+      const email = `${crypto.randomUUID()}@example.test`;
+      await assisted(user, email);
+      const start = await app.inject({
+        method: 'POST',
+        url: '/v1/sign-in/email/login/start',
+        headers: { origin },
+        payload: { email },
+      });
+      const login = await app.inject({
+        method: 'POST',
+        url: '/v1/sign-in/email/login',
+        headers: { origin, cookie: cookies(start) },
+        payload: { email, code: delivered.get(email) },
+      });
+      expect(login.statusCode).toBe(200);
+      const token = login.cookies.find((value) => value.name === 'daclify_session')?.value,
+        grant = login.headers['x-daclify-recovery-grant'];
+      if (!token || typeof grant !== 'string')
+        throw new Error('Expected enrolled recovery session');
+      const read = store.read.bind(store),
+        spy = vi.spyOn(store, 'read').mockImplementationOnce(async (receipt) => {
+          reached();
+          await waiting;
+          return read(receipt);
+        });
+      try {
+        const service = new RecoveryService(pool, chain, recovery),
+          recipient = await createRecoveryRecipient();
+        const claiming = service.claim(token, { grant, recipient: recipient.publicKey }, origin);
+        await started;
+        const optingOut = service.optOut(user.session.account, {});
+        release();
+        expect((await claiming).keyGrant).not.toBeNull();
+        expect((await optingOut).methods.some((method) => method.mode === 'daclify-assisted')).toBe(
+          false,
+        );
+        await expect(
+          service.claim(token, { grant, recipient: recipient.publicKey }, origin),
+        ).rejects.toMatchObject({ code: 'RECOVERY_GRANT_INVALID' });
+        expect(
+          (
+            await pool.query('SELECT 1 FROM vault_recovery_grants WHERE account_id=$1', [
+              user.session.account.id,
+            ])
+          ).rowCount,
+        ).toBe(0);
+      } finally {
+        release();
+        spy.mockRestore();
+      }
+    } finally {
+      release();
+      recovery.assistedQualified = false;
+    }
+  });
 });
 
 let simulatedClient = 0;

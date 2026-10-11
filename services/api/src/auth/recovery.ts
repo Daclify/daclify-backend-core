@@ -125,12 +125,20 @@ export class RecoveryService {
   }
   async methods(account: Account): Promise<RecoveryMethods> {
     const methods = await this.credentials(this.pool, account.id);
-    const records = await this.pool.query<{ credential_key: string; mode: string }>(
-      'SELECT credential_key,CASE WHEN quarantined THEN NULL ELSE mode END AS mode FROM vault_recovery_methods WHERE account_id=$1',
+    const records = await this.pool.query<{
+      credential_key: string;
+      mode: string | null;
+      assisted: boolean;
+    }>(
+      "SELECT credential_key,CASE WHEN quarantined THEN NULL ELSE mode END AS mode,mode='daclify-assisted' AS assisted FROM vault_recovery_methods WHERE account_id=$1",
       [account.id],
     );
-    const state = await this.pool.query<{ assisted_ever: boolean }>(
-      'SELECT assisted_ever FROM vault_recovery_state WHERE account_id=$1',
+    const state = await this.pool.query<{ assisted_ever: boolean; assisted_revision: number }>(
+      'SELECT assisted_ever,assisted_revision FROM vault_recovery_state WHERE account_id=$1',
+      [account.id],
+    );
+    const pending = await this.pool.query(
+      'SELECT 1 FROM vault_recovery_handoffs WHERE account_id=$1 AND expires_at>now() LIMIT 1',
       [account.id],
     );
     return RecoveryMethodsSchema.parse({
@@ -143,6 +151,8 @@ export class RecoveryService {
           : 'Full access is unavailable until recovery storage and this method are qualified.',
       })),
       assistedEver: state.rows[0]?.assisted_ever ?? false,
+      assistedEnabled: records.rows.some((row) => row.assisted) || Boolean(pending.rowCount),
+      assistedRevision: state.rows[0]?.assisted_revision ?? 0,
       configured: Boolean(this.configuration),
       reason: this.configuration
         ? null
@@ -250,6 +260,9 @@ export class RecoveryService {
       await db.query('SELECT id FROM accounts WHERE id=$1 FOR UPDATE', [account.id]);
       const current = await readAccount(db, account.id);
       if (!current) throw new ApiError('AUTH_REQUIRED', 401);
+      const revision = await this.assistedRevision(current, db);
+      if (consent.assistedRevision !== revision.revision)
+        throw new ApiError('RECOVERY_AUTHORITY_CHANGED', 409);
       this.identity(current, consent);
       const method = (await this.credentials(db, account.id)).find(
         (value) => value.credentialKey === consent.context.credentialKey,
@@ -442,6 +455,97 @@ export class RecoveryService {
     });
     return this.methods(account);
   }
+  async assistedRevision(
+    account: Account,
+    db: Pool | PoolClient = this.pool,
+  ): Promise<{ revision: number }> {
+    const result = await db.query<{ assisted_revision: number }>(
+      'SELECT assisted_revision FROM vault_recovery_state WHERE account_id=$1',
+      [account.id],
+    );
+    return RecoveryRoutes.recoveryAssistedRevision.response.parse({
+      revision: result.rows[0]?.assisted_revision ?? 0,
+    });
+  }
+  async optOut(account: Account, input: unknown): Promise<RecoveryMethods> {
+    const request = RecoveryRoutes.recoveryOptOut.input.parse(input);
+    await withTransaction(this.pool, async (db) => {
+      await db.query('SELECT id FROM accounts WHERE id=$1 FOR UPDATE', [account.id]);
+      const current = await readAccount(db, account.id);
+      if (!current) throw new ApiError('AUTH_REQUIRED', 401);
+      const rows = await db.query<{
+        credential_key: string;
+        mode: string;
+        record: unknown;
+        quarantined: boolean;
+      }>(
+        'SELECT credential_key,mode,record,quarantined FROM vault_recovery_methods WHERE account_id=$1 FOR UPDATE',
+        [current.id],
+      );
+      const kit = request.fallbackKit;
+      if (
+        kit &&
+        (kit.signingPublicKey !== current.signingKey ||
+          !isDeepStrictEqual(kit.encryptionPublicKey, current.encryptionKey))
+      )
+        throw new ApiError('ACCOUNT_KEY_MISMATCH', 409);
+      if (kit) {
+        for (const envelope of [kit.localEnvelope, kit.recoveryEnvelope]) {
+          if (
+            Buffer.from(envelope.salt, 'base64').length !== 16 ||
+            Buffer.from(envelope.iv, 'base64').length !== 12 ||
+            Buffer.from(envelope.ciphertext, 'base64').length < 16
+          )
+            throw new ApiError('RECOVERY_FALLBACK_REQUIRED', 409);
+        }
+      }
+      const assisted = rows.rows.filter((row) => row.mode === 'daclify-assisted');
+      let independent = false;
+      const credentials = await this.credentials(db, current.id);
+      for (const row of rows.rows) {
+        if (row.mode === 'daclify-assisted' || row.quarantined) continue;
+        const method = credentials.find((value) => value.credentialKey === row.credential_key);
+        const parsed = RecoveryBackupSchema.safeParse(row.record);
+        if (
+          method &&
+          parsed.success &&
+          this.modes(method).includes(parsed.data.context.mode) &&
+          (await this.owned(db, current.id, row.credential_key))
+        ) {
+          this.identity(current, parsed.data);
+          independent = true;
+          break;
+        }
+      }
+      if (assisted.length && !independent && !kit)
+        throw new ApiError('RECOVERY_FALLBACK_REQUIRED', 409);
+      await db.query(
+        'DELETE FROM vault_recovery_grants WHERE account_id=$1 AND credential_key=ANY($2::text[])',
+        [current.id, assisted.map((row) => row.credential_key)],
+      );
+      await db.query('DELETE FROM vault_recovery_handoffs WHERE account_id=$1', [current.id]);
+      await db.query(
+        "DELETE FROM vault_recovery_methods WHERE account_id=$1 AND mode='daclify-assisted'",
+        [current.id],
+      );
+      await db.query(
+        'INSERT INTO vault_recovery_state(account_id,assisted_ever,assisted_revision) VALUES($1,false,1) ON CONFLICT(account_id) DO UPDATE SET assisted_revision=vault_recovery_state.assisted_revision+1',
+        [current.id],
+      );
+      await db.query(
+        "INSERT INTO audit_events(account_id,kind,public_reference) VALUES($1,'recovery.assisted-disabled',$2)",
+        [
+          current.id,
+          {
+            removed: assisted.map((row) => row.credential_key),
+            kitFallback: Boolean(kit),
+            independentMethod: independent,
+          },
+        ],
+      );
+    });
+    return this.methods(account);
+  }
   async issueLoginGrant(token: string, origin: string): Promise<string | null> {
     if (!this.configuration) return null;
     return withTransaction(this.pool, async (db) => {
@@ -452,6 +556,7 @@ export class RecoveryService {
         )
       ).rows[0];
       if (!session?.credential_key) return null;
+      await db.query('SELECT id FROM accounts WHERE id=$1 FOR UPDATE', [session.account_id]);
       const row = (
         await db.query<MethodRow>(
           'SELECT record,receipt FROM vault_recovery_methods WHERE account_id=$1 AND credential_key=$2 AND origin=$3 AND NOT quarantined FOR SHARE',
@@ -533,6 +638,14 @@ export class RecoveryService {
   async claim(token: string, input: unknown, origin: string) {
     const request = RecoveryClaimSchema.parse(input);
     return withTransaction(this.pool, async (db) => {
+      const session = (
+        await db.query<{ account_id: string }>(
+          'SELECT account_id FROM sessions WHERE token_hash=$1 AND revoked_at IS NULL AND expires_at>now()',
+          [hash(token)],
+        )
+      ).rows[0];
+      if (!session) throw new ApiError('RECOVERY_GRANT_INVALID', 401);
+      await db.query('SELECT id FROM accounts WHERE id=$1 FOR UPDATE', [session.account_id]);
       const backup = await this.grant(db, token, request.grant, origin, true);
       if (!backup) throw new ApiError('RECOVERY_GRANT_INVALID', 401);
       if (backup.keyWrap.kind === 'client') return { backup, keyGrant: null };

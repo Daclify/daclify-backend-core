@@ -56,6 +56,7 @@ export const AccountControlPaths = Object.freeze([
   '/v1/account/vault',
   '/v1/account/recovery/enable',
   '/v1/account/recovery/assisted/options',
+  '/v1/account/recovery/assisted/opt-out',
   '/v1/account/recovery/disable',
   '/v1/account/recovery/device/approve',
   '/v1/auth/providers/link',

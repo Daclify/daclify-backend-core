@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { ApiOriginSchema } from './base.js';
-import { EncryptionPublicKeySchema, SigningPublicKeySchema } from './crypto.js';
+import { EncryptionPublicKeySchema, SigningPublicKeySchema, RecoveryKitSchema } from './crypto.js';
 
 function encodedBytes(length: number) {
   return z
@@ -129,6 +129,8 @@ export const RecoveryMethodSchema = z.strictObject({
 export const RecoveryMethodsSchema = z.strictObject({
   methods: z.array(RecoveryMethodSchema).max(64),
   assistedEver: z.boolean(),
+  assistedEnabled: z.boolean().optional(),
+  assistedRevision: z.int().min(0).max(2147483647).optional(),
   configured: z.boolean(),
   reason: z.string().max(512).nullable(),
 });
@@ -145,6 +147,7 @@ export const RecoveryAssistedConsentSchema = z
   .strictObject({
     context: RecoveryContextSchema,
     assistedConsent: z.literal(true),
+    assistedRevision: z.int().min(0).max(2147483647).default(0),
   })
   .refine((value) => value.context.mode === 'daclify-assisted', 'Assisted mode required');
 export const RecoveryIdentitySchema = z.strictObject({
@@ -195,6 +198,19 @@ export type RecoveryKeyGrant = z.infer<typeof RecoveryKeyGrantSchema>;
 export type RecoveryCipher = z.infer<typeof RecoveryCipherSchema>;
 
 export const RecoveryRoutes = {
+  recoveryAssistedRevision: {
+    method: 'GET',
+    path: '/v1/account/recovery/assisted/revision',
+    response: z.strictObject({ revision: z.int().min(0).max(2147483647) }),
+    helpTopic: 'recovery',
+  },
+  recoveryOptOut: {
+    method: 'POST',
+    path: '/v1/account/recovery/assisted/opt-out',
+    input: z.strictObject({ fallbackKit: RecoveryKitSchema.optional() }),
+    response: RecoveryMethodsSchema,
+    helpTopic: 'recovery',
+  },
   deviceRecoveryBegin: {
     method: 'POST',
     path: '/v1/account/recovery/device',

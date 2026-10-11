@@ -2635,6 +2635,7 @@ export class NativeChainGateway implements ChainGateway {
     }
     query = ModulePageQuerySchema.parse(query);
     const next: ModuleState['next'] = {
+      activities: null,
       ballots: null,
       projects: null,
       schedules: null,

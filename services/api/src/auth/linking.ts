@@ -26,7 +26,10 @@ async function consume(client: PoolClient, principal: ProviderPrincipal): Promis
     throw error;
   }
 }
-async function remember(pool: Pool, principal: ProviderPrincipal): Promise<void> {
+export async function consumeProviderProof(
+  pool: Pool,
+  principal: ProviderPrincipal,
+): Promise<void> {
   await withTransaction(pool, (client) => consume(client, principal));
 }
 export async function linkProvider(
@@ -35,7 +38,7 @@ export async function linkProvider(
   principal: ProviderPrincipal,
 ): Promise<{ provider: ProviderPrincipal['provider']; subject: string }> {
   const providerKey = providerCredentialKey(principal);
-  await remember(pool, principal);
+  await consumeProviderProof(pool, principal);
   return withTransaction(pool, async (client) => {
     const inserted = await client.query<{ account_id: string }>(
       'INSERT INTO credentials(provider_key,account_id) VALUES($1,$2) ON CONFLICT(provider_key) DO NOTHING RETURNING account_id',
@@ -73,7 +76,7 @@ export async function openLinkedSession(
   principal: ProviderPrincipal,
 ): Promise<{ account: Account; token: string; csrfToken: string }> {
   const providerKey = providerCredentialKey(principal);
-  await remember(pool, principal);
+  await consumeProviderProof(pool, principal);
   return withTransaction(pool, async (client) => {
     const row = (
       await client.query<{ account_id: string }>(

@@ -30,7 +30,7 @@ async function limited(pool: Pool | PoolClient, purpose: string, subject: string
 
 async function storeCode(
   pool: Pool,
-  purpose: 'email-link' | 'email-login',
+  purpose: 'email-link' | 'email-login' | 'email-signup',
   accountId: string | null,
   email: string,
   code: string,
@@ -57,7 +57,7 @@ async function storeCode(
 
 async function consumeCode(
   pool: Pool,
-  purpose: 'email-link' | 'email-login',
+  purpose: 'email-link' | 'email-login' | 'email-signup',
   accountId: string | null,
   email: string,
   code: string,
@@ -136,18 +136,30 @@ export async function startEmailLogin(
   value: string,
   deliver: (to: string, code: string) => Promise<void>,
   context: Uint8Array,
+  purpose: 'email-login' | 'email-signup' = 'email-login',
 ): Promise<{ delivery: 'sent' }> {
   const email = normalizeMailbox(value);
   // Issue/deliver the same bounded attempt whether paired or not. SMTP timing and
   // the per-mailbox resend limit must not disclose the credential directory.
   const code = freshCode();
-  const id = await storeCode(pool, 'email-login', null, email, code, context);
+  const id = await storeCode(pool, purpose, null, email, code, context);
   try {
     await deliver(email, code);
   } catch {
     await pool.query('UPDATE signin_challenges SET consumed_at=now() WHERE id=$1', [id]);
   }
   return { delivery: 'sent' };
+}
+
+export async function verifyEmailSignup(
+  pool: Pool,
+  value: string,
+  code: string,
+  context: Uint8Array,
+): Promise<string> {
+  const email = normalizeMailbox(value);
+  await consumeCode(pool, 'email-signup', null, email, code, context);
+  return `email:${email}`;
 }
 
 export async function confirmEmailLogin(

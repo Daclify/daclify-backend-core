@@ -55,6 +55,17 @@ export function registerRecoveryRoutes(
   app.get(RecoveryRoutes.recoveryMethods.path, async (request) =>
     service.methods(await session(request.cookies[cookieName])),
   );
+  app.get(RecoveryRoutes.recoveryAssistedRevision.path, async (request) =>
+    service.assistedRevision(await session(request.cookies[cookieName])),
+  );
+  app.post(RecoveryRoutes.recoveryOptOut.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    if (!admit(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    return service.optOut(account, request.body);
+  });
   for (const route of [RecoveryRoutes.recoveryEnroll, RecoveryRoutes.recoveryDisable] as const) {
     app.post(route.path, async (request) => {
       const account = await session(

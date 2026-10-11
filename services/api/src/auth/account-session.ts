@@ -68,6 +68,14 @@ export async function insertAccountSession(
   accountId: string,
   credentialKey: string | null = null,
 ): Promise<{ account: Account; token: string; csrfToken: string }> {
+  if (
+    (
+      await client.query('SELECT 1 FROM quick_signup_pending_accounts WHERE account_id=$1', [
+        accountId,
+      ])
+    ).rowCount
+  )
+    throw new ApiError('SIGNUP_INCOMPLETE', 409);
   const row = (
     await client.query<AccountRow>(
       'SELECT id,signing_key,custody,encryption_key FROM accounts WHERE id=$1',
