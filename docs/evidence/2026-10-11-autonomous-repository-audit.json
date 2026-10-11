@@ -1,0 +1,544 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-11T11:32:57.009490+00:00",
+  "scope": {
+    "repositoryCount": 4,
+    "repositories": [
+      {
+        "name": "daclify-backend-core",
+        "path": "/data/daclify-backend-core",
+        "branch": "dev",
+        "version": "0.13.0-alpha.4",
+        "baselineCommit": "7050cdbad6fa172c1c08d9eb454c1f013b1137ce",
+        "reviewedParentCommit": "684b45990df2212ba3e6fecb802ccc17bd54b35e",
+        "sourceResultCommit": "ee5c439da1031338475ec2b45ea4eac2881ffab4",
+        "baselineTrackedChanges": false,
+        "sourceModifiedByAudit": true
+      },
+      {
+        "name": "daclify-backend-modules",
+        "path": "/data/daclify-backend-modules",
+        "branch": "dev",
+        "version": "0.9.0-alpha.20",
+        "baselineCommit": "be8876ef719b58a39b5c9e061b46ca633e6eeb7f",
+        "reviewedParentCommit": "be8876ef719b58a39b5c9e061b46ca633e6eeb7f",
+        "sourceResultCommit": "be8876ef719b58a39b5c9e061b46ca633e6eeb7f",
+        "baselineTrackedChanges": false,
+        "sourceModifiedByAudit": false
+      },
+      {
+        "name": "daclify-frontend",
+        "path": "/data/daclify-frontend",
+        "branch": "dev",
+        "version": "0.13.0-alpha.4",
+        "baselineCommit": "60d0c8c6025e02980c26b1d3f153d32e7dac4fca",
+        "reviewedParentCommit": "60d0c8c6025e02980c26b1d3f153d32e7dac4fca",
+        "sourceResultCommit": "40bee7b37390522c1fe4ec5db09b7fd8de269896",
+        "baselineTrackedChanges": false,
+        "sourceModifiedByAudit": true
+      },
+      {
+        "name": "www-landing-page",
+        "path": "/data/www-landing-page",
+        "branch": "main",
+        "version": "2.0.0-alpha.9",
+        "baselineCommit": "d5c913de0a305c4030c9df111d87d482da85b580",
+        "reviewedParentCommit": "d5c913de0a305c4030c9df111d87d482da85b580",
+        "sourceResultCommit": "d5c913de0a305c4030c9df111d87d482da85b580",
+        "baselineTrackedChanges": false,
+        "sourceModifiedByAudit": false
+      }
+    ],
+    "archivedRepositoriesExcluded": true,
+    "basis": "User corrected scope to four current repositories; audit and bounded fixes were requested in the attached autonomous engineering instructions.",
+    "preservedConcurrentWork": "Core advanced from 7050cdb to 684b459 through another documentation-only commit during the audit. Its two files were preserved. Final core verification ran after that commit."
+  },
+  "method": {
+    "skills": [
+      "ponytail Full",
+      "superpowers brainstorming",
+      "superpowers writing-plans",
+      "superpowers executing-plans",
+      "superpowers systematic-debugging",
+      "superpowers test-driven-development",
+      "superpowers verification-before-completion",
+      "ponytail-review",
+      "superpowers finishing-a-development-branch"
+    ],
+    "execution": "Inline investigation, implementation and separate adversarial review; workspace instructions prohibit subagents. No independent-agent review is claimed.",
+    "coverage": "Risk-focused source review and whole default repository suites, followed by targeted database/browser integration. This is not a line-by-line proof of all code or exhaustive live-service qualification.",
+    "toolchain": {
+      "node": "v24.21.0",
+      "npm": "11.19.0"
+    },
+    "plan": "docs/superpowers/plans/2026-10-11-autonomous-repository-audit.md"
+  },
+  "outcome": {
+    "sourceDefectsFixed": 2,
+    "browserTestExpectationsFixed": 1,
+    "newRegressionTests": 13,
+    "defaultRepositoryTestsPassed": 1313,
+    "databaseIntegrationTestsPassed": 26,
+    "distinctBrowserCasesPassed": 74,
+    "dependenciesAdded": 0,
+    "persistentSchemasChanged": false,
+    "publicProtocolOrAbiChanged": false,
+    "contractSourceOrBinaryChanged": false,
+    "deployed": false,
+    "liveAssetsOrAuthoritiesChanged": false,
+    "sourceFixesPushed": "Core and frontend dev; remote heads read back after push. Modules and landing have no audit source changes."
+  },
+  "findings": [
+    {
+      "id": "AUDIT-01",
+      "severity": "medium",
+      "repository": "daclify-frontend",
+      "status": "fixed",
+      "title": "A delayed Anchor connection could undo disconnect or replace a newer payer",
+      "trigger": "Start a native connection, then disconnect, change account/network/RPC/API scope, or finish a newer connection before the older approval returns.",
+      "rootCause": "connectNative assigned nativeWallet after asynchronous work without invalidating a superseded connection intent.",
+      "impact": "Stale wallet state and wrong displayed payer identity. No unauthorized transaction was established; existing wallet approval and spending checks remain.",
+      "change": "Capture a monotonic connection revision and current workspace/API scope; check after network lookup and wallet approval. Disconnect increments the revision.",
+      "evidence": {
+        "baselineSource": "60d0c8c6025e02980c26b1d3f153d32e7dac4fca",
+        "counterfactual": "The final eight-case regression fixture against baseline source produced seven failures and one normal-success pass. Restoring the fix produced eight passes.",
+        "redLog": "frontend-connection-final-counterfactual.log",
+        "greenLog": "frontend-connection-final-green.log",
+        "restoreReceipt": "frontend-connection-final-counterfactual.json"
+      },
+      "limits": "SessionKit/Session objects are real; external approval and the renderer are controlled. Real Anchor transport, prompt cancellation and SDK persisted metadata are not qualified."
+    },
+    {
+      "id": "AUDIT-02",
+      "severity": "medium",
+      "repository": "daclify-backend-core",
+      "status": "fixed",
+      "title": "Failed rollback hid the original shared transaction failure",
+      "trigger": "An operation or COMMIT fails and ROLLBACK also fails.",
+      "rootCause": "The cleanup await threw before the original error or LAST_CONTROL_CREDENTIAL mapping could propagate.",
+      "impact": "Incorrect error reporting and loss of the original diagnostic/business error. Data corruption and unsafe pool reuse were not established; pg-pool already removes known non-queryable clients.",
+      "change": "Preserve the original failure, retain the constraint mapping, and release once with explicit client destruction after failed rollback.",
+      "evidence": {
+        "redLog": "core-transaction-red-final.log",
+        "redResult": "Three failures and two passes before the repair.",
+        "greenLog": "core-transaction-green.log",
+        "greenResult": "All five cases passed: failed cleanup, success, ordinary rollback, failed commit and credential mapping."
+      },
+      "limits": "Cleanup faults are transport injections; PostgreSQL integration exercises real account/recovery constraints without deliberately killing a production database connection."
+    },
+    {
+      "id": "AUDIT-03",
+      "severity": "low",
+      "repository": "daclify-frontend",
+      "status": "fixed-test",
+      "title": "Email pairing browser test expected a collapsed row to remain visible",
+      "trigger": "The real API accepts an email pairing; awaitingCode becomes false and the Email details closes.",
+      "rootCause": "The test did not reopen the existing panel before asserting the paired row is visible. Baseline product code contains the same closing behavior.",
+      "change": "Click the Email summary after the pairing success notice; retain the visible paired-address assertion and same-account passkey login checks.",
+      "evidence": {
+        "redLog": "frontend-auth-browser-red.log",
+        "greenLog": "frontend-auth-browser.log",
+        "result": "Both desktop/mobile Chromium journeys passed against the real API and fresh PostgreSQL after the one-line test interaction fix."
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "topic": "Pending native connection",
+      "chosen": "Small shared connection revision/scope guard",
+      "alternatives": "Patching every caller would duplicate cancellation behavior. SDK-wide cancellation/persistence changes require actual wallet lifecycle qualification and are outside the proven app-state defect."
+    },
+    {
+      "topic": "Transaction cleanup",
+      "chosen": "Repair the existing shared withTransaction helper",
+      "alternatives": "Changing only individual auth callers leaves the shared cause. Rewriting every content/payment/migration transaction requires separate tracing and fault tests; it is not needed to repair this helper."
+    },
+    {
+      "topic": "Repository structure",
+      "chosen": "Preserve current producer/consumer boundaries and frozen historical fixtures",
+      "alternatives": "File size alone does not prove a design defect. No speculative splitting, dependency replacement or history regeneration was justified."
+    }
+  ],
+  "verification": [
+    {
+      "repository": "daclify-backend-core",
+      "command": "npm run verify",
+      "exitCode": 0,
+      "testFiles": 133,
+      "passed": 834,
+      "failed": 0,
+      "log": "core-final-reviewed.log",
+      "includes": [
+        "ESLint",
+        "TypeScript",
+        "generated-documentation check",
+        "default Vitest suite"
+      ],
+      "qualification": "The release manifest still reports publication refused and qualified false; this expected gate remains. Passing verify does not establish a publishable release."
+    },
+    {
+      "repository": "daclify-backend-core",
+      "command": "npm run build",
+      "exitCode": 0,
+      "log": "core-build.log"
+    },
+    {
+      "repository": "daclify-backend-modules",
+      "command": "npm run verify",
+      "exitCode": 0,
+      "testFiles": 28,
+      "passed": 164,
+      "failed": 0,
+      "log": "modules-baseline.log",
+      "includes": [
+        "repository lint",
+        "TypeScript",
+        "generated-documentation check",
+        "default Vitest suite"
+      ]
+    },
+    {
+      "repository": "daclify-backend-modules",
+      "command": "npm run build",
+      "exitCode": 0,
+      "log": "modules-build.log"
+    },
+    {
+      "repository": "daclify-frontend",
+      "command": "npm run verify",
+      "exitCode": 0,
+      "testFiles": 41,
+      "passed": 272,
+      "failed": 0,
+      "log": "frontend-final-reviewed.log",
+      "includes": [
+        "repository lint policy",
+        "vue-tsc",
+        "default Vitest suite"
+      ]
+    },
+    {
+      "repository": "daclify-frontend",
+      "command": "npm run build",
+      "exitCode": 0,
+      "log": "frontend-build.log",
+      "warning": "Existing chunks exceed the 500 kB warning. Runtime load/bundle profiling was not performed; no limit was weakened."
+    },
+    {
+      "repository": "daclify-frontend",
+      "command": "npm run lint && npm run typecheck; prettier --check src/auth/telos-zero.ts tests/unit/native-connection.test.ts tests/e2e/sign-in-methods.spec.ts",
+      "exitCode": 0,
+      "logs": [
+        "frontend-final-lint.log",
+        "frontend-final-typecheck.log",
+        "frontend-final-format.log"
+      ],
+      "scope": "After the browser-test interaction correction."
+    },
+    {
+      "repository": "www-landing-page",
+      "command": "npm ci --ignore-scripts; npm run typecheck && npm test && npm run check:export",
+      "exitCode": 0,
+      "passed": 43,
+      "failed": 0,
+      "skipped": 0,
+      "log": "landing-baseline.log",
+      "includes": [
+        "build of 15 localized pages",
+        "static tests",
+        "exact exported-byte comparison"
+      ]
+    },
+    {
+      "repository": "www-landing-page",
+      "command": "npm run test:e2e",
+      "exitCode": 0,
+      "passed": 46,
+      "failed": 0,
+      "log": "landing-browser.log",
+      "scope": "Desktop/mobile Chromium, all localized pages, accessibility, navigation/FAQ without JavaScript, reduced motion, 320px/intermediate widths and 404/MIME behavior."
+    },
+    {
+      "repository": "www-landing-page",
+      "command": "npm run format:check",
+      "exitCode": 0,
+      "log": "landing-format.log"
+    },
+    {
+      "repository": "daclify-backend-core",
+      "command": "npm run test:integration -- tests/integration/sign-in-methods.test.ts tests/integration/wallet-recovery.test.ts",
+      "exitCode": 0,
+      "passed": 26,
+      "failed": 0,
+      "log": "core-auth-integration.log",
+      "databaseReceipt": "core-auth-integration-result.json",
+      "scope": "Fresh owned local PostgreSQL database, migrated and deleted afterward; no live database."
+    },
+    {
+      "repository": "daclify-frontend",
+      "command": "DACLIFY_TEST_UI_PORT=5196 playwright test tests/e2e/contract-resources.spec.ts tests/e2e/account-settings.spec.ts tests/e2e/sign-in-methods.spec.ts tests/e2e/wallet-recovery.spec.ts",
+      "exitCode": 1,
+      "passed": 26,
+      "failed": 2,
+      "log": "frontend-browser.log",
+      "interpretation": "The two sign-in cases require a real local API, which was absent. The 26 HTTP-fixture resource/settings/recovery cases passed. The missing-API failures were investigated and rerun with the owned API; they are not omitted."
+    },
+    {
+      "repository": "daclify-frontend",
+      "command": "DACLIFY_TEST_API_PORT=31096 DACLIFY_TEST_UI_PORT=5196 playwright test tests/e2e/sign-in-methods.spec.ts",
+      "exitCode": 0,
+      "passed": 2,
+      "failed": 0,
+      "log": "frontend-auth-browser.log",
+      "fixtureReceipt": "frontend-auth-browser-result.json",
+      "scope": "Real production API handlers, fresh PostgreSQL, real client cryptography/cookies and virtual Chromium WebAuthn. Local code delivery; all chain actions reject. API/database were cleaned afterward."
+    },
+    {
+      "repository": "core/modules/frontend",
+      "command": "npm audit --omit=dev --json",
+      "exitCode": 0,
+      "reportedAdvisories": 0,
+      "logs": [
+        "core-dependencies.json",
+        "modules-dependencies.json",
+        "frontend-dependencies.json"
+      ],
+      "limits": "Registry advisory check, not a proof that dependencies are secure."
+    },
+    {
+      "repository": "www-landing-page",
+      "command": "npm audit --json",
+      "exitCode": 0,
+      "reportedAdvisories": 0,
+      "log": "landing-dependencies.json"
+    }
+  ],
+  "reviewedAreas": {
+    "daclify-backend-core": [
+      "Account/key challenge and session boundaries, credential control and recovery",
+      "Shared transaction helper and its auth/creation consumers",
+      "Database migration/worker leasing and retry paths",
+      "Native resource quotes, market bounds and payer/system-code checks",
+      "Selected runtime/Hub/Names authorization, storage and settlement paths",
+      "Release/pin and deployment policy"
+    ],
+    "daclify-backend-modules": [
+      "Archive binary bounds, proofs, manifest/chunk commitments and restore release identity",
+      "History merging, planner retention/coverage and prune batching",
+      "Connected-payment SDK isolation, streaming bounds and deadlines",
+      "Shared module authorization/admission/code pins/RAM guards",
+      "Selected Decide/Works/Payroll/Grants payment and finalization paths",
+      "Pinned historical artifact compatibility"
+    ],
+    "daclify-frontend": [
+      "API/operator/workspace context and signed account control",
+      "Native wallet connection/signing/recovery consumers",
+      "Selected client vault and protected-content boundaries",
+      "Contract resources preview, payer, exact-debit approval and submission states",
+      "Account settings/sign-in/recovery browser journeys",
+      "Pinned public artifact consumption"
+    ],
+    "www-landing-page": [
+      "Build/export input validation, path/link rejection and generated asset selection",
+      "Static preview traversal/error/MIME behavior",
+      "Localized content/routes, source rendering and public claims",
+      "Desktop/mobile accessibility/navigation/layout and JavaScript-free behavior"
+    ]
+  },
+  "remaining": [
+    {
+      "priority": "follow-up",
+      "topic": "Explicit transaction cleanup outside the shared helper",
+      "evidence": "services/api/src/auth.ts:156 and services/api/src/creation.ts:278 still await ROLLBACK before rethrowing the original error. Additional raw rollback calls exist in storage/content/payment/migration paths; not every call is an error cleanup.",
+      "risk": "The same simultaneous-failure error masking can remain in these paths. No data-loss or pool-contamination claim is made.",
+      "next": "Trace each transaction and add path-specific failure injections before consolidating or repairing its cleanup; preserve accounting and migration behavior."
+    },
+    {
+      "priority": "release-qualification",
+      "topic": "Native/provider/release suites",
+      "unrun": "Full integration suite, live providers, real Anchor/EVM clients, native-runtime research/paid suites and complete supported-release qualification were not rerun in this audit. Contract code/binaries were unchanged.",
+      "risk": "Default suites and fixtures do not qualify real wallets, mail/Telegram/Google/Stripe/Pinata, public chain permissions or production recovery."
+    },
+    {
+      "priority": "performance-profiling",
+      "topic": "Large frontend chunks and production load",
+      "evidence": "The build emits a chunk-size warning. Large source files alone were not classified as bugs.",
+      "unrun": "Production traffic, database query plans under realistic load, long-running worker behavior, full bundle/runtime performance and new RAM/CPU profiling."
+    },
+    {
+      "priority": "coverage",
+      "topic": "Audit boundaries",
+      "unrun": "Exhaustive line review of every contract action and every module/component, all cross-network/provider failure schedules, physical assistive technology and non-Chromium browsers.",
+      "risk": "No all-code-correctness, independent-review or fully-qualified-release claim."
+    }
+  ],
+  "setupCorrections": [
+    "An initial frontend API-change fixture changed an unloaded environment value; it was corrected to use actual configured API endpoints. The final counterfactual validates the corrected fixture.",
+    "Test-only Promise.withResolvers conflicted with the frontend ES2022 TypeScript library and was replaced with an ordinary deferred promise.",
+    "The pg overloaded connect mock needed mockImplementation instead of a void-inferred mockResolvedValue.",
+    "The local PostgreSQL CLI required its existing shared-library path; all actual test databases were owned and dropped.",
+    "Git lacked author configuration; commit-local Codex identity matching prior commits was used. No global Git configuration was changed."
+  ],
+  "compatibilityAndRollback": {
+    "interfaces": "Existing connectNative/disconnectNative and withTransaction signatures, protocol/ABI/public pins, authorization constraints, account IDs and persisted schemas are unchanged.",
+    "operationalEffect": "Stale native connections reject instead of assigning wallet state; consumers already handle rejected connections. Shared transactions keep their original error and discard after failed cleanup.",
+    "rollback": "Review and revert source fix commits on dev if needed. No data migration, native action or deployed-service rollback is required by these changes.",
+    "sourceBinding": [
+      {
+        "path": "/data/daclify-backend-core/services/api/src/auth/account-session.ts",
+        "sha256": "941144c098806c12979736fad34b27dfc3a9d7933f723639cc7dca8a15220ee9"
+      },
+      {
+        "path": "/data/daclify-backend-core/tests/account-transaction.test.ts",
+        "sha256": "966a5ffe56818374a63ff1b484a8173234179f590358d53ce906de2c1ac9e5ec"
+      },
+      {
+        "path": "/data/daclify-frontend/src/auth/telos-zero.ts",
+        "sha256": "06af3beb5761145166736f89a38f0179a450e788fc73cc8cc147c598608d88bf"
+      },
+      {
+        "path": "/data/daclify-frontend/tests/unit/native-connection.test.ts",
+        "sha256": "1af830d42ca4aeedfef210d2a069894ca5935d17294c44e5564180b6ea000928"
+      },
+      {
+        "path": "/data/daclify-frontend/tests/e2e/sign-in-methods.spec.ts",
+        "sha256": "6ff98c6ce9670e32ef130909edefd3f63df4d2df2504e6de1f0eebfb3c1cdd82"
+      }
+    ]
+  },
+  "evidence": {
+    "runtimeDirectory": "/data/daclify-runtime/audit-all-repos-20261011",
+    "logs": [
+      {
+        "name": "core-baseline.log",
+        "sha256": "19767d38e46103305474a489e2e5704d85ea68143c9e5f4a1f6ebf53dd37146f"
+      },
+      {
+        "name": "modules-baseline.log",
+        "sha256": "db6d808bb0caa9775c611159a6ce542c631f9cfe95ac41ba4419573faf22e098"
+      },
+      {
+        "name": "frontend-baseline.log",
+        "sha256": "d10682c6dc945278ee0a388e866786a132806b2224cc9d2e03e00a12128a09ac"
+      },
+      {
+        "name": "landing-baseline.log",
+        "sha256": "fd0314429acf17f93299a47f904bd1651d5b587dbcfef5c1ece397af47a4d997"
+      },
+      {
+        "name": "landing-browser.log",
+        "sha256": "d1e9411ae3f4eaa5f86a8c7ab066207b80b36ded91b7cd3cc81e957c16efe5b3"
+      },
+      {
+        "name": "landing-format.log",
+        "sha256": "421dc0bd638f26980d718402fc1a60df2b9ace904cc090a5b2e6575702bafb48"
+      },
+      {
+        "name": "core-final-reviewed.log",
+        "sha256": "95a284565ae5285b0da88208027d0c7fb5fd1507ab483ae925dbb9af5bab11c4"
+      },
+      {
+        "name": "core-build.log",
+        "sha256": "82fbfb556c1dbef480fc4e914de7b3b5643edd6ad9705ba579bbc2a3f5b43cdf"
+      },
+      {
+        "name": "modules-build.log",
+        "sha256": "a4f5ae81c9b6dff1c0a9b68b306de9fd1741eedcd4bebd4297c69d3d9631bcdf"
+      },
+      {
+        "name": "frontend-final-reviewed.log",
+        "sha256": "b1fee35d88efd5c26f54bdbf1f1587ce0dd99f0161744dd2890a007c5bcc67b8"
+      },
+      {
+        "name": "frontend-build.log",
+        "sha256": "32cb12f8309a6fbb15e2737bc938693c3631a4ec7c9d3258616d2a3ae09bc30a"
+      },
+      {
+        "name": "frontend-final-format.log",
+        "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20"
+      },
+      {
+        "name": "frontend-final-lint.log",
+        "sha256": "5074e2c74388d118ae816f619614f4d97d63166463eb5b103b8589328dcef8f2"
+      },
+      {
+        "name": "frontend-final-typecheck.log",
+        "sha256": "abe3818c5ca6f6eea4b32e84d9c76f209694f426377d06f8d1b8a47bde71e2d0"
+      },
+      {
+        "name": "core-final-format.log",
+        "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20"
+      },
+      {
+        "name": "core-transaction-red-final.log",
+        "sha256": "574aa523fbf942eb19bb8e591e69f692a5fd4a9a928c5ab9dd93d340f208c21c"
+      },
+      {
+        "name": "core-transaction-green.log",
+        "sha256": "51ec840693d107065500b6213b0f85b7300a2affc08f87d59f44c11d94e06659"
+      },
+      {
+        "name": "frontend-connection-final-counterfactual.log",
+        "sha256": "50f40a5d51c43059efce2adc455e985b402c033e6d87469b23fad17f6261f890"
+      },
+      {
+        "name": "frontend-connection-final-green.log",
+        "sha256": "2167be4d54a0d3e133ba2bde997bce9eeee675996d336536a19503977ba1b2f7"
+      },
+      {
+        "name": "frontend-connection-final-counterfactual.json",
+        "sha256": "ff8a6f5ecc6e1b91557a505bcf348786a504eee6aa1a6967256c48563041dd48"
+      },
+      {
+        "name": "frontend-early-cancel-mutation.log",
+        "sha256": "8629c7a2cd345c87b500c0541fcaa32a935cb59b333318ce0884f5721d2cc52a"
+      },
+      {
+        "name": "frontend-browser.log",
+        "sha256": "7eba3a832c689b7227403378b13dd1bdd30f4b7456495a41a20bc230b4a793ca"
+      },
+      {
+        "name": "frontend-auth-browser-red.log",
+        "sha256": "a7b1fe9f3e22e82492adeffffebaa552ef0d159631fda7f4703f2057ad8c954b"
+      },
+      {
+        "name": "frontend-auth-browser.log",
+        "sha256": "ee71b18e87979a7d4c9b4e7a3c70f34792a15f96e8d889d215bf76ad670170eb"
+      },
+      {
+        "name": "frontend-auth-browser-result.json",
+        "sha256": "fc6b8def1d3ad0a3e5f3c311dc7f9ddb28d7726f16b033819d0ea4957dc1f03d"
+      },
+      {
+        "name": "core-auth-integration.log",
+        "sha256": "e1d15a9d208a47c61e2f138b3995285a5497f72347945f371d4c3b0728b0ce5c"
+      },
+      {
+        "name": "core-auth-integration-result.json",
+        "sha256": "04631b5026963c706788170adb8d128e4c2ea968c01eee31caf973bdfa2cae90"
+      },
+      {
+        "name": "core-dependencies.json",
+        "sha256": "033761b77cf39d0c278cadb032de3dbfa24071d6c28684d75bba080ef362dde0"
+      },
+      {
+        "name": "modules-dependencies.json",
+        "sha256": "257c7133195f2462994120452f391b9728d49e40647ff6a3e50eba6db42cdf76"
+      },
+      {
+        "name": "frontend-dependencies.json",
+        "sha256": "605353b096a2ebb4ea6311997d21355a4ac5828b88e15a187aadbb75c1581990"
+      },
+      {
+        "name": "landing-dependencies.json",
+        "sha256": "585d6d23113779591b4ca7aa1ff664957506140d6e5557143a976e4275d5d773"
+      },
+      {
+        "name": "inventory.json",
+        "sha256": "281383384db52a835cf4d9ed8aef4a12620adfb794e59dea716ae45641d1e27f"
+      }
+    ]
+  },
+  "recommendedNextWork": "Qualify real wallet cancellation/connection lifecycle and source-bound release suites; then fault-test the remaining explicit transaction cleanup. Profile actual bundle/database/worker load before structural optimization.",
+  "decisionsRequired": "No additional policy decision is required for the completed bounded repairs. A new deployment or production asset/authority operation remains subject to explicit user authorization."
+}
