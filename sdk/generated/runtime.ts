@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = 'a1a4b59c21d460c0e9bbea58f233c82df9eab73b1239719c11bede7e2db0f29f';
+export const runtimeAbiHash = 'aa007c00748ebac830ec3fb7de306f098c6a0a4ba474b9a27889aeb314338e71';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -2546,6 +2546,24 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "initactivity",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "after",
+          "type": "uint64"
+        },
+        {
+          "name": "limit",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
       "name": "initgov",
       "base": "",
       "fields": [
@@ -2749,6 +2767,20 @@ export const runtimeAbi = {
         {
           "name": "dao_id",
           "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "member_activity_record",
+      "base": "",
+      "fields": [
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "last_active",
+          "type": "uint32"
         }
       ]
     },
@@ -5205,6 +5237,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "initactivity",
+      "type": "initactivity",
+      "ricardian_contract": ""
+    },
+    {
       "name": "initgov",
       "type": "initgov",
       "ricardian_contract": ""
@@ -5724,6 +5761,13 @@ export const runtimeAbi = {
     {
       "name": "keygrants",
       "type": "key_grant_record",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "memberacts",
+      "type": "member_activity_record",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -6672,6 +6716,11 @@ export interface inheritram {
 export interface init {
   chain_id: string;
 }
+export interface initactivity {
+  dao_id: string;
+  after: string;
+  limit: number;
+}
 export interface initgov {
   dao_id: string;
   settings: gov_settings;
@@ -6728,6 +6777,10 @@ export interface market_policy {
   bump_bps: number;
   quote_premium_bps: number;
   dao_id: string;
+}
+export interface member_activity_record {
+  member_id: string;
+  last_active: number;
 }
 export interface member_record {
   id: string;
@@ -7377,6 +7430,7 @@ export interface RuntimeActions {
   heartbeat: heartbeat;
   inheritram: inheritram;
   init: init;
+  initactivity: initactivity;
   initgov: initgov;
   initramobs: initramobs;
   linkevm: linkevm;

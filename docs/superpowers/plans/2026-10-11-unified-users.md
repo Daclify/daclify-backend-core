@@ -34,9 +34,9 @@
 
 **Interfaces:** `memberacts` rows `{member_id:uint64,last_active:uint32}`; governance action `initactivity(dao_id:uint64,after:uint64,limit:uint32)`.
 
-- [ ] Write actual WASM tests for zero enrollment, successful signing/native actions, failed inline execution, replay, wrong signer, DAO isolation and bounded/idempotent legacy initialization. Observe missing-table/action failures before implementation.
-- [ ] Add the constant-size scoped activity record, metering family and bounded initializer; preallocate on enrollment and update only existing records in dispatch.
-- [ ] Compile with pinned CDT, regenerate SDK, run activity/runtime/RAM tests, then native signed activity tests and permission workflows.
+- [x] Write actual WASM tests for zero enrollment, successful signing/native actions, failed inline execution, replay, wrong signer, DAO isolation and bounded/idempotent legacy initialization. Observe missing-table/action failures before implementation.
+- [x] Add the constant-size scoped activity record, metering family and bounded initializer; preallocate on enrollment and update only existing records in dispatch.
+- [x] Compile with pinned CDT, regenerate SDK, run activity/runtime/RAM tests, then native signed activity tests and permission workflows.
 
 ### Task 2: Public projection and identity aggregation
 
@@ -44,9 +44,9 @@
 
 **Interfaces:** Add nullable `identityKey` (public key SHA-256) and `lastActive` (chain seconds) to `PublicMember`; defaults preserve old response decoding. Add exact member lookup to the existing query. Export `unifyPublicMembers(members:PublicMember[]):PublicUser[]` with representative profile, all memberships and max activity.
 
-- [ ] Write and observe failing API tests for scoped activity lookup, fingerprint-only identity, exact member lookup and safe legacy nulls.
-- [ ] Write grouping tests for repeated native accounts, unpaired shared signing keys, distinct native accounts sharing a key, deployments, uint64 order, duplicate pages, multiple profiles and maximum activity.
-- [ ] Implement producer-owned types/projection/grouping and run all people/API/schema tests plus strict checks.
+- [x] Write and observe failing API tests for scoped activity lookup, fingerprint-only identity, exact member lookup and safe legacy nulls.
+- [x] Write grouping tests for repeated native accounts, unpaired shared signing keys, distinct native accounts sharing a key, deployments, uint64 order, duplicate pages, multiple profiles and maximum activity.
+- [x] Implement producer-owned types/projection/grouping and run all people/API/schema tests plus strict checks.
 
 ### Task 3: Unified cards and profile connections
 
@@ -54,16 +54,16 @@
 
 **Interfaces:** Shared directory loading state holds validated `PublicMember[]`, next cursor and error; cards accept DAO links and nullable activity. Details reuse exact lookup plus public membership grouping.
 
-- [ ] Write failing tests for automatic multi-DAO loading, one person/all DAO links, avatar and published contacts, latest action/unknown activity, retry, safe links and no nested anchors.
-- [ ] Implement 20-page bounded progressive loading with cursor checks and stale-response guards; preserve operator scope and prior results on errors.
-- [ ] Render distinct profile/DAO/contact links, activity and aggregated memberships; keep own editing limited to the addressed membership.
-- [ ] Run Vue checks, unit tests and people browser journeys on desktop/mobile with accessibility checks and screenshots.
+- [x] Write failing tests for automatic multi-DAO loading, one person/all DAO links, avatar and published contacts, latest action/unknown activity, retry, safe links and no nested anchors.
+- [x] Implement 20-page bounded progressive loading with cursor checks and stale-response guards; preserve operator scope and prior results on errors.
+- [x] Render distinct profile/DAO/contact links, activity and aggregated memberships; keep own editing limited to the addressed membership.
+- [x] Run Vue checks, unit tests and people browser journeys on desktop/mobile with accessibility checks and screenshots.
 
 ### Task 4: Integration, documentation and delivery
 
 **Files:** package manifests/locks/pinned vendors in all three repos; generated reference docs, people/account guide, upgrade review evidence and plan ledger.
 
-- [ ] Bump independent SDK/consumer versions and install pinned development artifacts through the existing bootstrap workflow. Verify modules against the compatible additive core table.
-- [ ] Update guides/reference generation, preserve live oracle/runtime pins until approved cutover, and prepare the concrete testnet activity initialization/upgrade packet.
-- [ ] Run required affected suites, inspect the final diff for identity/privacy/authorization/RAM and accessible presentation, record exact evidence and limitations.
-- [ ] Commit/push `dev` in all affected repositories. Request live rollout approval only after the new packet is concrete and tested.
+- [x] Bump independent SDK/consumer versions and install pinned development artifacts through the existing bootstrap workflow. Verify modules against the compatible additive core table.
+- [x] Update guides/reference generation, preserve live oracle/runtime pins until approved cutover, and prepare the concrete testnet activity initialization/upgrade packet.
+- [x] Run required affected suites, inspect the final diff for identity/privacy/authorization/RAM and accessible presentation, record exact evidence and limitations.
+- [x] Commit/push `dev` in all affected repositories. Request live rollout approval only after the new packet is concrete and tested.

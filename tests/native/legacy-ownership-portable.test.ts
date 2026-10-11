@@ -169,6 +169,50 @@ it('preserves actual unstake exit across a legacy-policy upgrade', async () => {
     encodeAction('unstake', { ...dao.actor(), destination: 'alice', quantity: '1.0000 TLOS' }),
   );
   expect((await dao.member()).stake).toBe('0');
+  const activity = await f().api.v1.chain.get_table_rows({
+    code: 'daclifycore',
+    scope: dao.daoId,
+    table: 'memberacts',
+    limit: 50,
+  });
+  expect(activity.rows).toEqual([]);
+});
+it('initializes upgraded legacy members with real executive quorum without inventing historical activity', async () => {
+  await expect(
+    f().push(
+      [
+        f().action(
+          'daclifycore',
+          'initactivity',
+          { dao_id: dao.daoId, after: '0', limit: 50 },
+          [{ actor: 'daclifycore', permission: 'active' }],
+          ABI.from(readFileSync('.artifacts/contracts/runtime.abi', 'utf8')),
+        ),
+      ],
+      [f().key('alice')],
+    ),
+  ).rejects.toThrow();
+  await f().push(
+    [
+      f().action(
+        'daclifycore',
+        'initactivity',
+        { dao_id: dao.daoId, after: '0', limit: 50 },
+        [{ actor: 'daclifycore', permission: 'active' }],
+        ABI.from(readFileSync('.artifacts/contracts/runtime.abi', 'utf8')),
+      ),
+    ],
+    [f().key('alice'), f().key('bob')],
+  );
+  const activity = await f().api.v1.chain.get_table_rows({
+    code: 'daclifycore',
+    scope: dao.daoId,
+    table: 'memberacts',
+    limit: 50,
+  });
+  const rows = activity.rows.map((value) => RuntimeTableSchemas.memberacts.parse(value));
+  expect(rows.map((r) => r.member_id)).toEqual(['1', '2', '3']);
+  expect(rows.every((r) => r.last_active === 0)).toBe(true);
 });
 
 it('settles a real legacy payroll liability and preserves claim withdrawal after upgrade', async () => {

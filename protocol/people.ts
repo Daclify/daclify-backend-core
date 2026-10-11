@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import { CidSchema, DaoRefSchema, IdSchema, NativeAccountSchema, Uint64Schema } from './base.js';
+import {
+  ChainIdSchema,
+  CidSchema,
+  DaoRefSchema,
+  IdSchema,
+  NativeAccountSchema,
+  Uint64Schema,
+} from './base.js';
 import { RuntimeTableSchemas } from '../sdk/generated/schemas.js';
 
 const link = z.union([
@@ -35,7 +42,12 @@ export const PublicPersonSchema = z.strictObject({
 });
 export const PublicMemberSchema = RuntimeTableSchemas.members
   .pick({ id: true, native_account: true, active: true })
-  .extend({ dao: DaoRefSchema, profile: PublicProfileSchema.nullable() });
+  .extend({
+    dao: DaoRefSchema,
+    profile: PublicProfileSchema.nullable(),
+    identityKey: ChainIdSchema.nullable().default(null),
+    lastActive: z.int().min(1).max(0xffffffff).nullable().default(null),
+  });
 const memberCursor = z.strictObject({ daoId: IdSchema, after: Uint64Schema });
 export const PeopleRoutes = {
   members: {
@@ -44,10 +56,11 @@ export const PeopleRoutes = {
     helpTopic: 'accounts',
     query: memberCursor
       .partial()
-      .extend({ onlyDao: IdSchema.optional() })
+      .extend({ onlyDao: IdSchema.optional(), memberId: IdSchema.optional() })
       .refine(
         (value) =>
           (value.after === undefined || !!value.daoId) &&
+          (!value.memberId || (!!value.daoId && value.after === undefined)) &&
           (!value.onlyDao || !value.daoId || value.onlyDao === value.daoId),
       ),
     response: z.strictObject({
@@ -79,3 +92,64 @@ export const PeopleRoutes = {
 export type PublicPerson = z.infer<typeof PublicPersonSchema>;
 export type PublicMember = z.infer<typeof PublicMemberSchema>;
 export type PublicProfile = z.infer<typeof PublicProfileSchema>;
+export type PublicUser = {
+  key: string;
+  nativeAccount: string;
+  profile: PublicProfile | null;
+  memberships: PublicMember[];
+  lastActive: number | null;
+};
+
+export function unifyPublicMembers(members: readonly PublicMember[]): PublicUser[] {
+  const namespace = (member: PublicMember) => `${member.dao.chainId}:${member.dao.contract}`;
+  const membershipKey = (member: PublicMember) =>
+    `${namespace(member)}:${member.dao.daoId}:${member.id}`;
+  const records = new Map<string, PublicMember>();
+  for (const member of members) {
+    const key = membershipKey(member),
+      previous = records.get(key);
+    records.set(key, {
+      ...member,
+      lastActive: Math.max(previous?.lastActive ?? 0, member.lastActive ?? 0) || null,
+    });
+  }
+  const unique = [...records.values()].sort((a, b) => {
+    const deployment = namespace(a).localeCompare(namespace(b));
+    if (deployment) return deployment;
+    const left = (BigInt(a.dao.daoId) << 64n) + BigInt(a.id),
+      right = (BigInt(b.dao.daoId) << 64n) + BigInt(b.id);
+    return left < right ? -1 : left > right ? 1 : 0;
+  });
+  const owners = new Map<string, Set<string>>();
+  for (const member of unique) {
+    if (!member.native_account || !member.identityKey) continue;
+    const key = `${namespace(member)}:${member.identityKey}`,
+      accounts = owners.get(key) ?? new Set<string>();
+    accounts.add(member.native_account);
+    owners.set(key, accounts);
+  }
+  const users = new Map<string, PublicUser>();
+  for (const member of unique) {
+    const identity = member.identityKey ? `${namespace(member)}:${member.identityKey}` : null;
+    const accounts = identity ? owners.get(identity) : undefined;
+    const native = member.native_account || (accounts?.size === 1 ? [...accounts][0] : '') || '';
+    const key = native
+      ? `native:${namespace(member)}:${native}`
+      : identity
+        ? `key:${identity}`
+        : `member:${membershipKey(member)}`;
+    const user = users.get(key) ?? {
+      key,
+      nativeAccount: native,
+      profile: null,
+      memberships: [],
+      lastActive: null,
+    };
+    user.memberships.push(member);
+    user.profile ??= member.profile;
+    if (member.lastActive !== null)
+      user.lastActive = Math.max(user.lastActive ?? 0, member.lastActive);
+    users.set(key, user);
+  }
+  return [...users.values()];
+}

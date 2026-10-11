@@ -40,6 +40,12 @@ struct [[eosio::table("members"), eosio::contract("runtime")]] member_record {
   EOSLIB_SERIALIZE(member_record,(id)(native_account)(signing_key)(encryption_key)(custody)(nonce)(credits)(active)(admin)(reviewer)(stake)(claim)(join_epoch))
 };
 using members = ram_table<"members"_n,member_record,indexed_by<"bynative"_n,const_mem_fun<member_record,uint64_t,&member_record::by_native>>,indexed_by<"bykey"_n,const_mem_fun<member_record,checksum256,&member_record::by_key>>>;
+struct [[eosio::table("memberacts"), eosio::contract("runtime")]] member_activity_record {
+  uint64_t member_id; uint32_t last_active=0;
+  uint64_t primary_key() const { return member_id; }
+  EOSLIB_SERIALIZE(member_activity_record,(member_id)(last_active))
+};
+using member_activities = ram_table<"memberacts"_n,member_activity_record>;
 struct [[eosio::table("evmbindings"), eosio::contract("runtime")]] evm_binding_record {
   uint64_t member_id;uint64_t chain_id;checksum160 address;uint64_t epoch=1;bool active=true;
   uint64_t primary_key()const{return member_id;}

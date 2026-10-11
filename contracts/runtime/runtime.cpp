@@ -423,6 +423,12 @@ public:
   ACTION enrollagent(uint64_t dao_id,uint64_t member_id,name native_account,public_key signing_key,std::string encryption_key,uint8_t custody,std::string operator_label) {
     enroll_member(dao_id,member_id,native_account,signing_key,encryption_key,custody,1,operator_label);
   }
+  ACTION initactivity(uint64_t dao_id,uint64_t after,uint32_t limit) {
+    require_auth(get_self());dao_rows.get(dao_id,"DAO_UNKNOWN");check(limit>=1&&limit<=50,"ACTIVITY_BATCH");
+    members people(get_self(),dao_id);member_activities activity(get_self(),dao_id);uint32_t count=0;
+    for(auto it=people.lower_bound(after);it!=people.end()&&count++<limit;++it)
+      if(activity.find(it->id)==activity.end())activity.emplace(get_self(),[&](auto& r){r.member_id=it->id;});
+  }
   ACTION addmember(name runtime,uint64_t dao_id,uint64_t member_id,public_key signing_key,std::string encryption_key,uint8_t custody,uint8_t kind,std::string operator_label) {
     check(get_sender()==get_self(),"ACTOR_SENDER");authorized_actor(runtime,dao_id,member_id,true);check(kind<=1,"PARTICIPANT_MODE");
     const auto& d=dao_rows.get(dao_id);check(d.max_member<std::numeric_limits<uint64_t>::max(),"MEMBER_LIMIT");
@@ -554,6 +560,7 @@ private:
     check_unique_key(dao_id,signing_key);
     const bool first=d.max_member==0;
     rows.emplace(get_self(),[&](auto& m){m.id=member_id;m.native_account=native_account;m.signing_key=signing_key;m.encryption_key=encryption_key;m.custody=custody;m.admin=first;m.join_epoch=d.key_epoch;});
+    member_activities activity(get_self(),dao_id);activity.emplace(get_self(),[&](auto& r){r.member_id=member_id;});
     dao_rows.modify(d,same_payer,[&](auto& r){r.member_count++;r.max_member=member_id;if(first)r.admin_count++;});
     participants actors(get_self(),dao_id);actors.emplace(get_self(),[&](auto& r){r.id=member_id;r.kind=kind;if(kind==1)r.operator_label=operator_label;});
   }
@@ -1251,6 +1258,8 @@ private:
     action outgoing;outgoing.account=r.target;outgoing.name=r.action;outgoing.authorization={{get_self(),"execctx"_n}};outgoing.data=r.data;
     if(r.target==get_self()&&r.action=="linknative"_n){auto data=unpack<std::tuple<name,uint64_t,uint64_t,name>>(r.data);require_auth(permission_level{std::get<3>(data),"active"_n});}
     executives offices(get_self(),r.dao_id);auto office=offices.find(r.member_id);if(office!=offices.end())offices.modify(office,same_payer,[](auto& e){e.last_active=current_time_point().sec_since_epoch();});
+    // Legacy initialization reserves RAM separately; member completion paths only update existing rows.
+    member_activities activity(get_self(),r.dao_id);auto recorded=activity.find(r.member_id);if(recorded!=activity.end())activity.modify(recorded,same_payer,[](auto& a){a.last_active=current_time_point().sec_since_epoch();});
     refresh_native_governance(r.dao_id);
     outgoing.send();
   }
@@ -1263,7 +1272,7 @@ extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
     EOSIO_DISPATCH_HELPER(runtime,(beginram)(scanram)(adoptram)(sealram)(setarchcfg)(archattest)(archapprove)(archrevoke)(archstep)(clearholds)(initramobs)(rebindramobs)(setramauto)(setrampool)(grantdaoram)(inheritram)(setdaoquota)(checkdaoram)(checkrampool)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram)(fulfilram))
     EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(setprofile)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(confirmext)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))
     EOSIO_DISPATCH_HELPER(runtime,(sethosted)(govhosted)(govseatfee)(orderfree)(setcapacity)(revokecap)(resumecap))
-    EOSIO_DISPATCH_HELPER(runtime,(enrollagent)(addmember)(initgov)(setdaogov)(addsession)(delsession)(guardpause)(guardrevoke)(guardrecover)(submitsess)(setfees)(listmod)(unlistmod)(setmodcopy)(setpolicy)(setgov)(setoracle)(govfees)(govpayfees)(setcreate)(govcreate)(setcrrate)(ordercreate)(cardcreate)(createpaid)(govlist)(govunlist)(govmodcopy))
+    EOSIO_DISPATCH_HELPER(runtime,(initactivity)(enrollagent)(addmember)(initgov)(setdaogov)(addsession)(delsession)(guardpause)(guardrevoke)(guardrecover)(submitsess)(setfees)(listmod)(unlistmod)(setmodcopy)(setpolicy)(setgov)(setoracle)(govfees)(govpayfees)(setcreate)(govcreate)(setcrrate)(ordercreate)(cardcreate)(createpaid)(govlist)(govunlist)(govmodcopy))
   }}
   else if(action_name=="transfer"_n.value) execute_action(name(receiver),name(code),&runtime::deposit);
 }

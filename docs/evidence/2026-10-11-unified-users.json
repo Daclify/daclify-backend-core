@@ -1,0 +1,116 @@
+{
+  "status": "Source implemented and verified; testnet rollout awaits fresh approval",
+  "checkedAt": "2026-10-11T09:51:34.375308+00:00",
+  "versions": {
+    "core": "0.13.0-alpha.4",
+    "frontend": "0.13.0-alpha.4",
+    "moduleSdk": "0.9.0-alpha.20",
+    "moduleContracts": "0.9.0-alpha.5"
+  },
+  "compiler": "CDT 4.1.1 -O=s; historical module/upgrade fixtures preserve their released flags",
+  "checks": {
+    "core": {
+      "command": "npm run verify",
+      "testsPassed": 829,
+      "failed": 0,
+      "logSha256": "495be358af70cace75814740edfc6471599183240bd22be0be63152794fb7d63"
+    },
+    "modules": {
+      "command": "npm run verify",
+      "testsPassed": 164,
+      "failed": 0,
+      "logSha256": "57ffa9faad0ecdd4474d85701be48dbe0fca36160f1190f31adb182e79bdaf7f"
+    },
+    "frontend": {
+      "command": "npm run verify",
+      "testsPassed": 217,
+      "failed": 0,
+      "logSha256": "f0bb864e05215f57f15a332a4f6aac2df370a6f6b82084ad1b55988a5163d40c"
+    },
+    "native": {
+      "command": "native permission, workflow, member-activity and legacy-upgrade suites",
+      "testsPassed": 146,
+      "files": 10,
+      "failed": 0,
+      "logSha256": "008f1326059f6fdd2553f5120411641eff51d11ebb65cbc0952c902a137189ee"
+    },
+    "browser": {
+      "command": "playwright test tests/e2e/people-workspace.spec.ts",
+      "runsPassed": 24,
+      "uniqueJourneys": 12,
+      "projects": [
+        "Desktop Chrome",
+        "Pixel 7"
+      ],
+      "failed": 0,
+      "logSha256": "d2fbd6bff3c6c289263a72ec6cae2843a2c0369ab46d0eec2ddad9cc15f8bc4b"
+    }
+  },
+  "builds": {
+    "core": "passed",
+    "modules": "passed",
+    "frontendTestnet": "passed"
+  },
+  "artifacts": {
+    "runtimeCodeSha256": "2733a5295dd72580c43622346ec3db8d93e9315a3e2febff929e895b30f687f5",
+    "runtimeRawAbiSha256": "7c4c309b9a564d3abae1aac7a369cb5a47fd9d0549ebf720e0764ce2c70554c3",
+    "corePackageSha256": "0b8e9228cbeaf0b1b3e57bbf6c686be47308800751d9419306d1d11b38fb6e1e",
+    "modulesPackageSha256": "3c8acb68bef089877951c92c85f1a4e7c0483a112cf1233231931f4cfccdaea4",
+    "frontendIndexSha256": "3acd6786d57ea64b7a0df064955290e218a5858c61ad11e6b83d9b2e7163a43e",
+    "reviewPacketSha256": "070cf64e0674ffb2f8152f52fdb23a275faa1bc762f8ace0c8ec5a13a8caac11"
+  },
+  "runtimeSize": {
+    "initialCandidateBytes": 1019165,
+    "optimizedCandidateBytes": 869764,
+    "reductionPercent": 14.66
+  },
+  "readonlySimulation": {
+    "actions": 7,
+    "receipt": {
+      "status": "executed",
+      "cpu_usage_us": 27693,
+      "net_usage_words": 27205
+    },
+    "rootRamDeltaBytes": -1431041,
+    "ramPurchase": null,
+    "signatureChecksBypassed": true,
+    "broadcast": false
+  },
+  "liveRead": {
+    "mode": "Read-only live projection against existing alpha.3 chain data",
+    "checkedAt": "2026-10-11T09:31:45.168Z",
+    "memberships": 4,
+    "users": 3,
+    "publishedProfiles": 0,
+    "knownActivity": 0,
+    "communitiesPerUser": [
+      [
+        "1"
+      ],
+      [
+        "4899240341166052780",
+        "10462019581746745784"
+      ],
+      [
+        "7010534441818256360"
+      ]
+    ],
+    "fields": [
+      "id",
+      "native_account",
+      "active",
+      "dao",
+      "profile",
+      "identityKey",
+      "lastActive"
+    ]
+  },
+  "limitations": [
+    "No historical general-member activity timestamp exists; absent/zero values remain unknown",
+    "Private service identities are excluded; different unlinked public keys can remain separate cards",
+    "Directory batches are bounded at 20 pages and explicitly label partial search/connections",
+    "Observed-RAM deployments require separate exact-pin/migration review",
+    "No SQL migrations or live provider writes are part of this change; those suites were not repeated",
+    "Development artifacts remain unqualified for immutable production publication"
+  ]
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { PrivateKey } from '@wharfkit/antelope';
+import { Checksum256, PrivateKey, PublicKey, Serializer } from '@wharfkit/antelope';
 import { NativeChainGateway } from '../services/api/src/native-chain.js';
 import { PeopleRoutes, PublicProfileSchema } from '../protocol/people.js';
 import { Pool } from 'pg';
@@ -56,6 +56,84 @@ function fixture() {
   });
 }
 describe('public people directory', () => {
+  it('reads DAO-scoped activity and exact members without leaking later rows', async () => {
+    const gateway = fixture();
+    const requests: Array<{ table: string; scope: string; lower_bound: string; limit: number }> =
+      [];
+    const rpc = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
+      const request = z
+        .object({
+          table: z.string(),
+          scope: z.string(),
+          lower_bound: z.string(),
+          limit: z.number(),
+        })
+        .parse(JSON.parse(String(init?.body)));
+      requests.push(request);
+      const rows =
+        request.table === 'daos'
+          ? [publicDao, { ...publicDao, id: '4' }]
+          : request.table === 'members'
+            ? [{ ...publicMember, id: '2' }]
+            : request.table === 'memberacts'
+              ? [{ member_id: '2', last_active: 1_800_000_000 }]
+              : [];
+      return Response.json({ rows, more: false });
+    });
+    try {
+      const result = await gateway.publicMembers({ daoId: '1', memberId: '2' });
+      expect(result.members[0]).toMatchObject({ id: '2', lastActive: 1_800_000_000 });
+      expect(result.next).toBeNull();
+      expect(requests).toContainEqual({
+        table: 'memberacts',
+        scope: '1',
+        lower_bound: '2',
+        limit: 1,
+      });
+      expect((await gateway.publicMembers({ daoId: '1', memberId: '1' })).members).toEqual([]);
+      expect((await gateway.publicMembers({ daoId: '3', memberId: '2' })).members).toEqual([]);
+    } finally {
+      rpc.mockRestore();
+    }
+  });
+  it('treats only the specifically absent legacy activity table as unknown, preserving RPC failures', async () => {
+    const gateway = fixture();
+    let missing = true;
+    const rpc = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
+      const request = z.object({ table: z.string() }).parse(JSON.parse(String(init?.body)));
+      if (request.table === 'memberacts')
+        return Response.json(
+          {
+            error: {
+              details: [
+                {
+                  message: missing
+                    ? 'Table memberacts is not specified in the ABI'
+                    : 'Database read failed',
+                },
+              ],
+            },
+          },
+          { status: 500 },
+        );
+      return Response.json({
+        rows:
+          request.table === 'daos'
+            ? [publicDao]
+            : request.table === 'members'
+              ? [publicMember]
+              : [],
+        more: false,
+      });
+    });
+    try {
+      expect((await gateway.publicMembers({})).members[0]?.lastActive).toBeNull();
+      missing = false;
+      await expect(gateway.publicMembers({})).rejects.toThrow('CHAIN_UNAVAILABLE');
+    } finally {
+      rpc.mockRestore();
+    }
+  });
   it('shows public members without requiring profile publication or exposing keys', async () => {
     const gateway = fixture();
     const requests: Array<{ table: string; scope: string; lower_bound: string; limit: number }> =
@@ -87,6 +165,10 @@ describe('public people directory', () => {
             id: '1',
             native_account: 'alice',
             active: true,
+            identityKey: Checksum256.hash(
+              Serializer.encode({ object: PublicKey.from(publicMember.signing_key) }),
+            ).toString(),
+            lastActive: null,
             profile: null,
           },
           {
@@ -94,6 +176,10 @@ describe('public people directory', () => {
             id: '2',
             native_account: '',
             active: true,
+            identityKey: Checksum256.hash(
+              Serializer.encode({ object: PublicKey.from(publicMember.signing_key) }),
+            ).toString(),
+            lastActive: null,
             profile: null,
           },
         ],
@@ -108,7 +194,7 @@ describe('public people directory', () => {
           expect.objectContaining({ table: 'profiles', limit: 50 }),
         ]),
       );
-      expect(requests).toHaveLength(3);
+      expect(requests).toHaveLength(4);
     } finally {
       rpc.mockRestore();
     }
@@ -125,6 +211,7 @@ describe('public people directory', () => {
         return new Response(
           JSON.stringify({ rows: [{ ...publicMember, id: '2' }], more: true, next_key: '3' }),
         );
+      if (request.table === 'memberacts') return Response.json({ rows: [], more: false });
       return new Response(
         JSON.stringify({
           rows: [
@@ -205,7 +292,17 @@ describe('public people directory', () => {
           ? [publicDao]
           : request.table === 'members'
             ? [publicMember]
-            : [{ id: '0', dao_id: '1', member_id: '1', account_name: 'alice', profile: 'invalid' }];
+            : request.table === 'profiles'
+              ? [
+                  {
+                    id: '0',
+                    dao_id: '1',
+                    member_id: '1',
+                    account_name: 'alice',
+                    profile: 'invalid',
+                  },
+                ]
+              : [];
       return new Response(JSON.stringify({ rows, more: false }));
     });
     try {

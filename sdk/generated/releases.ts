@@ -1,3 +1,3 @@
 // Generated from compiled runtime artifacts; do not edit.
-export const RuntimeCodeHash='a05da7ad1cf616db6af7129fa036ddbc4ae03423f81c87f5eae17d3c78878213';
-export const RuntimeRawAbiHash='50ab00d5e3e61a5e1fa4339a2edecaa005cd1edd7f28268aa87c7d8195fa4e63';
+export const RuntimeCodeHash='2733a5295dd72580c43622346ec3db8d93e9315a3e2febff929e895b30f687f5';
+export const RuntimeRawAbiHash='7c4c309b9a564d3abae1aac7a369cb5a47fd9d0549ebf720e0764ce2c70554c3';

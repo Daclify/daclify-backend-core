@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.13.0-alpha.3 · interface 1.
+Package 0.13.0-alpha.4 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -28,7 +28,11 @@ Managed recovery delegates signing and decryption recovery to an operator. The p
 
 Accounts with vault keys can share Account → Access & recovery → Public join identity with a DAO administrator. Never share recovery kits or their credentials. A saved service-to-member association can survive DAO signing-key rotation while its database exists; a lost mapping cannot make an old signing key current again. Current chain permissions and wallet bindings remain authoritative.
 
-The Users directory reads public DAO membership records, so members appear before they publish a profile. Native accounts shared across DAO memberships appear once, with available published profile details; internal members without a native account or profile appear as Member plus their public member ID. Each card opens its DAO-specific public record. Sign in to keep your own card first and edit your profile or account pairings. The paginated directory reads at most 50 members from one DAO per request; Load more users continues into the next page or DAO. Unpublished profile details remain absent and private service identities are never used for discovery. Your profile is shown first when you sign in; opening another user gives the same public view without your editing and pairing controls.
+The Users directory includes all public DAO membership records, including members without a published profile. Cards and list rows show published avatars, names, location, contact links, community links and the latest successful authenticated DAO action. Matching native accounts or current signing public keys connect memberships within one chain/runtime; distinct native accounts sharing a key remain separate. Private service pairings and similar profile details never establish public identity. Key rotation can leave unpaired memberships separate until public identity evidence reconnects them. Profiles remain stored and edited with their original DAO membership; no Hub-wide identity registry has been added. Unpublished details remain absent.
+
+The directory automatically loads up to 20 pages per batch, each containing at most 50 members from one DAO. Small directories load all communities automatically; larger directories expose Load more users and label partial search. Each community badge opens its DAO. User details show all loaded proven memberships and per-membership profile links. A failed later page retains earlier results and Retry continues from its cursor. Independent operators remain limited to their configured DAO.
+
+Last active means the latest successful authenticated member instruction in any connected DAO, including installed module actions. Failed actions and replays do not advance it. Sign-ins, enrollment and direct administration do not count. Older members need bounded governance-authorized activity-row initialization; absent or zero timestamps show DAO activity not recorded. Initialization never invents historical dates, changes permissions or spends tokens. Public profile contacts and avatar CIDs are published on chain; publish only information intended to be public.
 
 Open your own user card and choose Edit profile & account to edit your public profile, set avatar/background IPFS CIDs, manage recovery keys, pair sign-in credentials and manage wallet links. A browser signer must be authorized for the selected membership to publish. Email and social contact fields entered in this public profile are public on-chain; they are distinct from private service login pairings.
 
@@ -292,7 +296,7 @@ Basic complete JSON/CSV exports are free and do not require an Operations subscr
 
 ## Use the matching release and enabled modules
 
-The current development candidate is core/frontend 0.13.0-alpha.3 with modules SDK 0.9.0-alpha.19 and unchanged module contracts 0.9.0-alpha.5. Contract interface remains 1; vault login uses its separate version-3 challenge binding both signing and encryption keys. Documentation displays its package version and warns when the selected deployment differs. Module actions require the exact compatible installed version and verified code hash.
+The current development candidate is core/frontend 0.13.0-alpha.4 with modules SDK 0.9.0-alpha.20 and unchanged module contracts 0.9.0-alpha.5. Contract interface remains 1; vault login uses its separate version-3 challenge binding both signing and encryption keys. Documentation displays its package version and warns when the selected deployment differs. Module actions require the exact compatible installed version and verified code hash.
 
 The candidate adds physically backed per-DAO RAM, native and card acquisition, prepaid pinned storage, bounded Archive export/backup/approval/pruning and original-key recovery. Follow upgrade-0.8, RAM migration and release-qualification runbooks. Preserve old approved executable hashes, member IDs, claims, obligations, key grants and document ciphertext. A package version alone does not prove a deployed contract upgrade. The current audit candidate also fixes seller-paid Names listings, paginated inventory, challenge admission/expiry and rotating Google signing keys. It prepares scoped Relay/Fees authorities and rejects creator/executive delegation back through core owner/active. Follow the current audit remediation guide for coordinated deployment; the earlier upgrade guides retain their version-specific migration procedures.
 
@@ -556,7 +560,7 @@ Sources:
 
 ## runtime contract
 
-Source ABI JSON SHA-256: `a1a4b59c21d460c0e9bbea58f233c82df9eab73b1239719c11bede7e2db0f29f`.
+Source ABI JSON SHA-256: `aa007c00748ebac830ec3fb7de306f098c6a0a4ba474b9a27889aeb314338e71`.
 
 ### Action: addmember
 
@@ -1071,6 +1075,14 @@ Source ABI JSON SHA-256: `a1a4b59c21d460c0e9bbea58f233c82df9eab73b1239719c11bede
 | Field | ABI type |
 | --- | --- |
 | chain_id | checksum256 |
+
+### Action: initactivity
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| after | uint64 |
+| limit | uint32 |
 
 ### Action: initgov
 
@@ -1967,6 +1979,13 @@ Source ABI JSON SHA-256: `a1a4b59c21d460c0e9bbea58f233c82df9eab73b1239719c11bede
 | recipient | uint64 |
 | grantor | uint64 |
 | envelope | string |
+
+### Table: memberacts
+
+| Field | ABI type |
+| --- | --- |
+| member_id | uint64 |
+| last_active | uint32 |
 
 ### Table: members
 
@@ -19153,6 +19172,10 @@ Query:
     "onlyDao": {
       "type": "string",
       "maxLength": 20
+    },
+    "memberId": {
+      "type": "string",
+      "maxLength": 20
     }
   },
   "additionalProperties": false
@@ -19343,6 +19366,31 @@ Response:
                 "type": "null"
               }
             ]
+          },
+          "identityKey": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastActive": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4294967295
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -19350,7 +19398,9 @@ Response:
           "native_account",
           "active",
           "dao",
-          "profile"
+          "profile",
+          "identityKey",
+          "lastActive"
         ],
         "additionalProperties": false
       }
