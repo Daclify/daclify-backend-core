@@ -4,6 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, mkdirSync, statSync } from 'node:fs';
 import {
   ABI,
+  Authority,
   Action,
   Name,
   Serializer,
@@ -27,7 +28,9 @@ import { waitForIrreversibleBlock } from '../../services/api/src/chain-confirmat
 import { loadEnvironment, deploymentAccounts } from './environment.js';
 import { encodeSystem, encodeContractAbi } from './actions.js';
 import { contextPermissionPlan } from './permissions.js';
-const mode = z.enum(['--prepare', '--apply', '--verify', '--simulate']).parse(process.argv[2]);
+const mode = z
+  .enum(['--prepare', '--prepare-remainder', '--apply', '--verify', '--simulate'])
+  .parse(process.argv[2]);
 const directory = z
   .string()
   .regex(/^\/data\/daclify-runtime\/connected-apps-rollout-[a-z0-9-]+$/)
@@ -95,6 +98,7 @@ function sourceIdentity() {
 }
 const PacketSchema = z.object({
   sources: SourcesSchema,
+  activityAlreadyInstalled: z.boolean().default(false),
   chainId: z.string(),
   priorCodeHash: z.string(),
   priorAbiHash: z.string(),
@@ -179,6 +183,49 @@ async function state(includeActivity = mode === '--verify') {
   }
   return StateSchema.parse({ accounts, tables: allTables });
 }
+async function validateExistingActivity() {
+  const [raw, account] = await Promise.all([
+    api.v1.chain.get_raw_abi(moduleAccount),
+    api.v1.chain.get_account(moduleAccount),
+  ]);
+  assert.equal(String(raw.code_hash), ModuleCodeHashes.activity);
+  assert.equal(
+    String(raw.abi_hash),
+    hash(
+      encodeContractAbi(
+        readFileSync('../daclify-backend-modules/.artifacts/contracts/activity.abi', 'utf8'),
+      ),
+    ),
+  );
+  assert.equal(String(account.ram_quota), '4194304');
+  assert.equal(account.permissions.length, 2);
+  for (const name of ['owner', 'active']) {
+    const permission = account.permissions.find((item) => item.perm_name.toString() === name);
+    assert.ok(permission);
+    assert.equal(permission.parent.toString(), name === 'owner' ? '' : 'owner');
+    assert.ok(
+      permission.required_auth.equals(
+        Authority.from({
+          threshold: 1,
+          keys: [],
+          waits: [],
+          accounts: [
+            ...(name === 'active'
+              ? [{ permission: { actor: moduleAccount, permission: 'eosio.code' }, weight: 1 }]
+              : []),
+            { permission: { actor: runtime, permission: 'active' }, weight: 1 },
+          ],
+        }),
+      ),
+      'ACTIVITY_AUTHORITY_CHANGED',
+    );
+  }
+  assert.equal(
+    (await tables(moduleAccount, Serializer.decode({ type: ABI, data: raw.abi.array }))).length,
+    0,
+    'ACTIVITY_ALREADY_USED',
+  );
+}
 function system(name: string, data: object, actor: string) {
   return Action.from({
     account: 'eosio',
@@ -226,7 +273,7 @@ async function simulate(actions: Action[]) {
 }
 const info = await api.v1.chain.get_info();
 assert.equal(String(info.chain_id), env.chainId);
-if (mode === '--prepare') {
+if (mode === '--prepare' || mode === '--prepare-remainder') {
   const sources = sourceIdentity();
   mkdirSync(directory, { recursive: true, mode: 0o700 });
   assert.equal(statSync(directory).mode & 0o077, 0);
@@ -236,7 +283,10 @@ if (mode === '--prepare') {
     body: JSON.stringify({ account_name: moduleAccount }),
     signal: AbortSignal.timeout(15000),
   });
-  assert.equal(unavailable.status, 400, 'ACTIVITY_ACCOUNT_ALREADY_EXISTS');
+  if (mode === '--prepare-remainder') {
+    assert.equal(unavailable.status, 200, 'ACTIVITY_ACCOUNT_MISSING');
+    await validateExistingActivity();
+  } else assert.equal(unavailable.status, 400, 'ACTIVITY_ACCOUNT_ALREADY_EXISTS');
   const before = await state(),
     root = before.accounts.find((item) => item.name === runtime);
   assert.ok(root);
@@ -377,6 +427,16 @@ if (mode === '--prepare') {
     deployment = HubDeploymentRowSchema.parse(registered.rows[0]);
   assert.equal(deployment.runtime, runtime);
   assert.equal(deployment.code_hash, root.codeHash);
+  const fees = RuntimeTableSchemas.feecfg.parse(
+    (
+      await api.v1.chain.get_table_rows({
+        code: runtime,
+        scope: runtime,
+        table: 'feecfg',
+        limit: 1,
+      })
+    ).rows[0],
+  );
   const second = [
     system('setcode', { account: runtime, vmtype: 0, vmversion: 0, code: wasm }, runtime),
     system('setabi', { account: runtime, abi: encodeContractAbi(runtimeAbi) }, runtime),
@@ -413,7 +473,7 @@ if (mode === '--prepare') {
     ),
     core('listmod', {
       account: moduleAccount,
-      publisher: runtime,
+      publisher: fees.treasury,
       party: 0,
       accepts_fee_rule: 1,
       price: '0.0000 TLOS',
@@ -437,15 +497,17 @@ if (mode === '--prepare') {
   ];
   const packet = PacketSchema.parse({
     sources,
+    activityAlreadyInstalled: mode === '--prepare-remainder',
     chainId: env.chainId,
     priorCodeHash: root.codeHash,
     priorAbiHash: root.abiHash,
     runtimeCodeHash: RuntimeCodeHash,
     activityCodeHash: ModuleCodeHashes.activity,
     resourceCostCapUnits: cap.toString(),
-    batches: [first.slice(0, 3), first.slice(3), second].map((batch) =>
-      batch.map((action) => object(action)),
-    ),
+    batches: (mode === '--prepare-remainder'
+      ? [second]
+      : [first.slice(0, 3), first.slice(3), second]
+    ).map((batch) => batch.map((action) => object(action))),
     before,
   });
   save('packet.json', packet);
@@ -454,7 +516,10 @@ if (mode === '--prepare') {
     hash(readFileSync(directory + '/packet.json')) + '\n',
     { mode: 0o600, flag: 'wx' },
   );
-  save('simulation.json', { batch: 0, ...(await simulate(first.slice(0, 3))) });
+  save('simulation.json', {
+    batch: 0,
+    ...(await simulate(mode === '--prepare-remainder' ? second : first.slice(0, 3))),
+  });
   console.log(
     JSON.stringify({
       state: 'prepared',
@@ -463,6 +528,7 @@ if (mode === '--prepare') {
       ramBytes: 4194304,
       estimatedRamCost: tlosAsset(cost),
       stake: '3.0000 TLOS',
+      activityAlreadyInstalled: packet.activityAlreadyInstalled,
       batches: packet.batches.map((batch) => batch.length),
       runtimeCodeHash: RuntimeCodeHash,
     }),
@@ -483,6 +549,7 @@ if (mode === '--prepare') {
     );
   } else if (mode === '--apply') {
     assert.deepEqual(sourceIdentity(), packet.sources, 'RELEASE_SOURCE_CHANGED');
+    if (packet.activityAlreadyInstalled) await validateExistingActivity();
     const market = await api.v1.chain.get_table_rows({
         code: 'eosio',
         scope: 'eosio',
