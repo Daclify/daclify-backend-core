@@ -25,6 +25,7 @@ export function registerConnectedAppsRoutes(
   service: ConnectedApps,
   cookieName: string,
   session: (token: string | undefined, csrf?: string) => Promise<Account>,
+  spend: (accountId: string) => void,
 ) {
   app.get(ModuleApiRoutes.appKeys.path, async (request) => {
     const params = z
@@ -193,6 +194,7 @@ export function registerConnectedAppsRoutes(
         .hexString !== instruction.data
     )
       throw new ApiError('APP_SCOPE', 403);
+    spend(access.account.id);
     const db = await service.pool.connect();
     let discard = false;
     try {

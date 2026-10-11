@@ -1,5 +1,5 @@
-import { afterAll, beforeAll, expect, it } from 'vitest';
-import { generateKeyPairSync } from 'node:crypto';
+import { afterAll, beforeAll, expect, it, vi } from 'vitest';
+import { generateKeyPairSync, randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import { PrivateKey } from '@wharfkit/antelope';
 import { createServer } from '../../services/api/src/server.js';
@@ -7,6 +7,8 @@ import { NativeChainGateway } from '../../services/api/src/native-chain.js';
 import { cleanupExpiredChallenges, createChallenge } from '../../services/api/src/auth.js';
 import { migrate } from '../../services/api/src/store.js';
 import { EncryptionPublicKeySchema } from '../../protocol/crypto.js';
+import { ApiRoutes } from '../../protocol/routes.js';
+import { authChain } from '../helpers/auth-chain.js';
 const url = process.env.DATABASE_URL;
 if (
   !url ||
@@ -27,6 +29,57 @@ const encryptionKey = EncryptionPublicKeySchema.parse({
 });
 beforeAll(() => migrate(pool));
 afterAll(() => pool.end());
+
+it.each(['vault', 'provider'] as const)(
+  'limits anonymous %s login verification across direct authentication routes',
+  async (kind) => {
+    const server = await createServer(pool, authChain, origin, {
+      providers: { telegram: { botToken: '12345:owned-security-login-fixture' } },
+    });
+    const vault = {
+      challengeId: randomUUID(),
+      signature: PrivateKey.generate('K1')
+        .signMessage(new TextEncoder().encode('invalid login fixture'))
+        .toString(),
+      encryptionKey,
+    };
+    const provider = {
+      provider: 'telegram',
+      proof: new URLSearchParams({
+        id: '1',
+        auth_date: String(Math.floor(Date.now() / 1000)),
+        hash: '00'.repeat(32),
+      }).toString(),
+    };
+    const paths = [ApiRoutes.login.path, ApiRoutes.providerLogin.path] as const,
+      inputs = [vault, provider] as const,
+      selected = kind === 'vault' ? 0 : 1;
+    const attempt = (index: 0 | 1 = selected, forwarded = '203.0.113.99') =>
+      server.inject({
+        method: 'POST',
+        url: paths[index],
+        remoteAddress: '203.0.113.8',
+        headers: { origin, 'x-forwarded-for': forwarded },
+        payload: inputs[index],
+      });
+    let restoreClock: (() => void) | undefined;
+    try {
+      for (let index = 0; index < 60; index++) expect((await attempt()).statusCode).toBe(401);
+      for (let index = 0; index < 5; index++) {
+        const denied = await attempt(selected, '203.0.113.' + (100 + index));
+        expect(denied.statusCode).toBe(429);
+        expect(denied.json()).toMatchObject({ code: 'RATE_LIMIT' });
+      }
+      expect((await attempt(selected === 0 ? 1 : 0)).statusCode).toBe(429);
+      const clock = vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 600001);
+      restoreClock = () => clock.mockRestore();
+      expect((await attempt()).statusCode).toBe(401);
+    } finally {
+      restoreClock?.();
+      await server.close();
+    }
+  },
+);
 
 it('limits unauthenticated challenge inserts before touching the database', async () => {
   const signingKey = PrivateKey.generate('K1').toPublic().toString();

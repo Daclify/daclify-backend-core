@@ -26,6 +26,7 @@ import {
 import { EncryptionPublicKeySchema } from '../../protocol/crypto.js';
 import { RuntimeTableSchemas } from '../../sdk/generated/schemas.js';
 import { encodeActivity } from '@daclify/modules/sdk';
+import { ModuleApiRoutes } from '@daclify/modules';
 import { makeInstruction, instructionDigest } from '../../sdk/index.js';
 import { DaoRefSchema } from '../../protocol/base.js';
 const url = process.env.DATABASE_URL;
@@ -510,6 +511,87 @@ it.each(['recordact', 'askreview'] as const)(
     expect(relay).toHaveBeenCalledTimes(1);
   },
 );
+it('shares sponsored admission across portal writes and freshly issued app tokens', async () => {
+  const delegate = PrivateKey.generate('K1');
+  const redirect = await service.authorize({
+    ...authRequest(),
+    signing_key: delegate.toPublic().toString(),
+    grant_seconds: 600,
+  });
+  const id = new URL(redirect).searchParams.get('request');
+  if (!id) throw new Error('Fixture request');
+  const consent = await service.consent(account(2), id);
+  sessions.set('101', {
+    credential: RuntimeTableSchemas.sessions.parse({
+      id: '101',
+      member_id: '3',
+      signing_key: delegate.toPublic().toString(),
+      expires: consent.grantExpires,
+      credential_epoch: '1',
+      permissions: [],
+    }),
+    scope: RuntimeTableSchemas.appscopes.parse({ id: '101', app_id: '1', revision: '1' }),
+  });
+  const approved = await service.approve(account(2), id, '101');
+  const issued = AppTokenSchema.parse(
+    await service.token({
+      grant_type: 'authorization_code',
+      client_id: app().clientId,
+      redirect_uri: app().config.redirectUris[0],
+      code: new URL(approved.redirect).searchParams.get('code'),
+      code_verifier: verifier,
+    }),
+  );
+  const request = makeInstruction(
+    dao,
+    '3',
+    '0',
+    Math.floor(Date.now() / 1000) + 120,
+    'activity',
+    'recordact',
+    encodeActivity('recordact', {
+      runtime: dao.contract,
+      dao_id: dao.daoId,
+      member_id: '3',
+      app_id: '1',
+      source_id: '11'.repeat(32),
+      source_revision: '22'.repeat(32),
+      event_id: '33'.repeat(32),
+      evidence_cid: '',
+      evidence_hash: '00'.repeat(32),
+      key_epoch: '0',
+    }),
+  );
+  const relay = (token: string) =>
+    server.inject({
+      method: 'POST',
+      url: '/v1/connected-apps/relay',
+      headers: { origin: 'https://app1.example', authorization: 'Bearer ' + token },
+      payload: { request, signature: delegate.signDigest(instructionDigest(request)).toString() },
+    });
+  expect((await relay(issued.access_token)).statusCode).toBe(200);
+  const finalize = () =>
+    server.inject({
+      method: 'POST',
+      url: ModuleApiRoutes.finalize.path,
+      headers: {
+        origin: frontend,
+        cookie: '__Host-daclify_session=' + login.token,
+        'x-csrf-token': login.csrfToken,
+      },
+      payload: { dao, ballotId: '1' },
+    });
+  for (let index = 0; index < 59; index++) expect((await finalize()).statusCode).toBe(200);
+  const renewed = await service.token({
+    grant_type: 'refresh_token',
+    client_id: app().clientId,
+    refresh_token: issued.refresh_token,
+  });
+  const denied = await relay(renewed.access_token);
+  expect(denied.statusCode).toBe(429);
+  expect(denied.json()).toMatchObject({ code: 'RATE_LIMIT' });
+  expect((await finalize()).statusCode).toBe(429);
+});
 it('supports standard form token exchange, restricts token audience and revokes logout', async () => {
   const codeValue = await code(),
     body = new URLSearchParams({

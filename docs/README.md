@@ -43,6 +43,7 @@ Use [audit remediation](operations/project-audit-remediation.md) for the current
 
 ## Evidence and unresolved qualification
 
+- [Three-repository security audit](evidence/2026-10-11-security-audit.md): four reproduced API resource-limit bypasses repaired, local/native verification and remaining development-dependency/provider qualification limits.
 - [Native RAM and history simulation](evidence/2026-10-08-ram-history-simulation.md): measured 200 shared DAOs/40,000 active memberships, growth projections and proposed archive-before-prune safeguards.
 - [Recovery documentation checks](evidence/2026-10-07-recovery-documentation.md): regenerated handbook, README/runbook consistency and the current documentation verification.
 - [Wallet recovery evidence](evidence/2026-10-07-wallet-recovery.md): actual empty-database access, original-key decryption, archive restore, local native behavior and read-only Telos testnet proof.

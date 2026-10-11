@@ -267,7 +267,7 @@ export async function createServer(
   }
   registerRecoveryRoutes(app, recovery, cookieName, session, origin);
   if (options.connectedApps)
-    registerConnectedAppsRoutes(app, options.connectedApps, cookieName, session);
+    registerConnectedAppsRoutes(app, options.connectedApps, cookieName, session, spend);
   app.addHook('onSend', async (request, reply, payload) => {
     if (request.routeOptions.url === '/v1/sign-in/session' && reply.statusCode < 400) {
       const token = request.cookies[cookieName],
@@ -770,7 +770,7 @@ export async function createServer(
       content: spendingCsv(await spendingReport(chain, IdSchema.parse(request.params.id))),
     };
   });
-  const images = createWindowLimiter(100, 60_000, 4000, sharedProxyIps);
+  const admitPublicDownload = createWindowLimiter(100, 60_000, 4000, sharedProxyIps);
   const assetWrites = createWindowLimiter(20, 60_000, 2000);
   app.post(ApiRoutes.storageRecover.path, async (request) => {
     const account = await session(
@@ -789,7 +789,7 @@ export async function createServer(
     return contentService().uploadBranding(account, request.body);
   });
   app.get<{ Params: { id: string; slot: string } }>(ApiRoutes.branding.path, async (request) => {
-    if (!images(request.ip, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    if (!admitPublicDownload(request.ip, Date.now())) throw new ApiError('RATE_LIMIT', 429);
     return contentService().brandingBytes(
       IdSchema.parse(request.params.id),
       z.enum(['logo', 'cover']).parse(request.params.slot),
@@ -1009,6 +1009,7 @@ export async function createServer(
       request.cookies[cookieName],
       typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
     );
+    if (!assetWrites(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
     return contentService().upload(account, ApiRoutes.upload.input.parse(request.body));
   });
   app.get<{ Params: { requestId: string } }>(ApiRoutes.uploadStatus.path, async (request) =>
@@ -1022,12 +1023,14 @@ export async function createServer(
       request.cookies[cookieName],
       typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
     );
+    if (!assetWrites(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
     ApiRoutes.uploadReconcile.input.parse(request.body);
     return contentService().refreshStatus(account, z.uuid().parse(request.params.requestId));
   });
   app.get<{ Params: { id: string; documentId: string; version: string } }>(
     ApiRoutes.documentBytes.path,
     async (request) => {
+      if (!admitPublicDownload(request.ip, Date.now())) throw new ApiError('RATE_LIMIT', 429);
       const daoId = IdSchema.parse(request.params.id);
       const documentId = IdSchema.parse(request.params.documentId);
       const version = z
