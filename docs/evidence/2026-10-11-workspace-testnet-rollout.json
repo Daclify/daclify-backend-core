@@ -1,0 +1,553 @@
+{
+  "schemaVersion": 1,
+  "status": "verified-testnet",
+  "environment": "testnet",
+  "qualifiedMainnetRelease": false,
+  "origins": {
+    "app": "https://testnet.app.daclify.com",
+    "api": "https://testnet.api.daclify.com",
+    "telos": "https://testnet.app.daclify.com/telos"
+  },
+  "source": {
+    "repositories": {
+      "daclify-backend-core": {
+        "commit": "f2b8d2284f9105db1b8689a0577e974fdd938560",
+        "version": "0.14.0-alpha.1"
+      },
+      "daclify-backend-modules": {
+        "commit": "f46432b70a91b385c79a09a46ddf9cecff442b8c",
+        "version": "0.10.0-alpha.1"
+      },
+      "daclify-frontend": {
+        "commit": "3553f08728035e75808bdb57d62949d86870cbd2",
+        "version": "0.14.0-alpha.1"
+      }
+    },
+    "packages": {
+      "daclify-core-protocol-0.14.0-alpha.1.tgz": "84f8fddf677f0845b5bf6f78f6888d4e832839de7c281984e9a3623a3877cbdc",
+      "daclify-modules-0.10.0-alpha.1.tgz": "b9eb5948ab6539770f730c6977eb0ef66d894fe805da52cdc9d8fec093bffcdd"
+    },
+    "correctedFrontend": {
+      "tree": "9e7dc79583e3f89c2a002cd78160c9e1e1f24ee6",
+      "verifiedBeforePublication": true,
+      "commit": "6ff2756680e3bd8fae7bcd4e530033cb782f6081",
+      "fullUnitTests": 280,
+      "telosBrowserTests": 16
+    }
+  },
+  "database": {
+    "verifiedAt": "2026-10-11T21:08:23.430Z",
+    "backupSha256": "fdfc1ab45bf5560dc11fc82787d86481f775dcb2578ed1a22f1c262ff5258076",
+    "backupBytes": 270528,
+    "migration": "039_native_signup.sql",
+    "restoredWithApplicationOwner": true,
+    "migratedTwice": true,
+    "priorMigrationsPreserved": 44,
+    "accountCount": 17,
+    "accountRowsPreserved": true,
+    "nativeIntentsPreserved": true,
+    "accountDigest": "2bf744c1309cfcc108ff441dde245cabecdd1d386d5da2ca9a583b6eb46b1af5",
+    "fixtureCleanup": true
+  },
+  "preservation": {
+    "verifiedAt": "2026-10-11T21:14:52.919Z",
+    "accountCount": 17,
+    "accountRowsUnchanged": true,
+    "migrationCount": 45,
+    "coreMigrationHashesVerified": true,
+    "runtimePermissionsUnchanged": true,
+    "contractsDeployed": false,
+    "chainTransactionsSent": false
+  },
+  "recovery": {
+    "status": "passed",
+    "kind": "testnet-local-restore",
+    "origin": "https://testnet.app.daclify.com",
+    "coreVersion": "0.14.0-alpha.1",
+    "independentHost": false,
+    "sourceUnavailable": true,
+    "sourceRemoved": false,
+    "originalKeyRecovered": true,
+    "leastPrivilegeDenials": 4,
+    "auditPlaintextExcluded": true,
+    "tlsVerified": true,
+    "providerVersion": "2.7.1",
+    "snapshotSha256": "020119532354e4c4bf35266763cfd29a278759f38b11952bd38aee401267d27e",
+    "checkedAt": "2026-10-11T21:14:23.435Z"
+  },
+  "api": {
+    "verifiedAt": "2026-10-11T21:14:36.979Z",
+    "network": {
+      "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+      "rpcUrl": "https://testnet.telos.caleos.io",
+      "runtime": "daclifycore1",
+      "hub": "daclifyhubv1",
+      "environment": "testnet",
+      "interfaceVersion": 1,
+      "coreVersion": "0.14.0-alpha.1",
+      "capabilities": [
+        "creator-owner-executive-active",
+        "internal-k1",
+        "native-linked",
+        "encrypted-documents",
+        "native-sign-in",
+        "executive-authority",
+        "evm-eoa-governance",
+        "shared-dao-create",
+        "dao-presets",
+        "guarded-agents",
+        "governance-policy"
+      ]
+    },
+    "apiVersion": "0.14.0-alpha.1",
+    "moduleVersion": "0.10.0-alpha.1",
+    "firstPageRecords": 9,
+    "secondPageRecords": 12,
+    "detailMatches": true,
+    "sourceMatches": true,
+    "signingAvailable": false,
+    "migrationApplied": true,
+    "moduleFeesMigrationPreserved": true,
+    "invalidSignupRejected": true,
+    "invalidCursorRejected": true,
+    "corsVerified": true,
+    "contracts": [
+      {
+        "account": "daclifycore1",
+        "verified": true,
+        "codeHash": "b0c1826a210d273b3250915b7db0a4c1a4cc70be465153195b52febfb3272fb4"
+      },
+      {
+        "account": "daclifyhubv1",
+        "verified": false,
+        "codeHash": "5f05cac05cd0bc3ea057402df7aef3e0c3fb3f9373094d1ad47605b377ab6bee"
+      },
+      {
+        "account": "daclifydecid",
+        "verified": true,
+        "codeHash": "f99a964c4eadd6d33ff261f79e546bd8a98f41a02785b41994490b319860cbf2"
+      },
+      {
+        "account": "daclifyworks",
+        "verified": true,
+        "codeHash": "9e4117b18393b0de1a090acf87788d908419ecb5dc85e8354a28dacb707bc308"
+      },
+      {
+        "account": "daclifypayr1",
+        "verified": true,
+        "codeHash": "4db6a327656d81fb055da26f359beb6d97cb4f3bb172b1efbd1e71c59ff7a8e7"
+      },
+      {
+        "account": "daclifygrant",
+        "verified": true,
+        "codeHash": "e973f83fbe27e548d4ef14733f511d705d066db74a32a5ff65ca7f005af138fa"
+      },
+      {
+        "account": "daclifyendor",
+        "verified": true,
+        "codeHash": "e1a0f64dc42c8e8ad1d324cf92d1dfe01cebba77b130fb2be74ba9ee4d88df48"
+      },
+      {
+        "account": "daclifyactiv",
+        "verified": true,
+        "codeHash": "225b7070235779ccc6f001d21209f243cdfd6fc0619e8a334405d30d7e6f6866"
+      },
+      {
+        "account": "daclifyrelay",
+        "verified": false,
+        "codeHash": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      {
+        "account": "daclifyfees1",
+        "verified": false,
+        "codeHash": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      {
+        "account": "daclifynames",
+        "verified": false,
+        "codeHash": "29f3155cc67c86871aa862b0ae9168acfdbaadf899721d4f5ef9a7ccaff86a65"
+      }
+    ]
+  },
+  "initialFrontendPublication": {
+    "publishedAt": "2026-10-11T21:15:07.536249+00:00",
+    "origin": "https://testnet.app.daclify.com",
+    "indexSha256": "81fdb76a9f1545ff0947b1292578bbed6315dfac2a2fe9047a4fce1639635e97",
+    "oldAssetsRetained": true,
+    "apiVerifiedBeforePublication": true
+  },
+  "freshChecks": {
+    "core": {
+      "lint": "passed",
+      "generatedDocs": "passed",
+      "build": "passed",
+      "targetedTests": 4
+    },
+    "modules": {
+      "lint": "passed",
+      "generatedDocs": "passed",
+      "build": "passed",
+      "targetedTests": 9
+    },
+    "frontend": {
+      "lint": "passed",
+      "types": "passed",
+      "initialBuild": "passed",
+      "targetedTests": 5,
+      "fullTests": {
+        "files": 44,
+        "tests": 280,
+        "status": "passed"
+      },
+      "telosBrowserTests": 16,
+      "landmarkRegression": "Observed 2 main landmarks before correction; green after correction",
+      "correctedBuild": "passed"
+    },
+    "databaseRestore": "Actual application-owner restore; new migration applied twice",
+    "recoveryRestore": "Actual original transit key recovered from Raft snapshot with source stopped; TLS and four permission denials verified"
+  },
+  "initialPublicChecks": {
+    "desktop": "passed",
+    "mobile": "passed",
+    "scope": "Hub, Status, native resources, Names quotes and DAO workspace; actual HTTPS"
+  },
+  "limitations": [
+    "Telos source is testnet; signing pins absent, so current connection is read-only",
+    "Actual Anchor and mainnet external Decide vote qualification remain unrun",
+    "Recovery drill is same-VM development evidence, not independent-host disaster recovery",
+    "Existing paid-creation native browser fixture at port 3008 was not run"
+  ],
+  "runtimeDirectory": "/data/daclify-runtime/releases/20261011-telos-governance",
+  "verifiedAt": "2026-10-11T21:19:51.000Z",
+  "frontendPublication": {
+    "publishedAt": "2026-10-11T21:18:29.258210+00:00",
+    "commit": "6ff2756680e3bd8fae7bcd4e530033cb782f6081",
+    "tree": "9e7dc79583e3f89c2a002cd78160c9e1e1f24ee6",
+    "origin": "https://testnet.app.daclify.com",
+    "indexSha256": "085ed7fc437c5188b671b6c3794ed1ac64375558984de481d1016f3bdbbf101f",
+    "oldAssetsRetained": true,
+    "landmarkCorrected": true
+  },
+  "publicBrowser": {
+    "verifiedAt": "2026-10-11T21:18:55.594Z",
+    "results": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "status": "passed",
+        "firstPageCount": 9,
+        "telosDetail": true,
+        "filters": true,
+        "refresh": true,
+        "pagination": true,
+        "guide": true,
+        "pricing": true,
+        "sameTabPricing": true,
+        "platformSections": true,
+        "accountEntry": true,
+        "horizontalOverflow": false,
+        "axeViolations": 0,
+        "mockedResponses": false,
+        "reads": [
+          {
+            "path": "/v1/network",
+            "status": 200
+          },
+          {
+            "path": "/v1/daos",
+            "status": 200
+          },
+          {
+            "path": "/v1/me",
+            "status": 401
+          },
+          {
+            "path": "/v1/telos/ballots",
+            "status": 200
+          },
+          {
+            "path": "/v1/telos/ballots/1cw3rwrjq2no",
+            "status": 200
+          },
+          {
+            "path": "/v1/telos/ballots",
+            "status": 200
+          },
+          {
+            "path": "/v1/telos/ballots/1cw3rwrjq2no",
+            "status": 200
+          },
+          {
+            "path": "/v1/telos/ballots",
+            "status": 200
+          },
+          {
+            "path": "/v1/network",
+            "status": 200
+          },
+          {
+            "path": "/v1/daos",
+            "status": 200
+          },
+          {
+            "path": "/v1/me",
+            "status": 401
+          },
+          {
+            "path": "/v1/modules/pricing",
+            "status": 200
+          },
+          {
+            "path": "/v1/platform/status",
+            "status": 200
+          },
+          {
+            "path": "/v1/network",
+            "status": 200
+          },
+          {
+            "path": "/v1/daos",
+            "status": 200
+          },
+          {
+            "path": "/v1/me",
+            "status": 401
+          },
+          {
+            "path": "/v1/daos",
+            "status": 200
+          },
+          {
+            "path": "/v1/network",
+            "status": 200
+          },
+          {
+            "path": "/v1/me",
+            "status": 401
+          },
+          {
+            "path": "/v1/platform/status",
+            "status": 200
+          },
+          {
+            "path": "/v1/daos/1/modules",
+            "status": 200
+          },
+          {
+            "path": "/v1/marketplace",
+            "status": 200
+          },
+          {
+            "path": "/v1/modules/pricing",
+            "status": 200
+          },
+          {
+            "path": "/v1/platform/status",
+            "status": 200
+          },
+          {
+            "path": "/v1/daos",
+            "status": 200
+          },
+          {
+            "path": "/v1/network",
+            "status": 200
+          },
+          {
+            "path": "/v1/me",
+            "status": 401
+          },
+          {
+            "path": "/v1/sign-in/options",
+            "status": 200
+          },
+          {
+            "path": "/v1/sign-up/options",
+            "status": 200
+          }
+        ]
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "status": "passed",
+        "firstPageCount": 9,
+        "telosDetail": true,
+        "filters": true,
+        "refresh": true,
+        "pagination": true,
+        "guide": true,
+        "pricing": true,
+        "sameTabPricing": true,
+        "platformSections": true,
+        "accountEntry": true,
+        "horizontalOverflow": false,
+        "axeViolations": 0,
+        "mockedResponses": false,
+        "reads": [
+          {
+            "path": "/v1/daos",
+            "status": 200
+          },
+          {
+            "path": "/v1/network",
+            "status": 200
+          },
+          {
+            "path": "/v1/me",
+            "status": 401
+          },
+          {
+            "path": "/v1/telos/ballots",
+            "status": 200
+          },
+          {
+            "path": "/v1/telos/ballots/1cw3rwrjq2no",
+            "status": 200
+          },
+          {
+            "path": "/v1/telos/ballots",
+            "status": 200
+          },
+          {
+            "path": "/v1/telos/ballots/1cw3rwrjq2no",
+            "status": 200
+          },
+          {
+            "path": "/v1/telos/ballots",
+            "status": 200
+          },
+          {
+            "path": "/v1/network",
+            "status": 200
+          },
+          {
+            "path": "/v1/daos",
+            "status": 200
+          },
+          {
+            "path": "/v1/me",
+            "status": 401
+          },
+          {
+            "path": "/v1/modules/pricing",
+            "status": 200
+          },
+          {
+            "path": "/v1/platform/status",
+            "status": 200
+          },
+          {
+            "path": "/v1/daos",
+            "status": 200
+          },
+          {
+            "path": "/v1/network",
+            "status": 200
+          },
+          {
+            "path": "/v1/me",
+            "status": 401
+          },
+          {
+            "path": "/v1/daos",
+            "status": 200
+          },
+          {
+            "path": "/v1/network",
+            "status": 200
+          },
+          {
+            "path": "/v1/me",
+            "status": 401
+          },
+          {
+            "path": "/v1/platform/status",
+            "status": 200
+          },
+          {
+            "path": "/v1/daos/1/modules",
+            "status": 200
+          },
+          {
+            "path": "/v1/marketplace",
+            "status": 200
+          },
+          {
+            "path": "/v1/modules/pricing",
+            "status": 200
+          },
+          {
+            "path": "/v1/platform/status",
+            "status": 200
+          },
+          {
+            "path": "/v1/daos",
+            "status": 200
+          },
+          {
+            "path": "/v1/network",
+            "status": 200
+          },
+          {
+            "path": "/v1/me",
+            "status": 401
+          },
+          {
+            "path": "/v1/sign-in/options",
+            "status": 200
+          },
+          {
+            "path": "/v1/sign-up/options",
+            "status": 200
+          }
+        ]
+      }
+    ]
+  },
+  "repositoryAudit": {
+    "primaryCheckouts": [
+      "daclify-backend-core",
+      "daclify-backend-modules",
+      "daclify-frontend",
+      "www-landing-page"
+    ],
+    "registeredWorktreesChecked": true,
+    "archivedLegacyCopiesChecked": true,
+    "namesHistoricalEvidence": {
+      "commit": "94110d9",
+      "alreadyPresentOnDev": true,
+      "closureMerge": "e849bab"
+    },
+    "historicalSizeComparisonCopies": {
+      "core": "febd2ff",
+      "modules": "da597a7",
+      "corePreservationMerge": "f2b8d22",
+      "modulesPreservationMerge": "f46432b",
+      "policy": "Historical experimental artifacts preserved in ancestry; current release files retained because implementation is already integrated"
+    },
+    "allSourceChangesReachableFromRemoteDev": true
+  },
+  "startupCorrection": {
+    "initialFailure": "Recovery qualification bound to 0.13.0-alpha.7 refused the candidate 0.14.0-alpha.1",
+    "previousApiRestoredBeforeInvestigation": true,
+    "correction": "Real same-VM Raft restore with original transit key, TLS and four policy denials; exact-version qualification renewed",
+    "harnessCorrection": "Restore replacement restarted after snapshot application to load the restored seal configuration",
+    "validationBypassed": false
+  },
+  "accessibilityCorrection": {
+    "initialFailure": "Telos view nested a main landmark inside the application main",
+    "fixCommit": "6ff2756680e3bd8fae7bcd4e530033cb782f6081",
+    "fix": "Use a div within the existing application main",
+    "red": "Owned browser expected 1 main, received 2",
+    "green": "16 desktop/mobile Telos browser cases and actual public Axe checks passed"
+  },
+  "recoveryQualificationExpiresAt": "2026-10-17T14:46:09.233Z",
+  "mainnetDeployed": false,
+  "nativeContractsChanged": false,
+  "nativeAuthoritiesChanged": false
+}
