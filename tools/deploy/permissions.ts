@@ -54,6 +54,7 @@ export function deploymentContextPermissionPlan(environment: DeployEnvironment) 
       id === 'works' ||
       id === 'payroll' ||
       id === 'grants-rounds' ||
+      id === 'activity' ||
       id === 'endorsement-admission'
       ? [{ id, account: account.name }]
       : [];

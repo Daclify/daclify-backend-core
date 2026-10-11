@@ -38,6 +38,7 @@ import type {
   ArchiveProgressSchema,
 } from '@daclify/modules/archive';
 export interface ChainGateway {
+  connectedApps?: import('./connected-apps/chain.js').ConnectedAppsChain;
   publicMembers?(
     query: z.infer<typeof import('../../../protocol/people.js').PeopleRoutes.members.query>,
   ): Promise<z.infer<typeof import('../../../protocol/people.js').PeopleRoutes.members.response>>;

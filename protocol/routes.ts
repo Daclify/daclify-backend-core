@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import {ConnectedAppsRoutes} from './connected-apps.js';
 import { RecoveryRoutes } from './recovery.js';
 import { SignupRoutes } from './signup.js';
 import {
@@ -46,6 +47,7 @@ import {
 } from './resources.js';
 import { StorageCurationRoutes } from './storage-retention.js';
 export const ApiRoutes = {
+  ...ConnectedAppsRoutes,
   ...RecoveryRoutes,
   ...SignupRoutes,
   ...StorageCurationRoutes,

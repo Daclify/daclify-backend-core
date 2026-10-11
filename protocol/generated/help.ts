@@ -548,8 +548,45 @@ export const CoreHelpBundle={
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "aa007c00748ebac830ec3fb7de306f098c6a0a4ba474b9a27889aeb314338e71",
+      "sourceAbiHash": "aefa1060bd8476d2960e95f593122062fb9a78129c01ba19c1b4a4c9c0136900",
       "actions": [
+        {
+          "name": "addappses",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "app_id",
+              "type": "uint64"
+            },
+            {
+              "name": "app_revision",
+              "type": "uint64"
+            },
+            {
+              "name": "session_id",
+              "type": "uint64"
+            },
+            {
+              "name": "signing_key",
+              "type": "public_key"
+            },
+            {
+              "name": "expires",
+              "type": "uint32"
+            }
+          ]
+        },
         {
           "name": "addmember",
           "fields": [
@@ -2077,6 +2114,23 @@ export const CoreHelpBundle={
           ]
         },
         {
+          "name": "pruneappses",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "after",
+              "type": "uint64"
+            },
+            {
+              "name": "limit",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
           "name": "prunedocs",
           "fields": [
             {
@@ -2461,6 +2515,43 @@ export const CoreHelpBundle={
             },
             {
               "name": "admin_override",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "name": "setapp",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "app_id",
+              "type": "uint64"
+            },
+            {
+              "name": "target",
+              "type": "name"
+            },
+            {
+              "name": "revision",
+              "type": "uint64"
+            },
+            {
+              "name": "config_hash",
+              "type": "checksum256"
+            },
+            {
+              "name": "enabled",
               "type": "bool"
             }
           ]
@@ -3188,6 +3279,52 @@ export const CoreHelpBundle={
             {
               "name": "admin_override",
               "type": "bool"
+            }
+          ]
+        },
+        {
+          "name": "appregs",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uint64"
+            },
+            {
+              "name": "target",
+              "type": "name"
+            },
+            {
+              "name": "revision",
+              "type": "uint64"
+            },
+            {
+              "name": "config_hash",
+              "type": "checksum256"
+            },
+            {
+              "name": "enabled",
+              "type": "bool"
+            },
+            {
+              "name": "security_epoch",
+              "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "appscopes",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uint64"
+            },
+            {
+              "name": "app_id",
+              "type": "uint64"
+            },
+            {
+              "name": "revision",
+              "type": "uint64"
             }
           ]
         },
@@ -5757,6 +5894,1502 @@ export const CoreHelpBundle={
   "api": [
     {
       "method": "POST",
+      "path": "/v1/connected-apps/:id/source-access",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$"
+          },
+          "expiresIn": {
+            "type": "number",
+            "const": 300
+          },
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "appId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "memberId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "apiBase": {
+            "type": "string",
+            "maxLength": 512,
+            "format": "uri"
+          }
+        },
+        "required": [
+          "accessToken",
+          "expiresIn",
+          "dao",
+          "appId",
+          "memberId",
+          "apiBase"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "connected-apps"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/daos/:id/apps",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "clientId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "config": {
+              "type": "object",
+              "properties": {
+                "dao": {
+                  "type": "object",
+                  "properties": {
+                    "chainId": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "contract": {
+                      "type": "string",
+                      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                    },
+                    "daoId": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "interfaceVersion": {
+                      "type": "number",
+                      "const": 1
+                    }
+                  },
+                  "required": [
+                    "chainId",
+                    "contract",
+                    "daoId",
+                    "interfaceVersion"
+                  ],
+                  "additionalProperties": false
+                },
+                "appId": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "revision": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
+                },
+                "origins": {
+                  "minItems": 1,
+                  "maxItems": 8,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 512,
+                    "format": "uri"
+                  }
+                },
+                "redirectUris": {
+                  "minItems": 1,
+                  "maxItems": 8,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 512,
+                    "format": "uri"
+                  }
+                },
+                "sourceApiBase": {
+                  "type": "string",
+                  "maxLength": 512,
+                  "format": "uri"
+                },
+                "activityAccount": {
+                  "type": "string",
+                  "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                },
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "dao",
+                "appId",
+                "revision",
+                "name",
+                "origins",
+                "redirectUris",
+                "activityAccount",
+                "enabled"
+              ],
+              "additionalProperties": false
+            },
+            "configHash": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "native": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "target": {
+                      "type": "string",
+                      "maxLength": 13
+                    },
+                    "revision": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "config_hash": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "security_epoch": {
+                      "type": "string",
+                      "maxLength": 20
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "target",
+                    "revision",
+                    "config_hash",
+                    "enabled",
+                    "security_epoch"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "clientId",
+            "config",
+            "configHash",
+            "native"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "helpTopic": "connected-apps"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/connected-apps/configurations",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "appId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "revision": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "origins": {
+            "minItems": 1,
+            "maxItems": 8,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 512,
+              "format": "uri"
+            }
+          },
+          "redirectUris": {
+            "minItems": 1,
+            "maxItems": 8,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 512,
+              "format": "uri"
+            }
+          },
+          "sourceApiBase": {
+            "type": "string",
+            "maxLength": 512,
+            "format": "uri"
+          },
+          "activityAccount": {
+            "type": "string",
+            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "dao",
+          "appId",
+          "revision",
+          "name",
+          "origins",
+          "redirectUris",
+          "activityAccount",
+          "enabled"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "clientId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "config": {
+            "type": "object",
+            "properties": {
+              "dao": {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "contract": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "daoId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "interfaceVersion": {
+                    "type": "number",
+                    "const": 1
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "contract",
+                  "daoId",
+                  "interfaceVersion"
+                ],
+                "additionalProperties": false
+              },
+              "appId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "revision": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "origins": {
+                "minItems": 1,
+                "maxItems": 8,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 512,
+                  "format": "uri"
+                }
+              },
+              "redirectUris": {
+                "minItems": 1,
+                "maxItems": 8,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 512,
+                  "format": "uri"
+                }
+              },
+              "sourceApiBase": {
+                "type": "string",
+                "maxLength": 512,
+                "format": "uri"
+              },
+              "activityAccount": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "enabled": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "dao",
+              "appId",
+              "revision",
+              "name",
+              "origins",
+              "redirectUris",
+              "activityAccount",
+              "enabled"
+            ],
+            "additionalProperties": false
+          },
+          "configHash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "native": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "target": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "config_hash": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "security_epoch": {
+                    "type": "string",
+                    "maxLength": 20
+                  }
+                },
+                "required": [
+                  "id",
+                  "target",
+                  "revision",
+                  "config_hash",
+                  "enabled",
+                  "security_epoch"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "clientId",
+          "config",
+          "configHash",
+          "native"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "connected-apps"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/connected-apps/requests/:id",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "app": {
+            "type": "object",
+            "properties": {
+              "clientId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "config": {
+                "type": "object",
+                "properties": {
+                  "dao": {
+                    "type": "object",
+                    "properties": {
+                      "chainId": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "contract": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "daoId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "interfaceVersion": {
+                        "type": "number",
+                        "const": 1
+                      }
+                    },
+                    "required": [
+                      "chainId",
+                      "contract",
+                      "daoId",
+                      "interfaceVersion"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "appId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "origins": {
+                    "minItems": 1,
+                    "maxItems": 8,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 512,
+                      "format": "uri"
+                    }
+                  },
+                  "redirectUris": {
+                    "minItems": 1,
+                    "maxItems": 8,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 512,
+                      "format": "uri"
+                    }
+                  },
+                  "sourceApiBase": {
+                    "type": "string",
+                    "maxLength": 512,
+                    "format": "uri"
+                  },
+                  "activityAccount": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "dao",
+                  "appId",
+                  "revision",
+                  "name",
+                  "origins",
+                  "redirectUris",
+                  "activityAccount",
+                  "enabled"
+                ],
+                "additionalProperties": false
+              },
+              "configHash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "native": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "target": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "config_hash": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      },
+                      "security_epoch": {
+                        "type": "string",
+                        "maxLength": 20
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "target",
+                      "revision",
+                      "config_hash",
+                      "enabled",
+                      "security_epoch"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "clientId",
+              "config",
+              "configHash",
+              "native"
+            ],
+            "additionalProperties": false
+          },
+          "member": {
+            "type": "object",
+            "properties": {
+              "sub": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "dao": {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "contract": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "daoId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "interfaceVersion": {
+                    "type": "number",
+                    "const": 1
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "contract",
+                  "daoId",
+                  "interfaceVersion"
+                ],
+                "additionalProperties": false
+              },
+              "memberId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "admin": {
+                "type": "boolean"
+              },
+              "reviewer": {
+                "type": "boolean"
+              },
+              "nonce": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  {
+                    "type": "string",
+                    "const": "0"
+                  }
+                ]
+              },
+              "appId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "appRevision": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "sessionId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "sessionExpires": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "sub",
+              "dao",
+              "memberId",
+              "admin",
+              "reviewer",
+              "nonce",
+              "appId",
+              "appRevision",
+              "sessionId",
+              "sessionExpires"
+            ],
+            "additionalProperties": false
+          },
+          "signingKey": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "grantExpires": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expires": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "id",
+          "app",
+          "member",
+          "signingKey",
+          "grantExpires",
+          "expires"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "connected-apps"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/connected-apps/requests/:id/approve",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "maxLength": 20
+          }
+        },
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "redirect": {
+            "type": "string",
+            "maxLength": 512,
+            "format": "uri"
+          }
+        },
+        "required": [
+          "redirect"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "connected-apps"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/connected-apps/requests/:id/reject",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "redirect": {
+            "type": "string",
+            "maxLength": 512,
+            "format": "uri"
+          }
+        },
+        "required": [
+          "redirect"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "connected-apps"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/connected-apps/userinfo",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "sub": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "memberId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "admin": {
+            "type": "boolean"
+          },
+          "reviewer": {
+            "type": "boolean"
+          },
+          "nonce": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "string",
+                "const": "0"
+              }
+            ]
+          },
+          "appId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "appRevision": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "sessionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sessionExpires": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "sub",
+          "dao",
+          "memberId",
+          "admin",
+          "reviewer",
+          "nonce",
+          "appId",
+          "appRevision",
+          "sessionId",
+          "sessionExpires"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "connected-apps"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/connected-apps/relay",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "request": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 65535
+              },
+              "chain_id": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "deployment": {
+                "type": "string",
+                "maxLength": 13
+              },
+              "dao_id": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "member_id": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "nonce": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "expires": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              "target": {
+                "type": "string",
+                "maxLength": 13
+              },
+              "action": {
+                "type": "string",
+                "maxLength": 13
+              },
+              "data": {
+                "type": "string",
+                "maxLength": 32768,
+                "pattern": "^(?:[0-9a-f]{2})*$"
+              }
+            },
+            "required": [
+              "version",
+              "chain_id",
+              "deployment",
+              "dao_id",
+              "member_id",
+              "nonce",
+              "expires",
+              "target",
+              "action",
+              "data"
+            ],
+            "additionalProperties": false
+          },
+          "signature": {
+            "type": "string",
+            "maxLength": 256
+          }
+        },
+        "required": [
+          "request",
+          "signature"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "transactionId"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "connected-apps"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/connected-apps/logout",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "revoked": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "revoked"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "connected-apps"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/connected-apps/activities",
+      "query": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "after": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "eventId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "receipts": {
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "receiptId": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "appId": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "memberId": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "eventId": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "sourceId": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "sourceRevision": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "completed",
+                    "review-requested"
+                  ]
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "recorded",
+                    "pending-review",
+                    "accepted",
+                    "rejected"
+                  ]
+                },
+                "createdAt": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "evidenceCid": {
+                  "type": "string",
+                  "maxLength": 128
+                },
+                "evidenceHash": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "keyEpoch": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "receiptId",
+                "appId",
+                "memberId",
+                "eventId",
+                "sourceId",
+                "sourceRevision",
+                "kind",
+                "status",
+                "createdAt",
+                "evidenceCid",
+                "evidenceHash",
+                "keyEpoch"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "next": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "receipts",
+          "next"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "connected-apps"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/account/recovery/assisted/revision",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          }
+        },
+        "required": [
+          "revision"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "recovery"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account/recovery/assisted/opt-out",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "fallbackKit": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "localEnvelope": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "kdf": {
+                    "type": "string",
+                    "const": "PBKDF2-SHA256"
+                  },
+                  "iterations": {
+                    "type": "integer",
+                    "minimum": 600000,
+                    "maximum": 2000000
+                  },
+                  "salt": {
+                    "type": "string",
+                    "maxLength": 24,
+                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                  },
+                  "iv": {
+                    "type": "string",
+                    "maxLength": 16,
+                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                  },
+                  "ciphertext": {
+                    "type": "string",
+                    "maxLength": 16384,
+                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                  }
+                },
+                "required": [
+                  "version",
+                  "kdf",
+                  "iterations",
+                  "salt",
+                  "iv",
+                  "ciphertext"
+                ],
+                "additionalProperties": false
+              },
+              "recoveryEnvelope": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "kdf": {
+                    "type": "string",
+                    "const": "PBKDF2-SHA256"
+                  },
+                  "iterations": {
+                    "type": "integer",
+                    "minimum": 600000,
+                    "maximum": 2000000
+                  },
+                  "salt": {
+                    "type": "string",
+                    "maxLength": 24,
+                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                  },
+                  "iv": {
+                    "type": "string",
+                    "maxLength": 16,
+                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                  },
+                  "ciphertext": {
+                    "type": "string",
+                    "maxLength": 16384,
+                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                  }
+                },
+                "required": [
+                  "version",
+                  "kdf",
+                  "iterations",
+                  "salt",
+                  "iv",
+                  "ciphertext"
+                ],
+                "additionalProperties": false
+              },
+              "signingPublicKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "encryptionPublicKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "version",
+              "localEnvelope",
+              "recoveryEnvelope",
+              "signingPublicKey",
+              "encryptionPublicKey"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "methods": {
+            "maxItems": 64,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "credentialKey": {
+                  "type": "string",
+                  "minLength": 3,
+                  "maxLength": 2048,
+                  "pattern": "^(email|telegram|google|passkey|native|evm):[^\\u0000-\\u001f\\u007f]+$"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "email",
+                    "telegram",
+                    "google",
+                    "passkey",
+                    "native",
+                    "evm"
+                  ]
+                },
+                "subject": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "chainId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "mode": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "wallet-protected",
+                        "passkey-protected",
+                        "daclify-assisted"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "availableModes": {
+                  "maxItems": 3,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "wallet-protected",
+                      "passkey-protected",
+                      "daclify-assisted"
+                    ]
+                  }
+                },
+                "reason": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 512
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "credentialKey",
+                "kind",
+                "subject",
+                "chainId",
+                "mode",
+                "availableModes",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "assistedEver": {
+            "type": "boolean"
+          },
+          "assistedEnabled": {
+            "type": "boolean"
+          },
+          "assistedRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "methods",
+          "assistedEver",
+          "configured",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "recovery"
+    },
+    {
+      "method": "POST",
       "path": "/v1/account/recovery/device",
       "input": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -6534,7 +8167,7 @@ export const CoreHelpBundle={
         ],
         "additionalProperties": false
       },
-      "helpTopic": "accounts"
+      "helpTopic": "recovery"
     },
     {
       "method": "POST",
@@ -6879,6 +8512,14 @@ export const CoreHelpBundle={
           "assistedEver": {
             "type": "boolean"
           },
+          "assistedEnabled": {
+            "type": "boolean"
+          },
+          "assistedRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
           "configured": {
             "type": "boolean"
           },
@@ -7018,6 +8659,14 @@ export const CoreHelpBundle={
           },
           "assistedEver": {
             "type": "boolean"
+          },
+          "assistedEnabled": {
+            "type": "boolean"
+          },
+          "assistedRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "configured": {
             "type": "boolean"
@@ -7204,7 +8853,7 @@ export const CoreHelpBundle={
         ],
         "additionalProperties": false
       },
-      "helpTopic": "accounts"
+      "helpTopic": "recovery"
     },
     {
       "method": "POST",
@@ -7537,6 +9186,1000 @@ export const CoreHelpBundle={
         "additionalProperties": false
       },
       "helpTopic": "recovery"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/sign-up/options",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "telegram": {
+            "type": "object",
+            "properties": {
+              "configured": {
+                "type": "boolean"
+              },
+              "username": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "oidc": {
+                "type": "boolean"
+              },
+              "miniApp": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "configured",
+              "username",
+              "oidc",
+              "miniApp"
+            ],
+            "additionalProperties": false
+          },
+          "email": {
+            "type": "object",
+            "properties": {
+              "delivery": {
+                "type": "string",
+                "enum": [
+                  "mail",
+                  "unavailable"
+                ]
+              }
+            },
+            "required": [
+              "delivery"
+            ],
+            "additionalProperties": false
+          },
+          "assisted": {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean"
+              },
+              "reason": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 512
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "available",
+              "reason"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "telegram",
+          "email",
+          "assisted"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/sign-up/email/start",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 254
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "delivery": {
+            "type": "string",
+            "const": "sent"
+          }
+        },
+        "required": [
+          "delivery"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/sign-up/email/verify",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 254
+          },
+          "code": {
+            "type": "string",
+            "pattern": "^\\d{8}$"
+          }
+        },
+        "required": [
+          "email",
+          "code"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "account": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "signingKey": {
+                        "type": "string",
+                        "maxLength": 128
+                      },
+                      "custody": {
+                        "type": "string",
+                        "enum": [
+                          "user-controlled",
+                          "managed"
+                        ]
+                      },
+                      "encryptionKey": {
+                        "type": "object",
+                        "properties": {
+                          "kty": {
+                            "type": "string",
+                            "const": "EC"
+                          },
+                          "crv": {
+                            "type": "string",
+                            "const": "P-256"
+                          },
+                          "x": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{43}$"
+                          },
+                          "y": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{43}$"
+                          }
+                        },
+                        "required": [
+                          "kty",
+                          "crv",
+                          "x",
+                          "y"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "signingKey",
+                      "custody",
+                      "encryptionKey"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "custody": {
+                        "type": "string",
+                        "const": "user-controlled"
+                      },
+                      "signingKey": {
+                        "type": "null"
+                      },
+                      "encryptionKey": {
+                        "type": "null"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "custody",
+                      "signingKey",
+                      "encryptionKey"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "csrfToken": {
+                "type": "string",
+                "minLength": 32,
+                "maxLength": 128
+              },
+              "status": {
+                "type": "string",
+                "const": "existing"
+              }
+            },
+            "required": [
+              "account",
+              "csrfToken",
+              "status"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "provider": {
+                "type": "string",
+                "enum": [
+                  "email",
+                  "telegram"
+                ]
+              },
+              "expires": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              "status": {
+                "type": "string",
+                "const": "pending"
+              }
+            },
+            "required": [
+              "id",
+              "provider",
+              "expires",
+              "status"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/sign-up/telegram",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "proof": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16384
+          }
+        },
+        "required": [
+          "proof"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "account": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "signingKey": {
+                        "type": "string",
+                        "maxLength": 128
+                      },
+                      "custody": {
+                        "type": "string",
+                        "enum": [
+                          "user-controlled",
+                          "managed"
+                        ]
+                      },
+                      "encryptionKey": {
+                        "type": "object",
+                        "properties": {
+                          "kty": {
+                            "type": "string",
+                            "const": "EC"
+                          },
+                          "crv": {
+                            "type": "string",
+                            "const": "P-256"
+                          },
+                          "x": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{43}$"
+                          },
+                          "y": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{43}$"
+                          }
+                        },
+                        "required": [
+                          "kty",
+                          "crv",
+                          "x",
+                          "y"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "signingKey",
+                      "custody",
+                      "encryptionKey"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "custody": {
+                        "type": "string",
+                        "const": "user-controlled"
+                      },
+                      "signingKey": {
+                        "type": "null"
+                      },
+                      "encryptionKey": {
+                        "type": "null"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "custody",
+                      "signingKey",
+                      "encryptionKey"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "csrfToken": {
+                "type": "string",
+                "minLength": 32,
+                "maxLength": 128
+              },
+              "status": {
+                "type": "string",
+                "const": "existing"
+              }
+            },
+            "required": [
+              "account",
+              "csrfToken",
+              "status"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "provider": {
+                "type": "string",
+                "enum": [
+                  "email",
+                  "telegram"
+                ]
+              },
+              "expires": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              "status": {
+                "type": "string",
+                "const": "pending"
+              }
+            },
+            "required": [
+              "id",
+              "provider",
+              "expires",
+              "status"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/sign-in/telegram/oidc/signup/start",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "returnTo": {
+            "type": "string",
+            "maxLength": 2048
+          }
+        },
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "authorizationUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "required": [
+          "authorizationUrl"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/sign-up/pending/:id",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "email",
+              "telegram"
+            ]
+          },
+          "expires": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "id",
+          "provider",
+          "expires"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/sign-up/prepare",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "signingKey": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "encryptionKey": {
+            "type": "object",
+            "properties": {
+              "kty": {
+                "type": "string",
+                "const": "EC"
+              },
+              "crv": {
+                "type": "string",
+                "const": "P-256"
+              },
+              "x": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              },
+              "y": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              }
+            },
+            "required": [
+              "kty",
+              "crv",
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "assistedConsent": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "signingKey",
+          "encryptionKey",
+          "id",
+          "assistedConsent"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "expires": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "context": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "accountId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "origin": {
+                "type": "string",
+                "maxLength": 512,
+                "format": "uri"
+              },
+              "credentialKey": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 2048,
+                "pattern": "^(email|telegram|google|passkey|native|evm):[^\\u0000-\\u001f\\u007f]+$"
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "wallet-protected",
+                  "passkey-protected",
+                  "daclify-assisted"
+                ]
+              },
+              "signingPublicKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "encryptionPublicKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "salt": {
+                "type": "string",
+                "maxLength": 44
+              }
+            },
+            "required": [
+              "version",
+              "id",
+              "accountId",
+              "origin",
+              "credentialKey",
+              "mode",
+              "signingPublicKey",
+              "encryptionPublicKey",
+              "salt"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "message",
+          "expires",
+          "context"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/sign-up/authorize",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "signature": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          }
+        },
+        "required": [
+          "id",
+          "signature"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "recipient": {
+            "type": "object",
+            "properties": {
+              "kty": {
+                "type": "string",
+                "const": "EC"
+              },
+              "crv": {
+                "type": "string",
+                "const": "P-256"
+              },
+              "x": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              },
+              "y": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              }
+            },
+            "required": [
+              "kty",
+              "crv",
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
+          },
+          "expires": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "id",
+          "recipient",
+          "expires"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/sign-up/finish",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "envelope": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "algorithm": {
+                "type": "string",
+                "const": "AES-256-GCM"
+              },
+              "iv": {
+                "type": "string",
+                "maxLength": 16
+              },
+              "ciphertext": {
+                "type": "string",
+                "maxLength": 16384
+              }
+            },
+            "required": [
+              "version",
+              "algorithm",
+              "iv",
+              "ciphertext"
+            ],
+            "additionalProperties": false
+          },
+          "keyGrant": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "ephemeralKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "salt": {
+                "type": "string",
+                "maxLength": 44
+              },
+              "envelope": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "algorithm": {
+                    "type": "string",
+                    "const": "AES-256-GCM"
+                  },
+                  "iv": {
+                    "type": "string",
+                    "maxLength": 16
+                  },
+                  "ciphertext": {
+                    "type": "string",
+                    "maxLength": 64
+                  }
+                },
+                "required": [
+                  "version",
+                  "algorithm",
+                  "iv",
+                  "ciphertext"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "version",
+              "ephemeralKey",
+              "salt",
+              "envelope"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "envelope",
+          "keyGrant"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "account": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "signingKey": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  "custody": {
+                    "type": "string",
+                    "enum": [
+                      "user-controlled",
+                      "managed"
+                    ]
+                  },
+                  "encryptionKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "signingKey",
+                  "custody",
+                  "encryptionKey"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "custody": {
+                    "type": "string",
+                    "const": "user-controlled"
+                  },
+                  "signingKey": {
+                    "type": "null"
+                  },
+                  "encryptionKey": {
+                    "type": "null"
+                  }
+                },
+                "required": [
+                  "id",
+                  "custody",
+                  "signingKey",
+                  "encryptionKey"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "csrfToken": {
+            "type": "string",
+            "minLength": 32,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "account",
+          "csrfToken"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
     },
     {
       "method": "GET",
@@ -19969,6 +22612,294 @@ export const CoreHelpBundle={
       "helpTopic": "modules"
     },
     {
+      "method": "GET",
+      "path": "/v1/account/recovery/assisted/revision",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          }
+        },
+        "required": [
+          "revision"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account/recovery/assisted/opt-out",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "fallbackKit": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "localEnvelope": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "kdf": {
+                    "type": "string",
+                    "const": "PBKDF2-SHA256"
+                  },
+                  "iterations": {
+                    "type": "integer",
+                    "minimum": 600000,
+                    "maximum": 2000000
+                  },
+                  "salt": {
+                    "type": "string",
+                    "maxLength": 24,
+                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                  },
+                  "iv": {
+                    "type": "string",
+                    "maxLength": 16,
+                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                  },
+                  "ciphertext": {
+                    "type": "string",
+                    "maxLength": 16384,
+                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                  }
+                },
+                "required": [
+                  "version",
+                  "kdf",
+                  "iterations",
+                  "salt",
+                  "iv",
+                  "ciphertext"
+                ],
+                "additionalProperties": false
+              },
+              "recoveryEnvelope": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "kdf": {
+                    "type": "string",
+                    "const": "PBKDF2-SHA256"
+                  },
+                  "iterations": {
+                    "type": "integer",
+                    "minimum": 600000,
+                    "maximum": 2000000
+                  },
+                  "salt": {
+                    "type": "string",
+                    "maxLength": 24,
+                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                  },
+                  "iv": {
+                    "type": "string",
+                    "maxLength": 16,
+                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                  },
+                  "ciphertext": {
+                    "type": "string",
+                    "maxLength": 16384,
+                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                  }
+                },
+                "required": [
+                  "version",
+                  "kdf",
+                  "iterations",
+                  "salt",
+                  "iv",
+                  "ciphertext"
+                ],
+                "additionalProperties": false
+              },
+              "signingPublicKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "encryptionPublicKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "version",
+              "localEnvelope",
+              "recoveryEnvelope",
+              "signingPublicKey",
+              "encryptionPublicKey"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "methods": {
+            "maxItems": 64,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "credentialKey": {
+                  "type": "string",
+                  "minLength": 3,
+                  "maxLength": 2048,
+                  "pattern": "^(email|telegram|google|passkey|native|evm):[^\\u0000-\\u001f\\u007f]+$"
+                },
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "email",
+                    "telegram",
+                    "google",
+                    "passkey",
+                    "native",
+                    "evm"
+                  ]
+                },
+                "subject": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                },
+                "chainId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "mode": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "wallet-protected",
+                        "passkey-protected",
+                        "daclify-assisted"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "availableModes": {
+                  "maxItems": 3,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "wallet-protected",
+                      "passkey-protected",
+                      "daclify-assisted"
+                    ]
+                  }
+                },
+                "reason": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "maxLength": 512
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "credentialKey",
+                "kind",
+                "subject",
+                "chainId",
+                "mode",
+                "availableModes",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "assistedEver": {
+            "type": "boolean"
+          },
+          "assistedEnabled": {
+            "type": "boolean"
+          },
+          "assistedRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "methods",
+          "assistedEver",
+          "configured",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
       "method": "POST",
       "path": "/v1/account/recovery/device",
       "input": {
@@ -21092,6 +24023,14 @@ export const CoreHelpBundle={
           "assistedEver": {
             "type": "boolean"
           },
+          "assistedEnabled": {
+            "type": "boolean"
+          },
+          "assistedRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
           "configured": {
             "type": "boolean"
           },
@@ -21231,6 +24170,14 @@ export const CoreHelpBundle={
           },
           "assistedEver": {
             "type": "boolean"
+          },
+          "assistedEnabled": {
+            "type": "boolean"
+          },
+          "assistedRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
           },
           "configured": {
             "type": "boolean"
@@ -27098,6 +30045,7 @@ export const CoreHelpBundle={
               "/v1/account/vault",
               "/v1/account/recovery/enable",
               "/v1/account/recovery/assisted/options",
+              "/v1/account/recovery/assisted/opt-out",
               "/v1/account/recovery/disable",
               "/v1/account/recovery/device/approve",
               "/v1/auth/providers/link",
@@ -29261,1576 +32209,6 @@ export const CoreHelpBundle={
         "additionalProperties": false
       },
       "helpTopic": "providers"
-    },
-    {
-      "method": "GET",
-      "path": "/v1/account/recovery/assisted/revision",
-      "response": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "revision": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 2147483647
-          }
-        },
-        "required": [
-          "revision"
-        ],
-        "additionalProperties": false
-      },
-      "helpTopic": "recovery"
-    },
-    {
-      "method": "POST",
-      "path": "/v1/account/recovery/assisted/opt-out",
-      "input": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "fallbackKit": {
-            "type": "object",
-            "properties": {
-              "version": {
-                "type": "number",
-                "const": 1
-              },
-              "localEnvelope": {
-                "type": "object",
-                "properties": {
-                  "version": {
-                    "type": "number",
-                    "const": 1
-                  },
-                  "kdf": {
-                    "type": "string",
-                    "const": "PBKDF2-SHA256"
-                  },
-                  "iterations": {
-                    "type": "integer",
-                    "minimum": 600000,
-                    "maximum": 2000000
-                  },
-                  "salt": {
-                    "type": "string",
-                    "maxLength": 24,
-                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
-                  },
-                  "iv": {
-                    "type": "string",
-                    "maxLength": 16,
-                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
-                  },
-                  "ciphertext": {
-                    "type": "string",
-                    "maxLength": 16384,
-                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
-                  }
-                },
-                "required": [
-                  "version",
-                  "kdf",
-                  "iterations",
-                  "salt",
-                  "iv",
-                  "ciphertext"
-                ],
-                "additionalProperties": false
-              },
-              "recoveryEnvelope": {
-                "type": "object",
-                "properties": {
-                  "version": {
-                    "type": "number",
-                    "const": 1
-                  },
-                  "kdf": {
-                    "type": "string",
-                    "const": "PBKDF2-SHA256"
-                  },
-                  "iterations": {
-                    "type": "integer",
-                    "minimum": 600000,
-                    "maximum": 2000000
-                  },
-                  "salt": {
-                    "type": "string",
-                    "maxLength": 24,
-                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
-                  },
-                  "iv": {
-                    "type": "string",
-                    "maxLength": 16,
-                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
-                  },
-                  "ciphertext": {
-                    "type": "string",
-                    "maxLength": 16384,
-                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
-                  }
-                },
-                "required": [
-                  "version",
-                  "kdf",
-                  "iterations",
-                  "salt",
-                  "iv",
-                  "ciphertext"
-                ],
-                "additionalProperties": false
-              },
-              "signingPublicKey": {
-                "type": "string",
-                "maxLength": 128
-              },
-              "encryptionPublicKey": {
-                "type": "object",
-                "properties": {
-                  "kty": {
-                    "type": "string",
-                    "const": "EC"
-                  },
-                  "crv": {
-                    "type": "string",
-                    "const": "P-256"
-                  },
-                  "x": {
-                    "type": "string",
-                    "pattern": "^[A-Za-z0-9_-]{43}$"
-                  },
-                  "y": {
-                    "type": "string",
-                    "pattern": "^[A-Za-z0-9_-]{43}$"
-                  }
-                },
-                "required": [
-                  "kty",
-                  "crv",
-                  "x",
-                  "y"
-                ],
-                "additionalProperties": false
-              }
-            },
-            "required": [
-              "version",
-              "localEnvelope",
-              "recoveryEnvelope",
-              "signingPublicKey",
-              "encryptionPublicKey"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
-      },
-      "response": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "methods": {
-            "maxItems": 64,
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "credentialKey": {
-                  "type": "string",
-                  "minLength": 3,
-                  "maxLength": 2048,
-                  "pattern": "^(email|telegram|google|passkey|native|evm):[^\\u0000-\\u001f\\u007f]+$"
-                },
-                "kind": {
-                  "type": "string",
-                  "enum": [
-                    "email",
-                    "telegram",
-                    "google",
-                    "passkey",
-                    "native",
-                    "evm"
-                  ]
-                },
-                "subject": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 2048
-                },
-                "chainId": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "mode": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "enum": [
-                        "wallet-protected",
-                        "passkey-protected",
-                        "daclify-assisted"
-                      ]
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "availableModes": {
-                  "maxItems": 3,
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "enum": [
-                      "wallet-protected",
-                      "passkey-protected",
-                      "daclify-assisted"
-                    ]
-                  }
-                },
-                "reason": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "maxLength": 512
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "credentialKey",
-                "kind",
-                "subject",
-                "chainId",
-                "mode",
-                "availableModes",
-                "reason"
-              ],
-              "additionalProperties": false
-            }
-          },
-          "assistedEver": {
-            "type": "boolean"
-          },
-          "assistedEnabled": {
-            "type": "boolean"
-          },
-          "assistedRevision": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 2147483647
-          },
-          "configured": {
-            "type": "boolean"
-          },
-          "reason": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 512
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "methods",
-          "assistedEver",
-          "configured",
-          "reason"
-        ],
-        "additionalProperties": false
-      },
-      "helpTopic": "recovery"
-    },
-    {
-      "method": "GET",
-      "path": "/v1/sign-up/options",
-      "response": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "telegram": {
-            "type": "object",
-            "properties": {
-              "configured": {
-                "type": "boolean"
-              },
-              "username": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "oidc": {
-                "type": "boolean"
-              },
-              "miniApp": {
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "configured",
-              "username",
-              "oidc",
-              "miniApp"
-            ],
-            "additionalProperties": false
-          },
-          "email": {
-            "type": "object",
-            "properties": {
-              "delivery": {
-                "type": "string",
-                "enum": [
-                  "mail",
-                  "unavailable"
-                ]
-              }
-            },
-            "required": [
-              "delivery"
-            ],
-            "additionalProperties": false
-          },
-          "assisted": {
-            "type": "object",
-            "properties": {
-              "available": {
-                "type": "boolean"
-              },
-              "reason": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "maxLength": 512
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "available",
-              "reason"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "required": [
-          "telegram",
-          "email",
-          "assisted"
-        ],
-        "additionalProperties": false
-      },
-      "helpTopic": "accounts"
-    },
-    {
-      "method": "POST",
-      "path": "/v1/sign-up/email/start",
-      "input": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "minLength": 3,
-            "maxLength": 254
-          }
-        },
-        "required": [
-          "email"
-        ],
-        "additionalProperties": false
-      },
-      "response": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "delivery": {
-            "type": "string",
-            "const": "sent"
-          }
-        },
-        "required": [
-          "delivery"
-        ],
-        "additionalProperties": false
-      },
-      "helpTopic": "accounts"
-    },
-    {
-      "method": "POST",
-      "path": "/v1/sign-up/email/verify",
-      "input": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "minLength": 3,
-            "maxLength": 254
-          },
-          "code": {
-            "type": "string",
-            "pattern": "^\\d{8}$"
-          }
-        },
-        "required": [
-          "email",
-          "code"
-        ],
-        "additionalProperties": false
-      },
-      "response": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "oneOf": [
-          {
-            "type": "object",
-            "properties": {
-              "account": {
-                "anyOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                      },
-                      "signingKey": {
-                        "type": "string",
-                        "maxLength": 128
-                      },
-                      "custody": {
-                        "type": "string",
-                        "enum": [
-                          "user-controlled",
-                          "managed"
-                        ]
-                      },
-                      "encryptionKey": {
-                        "type": "object",
-                        "properties": {
-                          "kty": {
-                            "type": "string",
-                            "const": "EC"
-                          },
-                          "crv": {
-                            "type": "string",
-                            "const": "P-256"
-                          },
-                          "x": {
-                            "type": "string",
-                            "pattern": "^[A-Za-z0-9_-]{43}$"
-                          },
-                          "y": {
-                            "type": "string",
-                            "pattern": "^[A-Za-z0-9_-]{43}$"
-                          }
-                        },
-                        "required": [
-                          "kty",
-                          "crv",
-                          "x",
-                          "y"
-                        ],
-                        "additionalProperties": false
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "signingKey",
-                      "custody",
-                      "encryptionKey"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                      },
-                      "custody": {
-                        "type": "string",
-                        "const": "user-controlled"
-                      },
-                      "signingKey": {
-                        "type": "null"
-                      },
-                      "encryptionKey": {
-                        "type": "null"
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "custody",
-                      "signingKey",
-                      "encryptionKey"
-                    ],
-                    "additionalProperties": false
-                  }
-                ]
-              },
-              "csrfToken": {
-                "type": "string",
-                "minLength": 32,
-                "maxLength": 128
-              },
-              "status": {
-                "type": "string",
-                "const": "existing"
-              }
-            },
-            "required": [
-              "account",
-              "csrfToken",
-              "status"
-            ],
-            "additionalProperties": false
-          },
-          {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "format": "uuid",
-                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-              },
-              "provider": {
-                "type": "string",
-                "enum": [
-                  "email",
-                  "telegram"
-                ]
-              },
-              "expires": {
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-              },
-              "status": {
-                "type": "string",
-                "const": "pending"
-              }
-            },
-            "required": [
-              "id",
-              "provider",
-              "expires",
-              "status"
-            ],
-            "additionalProperties": false
-          }
-        ]
-      },
-      "helpTopic": "accounts"
-    },
-    {
-      "method": "POST",
-      "path": "/v1/sign-up/telegram",
-      "input": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "proof": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 16384
-          }
-        },
-        "required": [
-          "proof"
-        ],
-        "additionalProperties": false
-      },
-      "response": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "oneOf": [
-          {
-            "type": "object",
-            "properties": {
-              "account": {
-                "anyOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                      },
-                      "signingKey": {
-                        "type": "string",
-                        "maxLength": 128
-                      },
-                      "custody": {
-                        "type": "string",
-                        "enum": [
-                          "user-controlled",
-                          "managed"
-                        ]
-                      },
-                      "encryptionKey": {
-                        "type": "object",
-                        "properties": {
-                          "kty": {
-                            "type": "string",
-                            "const": "EC"
-                          },
-                          "crv": {
-                            "type": "string",
-                            "const": "P-256"
-                          },
-                          "x": {
-                            "type": "string",
-                            "pattern": "^[A-Za-z0-9_-]{43}$"
-                          },
-                          "y": {
-                            "type": "string",
-                            "pattern": "^[A-Za-z0-9_-]{43}$"
-                          }
-                        },
-                        "required": [
-                          "kty",
-                          "crv",
-                          "x",
-                          "y"
-                        ],
-                        "additionalProperties": false
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "signingKey",
-                      "custody",
-                      "encryptionKey"
-                    ],
-                    "additionalProperties": false
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string",
-                        "format": "uuid",
-                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                      },
-                      "custody": {
-                        "type": "string",
-                        "const": "user-controlled"
-                      },
-                      "signingKey": {
-                        "type": "null"
-                      },
-                      "encryptionKey": {
-                        "type": "null"
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "custody",
-                      "signingKey",
-                      "encryptionKey"
-                    ],
-                    "additionalProperties": false
-                  }
-                ]
-              },
-              "csrfToken": {
-                "type": "string",
-                "minLength": 32,
-                "maxLength": 128
-              },
-              "status": {
-                "type": "string",
-                "const": "existing"
-              }
-            },
-            "required": [
-              "account",
-              "csrfToken",
-              "status"
-            ],
-            "additionalProperties": false
-          },
-          {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string",
-                "format": "uuid",
-                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-              },
-              "provider": {
-                "type": "string",
-                "enum": [
-                  "email",
-                  "telegram"
-                ]
-              },
-              "expires": {
-                "type": "string",
-                "format": "date-time",
-                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-              },
-              "status": {
-                "type": "string",
-                "const": "pending"
-              }
-            },
-            "required": [
-              "id",
-              "provider",
-              "expires",
-              "status"
-            ],
-            "additionalProperties": false
-          }
-        ]
-      },
-      "helpTopic": "accounts"
-    },
-    {
-      "method": "POST",
-      "path": "/v1/sign-in/telegram/oidc/signup/start",
-      "input": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "returnTo": {
-            "type": "string",
-            "maxLength": 2048
-          }
-        },
-        "additionalProperties": false
-      },
-      "response": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "authorizationUrl": {
-            "type": "string",
-            "format": "uri"
-          }
-        },
-        "required": [
-          "authorizationUrl"
-        ],
-        "additionalProperties": false
-      },
-      "helpTopic": "accounts"
-    },
-    {
-      "method": "GET",
-      "path": "/v1/sign-up/pending/:id",
-      "response": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-          },
-          "provider": {
-            "type": "string",
-            "enum": [
-              "email",
-              "telegram"
-            ]
-          },
-          "expires": {
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-          }
-        },
-        "required": [
-          "id",
-          "provider",
-          "expires"
-        ],
-        "additionalProperties": false
-      },
-      "helpTopic": "accounts"
-    },
-    {
-      "method": "POST",
-      "path": "/v1/sign-up/prepare",
-      "input": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "signingKey": {
-            "type": "string",
-            "maxLength": 128
-          },
-          "encryptionKey": {
-            "type": "object",
-            "properties": {
-              "kty": {
-                "type": "string",
-                "const": "EC"
-              },
-              "crv": {
-                "type": "string",
-                "const": "P-256"
-              },
-              "x": {
-                "type": "string",
-                "pattern": "^[A-Za-z0-9_-]{43}$"
-              },
-              "y": {
-                "type": "string",
-                "pattern": "^[A-Za-z0-9_-]{43}$"
-              }
-            },
-            "required": [
-              "kty",
-              "crv",
-              "x",
-              "y"
-            ],
-            "additionalProperties": false
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-          },
-          "assistedConsent": {
-            "type": "boolean",
-            "const": true
-          }
-        },
-        "required": [
-          "signingKey",
-          "encryptionKey",
-          "id",
-          "assistedConsent"
-        ],
-        "additionalProperties": false
-      },
-      "response": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-          },
-          "message": {
-            "type": "string",
-            "maxLength": 4096
-          },
-          "expires": {
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-          },
-          "context": {
-            "type": "object",
-            "properties": {
-              "version": {
-                "type": "number",
-                "const": 1
-              },
-              "id": {
-                "type": "string",
-                "format": "uuid",
-                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-              },
-              "accountId": {
-                "type": "string",
-                "format": "uuid",
-                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-              },
-              "origin": {
-                "type": "string",
-                "maxLength": 512,
-                "format": "uri"
-              },
-              "credentialKey": {
-                "type": "string",
-                "minLength": 3,
-                "maxLength": 2048,
-                "pattern": "^(email|telegram|google|passkey|native|evm):[^\\u0000-\\u001f\\u007f]+$"
-              },
-              "mode": {
-                "type": "string",
-                "enum": [
-                  "wallet-protected",
-                  "passkey-protected",
-                  "daclify-assisted"
-                ]
-              },
-              "signingPublicKey": {
-                "type": "string",
-                "maxLength": 128
-              },
-              "encryptionPublicKey": {
-                "type": "object",
-                "properties": {
-                  "kty": {
-                    "type": "string",
-                    "const": "EC"
-                  },
-                  "crv": {
-                    "type": "string",
-                    "const": "P-256"
-                  },
-                  "x": {
-                    "type": "string",
-                    "pattern": "^[A-Za-z0-9_-]{43}$"
-                  },
-                  "y": {
-                    "type": "string",
-                    "pattern": "^[A-Za-z0-9_-]{43}$"
-                  }
-                },
-                "required": [
-                  "kty",
-                  "crv",
-                  "x",
-                  "y"
-                ],
-                "additionalProperties": false
-              },
-              "salt": {
-                "type": "string",
-                "maxLength": 44
-              }
-            },
-            "required": [
-              "version",
-              "id",
-              "accountId",
-              "origin",
-              "credentialKey",
-              "mode",
-              "signingPublicKey",
-              "encryptionPublicKey",
-              "salt"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "required": [
-          "id",
-          "message",
-          "expires",
-          "context"
-        ],
-        "additionalProperties": false
-      },
-      "helpTopic": "accounts"
-    },
-    {
-      "method": "POST",
-      "path": "/v1/sign-up/authorize",
-      "input": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-          },
-          "signature": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 160
-          }
-        },
-        "required": [
-          "id",
-          "signature"
-        ],
-        "additionalProperties": false
-      },
-      "response": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-          },
-          "recipient": {
-            "type": "object",
-            "properties": {
-              "kty": {
-                "type": "string",
-                "const": "EC"
-              },
-              "crv": {
-                "type": "string",
-                "const": "P-256"
-              },
-              "x": {
-                "type": "string",
-                "pattern": "^[A-Za-z0-9_-]{43}$"
-              },
-              "y": {
-                "type": "string",
-                "pattern": "^[A-Za-z0-9_-]{43}$"
-              }
-            },
-            "required": [
-              "kty",
-              "crv",
-              "x",
-              "y"
-            ],
-            "additionalProperties": false
-          },
-          "expires": {
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-          }
-        },
-        "required": [
-          "id",
-          "recipient",
-          "expires"
-        ],
-        "additionalProperties": false
-      },
-      "helpTopic": "accounts"
-    },
-    {
-      "method": "POST",
-      "path": "/v1/sign-up/finish",
-      "input": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-          },
-          "envelope": {
-            "type": "object",
-            "properties": {
-              "version": {
-                "type": "number",
-                "const": 1
-              },
-              "algorithm": {
-                "type": "string",
-                "const": "AES-256-GCM"
-              },
-              "iv": {
-                "type": "string",
-                "maxLength": 16
-              },
-              "ciphertext": {
-                "type": "string",
-                "maxLength": 16384
-              }
-            },
-            "required": [
-              "version",
-              "algorithm",
-              "iv",
-              "ciphertext"
-            ],
-            "additionalProperties": false
-          },
-          "keyGrant": {
-            "type": "object",
-            "properties": {
-              "version": {
-                "type": "number",
-                "const": 1
-              },
-              "ephemeralKey": {
-                "type": "object",
-                "properties": {
-                  "kty": {
-                    "type": "string",
-                    "const": "EC"
-                  },
-                  "crv": {
-                    "type": "string",
-                    "const": "P-256"
-                  },
-                  "x": {
-                    "type": "string",
-                    "pattern": "^[A-Za-z0-9_-]{43}$"
-                  },
-                  "y": {
-                    "type": "string",
-                    "pattern": "^[A-Za-z0-9_-]{43}$"
-                  }
-                },
-                "required": [
-                  "kty",
-                  "crv",
-                  "x",
-                  "y"
-                ],
-                "additionalProperties": false
-              },
-              "salt": {
-                "type": "string",
-                "maxLength": 44
-              },
-              "envelope": {
-                "type": "object",
-                "properties": {
-                  "version": {
-                    "type": "number",
-                    "const": 1
-                  },
-                  "algorithm": {
-                    "type": "string",
-                    "const": "AES-256-GCM"
-                  },
-                  "iv": {
-                    "type": "string",
-                    "maxLength": 16
-                  },
-                  "ciphertext": {
-                    "type": "string",
-                    "maxLength": 64
-                  }
-                },
-                "required": [
-                  "version",
-                  "algorithm",
-                  "iv",
-                  "ciphertext"
-                ],
-                "additionalProperties": false
-              }
-            },
-            "required": [
-              "version",
-              "ephemeralKey",
-              "salt",
-              "envelope"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "required": [
-          "id",
-          "envelope",
-          "keyGrant"
-        ],
-        "additionalProperties": false
-      },
-      "response": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "account": {
-            "anyOf": [
-              {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                  },
-                  "signingKey": {
-                    "type": "string",
-                    "maxLength": 128
-                  },
-                  "custody": {
-                    "type": "string",
-                    "enum": [
-                      "user-controlled",
-                      "managed"
-                    ]
-                  },
-                  "encryptionKey": {
-                    "type": "object",
-                    "properties": {
-                      "kty": {
-                        "type": "string",
-                        "const": "EC"
-                      },
-                      "crv": {
-                        "type": "string",
-                        "const": "P-256"
-                      },
-                      "x": {
-                        "type": "string",
-                        "pattern": "^[A-Za-z0-9_-]{43}$"
-                      },
-                      "y": {
-                        "type": "string",
-                        "pattern": "^[A-Za-z0-9_-]{43}$"
-                      }
-                    },
-                    "required": [
-                      "kty",
-                      "crv",
-                      "x",
-                      "y"
-                    ],
-                    "additionalProperties": false
-                  }
-                },
-                "required": [
-                  "id",
-                  "signingKey",
-                  "custody",
-                  "encryptionKey"
-                ],
-                "additionalProperties": false
-              },
-              {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "string",
-                    "format": "uuid",
-                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                  },
-                  "custody": {
-                    "type": "string",
-                    "const": "user-controlled"
-                  },
-                  "signingKey": {
-                    "type": "null"
-                  },
-                  "encryptionKey": {
-                    "type": "null"
-                  }
-                },
-                "required": [
-                  "id",
-                  "custody",
-                  "signingKey",
-                  "encryptionKey"
-                ],
-                "additionalProperties": false
-              }
-            ]
-          },
-          "csrfToken": {
-            "type": "string",
-            "minLength": 32,
-            "maxLength": 128
-          }
-        },
-        "required": [
-          "account",
-          "csrfToken"
-        ],
-        "additionalProperties": false
-      },
-      "helpTopic": "accounts"
-    },
-    {
-      "method": "GET",
-      "path": "/v1/account/recovery/assisted/revision",
-      "response": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "revision": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 2147483647
-          }
-        },
-        "required": [
-          "revision"
-        ],
-        "additionalProperties": false
-      },
-      "helpTopic": "accounts"
-    },
-    {
-      "method": "POST",
-      "path": "/v1/account/recovery/assisted/opt-out",
-      "input": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "fallbackKit": {
-            "type": "object",
-            "properties": {
-              "version": {
-                "type": "number",
-                "const": 1
-              },
-              "localEnvelope": {
-                "type": "object",
-                "properties": {
-                  "version": {
-                    "type": "number",
-                    "const": 1
-                  },
-                  "kdf": {
-                    "type": "string",
-                    "const": "PBKDF2-SHA256"
-                  },
-                  "iterations": {
-                    "type": "integer",
-                    "minimum": 600000,
-                    "maximum": 2000000
-                  },
-                  "salt": {
-                    "type": "string",
-                    "maxLength": 24,
-                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
-                  },
-                  "iv": {
-                    "type": "string",
-                    "maxLength": 16,
-                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
-                  },
-                  "ciphertext": {
-                    "type": "string",
-                    "maxLength": 16384,
-                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
-                  }
-                },
-                "required": [
-                  "version",
-                  "kdf",
-                  "iterations",
-                  "salt",
-                  "iv",
-                  "ciphertext"
-                ],
-                "additionalProperties": false
-              },
-              "recoveryEnvelope": {
-                "type": "object",
-                "properties": {
-                  "version": {
-                    "type": "number",
-                    "const": 1
-                  },
-                  "kdf": {
-                    "type": "string",
-                    "const": "PBKDF2-SHA256"
-                  },
-                  "iterations": {
-                    "type": "integer",
-                    "minimum": 600000,
-                    "maximum": 2000000
-                  },
-                  "salt": {
-                    "type": "string",
-                    "maxLength": 24,
-                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
-                  },
-                  "iv": {
-                    "type": "string",
-                    "maxLength": 16,
-                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
-                  },
-                  "ciphertext": {
-                    "type": "string",
-                    "maxLength": 16384,
-                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
-                  }
-                },
-                "required": [
-                  "version",
-                  "kdf",
-                  "iterations",
-                  "salt",
-                  "iv",
-                  "ciphertext"
-                ],
-                "additionalProperties": false
-              },
-              "signingPublicKey": {
-                "type": "string",
-                "maxLength": 128
-              },
-              "encryptionPublicKey": {
-                "type": "object",
-                "properties": {
-                  "kty": {
-                    "type": "string",
-                    "const": "EC"
-                  },
-                  "crv": {
-                    "type": "string",
-                    "const": "P-256"
-                  },
-                  "x": {
-                    "type": "string",
-                    "pattern": "^[A-Za-z0-9_-]{43}$"
-                  },
-                  "y": {
-                    "type": "string",
-                    "pattern": "^[A-Za-z0-9_-]{43}$"
-                  }
-                },
-                "required": [
-                  "kty",
-                  "crv",
-                  "x",
-                  "y"
-                ],
-                "additionalProperties": false
-              }
-            },
-            "required": [
-              "version",
-              "localEnvelope",
-              "recoveryEnvelope",
-              "signingPublicKey",
-              "encryptionPublicKey"
-            ],
-            "additionalProperties": false
-          }
-        },
-        "additionalProperties": false
-      },
-      "response": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "methods": {
-            "maxItems": 64,
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "credentialKey": {
-                  "type": "string",
-                  "minLength": 3,
-                  "maxLength": 2048,
-                  "pattern": "^(email|telegram|google|passkey|native|evm):[^\\u0000-\\u001f\\u007f]+$"
-                },
-                "kind": {
-                  "type": "string",
-                  "enum": [
-                    "email",
-                    "telegram",
-                    "google",
-                    "passkey",
-                    "native",
-                    "evm"
-                  ]
-                },
-                "subject": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 2048
-                },
-                "chainId": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "mode": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "enum": [
-                        "wallet-protected",
-                        "passkey-protected",
-                        "daclify-assisted"
-                      ]
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                },
-                "availableModes": {
-                  "maxItems": 3,
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "enum": [
-                      "wallet-protected",
-                      "passkey-protected",
-                      "daclify-assisted"
-                    ]
-                  }
-                },
-                "reason": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "maxLength": 512
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                }
-              },
-              "required": [
-                "credentialKey",
-                "kind",
-                "subject",
-                "chainId",
-                "mode",
-                "availableModes",
-                "reason"
-              ],
-              "additionalProperties": false
-            }
-          },
-          "assistedEver": {
-            "type": "boolean"
-          },
-          "assistedEnabled": {
-            "type": "boolean"
-          },
-          "assistedRevision": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 2147483647
-          },
-          "configured": {
-            "type": "boolean"
-          },
-          "reason": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 512
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "required": [
-          "methods",
-          "assistedEver",
-          "configured",
-          "reason"
-        ],
-        "additionalProperties": false
-      },
-      "helpTopic": "accounts"
     }
   ],
   "modules": []

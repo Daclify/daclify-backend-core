@@ -10,6 +10,7 @@ import {
   payrollAbi,
   grantsAbi,
   endorseAbi,
+  activityAbi,
   ModuleCodeHashes,
 } from '@daclify/modules/sdk';
 
@@ -20,6 +21,7 @@ const producers = [
   { name: 'payroll', abi: payrollAbi, codeHash: ModuleCodeHashes.payroll },
   { name: 'grants', abi: grantsAbi, codeHash: ModuleCodeHashes['grants-rounds'] },
   { name: 'endorse', abi: endorseAbi, codeHash: ModuleCodeHashes['endorsement-admission'] },
+  {name:'activity',abi:activityAbi,codeHash:ModuleCodeHashes.activity},
 ];
 const roots = [
   { label: 'core', path: 'contracts' },

@@ -71,10 +71,34 @@ Decide can provide a community ballot linked to the exact app/source revision an
 
 Works remains a separate funded contribution workflow with positive milestone amounts and its existing reservation, review and settlement rules. A completion credential gives no spending, withdrawal or automatic payment authority.
 
-## Current support and implementation dependencies
+## Developer integration
 
-Current Daclify provides account sessions, paired login where configured, DAO membership, native scoped sessions, encrypted private documents and governance modules. Those components are foundations rather than an external-app login service. The current account/membership endpoints serve Daclify's own trusted clients.
+The development integration uses core/frontend `0.13.0-alpha.5` and modules SDK `0.9.0-alpha.21`. Community Activity is an additive contract; the five existing module release pins stay unchanged. Testnet installation and verification are recorded separately in release evidence. This is not a production qualification.
 
-The external feature needs registered-client login and consent, native app constraints, versioned producer-owned event schemas, the Community Activity module, app encryption grants and a public developer client. Adding an app origin to the trusted frontend CORS list or issuing a server API key does not supply those guarantees.
+```ts
+import { ConnectedAppClient } from '@daclify/core-protocol/connected-apps';
+import { CommunityActivityClient } from '@daclify/modules/sdk';
+const client = new ConnectedAppClient({
+  issuer: 'https://testnet.api.daclify.com',
+  clientId: registeredClientId,
+  redirectUri: 'https://garden.example/callback',
+});
+// Keep this instance in the original browser tab, with the delegate key in memory.
+const consentUrl = client.beginLogin({ recording: true, grantSeconds: 3600 });
+// Open consent in a popup; the exact callback returns to the original tab.
+await client.finishLogin(callbackUrl);
+const activity = new CommunityActivityClient(client, 'daclifyactiv');
+// Persist this intent in the project's outbox before sending it.
+const result = await activity.deliver(savedIntent);
+// result.status is confirmed only after the exact native event is read back.
+```
 
-Potential projects can use the example to design their local workflow now. They must wait for a qualified integration release before using these proposed flows with real users. Exact endpoint names, SDK calls, deployed accounts, resource prices and release dates are intentionally unspecified here. Existing API/action schemas remain in the [generated reference](generated/reference.md).
+Tokens use a five-minute access lifetime and rotating refresh credentials bounded by the native recording grant. Every protected call rechecks active membership, native app revision, credential generation and current code pins. A token is scoped to one app/DAO; it contains no paired email, Telegram ID, vault secret or treasury authority.
+
+Administrators manage apps from the DAO's Connected apps tab. Native app registrations hold fixed IDs, target/revision/configuration commitment and enabled/security-generation flags; names, exact HTTPS callbacks and source API settings live in PostgreSQL. At most 64 apps can be registered per DAO. Each member has at most 16 native sessions and one current recording grant per app, with seven days maximum expiry. Expired cleanup is bounded to 25 rows.
+
+The module retains at most 10,000 selected receipts and 128 encryption epochs per app. Compact source/event hashes carry no private descriptions or photos. First receipt/table overhead measured 1,225 physical RAM bytes in the owned native fixture; a second app receipt/count used 889 bytes. These measurements include table/index headers and are not public testnet timings. Capacity must be backed by the existing RAM model; permanent receipts are not erased to make space.
+
+The optional source adapter serves current detail under short-lived membership access. Daclify labels a revision that differs from the receipt. The trusted snapshot screen accepts an immutable project outbox draft and selected files, encrypts the actual bytes using a separately granted app key, and sends ciphertext to the project's pinning adapter. The native receipt stores CID, byte commitment and epoch. Protected snapshots remain encrypted for public DAOs too. Missing pinning, an unavailable source API or an unavailable wrapped key is shown as unavailable; it does not invent historical evidence.
+
+See the [runnable SQLite/outbox example](../examples/community-mini-app/README.md), the [project design template](examples/community-mini-app-design.md), and the producer-owned schemas in the [generated reference](generated/reference.md).

@@ -1,4 +1,6 @@
 import { CreationService } from './creation.js';
+import { ConnectedApps } from './connected-apps/service.js';
+import { readConnectedAppsConfiguration } from './connected-apps/config.js';
 import './load-local-env.js';
 import { Pool } from 'pg';
 import { PrivateKey } from '@wharfkit/antelope';
@@ -10,6 +12,7 @@ import { readTelegramOidc } from './auth/telegram-oidc.js';
 import { NativeChainGateway } from './native-chain.js';
 import { migrate } from './store.js';
 import { startAuthMaintenance } from './auth.js';
+import { startPollingWorker } from './jobs.js';
 import { createServer } from './server.js';
 import { PinataStorage } from './content/pinata.js';
 import { readRecoveryConfiguration } from './auth/recovery-config.js';
@@ -233,7 +236,16 @@ const storageNotices =
       )
     : undefined;
 const recovery = await readRecoveryConfiguration(process.env);
+const appConfig = readConnectedAppsConfiguration(
+  process.env,
+  process.env.API_PUBLIC_ORIGIN ?? env.FRONTEND_ORIGIN,
+  env.FRONTEND_ORIGIN,
+);
+const connectedApps = appConfig
+  ? await ConnectedApps.create(pool, chain.connectedApps, appConfig)
+  : undefined;
 const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
+  ...(connectedApps ? { connectedApps } : {}),
   ...(recovery ? { recovery } : {}),
   origins,
   creation,
@@ -260,6 +272,12 @@ const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
 });
 await app.listen({ host: env.API_HOST, port: env.API_PORT });
 const authWorker = startAuthMaintenance(pool);
+const appsWorker = connectedApps
+  ? startPollingWorker(
+      async () => ((await connectedApps.cleanup()) ? 'progress' : 'idle'),
+      'APP_MAINTENANCE_UNAVAILABLE',
+    )
+  : undefined;
 const worker = content ? startContentWorker(pool, content) : undefined;
 const hostingWorker = hosting ? startHostingWorker(pool, hosting) : undefined;
 const storageWorker = hostedStorage ? startStorageWorker(pool, hostedStorage) : undefined;
@@ -272,6 +290,7 @@ const retentionWorker = content?.retention.cleanupEnabled
 async function shutdown() {
   await app.close();
   await authWorker.stop();
+  await appsWorker?.stop();
   await worker?.stop();
   await hostingWorker?.stop();
   await storageWorker?.stop();

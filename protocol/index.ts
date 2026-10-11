@@ -21,3 +21,4 @@ export * from './payments.js';
 export * from './hosting.js';
 export * from './directory.js';
 export * from './storage-retention.js';
+export * from './connected-apps.js';

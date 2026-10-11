@@ -1,10 +1,48 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = 'aa007c00748ebac830ec3fb7de306f098c6a0a4ba474b9a27889aeb314338e71';
+export const runtimeAbiHash = 'aefa1060bd8476d2960e95f593122062fb9a78129c01ba19c1b4a4c9c0136900';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
   "structs": [
+    {
+      "name": "addappses",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "app_id",
+          "type": "uint64"
+        },
+        {
+          "name": "app_revision",
+          "type": "uint64"
+        },
+        {
+          "name": "session_id",
+          "type": "uint64"
+        },
+        {
+          "name": "signing_key",
+          "type": "public_key"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
+        }
+      ]
+    },
     {
       "name": "addmember",
       "base": "",
@@ -148,6 +186,24 @@ export const runtimeAbi = {
         {
           "name": "limit",
           "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "app_scope_record",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "app_id",
+          "type": "uint64"
+        },
+        {
+          "name": "revision",
+          "type": "uint64"
         }
       ]
     },
@@ -936,6 +992,36 @@ export const runtimeAbi = {
         {
           "name": "reference",
           "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "connected_app_record",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "target",
+          "type": "name"
+        },
+        {
+          "name": "revision",
+          "type": "uint64"
+        },
+        {
+          "name": "config_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "enabled",
+          "type": "bool"
+        },
+        {
+          "name": "security_epoch",
+          "type": "uint64"
         }
       ]
     },
@@ -3211,6 +3297,24 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "pruneappses",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "after",
+          "type": "uint64"
+        },
+        {
+          "name": "limit",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
       "name": "prunedocs",
       "base": "",
       "fields": [
@@ -4261,6 +4365,44 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "setapp",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "app_id",
+          "type": "uint64"
+        },
+        {
+          "name": "target",
+          "type": "name"
+        },
+        {
+          "name": "revision",
+          "type": "uint64"
+        },
+        {
+          "name": "config_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "enabled",
+          "type": "bool"
+        }
+      ]
+    },
+    {
       "name": "setarchcfg",
       "base": "",
       "fields": [
@@ -4977,6 +5119,11 @@ export const runtimeAbi = {
   ],
   "actions": [
     {
+      "name": "addappses",
+      "type": "addappses",
+      "ricardian_contract": ""
+    },
+    {
       "name": "addmember",
       "type": "addmember",
       "ricardian_contract": ""
@@ -5292,6 +5439,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "pruneappses",
+      "type": "pruneappses",
+      "ricardian_contract": ""
+    },
+    {
       "name": "prunedocs",
       "type": "prunedocs",
       "ricardian_contract": ""
@@ -5374,6 +5526,11 @@ export const runtimeAbi = {
     {
       "name": "setadmit",
       "type": "setadmit",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "setapp",
+      "type": "setapp",
       "ricardian_contract": ""
     },
     {
@@ -5558,6 +5715,20 @@ export const runtimeAbi = {
     {
       "name": "admpolicies",
       "type": "admission_policy",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "appregs",
+      "type": "connected_app_record",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "appscopes",
+      "type": "app_scope_record",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -6036,6 +6207,16 @@ export const runtimeAbi = {
   "ricardian_clauses": [],
   "action_results": []
 } satisfies ABI.Def;
+export interface addappses {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  app_id: string;
+  app_revision: string;
+  session_id: string;
+  signing_key: string;
+  expires: number;
+}
 export interface addmember {
   runtime: string;
   dao_id: string;
@@ -6074,6 +6255,11 @@ export interface adoptram {
   dao_id: string;
   claims: boolean;
   limit: number;
+}
+export interface app_scope_record {
+  id: string;
+  app_id: string;
+  revision: string;
 }
 export interface appoint {
   dao_id: string;
@@ -6285,6 +6471,14 @@ export interface confirmext {
   recipient: string;
   quantity: string;
   reference: string;
+}
+export interface connected_app_record {
+  id: string;
+  target: string;
+  revision: string;
+  config_hash: string;
+  enabled: boolean;
+  security_epoch: string;
 }
 export interface createdao {
   dao_id: string;
@@ -6896,6 +7090,11 @@ export interface profile_record {
   account_name: string;
   profile: string;
 }
+export interface pruneappses {
+  dao_id: string;
+  after: string;
+  limit: number;
+}
 export interface prunedocs {
   dao_id: string;
   archive_id: string;
@@ -7181,6 +7380,16 @@ export interface setadmit {
   allow_agents: boolean;
   admin_override: boolean;
 }
+export interface setapp {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  app_id: string;
+  target: string;
+  revision: string;
+  config_hash: string;
+  enabled: boolean;
+}
 export interface setarchcfg {
   verifier: string;
   minimum_retention_seconds: number;
@@ -7378,6 +7587,7 @@ export interface withdraw {
   quantity: string;
 }
 export interface RuntimeActions {
+  addappses: addappses;
   addmember: addmember;
   addsession: addsession;
   admitfrom: admitfrom;
@@ -7441,6 +7651,7 @@ export interface RuntimeActions {
   orderfree: orderfree;
   orderram: orderram;
   payob: payob;
+  pruneappses: pruneappses;
   prunedocs: prunedocs;
   putdoc: putdoc;
   putjson: putjson;
@@ -7458,6 +7669,7 @@ export interface RuntimeActions {
   sealram: sealram;
   setactive: setactive;
   setadmit: setadmit;
+  setapp: setapp;
   setarchcfg: setarchcfg;
   setcapacity: setcapacity;
   setcreate: setcreate;

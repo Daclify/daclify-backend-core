@@ -1,5 +1,6 @@
 #pragma once
 #include "ram_migration.hpp"
+#include "connected_apps.hpp"
 namespace daclify {
 // Canonical aliases retain their row/index recipes; these lists define required scan coverage.
 #define DACLIFY_RAM_GLOBALS(X) \
@@ -18,7 +19,7 @@ namespace daclify {
  X("executives",executives) X("nonvoters",nonvoters) X("members",members) X("memberacts",member_activities) X("actors",participants) X("sessions",scoped_sessions) \
  X("evmbindings",evm_bindings) X("modules",modules) X("obligations",obligations) \
  X("receipts",finance_receipts) X("documents",documents) X("epochs",epochs) \
- X("keygrants",key_grants) X("govlocks",governance_locks) X("docrefs",document_references) \
+ X("keygrants",key_grants) X("govlocks",governance_locks) X("appregs",connected_apps) X("appscopes",app_scopes) X("docrefs",document_references) \
  X("docheads",document_heads) X("docclocks",document_clocks) X("docstate",document_states) \
  X("docscan",document_scans) X("docsrcs",document_sources) X("archives",archive_anchors) \
  X("archpos",archive_positions) X("ramalloc",ram_allocations) X("ramholds",ram_holds) \
@@ -30,6 +31,7 @@ inline std::vector<eosio::name> module_ram_families(uint8_t kind){
  case 3:return {"schedules"_n,"entries"_n,"controls"_n,"adoptpay"_n};
  case 4:return {"rounds"_n,"applications"_n};
  case 5:return {"joinapps"_n};
+ case 6:return {"activities"_n,"actreviews"_n,"appcounts"_n,"appkeys"_n,"appgrants"_n,"actdecisions"_n};
  default:eosio::check(false,"RAM_MIGRATION_SOURCE_KIND");return {};
  }
 }

@@ -28,6 +28,10 @@
       "types": "./dist/sdk/compiler.d.ts",
       "import": "./dist/sdk/compiler.js"
     },
+    "./connected-apps": {
+      "types": "./dist/sdk/connected-apps.d.ts",
+      "import": "./dist/sdk/connected-apps.js"
+    },
     "./documentation": {
       "types": "./dist/sdk/documentation.d.ts",
       "import": "./dist/sdk/documentation.js"

@@ -11,3 +11,7 @@ coverage/
 __pycache__/
 
 test-results/
+
+examples/community-mini-app/public/
+examples/community-mini-app/*.sqlite*
+examples/community-mini-app/*.pem

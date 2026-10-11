@@ -88,6 +88,14 @@
       "netStake": "1.0000 TLOS",
       "contract": "endorse",
       "inlineCode": true
+    },
+    {
+      "name": "daclifyactiv",
+      "ramBytes": 4194304,
+      "cpuStake": "2.0000 TLOS",
+      "netStake": "1.0000 TLOS",
+      "contract": "activity",
+      "inlineCode": true
     }
   ],
   "namesAccount": {

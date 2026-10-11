@@ -54,7 +54,9 @@ import {
   PayrollTableSchemas,
   GrantsTableSchemas,
   EndorseTableSchemas,
+  ActivityTableSchemas,
 } from '@daclify/modules/sdk';
+import { AppActivityPageSchema, appConfigurationHash } from '../../../protocol/connected-apps.js';
 import { AccountResourceSchema, resourcesAcceptable } from './deployment-check.js';
 import { randomBytes } from 'node:crypto';
 import {
@@ -170,6 +172,257 @@ export function payrollSettlementAccount(
   return payroll.account;
 }
 export class NativeChainGateway implements ChainGateway {
+  readonly connectedApps: import('./connected-apps/chain.js').ConnectedAppsChain = {
+    keys: async (app, memberId) => {
+      await this.reviewedRuntime(this.config.runtime);
+      const code = await this.api.v1.chain.get_raw_abi(app.activityAccount);
+      if (String(code.code_hash) !== ModuleCodeHashes.activity)
+        throw new ApiError('MODULE_CODE', 503);
+      const domain = ((BigInt(app.dao.daoId) << 64n) | BigInt(app.appId)).toString(),
+        page = await this.moduleRows(
+          app.activityAccount,
+          'appkeys',
+          ActivityTableSchemas.appkeys,
+          domain,
+          domain,
+          2,
+          'i128',
+          128,
+        );
+      if (
+        page.more ||
+        page.rows.some((row) => row.dao_id !== app.dao.daoId || row.app_id !== app.appId)
+      )
+        throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+      const grants = [];
+      for (const key of page.rows) {
+        const grantDomain = ((BigInt(key.id) << 64n) | BigInt(memberId)).toString(),
+          found = await this.moduleRows(
+            app.activityAccount,
+            'appgrants',
+            ActivityTableSchemas.appgrants,
+            grantDomain,
+            grantDomain,
+            2,
+            'i128',
+            1,
+          );
+        grants.push(
+          ...found.rows.filter(
+            (row) =>
+              row.dao_id === app.dao.daoId &&
+              row.key_epoch === key.id &&
+              row.recipient === memberId,
+          ),
+        );
+      }
+      const count = await this.moduleRows(
+        app.activityAccount,
+        'appcounts',
+        ActivityTableSchemas.appcounts,
+        domain,
+        domain,
+        2,
+        'i128',
+        1,
+      );
+      return ModuleApiRoutes.appKeys.response.parse({
+        currentEpoch: count.rows[0]?.current_key_epoch ?? '0',
+        dao: app.dao,
+        appId: app.appId,
+        keys: page.rows,
+        grants,
+      });
+    },
+    activity: async (app, query) => {
+      const registration = (await this.connectedApps.registry(app.dao.daoId)).find(
+        (row) => row.id === app.appId,
+      );
+      const installation = (await this.table('modules', app.dao.daoId, '0', 100)).find(
+        (row) => row.account === app.activityAccount,
+      );
+      const deployment = (this.config.modules ?? []).find(
+        (row) => row.id === 'activity' && row.account === app.activityAccount,
+      );
+      if (
+        !registration?.enabled ||
+        registration.config_hash !== appConfigurationHash(app) ||
+        !installation ||
+        !deployment ||
+        installation.code_hash !== ModuleCodeHashes.activity
+      )
+        throw new ApiError('APP_SCOPE', 403);
+      const deployed = await this.api.v1.chain.get_raw_abi(app.activityAccount);
+      if (String(deployed.code_hash) !== ModuleCodeHashes.activity)
+        throw new ApiError('MODULE_CODE', 503);
+      let page: { rows: z.infer<typeof ActivityTableSchemas.activities>[]; more: boolean };
+      if (query.eventId) {
+        const parts = [
+            Serializer.encode({ type: 'uint64', object: app.dao.daoId }).array,
+            Serializer.encode({ type: 'uint64', object: app.appId }).array,
+            Serializer.encode({ type: 'checksum256', object: query.eventId }).array,
+          ],
+          data = Uint8Array.from(parts.flatMap((part) => Array.from(part))),
+          key = Checksum256.hash(data).toString();
+        page = await this.moduleRows(
+          app.activityAccount,
+          'activities',
+          ActivityTableSchemas.activities,
+          key,
+          key,
+          3,
+          'sha256',
+          1,
+        );
+      } else if (!query.after) {
+        const domain = ((BigInt(app.dao.daoId) << 64n) | BigInt(app.appId)).toString();
+        page = await this.moduleRows(
+          app.activityAccount,
+          'activities',
+          ActivityTableSchemas.activities,
+          domain,
+          domain,
+          2,
+          'i128',
+          50,
+        );
+      } else
+        page = await this.moduleRows(
+          app.activityAccount,
+          'activities',
+          ActivityTableSchemas.activities,
+          query.after,
+          ((1n << 64n) - 1n).toString(),
+          1,
+          'i64',
+          50,
+        );
+      const rows = page.rows.filter(
+        (row) =>
+          row.dao_id === app.dao.daoId &&
+          row.app_id === app.appId &&
+          (!query.eventId || row.event_id === query.eventId),
+      );
+      const last = page.rows.at(-1),
+        next =
+          !query.eventId && page.more && last && BigInt(last.id) < (1n << 64n) - 1n
+            ? (BigInt(last.id) + 1n).toString()
+            : null;
+      return AppActivityPageSchema.parse({
+        receipts: rows.map((row) => ({
+          receiptId: row.id,
+          appId: row.app_id,
+          memberId: row.actor,
+          eventId: row.event_id,
+          sourceId: row.source_id,
+          sourceRevision: row.source_revision,
+          kind: row.kind === 1 ? 'completed' : 'review-requested',
+          status: ['recorded', 'pending-review', 'accepted', 'rejected'][row.status],
+          createdAt: row.created_at,
+          evidenceCid: row.evidence_cid,
+          evidenceHash: row.evidence_hash,
+          keyEpoch: row.key_epoch,
+        })),
+        next,
+      });
+    },
+    network: () => this.network(),
+    registry: async (daoId) => {
+      await this.reviewedRuntime(this.config.runtime);
+      return this.table('appregs', IdSchema.parse(daoId), '0', 64);
+    },
+    membership: async (account, daoId) => {
+      await this.reviewedRuntime(this.config.runtime);
+      const dao = await this.dao(daoId),
+        wallets = await this.linkedWallets(account.id);
+      if (wallets.length) await this.checkWalletChain();
+      const rows = await this.table('members', daoId, '0', 5000),
+        id = await this.memberIdentity(account, daoId, rows, wallets),
+        member = rows.find((row) => row.id === id);
+      if (!member?.active) return null;
+      const actor = (await this.table('actors', daoId, member.id, 1))[0];
+      if (actor?.id === member.id && actor.revoked) return null;
+      if (actor?.kind === 1) {
+        const guard = (await this.table('guards', this.config.runtime, daoId, 1))[0];
+        if (guard?.dao_id === daoId && guard.paused_until > Date.now() / 1000) return null;
+      }
+      return this.membershipView(dao, member);
+    },
+    session: async (daoId, id) => {
+      const [credentials, scopes] = await Promise.all([
+          this.table('sessions', daoId, id, 1),
+          this.table('appscopes', daoId, id, 1),
+        ]),
+        credential = credentials[0],
+        scope = scopes[0];
+      if (credential?.id !== id || scope?.id !== id) return null;
+      const actor = (await this.table('actors', daoId, credential.member_id, 1))[0];
+      if (
+        actor?.id === credential.member_id &&
+        (actor.revoked || actor.credential_epoch !== credential.credential_epoch)
+      )
+        return null;
+      const app = (await this.connectedApps.registry(daoId)).find((row) => row.id === scope.app_id);
+      if (
+        !app?.enabled ||
+        app.revision !== scope.revision ||
+        credential.expires <= Date.now() / 1000
+      )
+        return null;
+      const installed = (
+        await this.table('modules', daoId, Name.from(app.target).value.toString(), 1)
+      )[0];
+      if (
+        installed?.account !== app.target ||
+        installed.code_hash !== ModuleCodeHashes.activity ||
+        credential.permissions.length !== 2 ||
+        ['recordact', 'askreview'].some(
+          (action) =>
+            !credential.permissions.some(
+              (permission) =>
+                permission.action === action &&
+                permission.target === app.target &&
+                permission.code_hash === installed.code_hash,
+            ),
+        )
+      )
+        return null;
+      const deployed = await this.api.v1.chain.get_raw_abi(app.target);
+      if (String(deployed.code_hash) !== installed.code_hash) return null;
+      return { credential, scope };
+    },
+    relay: async (account, request, signature, sessionId, appId) => {
+      const member = await this.connectedApps.membership(account, request.dao_id),
+        session = await this.connectedApps.session(request.dao_id, sessionId);
+      if (
+        !member ||
+        member.memberId !== request.member_id ||
+        !session ||
+        session.credential.member_id !== member.memberId ||
+        session.scope.app_id !== appId ||
+        session.credential.expires <= Date.now() / 1000
+      )
+        throw new ApiError('APP_GRANT_REVOKED', 403);
+      if (request.chain_id !== this.config.chainId || request.deployment !== this.config.runtime)
+        throw new ApiError('INSTRUCTION_DOMAIN');
+      let valid = false;
+      try {
+        valid = Signature.from(signature).verifyDigest(
+          instructionDigest(request),
+          PublicKey.from(session.credential.signing_key),
+        );
+      } catch {
+        valid = false;
+      }
+      if (!valid) throw new ApiError('SIGNATURE_INVALID', 403);
+      return this.push(
+        'submitsess',
+        { request, session_id: sessionId, sig: signature },
+        this.config.relayActor,
+        this.config.relayKey,
+      );
+    },
+  };
   private readonly api: APIClient;
   constructor(
     private readonly config: NativeChainConfig,
@@ -2604,6 +2857,7 @@ export class NativeChainGateway implements ChainGateway {
       const all = await this.moduleState(daoId, {});
       while (Object.values(all.next).some((cursor) => cursor !== null)) {
         const page = await this.moduleState(daoId, {
+          activities: all.next.activities ?? 'done',
           ballots: all.next.ballots ?? 'done',
           projects: all.next.projects ?? 'done',
           schedules: all.next.schedules ?? 'done',
@@ -2614,6 +2868,11 @@ export class NativeChainGateway implements ChainGateway {
           terms: all.next.terms ?? 'done',
         });
         all.ballots.push(...page.ballots);
+        all.activities.push(...page.activities);
+        all.activityReviews.push(...page.activityReviews);
+        all.activityDecisions.push(...page.activityDecisions);
+        all.appKeys.push(...page.appKeys);
+        all.appKeyGrants.push(...page.appKeyGrants);
         all.votes.push(...page.votes);
         all.projects.push(...page.projects);
         all.milestones.push(...page.milestones);
@@ -2649,6 +2908,11 @@ export class NativeChainGateway implements ChainGateway {
     if (!dao || dao.id !== daoId) throw new ApiError('DAO_UNKNOWN', 404);
     const installed = await this.table('modules', daoId, '0', 100);
     const states: ModuleState['modules'] = [];
+    let activities: ModuleState['activities'] = [],
+      activityReviews: ModuleState['activityReviews'] = [],
+      activityDecisions: ModuleState['activityDecisions'] = [],
+      appKeys: ModuleState['appKeys'] = [],
+      appKeyGrants: ModuleState['appKeyGrants'] = [];
     let ballots: ModuleState['ballots'] = [];
     let votes: ModuleState['votes'] = [];
     let projects: ModuleState['projects'] = [];
@@ -2704,6 +2968,90 @@ export class NativeChainGateway implements ChainGateway {
       });
       if (!verified) continue;
       if (!enabled) continue;
+      if (deployment.id === 'activity' && query.activities !== 'done') {
+        const page = await this.moduleRows(
+          deployment.account,
+          'activities',
+          ActivityTableSchemas.activities,
+          query.activities ?? '0',
+          ((1n << 64n) - 1n).toString(),
+          1,
+          'i64',
+          50,
+        );
+        activities = page.rows.filter((row) => row.dao_id === daoId);
+        const last = page.rows.at(-1);
+        next.activities =
+          page.more && last && BigInt(last.id) < (1n << 64n) - 1n
+            ? (BigInt(last.id) + 1n).toString()
+            : null;
+        for (const receipt of activities) {
+          const [reviews, decisions, keys] = await Promise.all([
+            this.moduleRows(
+              deployment.account,
+              'actreviews',
+              ActivityTableSchemas.actreviews,
+              receipt.id,
+              receipt.id,
+              1,
+              'i64',
+              1,
+            ),
+            this.moduleRows(
+              deployment.account,
+              'actdecisions',
+              ActivityTableSchemas.actdecisions,
+              receipt.id,
+              receipt.id,
+              1,
+              'i64',
+              1,
+            ),
+            receipt.key_epoch === '0'
+              ? Promise.resolve({ rows: [], more: false })
+              : this.moduleRows(
+                  deployment.account,
+                  'appkeys',
+                  ActivityTableSchemas.appkeys,
+                  receipt.key_epoch,
+                  receipt.key_epoch,
+                  1,
+                  'i64',
+                  1,
+                ),
+          ]);
+          activityReviews.push(
+            ...reviews.rows.filter((row) => row.id === receipt.id && row.dao_id === daoId),
+          );
+          activityDecisions.push(
+            ...decisions.rows.filter((row) => row.id === receipt.id && row.dao_id === daoId),
+          );
+          appKeys.push(
+            ...keys.rows.filter((row) => row.dao_id === daoId && row.app_id === receipt.app_id),
+          );
+          if (query.memberId && receipt.key_epoch !== '0') {
+            const domain = ((BigInt(receipt.key_epoch) << 64n) | BigInt(query.memberId)).toString(),
+              grants = await this.moduleRows(
+                deployment.account,
+                'appgrants',
+                ActivityTableSchemas.appgrants,
+                domain,
+                domain,
+                2,
+                'i128',
+                1,
+              );
+            appKeyGrants.push(
+              ...grants.rows.filter(
+                (row) =>
+                  row.dao_id === daoId &&
+                  row.recipient === query.memberId &&
+                  row.key_epoch === receipt.key_epoch,
+              ),
+            );
+          }
+        }
+      }
       if (deployment.id === 'decide') {
         const electionPage = await this.modulePage(
           deployment.account,
@@ -2910,6 +3258,11 @@ export class NativeChainGateway implements ChainGateway {
         interfaceVersion: 1,
       },
       modules: states,
+      activities,
+      activityReviews,
+      activityDecisions,
+      appKeys,
+      appKeyGrants,
       next,
       ballots,
       votes,

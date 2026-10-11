@@ -51,8 +51,10 @@ it('seals complete scope coverage in bounded batches and retries without changin
   const labels = (text: string) => [...text.matchAll(/X\("([a-z]+)",/g)].map((m) => m[1]);
   expect(labels(global)).toHaveLength(31);
   expect(labels(global)).toEqual(expect.arrayContaining(['execpols', 'nativegov', 'execpending']));
-  expect(labels(scoped)).toEqual(expect.arrayContaining(['executives', 'nonvoters', 'memberacts']));
-  expect(labels(scoped)).toHaveLength(29);
+  expect(labels(scoped)).toEqual(
+    expect.arrayContaining(['executives', 'nonvoters', 'memberacts', 'appregs', 'appscopes']),
+  );
+  expect(labels(scoped)).toHaveLength(31);
   for (const table of labels(global))
     await send(runtime, 'scanram', [0, table, 25], 'daclifycore@active');
   for (const id of [1, 2])

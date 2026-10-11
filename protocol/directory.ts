@@ -40,7 +40,7 @@ export const HubMetadataSchema = z
           account: NativeAccountSchema,
         }),
       )
-      .max(5)
+      .max(6)
       .default([]),
   })
   .refine(

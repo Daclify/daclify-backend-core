@@ -17,7 +17,17 @@ const AccountSchema = z.strictObject({
   cpuStake: StakeSchema,
   netStake: StakeSchema,
   contract: z
-    .enum(['runtime', 'hub', 'decide', 'works', 'payroll', 'grants', 'endorse', 'names'])
+    .enum([
+      'runtime',
+      'hub',
+      'decide',
+      'works',
+      'payroll',
+      'grants',
+      'endorse',
+      'names',
+      'activity',
+    ])
     .nullable(),
   inlineCode: z.boolean(),
 });
@@ -49,11 +59,11 @@ const EnvironmentSchema = z
     extraModules: z
       .array(
         AccountSchema.extend({
-          contract: z.enum(['grants', 'endorse']),
+          contract: z.enum(['grants', 'endorse', 'activity']),
           inlineCode: z.literal(true),
         }),
       )
-      .max(2)
+      .max(3)
       .default([]),
   })
   .refine((environment) => environment.chainId !== null || environment.chainIdFile, 'CHAIN_SOURCE')

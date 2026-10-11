@@ -1,4 +1,10 @@
 import type { CreationService } from './creation.js';
+import {
+  APP_BEARER_PATHS,
+  APP_METADATA_PATHS,
+  registerConnectedAppsRoutes,
+} from './connected-apps/routes.js';
+import type { ConnectedApps } from './connected-apps/service.js';
 import type { ConnectedPayments } from './payments/service.js';
 import type { OperatorPayments } from './payments/operator.js';
 import type { HostedStorage } from './billing/storage.js';
@@ -20,7 +26,7 @@ import { ArchiveRoutes } from '@daclify/modules/archive';
 import { archivePreview } from './archive/service.js';
 import { ramUsage, ramQuote } from './resources/service.js';
 import type { CardRam } from './resources/card.js';
-import Fastify, { type FastifyReply, errorCodes } from 'fastify';
+import Fastify, { type FastifyReply, type FastifyRequest, errorCodes } from 'fastify';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import { z, ZodError } from 'zod';
@@ -91,6 +97,7 @@ export async function createServer(
   chain: ChainGateway,
   origin: string,
   options: {
+    connectedApps?: ConnectedApps;
     content?: ContentService;
     recovery?: RecoveryConfiguration;
     gatewayAllowance?: GatewayAllowance;
@@ -168,7 +175,35 @@ export async function createServer(
   });
   await app.register(cookie);
   await app.register(cors, {
-    origin: origins,
+    delegator: async (request: FastifyRequest) => {
+      const path = request.url.split('?')[0] ?? '';
+      if (options.connectedApps && APP_METADATA_PATHS.includes(path))
+        return { origin: '*', credentials: false, methods: ['GET'] };
+      if (options.connectedApps && APP_BEARER_PATHS.includes(path))
+        return {
+          origin:
+            request.headers.origin &&
+            (await options.connectedApps.allowedOrigin(request.headers.origin))
+              ? request.headers.origin
+              : false,
+          credentials: false,
+          methods: ['GET', 'POST'],
+          allowedHeaders: ['content-type', 'authorization'],
+        };
+      return {
+        origin: origins,
+        credentials: true,
+        methods: ['GET', 'POST'],
+        allowedHeaders: [
+          'content-type',
+          'x-csrf-token',
+          'x-account-intent-id',
+          'x-account-signature',
+          'x-account-proof',
+        ],
+        exposedHeaders: ['x-daclify-recovery-grant'],
+      };
+    },
     credentials: true,
     exposedHeaders: ['x-daclify-recovery-grant'],
     methods: ['GET', 'POST'],
@@ -213,7 +248,8 @@ export async function createServer(
       path === ramWebhookPath ||
       path === CONNECT_WEBHOOK ||
       path === TELEGRAM_DOCS_PATH ||
-      BROKER_PATHS.some((route) => route === path)
+      BROKER_PATHS.some((route) => route === path) ||
+      (!!options.connectedApps && APP_BEARER_PATHS.includes(path ?? ''))
     )
       return;
     if (!origins.includes(request.headers.origin ?? '')) throw new ApiError('ORIGIN_REJECTED', 403);
@@ -227,6 +263,8 @@ export async function createServer(
     return account;
   }
   registerRecoveryRoutes(app, recovery, cookieName, session, origin);
+  if (options.connectedApps)
+    registerConnectedAppsRoutes(app, options.connectedApps, cookieName, session);
   app.addHook('onSend', async (request, reply, payload) => {
     if (request.routeOptions.url === '/v1/sign-in/session' && reply.statusCode < 400) {
       const token = request.cookies[cookieName],
@@ -326,16 +364,7 @@ export async function createServer(
     session,
     sessionCookie,
     sharedProxyIps,
-    registerSignupRoutes(
-      app,
-      pool,
-      origin,
-      options.providers,
-      options.signIn,
-      signup,
-      sessionCookie,
-      sharedProxyIps,
-    ),
+    registerSignupRoutes(app,pool,origin,options.providers,options.signIn,signup,sessionCookie,sharedProxyIps),
   );
   function creationService() {
     if (!options.creation) throw new ApiError('DAO_CREATION_UNAVAILABLE', 503);

@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-11",
+  "status": "source-qualified; testnet rollout pending",
+  "coreVersion": "0.13.0-alpha.5",
+  "frontendVersion": "0.13.0-alpha.5",
+  "modulesSdkVersion": "0.9.0-alpha.21",
+  "runtimeCodeHash": "4235158cdd149a4bebf1006a69b5f3943a842a9b437db14abf823acbd6cc277b",
+  "runtimeRawAbiHash": "2f8433050a4e63af0366d460d23b9d7d50a176bbc30fb2e7c402b4ea7599c0c1",
+  "activityCodeHash": "225b7070235779ccc6f001d21209f243cdfd6fc0619e8a334405d30d7e6f6866",
+  "artifactSha256": {
+    "corePackage": "0ed0d366421261d46db754bf86e92096e98ac4c6a4c083129715a9af1bbc1570",
+    "modulesPackage": "e96300f3716ed193e251b99bcf6d69928046a6b1e358f4ea880ec6c9c7f1838a"
+  },
+  "metrics": {
+    "runtimeCodeHash": "4235158cdd149a4bebf1006a69b5f3943a842a9b437db14abf823acbd6cc277b",
+    "activityCodeHash": "225b7070235779ccc6f001d21209f243cdfd6fc0619e8a334405d30d7e6f6866",
+    "wasmBytes": 187031,
+    "firstAppReceiptRamBytes": 1225,
+    "secondAppReceiptRamBytes": 889,
+    "cpuMicroseconds": [
+      2015,
+      2027
+    ]
+  },
+  "checks": {
+    "core": {
+      "files": 139,
+      "tests": 871,
+      "finalRerun": "passed"
+    },
+    "modules": {
+      "files": 30,
+      "tests": 179,
+      "lint": true,
+      "types": true,
+      "docs": true
+    },
+    "frontend": {
+      "files": 42,
+      "tests": 275,
+      "build": true
+    },
+    "postgres": {
+      "files": 3,
+      "tests": 53
+    },
+    "nativeConnectedApps": {
+      "tests": 7,
+      "includesRealGatewayRelay": true
+    },
+    "nativePermissions": {
+      "tests": 32
+    },
+    "combinedBrowser": {
+      "tests": 22,
+      "desktopAndMobile": true
+    }
+  },
+  "limitations": [
+    "Real email/Telegram user ceremonies were not repeated; cryptographic provider fixtures passed.",
+    "Assisted quick signup remains disabled on public testnet until separate OpenBao and independent restore qualification are configured.",
+    "Research module-integration suite needs its separate Docker research chain and was not qualified in this run.",
+    "Example pinning adapter uses project-owned credentials; live project IPFS pinning was not exercised.",
+    "Self-review was inline under the workspace no-subagent rule."
+  ]
+}

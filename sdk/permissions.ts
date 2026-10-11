@@ -9,6 +9,8 @@ export const CoreContextActions = [
   'addmember',
   'setadmit',
   'addsession',
+  'setapp',
+  'addappses',
   'delsession',
   'rotatekey',
   'setmeta',
