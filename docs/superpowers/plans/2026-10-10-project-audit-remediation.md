@@ -96,3 +96,12 @@
 - [x] Run all repo lint/type/doc/format/build checks and complete unit/SQL/native/frontend suites.
 - [x] Review the cross-repo diff inline, check public desktop/mobile behavior and save exact rollout artifacts. Final verification: 1,547 unit/SQL/native tests plus 104 desktop/mobile browser runs, and the current live UI smoke check passed.
 - [x] Commit/push `dev` under the workspace workflow; report tested behavior, remaining external checks and the concrete live authority decision.
+
+### Task 10: Approved testnet rollout — 2026-10-11
+
+- [x] Accept the user's express approval of the exact 32-action packet; fresh preparation matched its encoded actions and configuration.
+- [x] Save private backups, pause API writes/oracle, and apply runtime followed by Names/Hub/services with an irreversible confirmation and precondition refresh between stages.
+- [x] Read back code/ABI pins, authorities, all Names tables, unchanged governance/Hub metadata, resource deltas and unchanged Fees balance; no token transfer or RAM purchase.
+- [x] Publish the matching testnet API/frontend, install the archived alpha.3 oracle snapshot, and verify an irreversible observation and active services.
+- [x] Pass actual public desktop/mobile smoke and additional Relay/Fees service UI checks; qualify operator with read-only authority lookup and contract computation without persisting a dummy order.
+- [x] Record public evidence and update current runbooks while preserving historical checkpoints and external release gates. See [live rollout evidence](../../evidence/2026-10-11-project-audit-testnet-rollout.md).

@@ -2,6 +2,8 @@
 
 Reviewed inline alongside the audit fixes at the user's request. The review covers the three active V2 repositories and the continuing workspace runtime instructions. Legacy repositories, dated source snapshots, original plans and historical release manifests retain their historical meaning.
 
+This record describes the documentation review before deployment. The subsequently approved [2026-10-11 testnet rollout](2026-10-11-project-audit-testnet-rollout.md) installed alpha.3 and Relay/Fees governance, advanced the oracle snapshot and verified the public UI. Current operator guides now point to that installed state; the findings below retain their original review context.
+
 ## Findings corrected
 
 - Root READMEs, documentation indexes and the public SDK/vendor guidance advertised stale versions. Current source is core/frontend 0.13.0-alpha.3 with modules SDK 0.9.0-alpha.19; module contract version remains 0.9.0-alpha.5. Public `/v1/network` still reports live core 0.13.0-alpha.2, so the candidate is explicitly staged.

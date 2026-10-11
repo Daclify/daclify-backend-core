@@ -1,0 +1,519 @@
+{
+  "checkedAt": "2026-10-11T07:47:32.279478+00:00",
+  "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+  "approvedPacketSha256": "1d2041354022c41591139e2d3c1f1780f5eedb05e359e38f6b0664c0770f5faf",
+  "actionCount": 32,
+  "runtimeUpgrade": {
+    "transactionId": "c3fde67f3f6c2c2e4c7fb526cff00a2f92217b124dedd816258b4eec95f55263",
+    "blockNum": 449603058,
+    "confirmedAt": "2026-10-11T07:41:07.147Z",
+    "irreversible": true
+  },
+  "namesHubAndServices": {
+    "transactionId": "5058459dc055fc7c9839764db0794d16eba1cdeb4cbe73fc5d0c568b8d3f09f5",
+    "blockNum": 449603084,
+    "confirmedAt": "2026-10-11T07:41:20.313Z",
+    "irreversible": true
+  },
+  "oracleObservation": {
+    "transactionId": "69cc58ec19f81fb1e574eec6a4105ef647d140c2c141f2cf7533b5aa87d00cec",
+    "blockNum": 449603132,
+    "irreversible": true
+  },
+  "versions": {
+    "core": "0.13.0-alpha.3",
+    "modules": "0.9.0-alpha.19",
+    "frontend": "0.13.0-alpha.3"
+  },
+  "sourceCommits": {
+    "publishedIndexSha256": "85ca00a0983bfcbc6eeb27021f45f1847c102e66a83ffdbf810d64756f8b1ded",
+    "configuration": {
+      "RELAY_PERMISSION": "operator",
+      "SHARED_PROXY_IPS": [
+        "192.168.5.1"
+      ],
+      "TRUSTED_PROXY_IPS": []
+    },
+    "oracleRelease": "oracle-alpha3",
+    "frontendCommit": "534f05d2e17244521bb9f5c355c70ee85fb01d0d",
+    "coreCommit": "f1c951175d7e856d996febb2fb1bee895956a151"
+  },
+  "compiledArtifactHashes": {
+    "runtime": "a05da7ad1cf616db6af7129fa036ddbc4ae03423f81c87f5eae17d3c78878213",
+    "runtimeRawAbi": "50ab00d5e3e61a5e1fa4339a2edecaa005cd1edd7f28268aa87c7d8195fa4e63",
+    "names": "29f3155cc67c86871aa862b0ae9168acfdbaadf899721d4f5ef9a7ccaff86a65",
+    "namesRawAbi": "1c57626378c943ec3c97c6bb8fe20b8c25b9c49cabd9b65634c10c11cca86b02"
+  },
+  "governance": {
+    "dao_id": 1,
+    "contracts": [
+      "daclifydecid",
+      "daclifyendor",
+      "daclifygrant",
+      "daclifyhubv1",
+      "daclifynames",
+      "daclifypayr1",
+      "daclifyworks"
+    ],
+    "service_key": "EOS8j1MA7Evt5628RaKn5zF1GPwB3RqY1gXeqxq9z56Cmh7ozkcdU",
+    "handed_over": 1,
+    "signers": [
+      "3boidanimus3"
+    ],
+    "threshold": 1,
+    "admin_members": [
+      1
+    ],
+    "ownership": {
+      "policy_version": 2,
+      "creator": "3boidanimus3",
+      "inline_code": [
+        "daclifydecid",
+        "daclifyendor",
+        "daclifygrant",
+        "daclifynames",
+        "daclifypayr1",
+        "daclifyworks"
+      ]
+    }
+  },
+  "governancePreserved": true,
+  "namesTablesPreservedBeforeObservations": [
+    {
+      "table": "intents",
+      "rowCount": 0,
+      "canonicalJsonSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "table": "namelist",
+      "rowCount": 0,
+      "canonicalJsonSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "table": "namescfg",
+      "rowCount": 1,
+      "canonicalJsonSha256": "334b35babd76fcba4dc7a657ac8784fe44ac8e7af88e27f69eb2023902705a36"
+    },
+    {
+      "table": "policy",
+      "rowCount": 1,
+      "canonicalJsonSha256": "0b32368f2c5342e864a9f3bc3c603f53accc87bbc3d846f5af67ed9b17365810"
+    },
+    {
+      "table": "profitcfg",
+      "rowCount": 1,
+      "canonicalJsonSha256": "b7d75cf86971099c71d9763378dafb4e6c6c7bb999f845865a51ca95b399e729"
+    },
+    {
+      "table": "profitcheck",
+      "rowCount": 0,
+      "canonicalJsonSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "table": "saleprov",
+      "rowCount": 0,
+      "canonicalJsonSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "table": "sales",
+      "rowCount": 0,
+      "canonicalJsonSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "table": "suffixes",
+      "rowCount": 0,
+      "canonicalJsonSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "table": "tiers",
+      "rowCount": 1,
+      "canonicalJsonSha256": "0ad8ac1e4d714e049a86336320c53815ae72240a28467bfc2d72706332734360"
+    }
+  ],
+  "namesStatePreservedExceptApprovedObservations": true,
+  "hubMetadataPreserved": true,
+  "feeBalanceBefore": [
+    "1243.5234 TLOS"
+  ],
+  "feeBalanceAfter": [
+    "1243.5234 TLOS"
+  ],
+  "tokenTransfers": 0,
+  "ramPurchases": 0,
+  "accountResources": [
+    {
+      "account": "daclifycore1",
+      "ramQuota": "10208621",
+      "beforeUsed": "10172776",
+      "afterUsed": "10185526",
+      "deltaBytes": 12750,
+      "codeHash": "a05da7ad1cf616db6af7129fa036ddbc4ae03423f81c87f5eae17d3c78878213",
+      "abiHash": "50ab00d5e3e61a5e1fa4339a2edecaa005cd1edd7f28268aa87c7d8195fa4e63",
+      "permissionsUnchanged": true
+    },
+    {
+      "account": "daclifyhubv1",
+      "ramQuota": "1049974",
+      "beforeUsed": "609012",
+      "afterUsed": "609012",
+      "deltaBytes": 0,
+      "codeHash": "5f05cac05cd0bc3ea057402df7aef3e0c3fb3f9373094d1ad47605b377ab6bee",
+      "abiHash": "f4aeb966960d7df76df27fa5a3a182d038b2184223d282b17b979bb577de80b6",
+      "permissionsUnchanged": true
+    },
+    {
+      "account": "daclifydecid",
+      "ramQuota": "2844014",
+      "beforeUsed": "2777753",
+      "afterUsed": "2777753",
+      "deltaBytes": 0,
+      "codeHash": "f99a964c4eadd6d33ff261f79e546bd8a98f41a02785b41994490b319860cbf2",
+      "abiHash": "29abcba925283ff84c58743d432f570ec159d5cb4d998e8df1488027a9b1d44b",
+      "permissionsUnchanged": true
+    },
+    {
+      "account": "daclifyworks",
+      "ramQuota": "1361264",
+      "beforeUsed": "1295726",
+      "afterUsed": "1295726",
+      "deltaBytes": 0,
+      "codeHash": "9e4117b18393b0de1a090acf87788d908419ecb5dc85e8354a28dacb707bc308",
+      "abiHash": "70cd84482d7e045c7db88bf2a0531b32f5150510b18fec31ed043de322f047bc",
+      "permissionsUnchanged": true
+    },
+    {
+      "account": "daclifypayr1",
+      "ramQuota": "1049973",
+      "beforeUsed": "850877",
+      "afterUsed": "850877",
+      "deltaBytes": 0,
+      "codeHash": "4db6a327656d81fb055da26f359beb6d97cb4f3bb172b1efbd1e71c59ff7a8e7",
+      "abiHash": "c3dc83e99ef7f172e158cb1d2db230dfa39718b96be4daa47c31011e99ac6f6d",
+      "permissionsUnchanged": true
+    },
+    {
+      "account": "daclifyrelay",
+      "ramQuota": "17781",
+      "beforeUsed": "2996",
+      "afterUsed": "6466",
+      "deltaBytes": 3470,
+      "codeHash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "abiHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "permissionsUnchanged": false
+    },
+    {
+      "account": "daclifyfees1",
+      "ramQuota": "17781",
+      "beforeUsed": "2996",
+      "afterUsed": "3248",
+      "deltaBytes": 252,
+      "codeHash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "abiHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "permissionsUnchanged": false
+    },
+    {
+      "account": "daclifygrant",
+      "ramQuota": "1181042",
+      "beforeUsed": "1114053",
+      "afterUsed": "1114053",
+      "deltaBytes": 0,
+      "codeHash": "e973f83fbe27e548d4ef14733f511d705d066db74a32a5ff65ca7f005af138fa",
+      "abiHash": "ad57534f046b320108d9e47833997d824570936f2f901f6ec6531abf32d6cce8",
+      "permissionsUnchanged": true
+    },
+    {
+      "account": "daclifyendor",
+      "ramQuota": "1049972",
+      "beforeUsed": "842557",
+      "afterUsed": "842557",
+      "deltaBytes": 0,
+      "codeHash": "e1a0f64dc42c8e8ad1d324cf92d1dfe01cebba77b130fb2be74ba9ee4d88df48",
+      "abiHash": "d1f4fe0ffe18d2cb458efe60cd3f5654ca32e9b245a2e15728569b82393a3602",
+      "permissionsUnchanged": true
+    },
+    {
+      "account": "daclifynames",
+      "ramQuota": "1049973",
+      "beforeUsed": "925050",
+      "afterUsed": "925910",
+      "deltaBytes": 860,
+      "codeHash": "29f3155cc67c86871aa862b0ae9168acfdbaadf899721d4f5ef9a7ccaff86a65",
+      "abiHash": "1c57626378c943ec3c97c6bb8fe20b8c25b9c49cabd9b65634c10c11cca86b02",
+      "permissionsUnchanged": true
+    }
+  ],
+  "servicePermissions": [
+    {
+      "account": "daclifyrelay",
+      "permissions": [
+        {
+          "perm_name": "active",
+          "parent": "owner",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [],
+            "accounts": [
+              {
+                "permission": {
+                  "actor": "daclifycore1",
+                  "permission": "active"
+                },
+                "weight": 1
+              }
+            ],
+            "waits": []
+          },
+          "linked_actions": []
+        },
+        {
+          "perm_name": "operator",
+          "parent": "active",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [
+              {
+                "key": "PUB_K1_8j1MA7Evt5628RaKn5zF1GPwB3RqY1gXeqxq9z56Cmh7oPsAmg",
+                "weight": 1
+              }
+            ],
+            "accounts": [],
+            "waits": []
+          },
+          "linked_actions": [
+            {
+              "account": "daclifycore1",
+              "action": "submit"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "submitsess"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "submitevm"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "orderfree"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "ordercreate"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "cardcreate"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "createpaid"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "setcapacity"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "revokecap"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "resumecap"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "fulfilram"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "archattest"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "prunedocs"
+            },
+            {
+              "account": "daclifycore1",
+              "action": "payob"
+            },
+            {
+              "account": "daclifynames",
+              "action": "fulfillnet"
+            },
+            {
+              "account": "daclifydecid",
+              "action": "finalize"
+            },
+            {
+              "account": "daclifydecid",
+              "action": "execute"
+            },
+            {
+              "account": "daclifydecid",
+              "action": "executeaward"
+            },
+            {
+              "account": "daclifydecid",
+              "action": "prunevotes"
+            },
+            {
+              "account": "daclifypayr1",
+              "action": "settle"
+            }
+          ]
+        },
+        {
+          "perm_name": "owner",
+          "parent": "",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [],
+            "accounts": [
+              {
+                "permission": {
+                  "actor": "daclifycore1",
+                  "permission": "active"
+                },
+                "weight": 1
+              }
+            ],
+            "waits": []
+          },
+          "linked_actions": [
+            {
+              "account": "eosio",
+              "action": "setcode"
+            },
+            {
+              "account": "eosio",
+              "action": "setabi"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "account": "daclifyfees1",
+      "permissions": [
+        {
+          "perm_name": "active",
+          "parent": "owner",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [],
+            "accounts": [
+              {
+                "permission": {
+                  "actor": "daclifycore1",
+                  "permission": "active"
+                },
+                "weight": 1
+              }
+            ],
+            "waits": []
+          },
+          "linked_actions": []
+        },
+        {
+          "perm_name": "owner",
+          "parent": "",
+          "required_auth": {
+            "threshold": 1,
+            "keys": [],
+            "accounts": [
+              {
+                "permission": {
+                  "actor": "daclifycore1",
+                  "permission": "active"
+                },
+                "weight": 1
+              }
+            ],
+            "waits": []
+          },
+          "linked_actions": [
+            {
+              "account": "eosio",
+              "action": "setcode"
+            },
+            {
+              "account": "eosio",
+              "action": "setabi"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "operatorReadOnlyVerification": {
+    "mode": "get_required_keys authority verification plus signed read-only compute_transaction; no broadcast",
+    "checkedAt": "2026-10-11T07:45:12.462Z",
+    "operatorFreeOrder": "authority satisfied and contract executed in simulation",
+    "oldActiveDeclaration": "denied",
+    "relayGoverningAuthority": "unavailable to operator key",
+    "feesGoverningAuthority": "unavailable to operator key",
+    "simulatedOrderPersisted": false,
+    "feeBalance": [
+      "1243.5234 TLOS"
+    ],
+    "simulation": {
+      "transactionId": "b62a104404ed95e519461c7abaa00862fc0a3dcdd38c1a44267597f2a6cc1792",
+      "blockNum": 449603549
+    },
+    "limitations": [
+      "compute_transaction alone accepted an unsatisfied active declaration; it is not signature-authority evidence",
+      "get_required_keys checks declared authorities, not action minimum permissions; native signed-transaction tests qualify minimum-permission enforcement"
+    ]
+  },
+  "publicServicesUi": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "relayAndFeesPermissions": "passed",
+      "rolesAndResources": "passed",
+      "pageErrors": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "relayAndFeesPermissions": "passed",
+      "rolesAndResources": "passed",
+      "pageErrors": []
+    }
+  ],
+  "publicSmoke": {
+    "command": "npm run test:testnet-public",
+    "desktop": "passed",
+    "mobile": "passed",
+    "apiRequestsToStaticOrigin": 0,
+    "pageErrors": 0,
+    "apiServerErrors": 0
+  },
+  "publicStatus": {
+    "database": "reachable",
+    "rpc": "reachable",
+    "chainMatches": true,
+    "namesConfigured": true,
+    "runtimeAndModuleCataloguePinsVerified": true,
+    "hubAndNamesApiExpectedHash": null,
+    "coreCreationRateFresh": false,
+    "namesObservationUnix": 1791704482
+  },
+  "limitations": [
+    "No live provider login/payment ceremonies or production soak qualification",
+    "Unchanged HAProxy does not provide trustworthy visitor IP addresses",
+    "API catalogue status has no expected hash for Hub or Names; direct release preflight and chain read-back matched them",
+    "Core creation-rate observation is stale; Names prices are maintained by the separate oracle and quote checks passed",
+    "compute_transaction does not qualify signature authority; get_required_keys checks declared authorities and native signed-transaction tests cover action minimum permissions"
+  ],
+  "documentationLinks": {
+    "scope": "Markdown files reported by rg across the three active repositories, plus runtime README; code examples excluded",
+    "markdownFiles": 203,
+    "localReferences": 553,
+    "missing": []
+  }
+}

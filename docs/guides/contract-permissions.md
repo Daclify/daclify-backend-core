@@ -1,6 +1,6 @@
 # Smart contracts and permissions
 
-These examples describe the executable model introduced in core 0.13.0-alpha.1. They are illustrations of policy 2. The [dated testnet handover](../evidence/2026-10-10-native-ownership-testnet-rollout.md) records the installed creator/executive authorities; [audit remediation](../operations/project-audit-remediation.md) records the pending service-account proposal. Read Status for actual current account permissions. No mainnet handover is established by these examples.
+These examples describe the executable model introduced in core 0.13.0-alpha.1. They are illustrations of policy 2. The [dated testnet handover](../evidence/2026-10-10-native-ownership-testnet-rollout.md) records the installed creator/executive authorities; the [2026-10-11 audit rollout](../evidence/2026-10-11-project-audit-testnet-rollout.md) records the subsequently installed service-account migration and runtime guards. Read Status for actual current account permissions. No mainnet handover is established by these examples.
 
 ![Daclify contract permissions and module interaction map](../generated/contract-permissions.svg)
 
@@ -41,7 +41,7 @@ Runtime code carries active quorum weight and transitive ownership of the manage
 
 ## Relay, Fees and price observations
 
-Relay and Fees have no deployed code on the reviewed testnet. The separately reviewed service proposal delegates both owner/active authorities to runtime active, gives Relay a key-only operator child linked to 20 operational actions, and gives Fees no operator key. Neither service account needs an own-code grant. Fees transfers and service upgrades require governing authority; an operator child cannot change its parent or broaden action links.
+Relay and Fees have no deployed code on the reviewed testnet. The separately approved service migration installed both owner/active authorities delegated to runtime active, a Relay key-only operator child linked to 20 operational actions, and no Fees operator key. Neither service account needs an own-code grant. Fees transfers and service upgrades require governing authority; an operator child cannot change its parent or broaden action links.
 
 Names has a separate key-only oracle child linked only to `observeprice` and `observefee`. It cannot change fee percentages, minimum profit, treasury or code. Runtime rejects creator recovery or executive accounts whose owner/active is controlled through core owner/active or the configured service key. These independence checks prevent circular delegation when appointing governed service accounts.
 
