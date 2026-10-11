@@ -1,5 +1,5 @@
 {
-  "status": "Source implemented and verified; testnet rollout awaits fresh approval",
+  "status": "Source implemented and verified; user-approved testnet rollout completed",
   "checkedAt": "2026-10-11T09:51:34.375308+00:00",
   "versions": {
     "core": "0.13.0-alpha.4",
@@ -112,5 +112,6 @@
     "Observed-RAM deployments require separate exact-pin/migration review",
     "No SQL migrations or live provider writes are part of this change; those suites were not repeated",
     "Development artifacts remain unqualified for immutable production publication"
-  ]
+  ],
+  "liveRolloutEvidence": "2026-10-11-unified-users-testnet-rollout.json"
 }

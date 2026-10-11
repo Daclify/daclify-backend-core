@@ -2,6 +2,8 @@
 
 Core/frontend `0.13.0-alpha.4` and modules SDK `0.9.0-alpha.20` add the public directory projection and authoritative member activity. The five module contract binaries remain `0.9.0-alpha.5` and do not need redeployment. The Hub still registers deployments; this change creates no global identity registry.
 
+The user-approved seven-action testnet upgrade and API/frontend/oracle cutover completed on 2026-10-11. Actual root RAM fell by 1,431,041 bytes without a RAM purchase or token transfer. See [irreversible receipts and live checks](../evidence/2026-10-11-unified-users-testnet-rollout.md). The preparation steps below document the alpha.3-to-alpha.4 upgrade; do not replay its baseline-specific preparer against the installed release.
+
 ## Data and compatibility
 
 Existing `members` and `profiles` layouts, IDs, credentials, signing domains, treasury rights and permissions stay intact. `memberacts`, scoped by DAO, contains `{member_id,last_active}`. Enrollment reserves a constant-size row with zero time. Successful authenticated native, signing-key, scoped-session or EVM instructions update it, including installed module actions. A failed transaction rolls back the nonce and timestamp. Administrative calls and sign-ins are excluded.
@@ -36,4 +38,4 @@ Candidate raw ABI SHA-256: `7c4c309b9a564d3abae1aac7a369cb5a47fd9d0549ebf720e076
 4. Cut over the API, published frontend build and immutable oracle snapshot together. Keep the old frontend assets and service evidence. Do not change HAProxy.
 5. Verify public network/health/member responses, all four DAO memberships in Users, profile/DAO links, explicit unknown activity and a scheduled oracle run. Record receipts and resource measurements. A new member action must be explicitly authorized if a live write probe is desired.
 
-Public service code remains alpha.3 until this new rollout is approved. Existing oracle operations use its archived alpha.3 source and must not be switched prematurely.
+Public testnet services now run alpha.4. The Names oracle uses `/data/daclify-runtime/releases/oracle-alpha4/daclify-backend-core`, with the previous alpha.3 snapshot retained. Future runtime changes require a separately reviewed matching snapshot and cutover.
