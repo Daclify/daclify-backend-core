@@ -23,6 +23,7 @@ execFileSync(
     'daclify-v2-toolchain:4.1.1-spring1.2.2',
     'cdt-cpp',
     directory + '/runtime.cpp',
+    '-O=s',
     '-I',
     'contracts/common',
     '-I',
