@@ -39,13 +39,18 @@ export async function withTransaction<T>(
   run: (client: PoolClient) => Promise<T>,
 ): Promise<T> {
   const client = await pool.connect();
+  let discard = false;
   try {
     await client.query('BEGIN');
     const result = await run(client);
     await client.query('COMMIT');
     return result;
   } catch (error) {
-    await client.query('ROLLBACK');
+    try {
+      await client.query('ROLLBACK');
+    } catch {
+      discard = true;
+    }
     if (
       z
         .object({
@@ -57,7 +62,7 @@ export async function withTransaction<T>(
       throw new ApiError('LAST_CONTROL_CREDENTIAL', 409);
     throw error;
   } finally {
-    client.release();
+    client.release(discard);
   }
 }
 
