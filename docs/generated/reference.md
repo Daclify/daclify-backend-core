@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.13.0-alpha.6 · interface 1.
+Package 0.14.0-alpha.1 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -21,6 +21,8 @@ A previously paired email or Telegram identity opens its existing account with i
 Daclify-key login signs both your public signing key and public encryption key in a short-lived v3 challenge. The app checks the keys and issuing API before asking the vault to sign. An API/frontend update may require refreshing the app and restarting an in-progress login; your existing account, recovery kit and private keys are preserved.
 
 Sign in with your Daclify keys or a previously paired supported email, Telegram, passkey, Telos Zero account or Telos EVM wallet. A currently activated on-chain wallet can also reconstruct wallet-only access after the service database is lost. Signing in and recovering service access do not create membership or grant new permissions in a DAO. Provider availability depends on server configuration; complete Google browser login remains unfinished.
+
+The Telos network voting page offers explicit native-wallet signup. A fresh verified Telos Zero proof creates a wallet-only Daclify account and pairing before the external vote. Returning native login reuses that signup account without DAO membership. Existing pairings and vault keys are preserved; recovered wallet-only accounts still need their current on-chain membership. Signup grants no Daclify membership or private-document keys. Use Account and key setup before joining a new Daclify DAO.
 
 Adding or removing a sign-in method requires a fresh proof from existing Daclify keys or an already verified paired wallet, plus proof of the incoming credential. Review the exact credential before confirming. Removal revokes sessions opened with that credential; history is available in Account → Sign-in methods → Sign-in changes.
 
@@ -6484,6 +6486,13 @@ Response:
                 },
                 "encryptionKey": {
                   "type": "null"
+                },
+                "walletOrigin": {
+                  "type": "string",
+                  "enum": [
+                    "signup",
+                    "recovered"
+                  ]
                 }
               },
               "required": [
@@ -6658,6 +6667,13 @@ Response:
                 },
                 "encryptionKey": {
                   "type": "null"
+                },
+                "walletOrigin": {
+                  "type": "string",
+                  "enum": [
+                    "signup",
+                    "recovered"
+                  ]
                 }
               },
               "required": [
@@ -7281,6 +7297,13 @@ Response:
             },
             "encryptionKey": {
               "type": "null"
+            },
+            "walletOrigin": {
+              "type": "string",
+              "enum": [
+                "signup",
+                "recovered"
+              ]
             }
           },
           "required": [
@@ -10750,6 +10773,13 @@ Response:
             },
             "encryptionKey": {
               "type": "null"
+            },
+            "walletOrigin": {
+              "type": "string",
+              "enum": [
+                "signup",
+                "recovered"
+              ]
             }
           },
           "required": [
@@ -18766,6 +18796,13 @@ Response:
             },
             "encryptionKey": {
               "type": "null"
+            },
+            "walletOrigin": {
+              "type": "string",
+              "enum": [
+                "signup",
+                "recovered"
+              ]
             }
           },
           "required": [
@@ -18880,6 +18917,13 @@ Response:
             },
             "encryptionKey": {
               "type": "null"
+            },
+            "walletOrigin": {
+              "type": "string",
+              "enum": [
+                "signup",
+                "recovered"
+              ]
             }
           },
           "required": [
@@ -19223,6 +19267,13 @@ Response:
             },
             "encryptionKey": {
               "type": "null"
+            },
+            "walletOrigin": {
+              "type": "string",
+              "enum": [
+                "signup",
+                "recovered"
+              ]
             }
           },
           "required": [
@@ -27489,6 +27540,13 @@ Response:
             },
             "encryptionKey": {
               "type": "null"
+            },
+            "walletOrigin": {
+              "type": "string",
+              "enum": [
+                "signup",
+                "recovered"
+              ]
             }
           },
           "required": [
@@ -27585,7 +27643,8 @@ Request:
       "type": "string",
       "enum": [
         "login",
-        "pair"
+        "pair",
+        "signup"
       ]
     }
   },
@@ -27867,6 +27926,177 @@ Response:
             },
             "encryptionKey": {
               "type": "null"
+            },
+            "walletOrigin": {
+              "type": "string",
+              "enum": [
+                "signup",
+                "recovered"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "custody",
+            "signingKey",
+            "encryptionKey"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "csrfToken": {
+      "type": "string",
+      "minLength": 32,
+      "maxLength": 128
+    }
+  },
+  "required": [
+    "account",
+    "csrfToken"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/sign-up/native
+
+Guide: accounts.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "proof": {
+      "type": "object",
+      "properties": {
+        "packedTransaction": {
+          "type": "string",
+          "pattern": "^(?:[0-9a-f]{2}){1,4096}$"
+        },
+        "signatures": {
+          "minItems": 1,
+          "maxItems": 8,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          }
+        }
+      },
+      "required": [
+        "packedTransaction",
+        "signatures"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "id",
+    "proof"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "account": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "signingKey": {
+              "type": "string",
+              "maxLength": 128
+            },
+            "custody": {
+              "type": "string",
+              "enum": [
+                "user-controlled",
+                "managed"
+              ]
+            },
+            "encryptionKey": {
+              "type": "object",
+              "properties": {
+                "kty": {
+                  "type": "string",
+                  "const": "EC"
+                },
+                "crv": {
+                  "type": "string",
+                  "const": "P-256"
+                },
+                "x": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                },
+                "y": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_-]{43}$"
+                }
+              },
+              "required": [
+                "kty",
+                "crv",
+                "x",
+                "y"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "id",
+            "signingKey",
+            "custody",
+            "encryptionKey"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "custody": {
+              "type": "string",
+              "const": "user-controlled"
+            },
+            "signingKey": {
+              "type": "null"
+            },
+            "encryptionKey": {
+              "type": "null"
+            },
+            "walletOrigin": {
+              "type": "string",
+              "enum": [
+                "signup",
+                "recovered"
+              ]
             }
           },
           "required": [
@@ -28076,6 +28306,13 @@ Response:
             },
             "encryptionKey": {
               "type": "null"
+            },
+            "walletOrigin": {
+              "type": "string",
+              "enum": [
+                "signup",
+                "recovered"
+              ]
             }
           },
           "required": [
@@ -28805,6 +29042,13 @@ Response:
             },
             "encryptionKey": {
               "type": "null"
+            },
+            "walletOrigin": {
+              "type": "string",
+              "enum": [
+                "signup",
+                "recovered"
+              ]
             }
           },
           "required": [
@@ -28989,6 +29233,13 @@ Response:
             },
             "encryptionKey": {
               "type": "null"
+            },
+            "walletOrigin": {
+              "type": "string",
+              "enum": [
+                "signup",
+                "recovered"
+              ]
             }
           },
           "required": [
@@ -29382,6 +29633,13 @@ Response:
             },
             "encryptionKey": {
               "type": "null"
+            },
+            "walletOrigin": {
+              "type": "string",
+              "enum": [
+                "signup",
+                "recovered"
+              ]
             }
           },
           "required": [

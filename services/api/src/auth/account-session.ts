@@ -10,6 +10,7 @@ interface AccountRow {
   signing_key: string | null;
   custody: string;
   encryption_key: unknown;
+  wallet_origin: string | null;
 }
 
 const digest = (value: string): Buffer => createHash('sha256').update(value).digest();
@@ -20,12 +21,15 @@ function accountFromRow(row: AccountRow): Account {
     signingKey: row.signing_key,
     custody: row.custody,
     encryptionKey: row.encryption_key,
+    ...(row.signing_key === null && row.wallet_origin === 'signup'
+      ? { walletOrigin: 'signup' }
+      : {}),
   });
 }
 
 export async function readAccount(db: Pool | PoolClient, id: string): Promise<Account | null> {
   const result = await db.query<AccountRow>(
-    'SELECT id,signing_key,custody,encryption_key FROM accounts WHERE id=$1',
+    'SELECT id,signing_key,custody,encryption_key,wallet_origin FROM accounts WHERE id=$1',
     [z.uuid().parse(id)],
   );
   return result.rows[0] ? accountFromRow(result.rows[0]) : null;
@@ -78,7 +82,7 @@ export async function insertAccountSession(
     throw new ApiError('SIGNUP_INCOMPLETE', 409);
   const row = (
     await client.query<AccountRow>(
-      'SELECT id,signing_key,custody,encryption_key FROM accounts WHERE id=$1',
+      'SELECT id,signing_key,custody,encryption_key,wallet_origin FROM accounts WHERE id=$1',
       [accountId],
     )
   ).rows[0];

@@ -53,6 +53,11 @@ import { registerSignupRoutes } from './auth/signup-routes.js';
 import { registerSignInRoutes, type SignInConfiguration } from './auth/sign-in-routes.js';
 import { registerEvmRoutes } from './auth/evm-routes.js';
 import { registerNativeRoutes } from './auth/native-routes.js';
+import {
+  createTelosGovernanceClient,
+  registerTelosGovernanceRoutes,
+  type TelosPins,
+} from './telos-governance.js';
 import { registerVaultAttachRoutes } from './auth/vault-attach.js';
 import { registerEvmSignInRoutes } from './auth/evm-sign-in.js';
 import { EvmRelaySchema } from '../../../protocol/evm-wallet.js';
@@ -117,6 +122,7 @@ export async function createServer(
     operatorPayments?: OperatorPayments;
     trustedProxyIps?: string[];
     sharedProxyIps?: string[];
+    telosGovernance?: TelosPins;
   } = {},
 ) {
   const sharedProxyIps = parseSharedProxyIps(
@@ -1218,6 +1224,12 @@ export async function createServer(
     audience,
     chain.nativeGovernanceWalletInUse?.bind(chain),
     sharedProxyIps,
+  );
+  registerTelosGovernanceRoutes(app, async () =>
+    createTelosGovernanceClient(
+      await chain.network(),
+      options.telosGovernance ?? { codeHash: null, abiHash: null },
+    ),
   );
   const docsAssistant = createDocsAssistant(options.docs);
   registerDocsRoutes(app, docsAssistant);

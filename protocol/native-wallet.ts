@@ -9,11 +9,11 @@ export const NativeIdentitySchema = z.strictObject({
 });
 export const NativeUnlinkSchema = z.strictObject({ chainId: ChainIdSchema });
 export const NativeIntentSchema = NativeIdentitySchema.omit({ chainId: true }).extend({
-  purpose: z.enum(['login', 'pair']),
+  purpose: z.enum(['login', 'pair', 'signup']),
 });
 export const NativeSignInMessageSchema = z.strictObject({
   domain: z.literal('daclify.native-sign-in.v2'),
-  purpose: z.enum(['login', 'pair']),
+  purpose: z.enum(['login', 'pair', 'signup']),
   origin: z.url(),
   audience: ApiOriginSchema,
   accountId: z.uuid().nullable(),

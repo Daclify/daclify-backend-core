@@ -304,6 +304,12 @@ export const ServiceResponseRoutes = [
   },
   {
     method: 'POST',
+    path: '/v1/sign-up/native',
+    input: NativeFinishSchema,
+    response: SessionSchema,
+  },
+  {
+    method: 'POST',
     path: '/v1/account/control',
     input: AccountControlRequestSchema,
     response: AccountControlChallengeSchema,

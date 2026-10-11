@@ -30,6 +30,7 @@ export const WalletAccountSchema = z.strictObject({
   custody: z.literal('user-controlled'),
   signingKey: z.null(),
   encryptionKey: z.null(),
+  walletOrigin: z.enum(['signup', 'recovered']).optional(),
 });
 export const AccountSchema = z.union([VaultAccountSchema, WalletAccountSchema]);
 export const JoinIdentitySchema = VaultAccountSchema.omit({ id: true }).extend({

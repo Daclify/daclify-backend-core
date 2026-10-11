@@ -20,7 +20,7 @@ const hash = (text: string) => createHash('sha256').update(text).digest();
 const credential = (chain: string, account: string) => `native:${chain}:${account}`;
 interface Intent {
   id: string;
-  purpose: 'login' | 'pair';
+  purpose: 'login' | 'pair' | 'signup';
   account_id: string | null;
   session_hash: Buffer | null;
   chain_id: string;
@@ -128,7 +128,7 @@ export function registerNativeRoutes(
     });
     return { id, message, expires: expires.toISOString(), identity, runtime: info.runtime };
   });
-  async function finish(request: FastifyRequest, purpose: 'login' | 'pair') {
+  async function finish(request: FastifyRequest, purpose: 'login' | 'pair' | 'signup') {
     const input = NativeFinishSchema.parse(request.body);
     const current = purpose === 'pair' ? await control(request) : null;
     const token = current ? request.cookies[cookieName] : null;
@@ -196,13 +196,14 @@ export function registerNativeRoutes(
     }
     return identity;
   });
-  app.post('/v1/sign-in/native', async (request, reply) => {
-    const { identity } = await finish(request, 'login');
+  async function enter(request: FastifyRequest, reply: FastifyReply, purpose: 'login' | 'signup') {
+    const { identity } = await finish(request, purpose);
     const opened = await withTransaction(pool, async (client) => {
       const accountId = await walletAccount(
         client,
         { kind: 'native', chainId: identity.chainId, account: identity.account },
         discover,
+        purpose === 'signup',
       );
       return insertAccountSession(
         client,
@@ -213,7 +214,9 @@ export function registerNativeRoutes(
     await sessionCookie(reply, opened.token);
     reply.clearCookie(attemptCookie, { path: '/' });
     return { account: opened.account, csrfToken: opened.csrfToken };
-  });
+  }
+  app.post('/v1/sign-in/native', (request, reply) => enter(request, reply, 'login'));
+  app.post('/v1/sign-up/native', (request, reply) => enter(request, reply, 'signup'));
   app.post('/v1/account/native/unlink', async (request, reply) => {
     const current = await control(request),
       input = NativeUnlinkSchema.parse(request.body);

@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle={
   "producer": "core",
-  "packageVersion": "0.13.0-alpha.6",
+  "packageVersion": "0.14.0-alpha.1",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -22,6 +22,7 @@ export const CoreHelpBundle={
         "A previously paired email or Telegram identity opens its existing account with its current recovery settings. Choosing the quick-signup screen never silently enables assisted recovery on an existing account. Ordinary sign-in with an unpaired identity offers an explicit new-account path. Telegram redirects preserve the requested destination and resume a short-lived browser-bound signup; no plaintext vault crosses the redirect. Keep the setup tab open to retry a backup outage with the same keys. Expired or abandoned ceremonies must restart provider verification, and committed assisted-key history is retained.",
         "Daclify-key login signs both your public signing key and public encryption key in a short-lived v3 challenge. The app checks the keys and issuing API before asking the vault to sign. An API/frontend update may require refreshing the app and restarting an in-progress login; your existing account, recovery kit and private keys are preserved.",
         "Sign in with your Daclify keys or a previously paired supported email, Telegram, passkey, Telos Zero account or Telos EVM wallet. A currently activated on-chain wallet can also reconstruct wallet-only access after the service database is lost. Signing in and recovering service access do not create membership or grant new permissions in a DAO. Provider availability depends on server configuration; complete Google browser login remains unfinished.",
+        "The Telos network voting page offers explicit native-wallet signup. A fresh verified Telos Zero proof creates a wallet-only Daclify account and pairing before the external vote. Returning native login reuses that signup account without DAO membership. Existing pairings and vault keys are preserved; recovered wallet-only accounts still need their current on-chain membership. Signup grants no Daclify membership or private-document keys. Use Account and key setup before joining a new Daclify DAO.",
         "Adding or removing a sign-in method requires a fresh proof from existing Daclify keys or an already verified paired wallet, plus proof of the incoming credential. Review the exact credential before confirming. Removal revokes sessions opened with that credential; history is available in Account → Sign-in methods → Sign-in changes.",
         "A paired native or EVM wallet can authorize governance after explicit activation for the same member in each DAO. It adds no member or voting weight. Private documents still require the separate encryption keys.",
         "User-controlled accounts keep encrypted signing and decryption keys in your browser. Restore an encrypted kit using either the vault password saved with that kit or its separate recovery code, shown as the recovery credential during setup. Choose a new password for this device; the original signing and decryption keys stay the same. A publicly visible login signature cannot derive these keys. Explicitly enabled full-access methods can restore the original keys on another device, without a vault password.",
@@ -9409,6 +9410,13 @@ export const CoreHelpBundle={
                       },
                       "encryptionKey": {
                         "type": "null"
+                      },
+                      "walletOrigin": {
+                        "type": "string",
+                        "enum": [
+                          "signup",
+                          "recovered"
+                        ]
                       }
                     },
                     "required": [
@@ -9574,6 +9582,13 @@ export const CoreHelpBundle={
                       },
                       "encryptionKey": {
                         "type": "null"
+                      },
+                      "walletOrigin": {
+                        "type": "string",
+                        "enum": [
+                          "signup",
+                          "recovered"
+                        ]
                       }
                     },
                     "required": [
@@ -10155,6 +10170,13 @@ export const CoreHelpBundle={
                   },
                   "encryptionKey": {
                     "type": "null"
+                  },
+                  "walletOrigin": {
+                    "type": "string",
+                    "enum": [
+                      "signup",
+                      "recovered"
+                    ]
                   }
                 },
                 "required": [
@@ -13537,6 +13559,13 @@ export const CoreHelpBundle={
                   },
                   "encryptionKey": {
                     "type": "null"
+                  },
+                  "walletOrigin": {
+                    "type": "string",
+                    "enum": [
+                      "signup",
+                      "recovered"
+                    ]
                   }
                 },
                 "required": [
@@ -21363,6 +21392,13 @@ export const CoreHelpBundle={
                   },
                   "encryptionKey": {
                     "type": "null"
+                  },
+                  "walletOrigin": {
+                    "type": "string",
+                    "enum": [
+                      "signup",
+                      "recovered"
+                    ]
                   }
                 },
                 "required": [
@@ -21471,6 +21507,13 @@ export const CoreHelpBundle={
                   },
                   "encryptionKey": {
                     "type": "null"
+                  },
+                  "walletOrigin": {
+                    "type": "string",
+                    "enum": [
+                      "signup",
+                      "recovered"
+                    ]
                   }
                 },
                 "required": [
@@ -21781,6 +21824,13 @@ export const CoreHelpBundle={
                   },
                   "encryptionKey": {
                     "type": "null"
+                  },
+                  "walletOrigin": {
+                    "type": "string",
+                    "enum": [
+                      "signup",
+                      "recovered"
+                    ]
                   }
                 },
                 "required": [
@@ -29653,6 +29703,13 @@ export const CoreHelpBundle={
                   },
                   "encryptionKey": {
                     "type": "null"
+                  },
+                  "walletOrigin": {
+                    "type": "string",
+                    "enum": [
+                      "signup",
+                      "recovered"
+                    ]
                   }
                 },
                 "required": [
@@ -29739,7 +29796,8 @@ export const CoreHelpBundle={
             "type": "string",
             "enum": [
               "login",
-              "pair"
+              "pair",
+              "signup"
             ]
           }
         },
@@ -29998,6 +30056,13 @@ export const CoreHelpBundle={
                   },
                   "encryptionKey": {
                     "type": "null"
+                  },
+                  "walletOrigin": {
+                    "type": "string",
+                    "enum": [
+                      "signup",
+                      "recovered"
+                    ]
                   }
                 },
                 "required": [
@@ -30023,6 +30088,161 @@ export const CoreHelpBundle={
         "additionalProperties": false
       },
       "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/sign-up/native",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "proof": {
+            "type": "object",
+            "properties": {
+              "packedTransaction": {
+                "type": "string",
+                "pattern": "^(?:[0-9a-f]{2}){1,4096}$"
+              },
+              "signatures": {
+                "minItems": 1,
+                "maxItems": 8,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 160
+                }
+              }
+            },
+            "required": [
+              "packedTransaction",
+              "signatures"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "proof"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "account": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "signingKey": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  "custody": {
+                    "type": "string",
+                    "enum": [
+                      "user-controlled",
+                      "managed"
+                    ]
+                  },
+                  "encryptionKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "signingKey",
+                  "custody",
+                  "encryptionKey"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "custody": {
+                    "type": "string",
+                    "const": "user-controlled"
+                  },
+                  "signingKey": {
+                    "type": "null"
+                  },
+                  "encryptionKey": {
+                    "type": "null"
+                  },
+                  "walletOrigin": {
+                    "type": "string",
+                    "enum": [
+                      "signup",
+                      "recovered"
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "custody",
+                  "signingKey",
+                  "encryptionKey"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "csrfToken": {
+            "type": "string",
+            "minLength": 32,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "account",
+          "csrfToken"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
     },
     {
       "method": "POST",
@@ -30189,6 +30409,13 @@ export const CoreHelpBundle={
                   },
                   "encryptionKey": {
                     "type": "null"
+                  },
+                  "walletOrigin": {
+                    "type": "string",
+                    "enum": [
+                      "signup",
+                      "recovered"
+                    ]
                   }
                 },
                 "required": [
@@ -30828,6 +31055,13 @@ export const CoreHelpBundle={
                   },
                   "encryptionKey": {
                     "type": "null"
+                  },
+                  "walletOrigin": {
+                    "type": "string",
+                    "enum": [
+                      "signup",
+                      "recovered"
+                    ]
                   }
                 },
                 "required": [
@@ -30994,6 +31228,13 @@ export const CoreHelpBundle={
                   },
                   "encryptionKey": {
                     "type": "null"
+                  },
+                  "walletOrigin": {
+                    "type": "string",
+                    "enum": [
+                      "signup",
+                      "recovered"
+                    ]
                   }
                 },
                 "required": [
@@ -31351,6 +31592,13 @@ export const CoreHelpBundle={
                   },
                   "encryptionKey": {
                     "type": "null"
+                  },
+                  "walletOrigin": {
+                    "type": "string",
+                    "enum": [
+                      "signup",
+                      "recovered"
+                    ]
                   }
                 },
                 "required": [

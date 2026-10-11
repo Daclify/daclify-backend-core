@@ -7,6 +7,7 @@ export async function walletAccount(
   client: PoolClient,
   wallet: WalletIdentity,
   discover: ((wallet: WalletIdentity) => Promise<UserMembership[]>) | undefined,
+  allowNativeSignup = false,
 ): Promise<string> {
   const key =
     wallet.kind === 'native'
@@ -15,19 +16,27 @@ export async function walletAccount(
   await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [key]);
   const value = wallet.kind === 'native' ? wallet.account : wallet.address.toLowerCase();
   const previous = (
-    await client.query<{ account_id: string; signing_key: string | null }>(
+    await client.query<{
+      account_id: string;
+      signing_key: string | null;
+      wallet_origin: string | null;
+    }>(
       wallet.kind === 'native'
-        ? "SELECT l.account_id,a.signing_key FROM native_links l JOIN accounts a ON a.id=l.account_id WHERE l.chain_id=$1 AND l.native_account=$2 AND l.permission='active' FOR SHARE OF l,a"
-        : 'SELECT l.account_id,a.signing_key FROM evm_links l JOIN accounts a ON a.id=l.account_id WHERE l.chain_id=$1 AND l.address=$2 AND l.control_verified_at IS NOT NULL FOR SHARE OF l,a',
+        ? "SELECT l.account_id,a.signing_key,a.wallet_origin FROM native_links l JOIN accounts a ON a.id=l.account_id WHERE l.chain_id=$1 AND l.native_account=$2 AND l.permission='active' FOR SHARE OF l,a"
+        : 'SELECT l.account_id,a.signing_key,a.wallet_origin FROM evm_links l JOIN accounts a ON a.id=l.account_id WHERE l.chain_id=$1 AND l.address=$2 AND l.control_verified_at IS NOT NULL FOR SHARE OF l,a',
       [wallet.chainId, value],
     )
   ).rows[0];
   if (previous?.signing_key) return previous.account_id;
-  if (!discover || !(await discover(wallet)).length) throw new ApiError('PROVIDER_UNKNOWN', 401);
+  if (previous?.wallet_origin === 'signup' && wallet.kind === 'native') return previous.account_id;
+  const newNative = allowNativeSignup && wallet.kind === 'native' && !previous;
+  if (!newNative && (!discover || !(await discover(wallet)).length))
+    throw new ApiError('PROVIDER_UNKNOWN', 401);
   if (previous) return previous.account_id;
   const row = (
     await client.query<{ id: string }>(
-      "INSERT INTO accounts(signing_key,encryption_key,custody) VALUES(NULL,NULL,'user-controlled') RETURNING id",
+      "INSERT INTO accounts(signing_key,encryption_key,custody,wallet_origin) VALUES(NULL,NULL,'user-controlled',$1) RETURNING id",
+      [newNative ? 'signup' : null],
     )
   ).rows[0];
   if (!row) throw new ApiError('AUTH_REQUIRED', 401);
@@ -41,7 +50,7 @@ export async function walletAccount(
     'INSERT INTO audit_events(account_id,kind,public_reference) VALUES($1,$2,$3)',
     [
       row.id,
-      'account.wallet-recovered',
+      newNative ? 'account.native-signup' : 'account.wallet-recovered',
       { kind: wallet.kind, chainId: wallet.chainId, wallet: value },
     ],
   );

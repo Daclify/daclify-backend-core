@@ -43,6 +43,7 @@ const encryptionKey = EncryptionPublicKeySchema.parse({
   x: jwk.x,
   y: jwk.y,
 });
+let nativeAddress = 1;
 let bound = true,
   evmActive = true,
   chainMismatch = false,
@@ -173,6 +174,7 @@ beforeAll(async () => {
   app = await createServer(pool, gateway, origin, { origins: ['http://localhost:5198'] });
 });
 beforeEach(() => {
+  ++nativeAddress;
   bound = true;
   evmActive = true;
   chainMismatch = false;
@@ -187,12 +189,17 @@ afterAll(async () => {
 });
 const cookies = (response: { cookies: { name: string; value: string }[] }) =>
   response.cookies.map((c) => `${c.name}=${c.value}`).join('; ');
-async function nativeAttempt(account = 'alice', signer = native) {
+async function nativeAttempt(
+  account = 'alice',
+  signer = native,
+  purpose: 'login' | 'signup' = 'login',
+) {
   const response = await app.inject({
     method: 'POST',
     url: '/v1/account/native/challenge',
+    remoteAddress: '127.0.1.' + nativeAddress,
     headers: { origin },
-    payload: { purpose: 'login', account, permission: 'active' },
+    payload: { purpose, account, permission: 'active' },
   });
   expect(response.statusCode).toBe(200);
   const challenge = NativeChallengeSchema.parse(response.json());
@@ -213,7 +220,8 @@ async function nativeAttempt(account = 'alice', signer = native) {
   });
   return {
     method: 'POST' as const,
-    url: '/v1/sign-in/native',
+    url: purpose === 'signup' ? '/v1/sign-up/native' : '/v1/sign-in/native',
+    remoteAddress: '127.0.1.' + nativeAddress,
     headers: { origin, cookie: cookies(response) },
     payload: {
       id: challenge.id,
@@ -288,6 +296,7 @@ it('removes access after on-chain unlinking even while the session and database 
   });
   expect(result.json()).toEqual({ memberships: [] });
   expect((await nativeLogin()).statusCode).toBe(401);
+  expect((await app.inject(await nativeAttempt('alice', native, 'signup'))).statusCode).toBe(401);
 });
 it('recovers a Telos EVM EOA only through its current on-chain binding', async () => {
   const challenge = await app.inject({
@@ -469,6 +478,9 @@ it('requires fresh wallet and incoming key proofs to attach vault keys to the re
   });
   expect(attached.statusCode, attached.body).toBe(200);
   const upgraded = SessionSchema.parse(attached.json());
+  const reopened = await app.inject(await nativeAttempt('alice', native, 'signup'));
+  expect(reopened.statusCode, reopened.body).toBe(200);
+  expect(SessionSchema.parse(reopened.json()).account).toEqual(upgraded.account);
   expect(upgraded.account).toMatchObject({
     id: session.account.id,
     signingKey: signing.toPublic().toString(),
@@ -579,4 +591,43 @@ it('invalidates restored sessions and pending login proofs while retaining accou
     ).rows[0],
   ).toEqual({ account_id: current.id });
   expect(SessionSchema.parse((await nativeLogin()).json()).account.id).toBe(current.id);
+});
+it('provisions a new native holder without membership and reopens the same wallet-only account on later login', async () => {
+  const request = await nativeAttempt('newvoter', native, 'signup');
+  const response = await app.inject(request);
+  expect(response.statusCode, response.body).toBe(200);
+  const created = SessionSchema.parse(response.json()).account;
+  expect(created).toMatchObject({ signingKey: null, encryptionKey: null, walletOrigin: 'signup' });
+  const logged = await app.inject(await nativeAttempt('newvoter'));
+  expect(logged.statusCode, logged.body).toBe(200);
+  expect(SessionSchema.parse(logged.json()).account.id).toBe(created.id);
+  expect((await app.inject(request)).statusCode).toBe(401);
+});
+it('serializes concurrent native signup and refuses signup proofs used as login', async () => {
+  const requests = await Promise.all([
+    nativeAttempt('another', native, 'signup'),
+    nativeAttempt('another', native, 'signup'),
+  ]);
+  const responses = await Promise.all(requests.map((request) => app.inject(request)));
+  for (const response of responses) expect(response.statusCode, response.body).toBe(200);
+  expect(SessionSchema.parse(responses[0]?.json()).account.id).toBe(
+    SessionSchema.parse(responses[1]?.json()).account.id,
+  );
+  const swapped = await nativeAttempt('outsider', native, 'signup');
+  expect((await app.inject({ ...swapped, url: '/v1/sign-in/native' })).statusCode).toBe(401);
+  expect(
+    (await pool.query("SELECT 1 FROM native_links WHERE native_account='outsider'")).rowCount,
+  ).toBe(0);
+});
+
+it('does not provision accounts for forged or changed-origin native signup proofs', async () => {
+  const before = (await pool.query('SELECT count(*) FROM accounts')).rows[0];
+  const forged = await nativeAttempt('forgednew', PrivateKey.generate('K1'), 'signup');
+  expect((await app.inject(forged)).statusCode).toBe(401);
+  const moved = await nativeAttempt('movednew', native, 'signup');
+  moved.headers.origin = 'http://localhost:5198';
+  expect((await app.inject(moved)).statusCode).toBe(401);
+  expect((await pool.query('SELECT count(*) FROM accounts')).rows[0]).toEqual(before);
+  await migrate(pool);
+  expect((await app.inject(await nativeAttempt('newvoter'))).statusCode).toBe(200);
 });

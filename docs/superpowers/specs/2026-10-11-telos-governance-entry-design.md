@@ -1,6 +1,6 @@
 # Telos governance entry and wallet onboarding
 
-Date: 11 October 2026, Atlantic/Canary. Status: draft for user review. The user has selected contract-loaded election history and currently open ballots, native Telos Zero voting, and automatic Daclify account pairing during the voting journey. This document supplies implementation choices for review; it does not authorize production deployment or claim that this integration exists.
+Date: 11 October 2026, Atlantic/Canary. Status: approved for inline implementation by the user's “ok do it”. The user has selected contract-loaded election history and currently open ballots, native Telos Zero voting, and automatic Daclify account pairing during the voting journey. The integration is implemented in development source; [verification evidence](../../evidence/2026-10-11-telos-governance-entry.md) records its qualification limits. Production deployment remains outside this authorization.
 
 ## Intent and established scope
 
@@ -10,7 +10,7 @@ The user wants no additional community activities in this area. Existing proposa
 
 Automatic pairing means verifying control of the native account and creating or reopening its Daclify service account. A wallet connection, publicly visible previous vote, or caller-supplied account name is not proof of control. The native account remains the voting identity recognized by Telos.
 
-## Builder choices proposed here
+## Implementation choices
 
 These are design calls, not additional requirements stated by the user:
 
@@ -107,4 +107,4 @@ Primary references: [Telos Decide overview](https://docs.telos.net/zero/governan
 
 Repository evidence: `services/api/src/auth/native-routes.ts`, `services/api/src/auth/wallet-recovery.ts`, `protocol/native-wallet.ts`, frontend `src/auth/telos-zero.ts`, `src/components/NativeWalletPanel.vue`, and `src/views/Account.vue`. Existing wallet-only/key-attachment limits are documented in [upgrade 0.6](../../operations/upgrade-0.6.md). Follow the [master plan](../plans/2026-10-05-daclify-v2-master-plan.md), [architecture](2026-10-05-daclify-v2-architecture.md), and [release/docs/test policy](../plans/2026-10-05-daclify-v2-release-docs-test-policy.md).
 
-Design reviewed inline under Ponytail Full and the brainstorming builder-check prompt. Workspace instructions prohibit sub-agent delegation. Scope approval covers history, open ballots and the native-wallet entry idea; approval of this complete written design remains pending before the implementation plan.
+Design reviewed inline under Ponytail Full and the brainstorming builder-check prompt. Workspace instructions prohibit sub-agent delegation. The user approved implementation after receiving the complete written design; proceed inline through the implementation plan without additional approval checkpoints.

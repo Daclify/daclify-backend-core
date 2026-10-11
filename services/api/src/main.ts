@@ -16,6 +16,7 @@ import { startPollingWorker } from './jobs.js';
 import { createServer } from './server.js';
 import { PinataStorage } from './content/pinata.js';
 import { readRecoveryConfiguration } from './auth/recovery-config.js';
+import { readTelosPins } from './telos-governance.js';
 import { readPinataStorageScope } from './content/config.js';
 import { GatewayAllowance } from './content/gateway-allowance.js';
 import { ContentService } from './content/service.js';
@@ -245,6 +246,7 @@ const connectedApps = appConfig
   ? await ConnectedApps.create(pool, chain.connectedApps, appConfig)
   : undefined;
 const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
+  telosGovernance: readTelosPins(process.env),
   ...(connectedApps ? { connectedApps } : {}),
   ...(recovery ? { recovery } : {}),
   origins,

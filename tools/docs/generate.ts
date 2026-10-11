@@ -37,6 +37,7 @@ const output = generateDocumentation(
           : endpoint.path.startsWith('/v1/billing')
             ? 'service-payment'
             : endpoint.path.startsWith('/v1/account') ||
+                endpoint.path === '/v1/sign-up/native' ||
                 endpoint.path.startsWith('/v1/people') ||
                 endpoint.path.includes('profile')
               ? 'accounts'
