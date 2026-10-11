@@ -98,4 +98,4 @@ The [remediation guide](operations/project-audit-remediation.md) connects the si
 
 - [Unified Users and DAO activity](operations/unified-users.md): public identity aggregation, legacy activity initialization, bounded RAM and coordinated testnet cutover.
 
-See [monthly module access](operations/module-fees.md) for governed prices, the free tier and manual calendar-month renewal.
+See [monthly module access](operations/module-fees.md) for governed prices, the free tier and manual calendar-month renewal, and [the testnet qualification](evidence/2026-10-11-monthly-module-fees.md) for the actual sandbox payment/refund, native threshold and live encrypted-document results.
