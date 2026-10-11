@@ -169,13 +169,21 @@ export function registerConnectedAppsRoutes(
       instruction.action === 'recordact'
         ? ActivityActionSchemas.recordact
         : ActivityActionSchemas.askreview;
-    const data = schema.parse(
-      Serializer.decode({
-        abi: ABI.from(activityAbi),
-        type: instruction.action,
-        data: instruction.data,
-      }),
+    const fields = z.record(z.string(), z.unknown()).parse(
+      Serializer.objectify(
+        Serializer.decode({
+          abi: ABI.from(activityAbi),
+          type: instruction.action,
+          data: instruction.data,
+        }),
+      ),
     );
+    // Wharfkit emits safe uint64 values as numbers; action schemas require decimal strings.
+    for (const field of ['dao_id', 'member_id', 'app_id', 'key_epoch']) {
+      const value = fields[field];
+      if (typeof value === 'number') fields[field] = String(value);
+    }
+    const data = schema.parse(fields);
     if (
       data.app_id !== access.claims.appId ||
       data.member_id !== access.claims.memberId ||

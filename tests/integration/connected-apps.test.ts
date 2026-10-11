@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, afterAll, expect, it } from 'vitest';
+import { beforeAll, beforeEach, afterAll, expect, it, vi } from 'vitest';
 import { Pool } from 'pg';
 import { generateKeyPairSync, randomUUID, createHash } from 'node:crypto';
 import { PrivateKey } from '@wharfkit/antelope';
@@ -25,6 +25,9 @@ import {
 } from '../../protocol/connected-apps.js';
 import { EncryptionPublicKeySchema } from '../../protocol/crypto.js';
 import { RuntimeTableSchemas } from '../../sdk/generated/schemas.js';
+import { encodeActivity } from '@daclify/modules/sdk';
+import { makeInstruction, instructionDigest } from '../../sdk/index.js';
+import { DaoRefSchema } from '../../protocol/base.js';
 const url = process.env.DATABASE_URL;
 if (
   !url ||
@@ -35,7 +38,12 @@ if (
 const pool = new Pool({ connectionString: url });
 const issuer = 'https://api.daclify.example',
   frontend = 'https://daclify.example';
-const dao = { chainId: 'ab'.repeat(32), contract: 'daclifycore', daoId: '1', interfaceVersion: 1 };
+const dao = DaoRefSchema.parse({
+  chainId: 'ab'.repeat(32),
+  contract: 'daclifycore',
+  daoId: '1',
+  interfaceVersion: 1,
+});
 const network = NetworkSchema.parse({
   chainId: dao.chainId,
   runtime: dao.contract,
@@ -422,6 +430,86 @@ it('protects consent with frontend Origin and CSRF while app CORS grants no cook
   });
   expect(root.statusCode).toBe(403);
 });
+it.each(['recordact', 'askreview'] as const)(
+  'relays canonical %s ABI bytes over HTTP and rejects another app payload',
+  async (action) => {
+    const delegate = PrivateKey.generate('K1');
+    const redirect = await service.authorize({
+      ...authRequest(),
+      signing_key: delegate.toPublic().toString(),
+      grant_seconds: 600,
+    });
+    const id = new URL(redirect).searchParams.get('request');
+    if (!id) throw new Error('Fixture request');
+    const consent = await service.consent(account(2), id);
+    sessions.set('101', {
+      credential: RuntimeTableSchemas.sessions.parse({
+        id: '101',
+        member_id: '3',
+        signing_key: delegate.toPublic().toString(),
+        expires: consent.grantExpires,
+        credential_epoch: '1',
+        permissions: [],
+      }),
+      scope: RuntimeTableSchemas.appscopes.parse({ id: '101', app_id: '1', revision: '1' }),
+    });
+    const approved = await service.approve(account(2), id, '101');
+    const issued = AppTokenSchema.parse(
+      await service.token({
+        grant_type: 'authorization_code',
+        client_id: app().clientId,
+        redirect_uri: app().config.redirectUris[0],
+        code: new URL(approved.redirect).searchParams.get('code'),
+        code_verifier: verifier,
+      }),
+    );
+    const relay = vi.spyOn(service.chain, 'relay');
+    const submit = async (appId: string) => {
+      const instruction = makeInstruction(
+        dao,
+        '3',
+        '0',
+        Math.floor(Date.now() / 1000) + 120,
+        'activity',
+        action,
+        encodeActivity(action, {
+          runtime: dao.contract,
+          dao_id: dao.daoId,
+          member_id: '3',
+          app_id: appId,
+          source_id: '11'.repeat(32),
+          source_revision: '22'.repeat(32),
+          event_id: '33'.repeat(32),
+          evidence_cid: '',
+          evidence_hash: '00'.repeat(32),
+          key_epoch: '0',
+        }),
+      );
+      const signature = delegate.signDigest(instructionDigest(instruction)).toString();
+      const response = await server.inject({
+        method: 'POST',
+        url: '/v1/connected-apps/relay',
+        headers: { origin: 'https://app1.example', authorization: 'Bearer ' + issued.access_token },
+        payload: { request: instruction, signature },
+      });
+      return { response, instruction, signature };
+    };
+    const accepted = await submit('1');
+    expect(accepted.response.statusCode).toBe(200);
+    expect(accepted.response.json()).toEqual({ transactionId: 'cc'.repeat(32) });
+    expect(relay).toHaveBeenCalledWith(
+      account(2),
+      accepted.instruction,
+      accepted.signature,
+      '101',
+      '1',
+    );
+    const denied = await submit('2');
+    expect(denied.response.statusCode).toBe(403);
+    expect(denied.response.json()).toMatchObject({ code: 'APP_SCOPE' });
+    expect(relay).toHaveBeenCalledTimes(1);
+  },
+);
 it('supports standard form token exchange, restricts token audience and revokes logout', async () => {
   const codeValue = await code(),
     body = new URLSearchParams({
