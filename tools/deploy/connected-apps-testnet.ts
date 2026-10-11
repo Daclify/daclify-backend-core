@@ -18,7 +18,7 @@ import { z } from 'zod';
 import { ModuleCodeHashes, activityAbi } from '@daclify/modules/sdk';
 import { VERSION, parseUnits } from '../../protocol/base.js';
 import { RuntimeCodeHash, RuntimeRawAbiHash, RuntimeTableSchemas } from '../../sdk/index.js';
-import { HubDeploymentRowSchema, HubMetadataSchema } from '../../protocol/directory.js';
+import { HubDeploymentRowSchema } from '../../protocol/directory.js';
 import { ramMarketCost, tlosAsset } from '../../protocol/resources.js';
 import { createRpcClient } from '../../services/api/src/rpc.js';
 import { parseEnvFile } from '../../services/api/src/env-file.js';
@@ -429,15 +429,7 @@ if (mode === '--prepare') {
           ...deployment,
           code_hash: RuntimeCodeHash,
           abi_hash: RuntimeRawAbiHash,
-          metadata: JSON.stringify(
-            HubMetadataSchema.parse({
-              ...HubMetadataSchema.parse(JSON.parse(deployment.metadata)),
-              modules: [
-                ...HubMetadataSchema.parse(JSON.parse(deployment.metadata)).modules,
-                { id: 'activity', account: moduleAccount },
-              ],
-            }),
-          ),
+          metadata: deployment.metadata,
         },
       },
       hubAbi,
