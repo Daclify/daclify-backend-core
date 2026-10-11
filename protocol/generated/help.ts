@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle={
   "producer": "core",
-  "packageVersion": "0.13.0-alpha.5",
+  "packageVersion": "0.13.0-alpha.6",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -18,7 +18,7 @@ export const CoreHelpBundle={
       "id": "accounts",
       "title": "Quick signup or your own encrypted vault",
       "paragraphs": [
-        "New visitors can choose Get started quickly with a verified email code or Telegram identity, or Create with your own keys using a vault password and saved encrypted kit. Quick signup explicitly authorizes Daclify-assisted recovery and opens the original signing and private-document keys without requiring a password or kit first. It does not create DAO membership or voting rights. Keys are generated only after provider verification and remain in browser memory; the service verifies the encrypted backup and both original keys before activating the account. Live quick signup remains unavailable until independent storage and the recovery key service are qualified.",
+        "New visitors can choose Get started quickly with a verified email code or Telegram identity, or Create with your own keys using a vault password and saved encrypted kit. Quick signup explicitly authorizes Daclify-assisted recovery and opens the original signing and private-document keys without requiring a password or kit first. It does not create DAO membership or voting rights. Keys are generated only after provider verification and remain in browser memory; the service verifies the encrypted backup and both original keys before activating the account. Mainnet quick signup requires independent storage and qualified recovery hosts. An explicitly labelled single-VM testnet mode can use a verified local key restore; it cannot prove recovery after losing the VM and does not qualify wallet or passkey unlocks. The signup screen shows the operator’s recovery notice before consent.",
         "A previously paired email or Telegram identity opens its existing account with its current recovery settings. Choosing the quick-signup screen never silently enables assisted recovery on an existing account. Ordinary sign-in with an unpaired identity offers an explicit new-account path. Telegram redirects preserve the requested destination and resume a short-lived browser-bound signup; no plaintext vault crosses the redirect. Keep the setup tab open to retry a backup outage with the same keys. Expired or abandoned ceremonies must restart provider verification, and committed assisted-key history is retained.",
         "Daclify-key login signs both your public signing key and public encryption key in a short-lived v3 challenge. The app checks the keys and issuing API before asking the vault to sign. An API/frontend update may require refreshing the app and restarting an in-progress login; your existing account, recovery kit and private keys are preserved.",
         "Sign in with your Daclify keys or a previously paired supported email, Telegram, passkey, Telos Zero account or Telos EVM wallet. A currently activated on-chain wallet can also reconstruct wallet-only access after the service database is lost. Signing in and recovering service access do not create membership or grant new permissions in a DAO. Provider availability depends on server configuration; complete Google browser login remains unfinished.",

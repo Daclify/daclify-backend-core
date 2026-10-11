@@ -54,6 +54,9 @@ export const RecoveryQualificationSchema = z
   );
 const EnvironmentSchema = z.object({
   RECOVERY_ENABLED: z.literal('1'),
+  RECOVERY_MODE: z.enum(['independent', 'testnet-single-host']).default('independent'),
+  NETWORK_ENVIRONMENT: z.enum(['local', 'testnet', 'mainnet']).optional(),
+  CHAIN_ID: z.string().optional(),
   RECOVERY_OPENBAO_ADDRESS: ApiOriginSchema.refine((value) => value.startsWith('https://')),
   RECOVERY_OPENBAO_TOKEN_FILE: z.string().startsWith('/'),
   RECOVERY_QUALIFICATION_FILE: z.string().startsWith('/'),
@@ -63,6 +66,20 @@ const EnvironmentSchema = z.object({
   CONTENT_GATEWAY_KEY: z.string().optional(),
   PINATA_STORAGE_SCOPE: ProviderScopeSchema,
 });
+const DevelopmentQualificationSchema = z.strictObject({
+  mode: z.literal('testnet-single-host'),
+  version: z.literal(1),
+  coreVersion: z.literal(VERSION),
+  origin: ApiOriginSchema,
+  storeScope: ProviderScopeSchema,
+  keyServiceOrigin: ApiOriginSchema,
+  issuedAt: z.iso.datetime(),
+  expiresAt: z.iso.datetime(),
+  host: z.string().min(1).max(255),
+  independentHost: z.literal(false),
+  reviewedBy: z.string().min(1).max(128),
+  checks: z.tuple([EvidenceSchema.extend({ kind: z.literal('testnet-local-restore') })]),
+});
 export async function readRecoveryConfiguration(
   env: Record<string, string | undefined>,
 ): Promise<RecoveryConfiguration | undefined> {
@@ -70,6 +87,16 @@ export async function readRecoveryConfiguration(
   try {
     const config = EnvironmentSchema.parse(env),
       directory = await realpath(dirname(config.RECOVERY_QUALIFICATION_FILE));
+    const developmentOnly = config.RECOVERY_MODE === 'testnet-single-host';
+    if (
+      developmentOnly &&
+      (config.NETWORK_ENVIRONMENT !== 'testnet' ||
+        config.CHAIN_ID !== '1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f' ||
+        !['127.0.0.1', 'localhost', '[::1]'].includes(
+          new URL(config.RECOVERY_OPENBAO_ADDRESS).hostname,
+        ))
+    )
+      throw new Error();
     const reportPath = await realpath(config.RECOVERY_QUALIFICATION_FILE);
     const reportStat = await stat(reportPath);
     if (
@@ -79,9 +106,10 @@ export async function readRecoveryConfiguration(
       reportStat.size > 65536
     )
       throw new Error();
-    const report = RecoveryQualificationSchema.parse(
-        JSON.parse(await readFile(reportPath, 'utf8')),
-      ),
+    const input: unknown = JSON.parse(await readFile(reportPath, 'utf8'));
+    const report = developmentOnly
+        ? DevelopmentQualificationSchema.parse(input)
+        : RecoveryQualificationSchema.parse(input),
       now = Date.now();
     if (
       report.origin !== config.FRONTEND_ORIGIN ||
@@ -89,10 +117,12 @@ export async function readRecoveryConfiguration(
       report.storeScope !== config.PINATA_STORAGE_SCOPE ||
       Date.parse(report.issuedAt) > now ||
       Date.parse(report.expiresAt) <= now ||
-      Date.parse(report.expiresAt) - Date.parse(report.issuedAt) > 90 * 86400000
+      Date.parse(report.expiresAt) - Date.parse(report.issuedAt) >
+        (developmentOnly ? 7 : 90) * 86400000
     )
       throw new Error();
-    for (const item of [...report.checks, ...report.clients]) {
+    const clients = 'clients' in report ? report.clients : [];
+    for (const item of [...report.checks, ...clients]) {
       const path = await realpath(resolve(directory, item.file));
       const metadata = await stat(path);
       if (
@@ -113,6 +143,15 @@ export async function readRecoveryConfiguration(
         })
         .parse(JSON.parse(bytes.toString('utf8')));
       if (evidence.kind !== item.kind || evidence.origin !== report.origin) throw new Error();
+      if (developmentOnly)
+        z.object({
+          independentHost: z.literal(false),
+          sourceUnavailable: z.literal(true),
+          originalKeyRecovered: z.literal(true),
+          leastPrivilegeDenials: z.int().min(4),
+          auditPlaintextExcluded: z.literal(true),
+          tlsVerified: z.literal(true),
+        }).parse(JSON.parse(bytes.toString('utf8')));
     }
     const tokenPath = config.RECOVERY_OPENBAO_TOKEN_FILE;
     async function token(): Promise<string> {
@@ -134,15 +173,16 @@ export async function readRecoveryConfiguration(
       keys,
       report.storeScope,
     );
-    const qualifiedWallets = report.clients.flatMap((client) =>
+    const qualifiedWallets = clients.flatMap((client) =>
       client.kind === 'evm' || client.kind === 'native' ? [client.kind] : [],
     );
     return {
       store,
       keys,
       qualifiedWallets,
-      passkeysQualified: report.clients.some((client) => client.kind === 'passkey'),
-      assistedQualified: report.assisted,
+      passkeysQualified: clients.some((client) => client.kind === 'passkey'),
+      assistedQualified: 'assisted' in report ? report.assisted : true,
+      developmentOnly,
       expiresAt: Date.parse(report.expiresAt),
     };
   } catch {

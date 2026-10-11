@@ -61,6 +61,13 @@ export class SignupService {
       (config.expiresAt === undefined || config.expiresAt > Date.now()),
     );
   }
+  notice(): string | null {
+    if (!this.available())
+      return 'Quick signup needs a configured recovery service and encrypted backups.';
+    return this.configuration?.developmentOnly
+      ? 'Testnet development recovery: the API and key service share one VM. Losing that VM may lose recovery; independent-host recovery has not been qualified.'
+      : null;
+  }
   private configured() {
     const config = this.configuration;
     if (!this.available() || !config?.keys)

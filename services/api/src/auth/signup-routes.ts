@@ -88,9 +88,7 @@ export function registerSignupRoutes(
       email: { delivery: signIn?.deliverEmail ? 'mail' : 'unavailable' },
       assisted: {
         available: service.available(),
-        reason: service.available()
-          ? null
-          : 'Quick signup needs a qualified recovery service and independent encrypted backups.',
+        reason: service.notice(),
       },
     };
   });

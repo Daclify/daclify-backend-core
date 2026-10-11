@@ -57,6 +57,7 @@ export interface RecoveryConfiguration {
   qualifiedWallets: readonly ('evm' | 'native')[];
   passkeysQualified: boolean;
   assistedQualified: boolean;
+  developmentOnly?: boolean;
   keys?: RecoveryKeyProvider;
   expiresAt?: number;
 }

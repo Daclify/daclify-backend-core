@@ -1,6 +1,6 @@
 # Password-free devices and independent recovery keys
 
-This prepared deployment is **disabled by default**. It adds no live custody service, hosted key or off-site backup. Local verification used OpenBao 2.7.1 with its official checksum, a real disposable Raft snapshot restore and restricted API tokens. That test does not qualify an independent host or a real wallet/passkey.
+Independent recovery is **disabled by default**. Mainnet enablement requires the separate-host qualification below. The explicit single-host testnet option is described separately; it does not qualify independent recovery. Local verification used OpenBao 2.7.1 with its official checksum, a real disposable Raft snapshot restore and restricted API tokens. That test does not qualify an independent host or a real wallet/passkey.
 
 Users choose each paired method in Account → Sign-in → Full access on another device. Pairing alone signs into the same service account; it does not enable key recovery. Full access restores the **original signing and P-256 document keys** into browser memory, without a vault password. An idle lock requires a new sign-in or device approval. The existing encrypted JSON kit remains an independent fallback.
 
@@ -15,7 +15,17 @@ Google's complete browser sign-in remains unavailable; this feature does not mak
 
 Assisted consent is committed before the browser can deliver a spare unlocking key. `assisted_ever` is permanent and appears in the account, public join identity and DAO-creation policy. Disabling methods cannot recall a key already obtained. Accounts that authorized assisted recovery cannot found or enroll as user-controlled identities in strict private DAOs. Existing strict-private memberships, including retained historical mappings and inactive membership, block assisted setup; unresolved policy reads fail closed.
 
-## Required topology
+## Single-host testnet development option
+
+The user authorised keeping the testnet API, database and OpenBao on the current VM. Set `RECOVERY_MODE=testnet-single-host` only with `NETWORK_ENVIRONMENT=testnet` and the actual Telos testnet chain ID. OpenBao must use loopback HTTPS with certificate verification; the API receives its restricted renewable token from a protected file. `RECOVERY_QUALIFICATION_FILE` points to a distinct report labelled `mode:testnet-single-host` and `independentHost:false`. It binds the current core version, site, storage scope and key-service origin, includes hashed actual local-restore evidence and expires within seven days. This mode enables assisted recovery only; it cannot qualify wallet or passkey unlocks. Mainnet and other chain IDs reject it.
+
+The local drill must recover an original key from a Raft snapshot with the source service unavailable, verify TLS and audit redaction, and demonstrate denied key creation/export/metadata/snapshot requests under the API token. This is a same-VM drill: it does not establish recovery after losing the VM. The signup screen displays that limitation before consent. Assisted authority, strict-private DAO admission and permanent authority history use the same rules as independent recovery.
+
+The installed testnet services are `daclify-testnet-recovery.service` and `daclify-testnet-recovery-agent.service`. State, TLS, audit logs, operator material, agent credentials and evidence live under `/data/daclify-runtime/recovery-testnet`, with private directories/files. `ops/recovery/testnet-unseal.mjs` provides an explicitly testnet-only restart helper with readiness checks. Its five shares/three-share threshold are retained on this VM for development convenience; these are **not independent custodians**. The seven-day AppRole bootstrap secret is retained in a protected local file for agent restarts and yields only the reviewed API policy. Requalify and renew bootstrap material before expiry. Do not put tokens or unseal shares in chat, Git or the API environment.
+
+For mainnet, use two separately administered service hosts: API/database and OpenBao. Keep encrypted backups outside both hosts, for example in a Storage Box, and keep unseal shares and the backup decryption key with offline holders. A third server is not required merely to store backup files. Provision fresh mainnet keys/credentials and qualify actual source-loss restoration using the instructions below; copying the testnet development report or retained local shares is not qualification.
+
+## Required topology for independent recovery
 
 1. API/database host: existing Daclify services and a dedicated least-privilege API OS user.
 2. **Separate** OpenBao host: TLS, Raft data, audit logs, controlled firewall and restricted API access. A second container/directory on the API host is not independent.

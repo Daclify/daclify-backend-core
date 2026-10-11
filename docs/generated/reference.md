@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.13.0-alpha.5 · interface 1.
+Package 0.13.0-alpha.6 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -14,7 +14,7 @@ Deactivating a member advances the epoch for future content; an authorized admin
 
 ## Quick signup or your own encrypted vault
 
-New visitors can choose Get started quickly with a verified email code or Telegram identity, or Create with your own keys using a vault password and saved encrypted kit. Quick signup explicitly authorizes Daclify-assisted recovery and opens the original signing and private-document keys without requiring a password or kit first. It does not create DAO membership or voting rights. Keys are generated only after provider verification and remain in browser memory; the service verifies the encrypted backup and both original keys before activating the account. Live quick signup remains unavailable until independent storage and the recovery key service are qualified.
+New visitors can choose Get started quickly with a verified email code or Telegram identity, or Create with your own keys using a vault password and saved encrypted kit. Quick signup explicitly authorizes Daclify-assisted recovery and opens the original signing and private-document keys without requiring a password or kit first. It does not create DAO membership or voting rights. Keys are generated only after provider verification and remain in browser memory; the service verifies the encrypted backup and both original keys before activating the account. Mainnet quick signup requires independent storage and qualified recovery hosts. An explicitly labelled single-VM testnet mode can use a verified local key restore; it cannot prove recovery after losing the VM and does not qualify wallet or passkey unlocks. The signup screen shows the operator’s recovery notice before consent.
 
 A previously paired email or Telegram identity opens its existing account with its current recovery settings. Choosing the quick-signup screen never silently enables assisted recovery on an existing account. Ordinary sign-in with an unpaired identity offers an explicit new-account path. Telegram redirects preserve the requested destination and resume a short-lived browser-bound signup; no plaintext vault crosses the redirect. Keep the setup tab open to retry a backup outage with the same keys. Expired or abandoned ceremonies must restart provider verification, and committed assisted-key history is retained.
 
