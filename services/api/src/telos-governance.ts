@@ -112,7 +112,15 @@ export function registerTelosGovernanceRoutes(
       return reply
         .code(400)
         .send({ code: 'INPUT_INVALID', message: 'Invalid Telos governance request.' });
-    return run(request.ip, reply, (reader) => reader.ballots(query.data.cursor));
+    return run(request.ip, reply, (reader) => reader.ballots(query.data.cursor, query.data.kind));
+  });
+  app.get(TelosGovernanceRoutes.producers.path, async (request, reply) => {
+    const query = TelosGovernanceRoutes.producers.query.safeParse(request.query);
+    if (!query.success)
+      return reply
+        .code(400)
+        .send({ code: 'INPUT_INVALID', message: 'Invalid Telos governance request.' });
+    return run(request.ip, reply, (reader) => reader.producers(query.data.cursor));
   });
   const paramsSchema = z.strictObject({ ballot: TelosGovernanceRoutes.prepare.input.shape.ballot });
   app.get(TelosGovernanceRoutes.ballot.path, async (request, reply) => {

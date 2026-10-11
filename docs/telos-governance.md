@@ -4,13 +4,17 @@ The public `/telos` page brings Telos holders into Daclify through retained prop
 
 ## Holder experience
 
-Browsing creates no account. Records appear in contract order, 25 source rows at a time; Open and History filters apply to the displayed page. Other treasuries and categories are skipped while preserving the continuation cursor. Closed and archived records show stored option totals. A ballot whose voting period ended while its status remains `voting` is labelled Awaiting closure. Deleted records and cleaned vote receipts are outside this history.
+Browsing creates no account. Telos DAO separates Ballots, Elections and Block Producers. Elections offers Telos Foundation (`tf` publisher) and all network elections. Foundation records use the `leaderboard` category in the deployed Decide contract; those records are now retained by the reader. Closed and archived records show stored option totals. A ballot whose voting period ended while its status remains `voting` is labelled Awaiting closure. Deleted records and cleaned vote receipts are outside this history.
+
+Open, History and search apply to loaded records. Load more appends records. A filtered API request scans at most four table pages of 25 rows, stopping at the first page with matches and preserving its continuation. The browser automatically continues at most eight empty batches, then offers further loading. An empty batch with a continuation does not establish that the chain has no elections.
+
+Block Producers reads the current weighted-vote order with `get_producers` and the active schedule separately with `get_producer_schedule`, using the same operator-selected chain. Registration and schedule membership are distinct. Weights are contract weighted votes, not direct TLOS balances. The reader does not provide historic producer schedules or producer voting actions.
 
 Each record identifies its publisher. A public VOTE ballot is not automatically an official Telos election or proposal. The page displays contract option names when richer candidate information is unavailable. HTTPS content links open separately; ballot metadata is rendered as text.
 
 Vote with Telos Zero opens Anchor and requests a fresh, purpose-bound account proof. Continuing creates a wallet-only Daclify account and verified native pairing, or reuses the existing pairing and preserves its vault keys. Cancelling the subsequent vote can leave the account created. Existing users should pair the native wallet in Account first if they want to retain an account opened through another method.
 
-The wallet then reviews the external ballot transaction. A new Decide voter registers and casts atomically; a registered voter casts directly. Supported methods are `1token1vote`, `1tokennvote` and `1acct1vote`. Light ballots and other methods stay read-only. The native account's authority and Decide's rules govern the vote. External voting creates no Daclify membership, credits or private-document keys.
+The wallet then reviews the external ballot transaction. A new Decide voter registers and casts atomically; a registered voter casts directly. Supported methods are `1token1vote`, `1tokennvote` and `1acct1vote` for compatible proposal/election records. Foundation leaderboard records, light ballots and other methods stay read-only until separately qualified. The native account's authority and Decide's rules govern the vote. External voting creates no Daclify membership, credits or private-document keys.
 
 The app reads the balance used by the ballot from Decide's voter record. Standard VOTE stake is synchronized with external TLOS stake and REX by the contract; an existing registered voter may need to refresh that record in the Telos app after staking changes. Daclify does not recompute or silently refresh it. See [Telos voting documentation](https://docs.telos.net/zero/governance/decide/voting/), [ballot rules](https://docs.telos.net/zero/governance/decide/ballots/) and the [contract implementation reviewed here](https://github.com/telosnetwork/telos-decide/tree/64d3f256fb965415f718af2409129c863b6cf229/contracts/decide).
 
@@ -22,7 +26,7 @@ Deploy the matching core, module and frontend development versions together. App
 
 Reads remain available without signing pins. To enable compatible ballots, configure both `TELOS_DECIDE_CODE_HASH` and `TELOS_DECIDE_ABI_HASH` after reviewing the deployed contract and its ABI. Both are lowercase 64-character hashes. Missing or changed pins disable signing; an upgrade requires fresh review and configuration. A live observation of a hash is not release qualification.
 
-Public routes are producer-owned in `@daclify/modules`: list, detail, voter state and vote preparation under `/v1/telos`. Core hosts rate-limited reads and a bounded RPC transport with a 10-second timeout, 256 KiB response cap and refused redirects. Preparation never signs or broadcasts. The frontend verifies live chain identity, pins, voter state, ballot rules and the exact wallet transaction again after approval.
+Public routes are producer-owned in `@daclify/modules`: list, detail, producer standings, voter state and vote preparation under `/v1/telos`. Ballot list accepts optional `kind=ballots|elections|foundation`; older unfiltered calls remain compatible. Producer continuation uses a validated native account name. Core hosts rate-limited reads and a bounded RPC transport with a 10-second timeout, 256 KiB response cap and refused redirects. Preparation never signs or broadcasts. The frontend verifies live chain identity, pins, voter state, ballot rules and the exact wallet transaction again after approval.
 
 ## Confirmation and qualification
 

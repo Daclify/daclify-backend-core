@@ -55,6 +55,35 @@ it('redacts provider failures and refuses unpinned preparation', async () => {
 });
 
 afterEach(() => vi.unstubAllGlobals());
+it('hosts public producer standings and validates election filters and cursors', async () => {
+  const app = Fastify();
+  registerTelosGovernanceRoutes(
+    app,
+    new TelosGovernanceClient(source, async (path) => {
+      if (path === 'get_info') return { chain_id: source.chainId };
+      if (path === 'get_producers')
+        return {
+          rows: [{ owner: 'alice', total_votes: '1.5', is_active: 1, url: '', location: 0 }],
+          total_producer_vote_weight: '1.5',
+          more: '',
+        };
+      if (path === 'get_producer_schedule')
+        return { active: { version: 1, producers: [{ producer_name: 'alice' }] } };
+      return { rows: [], more: false };
+    }),
+  );
+  const result = await app.inject('/v1/telos/producers');
+  expect(result.statusCode, result.body).toBe(200);
+  expect(result.json()).toMatchObject({
+    source: { contract: 'eosio' },
+    activeSchedule: ['alice'],
+    producers: [{ owner: 'alice', is_active: true }],
+  });
+  expect((await app.inject('/v1/telos/producers?cursor=invalid!')).statusCode).toBe(400);
+  expect((await app.inject('/v1/telos/ballots?kind=foundation')).statusCode).toBe(200);
+  expect((await app.inject('/v1/telos/ballots?kind=unknown')).statusCode).toBe(400);
+  await app.close();
+});
 it('preserves an operator RPC path prefix and bounds provider responses', async () => {
   const fetcher = vi
     .fn<typeof fetch>()
