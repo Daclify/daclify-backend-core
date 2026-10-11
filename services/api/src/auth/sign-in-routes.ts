@@ -3,6 +3,7 @@ import type { Pool } from 'pg';
 import { z } from 'zod';
 import { createHash, randomBytes } from 'node:crypto';
 import type { Account } from '../../../../protocol/api.js';
+import { ApiRoutes } from '../../../../protocol/routes.js';
 import {
   CredentialHistoryQuerySchema,
   CredentialHistorySchema,
@@ -64,7 +65,13 @@ export function registerSignInRoutes(
   const confirm = createWindowLimiter(60, 10 * 60_000, 6000, sharedProxyIps);
   app.addHook('preHandler', async (request) => {
     const path = request.routeOptions.url ?? '';
-    if (request.method !== 'POST' || !path.startsWith('/v1/sign-in/')) return;
+    if (
+      request.method !== 'POST' ||
+      (!path.startsWith('/v1/sign-in/') &&
+        path !== ApiRoutes.login.path &&
+        path !== ApiRoutes.providerLogin.path)
+    )
+      return;
     const limiter = path.endsWith('/options') || path.endsWith('/start') ? admit : confirm;
     if (!limiter(request.ip, Date.now())) throw new ApiError('RATE_LIMIT', 429);
   });

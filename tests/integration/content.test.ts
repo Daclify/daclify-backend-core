@@ -18,6 +18,9 @@ import { DaoContentSchema } from '../../protocol/content.js';
 import { HostedUploadSchema, HostedAssetUploadSchema } from '../../protocol/storage.js';
 import { RuntimeTableSchemas, runtimeAbi } from '../../sdk/index.js';
 import { ContentService } from '../../services/api/src/content/service.js';
+import { createServer } from '../../services/api/src/server.js';
+import { openAccountSession } from '../../services/api/src/auth/account-session.js';
+import { ApiRoutes } from '../../protocol/routes.js';
 import {
   recordVerifiedPin,
   storageUsed,
@@ -289,6 +292,70 @@ beforeAll(async () => {
   );
 });
 afterAll(() => pool.end());
+
+it('limits repeated-byte document uploads and reconciliation before allocating jobs or provider reads', async () => {
+  const fixture = setup(),
+    retrieve = vi.spyOn(fixture.provider, 'retrieve'),
+    session = await openAccountSession(pool, account.id),
+    origin = 'http://localhost:5178',
+    server = await createServer(pool, fixture.chain, origin, { content: fixture.service }),
+    input = fixture.request();
+  const headers = {
+    origin,
+    cookie: 'daclify_session=' + session.token,
+    'x-csrf-token': session.csrfToken,
+  };
+  try {
+    for (let index = 0; index < 20; index++) {
+      const response = await server.inject({
+        method: 'POST',
+        url: ApiRoutes.upload.path,
+        headers,
+        payload: { ...input, requestId: index ? randomUUID() : input.requestId },
+      });
+      expect(response.statusCode).toBe(200);
+    }
+    const providerReads = retrieve.mock.calls.length;
+    const denied = await server.inject({
+      method: 'POST',
+      url: ApiRoutes.upload.path,
+      headers,
+      payload: { ...input, requestId: randomUUID() },
+    });
+    expect(denied.statusCode).toBe(429);
+    expect(denied.json()).toMatchObject({ code: 'RATE_LIMIT' });
+    expect(retrieve).toHaveBeenCalledTimes(providerReads);
+    expect(
+      Number(
+        (
+          await pool.query(
+            'SELECT count(*) AS count FROM uploads WHERE account_id=$1 AND dao_key=$2',
+            [account.id, contentDaoKey(input.dao)],
+          )
+        ).rows[0].count,
+      ),
+    ).toBe(20);
+    expect(
+      Number(
+        (
+          await pool.query(
+            "SELECT count(*) AS count FROM jobs WHERE module_id='core-content' AND payload->>'uploadId' IN(SELECT id::text FROM uploads WHERE account_id=$1 AND dao_key=$2)",
+            [account.id, contentDaoKey(input.dao)],
+          )
+        ).rows[0].count,
+      ),
+    ).toBe(20);
+    const reconcile = ApiRoutes.uploadReconcile.path.replace(':requestId', input.requestId);
+    expect(
+      (await server.inject({ method: 'POST', url: reconcile, headers, payload: {} })).statusCode,
+    ).toBe(429);
+    expect(retrieve).toHaveBeenCalledTimes(providerReads);
+    const status = ApiRoutes.uploadStatus.path.replace(':requestId', input.requestId);
+    expect((await server.inject({ url: status, headers })).statusCode).toBe(200);
+  } finally {
+    await server.close();
+  }
+});
 describe('hosted upload transactions with a simulated provider', () => {
   it('curates whole files with generation checks, preserves shared references and clears bounded removal staging', async () => {
     const fixture = setup(100n),

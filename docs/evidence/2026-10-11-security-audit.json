@@ -1,0 +1,513 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-11",
+  "completedAt": "2026-10-11T17:36:30.961687+00:00",
+  "mode": "source security audit and safe local remediation",
+  "review": "inline; separate adversarial pass by the same implementer; no independent specialist review",
+  "repositories": {
+    "daclify-backend-core": {
+      "initialRevision": "c61e3a5b0f4420a587c89c1e43c990a5f642649b",
+      "branch": "dev",
+      "version": "0.13.0-alpha.6"
+    },
+    "daclify-backend-modules": {
+      "initialRevision": "6962c884cf57a00546edeaf5d1361f4438d02736",
+      "branch": "dev",
+      "version": "0.9.0-alpha.22"
+    },
+    "daclify-frontend": {
+      "initialRevision": "7a4a198e11cb440000d174cc08780147cfda6cdd",
+      "branch": "dev",
+      "version": "0.13.0-alpha.8"
+    }
+  },
+  "remediationParent": "53f20285f5790e24c644b4c7b852f51a2ab30813",
+  "coreRemediatedFilesSha256": {
+    "services/api/src/auth/sign-in-routes.ts": "f16d4ae7825a131dd01e4d949aa35d3ed64face21dd172d3a625c60cd0ca7230",
+    "services/api/src/connected-apps/routes.ts": "06cce0808883d6c3a86cfb62c5d089d3ef4cd0a6422f0904155cb89ead349743",
+    "services/api/src/server.ts": "0b83b7b5b33d1e536ed82076918901e2feee9bb79d8fff73e45efb6b05602288",
+    "tests/integration/auth-challenge-limits.test.ts": "001c7c44564fdf7b8a73f08c61cd2d8b2207c78b1fdeca23381dcf6266e75d7c",
+    "tests/integration/connected-apps.test.ts": "52f6d3af070787b7a673b7f31658e8f02f083143dd6e4a739eb543cfeba0e042",
+    "tests/integration/content.test.ts": "031e86fde28ee34fa2c2bc4d48106147d49d2ceec3ac3f2601e727942f6b7e59",
+    "tests/integration/public-download-limits.test.ts": "b3b35a9cb843f48f40afd2febc7768635c28256f7e92b2759dc831a71b7aafd2"
+  },
+  "findings": [
+    {
+      "id": "SEC-01",
+      "severity": "medium",
+      "confidence": "high",
+      "status": "fixed-in-source",
+      "title": "Connected-app sponsored relay bypassed shared admission",
+      "cwe": [
+        "CWE-770"
+      ],
+      "locations": [
+        "services/api/src/connected-apps/routes.ts:197",
+        "services/api/src/server.ts:267"
+      ],
+      "regression": "tests/integration/connected-apps.test.ts:514"
+    },
+    {
+      "id": "SEC-02",
+      "severity": "medium",
+      "confidence": "high",
+      "status": "fixed-in-source",
+      "title": "Public document retrieval bypassed gateway download admission",
+      "cwe": [
+        "CWE-770"
+      ],
+      "locations": [
+        "services/api/src/server.ts:725",
+        "services/api/src/server.ts:985"
+      ],
+      "regression": "tests/integration/public-download-limits.test.ts:27"
+    },
+    {
+      "id": "SEC-03",
+      "severity": "medium",
+      "confidence": "high",
+      "status": "fixed-in-source",
+      "title": "Direct authentication bypassed sign-in verification admission",
+      "cwe": [
+        "CWE-770"
+      ],
+      "locations": [
+        "services/api/src/auth/sign-in-routes.ts:65"
+      ],
+      "regression": "tests/integration/auth-challenge-limits.test.ts:34"
+    },
+    {
+      "id": "SEC-04",
+      "severity": "medium",
+      "confidence": "high",
+      "status": "fixed-in-source",
+      "title": "Repeated-byte uploads and reconciliation bypassed asset-write admission",
+      "cwe": [
+        "CWE-770"
+      ],
+      "locations": [
+        "services/api/src/server.ts:964",
+        "services/api/src/server.ts:978"
+      ],
+      "regression": "tests/integration/content.test.ts:296"
+    },
+    {
+      "id": "SEC-05",
+      "severity": "low",
+      "severityContext": "Development/test dependency exposure; upstream severities retained separately; application exploitability not demonstrated",
+      "confidence": "high-for-advisory-presence",
+      "status": "unresolved",
+      "title": "Development-only contract emulator dependency advisories",
+      "repositories": [
+        "core",
+        "modules"
+      ],
+      "advisories": [
+        {
+          "package": "lodash.set",
+          "version": "4.3.2",
+          "upstreamSeverity": "high",
+          "url": "https://github.com/advisories/GHSA-p6mc-m468-83gw"
+        },
+        {
+          "package": "elliptic",
+          "version": "6.6.1",
+          "upstreamSeverity": "low",
+          "url": "https://github.com/advisories/GHSA-848j-6mx2-7j84"
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "repository": "core",
+      "command": "npm run verify (baseline)",
+      "log": "daclify-backend-core-baseline-verify.log",
+      "logSha256": "79e75e7d361cef33064f8ec2276e03634a28502ce4ca52622c825cad35101c44",
+      "exitCode": 0,
+      "testResults": {
+        "files": 139,
+        "passed": 872,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "repository": "modules",
+      "command": "npm run verify",
+      "log": "daclify-backend-modules-baseline-verify.log",
+      "logSha256": "f2a5c73bea43ff4db379125b707057d17a20a32af8396eb402601d77d906033d",
+      "exitCode": 0,
+      "testResults": {
+        "files": 30,
+        "passed": 179,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "repository": "frontend",
+      "command": "npm run verify",
+      "log": "daclify-frontend-baseline-verify.log",
+      "logSha256": "f77e481dd892a52c50d9989468b0d7aee5405d0d948e13276066e2ffda2347a8",
+      "exitCode": 0,
+      "additionalLintPolicyCases": 5,
+      "testResults": {
+        "files": 42,
+        "passed": 275,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "repository": "core",
+      "command": "npm run test:integration -- tests/integration/connected-apps.test.ts tests/integration/public-download-limits.test.ts (before fix)",
+      "log": "resource-limits-red-verified.log",
+      "logSha256": "e6e225d6c0a69b3efac8413d540aac8bc41e02d2b59f1c90293690369822a97b",
+      "exitCode": 1,
+      "expectedFailure": true,
+      "testResults": {
+        "files": 2,
+        "passed": 16,
+        "failed": 2,
+        "skipped": 0
+      }
+    },
+    {
+      "repository": "core",
+      "command": "npm run test:integration -- tests/integration/auth-challenge-limits.test.ts (before fix)",
+      "log": "login-limits-red.log",
+      "logSha256": "43b29793dd1147b75bb71b8b7763052d52897a1d7395e52e0813fea56913809f",
+      "exitCode": 1,
+      "expectedFailure": true,
+      "testResults": {
+        "files": 1,
+        "passed": 3,
+        "failed": 2,
+        "skipped": 0
+      }
+    },
+    {
+      "repository": "core",
+      "command": "npm run test:integration -- tests/integration/content.test.ts -t \"limits repeated-byte\" (before fix)",
+      "log": "upload-limits-red.log",
+      "logSha256": "85c6a174a4c55c1ac05715e3c5c5ad6d2f1d66288728e326a6ce050c6b63ce6b",
+      "exitCode": 1,
+      "expectedFailure": true,
+      "testResults": {
+        "files": 1,
+        "passed": 0,
+        "failed": 1,
+        "skipped": 42
+      }
+    },
+    {
+      "repository": "core",
+      "command": "npm run test:integration -- tests/integration/connected-apps.test.ts tests/integration/public-download-limits.test.ts tests/integration/auth-challenge-limits.test.ts",
+      "log": "security-regressions-green.log",
+      "logSha256": "37baeb062c08625e4ce11421d6244bddfa7874684d3cd314155ae8e94ab8eff2",
+      "exitCode": 0,
+      "testResults": {
+        "files": 3,
+        "passed": 23,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "repository": "core",
+      "command": "npm run test:integration -- tests/integration/content.test.ts -t \"limits repeated-byte\"",
+      "log": "upload-limits-green.log",
+      "logSha256": "752e16ab591de0e16006e97aa4e50204a4685ac5232d27391c9a0a7b0bc2b65d",
+      "exitCode": 0,
+      "testResults": {
+        "files": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 42
+      }
+    },
+    {
+      "repository": "core",
+      "command": "npm run test:integration",
+      "log": "core-full-integration.log",
+      "logSha256": "5665fd108703e4b8e70ec65b82dcf15d711eacf74b92236d2f2863c74f6ebe25",
+      "exitCode": 0,
+      "testResults": {
+        "files": 33,
+        "passed": 271,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "repository": "core",
+      "command": "npm run verify",
+      "log": "core-final-verify.log",
+      "logSha256": "0935efe070e43ff47a1ada74f66bedf7fcd2107c8c0b158593161719d8644db6",
+      "exitCode": 0,
+      "publication": "refused",
+      "qualified": false,
+      "testResults": {
+        "files": 139,
+        "passed": 872,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "repository": "core",
+      "command": "npm run build",
+      "log": "core-final-build.log",
+      "logSha256": "1920ef2f4afb442616ef59967b2bdda102e1b241c4cc8eb3d348df8a62be9bde",
+      "exitCode": 0
+    },
+    {
+      "repository": "modules",
+      "command": "npm run build",
+      "log": "modules-build.log",
+      "logSha256": "aed431dc172229b5602a0a5104cfb50a5ac28706a3d2e60a4485fefd7d03a756",
+      "exitCode": 0
+    },
+    {
+      "repository": "frontend",
+      "command": "npm run build",
+      "log": "frontend-build.log",
+      "logSha256": "b5c152bd3b8e29defadd93e17a5adc384a9e5f02b95c8e3b91fd111c8be621f9",
+      "exitCode": 0,
+      "warnings": [
+        "Existing Vite chunk-size warning"
+      ]
+    },
+    {
+      "repository": "core",
+      "command": "npm run test:native:permissions (owned Spring 1.2.2)",
+      "log": "native-permissions.log",
+      "logSha256": "df4bb31e791b6d5dc4ad8fd3bbd6261e762121afac3b1d6e4fccbb13d001b970",
+      "exitCode": 0,
+      "testResults": {
+        "files": 9,
+        "passed": 137,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "repository": "core",
+      "command": "npm run test:native -- tests/native/connected-apps.test.ts (owned Spring 1.2.2)",
+      "log": "native-connected-apps.log",
+      "logSha256": "8071a8491f04da8b09eda0c1eb1e5e80ef52857f718754b22908d17c8d44bd12",
+      "exitCode": 0,
+      "testResults": {
+        "files": 1,
+        "passed": 8,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "repository": "core",
+      "command": "npm run test:integration -- tests/integration/content.test.ts (post-review provider-read assertions)",
+      "log": "post-review-content-integration.log",
+      "logSha256": "54e27fe5d3bbbfb6536d8899473d18dac0a0ee8487406a8d07f7d9388de4c6d7",
+      "exitCode": 0,
+      "testResults": {
+        "files": 1,
+        "passed": 43,
+        "failed": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "repository": "core",
+      "command": "npm run lint; npm run typecheck; npm exec -- prettier --check <seven changed TS files>; git diff --check (sequential, post-review)",
+      "log": "post-review-static-checks.log",
+      "logSha256": "5c3d531f3cd20eef20d98c9737f420f55b2d125b87d7d50c92382d45ef502ec8",
+      "exitCode": 0
+    }
+  ],
+  "dependencyAudits": {
+    "daclify-backend-core-dependencies.json": {
+      "sha256": "9248fcbb0b211a18cc18a24fc6b8d9aafe316f6cfded752a8c6150c684ccd99b",
+      "advisoryCounts": {
+        "info": 0,
+        "low": 2,
+        "moderate": 0,
+        "high": 2,
+        "critical": 0,
+        "total": 4
+      }
+    },
+    "daclify-backend-modules-dependencies.json": {
+      "sha256": "d8aa0d04cfb1b8ad5dbe59ea7a7565b50ab255ef4e5b93dec2e3c8131b92ef2d",
+      "advisoryCounts": {
+        "info": 0,
+        "low": 2,
+        "moderate": 0,
+        "high": 2,
+        "critical": 0,
+        "total": 4
+      }
+    },
+    "daclify-frontend-dependencies.json": {
+      "sha256": "605353b096a2ebb4ea6311997d21355a4ac5828b88e15a187aadbb75c1581990",
+      "advisoryCounts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      }
+    },
+    "daclify-backend-core-production-dependencies.json": {
+      "sha256": "033761b77cf39d0c278cadb032de3dbfa24071d6c28684d75bba080ef362dde0",
+      "advisoryCounts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      }
+    },
+    "daclify-backend-modules-production-dependencies.json": {
+      "sha256": "257c7133195f2462994120452f391b9728d49e40647ff6a3e50eba6db42cdf76",
+      "advisoryCounts": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      }
+    }
+  },
+  "secretPatternScans": {
+    "current": [
+      {
+        "repo": "daclify-backend-core",
+        "textFilesScanned": 849,
+        "hits": [
+          {
+            "path": "tests/connect-provider.test.ts",
+            "line": 12,
+            "kind": "stripe_secret",
+            "fixture": true
+          },
+          {
+            "path": "tests/connect-provider.test.ts",
+            "line": 22,
+            "kind": "stripe_secret",
+            "fixture": true
+          }
+        ]
+      },
+      {
+        "repo": "daclify-backend-modules",
+        "textFilesScanned": 124,
+        "hits": []
+      },
+      {
+        "repo": "daclify-frontend",
+        "textFilesScanned": 290,
+        "hits": []
+      }
+    ],
+    "history": [
+      {
+        "repo": "daclify-backend-core",
+        "uniqueTextBlobsScanned": 2715,
+        "maximumBlobBytes": 2000000,
+        "hits": [
+          {
+            "path": "tests/connect-provider.test.ts",
+            "blob": "cf8a691f125eb34af7fb011da3978589098fb466",
+            "line": 12,
+            "kind": "stripe_secret"
+          },
+          {
+            "path": "tests/connect-provider.test.ts",
+            "blob": "cf8a691f125eb34af7fb011da3978589098fb466",
+            "line": 22,
+            "kind": "stripe_secret"
+          }
+        ]
+      },
+      {
+        "repo": "daclify-backend-modules",
+        "uniqueTextBlobsScanned": 718,
+        "maximumBlobBytes": 2000000,
+        "hits": []
+      },
+      {
+        "repo": "daclify-frontend",
+        "uniqueTextBlobsScanned": 1133,
+        "maximumBlobBytes": 2000000,
+        "hits": []
+      }
+    ],
+    "frontendBuild": {
+      "filesScanned": 98,
+      "maximumFileBytes": 2000000,
+      "hits": [],
+      "scope": "built frontend text files; limited format-pattern scan; no secret values recorded"
+    },
+    "limitations": [
+      "Format-pattern scan, not exhaustive secret detection",
+      "Binary and over-2MB files/blobs excluded",
+      "Ignored private environment and production stores not scanned",
+      "Only synthetic fixture matches; no secret values recorded"
+    ]
+  },
+  "fixtureCleanup": {
+    "name": "daclify_security_00cadd5953_test",
+    "host": "127.0.0.1",
+    "port": 5432,
+    "owner": "daclify_sec_ed67e3ff32",
+    "scope": "new owned disposable database; no source data copied",
+    "credentialFile": "database-connection.txt",
+    "removed": true,
+    "credentialFileRemoved": true,
+    "ownedDatabasesRemoved": [
+      "daclify_security_00cadd5953_test"
+    ],
+    "removedAt": "2026-10-11T17:35:10.443380+00:00"
+  },
+  "localEvidenceDirectory": "/data/daclify-runtime/security-audit-20261011",
+  "setupFailures": [
+    {
+      "log": "resource-limits-red.log",
+      "cause": "Initial test TCP authentication unavailable",
+      "sha256": "b90d489ebe5c9c35b01251a9e2d3508072c961fed27118da509cd322a19a8858"
+    },
+    {
+      "log": "resource-limits-green.log",
+      "cause": "Reused fixture provider funding scope; repaired with unique fixture scope",
+      "sha256": "42791af2ced76b809df54491cb258ca625b026d962880d606121b4114e7b47e7"
+    },
+    {
+      "log": "core-full-integration-setup-failure.log",
+      "cause": "Ephemeral role initially lacked CREATEDB for restore/wallet test databases",
+      "failedFiles": 3,
+      "passedCases": 257,
+      "failedCases": 2,
+      "skippedCases": 12,
+      "sha256": "14a6ca718298e52c3d2248be036a88f009cf42cc9aa06e0c331eb8d7914fd9e8"
+    },
+    {
+      "log": "core-remediation-types.log",
+      "cause": "Intermediate strict tuple-index typing error; corrected before final static checks",
+      "sha256": "576c5fa228d3d6ca77c9d2f097254ffdd1f637ed535e856c2215845443ac9b44"
+    }
+  ],
+  "residualRisks": [
+    "Process-local budgets reset on restart and multiply with API replicas",
+    "Development-only emulator advisories unresolved",
+    "No live provider, production infrastructure, full browser E2E or release qualification",
+    "Existing pinned artifacts used; no C++ edits or contract rebuild",
+    "No formal cryptanalysis or exhaustive historical/source/supply-chain review"
+  ],
+  "deployed": false,
+  "liveAssetOrAuthorityChanges": false
+}
