@@ -1,10 +1,10 @@
 # Connected community apps
 
-Status: proposed integration, documented on 11 October 2026. External app registration, Daclify-issued third-party login, app-bound signing grants and the Community Activity module are not implemented. This guide describes the intended product and its boundaries; it is not an available API onboarding procedure.
+Status: implemented and installed on testnet, 11 October 2026. External app registration, Daclify-issued login, app-bound signing grants and the Community Activity module are available in the qualified development release. Projects still register their own DAO/apps and deploy their own backend. Mainnet is not qualified.
 
 A community can build its own small application and use Daclify for account verification, DAO membership and selected governance records. The app keeps its interface, hosting and database. Daclify supplies the shared community relationship and records member-authorised submissions without copying the application's complete task database onto the blockchain.
 
-For a concrete project specification, use the [example mini-app design](examples/community-mini-app-design.md). The [platform design](superpowers/specs/2026-10-11-connected-community-apps-design.md) describes the proposed changes across core, modules and frontend.
+For a concrete project specification, use the [example mini-app design](examples/community-mini-app-design.md). The [platform design](superpowers/specs/2026-10-11-connected-community-apps-design.md) describes the implemented boundaries across core, modules and frontend.
 
 ## One community, several apps
 
@@ -16,9 +16,9 @@ DAO membership establishes eligibility. Each app also enforces its business perm
 
 ## Sign in and authorise actions
 
-The proposed Sign in with Daclify flow redirects to Daclify's trusted login screen. A previously paired, configured email or Telegram method can authenticate the existing account. The app receives a verified identity scoped to that app and checks active membership in its configured DAO. It receives neither the person's login pairing inventory nor their private signing or decryption keys.
+The Sign in with Daclify flow redirects to Daclify's trusted login screen. A previously paired, configured email or Telegram method can authenticate the existing account. The app receives a verified identity scoped to that app and checks active membership in its configured DAO. It receives neither the person's login pairing inventory nor their private signing or decryption keys.
 
-Login and activity authorisation are separate. A member enables a short-lived signing credential restricted to the app, DAO, module and permitted actions through Daclify's existing supported signer. After setup, a Complete click can use that credential in the app browser. The proposed first credential allows completion reporting and submission for review. Approvals and votes require their own displayed signing step.
+Login and activity authorisation are separate. A member enables a short-lived signing credential restricted to the app, DAO, module and permitted actions through Daclify's existing supported signer. After setup, a Complete click can use that credential in the app browser. The first credential allows completion reporting and submission for review. Approvals and votes require their own displayed signing step.
 
 Delegation authorises the app credential within those limits; it does not independently prove that a person inspected every field or clicked a particular button. A workflow needing confirmation of every event opens Daclify's trusted signing screen. The first delegated client keeps its private key in browser memory and requires renewed authorisation after losing it. App backends never hold that key.
 
@@ -37,7 +37,7 @@ Ordinary task creation and editing stay in the mini app. The first scope records
 
 Daclify can request current details from the app's authenticated API. A review instead uses the exact submitted source version and preserved snapshot, so editing the live task cannot silently change what a manager approves. Included photographs need actual file commitments; a mutable photo URL does not preserve the photograph.
 
-Compact records still cost RAM. Exact limits and costs require native measurement. Each DAO/app needs explicit funded capacity, bounded identifiers and safe expired-grant cleanup. The first proposal retains completed receipts; the current Archive module does not automatically support their deletion.
+Compact records still cost RAM. Native measurements and limits appear below. Each DAO/app needs explicit funded capacity, bounded identifiers and safe expired-grant cleanup. The first implementation retains completed receipts; the current Archive module does not automatically support their deletion.
 
 ## Public and private communities
 
@@ -47,7 +47,7 @@ A public DAO can publish selected information while keeping its operational apps
 
 The public blockchain still exposes member identifiers, authenticated activity, timing, commitments and native voting outcomes. Private content does not imply anonymous governance. Removing a member restricts future access and key grants but cannot retract information or old keys they already obtained.
 
-Signing credentials confer no decryption rights. The proposed first evidence viewer uses Daclify's trusted client boundary. Private evidence inside a public DAO requires explicit app encryption/key-grant support; the current public DAO document path does not provide that automatically. A mini app must not receive keys that unlock every other app's content.
+Signing credentials confer no decryption rights. The evidence viewer uses Daclify's trusted client boundary and separate app encryption/key grants, including for private evidence inside a public DAO. A mini app must not receive keys that unlock every other app's content.
 
 ## What happens when Complete is pressed
 
@@ -73,7 +73,7 @@ Works remains a separate funded contribution workflow with positive milestone am
 
 ## Developer integration
 
-The development integration uses core/frontend `0.13.0-alpha.5` and modules SDK `0.9.0-alpha.21`. Community Activity is an additive contract; the five existing module release pins stay unchanged. Testnet installation and verification are recorded separately in release evidence. This is not a production qualification.
+The installed testnet integration uses core/frontend `0.13.0-alpha.6` and modules SDK `0.9.0-alpha.22`. Community Activity is an additive contract; the five existing module release pins stay unchanged. See [installation and verification evidence](evidence/2026-10-11-connected-community-apps.md) and the [testnet recovery setup](evidence/2026-10-11-testnet-single-host-recovery.md). This is not a production qualification.
 
 ```ts
 import { ConnectedAppClient } from '@daclify/core-protocol/connected-apps';

@@ -1,0 +1,91 @@
+{
+  "date": "2026-10-11",
+  "status": "public-testnet-installed",
+  "mode": "testnet-single-host",
+  "coreVersion": "0.13.0-alpha.6",
+  "frontendVersion": "0.13.0-alpha.6",
+  "modulesSdkVersion": "0.9.0-alpha.22",
+  "independentHost": false,
+  "mainnetQualified": false,
+  "frontendOrigin": "https://testnet.app.daclify.com",
+  "apiOrigin": "https://testnet.api.daclify.com",
+  "sources": {
+    "daclify-backend-core": {
+      "commit": "a8272d437c49e0fe86ee5b40f2f1747fb033115b",
+      "archiveSha256": "7b6dd7a2ee48b1e0e59033e58c03b907b895192f5f2c36b48c4cc4995349919a"
+    },
+    "daclify-backend-modules": {
+      "commit": "6962c884cf57a00546edeaf5d1361f4438d02736",
+      "archiveSha256": "4a91486cb0de35fb910bf5f1217344d34a9405c30bcd14a815a2be750cf0cd9b"
+    },
+    "daclify-frontend": {
+      "commit": "e24aa247644959dcd1fabd97b35254dfa2349985",
+      "archiveSha256": "381102d2c74a49cbea50f2d3027250f64fc0d6d9510135ec3bc3f62756cacbfb"
+    }
+  },
+  "artifactSha256": {
+    "daclify-core-protocol-0.13.0-alpha.6.tgz": "f2e7c2214cd6d4f1f7d3c367bd6644598d4c37e9c557af99fe90ffbe75c848ea",
+    "daclify-modules-0.9.0-alpha.22.tgz": "ff40aa811318a11e58d5f578044d24036d160b5ae976c26281797751a956f24a"
+  },
+  "qualificationExpiresAt": "2026-10-17T14:46:09.233Z",
+  "restoreChecks": {
+    "sourceUnavailable": true,
+    "sourceRemoved": false,
+    "originalKeyRecovered": true,
+    "leastPrivilegeDenials": 4,
+    "auditPlaintextExcluded": true,
+    "tlsVerified": true,
+    "providerVersion": "2.7.1",
+    "snapshotSha256": "b4888c39f5bb5ed71a7318302a7cfbcd94de744f82834f69ed2b16e4938aa22f",
+    "checkedAt": "2026-10-11T14:46:09.232Z"
+  },
+  "restoreEvidenceSha256": "4b2f70cf92b05f400384d20cf3051a44809618273bb1f538f9f546ccdb2251e7",
+  "publicSignup": {
+    "syntheticProviderProof": true,
+    "actualOpenBao": true,
+    "actualEncryptedPinataStorage": true,
+    "identityAndOriginalPublicKeysPreserved": true,
+    "assistedEver": true,
+    "assistedEnabled": true,
+    "realTelegramUserCeremony": false,
+    "realEmailDeliveryCeremony": false
+  },
+  "publicChecks": {
+    "health": 200,
+    "networkCoreVersion": "0.13.0-alpha.6",
+    "assistedAvailable": true,
+    "oidcDiscovery": 200,
+    "publicJwksHasPrivateKey": false,
+    "desktopAndMobileConsentNotice": true,
+    "signedTwoAppQualification": true
+  },
+  "limits": [
+    "Same VM source-loss recovery and independent off-site retrieval remain unqualified.",
+    "Wallet/passkey private unlock clients are unqualified.",
+    "Local shares and AppRole bootstrap material are retained only for development restarts.",
+    "Qualification and bootstrap material need renewal before expiry.",
+    "Mainnet single-host recovery is rejected; no mainnet deployment occurred."
+  ],
+  "checks": {
+    "core": {
+      "files": 139,
+      "tests": 872
+    },
+    "modules": {
+      "files": 30,
+      "tests": 179
+    },
+    "frontend": {
+      "files": 42,
+      "tests": 275
+    },
+    "postgres": {
+      "files": 3,
+      "tests": 55
+    },
+    "combinedBrowser": {
+      "tests": 52,
+      "desktopAndMobile": true
+    }
+  }
+}

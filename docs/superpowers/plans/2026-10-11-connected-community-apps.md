@@ -104,10 +104,10 @@
 
 **Files:** Testnet deployment config/preparer, private review packet/backups under `/data/daclify-runtime`, public redacted rollout evidence and operations runbook.
 
-- [ ] Prepare exact testnet-only code/ABI, account, registration, resource and pin changes; compare current state/authority and ensure adequate existing/funded capacity. Keep mainnet and unrelated authorities untouched.
-- [ ] Back up service/database and native state, freeze API writes and oracle updater, simulate/review the concrete packet, then execute the testnet rollout already requested by the user.
-- [ ] Confirm irreversible receipts, preserved pre-existing state, correct code/ABI/RAM/oracle pins and matching archived updater before resuming.
-- [ ] Install migrations/configured issuer secret and matching testnet API/frontend builds; verify actual public HTTPS, consent, app registration and owned synthetic signed activity. Record exactly which provider ceremonies were qualified.
+- [x] Prepare exact testnet-only code/ABI, account, registration, resource and pin changes; compare current state/authority and ensure adequate existing/funded capacity. Keep mainnet and unrelated authorities untouched.
+- [x] Back up service/database and native state, freeze API writes and oracle updater, simulate/review the concrete packet, then execute the testnet rollout already requested by the user.
+- [x] Confirm irreversible receipts, preserved pre-existing state, correct code/ABI/RAM/oracle pins and matching archived updater before resuming.
+- [x] Install migrations/configured issuer secret and matching testnet API/frontend builds; verify actual public HTTPS, consent, app registration and owned synthetic signed activity. Record exactly which provider ceremonies were qualified.
 
 ## Execution ledger
 
@@ -161,3 +161,5 @@
 - Live resource measurement: `buyrambytes(4194304)` produced an actual Activity quota of 4195701 bytes, including the chain's initial account allowance and market rounding. Validation now checks sufficient actual quota rather than equating a purchase request with the total account quota. No extra RAM purchase is needed; remainder preparation failed safely and resumed old services.
 
 - Testnet native rollout completed: final runtime/links/catalogue/Hub transaction ea01e82aec713df913a4d60c3bde9e26dea2e95150e30cba3f913018a4284bf0, block 449652829, is irreversible. Frozen byte verification preserved existing rows, balances, owner/active authorities, old links and all five previous module pins. New Activity RAM usage 1876403 / quota 4195701. Persistent issuer, migrations 035–038, archived alpha.5 API/frontend and matching archived Names updater were installed; public HTTPS network/status/discovery/JWKS/health and frontend returned 200. User then authorised same-VM testnet recovery, which is being added in the separate linked implementation plan with a new alpha.6 source release; no additional contract upgrade is needed.
+
+- Final public installation uses core/frontend alpha.6, modules SDK alpha.22 and preserved native pins. The single-VM recovery option is active under explicit testnet qualification. Public signed activity exposed a real ABI transport issue: Wharfkit native wrappers and safe uint64 numbers require canonical decimal conversion before action-schema validation. Both HTTP actions failed first, then passed with cross-app denial and all 55 combined PostgreSQL checks. The API-only fix is archived at core a8272d4; public SDK packages are unchanged. Public HTTPS consent/token/grants and once-only signed completions passed for two apps in owned synthetic DAO 8122199153663004859 (seven members, two managers). No friend DAO/app was created or modified. Final evidence records the actual provider and mainnet limitations.

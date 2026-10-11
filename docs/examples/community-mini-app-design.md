@@ -1,6 +1,6 @@
 # Example mini-app design: Community Garden
 
-Status: reusable project design example, 11 October 2026. All people, apps and tasks below are synthetic. Daclify's connected-app integration is proposed and unimplemented; this is a specification to adapt, not working sample code or a claim of available endpoints.
+Status: reusable project design example, 11 October 2026. All people, apps and tasks below are synthetic. Daclify's connected-app integration is implemented on testnet. Adapt this specification to your project; a separate [working SQLite/outbox example](../../examples/community-mini-app/README.md) demonstrates the public SDK and supported endpoints. Mainnet deployment requires separate qualification.
 
 This example describes a small garden task app using Daclify for sign-in eligibility, community membership and member-authorised completion/review records. Replace the garden workflow with equipment bookings, volunteer shifts or another community process while preserving the identity, permission, privacy and delivery boundaries.
 

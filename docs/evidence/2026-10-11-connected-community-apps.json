@@ -1,15 +1,15 @@
 {
   "date": "2026-10-11",
-  "status": "source-qualified; testnet rollout pending",
-  "coreVersion": "0.13.0-alpha.5",
-  "frontendVersion": "0.13.0-alpha.5",
-  "modulesSdkVersion": "0.9.0-alpha.21",
+  "status": "installed and qualified on public testnet",
+  "coreVersion": "0.13.0-alpha.6",
+  "frontendVersion": "0.13.0-alpha.6",
+  "modulesSdkVersion": "0.9.0-alpha.22",
   "runtimeCodeHash": "4235158cdd149a4bebf1006a69b5f3943a842a9b437db14abf823acbd6cc277b",
   "runtimeRawAbiHash": "2f8433050a4e63af0366d460d23b9d7d50a176bbc30fb2e7c402b4ea7599c0c1",
   "activityCodeHash": "225b7070235779ccc6f001d21209f243cdfd6fc0619e8a334405d30d7e6f6866",
   "artifactSha256": {
-    "corePackage": "0ed0d366421261d46db754bf86e92096e98ac4c6a4c083129715a9af1bbc1570",
-    "modulesPackage": "e96300f3716ed193e251b99bcf6d69928046a6b1e358f4ea880ec6c9c7f1838a"
+    "corePackage": "f2e7c2214cd6d4f1f7d3c367bd6644598d4c37e9c557af99fe90ffbe75c848ea",
+    "modulesPackage": "ff40aa811318a11e58d5f578044d24036d160b5ae976c26281797751a956f24a"
   },
   "metrics": {
     "runtimeCodeHash": "4235158cdd149a4bebf1006a69b5f3943a842a9b437db14abf823acbd6cc277b",
@@ -25,7 +25,7 @@
   "checks": {
     "core": {
       "files": 139,
-      "tests": 871,
+      "tests": 872,
       "finalRerun": "passed"
     },
     "modules": {
@@ -42,7 +42,7 @@
     },
     "postgres": {
       "files": 3,
-      "tests": 53
+      "tests": 55
     },
     "nativeConnectedApps": {
       "tests": 7,
@@ -52,15 +52,113 @@
       "tests": 32
     },
     "combinedBrowser": {
-      "tests": 22,
+      "tests": 52,
       "desktopAndMobile": true
+    },
+    "publicHttps": {
+      "desktopAndMobile": true,
+      "networkVersion": "0.13.0-alpha.6",
+      "persistentPublicJwks": true,
+      "signupNoticeBeforeConsent": true
+    },
+    "publicOwnedApps": {
+      "state": "public-apps-qualified",
+      "dao": {
+        "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+        "contract": "daclifycore1",
+        "daoId": "8122199153663004859",
+        "interfaceVersion": 1
+      },
+      "members": 7,
+      "managers": 2,
+      "apps": [
+        {
+          "appId": "1",
+          "clientId": "2b74bd0d-7ab2-4947-af8f-f73fbbac9012",
+          "receiptId": "1",
+          "memberId": "3",
+          "keyEpoch": "0",
+          "retryOnce": true
+        },
+        {
+          "appId": "2",
+          "clientId": "16dab31b-4850-4cd5-a40c-3e1d2e9f77fe",
+          "receiptId": "2",
+          "memberId": "3",
+          "keyEpoch": "0",
+          "retryOnce": true
+        }
+      ],
+      "actualHttpsIdentityConsent": true,
+      "actualNativeMemberGrants": true,
+      "actualNativeSignedReceipts": true,
+      "zeroSnapshotEpochAccepted": true
     }
   },
   "limitations": [
-    "Real email/Telegram user ceremonies were not repeated; cryptographic provider fixtures passed.",
-    "Assisted quick signup remains disabled on public testnet until separate OpenBao and independent restore qualification are configured.",
+    "Real email/Telegram user ceremonies were not repeated; owned cryptographic provider fixtures passed, including public synthetic signup with real OpenBao and encrypted Pinata storage.",
+    "Same-VM recovery is a testnet development exception; independent source-loss restoration and mainnet recovery remain unqualified.",
     "Research module-integration suite needs its separate Docker research chain and was not qualified in this run.",
-    "Example pinning adapter uses project-owned credentials; live project IPFS pinning was not exercised.",
+    "Example snapshot pinning uses project-owned credentials; live project snapshot uploads were not exercised. Actual recovery ciphertext pinning was exercised.",
+    "Public app consent/callback/token/signing used actual HTTPS APIs and SDKs; no independently hosted third-party browser app was deployed.",
     "Self-review was inline under the workspace no-subagent rule."
-  ]
+  ],
+  "sources": {
+    "daclify-backend-core": {
+      "commit": "a8272d437c49e0fe86ee5b40f2f1747fb033115b",
+      "archiveSha256": "7b6dd7a2ee48b1e0e59033e58c03b907b895192f5f2c36b48c4cc4995349919a"
+    },
+    "daclify-backend-modules": {
+      "commit": "6962c884cf57a00546edeaf5d1361f4438d02736",
+      "archiveSha256": "4a91486cb0de35fb910bf5f1217344d34a9405c30bcd14a815a2be750cf0cd9b"
+    },
+    "daclify-frontend": {
+      "commit": "e24aa247644959dcd1fabd97b35254dfa2349985",
+      "archiveSha256": "381102d2c74a49cbea50f2d3027250f64fc0d6d9510135ec3bc3f62756cacbfb"
+    }
+  },
+  "nativeRollout": {
+    "runtimeAccount": "daclifycore1",
+    "hubAccount": "daclifyhubv1",
+    "activityAccount": "daclifyactiv",
+    "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+    "transactions": [
+      {
+        "purpose": "Activity account and resources",
+        "id": "aa97838a0f2d567fe54ac971b5c905ef4d8d2240b41558416e9e2770a3467ab8",
+        "block": 449652248,
+        "irreversible": true
+      },
+      {
+        "purpose": "Activity code and ABI",
+        "id": "5acb7d5c5ce66aa04c39c39d4af2acb56256c7d29501aba056b48f0c8143611d",
+        "block": 449652257,
+        "irreversible": true
+      },
+      {
+        "purpose": "Runtime, actor links, catalogue and Hub pins",
+        "id": "ea01e82aec713df913a4d60c3bde9e26dea2e95150e30cba3f913018a4284bf0",
+        "block": 449652829,
+        "irreversible": true
+      }
+    ],
+    "existingRowsPreserved": true,
+    "existingAuthoritiesPreserved": true,
+    "existingBalancesPreserved": true,
+    "previousFiveModulePinsPreserved": true,
+    "legacyHubMetadataPreserved": true,
+    "oldActorLinksPreserved": true,
+    "newActorLinks": 8,
+    "activityRamImmediatelyAfterUpgrade": {
+      "usedBytes": 1876403,
+      "quotaBytes": 4195701
+    },
+    "rootRamObserver": "previous absence preserved"
+  },
+  "assistedSignup": {
+    "publicTestnetEnabled": true,
+    "recoveryMode": "testnet-single-host",
+    "independentHostQualified": false,
+    "evidence": "2026-10-11-testnet-single-host-recovery.json"
+  }
 }

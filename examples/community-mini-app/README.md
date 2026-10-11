@@ -2,7 +2,7 @@
 
 This runnable example keeps garden tasks in SQLite and uses Daclify for member identity and selected, member-signed completion receipts. Run a second copy for equipment using another app ID/client ID/database; both copies can belong to the same seven-member DAO. Managers and ordinary members keep their existing DAO roles.
 
-It uses the public `@daclify/core-protocol/connected-apps` and `@daclify/modules/sdk` packages. The current workspace supplies development archives for core `0.13.0-alpha.5` and modules `0.9.0-alpha.21`; there is no promise that these development packages are published to npm. Node 24.21 or newer is required for the built-in SQLite driver.
+It uses the public `@daclify/core-protocol/connected-apps` and `@daclify/modules/sdk` packages. The current workspace supplies development archives for core `0.13.0-alpha.6` and modules `0.9.0-alpha.22`; there is no promise that these development packages are published to npm. Node 24.21 or newer is required for the built-in SQLite driver.
 
 ## Setup
 
