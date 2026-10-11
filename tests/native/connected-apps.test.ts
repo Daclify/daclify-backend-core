@@ -334,6 +334,53 @@ beforeAll(async () => {
   });
 }, 60000);
 afterAll(async () => owned?.stop());
+it('reports the same built-in member prices used by hosted capacity when no override exists', async () => {
+  const f = fixture();
+  const current = await gateway.platform();
+  expect(current.seatPricing).toEqual({
+    first_usd: 100,
+    next_usd: 50,
+    rest_usd: 20,
+    revision: '0',
+  });
+  expect(current.paymentPolicy).toBeNull();
+  await f.push(['govseatfee', 'govpayfees'].map(action => f.system('linkauth', {
+    account: 'daclifycore', code: 'daclifycore', type: action, requirement: 'execctx',
+  }, 'daclifycore', 'owner')), [f.key('daclifycore')]);
+  await f.call('daclifycore', 'setgov', { dao_id: '90001' }, 'daclifycore', 'owner');
+  expect((await gateway.platform()).paymentPolicy).toEqual({ bps: 500, revision: '0' });
+  expect((await gateway.paymentPolicy()).basisPoints).toBe(500);
+  await root(
+    'daclifycore',
+    'govseatfee',
+    encodeAction('govseatfee', {
+      ...actor('1'),
+      first_usd: 200,
+      next_usd: 75,
+      rest_usd: 25,
+    }),
+    '1',
+  );
+  await root(
+    'daclifycore',
+    'govpayfees',
+    encodeAction('govpayfees', {
+      ...actor('1'),
+      bps: 725,
+    }),
+    '1',
+  );
+  const changed = await gateway.platform();
+  expect(changed.seatPricing).toEqual({
+    first_usd: 200,
+    next_usd: 75,
+    rest_usd: 25,
+    revision: '1',
+  });
+  expect(changed.paymentPolicy).toEqual({ bps: 725, revision: '1' });
+  expect((await gateway.paymentPolicy()).basisPoints).toBe(725);
+  await f.call('daclifycore', 'setgov', { dao_id: '0' }, 'daclifycore', 'owner');
+});
 it('records two independently delegated apps under one seven-member DAO and measures native resources', async () => {
   const f = fixture(),
     before = Number((await f.api.v1.chain.get_account('activity')).ram_usage);

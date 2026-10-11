@@ -171,6 +171,13 @@ export function payrollSettlementAccount(
   if (!payroll || payroll.account !== source) return undefined;
   return payroll.account;
 }
+const defaultSeatPricing = RuntimeTableSchemas.seatcfg.parse({
+  first_usd: 100,
+  next_usd: 50,
+  rest_usd: 20,
+  revision: '0',
+});
+const defaultPaymentPolicy = RuntimeTableSchemas.paycfg.parse({ bps: 500, revision: '0' });
 export class NativeChainGateway implements ChainGateway {
   readonly connectedApps: import('./connected-apps/chain.js').ConnectedAppsChain = {
     keys: async (app, memberId) => {
@@ -468,8 +475,8 @@ export class NativeChainGateway implements ChainGateway {
     if (!market || market.dao_id === '0') throw new ApiError('PAYMENT_POLICY_UNAVAILABLE', 503);
     const row = (await this.table('paycfg', this.config.runtime))[0];
     return PaymentPolicySchema.parse({
-      basisPoints: row?.bps ?? 500,
-      revision: row?.revision ?? '0',
+      basisPoints: row?.bps ?? defaultPaymentPolicy.bps,
+      revision: row?.revision ?? defaultPaymentPolicy.revision,
     });
   }
   async hosting(dao: DaoRef) {
@@ -495,7 +502,7 @@ export class NativeChainGateway implements ChainGateway {
       dao,
       pricing: HostedPricingSchema.parse({
         freeSlots: policy.free_members,
-        rates: pricing[0] ?? { first_usd: 100, next_usd: 50, rest_usd: 20, revision: '0' },
+        rates: pricing[0] ?? defaultSeatPricing,
       }),
       activeMembers: record.member_count,
       effectiveCapacity: exempt
@@ -1691,8 +1698,14 @@ export class NativeChainGateway implements ChainGateway {
       market,
       creation,
       hosting,
-      seatPricing,
-      paymentPolicy,
+      seatPricing:
+        seatPricing ??
+        (abi.abi?.tables.some((table) => table.name === 'seatcfg') ? defaultSeatPricing : null),
+      paymentPolicy:
+        paymentPolicy ??
+        (market && market.dao_id !== '0' && abi.abi?.tables.some((table) => table.name === 'paycfg')
+          ? defaultPaymentPolicy
+          : null),
       resourcePolicy: resourcePolicy ? resourcePolicyFromRow(resourcePolicy) : null,
       ramReserve,
       runtimeSettings,
