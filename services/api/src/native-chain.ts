@@ -140,6 +140,7 @@ import {
 } from '../../../protocol/platform.js';
 import type { NamePurchase } from './billing/name.js';
 import { HostingChainSchema, HostedPricingSchema } from '../../../protocol/hosting.js';
+import { ModuleFeePricingSchema, ModuleFeeChainSchema } from '../../../protocol/module-fees.js';
 import {
   MarketRuleError,
   TelosNameSchema,
@@ -478,6 +479,102 @@ export class NativeChainGateway implements ChainGateway {
       basisPoints: row?.bps ?? defaultPaymentPolicy.bps,
       revision: row?.revision ?? defaultPaymentPolicy.revision,
     });
+  }
+  async moduleFeePricing() {
+    await this.reviewedRuntime(this.config.runtime);
+    const [fees, catalogue] = await Promise.all([
+      this.table('modfees', this.config.runtime),
+      this.table('catalogue', this.config.runtime),
+    ]);
+    return ModuleFeePricingSchema.parse({
+      chainId: this.config.chainId,
+      runtime: this.config.runtime,
+      interfaceVersion: 1,
+      freeMembers: 10,
+      plans: await Promise.all(
+        fees.map(async (fee) => {
+          const listing = catalogue.find(
+            (row) => row.account === fee.account && row.party === 0 && row.complies === 1,
+          );
+          if (!listing) throw new ApiError('MODULE_PRICING_UNAVAILABLE', 503);
+          const deployed = await this.api.v1.chain.get_raw_abi(fee.account);
+          if (deployed.code_hash.toString() !== listing.code_hash)
+            throw new ApiError('MODULE_PRICING_UNAVAILABLE', 503);
+          return {
+            pricing: {
+              account: fee.account,
+              revision: fee.revision,
+              monthlyUsdCents: fee.monthly_usd,
+              actions: fee.actions,
+            },
+            title: listing.title,
+            codeHash: listing.code_hash,
+          };
+        }),
+      ),
+    });
+  }
+  async moduleFeeState(dao: DaoRef) {
+    if (
+      dao.chainId !== this.config.chainId ||
+      dao.contract !== this.config.runtime ||
+      dao.interfaceVersion !== 1
+    )
+      throw new ApiError('DAO_REFERENCE', 403);
+    const [pricing, summary, installed, terms] = await Promise.all([
+      this.moduleFeePricing(),
+      this.dao(dao.daoId),
+      this.table('modules', dao.daoId),
+      this.table('modterms', dao.daoId),
+    ]);
+    return ModuleFeeChainSchema.parse({
+      dao,
+      activeMembers: summary.members,
+      freeMembers: 10,
+      modules: pricing.plans.map((plan) => ({
+        ...plan,
+        installed: installed.some(
+          (row) =>
+            row.account === plan.pricing.account &&
+            row.actions.length > 0 &&
+            row.code_hash === plan.codeHash,
+        ),
+        term: terms.find((row) => row.account === plan.pricing.account) ?? null,
+      })),
+    });
+  }
+  async attestModuleTerm(
+    dao: DaoRef,
+    account: string,
+    expectedReceipt: string,
+    expires: number,
+    receipt: string,
+  ) {
+    await this.moduleFeeState(dao);
+    await this.push(
+      'setmodterm',
+      { dao_id: dao.daoId, account, expected_receipt: expectedReceipt, expires, receipt },
+      this.config.relayActor,
+      this.config.relayKey,
+    );
+  }
+  async revokeModuleTerm(dao: DaoRef, account: string, receipt: string) {
+    await this.moduleFeeState(dao);
+    await this.push(
+      'revmodterm',
+      { dao_id: dao.daoId, account, receipt },
+      this.config.relayActor,
+      this.config.relayKey,
+    );
+  }
+  async resumeModuleTerm(dao: DaoRef, account: string, receipt: string) {
+    await this.moduleFeeState(dao);
+    await this.push(
+      'resmodterm',
+      { dao_id: dao.daoId, account, receipt },
+      this.config.relayActor,
+      this.config.relayKey,
+    );
   }
   async hosting(dao: DaoRef) {
     if (dao.chainId !== this.config.chainId || dao.contract !== this.config.runtime)

@@ -6,8 +6,12 @@ import { NativeChainGateway } from '../../services/api/src/native-chain.js';
 import { contextLinkRepairActions } from '../../tools/deploy/permissions.js';
 import { RuntimeTableSchemas } from '../../sdk/generated/schemas.js';
 import { RuntimeCodeHash, RuntimeRawAbiHash } from '../../sdk/generated/releases.js';
+import { encodeAction, instructionDigest } from '../../sdk/index.js';
+import { writeFileSync } from 'node:fs';
+import { z } from 'zod';
 import { HubDeploymentRowSchema } from '../../protocol/directory.js';
 let owned: NativeContracts | undefined;
+let governing: Awaited<ReturnType<NativeContracts['dummyDao']>> | undefined;
 function fixture() {
   if (!owned) throw new Error('NATIVE_FIXTURE_REQUIRED');
   return owned;
@@ -27,7 +31,15 @@ beforeAll(async () => {
     contextLinkRepairActions(f.context, await f.api.v1.chain.get_account('daclifycore')),
     [f.key('daclifycore')],
   );
-  await f.executiveTree();
+  governing = await f.executiveTree();
+  await f.call(
+    'daclifycore',
+    'setgov',
+    { dao_id: governing.daoId },
+    'daclifycore',
+    'active',
+    executives(),
+  );
   await f.call(
     'daclifycore',
     'setcreate',
@@ -58,6 +70,108 @@ beforeAll(async () => {
   );
 }, 90000);
 afterAll(async () => owned?.stop());
+
+it('uses code-only governance and scoped Relay operator links for monthly module settlement', async () => {
+  const f = fixture();
+  if (!governing) throw new Error('GOVERNING_FIXTURE_REQUIRED');
+  const payload = {
+    ...governing.actor(),
+    account: 'decide',
+    expected_revision: '0',
+    monthly_usd: 200,
+    actions: ['open', 'newelect'],
+  };
+  const before = Number((await f.api.v1.chain.get_account('daclifycore')).ram_usage);
+  await expect(
+    f.call('daclifycore', 'govmodfee', payload, 'daclifycore', 'active', executives()),
+  ).rejects.toThrow('ACTOR_SENDER');
+  const request = await governing.request(
+    'daclifycore',
+    'govmodfee',
+    encodeAction('govmodfee', payload),
+  );
+  const memberKey = governing.keys[0];
+  if (!memberKey) throw new Error('MEMBER_KEY_REQUIRED');
+  const result = await f.call(
+    'daclifycore',
+    'submit',
+    { request, sig: memberKey.signDigest(instructionDigest(request)) },
+    'relay',
+    'operator',
+  );
+  expect(result.processed.receipt.status).toBe('executed');
+  const gateway = new NativeChainGateway({
+    rpcUrl: f.url,
+    chainId: f.chainId,
+    runtime: 'daclifycore',
+    hub: null,
+    environment: 'local',
+    relayActor: 'relay',
+    relayKey: f.key('relay'),
+    relayPermission: 'operator',
+  });
+  expect((await gateway.moduleFeePricing()).plans[0]?.pricing).toEqual({
+    account: 'decide',
+    revision: '1',
+    monthlyUsdCents: 200,
+    actions: ['open', 'newelect'],
+  });
+  const afterPrice = Number((await f.api.v1.chain.get_account('daclifycore')).ram_usage);
+  const expires = Math.floor(Date.now() / 1000) + 3600,
+    receipt = 'bb'.repeat(32),
+    term = {
+      dao_id: governing.daoId,
+      account: 'decide',
+      expected_receipt: '00'.repeat(32),
+      expires,
+      receipt,
+    };
+  await expect(f.call('daclifycore', 'setmodterm', term, 'alice')).rejects.toThrow();
+  const settled = await f.call('daclifycore', 'setmodterm', term, 'relay', 'operator');
+  const afterTerm = Number((await f.api.v1.chain.get_account('daclifycore')).ram_usage);
+  await f.call(
+    'daclifycore',
+    'revmodterm',
+    { dao_id: governing.daoId, account: 'decide', receipt },
+    'relay',
+    'operator',
+  );
+  await f.call(
+    'daclifycore',
+    'resmodterm',
+    { dao_id: governing.daoId, account: 'decide', receipt },
+    'relay',
+    'operator',
+  );
+  const rows = await f.api.v1.chain.get_table_rows({
+    code: 'daclifycore',
+    scope: governing.daoId,
+    table: 'modterms',
+    limit: 1,
+  });
+  expect(RuntimeTableSchemas.modterms.parse(rows.rows[0])).toEqual({
+    account: 'decide',
+    expires,
+    receipt,
+    revoked: false,
+  });
+  const cpu = z.object({
+    processed: z.object({ elapsed: z.number(), receipt: z.object({ cpu_usage_us: z.number() }) }),
+  });
+  writeFileSync(
+    '.artifacts/module-fees-native-metrics.json',
+    JSON.stringify(
+      {
+        priceRamBytes: afterPrice - before,
+        termRamBytes: afterTerm - afterPrice,
+        priceCpu: cpu.parse(result).processed,
+        termCpu: cpu.parse(settled).processed,
+      },
+      null,
+      2,
+    ) + '\n',
+  );
+});
 
 it('runs a real API free-creation order through Relay operator after removing its active key', async () => {
   const f = fixture();

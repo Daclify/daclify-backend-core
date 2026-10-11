@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = 'aefa1060bd8476d2960e95f593122062fb9a78129c01ba19c1b4a4c9c0136900';
+export const runtimeAbiHash = 'd31f9e6c7d2a3608956cbab683d5212c905b21ab9fe3ec751b6ea7e5e5f2652d';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -915,6 +915,24 @@ export const runtimeAbi = {
         },
         {
           "name": "recipient",
+          "type": "uint64"
+        },
+        {
+          "name": "limit",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "clearmterms",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "after",
           "type": "uint64"
         },
         {
@@ -2242,6 +2260,40 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "govmodfee",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "account",
+          "type": "name"
+        },
+        {
+          "name": "expected_revision",
+          "type": "uint64"
+        },
+        {
+          "name": "monthly_usd",
+          "type": "uint32"
+        },
+        {
+          "name": "actions",
+          "type": "name[]"
+        }
+      ]
+    },
+    {
       "name": "govpayfees",
       "base": "",
       "fields": [
@@ -3023,6 +3075,50 @@ export const runtimeAbi = {
         {
           "name": "bps",
           "type": "uint16"
+        }
+      ]
+    },
+    {
+      "name": "module_fee_price",
+      "base": "",
+      "fields": [
+        {
+          "name": "account",
+          "type": "name"
+        },
+        {
+          "name": "monthly_usd",
+          "type": "uint32"
+        },
+        {
+          "name": "revision",
+          "type": "uint64"
+        },
+        {
+          "name": "actions",
+          "type": "name[]"
+        }
+      ]
+    },
+    {
+      "name": "module_fee_term",
+      "base": "",
+      "fields": [
+        {
+          "name": "account",
+          "type": "name"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
+        },
+        {
+          "name": "receipt",
+          "type": "checksum256"
+        },
+        {
+          "name": "revoked",
+          "type": "bool"
         }
       ]
     },
@@ -4063,6 +4159,24 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "resmodterm",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "account",
+          "type": "name"
+        },
+        {
+          "name": "receipt",
+          "type": "checksum256"
+        }
+      ]
+    },
+    {
       "name": "resource_policy",
       "base": "",
       "fields": [
@@ -4141,6 +4255,24 @@ export const runtimeAbi = {
         {
           "name": "dao_id",
           "type": "uint64"
+        },
+        {
+          "name": "receipt",
+          "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "revmodterm",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "account",
+          "type": "name"
         },
         {
           "name": "receipt",
@@ -4665,6 +4797,32 @@ export const runtimeAbi = {
         {
           "name": "detail",
           "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "setmodterm",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "account",
+          "type": "name"
+        },
+        {
+          "name": "expected_receipt",
+          "type": "checksum256"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
+        },
+        {
+          "name": "receipt",
+          "type": "checksum256"
         }
       ]
     },
@@ -5214,6 +5372,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "clearmterms",
+      "type": "clearmterms",
+      "ricardian_contract": ""
+    },
+    {
       "name": "commitepoch",
       "type": "commitepoch",
       "ricardian_contract": ""
@@ -5306,6 +5469,11 @@ export const runtimeAbi = {
     {
       "name": "govmodcopy",
       "type": "govmodcopy",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "govmodfee",
+      "type": "govmodfee",
       "ricardian_contract": ""
     },
     {
@@ -5484,6 +5652,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "resmodterm",
+      "type": "resmodterm",
+      "ricardian_contract": ""
+    },
+    {
       "name": "restoredoc",
       "type": "restoredoc",
       "ricardian_contract": ""
@@ -5491,6 +5664,11 @@ export const runtimeAbi = {
     {
       "name": "resumecap",
       "type": "resumecap",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "revmodterm",
+      "type": "revmodterm",
       "ricardian_contract": ""
     },
     {
@@ -5596,6 +5774,11 @@ export const runtimeAbi = {
     {
       "name": "setmodcopy",
       "type": "setmodcopy",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "setmodterm",
+      "type": "setmodterm",
       "ricardian_contract": ""
     },
     {
@@ -5965,8 +6148,22 @@ export const runtimeAbi = {
       "key_types": []
     },
     {
+      "name": "modfees",
+      "type": "module_fee_price",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "modpays",
       "type": "modpay_record",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "modterms",
+      "type": "module_fee_term",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -6453,6 +6650,11 @@ export interface clearholds {
   recipient: string;
   limit: number;
 }
+export interface clearmterms {
+  dao_id: string;
+  after: string;
+  limit: number;
+}
 export interface commitepoch {
   runtime: string;
   dao_id: string;
@@ -6804,6 +7006,15 @@ export interface govmodcopy {
   summary: string;
   detail: string;
 }
+export interface govmodfee {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  account: string;
+  expected_revision: string;
+  monthly_usd: number;
+  actions: string[];
+}
 export interface govpayfees {
   runtime: string;
   dao_id: string;
@@ -7016,6 +7227,18 @@ export interface modpay_record {
   publisher_share: string;
   party: number;
   bps: number;
+}
+export interface module_fee_price {
+  account: string;
+  monthly_usd: number;
+  revision: string;
+  actions: string[];
+}
+export interface module_fee_term {
+  account: string;
+  expires: number;
+  receipt: string;
+  revoked: boolean;
 }
 export interface module_record {
   account: string;
@@ -7298,6 +7521,11 @@ export interface reserve {
   quantity: string;
   due: number;
 }
+export interface resmodterm {
+  dao_id: string;
+  account: string;
+  receipt: string;
+}
 export interface resource_policy {
   schema_version: number;
   revision: string;
@@ -7319,6 +7547,11 @@ export interface restoredoc {
 }
 export interface resumecap {
   dao_id: string;
+  receipt: string;
+}
+export interface revmodterm {
+  dao_id: string;
+  account: string;
   receipt: string;
 }
 export interface revokecap {
@@ -7463,6 +7696,13 @@ export interface setmodcopy {
   summary: string;
   detail: string;
 }
+export interface setmodterm {
+  dao_id: string;
+  account: string;
+  expected_receipt: string;
+  expires: number;
+  receipt: string;
+}
 export interface setmodule {
   dao_id: string;
   account: string;
@@ -7606,6 +7846,7 @@ export interface RuntimeActions {
   checkdaoram: checkdaoram;
   checkrampool: checkrampool;
   clearholds: clearholds;
+  clearmterms: clearmterms;
   commitepoch: commitepoch;
   confirmext: confirmext;
   createdao: createdao;
@@ -7625,6 +7866,7 @@ export interface RuntimeActions {
   govlist: govlist;
   govlock: govlock;
   govmodcopy: govmodcopy;
+  govmodfee: govmodfee;
   govpayfees: govpayfees;
   govresources: govresources;
   govseatfee: govseatfee;
@@ -7660,8 +7902,10 @@ export interface RuntimeActions {
   recallexec: recallexec;
   refreshgov: refreshgov;
   reserve: reserve;
+  resmodterm: resmodterm;
   restoredoc: restoredoc;
   resumecap: resumecap;
+  revmodterm: revmodterm;
   revokecap: revokecap;
   rotateepoch: rotateepoch;
   rotatekey: rotatekey;
@@ -7683,6 +7927,7 @@ export interface RuntimeActions {
   sethosted: sethosted;
   setmeta: setmeta;
   setmodcopy: setmodcopy;
+  setmodterm: setmodterm;
   setmodule: setmodule;
   setnativegov: setnativegov;
   setoracle: setoracle;

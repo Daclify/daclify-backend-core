@@ -11,6 +11,8 @@ import type { HostedStorage } from './billing/storage.js';
 import { storageFunding } from './billing/storage-state.js';
 import { DEFAULT_STORAGE_PRICING, StorageBillingRoutes } from '../../../protocol/storage.js';
 import type { HostedSubscriptions } from './billing/hosting.js';
+import type { ModuleFees } from './billing/module-fees.js';
+import { ModuleFeeRoutes } from '../../../protocol/module-fees.js';
 import { HostingRoutes, HostingStatusSchema } from '../../../protocol/hosting.js';
 import { daoPaymentKey } from '../../../protocol/payments.js';
 import { registerPaymentRoutes, CONNECT_WEBHOOK, BROKER_PATHS } from './payments/routes.js';
@@ -105,6 +107,7 @@ export async function createServer(
     providers?: ProviderConfiguration;
     billing?: StripeBilling;
     hosting?: HostedSubscriptions;
+    moduleFees?: ModuleFees;
     hostedStorage?: HostedStorage;
     ramCards?: CardRam;
     signIn?: SignInConfiguration;
@@ -364,7 +367,16 @@ export async function createServer(
     session,
     sessionCookie,
     sharedProxyIps,
-    registerSignupRoutes(app,pool,origin,options.providers,options.signIn,signup,sessionCookie,sharedProxyIps),
+    registerSignupRoutes(
+      app,
+      pool,
+      origin,
+      options.providers,
+      options.signIn,
+      signup,
+      sessionCookie,
+      sharedProxyIps,
+    ),
   );
   function creationService() {
     if (!options.creation) throw new ApiError('DAO_CREATION_UNAVAILABLE', 503);
@@ -395,6 +407,12 @@ export async function createServer(
       /* no connection strings or raw database failures in public status */
     }
     const services = [
+      [
+        'module-access',
+        'Monthly module access',
+        !!options.moduleFees,
+        'Free through 10 active members; larger DAOs buy each enabled module one calendar month at a time. Renewal is manual.',
+      ],
       [
         'card-ram',
         'Card RAM provisioning',
@@ -586,6 +604,45 @@ export async function createServer(
       configured: false,
       subscription: null,
     });
+  });
+  app.get(ModuleFeeRoutes.moduleFeePricing.path, async () => {
+    if (!chain.moduleFeePricing) throw new ApiError('MODULE_PRICING_UNAVAILABLE', 503);
+    return ModuleFeeRoutes.moduleFeePricing.response.parse(await chain.moduleFeePricing());
+  });
+  app.get(ModuleFeeRoutes.moduleFeeStatus.path, async (request) => {
+    const account = await session(request.cookies[cookieName]),
+      { dao } = ModuleFeeRoutes.moduleFeeStatus.query.parse(request.query);
+    if (options.moduleFees) return options.moduleFees.status(account, dao);
+    if (
+      !(await chain.memberships(account)).some(
+        (m) => m.active && m.admin && daoPaymentKey(m.dao) === daoPaymentKey(dao),
+      )
+    )
+      throw new ApiError('PAYMENT_ADMIN_REQUIRED', 403);
+    if (!chain.moduleFeeState) throw new ApiError('MODULE_PRICING_UNAVAILABLE', 503);
+    return ModuleFeeRoutes.moduleFeeStatus.response.parse({
+      ...(await chain.moduleFeeState(dao)),
+      configured: false,
+      paymentMode: 'unconfigured',
+    });
+  });
+  app.post(ModuleFeeRoutes.moduleFeeCheckout.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    if (!admitPayment(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    if (!options.moduleFees) throw new ApiError('MODULE_BILLING_UNCONFIGURED', 503);
+    return options.moduleFees.checkout(
+      account,
+      ModuleFeeRoutes.moduleFeeCheckout.input.parse(request.body),
+    );
+  });
+  app.get<{ Params: { id: string } }>(ModuleFeeRoutes.moduleFeeOrder.path, async (request) => {
+    const account = await session(request.cookies[cookieName]);
+    if (!admitPayment(account.id, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    if (!options.moduleFees) throw new ApiError('MODULE_BILLING_UNCONFIGURED', 503);
+    return options.moduleFees.order(account, request.params.id);
   });
   app.post(HostingRoutes.hostingChange.path, async (request) => {
     const account = await session(

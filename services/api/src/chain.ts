@@ -38,6 +38,17 @@ import type {
   ArchiveProgressSchema,
 } from '@daclify/modules/archive';
 export interface ChainGateway {
+  moduleFeePricing?(): Promise<import('../../../protocol/module-fees.js').ModuleFeePricing>;
+  moduleFeeState?(dao: DaoRef): Promise<import('../../../protocol/module-fees.js').ModuleFeeChain>;
+  attestModuleTerm?(
+    dao: DaoRef,
+    account: string,
+    expectedReceipt: string,
+    expires: number,
+    receipt: string,
+  ): Promise<void>;
+  revokeModuleTerm?(dao: DaoRef, account: string, receipt: string): Promise<void>;
+  resumeModuleTerm?(dao: DaoRef, account: string, receipt: string): Promise<void>;
   connectedApps?: import('./connected-apps/chain.js').ConnectedAppsChain;
   publicMembers?(
     query: z.infer<typeof import('../../../protocol/people.js').PeopleRoutes.members.query>,

@@ -1,6 +1,6 @@
 # Daclify documentation
 
-Current development version: **0.13.0-alpha.4**, contract interface 1. This is a development checkpoint; immutable publication, live provider/client qualification and hosted operations remain separate gates.
+Current development version: **0.13.0-alpha.7**, contract interface 1. This is a development checkpoint; immutable publication, live provider/client qualification and hosted operations remain separate gates.
 
 See [vault login v3 rollout](operations/login-v3.md) for the coordinated API/frontend update and preserved account/recovery state.
 
@@ -96,3 +96,5 @@ The [documentation assistant and Telegram group runbook](operations/docs-assista
 The [remediation guide](operations/project-audit-remediation.md) connects the six confirmed fixes, service-account migration, unchanged external proxy and coordinated runtime/API/frontend cutover. [Source verification](operations/project-audit-remediation-verification.md) records local/native/read-only-chain evidence; [2026-10-11 testnet rollout](evidence/2026-10-11-project-audit-testnet-rollout.md) records the expressly approved irreversible transactions and public desktop/mobile checks. The [documentation review](evidence/2026-10-10-project-documentation-review.md) records stale guidance corrected across all three current repos and separates historical checkpoints from deployed state. The compatibility register remains unqualified; these changes do not close provider or production release gates.
 
 - [Unified Users and DAO activity](operations/unified-users.md): public identity aggregation, legacy activity initialization, bounded RAM and coordinated testnet cutover.
+
+See [monthly module access](operations/module-fees.md) for governed prices, the free tier and manual calendar-month renewal.
