@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-12",
+  "timezone": "Atlantic/Canary",
+  "plan": "docs/superpowers/plans/2026-10-12-self-service-mini-apps-and-account-exit.md",
+  "repositories": [
+    {
+      "repository": "daclify-backend-core",
+      "sourceCommit": "0d248303b2f2c64a3b7d24f936191b7240d3861e",
+      "sourceBranch": "dev",
+      "sourceStatus": "",
+      "packageVersion": "0.14.0-alpha.4",
+      "implementationWorktree": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core"
+    },
+    {
+      "repository": "daclify-backend-modules",
+      "sourceCommit": "b5e1721522d6b287814a368c5db4bfc16467ca3f",
+      "sourceBranch": "dev",
+      "sourceStatus": "",
+      "packageVersion": "0.10.0-alpha.4",
+      "implementationWorktree": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-modules"
+    },
+    {
+      "repository": "daclify-frontend",
+      "sourceCommit": "398060fa841378d4b68c093dc3c54d6514d29797",
+      "sourceBranch": "dev",
+      "sourceStatus": "",
+      "packageVersion": "0.14.0-alpha.7",
+      "implementationWorktree": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend"
+    },
+    {
+      "repository": "www-landing-page",
+      "sourceCommit": "d5c913de0a305c4030c9df111d87d482da85b580",
+      "sourceBranch": "main",
+      "sourceStatus": "",
+      "packageVersion": "2.0.0-alpha.9",
+      "implementationWorktree": null
+    }
+  ],
+  "toolchain": {
+    "node": "24.21.0",
+    "npm": "11.19.0",
+    "cdt": "4.1.1",
+    "spring": "1.2.2",
+    "currentContractOptimization": "-O=s",
+    "postgres": "17.11"
+  },
+  "artifactSha256": {
+    "daclify-modules-0.10.0-alpha.4.tgz": "c4da68084454a709e3d8246c824eca42942240a5d04d9494d552c6fe62b4ce5a",
+    "daclify-core-protocol-0.14.0-alpha.4.tgz": "0ba84f4f10ad4e5bffaecc759a8d11a28989743579780c548366cc10ea204121",
+    "daclify-core-protocol-0.13.0-alpha.4.tgz": "914b7eaf5f67d721cf9b5bf92eee04053e1da91a5e4946e1145afdb96d180397"
+  },
+  "qualification": "testnet-development; no new production qualification",
+  "baselineTests": {
+    "core": {
+      "files": 4,
+      "passed": 26
+    },
+    "frontend": {
+      "files": 3,
+      "passed": 21
+    },
+    "modules": {
+      "files": 1,
+      "passed": 6
+    }
+  },
+  "integrationFixture": {
+    "host": "127.0.0.1",
+    "port": 35432,
+    "database": "daclify_miniapps_test",
+    "isolated": true
+  },
+  "migrationReservations": {
+    "profileKeys": "042_profile_keys.sql",
+    "accountErasure": "043_account_erasure.sql",
+    "mcpPairing": "044_mcp_pairing.sql",
+    "mcpOAuth": "045_mcp_oauth.sql",
+    "appDirectory": "046_mini_app_directory.sql"
+  }
+}

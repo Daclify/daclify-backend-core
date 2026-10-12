@@ -2,7 +2,9 @@
 
 This runnable example keeps garden tasks in SQLite and uses Daclify for member identity and selected, member-signed completion receipts. Run a second copy for equipment using another app ID/client ID/database; both copies can belong to the same seven-member DAO. Managers and ordinary members keep their existing DAO roles.
 
-It uses the public `@daclify/core-protocol/connected-apps` and `@daclify/modules/sdk` packages. The current workspace supplies development archives for core `0.13.0-alpha.6` and modules `0.9.0-alpha.22`; there is no promise that these development packages are published to npm. Node 24.21 or newer is required for the built-in SQLite driver.
+It uses the public interfaces `@daclify/core-protocol/connected-apps` and `@daclify/modules/sdk`. The tested development archives are core `0.14.0-alpha.4` and modules `0.10.0-alpha.4`, matching frontend `0.14.0-alpha.7`; their exact filenames/hashes and current repository-access limitation are in the [connection guide](../../docs/connected-community-apps.md#developer-integration). Do not assume these packages are published to public npm. Node `>=24.21 <25` is required for this pinned recipe and built-in SQLite driver.
+
+The existing SQLite/outbox example does not yet persist the complete DAO/client binding. Use synthetic data until the planned binding fix passes its regressions. Follow the [database contract](../../docs/guides/mini-app-database-contract.md) when building or adapting an app; a PostgreSQL recipe and public self-service downloads are separate pending implementation tasks.
 
 ## Setup
 
@@ -35,7 +37,7 @@ npx tsx examples/community-mini-app/build.ts
 node --env-file=/absolute/private/path/mini-app.env --import tsx examples/community-mini-app/server.ts
 ```
 
-Outside this workspace, install the two pinned public package archives, `tsx`, and `esbuild`, and copy the example files. The `build.ts` script uses the local esbuild binary. Never ship the environment file, SQLite database, TLS private key or provider credential in static assets.
+Outside this workspace, obtain the two exact archives through authorized frontend repository access and check their SHA-256 values from the connection guide. Install those files with `npm install ./daclify-core-protocol-0.14.0-alpha.4.tgz ./daclify-modules-0.10.0-alpha.4.tgz tsx@4.23.15 esbuild@0.28.2 zod@4.6.5`, and copy the example files. A public download path still needs implementation. The `build.ts` script uses the local esbuild binary. Never ship the environment file, SQLite database, TLS private key or provider credential in static assets.
 
 ## Complete a task
 
@@ -61,15 +63,15 @@ From the DAO's activity list, fetch current task details through the app API or 
 
 Every protected request validates the opaque bearer against Daclify's current `/userinfo`, including live DAO membership and app configuration. The example supports trusted source-access tokens for reading and snapshot submission, while ordinary task completion additionally requires an active recording grant.
 
-| Endpoint | Purpose |
-| --- | --- |
-| `GET /v1/tasks` | Current app database state |
-| `POST /v1/complete/:taskId` | Save completion and durable native intent |
-| `POST /v1/complete/:taskId?evidence=1` | Hold completion for selected evidence |
-| `GET /v1/outbox` | This member's pending delivery intents |
-| `GET /v1/outbox/:eventId` | Immutable snapshot draft for its submitting member |
-| `GET /v1/sources/:sourceId` | Versioned current source adapter |
-| `POST /v1/evidence/:eventId` | Pin protected ciphertext and freeze the selected commitment |
-| `POST /v1/confirm/:eventId` | Independently reconcile the native receipt |
+| Endpoint                               | Purpose                                                     |
+| -------------------------------------- | ----------------------------------------------------------- |
+| `GET /v1/tasks`                        | Current app database state                                  |
+| `POST /v1/complete/:taskId`            | Save completion and durable native intent                   |
+| `POST /v1/complete/:taskId?evidence=1` | Hold completion for selected evidence                       |
+| `GET /v1/outbox`                       | This member's pending delivery intents                      |
+| `GET /v1/outbox/:eventId`              | Immutable snapshot draft for its submitting member          |
+| `GET /v1/sources/:sourceId`            | Versioned current source adapter                            |
+| `POST /v1/evidence/:eventId`           | Pin protected ciphertext and freeze the selected commitment |
+| `POST /v1/confirm/:eventId`            | Independently reconcile the native receipt                  |
 
 The DAO remains the source of roles and membership. Public presentation does not make operational APIs public. Reviews and ballots use Daclify's trusted signer; this app credential cannot review, vote, administer members or spend funds. Linked ballot outcomes remain advisory; a project must explicitly define its conditional handling of an outcome.

@@ -1,10 +1,41 @@
 # Connected community apps
 
-Status: implemented and installed on testnet, 11 October 2026. External app registration, Daclify-issued login, app-bound signing grants and the Community Activity module are available in the qualified development release. Projects still register their own DAO/apps and deploy their own backend. Mainnet is not qualified.
+Status: connected-app integration is implemented on testnet. The current tested development package set is core `0.14.0-alpha.4`, modules `0.10.0-alpha.4` and frontend `0.14.0-alpha.7`, reviewed 12 October 2026. Projects register their own DAO/apps and operate their own backend. Mainnet is not qualified.
 
 A community can build its own small application and use Daclify for account verification, DAO membership and selected governance records. The app keeps its interface, hosting and database. Daclify supplies the shared community relationship and records member-authorised submissions without copying the application's complete task database onto the blockchain.
 
 For a concrete project specification, use the [example mini-app design](examples/community-mini-app-design.md). The [platform design](superpowers/specs/2026-10-11-connected-community-apps-design.md) describes the implemented boundaries across core, modules and frontend.
+
+## Availability and first connection
+
+| Capability                                                                                                               | Current availability                                                       | Evidence or remaining work                                                                                                                               |
+| ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| App registration, exact-callback sign-in, app-bound completion/review-submission grants and Community Activity           | Implemented on testnet                                                     | [Connected-app installation and native/browser checks](evidence/2026-10-11-connected-community-apps.md)                                                  |
+| One account/kit, paired sign-ins and explicit reconnection from either a wallet-only or restored account                 | Implemented on testnet                                                     | [Account continuity](evidence/2026-10-12-account-access-continuity.md), [restored-account reconnection](evidence/2026-10-12-restored-account-pairing.md) |
+| Persisted database binding, PostgreSQL starter, public self-service package download and global Mini apps/discovery page | Planned; the current SQLite example needs its binding fix before real data | [Foundation/connection plan](superpowers/plans/2026-10-12-self-service-mini-apps-and-account-exit.md)                                                    |
+| MCP server, encrypted personal profiles, self-departure/closure and hosted-account erasure                               | Planned                                                                    | [Approved workstreams and acceptance gates](superpowers/plans/2026-10-12-self-service-mini-apps-and-account-exit.md)                                     |
+
+Start with a DAO, admitted members and enabled Community Activity. Its administrator registers the app in the DAO's **Connected apps** tab, using its own HTTPS origin, exact callback and approved source API. The builder configures the registered client/app plus verified chain/runtime/DAO; a member signs in and separately approves recording. Confirm one synthetic completion against its exact native receipt before using real records. Daclify's owner is not a registration approver. A public package distribution path remains an implementation gate; the current private source/vendor archives alone do not complete a clean-machine self-service installation.
+
+Use the [database and identity contract](guides/mini-app-database-contract.md) when designing any mini app. This applies to SQLite, PostgreSQL and another database engine; changing engines does not change the identity or privacy rules.
+
+## Identity and recovery
+
+The Daclify account is the canonical service identity. A client receives a pairwise app subject and the full native membership reference, not a global email-based app user. Keep issuer/client/subject separate from chain/runtime/DAO/member ID. Native IDs are validated decimal strings; the same member number in another DAO is another membership.
+
+Account recovery and changes to paired sign-in methods do not create a new app user. Explicit reconnection preserves a sole subject mapping for the registered client and its native member anchor, then revokes old app authorization. Sign in and authorize again. If both profiles already have a subject for the same client, reconnection rejects rather than merging app histories. Never merge records by matching names, email or Telegram IDs. Two different registered root identities cannot be combined by this flow.
+
+```mermaid
+flowchart LR
+  Account[Daclify account] --> Consent[App-specific sign-in and consent]
+  Consent --> Subject[Issuer + client + pairwise subject]
+  Consent --> Member[Chain + runtime + DAO + member]
+  Subject --> DB[Bound mini-app database]
+  Member --> DB
+  Member --> Authority[Current native permissions]
+```
+
+App login, recording grants, independent review/votes and decryption access are separate checks. Possessing an app subject or hosted account alias proves none of the other permissions.
 
 ## One community, several apps
 
@@ -26,12 +57,12 @@ The existing native session limit is sixteen per member, with a maximum seven-da
 
 ## Keep detailed data in the app
 
-| Location | What belongs there |
-| --- | --- |
-| Mini-app database | Tasks, descriptions, instructions, assignment, photos, current state and pending submissions |
-| Daclify service database | Registered clients, app-scoped identity/session state and recoverable delivery coordination |
-| IPFS | Selected preserved snapshots and evidence files, encrypted when protected |
-| Native activity module | Compact app/source references, source revision commitment, authorised member, event or decision kind and optional evidence reference |
+| Location                 | What belongs there                                                                                                                   |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Mini-app database        | Tasks, descriptions, instructions, assignment, photos, current state and pending submissions                                         |
+| Daclify service database | Registered clients, app-scoped identity/session state and recoverable delivery coordination                                          |
+| IPFS                     | Selected preserved snapshots and evidence files, encrypted when protected                                                            |
+| Native activity module   | Compact app/source references, source revision commitment, authorised member, event or decision kind and optional evidence reference |
 
 Ordinary task creation and editing stay in the mini app. The first scope records selected completions, submitted reviews and decisions. Creating a task does not automatically allocate a Daclify task row.
 
@@ -63,9 +94,9 @@ A recorded completion is a member-authorised claim. Independent review can accep
 
 ## Reviews and decisions
 
-The proposed Community Activity module provides nonfinancial completion and review records reusable across gardening, bookings, volunteering and other app domains. The first proposed review policy allows an authorised independent administrator or reviewer to approve or request changes; the submitter cannot approve their own request.
+The implemented Community Activity module provides nonfinancial completion and review records reusable across gardening, bookings, volunteering and other app domains. Its initial review policy allows an authorised independent administrator or reviewer to approve or request changes; the submitter cannot approve their own request.
 
-This proposal adds one reusable activity smart contract, alongside app-specific signing restrictions in the existing runtime. A shared deployment can use the same activity contract for many DAOs and apps, isolating their records by runtime, DAO and app. It does not create a smart contract per mini app or task. An independent DAO deployment can use its own compatible module instance. Login and most app data remain off chain; native code and resource changes need their own qualification before deployment.
+The integration uses one reusable activity smart contract, alongside app-specific signing restrictions in the existing runtime. A shared deployment can use the same activity contract for many DAOs and apps, isolating their records by runtime, DAO and app. It does not create a smart contract per mini app or task. An independent DAO deployment can use its own compatible module instance. Login and most app data remain off chain; native code and resource changes need their own qualification before deployment.
 
 Decide can provide a community ballot linked to the exact app/source revision and evidence. Ordinary polls are advisory. The app backend applies a confirmed result under its explicit business rules and must not apply approval to a later edited revision.
 
@@ -73,7 +104,7 @@ Works remains a separate funded contribution workflow with positive milestone am
 
 ## Developer integration
 
-The installed testnet integration uses core/frontend `0.13.0-alpha.6` and modules SDK `0.9.0-alpha.22`. Community Activity is an additive contract; the five existing module release pins stay unchanged. See [installation and verification evidence](evidence/2026-10-11-connected-community-apps.md) and the [testnet recovery setup](evidence/2026-10-11-testnet-single-host-recovery.md). This is not a production qualification.
+Use one matched development set: `daclify-core-protocol-0.14.0-alpha.4.tgz` (SHA-256 `0ba84f4f10ad4e5bffaecc759a8d11a28989743579780c548366cc10ea204121`) and `daclify-modules-0.10.0-alpha.4.tgz` (SHA-256 `c4da68084454a709e3d8246c824eca42942240a5d04d9494d552c6fe62b4ce5a`). Both are currently in the frontend repository's `vendor/` directory, accessible to authorized repository users; do not assume public npm/GitHub registry publication. The [restored-account delivery](evidence/2026-10-12-restored-account-pairing.md) verifies this set with frontend `0.14.0-alpha.7`. Preserve earlier archives rather than replacing their bytes. Contract code pins remain distinct from SDK versions; check the actual installed module/code through canonical interfaces.
 
 ```ts
 import { ConnectedAppClient } from '@daclify/core-protocol/connected-apps';
@@ -102,3 +133,5 @@ The module retains at most 10,000 selected receipts and 128 encryption epochs pe
 The optional source adapter serves current detail under short-lived membership access. Daclify labels a revision that differs from the receipt. The trusted snapshot screen accepts an immutable project outbox draft and selected files, encrypts the actual bytes using a separately granted app key, and sends ciphertext to the project's pinning adapter. The native receipt stores CID, byte commitment and epoch. Protected snapshots remain encrypted for public DAOs too. Missing pinning, an unavailable source API or an unavailable wrapped key is shown as unavailable; it does not invent historical evidence.
 
 See the [runnable SQLite/outbox example](../examples/community-mini-app/README.md), the [project design template](examples/community-mini-app-design.md), and the producer-owned schemas in the [generated reference](generated/reference.md).
+
+If configuration fails, check the exact issuer/client, callback/origin, full membership reference and matched package pins. If recording fails, distinguish inactive membership, suspended app, expired/revoked grant, changed nonce, incompatible code, unavailable evidence and exhausted capacity. A restart preserves a durable outbox but loses the browser-held delegate; renew consent before signing, and reconcile an uncertain previous submission first. Removing an identity link alone does not anonymize surviving tasks, photos, receipts or backups. Each app defines its own record audiences, finite retention and cleanup; native receipts are retained under the limits above.

@@ -181,7 +181,7 @@ Q3 prepares a source-bound release candidate and a concrete rollout/rollback run
 
 ## Execution ledger
 
-At authoring time only repository investigation and this design/planning work are complete. Every implementation task below is pending.
+Execution is now authorized and running inline. The [durable execution ledger](../../evidence/2026-10-12-mini-app-execution-ledger.md) and [baseline](../../evidence/2026-10-12-mini-app-execution-baseline.json) record actual progress; unchecked tasks remain pending.
 
 | Package | State             | Evidence/commit                                      |
 | ------- | ----------------- | ---------------------------------------------------- |

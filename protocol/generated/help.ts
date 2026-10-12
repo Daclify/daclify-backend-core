@@ -71,36 +71,52 @@ export const CoreHelpBundle={
     },
     {
       "id": "connected-apps",
-      "title": "Community mini apps with Daclify (proposed)",
+      "title": "Community mini apps with Daclify",
       "paragraphs": [
-        "This is a proposed integration, not an available app registration or login API. External-client login, app-bound signing grants, app encryption access and the Community Activity module remain unimplemented. The linked guide and reusable garden-app design help projects specify their workflows before a qualified integration release.",
+        "Connected app registration, Daclify-issued sign-in, app-bound completion/submission grants, private evidence and Community Activity are implemented on testnet. The connected-app installation/native/browser evidence is dated 11 October 2026; restored-account evidence dated 12 October verifies core 0.14.0-alpha.4, modules 0.10.0-alpha.4 and frontend 0.14.0-alpha.7. These are development releases; mainnet is not qualified. MCP, encrypted personal profiles and self-service leave/closure/account erasure remain planned.",
         "A community first creates its DAO and admits members. It can then connect several independently hosted apps, such as gardening, equipment booking and volunteer planning. Members join once; another app creates no new membership or voting weight. Each app has separate registration, callbacks, record references, access settings and signing permissions.",
-        "The proposed Sign in with Daclify flow authenticates at Daclify through a previously paired, configured method such as email or Telegram. The app receives a verified app-specific identity and checks active membership in its configured DAO. It receives no private login pairings, root signing keys or decryption keys. A public DAO visitor does not become a member by viewing an app.",
-        "Login and recording authority are separate. A member approves a short-lived app-restricted browser credential through a supported Daclify signer. The first proposed grant permits completion reporting and submission for review, with separate signing for approvals and votes. A delegated signature proves use of approved authority within scope; workflows needing confirmation of every event use Daclify's trusted signing screen.",
+        "The Sign in with Daclify flow authenticates at Daclify through a previously paired, configured method such as email or Telegram. The app receives a verified app-specific identity and checks active membership in its configured DAO. It receives no private login pairings, root signing keys or decryption keys. A public DAO visitor does not become a member by viewing an app.",
+        "Login and recording authority are separate. A member approves a short-lived app-restricted browser credential through a supported Daclify signer. The first grant permits completion reporting and submission for review, with separate signing for approvals and votes. A delegated signature proves use of approved authority within scope; workflows needing confirmation of every event use Daclify's trusted signing screen.",
         "The app keeps task details, instructions, assignments, photographs and working state in its own database. Only selected completions, submitted reviews and decisions create compact native records. Daclify stores an app/source reference, submitted revision commitment, authorising member, event or decision kind and optional evidence reference. Current details can come from the app's authenticated API; frozen review evidence must preserve the submitted version.",
         "Pressing Complete saves local work and a durable pending event together. The connector prepares any selected verified snapshot, the browser signs the exact event, and Daclify validates native authority and resources. The app shows Daclify confirmation pending until the receipt is confirmed. Lost responses and retries reconcile the same event; background delivery cannot create fresh signatures or approve an edited task revision.",
         "Private DAO task contents, review text and decrypted evidence are restricted to authorised members. Public DAOs may publish selected summaries while keeping their operational apps private. Protected read and write APIs enforce current membership and app permissions. Private IPFS snapshots, manifests and included files are encrypted before publication; an API access check cannot protect publicly hosted plaintext.",
-        "Signing grants confer no decryption rights. The proposed first evidence viewer stays in Daclify's trusted client boundary. Private evidence inside a public DAO requires explicit app encryption envelopes and key grants; the existing public DAO document path does not provide that automatically. One mini app must not receive keys that unlock every other connected app.",
+        "Signing grants confer no decryption rights. The evidence viewer stays in Daclify's trusted client boundary. Private evidence inside a public DAO requires explicit app encryption envelopes and key grants; the dedicated app evidence path provides these separately from ordinary public DAO documents. One mini app must not receive keys that unlock every other connected app.",
         "The public blockchain still reveals member identifiers, authenticated activity, timing, commitments and native voting outcomes. Protected content does not imply anonymous governance. Removing a member stops future access under the configured policy but cannot retract previously obtained plaintext or keys. Verified pinning, backups and surviving decryption material determine evidence recovery; a CID alone is insufficient.",
-        "The proposed Community Activity module supplies nonfinancial reviews reusable across app domains. The first proposed policy uses an independent authorised reviewer and forbids self-approval. Decide can provide a ballot bound to the exact app/source revision; ordinary polls are advisory and the app backend applies results under its business rules. Works remains a separate funded milestone workflow. Completing a task does not automatically pay anyone.",
+        "The Community Activity module supplies nonfinancial reviews reusable across app domains. The initial policy uses an independent authorised reviewer and forbids self-approval. Decide can provide a ballot bound to the exact app/source revision; ordinary polls are advisory and the app backend applies results under its business rules. Works remains a separate funded milestone workflow. Completing a task does not automatically pay anyone.",
         "Compact receipts still consume RAM. Apps need explicit capacity, bounded references, measured native costs and safe expired-grant cleanup. Registration alone uses no signing-session slot; active delegated credentials initially retain the current sixteen-session and seven-day limits. Concurrent apps share a member nonce and require SDK coordination. Exhaustion leaves local work visibly pending; completed receipts are not automatically deleted.",
-        "Potential projects can adapt the linked synthetic garden design: seven members, two managers, a small persistent database, member-authorised completions, exact-version review and optional community votes. Specify your roles, public/private content, evidence retention, review policy, recovery and result application. Endpoint names, SDK calls, prices and deployed accounts must come from the eventual qualified release rather than guessed examples."
+        "Builders register their own apps in the DAO Connected apps tab; Daclify owner intervention is not an approval step. The current exact development archives are in the authorized frontend repository vendor directory; public self-service download distribution remains pending, so do not invent an npm install path. The SQLite example also requires its planned persisted binding fix before real data; PostgreSQL conformance is pending. Follow the database contract for issuer/client/subject mapping, full membership namespace, transactional outbox, restore and finite per-purpose cleanup.",
+        "One Daclify account can have several paired sign-in methods. A registered app gets a pairwise subject and complete native membership, not a copy of email/Telegram pairings. Both supported account reconnection paths preserve a sole client subject and member anchor, revoke old app tokens and require new consent. If both account profiles already have a subject for the same client, reconnection rejects; matching personal fields never authorizes a history merge."
       ],
       "sources": [
         {
-          "title": "Connected-app project guide (proposal)",
+          "title": "Connected-app project guide",
           "url": "https://github.com/Daclify/daclify-backend-core/blob/dev/docs/connected-community-apps.md",
-          "reviewedAt": "2026-10-11"
+          "reviewedAt": "2026-10-12"
         },
         {
           "title": "Reusable mini-app design: Community Garden",
           "url": "https://github.com/Daclify/daclify-backend-core/blob/dev/docs/examples/community-mini-app-design.md",
-          "reviewedAt": "2026-10-11"
+          "reviewedAt": "2026-10-12"
         },
         {
           "title": "Connected community apps platform design",
           "url": "https://github.com/Daclify/daclify-backend-core/blob/dev/docs/superpowers/specs/2026-10-11-connected-community-apps-design.md",
-          "reviewedAt": "2026-10-11"
+          "reviewedAt": "2026-10-12"
+        },
+        {
+          "title": "Connected-app testnet installation and qualification",
+          "url": "https://github.com/Daclify/daclify-backend-core/blob/dev/docs/evidence/2026-10-11-connected-community-apps.md",
+          "reviewedAt": "2026-10-12"
+        },
+        {
+          "title": "Restored-account delivery and current artifact hashes",
+          "url": "https://github.com/Daclify/daclify-backend-core/blob/dev/docs/evidence/2026-10-12-restored-account-pairing.md",
+          "reviewedAt": "2026-10-12"
+        },
+        {
+          "title": "Mini-app database and identity contract",
+          "url": "https://github.com/Daclify/daclify-backend-core/blob/dev/docs/guides/mini-app-database-contract.md",
+          "reviewedAt": "2026-10-12"
         }
       ]
     },
@@ -546,6 +562,25 @@ export const CoreHelpBundle={
           "title": "Telos Works",
           "url": "https://docs.telos.net/zero/governance/works/",
           "reviewedAt": "2026-10-09"
+        }
+      ]
+    },
+    {
+      "id": "mini-app-database",
+      "title": "Mini-app accounts, databases and recovery",
+      "paragraphs": [
+        "Mini apps operate their own persistent databases; a hosted Daclify mini-app database service is deferred. SQLite and PostgreSQL must pass the same identity, tenancy, transaction, restart and cleanup conformance requirements before being labelled supported.",
+        "Bind chain, runtime, DAO, app, verified identity issuer and registered client before reading records. A dedicated file persists one binding and refuses another connection. Shared storage includes the namespace in every query, uniqueness rule and foreign key. Nonempty unbound legacy data needs an explicit backup and verified adoption; it never silently joins the next configured DAO.",
+        "Derive an actor from the verified app subject and complete native membership after checking current membership/app policy. Never use a supplied member number, name, email or role projection as authority. Preserve full uint64 identifiers without JavaScript Number conversion. App login, recording, review/votes and decryption are separate.",
+        "Save a business change and frozen pending intent together in one transaction. Preserve the event, submitting actor and exact source revision through edits, retries, restart and restore. General apps distinguish logical operations/revisions; the one-completion task example is not a universal activity schema. Reconcile uncertain native delivery before signing another event.",
+        "Account recovery/reconnection keeps a sole verified client subject/native member anchor, then requires fresh app access. A new subject cannot claim old records without proof. Conflicting mappings and different registered roots are never silently merged.",
+        "Each app defines audiences, purpose, expiry, cleanup and required exceptions for personal text/photos/links/outbox/logs/backups. Removing a link does not anonymize surviving content or erase public-chain receipts. Coordinate SQLite WAL/checkpoint/VACUUM; PostgreSQL vacuum permits page reuse rather than promising immediate file shrinkage. Back up actual files and surviving encryption material, and apply controlled deletions before reopening a restore."
+      ],
+      "sources": [
+        {
+          "title": "Normative mini-app database contract",
+          "url": "https://github.com/Daclify/daclify-backend-core/blob/dev/docs/guides/mini-app-database-contract.md",
+          "reviewedAt": "2026-10-12"
         }
       ]
     }
