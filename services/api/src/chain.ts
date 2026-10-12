@@ -106,6 +106,13 @@ export interface ChainGateway {
   dao(daoId: string): Promise<DaoSummary>;
   network(): Promise<Network>;
   moduleState(daoId: string, query?: ModulePageQuery): Promise<ModuleState>;
+  governingDocuments?(
+    daoId: string,
+    query: import('@daclify/modules').GoverningDocumentQuery,
+  ): Promise<import('@daclify/modules').GoverningDocumentPage>;
+  clearGoverningDocuments?(
+    input: z.infer<typeof import('@daclify/modules').ModuleApiRoutes.clearDocuments.input>,
+  ): Promise<{ transactionId: string }>;
   listDaosPage?(after?: string): Promise<{ daos: DaoSummary[]; next: string | null }>;
   listDaos(): Promise<DaoSummary[]>;
   memberships(account: Account): Promise<UserMembership[]>;

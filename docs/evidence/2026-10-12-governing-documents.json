@@ -1,0 +1,102 @@
+{
+  "date": "2026-10-12",
+  "publication": "development-review-only",
+  "coreVersion": "0.14.0-alpha.5",
+  "moduleVersion": "0.10.0-alpha.5",
+  "contractVersion": "0.10.0-alpha.1",
+  "frontendVersion": "0.14.0-alpha.8",
+  "toolchain": "CDT 4.1.1 -O=s; Spring 1.2.2",
+  "contracts": {
+    "runtime": {
+      "bytes": 916168,
+      "sha256": "6bb89e59c38975928e6d85827c2ff8a4589f3ab0e315f52d88ffa55b62d0fb46"
+    },
+    "decide": {
+      "bytes": 314410,
+      "sha256": "387dd60f2a6c3135e7c47bf75a6af1e27c7a06fef3246cdcbcfbc12d7b5a8033"
+    },
+    "works": {
+      "bytes": 118594,
+      "sha256": "5d373c56b33caf9df7d2b1486936790119d6be32bb187d680ca8e6a9d46b017c"
+    },
+    "payroll": {
+      "bytes": 81699,
+      "sha256": "78662537ea5adf3e61439120ead312c2cb10a41c683da7a82db7e9f2f49a63bc"
+    },
+    "grants": {
+      "bytes": 98918,
+      "sha256": "e8a83ff38208071ac423a642d7b00e76be4d7487fffc82bbf8feb218aa5a3f7c"
+    },
+    "endorse": {
+      "bytes": 77752,
+      "sha256": "7dbff93a850760a43b741baf40406260c6bea006f934c406a9560367e28f0454"
+    },
+    "activity": {
+      "bytes": 187079,
+      "sha256": "ae3e24978ab8ed84de4b5d99c30cc84f4edc513ceed0af12699fa683f2d8d3d6"
+    }
+  },
+  "packages": {
+    "core": {
+      "bytes": 502238,
+      "sha256": "ea6d705ae1e24aff5edc01fdac51c1e60fca33505ba73df8ec5b58c850d85c2f"
+    },
+    "modules": {
+      "bytes": 207073,
+      "sha256": "705780bcebfbbf9e58afa628336dcef0535a3df80fa7a8c9d3c88dde32ed3c5c"
+    }
+  },
+  "native": {
+    "kind": "disposable-native-contract-flow",
+    "moduleCodeHash": "387dd60f2a6c3135e7c47bf75a6af1e27c7a06fef3246cdcbcfbc12d7b5a8033",
+    "ramBytes": 1840,
+    "actions": {
+      "register": {
+        "cpu_usage_us": 1507,
+        "net_usage_words": 30
+      },
+      "propose": {
+        "cpu_usage_us": 2789,
+        "net_usage_words": 30
+      },
+      "adopt": {
+        "cpu_usage_us": 2233,
+        "net_usage_words": 30
+      },
+      "accept": {
+        "cpu_usage_us": 1931,
+        "net_usage_words": 29
+      }
+    },
+    "preservesAdoptedVersion": true,
+    "duplicateAcceptanceRejected": true,
+    "unsignedDispatchRejected": true
+  },
+  "vote": {
+    "kind": "disposable-native-member-vote",
+    "moduleCodeHash": "387dd60f2a6c3135e7c47bf75a6af1e27c7a06fef3246cdcbcfbc12d7b5a8033",
+    "version": 1,
+    "laterDraftVersion": 2,
+    "memberVotePassed": true,
+    "administratorVetoRejected": true,
+    "adopt": {
+      "cpu_usage_us": 3200,
+      "net_usage_words": 30
+    }
+  },
+  "liveDeploymentPerformed": false,
+  "checks": {
+    "core": 893,
+    "modules": 201,
+    "frontend": 294,
+    "databaseIntegration": 296,
+    "native": 44,
+    "desktopMobileBrowser": 36,
+    "independentReview": false
+  },
+  "sourceCommits": {
+    "modules": "29ec2a6b4c70a393b8c9e1f98aa871b20b6e0978",
+    "frontend": "c6b6479362d6b51d75ed6643b6db71510bde5bfb",
+    "core": "containing commit"
+  }
+}

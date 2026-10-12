@@ -438,6 +438,32 @@ export const ServiceResponseRoutes = [
 }[];
 
 export const ContractFailureMessages = {
+  DOCUMENT_REGISTERED: 'This document is already registered. Open its existing registration.',
+  CONSTITUTION_REGISTERED:
+    'This DAO already has a constitution. Publish an amendment to that document.',
+  DOCUMENT_REGISTER_LIMIT: 'This DAO has reached its limit of 64 managed documents.',
+  DOCUMENT_SETTINGS: 'Choose a supported document type and approval rule.',
+  DOCUMENT_DOMAIN: 'This document proposal belongs to another DAO. Refresh Documents.',
+  DOCUMENT_REGISTER_UNKNOWN: 'The managed document could not be found. Refresh Documents.',
+  DOCUMENT_PROPOSAL_UNKNOWN: 'The document proposal could not be found. Refresh Documents.',
+  DOCUMENT_PROPOSAL_PENDING:
+    'Approve, cancel or clear the current proposal before proposing another version.',
+  DOCUMENT_REVISION_CHANGED:
+    'The adopted version changed. Refresh Documents before proposing or approving an amendment.',
+  DOCUMENT_VERSION_NOT_NEWER: 'Choose a version newer than the adopted version.',
+  DOCUMENT_APPROVAL_METHOD: 'Use the approval rule selected for this document.',
+  DOCUMENT_PROPOSAL_CLOSED: 'This proposal has already been adopted or closed. Refresh Documents.',
+  DOCUMENT_PROPOSAL_EXPIRED: 'This proposal expired. Clear it and propose the version again.',
+  DOCUMENT_SOURCE_CHANGED:
+    'The governing-document contract changed. Cancel this proposal and request fresh approval.',
+  DOCUMENT_APPROVAL_READY:
+    'Members approved this proposal. Adopt it before proposing another amendment.',
+  DOCUMENT_ADOPTION_CHANGED:
+    'A different version is now adopted. Open it before signing acceptance.',
+  DOCUMENT_ALREADY_ACCEPTED: 'You already accepted this adopted version.',
+  DOCUMENT_NOT_ADOPTED: 'Only an adopted document version can be accepted.',
+  DOCUMENT_ACCEPTANCE_DISABLED: 'Member acceptance is not tracked for this document.',
+  DOCUMENT_CLEANUP_BOUNDS: 'Clear between one and 25 rejected or expired proposals at a time.',
   MODULE_FEE_REQUIRED:
     'This module needs renewed access for a DAO above 10 active members. Ask a DAO administrator to open Module access. Existing work can still be completed.',
   MODULE_TERM_CHANGED:
@@ -631,7 +657,7 @@ export const ContractFailureMessages = {
   EVM_SIGNATURE_CANONICAL: 'The wallet returned an unsupported signature form.',
   GOVERNANCE_LOCKED:
     'An active ballot has locked voting weights or policy. Close the ballot before making this change.',
-  POLICY_CHANGED: 'The funding policy changed. Members must approve a new funding vote.',
+  POLICY_CHANGED: 'The governance policy changed. Members must approve a new proposal.',
   DAO_PAUSED:
     'The DAO guardian has paused commitments and payments. Check the pause expiry in Settings.',
   SELF_REVIEW: 'Contributors cannot review their own work. Ask another reviewer or administrator.',
