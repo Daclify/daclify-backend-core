@@ -2,8 +2,8 @@ import { NamesActionSchemas, NamesTableSchemas } from '../../../sdk/generated/na
 import { EncryptionPublicKeySchema } from '../../../protocol/crypto.js';
 import { ProfileRecipientPageSchema } from '../../../protocol/profiles.js';
 import { decodeRawNativeProfile } from '../../../sdk/profiles.js';
-import { privateHandoverCommitment } from '../../../sdk/account-exit.js';
-import { DaoHandoverSchema } from '../../../protocol/account-exit.js';
+import { privateHandoverCommitment,exitInstructionDigest } from '../../../sdk/account-exit.js';
+import { DaoHandoverSchema,SignedExitInstructionSchema,ExitSubmissionSchema,type ExitSubmission } from '../../../protocol/account-exit.js';
 import { namesAbi, NamesCodeHash } from '../../../sdk/names.js';
 import {
   ContentPageQuerySchema,
@@ -620,6 +620,12 @@ export class NativeChainGateway implements ChainGateway {
       receipt: cap?.receipt ?? null,
       exempt,
     });
+  }
+  async attestHostedClosure(dao:DaoRef,receipt:string):Promise<void>{
+    await this.hosting(dao);ChainIdSchema.parse(receipt);
+    const life=(await this.table('daolife',this.config.runtime,dao.daoId,1))[0];
+    if(!life||life.dao_id!==dao.daoId||life.state!==1)throw new ApiError('HOSTED_CLOSURE_CONTEXT',409);
+    await this.push('closehost',{dao_id:dao.daoId,closing_at:life.transitioned_at,receipt},this.config.relayActor,this.config.relayKey);
   }
   async attestCapacity(dao: DaoRef, members: number, expires: number, receipt: string) {
     await this.hosting(dao);
@@ -3754,6 +3760,56 @@ export class NativeChainGateway implements ChainGateway {
       })
     )
       throw new ApiError('RELAY_RESOURCES', 503);
+  }
+  async prepareSettlement(input:unknown):Promise<ExitSubmission>{
+    const signed=SignedExitInstructionSchema.parse(input);if(!['withdraw','unstake'].includes(signed.request.action))throw new ApiError('EXIT_SETTLEMENT_SCOPE',403);
+    return this.prepareExitSubmission(signed);
+  }
+  async submitSettlement(input:ExitSubmission):Promise<{transactionId:string}>{
+    const {transaction}=this.exitPacket(input),action=transaction.actions[0];if(!action)throw new ApiError('EXIT_PACKET',403);
+    const decoded=z.object({request:z.object({action:z.string()})}).parse(Serializer.objectify(Serializer.decode({abi:runtimeAbi,type:'submitexit',data:action.data})));
+    if(!['withdraw','unstake'].includes(decoded.request.action))throw new ApiError('EXIT_SETTLEMENT_SCOPE',403);
+    return this.submitPreparedExit(input);
+  }
+  async prepareExitSubmission(input:unknown):Promise<ExitSubmission>{
+    const signed=SignedExitInstructionSchema.parse(input),request=signed.request;
+    await this.reviewedRuntime(this.config.runtime);
+    if(request.chain_id!==this.config.chainId||request.deployment!==this.config.runtime)throw new ApiError('INSTRUCTION_DOMAIN',403);
+    const member=(await this.table('members',request.dao_id,request.member_id,1))[0];
+    if(!member||member.id!==request.member_id||member.nonce!==request.nonce)throw new ApiError('EXIT_MEMBER_CHANGED',409);
+    let valid=false;try{valid=Signature.from(signed.sig).verifyDigest(exitInstructionDigest(signed.operation,signed.step_digest,request),PublicKey.from(member.signing_key));}catch{}
+    if(!valid)throw new ApiError('SIGNATURE_INVALID',403);
+    await this.assertResources(this.config.relayActor);
+    const info=await this.api.v1.chain.get_info();if(info.chain_id.toString()!==this.config.chainId)throw new ApiError('CHAIN_ID_MISMATCH',503);
+    const transaction=Transaction.from({...info.getTransactionHeader(60),actions:[Action.from({account:this.config.runtime,name:'submitexit',authorization:[{actor:this.config.relayActor,permission:this.config.relayPermission??'active'}],data:encodeAction('submitexit',signed)})]});
+    const packet=SignedTransaction.from({...transaction,signatures:[this.config.relayKey.signDigest(transaction.signingDigest(info.chain_id))]});
+    return ExitSubmissionSchema.parse({transactionId:transaction.id.toString(),packet:Serializer.encode({object:packet}).hexString,firstBlock:Number(info.head_block_num),cursor:Number(info.head_block_num),expiresAt:transaction.expiration.toDate().toISOString()});
+  }
+  private exitPacket(input:ExitSubmission){
+    const packet=ExitSubmissionSchema.parse(input),transaction=Serializer.decode({type:SignedTransaction,data:packet.packet});
+    if(transaction.id.toString()!==packet.transactionId||transaction.actions.length!==1||transaction.signatures.length!==1||transaction.context_free_actions.length||transaction.context_free_data.length||transaction.expiration.toDate().toISOString()!==packet.expiresAt)throw new ApiError('EXIT_PACKET',403);
+    const action=transaction.actions[0];if(!action||action.account.toString()!==this.config.runtime||action.name.toString()!=='submitexit'||action.authorization.length!==1||action.authorization[0]?.actor.toString()!==this.config.relayActor||action.authorization[0]?.permission.toString()!==(this.config.relayPermission??'active'))throw new ApiError('EXIT_PACKET',403);
+    const signature=transaction.signatures[0];if(!signature||!signature.verifyDigest(transaction.transaction.signingDigest(this.config.chainId),this.config.relayKey.toPublic()))throw new ApiError('EXIT_PACKET',403);
+    return {packet,transaction};
+  }
+  async submitPreparedExit(input:ExitSubmission):Promise<{transactionId:string}>{
+    const {packet,transaction}=this.exitPacket(input);await this.reviewedRuntime(this.config.runtime);
+    const result=executedChainResult(await this.api.v1.chain.push_transaction(transaction),packet.transactionId);
+    await this.confirmBlock(result.blockNum);return {transactionId:result.transactionId};
+  }
+  async reconcileExitSubmission(input:ExitSubmission):Promise<{state:'confirmed'|'pending'|'unavailable';cursor:number}>{
+    const {packet}=this.exitPacket(input);await this.reviewedRuntime(this.config.runtime);
+    try{const result=await this.api.v1.chain.get_transaction_status(packet.transactionId);if(result.state==='IRREVERSIBLE')return {state:'confirmed',cursor:packet.cursor};}catch{/* Nodes may not enable finality tracking; reconcile the exact ID in irreversible blocks. */}
+    const info=await this.api.v1.chain.get_info();if(info.chain_id.toString()!==this.config.chainId)throw new ApiError('CHAIN_ID_MISMATCH',503);
+    const end=Math.min(Number(info.last_irreversible_block_num),packet.firstBlock+128,packet.cursor+24);
+    for(let cursor=packet.cursor;cursor<=end;cursor++){
+      const value=await this.api.call({path:'/v1/chain/get_block',params:{block_num_or_id:cursor}});
+      const block=z.object({block_num:z.int(),timestamp:z.string(),transactions:z.array(z.object({status:z.string(),trx:z.union([z.string(),z.object({id:ChainIdSchema})])}))}).parse(value);
+      if(block.block_num!==cursor)throw new ApiError('EXIT_RECEIPT',503);
+      if(block.transactions.some(item=>(typeof item.trx==='string'?item.trx:item.trx.id)===packet.transactionId&&item.status==='executed'))return {state:'confirmed',cursor};
+      if(Date.parse(block.timestamp+(block.timestamp.endsWith('Z')?'':'Z'))>Date.parse(packet.expiresAt))return {state:'unavailable',cursor};
+    }
+    return {state:packet.cursor>=packet.firstBlock+128?'unavailable':'pending',cursor:end>=packet.cursor?end+1:packet.cursor};
   }
   async relay(
     account: Account,

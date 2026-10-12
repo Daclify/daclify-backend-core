@@ -1354,3 +1354,29 @@ it.each(['wallet', 'restored'] as const)(
       expect((await service.access(token.accessToken)).claims.memberId).toBe('1');
   },
 );
+it.each(['wallet','restored'] as const)('refuses %s reconnect after erasure even for a proof issued beforehand',async direction=>{
+ const name=direction==='wallet'?'erasewallet':'eraserestore',f=await reconnectionFixture(name);
+ const request=direction==='wallet'?await f.request():await restoredReconnectRequest(f,name);
+ for(const id of [f.current.account.id,f.original.account.id])await pool.query("UPDATE accounts SET erasure_state='pending' WHERE id=$1",[id]);
+ const result=await app.inject(request);expect([401,409]).toContain(result.statusCode);
+ expect((await pool.query('SELECT id,merged_into FROM accounts WHERE id=ANY($1::uuid[])',[[f.current.account.id,f.original.account.id]])).rows.every(row=>row.merged_into===null)).toBe(true);
+});
+it.each(['wallet','restored'] as const)('rechecks both %s reconnect owners under the shared locks when erasure wins a race',async direction=>{
+ const name=direction==='wallet'?'raceerasewal':'raceeraserst',f=await reconnectionFixture(name);
+ const request=direction==='wallet'?await f.request():await restoredReconnectRequest(f,name);
+ beforeMembershipRead=async()=>{await pool.query("UPDATE accounts SET erasure_state='pending' WHERE id=$1",[f.current.account.id]);};
+ const result=await app.inject(request);expect(result.statusCode,result.body).toBe(409);expect(result.json()).toMatchObject({code:'ACCOUNT_RECONNECT_CHANGED'});
+ expect((await pool.query('SELECT merged_into FROM accounts WHERE id=$1',[f.current.account.id])).rows[0]).toEqual({merged_into:null});
+ expect((await pool.query('SELECT account_id FROM native_links WHERE native_account=$1',[name])).rows[0]?.account_id).toBe(f.current.account.id);
+});
+it.each([{direction:'wallet',side:'source',name:'erwsource'},{direction:'wallet',side:'target',name:'erwtarget'},{direction:'restored',side:'source',name:'errsource'},{direction:'restored',side:'target',name:'errtarget'}] as const)('rejects $direction reconnect when its $side UUID was erased after proof issuance',async({direction,side,name})=>{
+ const {AccountExit}=await import('../../services/api/src/account-exit/service.js');
+ const f=await reconnectionFixture(name),request=direction==='wallet'?await f.request():await restoredReconnectRequest(f,name);
+ const ownerId=side==='source'?f.current.account.id:f.original.account.id;
+ const service=new AccountExit(pool,{...(await import('../helpers/auth-chain.js')).authChain,memberships:async()=>[]},{backupRetentionSeconds:86400});
+ const operation=await service.begin(ownerId,{version:1,mode:'delete-account',memberships:[]},{reauthenticated:true});
+ for(let attempts=0;attempts<20;attempts++)if(await service.eraseHosted(operation.id)==='completed')break;
+ expect((await pool.query('SELECT erasure_state,signing_key FROM accounts WHERE id=$1',[ownerId])).rows[0]).toEqual({erasure_state:'erased',signing_key:null});
+ const result=await app.inject(request);expect([401,409]).toContain(result.statusCode);
+ expect((await pool.query('SELECT merged_into FROM accounts WHERE id=$1',[f.current.account.id])).rows[0]?.merged_into).toBeNull();
+});

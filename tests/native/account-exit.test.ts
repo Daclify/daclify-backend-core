@@ -706,3 +706,57 @@ it('rolls back retirement at an exhausted native RAM quota and completes after p
     await limits(-1);
   }
 });
+it('binds actual native exit signatures to operation/step and consumes the member nonce once',async()=>{
+ const test=await bare(),person=await test.member('2'),key=test.roots[1];if(!key)throw Error('FIXTURE_ROOT');
+ const request=makeInstruction(test.reference,'2',person.nonce,Math.floor(Date.now()/1000)+300,'daclifycore','leave',encodeAction('leave',test.actor('2')));
+ const {exitInstructionDigest}=await import('../../sdk/account-exit.js');
+ const operation='ab'.repeat(32),step_digest='cd'.repeat(32),sig=key.signDigest(exitInstructionDigest(operation,step_digest,request)).toString();
+ await expect(f().call('daclifycore','submitexit',{operation:'ae'.repeat(32),step_digest,request,sig},'relay')).rejects.toThrow();
+ await expect(f().call('daclifycore','submitexit',{operation,step_digest:'de'.repeat(32),request,sig},'relay')).rejects.toThrow();
+ expect((await test.member('2')).nonce).toBe(person.nonce);
+ await expect(f().call('daclifycore','submitexit',{operation:'00'.repeat(32),step_digest,request,sig},'relay')).rejects.toThrow('EXIT_CONTEXT');
+ await expect(f().call('daclifycore','submitexit',{operation,step_digest,request:{...request,action:'setcredits'},sig},'relay')).rejects.toThrow('EXIT_ACTION');
+ const result=await f().call('daclifycore','submitexit',{operation,step_digest,request,sig},'relay');
+ measurements.push({scenario:'operation-bound-exit',cpuUs:cpu(result)});
+ expect((await test.member('2')).active).toBe(false);
+ await expect(f().call('daclifycore','submitexit',{operation,step_digest,request,sig},'relay')).rejects.toThrow();
+});
+it('persists an exact exit packet before delivery and reconciles its irreversible transaction',async()=>{
+ const test=await bare(),person=await test.member('2'),key=test.roots[1];if(!key)throw Error('FIXTURE_ROOT');
+ const request=makeInstruction(test.reference,'2',person.nonce,Math.floor(Date.now()/1000)+300,'daclifycore','leave',encodeAction('leave',test.actor('2')));
+ const {exitInstructionDigest}=await import('../../sdk/account-exit.js');
+ const input={operation:'ef'.repeat(32),step_digest:'bc'.repeat(32),request,sig:key.signDigest(exitInstructionDigest('ef'.repeat(32),'bc'.repeat(32),request)).toString()};
+ const gateway=f().gateway;
+ const packet=await gateway.prepareExitSubmission(input);
+ expect((await test.member('2')).active).toBe(true);
+ const delivered=await gateway.submitPreparedExit(packet);expect(delivered.transactionId).toBe(packet.transactionId);
+ const reconciled=await gateway.reconcileExitSubmission(packet);expect(reconciled.state).toBe('confirmed');
+ expect((await test.member('2')).active).toBe(false);
+});
+it('refuses account-deletion closure when another active member joined before signing',async()=>{
+ const test=await bare(),person=await test.member(),key=test.roots[0];if(!key)throw Error('FIXTURE_ROOT');
+ const request=makeInstruction(test.reference,'1',person.nonce,Math.floor(Date.now()/1000)+300,'daclifycore','startclose',encodeAction('startclose',test.actor()));
+ const {exitInstructionDigest}=await import('../../sdk/account-exit.js');const operation='aa'.repeat(32),step_digest='bb'.repeat(32),sig=key.signDigest(exitInstructionDigest(operation,step_digest,request)).toString();
+ await expect(f().call('daclifycore','submitexit',{operation,step_digest,request,sig},'relay')).rejects.toThrow('SOLE_MEMBER_REQUIRED');
+ expect((await test.member()).nonce).toBe(person.nonce);
+});
+it('settles inactive stake through the narrow exit packet without a hosted account',async()=>{
+ const dao=await f().dummyDao(),key=dao.keys[1];if(!key)throw Error('FIXTURE_ROOT');
+ await dao.act('daclifycore','linknative',encodeAction('linknative',{...dao.actor('2'),account:'bob'}),'2','bob');
+ await f().call('eosio.token','transfer',{from:'bob',to:'daclifycore',quantity:'2.0000 TLOS',memo:'stake:'+dao.daoId+':2'},'bob');
+ await dao.act('daclifycore','leave',encodeAction('leave',dao.actor('2')),'2');
+ const request=await dao.request('daclifycore','unstake',encodeAction('unstake',{...dao.actor('2'),destination:'bob',quantity:'2.0000 TLOS'}),'2');
+ const {exitInstructionDigest}=await import('../../sdk/account-exit.js');
+ const operation='ad'.repeat(32),step_digest='ce'.repeat(32),signed={operation,step_digest,request,sig:key.signDigest(exitInstructionDigest(operation,step_digest,request)).toString()};
+ const packet=await f().gateway.prepareSettlement(signed);await f().gateway.submitSettlement(packet);
+ expect((await dao.member('2')).stake).toBe('0');
+ await expect(f().gateway.submitSettlement(packet)).rejects.toThrow();
+});
+it('requires the linked native wallet for operation-bound exit and preserves its later settlement authority',async()=>{
+ const dao=await f().dummyDao();await dao.act('daclifycore','linknative',encodeAction('linknative',{...dao.actor('2'),account:'bob'}),'2','bob');
+ const request=await dao.request('daclifycore','leave',encodeAction('leave',dao.actor('2')),'2');
+ const input={operation:'bf'.repeat(32),step_digest:'cf'.repeat(32),request};
+ await expect(f().call('daclifycore','exitnative',input,'alice')).rejects.toThrow();
+ const result=await f().call('daclifycore','exitnative',input,'bob');measurements.push({scenario:'linked-wallet-operation-exit',cpuUs:cpu(result)});
+ expect((await dao.member('2')).active).toBe(false);await expect(f().call('daclifycore','exitnative',input,'bob')).rejects.toThrow();
+});

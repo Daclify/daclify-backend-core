@@ -245,10 +245,6 @@ export async function reconnectAccounts(
         [current.id, target.id, ids],
       );
       if (conflict.rowCount) throw new ApiError('ACCOUNT_RECONNECT_CONFLICT', 409);
-      await db.query('UPDATE accounts SET merged_into=$2 WHERE id=$1 AND merged_into IS NULL', [
-        current.id,
-        target.id,
-      ]);
       for (const table of [
         'credentials',
         'passkeys',
@@ -297,6 +293,10 @@ export async function reconnectAccounts(
         'UPDATE dao_merchants SET broker_hash=NULL,broker_admin=NULL WHERE broker_admin=ANY($1::uuid[])',
         [ids],
       );
+      await db.query('UPDATE accounts SET merged_into=$2 WHERE id=$1 AND merged_into IS NULL', [
+        current.id,
+        target.id,
+      ]);
       await db.query(
         'INSERT INTO audit_events(account_id,kind,public_reference) VALUES($1,$3,$4),($2,$3,$4)',
         [

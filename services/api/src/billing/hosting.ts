@@ -112,6 +112,7 @@ export class HostedSubscriptions {
     );
     return result.rows[0] ? ChangeRow.parse(result.rows[0]) : undefined;
   }
+  async reconcileRetention(dao:DaoRef){const row=await this.row(dao);if(row)await this.reconcile(row);}
   async status(account: Account, dao: DaoRef) {
     await this.admin(account, dao);
     const row = await this.row(dao);

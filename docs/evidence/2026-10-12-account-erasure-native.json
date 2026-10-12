@@ -1,0 +1,70 @@
+{
+  "coreVersion": "0.15.0-alpha.8",
+  "runtimeCodeHash": "20d0d0a7a7281d990d667b4110ce9914bba1cf398b9c3d6e8bf6730c69f7ce00",
+  "environment": "owned local Spring; concurrent test load",
+  "measurements": [
+    {
+      "scenario": "departure",
+      "releasedRam": 735,
+      "cpuUs": 1567
+    },
+    {
+      "scenario": "handover acceptance",
+      "cpuUs": 1370
+    },
+    {
+      "scenario": "handover departure",
+      "releasedRam": 335,
+      "cpuUs": 1981
+    },
+    {
+      "scenario": "module closure scan",
+      "module": "decide",
+      "insertedRam": 278,
+      "cpuUs": 598
+    },
+    {
+      "scenario": "module closure scan",
+      "module": "works",
+      "insertedRam": 278,
+      "cpuUs": 351
+    },
+    {
+      "scenario": "module closure scan",
+      "module": "payroll",
+      "insertedRam": 278,
+      "cpuUs": 381
+    },
+    {
+      "scenario": "module closure scan",
+      "module": "grants-rounds",
+      "insertedRam": 278,
+      "cpuUs": 587
+    },
+    {
+      "scenario": "module closure scan",
+      "module": "endorsement-admission",
+      "insertedRam": 278,
+      "cpuUs": 376
+    },
+    {
+      "scenario": "module closure scan",
+      "module": "activity",
+      "insertedRam": 278,
+      "cpuUs": 395
+    },
+    {
+      "scenario": "funded native retirement after exhausted quota",
+      "insertedRam": 125,
+      "cpuUs": 1259
+    },
+    {
+      "scenario": "operation-bound-exit",
+      "cpuUs": 1359
+    },
+    {
+      "scenario": "linked-wallet-operation-exit",
+      "cpuUs": 1339
+    }
+  ]
+}

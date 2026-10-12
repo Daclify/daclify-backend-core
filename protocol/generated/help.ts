@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle={
   "producer": "core",
-  "packageVersion": "0.15.0-alpha.7",
+  "packageVersion": "0.15.0-alpha.8",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -583,6 +583,14 @@ export const CoreHelpBundle={
           "reviewedAt": "2026-10-12"
         }
       ]
+    },
+    {
+      "id": "account-exit",
+      "title": "Leave DAOs and delete your hosted account",
+      "paragraphs": [
+        "Account exit separates leaving DAOs, explicitly offering sole-member closure and deleting hosted identity. Fresh account-control proof is required. A downloaded 30-day status capability is read-only; each later native step needs its own member signature. Outstanding claims/stake remain in the native member identity; keep the recovery kit or linked wallet until settlement is complete. Deletion revokes hosted authentication immediately and removes disposable records across canonical and retired owners in bounded batches. The report separates current native profile rows, controlled key envelopes/provider pins, independent app acknowledgments, backup expiry and required shared history. Unavailable chains, providers or apps remain unresolved. Public history and recipient copies cannot be retracted. Controlled restore exclusions apply before authentication/key access; actual production retention and independent recovery require qualification.",
+        "For private administrators, prepare the selected successor and their permitted recorded epoch grants while normal access is still available. Verify local decryption separately, confirm recovery on another device, then obtain the selected successor's own context-bound native acceptance. A recorded grant alone does not prove that its ciphertext decrypts. Ordinary departure never cancels a shared subscription or disposes of remaining funds."
+      ]
     }
   ],
   "schemaVersion": 1,
@@ -590,7 +598,7 @@ export const CoreHelpBundle={
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "70fad149e20d22989c9412b7ac38e337e74fa407340d6270d5440c26a2ebd807",
+      "sourceAbiHash": "1289bc84afd5d065b40cb88c82fe1c4424731c48e14fdfa6a4f5281de41e5f73",
       "actions": [
         {
           "name": "accepthand",
@@ -1475,6 +1483,23 @@ export const CoreHelpBundle={
             {
               "name": "operator_label",
               "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "exitnative",
+          "fields": [
+            {
+              "name": "operation",
+              "type": "checksum256"
+            },
+            {
+              "name": "step_digest",
+              "type": "checksum256"
+            },
+            {
+              "name": "request",
+              "type": "instruction"
             }
           ]
         },
@@ -3442,6 +3467,27 @@ export const CoreHelpBundle={
             {
               "name": "proof",
               "type": "bytes"
+            }
+          ]
+        },
+        {
+          "name": "submitexit",
+          "fields": [
+            {
+              "name": "operation",
+              "type": "checksum256"
+            },
+            {
+              "name": "step_digest",
+              "type": "checksum256"
+            },
+            {
+              "name": "request",
+              "type": "instruction"
+            },
+            {
+              "name": "sig",
+              "type": "signature"
             }
           ]
         },
@@ -7060,6 +7106,436 @@ export const CoreHelpBundle={
     },
     {
       "method": "GET",
+      "path": "/v1/me/exit/preflight",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number",
+            "const": 1
+          },
+          "nativeAvailable": {
+            "type": "boolean"
+          },
+          "memberships": {
+            "maxItems": 256,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "reference": {
+                  "type": "object",
+                  "properties": {
+                    "chainId": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "contract": {
+                      "type": "string",
+                      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                    },
+                    "daoId": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "interfaceVersion": {
+                      "type": "number",
+                      "const": 1
+                    }
+                  },
+                  "required": [
+                    "chainId",
+                    "contract",
+                    "daoId",
+                    "interfaceVersion"
+                  ],
+                  "additionalProperties": false
+                },
+                "memberId": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "nonce": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "active": {
+                  "type": "boolean"
+                },
+                "admin": {
+                  "type": "boolean"
+                },
+                "claim": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "stake": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "nativeAccount": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "soleMember": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "lifecycle": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "active",
+                        "closing",
+                        "closed"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "maxLength": 128
+                }
+              },
+              "required": [
+                "reference",
+                "memberId",
+                "nonce",
+                "active",
+                "admin",
+                "claim",
+                "stake",
+                "nativeAccount",
+                "soleMember",
+                "lifecycle",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "limits": {
+            "type": "object",
+            "properties": {
+              "memberships": {
+                "type": "number",
+                "const": 256
+              },
+              "statusDays": {
+                "type": "number",
+                "const": 30
+              }
+            },
+            "required": [
+              "memberships",
+              "statusDays"
+            ],
+            "additionalProperties": false
+          },
+          "retained": {
+            "type": "string",
+            "maxLength": 4096
+          }
+        },
+        "required": [
+          "version",
+          "nativeAvailable",
+          "memberships",
+          "limits",
+          "retained"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "account-exit"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/me/exit",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "intent": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "leave-all",
+                  "delete-account"
+                ]
+              },
+              "memberships": {
+                "maxItems": 256,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "chainId": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "runtime": {
+                      "type": "string",
+                      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                    },
+                    "daoId": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "memberId": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "choice": {
+                      "type": "string",
+                      "enum": [
+                        "leave",
+                        "handover",
+                        "close"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "chainId",
+                    "runtime",
+                    "daoId",
+                    "memberId",
+                    "choice"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "version",
+              "mode",
+              "memberships"
+            ],
+            "additionalProperties": false
+          },
+          "statusCapability": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$"
+          }
+        },
+        "required": [
+          "intent",
+          "statusCapability"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number",
+            "const": 1
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "leave-all",
+              "delete-account"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "processing",
+              "complete",
+              "expired"
+            ]
+          },
+          "components": {
+            "maxItems": 1024,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "confirmed",
+                    "unavailable",
+                    "retained"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "expiresAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                }
+              },
+              "required": [
+                "id",
+                "state",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "statusCapability": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$"
+          }
+        },
+        "required": [
+          "version",
+          "id",
+          "mode",
+          "state",
+          "components",
+          "expiresAt",
+          "statusCapability"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "account-exit"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account-exit/status",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "capability": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$"
+          }
+        },
+        "required": [
+          "capability"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number",
+            "const": 1
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "leave-all",
+              "delete-account"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "processing",
+              "complete",
+              "expired"
+            ]
+          },
+          "components": {
+            "maxItems": 1024,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "confirmed",
+                    "unavailable",
+                    "retained"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "expiresAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                }
+              },
+              "required": [
+                "id",
+                "state",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "version",
+          "id",
+          "mode",
+          "state",
+          "components",
+          "expiresAt"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "account-exit"
+    },
+    {
+      "method": "GET",
       "path": "/v1/daos/:id/handover",
       "response": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -7163,6 +7639,442 @@ export const CoreHelpBundle={
         ]
       },
       "helpTopic": "accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account-exit/settlement/prepare",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "step_digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "request": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 65535
+              },
+              "chain_id": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "deployment": {
+                "type": "string",
+                "maxLength": 13
+              },
+              "dao_id": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "member_id": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "nonce": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "expires": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              "target": {
+                "type": "string",
+                "maxLength": 13
+              },
+              "action": {
+                "type": "string",
+                "maxLength": 13
+              },
+              "data": {
+                "type": "string",
+                "maxLength": 32768,
+                "pattern": "^(?:[0-9a-f]{2})*$"
+              }
+            },
+            "required": [
+              "version",
+              "chain_id",
+              "deployment",
+              "dao_id",
+              "member_id",
+              "nonce",
+              "expires",
+              "target",
+              "action",
+              "data"
+            ],
+            "additionalProperties": false
+          },
+          "sig": {
+            "type": "string",
+            "maxLength": 160
+          }
+        },
+        "required": [
+          "operation",
+          "step_digest",
+          "request",
+          "sig"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "packet": {
+            "type": "string",
+            "maxLength": 8192,
+            "pattern": "^(?:[a-f0-9]{2})+$"
+          },
+          "firstBlock": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "cursor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "transactionId",
+          "packet",
+          "firstBlock",
+          "cursor",
+          "expiresAt"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "account-exit"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account-exit/settlement/submit",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "packet": {
+            "type": "string",
+            "maxLength": 8192,
+            "pattern": "^(?:[a-f0-9]{2})+$"
+          },
+          "firstBlock": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "cursor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "transactionId",
+          "packet",
+          "firstBlock",
+          "cursor",
+          "expiresAt"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "transactionId"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "account-exit"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account-exit/settlement/receipt",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "packet": {
+            "type": "string",
+            "maxLength": 8192,
+            "pattern": "^(?:[a-f0-9]{2})+$"
+          },
+          "firstBlock": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "cursor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "transactionId",
+          "packet",
+          "firstBlock",
+          "cursor",
+          "expiresAt"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "pending",
+              "unavailable"
+            ]
+          },
+          "cursor": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "state",
+          "cursor"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "account-exit"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/me/exit/:id/steps/:stepId",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "signed": {
+            "type": "object",
+            "properties": {
+              "operation": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "step_digest": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "request": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65535
+                  },
+                  "chain_id": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "deployment": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "dao_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "member_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "nonce": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "expires": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4294967295
+                  },
+                  "target": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "action": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "data": {
+                    "type": "string",
+                    "maxLength": 32768,
+                    "pattern": "^(?:[0-9a-f]{2})*$"
+                  }
+                },
+                "required": [
+                  "version",
+                  "chain_id",
+                  "deployment",
+                  "dao_id",
+                  "member_id",
+                  "nonce",
+                  "expires",
+                  "target",
+                  "action",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              "sig": {
+                "type": "string",
+                "maxLength": 160
+              }
+            },
+            "required": [
+              "operation",
+              "step_digest",
+              "request",
+              "sig"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "signed"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number",
+            "const": 1
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "leave-all",
+              "delete-account"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "processing",
+              "complete",
+              "expired"
+            ]
+          },
+          "components": {
+            "maxItems": 1024,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "pending",
+                    "confirmed",
+                    "unavailable",
+                    "retained"
+                  ]
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                },
+                "expiresAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                }
+              },
+              "required": [
+                "id",
+                "state",
+                "reason"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "version",
+          "id",
+          "mode",
+          "state",
+          "components",
+          "expiresAt"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "account-exit"
     },
     {
       "method": "GET",
@@ -33640,6 +34552,7 @@ export const CoreHelpBundle={
           "path": {
             "type": "string",
             "enum": [
+              "/v1/me/exit",
               "/v1/profiles/keys/share",
               "/v1/profiles/keys/remove",
               "/v1/resources/ram/card/checkout",

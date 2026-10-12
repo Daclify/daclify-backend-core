@@ -133,6 +133,12 @@ export interface ChainGateway {
     memberId: string,
   ): Promise<{ accountName: string | null; profile: string | null }>;
   createDao(account: Account, input: z.infer<typeof CreateDaoSchema>): Promise<DaoSummary>;
+  attestHostedClosure?(dao:DaoRef,receipt:string):Promise<void>;
+  prepareSettlement?(input:unknown):Promise<import('../../../protocol/account-exit.js').ExitSubmission>;
+  submitSettlement?(packet:import('../../../protocol/account-exit.js').ExitSubmission):Promise<{transactionId:string}>;
+  prepareExitSubmission?(input:unknown):Promise<import('../../../protocol/account-exit.js').ExitSubmission>;
+  submitPreparedExit?(packet:import('../../../protocol/account-exit.js').ExitSubmission):Promise<{transactionId:string}>;
+  reconcileExitSubmission?(packet:import('../../../protocol/account-exit.js').ExitSubmission):Promise<{state:'confirmed'|'pending'|'unavailable';cursor:number}>;
   relay(
     account: Account,
     request: instruction,

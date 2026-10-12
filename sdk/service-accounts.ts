@@ -5,6 +5,8 @@ import { SYSTEM_ABI } from './system-abi.js';
 
 export const RelayCoreActions = [
   'submit',
+  'submitexit',
+  'exitnative',
   'submitsess',
   'submitevm',
   'orderfree',

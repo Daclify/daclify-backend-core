@@ -51,6 +51,7 @@ export type RecoveryReceipt = z.infer<typeof RecoveryReceiptSchema>;
 export interface RecoveryBackupStore {
   write(record: RecoveryBackup): Promise<RecoveryReceipt>;
   read(receipt: RecoveryReceipt): Promise<RecoveryBackup>;
+  remove?(receipt: RecoveryReceipt): Promise<void>;
 }
 export interface RecoveryConfiguration {
   store: RecoveryBackupStore;

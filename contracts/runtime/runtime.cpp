@@ -652,6 +652,17 @@ public:
     assert_recover_key(digest,sig,m.signing_key);
     dispatch(request);
   }
+  ACTION submitexit(checksum256 operation,checksum256 step_digest,instruction request,signature sig){
+    validate_exit(operation,step_digest,request);validate_instruction(request);
+    members rows(get_self(),request.dao_id);const auto& m=rows.get(request.member_id,"MEMBER_UNKNOWN");
+    const auto packed=pack(std::make_tuple(std::string("daclify.account-exit.v1"),operation,step_digest,request));
+    assert_recover_key(sha256(packed.data(),packed.size()),sig,m.signing_key);dispatch(request);
+  }
+  ACTION exitnative(checksum256 operation,checksum256 step_digest,instruction request){
+    validate_exit(operation,step_digest,request);validate_instruction(request);
+    members rows(get_self(),request.dao_id);const auto& m=rows.get(request.member_id,"MEMBER_UNKNOWN");
+    check(m.native_account.value,"NATIVE_UNLINKED");require_auth(m.native_account);dispatch(request);
+  }
   ACTION submitsess(instruction request,uint64_t session_id,signature sig) {
     validate_instruction(request);scoped_sessions sessions(get_self(),request.dao_id);const auto& credential=sessions.get(session_id,"SESSION_UNKNOWN");
     check(credential.member_id==request.member_id,"SESSION_MEMBER");check(credential.expires>current_time_point().sec_since_epoch(),"SESSION_EXPIRED");
@@ -1439,6 +1450,11 @@ private:
     executive_policies policies(get_self(),get_self().value);auto policy=policies.get(dao_id);replace_executives(dao_id,next.members,policy.inactivity_seconds,policy.quorum_bps);policies.modify(policies.get(dao_id),same_payer,[&](auto& r){r.last_election_start=next.starts;});
     executives offices(get_self(),dao_id);for(auto it=offices.begin();it!=offices.end();++it)offices.modify(it,same_payer,[&](auto& r){r.election_id=next.election_id;});rows.erase(found);
   }
+  void validate_exit(checksum256 operation,checksum256 step_digest,const instruction& r){
+    check(operation!=checksum256{}&&step_digest!=checksum256{},"EXIT_CONTEXT");
+    if(r.action=="startclose"_n)check(dao_rows.get(r.dao_id,"DAO_UNKNOWN").member_count==1,"SOLE_MEMBER_REQUIRED");
+    check(r.target==get_self()&&(r.action=="leave"_n||r.action=="startclose"_n||r.action=="closedao"_n||r.action=="delprofile"_n||r.action=="beginhand"_n||r.action=="scanhand"_n||r.action=="accepthand"_n||r.action=="withdraw"_n||r.action=="unstake"_n),"EXIT_ACTION");
+  }
   void validate_instruction(const instruction& r) {
     native_governance_settings native(get_self(),get_self().value);if(native.exists()&&native.get().dao_id==r.dao_id&&!native_policy_supported(native.get()))check(r.target==get_self()&&(r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="delprofile"_n),"NATIVE_POLICY_MIGRATION_REQUIRED");
     activate_executive_handover(r.dao_id);refresh_native_governance(r.dao_id);
@@ -1468,7 +1484,7 @@ private:
 extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
   if(code==receiver){switch(action_name){
     EOSIO_DISPATCH_HELPER(runtime,(appoint)(setexecs)(setnativegov)(handover)(heartbeat)(refreshgov)(syncexec)(electexec)(recallexec)(setvoter))
-    EOSIO_DISPATCH_HELPER(runtime,(authproof)(unlinknat)(linkevm)(unlinkevm)(submitevm)(setadmit)(admitfrom))
+    EOSIO_DISPATCH_HELPER(runtime,(authproof)(submitexit)(exitnative)(unlinknat)(linkevm)(unlinkevm)(submitevm)(setadmit)(admitfrom))
     EOSIO_DISPATCH_HELPER(runtime,(docsrc)(docref)(docscanstep)(backfilldocs)(prunedocs)(restoredoc))
     EOSIO_DISPATCH_HELPER(runtime,(beginram)(scanram)(adoptram)(sealram)(setarchcfg)(archattest)(archapprove)(archrevoke)(archstep)(clearholds)(initramobs)(rebindramobs)(setramauto)(setrampool)(grantdaoram)(inheritram)(setdaoquota)(checkdaoram)(checkrampool)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram)(fulfilram))
     EOSIO_DISPATCH_HELPER(runtime,(leave)(startclose)(closedao)(beginhand)(scanhand)(accepthand)(clearhand)(setlifecode)(clearlifecode)(closehost))

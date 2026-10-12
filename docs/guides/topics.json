@@ -577,5 +577,13 @@
         "reviewedAt": "2026-10-12"
       }
     ]
+  },
+  {
+    "id": "account-exit",
+    "title": "Leave DAOs and delete your hosted account",
+    "paragraphs": [
+      "Account exit separates leaving DAOs, explicitly offering sole-member closure and deleting hosted identity. Fresh account-control proof is required. A downloaded 30-day status capability is read-only; each later native step needs its own member signature. Outstanding claims/stake remain in the native member identity; keep the recovery kit or linked wallet until settlement is complete. Deletion revokes hosted authentication immediately and removes disposable records across canonical and retired owners in bounded batches. The report separates current native profile rows, controlled key envelopes/provider pins, independent app acknowledgments, backup expiry and required shared history. Unavailable chains, providers or apps remain unresolved. Public history and recipient copies cannot be retracted. Controlled restore exclusions apply before authentication/key access; actual production retention and independent recovery require qualification.",
+      "For private administrators, prepare the selected successor and their permitted recorded epoch grants while normal access is still available. Verify local decryption separately, confirm recovery on another device, then obtain the selected successor's own context-bound native acceptance. A recorded grant alone does not prove that its ciphertext decrypts. Ordinary departure never cancels a shared subscription or disposes of remaining funds."
+    ]
   }
 ]

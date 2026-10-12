@@ -81,6 +81,7 @@ export async function consumeAccountControl(
     checked.data.kind !== 'root'
   )
     throw new ApiError('ACCOUNT_CONTROL_REQUIRED', 403);
+  if(path==='/v1/me/exit'&&account.signingKey!==null&&checked.data.kind!=='root')throw new ApiError('ACCOUNT_CONTROL_REQUIRED',403);
   const result = await pool.query<{ message: string; expires_at: Date }>(
     `UPDATE account_control_intents SET consumed_at=now()
      WHERE id=$1 AND account_id=$2 AND session_hash=$3 AND path=$4 AND body_hash=$5

@@ -122,6 +122,14 @@ export class EncryptedRecoveryStore implements RecoveryBackupStore {
       plaintext.fill(0);
     }
   }
+  async remove(input:RecoveryReceipt):Promise<void>{
+    const receipt=RecoveryReceiptSchema.parse(input);if(receipt.storeId!==this.scope)throw Error('RECOVERY_STORAGE_SCOPE');
+    const reference=ReferenceSchema.parse(JSON.parse(receipt.reference));
+    const files=z.array(z.object({id:z.uuid(),cid:CidSchema,size:z.int().min(1).max(65536)})).max(25).parse(await this.provider.find(reference.id));
+    if(files.some(file=>file.cid!==reference.cid||file.size!==reference.bytes))throw Error('RECOVERY_STORAGE_CONTEXT');
+    for(const file of files)await this.provider.remove(file.id);
+    if((await this.provider.find(reference.id)).length)throw Error('RECOVERY_REMOVAL_PENDING');
+  }
   async read(input: RecoveryReceipt): Promise<RecoveryBackup> {
     const receipt = RecoveryReceiptSchema.parse(input);
     if (receipt.storeId !== this.scope) throw new Error('RECOVERY_STORAGE_SCOPE');

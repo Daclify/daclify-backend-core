@@ -1,3 +1,6 @@
+import { AccountExit } from './account-exit/service.js';
+import { readAccountExitConfiguration } from './account-exit/config.js';
+import { startAccountExitWorker } from './account-exit/jobs.js';
 import { CreationService } from './creation.js';
 import { readProfileKeysConfiguration } from './profiles/config.js';
 import { ProfileKeys } from './profiles/keys.js';
@@ -254,6 +257,9 @@ const storageNotices =
     : undefined;
 const recovery = await readRecoveryConfiguration(process.env);
 const profileKeysConfiguration = await readProfileKeysConfiguration(process.env);
+const exitConfiguration=await readAccountExitConfiguration(process.env);
+if(exitConfiguration)await exitConfiguration.exclusions.applyBeforeServe(pool);
+const accountExit=exitConfiguration?new AccountExit(pool,chain,{...exitConfiguration,hostedReconciliation:{...(hosting?{hosting:(dao)=>hosting.reconcileRetention(dao)}:{}),...(hostedStorage?{storage:(dao)=>hostedStorage.reconcileRetention(dao)}:{})},...(profileKeysConfiguration?{profileExclusions:profileKeysConfiguration.exclusions}:{}),...(recovery?{recoveryStore:recovery.store}:{})}):undefined;
 const appConfig = readConnectedAppsConfiguration(
   process.env,
   process.env.API_PUBLIC_ORIGIN ?? env.FRONTEND_ORIGIN,
@@ -272,6 +278,7 @@ const miniApps = connectedApps
   : undefined;
 const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
   ...(profileKeysConfiguration ? { profileKeys: profileKeysConfiguration } : {}),
+  ...(accountExit?{accountExit}:{}),
   telosGovernance: readTelosPins(process.env),
   ...(connectedApps ? { connectedApps } : {}),
   ...(miniApps ? { miniApps } : {}),
@@ -302,6 +309,7 @@ const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
 });
 await app.listen({ host: env.API_HOST, port: env.API_PORT });
 const authWorker = startAuthMaintenance(pool);
+const exitWorker=accountExit?startAccountExitWorker(pool,accountExit):undefined;
 const profileWorker = profileKeysConfiguration
   ? startProfileWorker(pool, new ProfileKeys(pool, chain, profileKeysConfiguration))
   : undefined;
@@ -326,6 +334,7 @@ const retentionWorker = content?.retention.cleanupEnabled
 async function shutdown() {
   await app.close();
   await authWorker.stop();
+  await exitWorker?.stop();
   await profileWorker?.stop();
   await profileKeysConfiguration?.exclusions.close?.();
   await appsWorker?.stop();

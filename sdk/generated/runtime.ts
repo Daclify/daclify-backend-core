@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = '70fad149e20d22989c9412b7ac38e337e74fa407340d6270d5440c26a2ebd807';
+export const runtimeAbiHash = '1289bc84afd5d065b40cb88c82fe1c4424731c48e14fdfa6a4f5281de41e5f73';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -2058,6 +2058,24 @@ export const runtimeAbi = {
         {
           "name": "election_id",
           "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "exitnative",
+      "base": "",
+      "fields": [
+        {
+          "name": "operation",
+          "type": "checksum256"
+        },
+        {
+          "name": "step_digest",
+          "type": "checksum256"
+        },
+        {
+          "name": "request",
+          "type": "instruction"
         }
       ]
     },
@@ -5519,6 +5537,28 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "submitexit",
+      "base": "",
+      "fields": [
+        {
+          "name": "operation",
+          "type": "checksum256"
+        },
+        {
+          "name": "step_digest",
+          "type": "checksum256"
+        },
+        {
+          "name": "request",
+          "type": "instruction"
+        },
+        {
+          "name": "sig",
+          "type": "signature"
+        }
+      ]
+    },
+    {
       "name": "submitnat",
       "base": "",
       "fields": [
@@ -5844,6 +5884,11 @@ export const runtimeAbi = {
     {
       "name": "enrollagent",
       "type": "enrollagent",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "exitnative",
+      "type": "exitnative",
       "ricardian_contract": ""
     },
     {
@@ -6284,6 +6329,11 @@ export const runtimeAbi = {
     {
       "name": "submitevm",
       "type": "submitevm",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "submitexit",
+      "type": "submitexit",
       "ricardian_contract": ""
     },
     {
@@ -7430,6 +7480,11 @@ export interface executive_record {
   office_epoch: string;
   election_id: string;
 }
+export interface exitnative {
+  operation: string;
+  step_digest: string;
+  request: instruction;
+}
 export interface fee_config {
   third_party_bps: number;
   first_party_bps: number;
@@ -8367,6 +8422,12 @@ export interface submitevm {
   binding_epoch: string;
   proof: string;
 }
+export interface submitexit {
+  operation: string;
+  step_digest: string;
+  request: instruction;
+  sig: string;
+}
 export interface submitnat {
   request: instruction;
 }
@@ -8444,6 +8505,7 @@ export interface RuntimeActions {
   electexec: electexec;
   enroll: enroll;
   enrollagent: enrollagent;
+  exitnative: exitnative;
   finishram: finishram;
   fulfilram: fulfilram;
   govcreate: govcreate;
@@ -8532,6 +8594,7 @@ export interface RuntimeActions {
   startclose: startclose;
   submit: submit;
   submitevm: submitevm;
+  submitexit: submitexit;
   submitnat: submitnat;
   submitsess: submitsess;
   syncexec: syncexec;

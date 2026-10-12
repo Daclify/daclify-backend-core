@@ -1,3 +1,5 @@
+import type { AccountExit } from './account-exit/service.js';
+import { registerSettlementRoutes,registerAccountExitRoutes } from './account-exit/routes.js';
 import type { CreationService } from './creation.js';
 import { ProfileKeys, type ProfileKeysConfiguration } from './profiles/keys.js';
 import { registerProfileRoutes } from './profiles/routes.js';
@@ -110,6 +112,7 @@ export async function createServer(
   origin: string,
   options: {
     profileKeys?: ProfileKeysConfiguration;
+    accountExit?: AccountExit;
     connectedApps?: ConnectedApps;
     miniApps?: MiniAppConnections;
     content?: ContentService;
@@ -279,6 +282,8 @@ export async function createServer(
     return account;
   }
   registerRecoveryRoutes(app, recovery, cookieName, session, origin);
+  if(options.accountExit)registerAccountExitRoutes(app,options.accountExit,cookieName,session,spend);
+  registerSettlementRoutes(app,chain);
   const profileKeys = new ProfileKeys(pool, chain, options.profileKeys);
   registerProfileRoutes(app, profileKeys, chain, cookieName, session);
   if (options.connectedApps)
@@ -724,6 +729,7 @@ export async function createServer(
       ...network,
       capabilities: [
         ...network.capabilities,
+        ...(options.accountExit?['account-exit-v1']:[]),
         ...(profileKeys.enabled && network.capabilities.includes('encrypted-profiles-v2')
           ? ['profile-key-envelopes-v1']
           : []),
