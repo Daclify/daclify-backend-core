@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle={
   "producer": "core",
-  "packageVersion": "0.14.0-alpha.4",
+  "packageVersion": "0.14.0-alpha.5",
   "interfaceVersion": 1,
   "topics": [
     {

@@ -740,6 +740,36 @@ export async function createServer(
       ModuleApiRoutes.state.query.parse(request.query),
     ),
   );
+  app.get<{ Params: { id: string } }>(ModuleApiRoutes.documents.path, async (request) => {
+    const daoId = IdSchema.parse(request.params.id);
+    const query = ModuleApiRoutes.documents.query.parse(request.query);
+    if (chain.governingDocuments)
+      return ModuleApiRoutes.documents.response.parse(await chain.governingDocuments(daoId, query));
+    const dao = await chain.dao(daoId);
+    return {
+      dao: dao.reference,
+      available: false,
+      module: null,
+      registrations: [],
+      changes: [],
+      acceptances: [],
+      acceptedAdoptionIds: [],
+      ballots: [],
+      votes: [],
+      next: null,
+    };
+  });
+  app.post(ModuleApiRoutes.clearDocuments.path, async (request) => {
+    const account = await session(
+      request.cookies[cookieName],
+      typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+    );
+    spend(account.id);
+    if (!chain.clearGoverningDocuments) throw new ApiError('MODULE_UNVERIFIED', 409);
+    return ModuleApiRoutes.clearDocuments.response.parse(
+      await chain.clearGoverningDocuments(ModuleApiRoutes.clearDocuments.input.parse(request.body)),
+    );
+  });
   app.post(ModuleApiRoutes.finalize.path, async (request) => {
     const account = await session(
       request.cookies[cookieName],

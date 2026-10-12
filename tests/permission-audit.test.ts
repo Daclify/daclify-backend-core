@@ -183,7 +183,10 @@ describe('deployment permission inspection', () => {
   it('uses all configured modules while keeping service-only accounts out of member execution', async () => {
     const audit = deploymentContextPermissionPlan(await loadEnvironment('testnet'));
     expect(audit.account).toBe('daclifycore1');
-    expect(audit.links).toHaveLength(77);
+    expect(audit.links).toHaveLength(82);
+    for (const action of ['regdoc', 'proposedoc', 'adoptdoc', 'canceldoc', 'ackdoc'])
+      expect(audit.links).toContainEqual({ account: 'daclifydecid', action });
+    expect(audit.links.map((link) => link.action)).not.toContain('cleardocs');
     expect(audit.links).toContainEqual({ account: 'daclifygrant', action: 'applygrant' });
     expect(audit.links).toContainEqual({ account: 'daclifyactiv', action: 'recordact' });
     expect(audit.links).toContainEqual({ account: 'daclifycore1', action: 'addappses' });

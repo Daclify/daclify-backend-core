@@ -37,6 +37,10 @@ import {
   ModuleApiRoutes,
   ModuleStateSchema,
   ModulePageQuerySchema,
+  GoverningDocumentQuerySchema,
+  GoverningDocumentPageSchema,
+  type GoverningDocumentQuery,
+  type GoverningDocumentPage,
   type ModulePageQuery,
   type ModuleState,
   type ModuleDeployment,
@@ -2978,6 +2982,199 @@ export class NativeChainGateway implements ChainGateway {
         ? (BigInt(last.id) + 1n).toString()
         : null;
     return { rows: page.rows.filter((row) => row.dao_id === daoId), next };
+  }
+  async clearGoverningDocuments(
+    input: z.infer<typeof ModuleApiRoutes.clearDocuments.input>,
+  ): Promise<{ transactionId: string }> {
+    const request = ModuleApiRoutes.clearDocuments.input.parse(input);
+    if (
+      request.dao.chainId !== this.config.chainId ||
+      request.dao.contract !== this.config.runtime ||
+      request.dao.interfaceVersion !== 1
+    )
+      throw new ApiError('DAO_REFERENCE');
+    const page = await this.governingDocuments(request.dao.daoId, {});
+    if (!page.available || !page.module?.enabled) throw new ApiError('MODULE_UNVERIFIED', 409);
+    const result = await this.pushEncoded(
+      page.module.deployment.account,
+      'cleardocs',
+      encodeDecide('cleardocs', {
+        runtime: this.config.runtime,
+        dao_id: request.dao.daoId,
+        proposal_ids: request.proposalIds,
+      }),
+      this.config.relayActor,
+      this.config.relayKey,
+    );
+    return { transactionId: result.transactionId };
+  }
+  async governingDocuments(
+    daoId: string,
+    input: GoverningDocumentQuery,
+  ): Promise<GoverningDocumentPage> {
+    const query = GoverningDocumentQuerySchema.parse(input);
+    const state = await this.moduleState(daoId, {
+      activities: 'done',
+      ballots: 'done',
+      projects: 'done',
+      schedules: 'done',
+      elections: 'done',
+      terms: 'done',
+      joinApplications: 'done',
+      rounds: 'done',
+      applications: 'done',
+    });
+    const module = state.modules.find((item) => item.deployment.id === 'decide') ?? null;
+    const page: GoverningDocumentPage = {
+      dao: state.dao,
+      module,
+      policyRevision: null,
+      available: !!module && module.installed && module.compatible && module.codeVerified,
+      registrations: [],
+      changes: [],
+      acceptances: [],
+      acceptedAdoptionIds: [],
+      ballots: [],
+      votes: [],
+      next: null,
+    };
+    if (!page.available || !module) return GoverningDocumentPageSchema.parse(page);
+    const runtimeResponse = await fetch(this.config.rpcUrl + '/v1/chain/get_code_hash', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ account_name: this.config.runtime }),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!runtimeResponse.ok) throw new ApiError('CHAIN_UNAVAILABLE', 503);
+    if (
+      z.object({ code_hash: ChainIdSchema }).parse(await runtimeResponse.json()).code_hash !==
+      RuntimeCodeHash
+    ) {
+      page.available = false;
+      return GoverningDocumentPageSchema.parse(page);
+    }
+    const policy = (await this.table('govpolicies', this.config.runtime, daoId, 1))[0];
+    if (policy?.dao_id === daoId) page.policyRevision = policy.revision;
+    const account = module.deployment.account;
+    const one = async <T extends { id: string; dao_id: string }>(
+      table: string,
+      schema: z.ZodType<T>,
+      id: string,
+    ) => {
+      const found = (await this.moduleRows(account, table, schema, id, id, 1, 'i64', 1)).rows[0];
+      if (!found || found.id !== id || found.dao_id !== daoId)
+        throw new ApiError('DOCUMENT_UNKNOWN', 404);
+      return found;
+    };
+    const bounded = async <T extends { id: string; dao_id: string }>(
+      table: string,
+      schema: z.ZodType<T>,
+      domainId: string,
+      belongs: (row: T) => boolean,
+      cursor: (row: T) => string = (row) => row.id,
+    ) => {
+      const after = query.after ?? '0';
+      const result = await this.moduleRows(
+        account,
+        table,
+        schema,
+        ((BigInt(domainId) << 64n) | BigInt(after)).toString(),
+        ((BigInt(domainId) << 64n) | ((1n << 64n) - 1n)).toString(),
+        2,
+        'i128',
+        25,
+      );
+      let previous = BigInt(after) - 1n;
+      if (result.rows.length > 25) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+      for (const row of result.rows) {
+        if (row.dao_id !== daoId || !belongs(row) || BigInt(cursor(row)) <= previous)
+          throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+        previous = BigInt(cursor(row));
+      }
+      const last = result.rows.at(-1);
+      if (result.more && (!last || BigInt(cursor(last)) === (1n << 64n) - 1n))
+        throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+      page.next = result.more && last ? (BigInt(cursor(last)) + 1n).toString() : null;
+      return result.rows;
+    };
+    if (query.adoptionId) {
+      const adopted = await one('docchanges', DecideTableSchemas.docchanges, query.adoptionId);
+      if (adopted.status !== 1) throw new ApiError('DOCUMENT_NOT_ADOPTED', 409);
+      page.changes = [adopted];
+      page.registrations = [await one('docregs', DecideTableSchemas.docregs, adopted.register_id)];
+      page.acceptances = await bounded(
+        'docaccepts',
+        DecideTableSchemas.docaccepts,
+        query.adoptionId,
+        (row) => row.adoption_id === query.adoptionId,
+        (row) => row.member_id,
+      );
+    } else if (query.registerId) {
+      page.registrations = [await one('docregs', DecideTableSchemas.docregs, query.registerId)];
+      page.changes = await bounded(
+        'docchanges',
+        DecideTableSchemas.docchanges,
+        query.registerId,
+        (row) => row.register_id === query.registerId,
+      );
+    } else {
+      page.registrations = await bounded('docregs', DecideTableSchemas.docregs, daoId, () => true);
+      page.changes = await Promise.all(
+        page.registrations.flatMap((row) =>
+          [row.adopted_id, row.pending_id]
+            .filter((id) => id !== '0')
+            .map((id) => one('docchanges', DecideTableSchemas.docchanges, id)),
+        ),
+      );
+      if (query.memberId)
+        for (const registered of page.registrations) {
+          if (registered.adopted_id === '0') continue;
+          const key = ((BigInt(registered.adopted_id) << 64n) | BigInt(query.memberId)).toString();
+          const accepted = await this.moduleRows(
+            account,
+            'docaccepts',
+            DecideTableSchemas.docaccepts,
+            key,
+            key,
+            2,
+            'i128',
+            1,
+          );
+          if (
+            accepted.rows.some(
+              (row) =>
+                row.dao_id === daoId &&
+                row.adoption_id === registered.adopted_id &&
+                row.member_id === query.memberId,
+            )
+          )
+            page.acceptedAdoptionIds.push(registered.adopted_id);
+        }
+    }
+    const ballotIds = [
+      ...new Set(page.changes.filter((row) => row.ballot_id !== '0').map((row) => row.ballot_id)),
+    ];
+    page.ballots = await Promise.all(
+      ballotIds.map((id) => one('ballots', DecideTableSchemas.ballots, id)),
+    );
+    if (query.memberId)
+      for (const id of ballotIds) {
+        const key = ((BigInt(id) << 64n) | BigInt(query.memberId)).toString();
+        const votes = await this.moduleRows(
+          account,
+          'votes',
+          DecideTableSchemas.votes,
+          key,
+          key,
+          2,
+          'i128',
+          1,
+        );
+        page.votes.push(
+          ...votes.rows.filter((row) => row.ballot === id && row.member === query.memberId),
+        );
+      }
+    return GoverningDocumentPageSchema.parse(page);
   }
   async moduleState(daoId: string, query?: ModulePageQuery): Promise<ModuleState> {
     if (query === undefined) {

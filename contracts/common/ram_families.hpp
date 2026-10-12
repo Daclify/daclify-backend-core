@@ -27,7 +27,7 @@ namespace daclify {
  X("ramlimits",ram_limits) X("ramgrants",ram_grants) X("ramentitle",ram_entitlements) X("ramclmholds",ram_claim_holds) X("raminherit",ram_inherited)
 inline std::vector<eosio::name> module_ram_families(uint8_t kind){
  switch(kind){
- case 1:return {"ballots"_n,"votes"_n,"pollends"_n,"voteids"_n,"elections"_n,"nominations"_n,"terms"_n,"termholds"_n,"executions"_n,"grantplans"_n,"adoptelect"_n,"adoptpolls"_n};
+ case 1:return {"ballots"_n,"votes"_n,"pollends"_n,"voteids"_n,"elections"_n,"nominations"_n,"terms"_n,"termholds"_n,"executions"_n,"grantplans"_n,"adoptelect"_n,"adoptpolls"_n,"docregs"_n,"docchanges"_n,"docaccepts"_n};
  case 2:return {"projects"_n,"milestones"_n,"agreements"_n,"adoptwork"_n};
  case 3:return {"schedules"_n,"entries"_n,"controls"_n,"adoptpay"_n};
  case 4:return {"rounds"_n,"applications"_n};
