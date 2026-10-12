@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "environment": "testnet",
+  "sources": {
+    "daclify-backend-core": "9b5872efc2c05f4fc0fbc842f12fa4745c686f4f",
+    "daclify-backend-modules": "aa5208a743746829f25da16663cfb3da09c6ea8a",
+    "daclify-frontend": "489803a6477d61ff58320b6db13494d989166919"
+  },
+  "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+  "native": {
+    "irreversible": true,
+    "statePreserved": true,
+    "authoritiesPreserved": true,
+    "transactions": [
+      {
+        "transactionId": "c878edf13ad510ca04bd1aae707da11055d5ec7f6ce63d1d753c437d61c1513d",
+        "blockNum": 449869175
+      },
+      {
+        "transactionId": "64943297d2e1f1c572cd962e1a544783178fed8a5d160230af24fcb64c6bee8f",
+        "blockNum": 449869189
+      },
+      {
+        "transactionId": "5b595fc6f079ab3a2eb92295459fd544f90202d22c28eea911ed1f9d9a993b98",
+        "blockNum": 449869200
+      },
+      {
+        "transactionId": "4e0ac86d69cbe03db66d84401f74b5fe3397ec1413b675872618d49b710038e6",
+        "blockNum": 449869210
+      },
+      {
+        "transactionId": "310d0a7c8e20ab53af6d29df3278af3e61093200aa86646e7de5d9ff4dec0c87",
+        "blockNum": 449869220
+      },
+      {
+        "transactionId": "a2a4d11c6a362bd0d604b7de1950c684620c5e6999917a95c0fc3818df73a32f",
+        "blockNum": 449869231
+      },
+      {
+        "transactionId": "da93ce0516b3241eb798f38138a73f858310a9aae487fc126886e3409cbb8ee5",
+        "blockNum": 449869242
+      }
+    ]
+  },
+  "preservedPrimaryTables": 77,
+  "preservedNativeRows": 197,
+  "accountRecords": 18,
+  "accountKeysPairingsMembershipsAndMergeOwnershipUnchanged": true,
+  "additiveMigration": "042_profile_key_envelopes.sql",
+  "artifacts": {
+    "daclifycore1": {
+      "code": "5778adbf4b72c67b2c2a0844aa8ec2f915c43ac6818c62af79883b7bf75dccd2",
+      "abi": "e619326c42a8a2849d80366fc71067bdf2e622c43aa55847a7ca5ea6ab925648"
+    },
+    "daclifydecid": {
+      "code": "be206e53fb5580c238e48536dc4dd9ff74ce0de61d2a9ec089512667823c7fe5",
+      "abi": "f6b8b69a5ed3f8deb6b111c3ad92246705afba4f03edc13ed880a54b7baf1998"
+    },
+    "daclifyworks": {
+      "code": "2f206002f9c87ef9b25159fd65d639084f4e0223a22d083b60a9e349e90284b2",
+      "abi": "a6c2ec147958ce0facc343d14b94be8dc1909ffc6011718c08db374dcb785c28"
+    },
+    "daclifypayr1": {
+      "code": "6993ba94978313cd43704b569725ae571693381d3653581e30f0930490f0bd3e",
+      "abi": "97bceedef474b8702e76a501623d7d4e60cc7d365970e4332ee24db138a051ce"
+    },
+    "daclifygrant": {
+      "code": "85be2c8b4c0a655b4b3d3020f90f2ab0d41452f0eb7630941e2ba9eab5d88749",
+      "abi": "fd26a7eed1c41643671bff05c9482e8afae07807d391a279982a7addf5c9fba7"
+    },
+    "daclifyendor": {
+      "code": "724f85d20756516202748f39312ae7a693cf7374860342f00b5f7b5251aeedb7",
+      "abi": "2a74e6139a5a3713fe76a7f5c2bb2f8b6dd6277d77a55c341db9b1f988541c31"
+    },
+    "daclifyactiv": {
+      "code": "796cf42e0a71c520b57cd7eabff26e345a895936427b31bd121dc24f56b1251d",
+      "abi": "f7c8d87159fc12087ea0998d501f594bda7d6080e9c68af077c6801819f65476"
+    }
+  },
+  "profileKeys": {
+    "enabled": true,
+    "controlledDatabaseBackupRetentionDays": 7,
+    "exclusionHorizonSeconds": 608400,
+    "exclusionJournalOutsidePostgres": true,
+    "independentFailureDomainQualified": false
+  },
+  "recovery": {
+    "recovery": "testnet-single-host",
+    "liveTlsWrapRoundtrip": true,
+    "profileKeysEnabled": true,
+    "backupRetentionSeconds": 608400,
+    "starterRelease": "2fe86bb855f958de0cb00d1580ba11a9157143b86eb9c8956910e3eddb74a828",
+    "expiresAt": "2026-10-17T14:46:09.233Z"
+  },
+  "ram": {
+    "bytes": 229376,
+    "testnetTlos": "13.1360",
+    "payer": "3boidanimus3"
+  },
+  "liveAccountDeletionOrDaoClosureTestsRun": false,
+  "authorOnlyReview": true,
+  "remainingTasks": [
+    "X2",
+    "X3",
+    "X4",
+    "M1",
+    "M2",
+    "M3",
+    "M4",
+    "C3",
+    "Q1",
+    "Q2",
+    "Q3"
+  ]
+}

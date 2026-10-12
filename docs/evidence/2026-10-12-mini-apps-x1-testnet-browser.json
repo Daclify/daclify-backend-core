@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "checks": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "miniAppsAvailable": true,
+      "databaseGuideAvailable": true,
+      "accessibilityViolations": 0,
+      "errors": [],
+      "serverErrors": []
+    },
+    {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "miniAppsAvailable": true,
+      "databaseGuideAvailable": true,
+      "accessibilityViolations": 0,
+      "errors": [],
+      "serverErrors": []
+    }
+  ]
+}
