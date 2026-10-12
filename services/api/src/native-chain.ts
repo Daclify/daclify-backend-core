@@ -1,4 +1,6 @@
 import { NamesActionSchemas, NamesTableSchemas } from '../../../sdk/generated/names-schemas.js';
+import { EncryptionPublicKeySchema } from '../../../protocol/crypto.js';
+import { ProfileRecipientPageSchema } from '../../../protocol/profiles.js';
 import { namesAbi, NamesCodeHash } from '../../../sdk/names.js';
 import {
   ContentPageQuerySchema,
@@ -2306,6 +2308,45 @@ export class NativeChainGateway implements ChainGateway {
       if (member) matches.push(this.membershipView(dao, member));
     }
     return matches;
+  }
+  async profileKeyMember(daoId: string, memberId: string) {
+    await this.reviewedRuntime(this.config.runtime);
+    const member = (
+      await this.table('members', IdSchema.parse(daoId), IdSchema.parse(memberId), 1)
+    )[0];
+    if (!member || member.id !== memberId) return null;
+    let key: unknown;
+    try {
+      key = JSON.parse(member.encryption_key);
+    } catch {
+      return null;
+    }
+    const encryptionKey = EncryptionPublicKeySchema.safeParse(key);
+    return encryptionKey.success
+      ? { memberId: member.id, active: member.active, encryptionKey: encryptionKey.data }
+      : null;
+  }
+  async profileKeyRecipients(daoId: string, after?: string) {
+    await this.reviewedRuntime(this.config.runtime);
+    const start = after === undefined ? '0' : (BigInt(IdSchema.parse(after)) + 1n).toString();
+    if (BigInt(start) > (1n << 64n) - 1n) return { recipients: [], next: null };
+    const members = await this.table('members', IdSchema.parse(daoId), start, 51);
+    const page = members.slice(0, 50);
+    const recipients = page.flatMap((member) => {
+      if (!member.active) return [];
+      let value: unknown;
+      try {
+        value = JSON.parse(member.encryption_key);
+      } catch {
+        return [];
+      }
+      const key = EncryptionPublicKeySchema.safeParse(value);
+      return key.success ? [{ memberId: member.id, encryptionKey: key.data }] : [];
+    });
+    return ProfileRecipientPageSchema.parse({
+      recipients,
+      next: members.length > 50 ? page.at(-1)?.id : null,
+    });
   }
   private membershipView(
     dao: DaoSummary,

@@ -9,7 +9,16 @@ import {
   type ProfileContext,
   type EncryptedProfile,
   type DecodedProfile,
+  ProfileKeyGrantSchema,
+  profileKeyGrantDomain,
+  type ProfileKeyGrant,
 } from '../protocol/profiles.js';
+import {
+  EncryptionPrivateKeySchema,
+  type EncryptionPublicKey,
+  type EncryptionPrivateKey,
+} from '../protocol/crypto.js';
+import { sealRecoveryDelivery, openRecoveryDelivery } from './recovery.js';
 function bytes(value: Uint8Array): ArrayBuffer {
   return Uint8Array.from(value).buffer;
 }
@@ -88,5 +97,45 @@ export function decodeRawNativeProfile(input: unknown): DecodedProfile {
     );
   } catch {
     throw new Error('PROFILE_FORMAT');
+  }
+}
+export async function profileCiphertextCommitment(input: EncryptedProfile): Promise<string> {
+  const source = new TextEncoder().encode(JSON.stringify(EncryptedProfileSchema.parse(input)));
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes(source)));
+  return Array.from(digest, (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+export async function sealProfileKey(
+  key: Uint8Array,
+  recipient: EncryptionPublicKey,
+  context: ProfileContext,
+  ciphertextCommitment: string,
+): Promise<ProfileKeyGrant> {
+  checkKey(key);
+  const binding = { context, recipientEncryptionKey: recipient, ciphertextCommitment };
+  const domain = profileKeyGrantDomain(binding);
+  return ProfileKeyGrantSchema.parse({
+    version: 1,
+    ...binding,
+    grant: await sealRecoveryDelivery(key, recipient, domain),
+  });
+}
+export async function openProfileKey(
+  input: ProfileKeyGrant,
+  recipient: EncryptionPrivateKey,
+  expectedContext: ProfileContext,
+  expectedCommitment: string,
+): Promise<Uint8Array> {
+  const grant = ProfileKeyGrantSchema.parse(input);
+  const own = EncryptionPrivateKeySchema.parse(recipient);
+  const expected = profileKeyGrantDomain({
+    context: expectedContext,
+    recipientEncryptionKey: { kty: own.kty, crv: own.crv, x: own.x, y: own.y },
+    ciphertextCommitment: expectedCommitment,
+  });
+  if (expected !== profileKeyGrantDomain(grant)) throw new Error('PROFILE_KEY_CONTEXT');
+  try {
+    return await openRecoveryDelivery(grant.grant, own, expected);
+  } catch {
+    throw new Error('PROFILE_KEY_DECRYPTION');
   }
 }

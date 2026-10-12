@@ -1,4 +1,7 @@
 import { CreationService } from './creation.js';
+import { readProfileKeysConfiguration } from './profiles/config.js';
+import { ProfileKeys } from './profiles/keys.js';
+import { startProfileWorker } from './profiles/jobs.js';
 import { ConnectedApps } from './connected-apps/service.js';
 import { MiniAppArtifacts } from './mini-apps/artifacts.js';
 import { MiniAppConnections } from './mini-apps/connections.js';
@@ -250,6 +253,7 @@ const storageNotices =
       )
     : undefined;
 const recovery = await readRecoveryConfiguration(process.env);
+const profileKeysConfiguration = await readProfileKeysConfiguration(process.env);
 const appConfig = readConnectedAppsConfiguration(
   process.env,
   process.env.API_PUBLIC_ORIGIN ?? env.FRONTEND_ORIGIN,
@@ -267,6 +271,7 @@ const miniApps = connectedApps
   ? new MiniAppConnections(connectedApps, miniAppArtifacts)
   : undefined;
 const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
+  ...(profileKeysConfiguration ? { profileKeys: profileKeysConfiguration } : {}),
   telosGovernance: readTelosPins(process.env),
   ...(connectedApps ? { connectedApps } : {}),
   ...(miniApps ? { miniApps } : {}),
@@ -297,6 +302,9 @@ const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
 });
 await app.listen({ host: env.API_HOST, port: env.API_PORT });
 const authWorker = startAuthMaintenance(pool);
+const profileWorker = profileKeysConfiguration
+  ? startProfileWorker(pool, new ProfileKeys(pool, chain, profileKeysConfiguration))
+  : undefined;
 const appsWorker = connectedApps
   ? startPollingWorker(
       async () => ((await connectedApps.cleanup()) ? 'progress' : 'idle'),
@@ -318,6 +326,8 @@ const retentionWorker = content?.retention.cleanupEnabled
 async function shutdown() {
   await app.close();
   await authWorker.stop();
+  await profileWorker?.stop();
+  await profileKeysConfiguration?.exclusions.close?.();
   await appsWorker?.stop();
   await worker?.stop();
   await hostingWorker?.stop();

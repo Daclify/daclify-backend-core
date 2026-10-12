@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { NativeFinishSchema } from './native-wallet.js';
 import { ConnectedAppsRoutes } from './connected-apps.js';
 import { MiniAppsRoutes } from './mini-apps.js';
+import { ProfileRoutes } from './profiles.js';
 import { RecoveryRoutes } from './recovery.js';
 import { SignupRoutes } from './signup.js';
 import {
@@ -50,6 +51,7 @@ import {
 import { StorageCurationRoutes } from './storage-retention.js';
 import { ModuleFeeRoutes } from './module-fees.js';
 export const ApiRoutes = {
+  ...ProfileRoutes,
   ...MiniAppsRoutes,
   accountReconnectNative: {
     method: 'POST',

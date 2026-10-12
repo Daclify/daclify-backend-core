@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.15.0-alpha.1 · interface 1.
+Package 0.15.0-alpha.2 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -42,9 +42,9 @@ The Users directory includes all public DAO membership records, including member
 
 The directory automatically loads up to 20 pages per batch, each containing at most 50 members from one DAO. Small directories load all communities automatically; larger directories expose Load more users and label partial search. Each community badge opens its DAO. User details show all loaded proven memberships and per-membership profile links. A failed later page retains earlier results and Retry continues from its cursor. Independent operators remain limited to their configured DAO.
 
-Last active means the latest successful authenticated member instruction in any connected DAO, including installed module actions. Failed actions and replays do not advance it. Sign-ins, enrollment and direct administration do not count. Older members need bounded governance-authorized activity-row initialization; absent or zero timestamps show DAO activity not recorded. Initialization never invents historical dates, changes permissions or spends tokens. Public profile contacts and avatar CIDs are published on chain; publish only information intended to be public.
+Last active means the latest successful authenticated member instruction in any connected DAO, including installed module actions. Failed actions and replays do not advance it. Sign-ins, enrollment and direct administration do not count. Older members need bounded governance-authorized activity-row initialization; absent or zero timestamps show DAO activity not recorded. Initialization never invents historical dates, changes permissions or spends tokens. Legacy profile contacts and avatar CIDs remain public in chain history. The new encrypted-profile runtime refuses plaintext updates; public member and alias metadata remains visible.
 
-Open your own user card and choose Edit profile & account to edit your public profile, set avatar/background IPFS CIDs, manage recovery keys, pair sign-in credentials and manage wallet links. A browser signer must be authorized for the selected membership to publish. Email and social contact fields entered in this public profile are public on-chain; they are distinct from private service login pairings.
+Open your own user card and choose Edit profile & account to manage recovery, sign-ins and wallet links. Older deployments publish profile contacts on chain. The encrypted-profile candidate uses random per-revision keys and removable recipient-sealed envelopes, separate from signing and DAO document keys. Its audience editor is still being qualified; plaintext publishing is blocked on the new runtime. The existing account kit recovers a profile only while its authorized envelope survives; old ciphertext alone cannot recover a deleted random key.
 
 ## Choose how to operate your DAO
 
@@ -2874,6 +2874,669 @@ Source ABI JSON SHA-256: `0e0d996e5ac592ba29a1d1531a575d88d2370d314123b848932631
 | ram_bytes | uint32 |
 | net_stake | asset |
 | cpu_stake | asset |
+
+## GET /v1/profiles/:daoId/recipients
+
+Guide: accounts.
+
+No request body.
+
+Query:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "after": {
+      "type": "string",
+      "maxLength": 20
+    }
+  },
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "recipients": {
+      "maxItems": 50,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "encryptionKey": {
+            "type": "object",
+            "properties": {
+              "kty": {
+                "type": "string",
+                "const": "EC"
+              },
+              "crv": {
+                "type": "string",
+                "const": "P-256"
+              },
+              "x": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              },
+              "y": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              }
+            },
+            "required": [
+              "kty",
+              "crv",
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "memberId",
+          "encryptionKey"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "next": {
+      "anyOf": [
+        {
+          "type": "string",
+          "maxLength": 20
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "recipients",
+    "next"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/profiles/keys/share
+
+Guide: accounts.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "context": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "number",
+          "const": 2
+        },
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "runtime": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "daoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "memberId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "profileRevision": {
+          "type": "string",
+          "allOf": [
+            {
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            }
+          ]
+        }
+      },
+      "required": [
+        "version",
+        "chainId",
+        "runtime",
+        "daoId",
+        "memberId",
+        "profileRevision"
+      ],
+      "additionalProperties": false
+    },
+    "grants": {
+      "minItems": 1,
+      "maxItems": 64,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number",
+            "const": 1
+          },
+          "context": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number",
+                "const": 2
+              },
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "runtime": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "memberId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "profileRevision": {
+                "type": "string",
+                "allOf": [
+                  {
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  {
+                    "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "version",
+              "chainId",
+              "runtime",
+              "daoId",
+              "memberId",
+              "profileRevision"
+            ],
+            "additionalProperties": false
+          },
+          "recipientEncryptionKey": {
+            "type": "object",
+            "properties": {
+              "kty": {
+                "type": "string",
+                "const": "EC"
+              },
+              "crv": {
+                "type": "string",
+                "const": "P-256"
+              },
+              "x": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              },
+              "y": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              }
+            },
+            "required": [
+              "kty",
+              "crv",
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
+          },
+          "ciphertextCommitment": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "grant": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "number",
+                "const": 1
+              },
+              "ephemeralKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "salt": {
+                "type": "string",
+                "maxLength": 44,
+                "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+              },
+              "envelope": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "algorithm": {
+                    "type": "string",
+                    "const": "AES-256-GCM"
+                  },
+                  "iv": {
+                    "type": "string",
+                    "maxLength": 16,
+                    "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+                  },
+                  "ciphertext": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+                  }
+                },
+                "required": [
+                  "version",
+                  "algorithm",
+                  "iv",
+                  "ciphertext"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "version",
+              "ephemeralKey",
+              "salt",
+              "envelope"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "version",
+          "context",
+          "recipientEncryptionKey",
+          "ciphertextCommitment",
+          "grant"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "context",
+    "grants"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "state": {
+      "type": "string",
+      "enum": [
+        "staged",
+        "active"
+      ]
+    },
+    "expiresAt": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "state",
+    "expiresAt"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/profiles/keys/remove
+
+Guide: accounts.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "context": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "number",
+          "const": 2
+        },
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "runtime": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "daoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "memberId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "profileRevision": {
+          "type": "string",
+          "allOf": [
+            {
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            }
+          ]
+        }
+      },
+      "required": [
+        "version",
+        "chainId",
+        "runtime",
+        "daoId",
+        "memberId",
+        "profileRevision"
+      ],
+      "additionalProperties": false
+    },
+    "ciphertextCommitment": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "context",
+    "ciphertextCommitment"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "state": {
+      "type": "string",
+      "enum": [
+        "removed",
+        "backup-expiry-pending",
+        "unavailable"
+      ]
+    },
+    "backupExpiresAt": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "state",
+    "backupExpiresAt"
+  ],
+  "additionalProperties": false
+}
+```
+
+## GET /v1/profiles/:daoId/:memberId/keys/:profileRevision
+
+Guide: accounts.
+
+No request body.
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "number",
+      "const": 1
+    },
+    "context": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "number",
+          "const": 2
+        },
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "runtime": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "daoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "memberId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "profileRevision": {
+          "type": "string",
+          "allOf": [
+            {
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            {
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+            }
+          ]
+        }
+      },
+      "required": [
+        "version",
+        "chainId",
+        "runtime",
+        "daoId",
+        "memberId",
+        "profileRevision"
+      ],
+      "additionalProperties": false
+    },
+    "recipientEncryptionKey": {
+      "type": "object",
+      "properties": {
+        "kty": {
+          "type": "string",
+          "const": "EC"
+        },
+        "crv": {
+          "type": "string",
+          "const": "P-256"
+        },
+        "x": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43}$"
+        },
+        "y": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43}$"
+        }
+      },
+      "required": [
+        "kty",
+        "crv",
+        "x",
+        "y"
+      ],
+      "additionalProperties": false
+    },
+    "ciphertextCommitment": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "grant": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "number",
+          "const": 1
+        },
+        "ephemeralKey": {
+          "type": "object",
+          "properties": {
+            "kty": {
+              "type": "string",
+              "const": "EC"
+            },
+            "crv": {
+              "type": "string",
+              "const": "P-256"
+            },
+            "x": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{43}$"
+            },
+            "y": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{43}$"
+            }
+          },
+          "required": [
+            "kty",
+            "crv",
+            "x",
+            "y"
+          ],
+          "additionalProperties": false
+        },
+        "salt": {
+          "type": "string",
+          "maxLength": 44,
+          "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+        },
+        "envelope": {
+          "type": "object",
+          "properties": {
+            "version": {
+              "type": "number",
+              "const": 1
+            },
+            "algorithm": {
+              "type": "string",
+              "const": "AES-256-GCM"
+            },
+            "iv": {
+              "type": "string",
+              "maxLength": 16,
+              "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+            },
+            "ciphertext": {
+              "type": "string",
+              "maxLength": 64,
+              "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+            }
+          },
+          "required": [
+            "version",
+            "algorithm",
+            "iv",
+            "ciphertext"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "version",
+        "ephemeralKey",
+        "salt",
+        "envelope"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "version",
+    "context",
+    "recipientEncryptionKey",
+    "ciphertextCommitment",
+    "grant"
+  ],
+  "additionalProperties": false
+}
+```
 
 ## GET /v1/mini-apps/connections/:daoId/:appId
 
@@ -30467,6 +31130,8 @@ Request:
     "path": {
       "type": "string",
       "enum": [
+        "/v1/profiles/keys/share",
+        "/v1/profiles/keys/remove",
         "/v1/resources/ram/card/checkout",
         "/v1/hosting/change",
         "/v1/storage/approve",

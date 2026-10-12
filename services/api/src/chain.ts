@@ -116,6 +116,16 @@ export interface ChainGateway {
   listDaosPage?(after?: string): Promise<{ daos: DaoSummary[]; next: string | null }>;
   listDaos(): Promise<DaoSummary[]>;
   memberships(account: Account): Promise<UserMembership[]>;
+  profileKeyMember?(
+    daoId: string,
+    memberId: string,
+  ): Promise<
+    (import('../../../protocol/profiles.js').ProfileRecipient & { active: boolean }) | null
+  >;
+  profileKeyRecipients?(
+    daoId: string,
+    after?: string,
+  ): Promise<import('../../../protocol/profiles.js').ProfileRecipientPage>;
   memberProfile(
     daoId: string,
     memberId: string,

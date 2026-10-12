@@ -1,0 +1,129 @@
+{
+  "task": "P2",
+  "state": "complete; P3 editor pending",
+  "date": "2026-10-12",
+  "versions": {
+    "core": "0.15.0-alpha.2",
+    "modulesSdk": "0.10.0-alpha.10",
+    "moduleContracts": "0.10.0-alpha.1",
+    "frontend": "0.15.0-alpha.2"
+  },
+  "artifacts": {
+    "corePackage": {
+      "sha256": "44fab08e34f04b9f73d82c2e3c4803b970460536981ad94337588af0cbbf498a",
+      "bytes": 524997
+    },
+    "modulesPackage": {
+      "sha256": "008352cc01fd0b5d250b2b105cf95f484b9b6f78a9014e74590a76ce93d2038c",
+      "bytes": 207159
+    }
+  },
+  "sourceHashes": {
+    "protocol/profiles.ts": "6c5fad4b88636efe02891bdda43b8294e6d12746e367d895050a0db5b7940617",
+    "sdk/profiles.ts": "6071c95712cb90b864660b2f3436f031f3b4425226cc8b2a028b5d27ea7ffbdd",
+    "protocol/sign-in.ts": "c58956131f30865b4b3e0a80bb5f23f998db8cb79afd5b989ec1c7124af9c814",
+    "services/api/src/auth/intent.ts": "807f71def585d2a55ecbcbad59fcba03307d5276ff5b83bb72c8e01dfbd1497f",
+    "services/api/src/profiles/keys.ts": "46db78a328ea457b4492eb3304ad734cbc921a7270b1ea0735e5142c1577d2b7",
+    "services/api/src/profiles/exclusions.ts": "82970ad5f17990bfb6c5b0652e761644777e31644941d964f39da0585e11d61e",
+    "services/api/src/profiles/jobs.ts": "851cd4af1e266c7e951d1dde5d3d8f3d9c1c101e282833e801c953c8892f538d",
+    "services/api/src/profiles/routes.ts": "0ae081bfeb161fdaf08d5ce7e357447f78162b915d911e8c8d35ebd74f6beed7",
+    "services/api/src/profiles/config.ts": "d9304b248c2c9eac1273149a43f5363d483084354c33b8066db1c8ca962f2961",
+    "migrations/042_profile_key_envelopes.sql": "09a11ed84d61227b466ef2f2ab7ea988f342325bb51a5c8a126cc2349e1030e4",
+    "tools/content/profile-keys-restore.ts": "6d33719b9dc4aebb5c81382fdc1aca68ecfbb99b11e3cc16dc0001a31d36a46f",
+    "tests/integration/profile-keys.test.ts": "d2141ff95dbb15595d8bbbe2bd3748a3cd9c8ff98f08448069e04c03877a9706",
+    "tests/profile-keys.test.ts": "caef8263a00fb29b38206ed09087787334969ba7a14edcaa663dfc4fb2874c00",
+    "tests/profile-exclusions.test.ts": "595246762c8bd1e163cf5953c9ce3d508688d047e7114d840628bc472f5e81ff",
+    "tests/native/profile-key-readers.test.ts": "5314f9ba8fefc3dd9b5ded43fb9413f6f18f5e153a2e1bdeb024628bd2bfdd3e"
+  },
+  "frontendSourceHashes": {
+    "src/auth/vault.ts": "2e7c3539416f8895008a487277f7fd3baf4b6075fa12dadffceb67862220a8a7",
+    "src/auth/session.ts": "90a74aed037a4a22d482b0d291ae3af7d76d93777fae19aac15cf9507a26be13",
+    "src/api/client.ts": "0a960108be1e2e5dab344d555655f397592b23b116368e1f30bb352ddc082674",
+    "tests/unit/profile-key-recovery.test.ts": "5f0482d708e6a649700b8dfae442c66c5fd9211ee23ae03317cc7f631a1775d7",
+    "tests/unit/profile-api.test.ts": "9c9ae8f50fa393186679380266d03b02804a29710e64beebb7ca329392d02191"
+  },
+  "unchangedContracts": {
+    "runtimeWasm": {
+      "sha256": "5cb464cc861f1662781f6fa56267403e22c217bfbd5041158953a07f0007bc58",
+      "bytes": 919165
+    },
+    "sharedHeadersIdenticalToP1": true,
+    "newNativeFieldsOrIndexes": 0
+  },
+  "limits": {
+    "plaintextBytes": 4096,
+    "envelopeBytes": 8192,
+    "recipientsIncludingOwner": 64,
+    "grantJsonBytesPerRevision": 65536,
+    "activeRevisionsPerMember": 1,
+    "stagedRevisionsPerMember": 2,
+    "unpublishedStageSeconds": 900,
+    "maximumConfiguredBackupAgeSeconds": 7776000,
+    "cleanupInspectionsPerTick": 25
+  },
+  "checks": [
+    {
+      "command": "core npm run typecheck && npm run lint && npm run docs:check && npm test",
+      "result": "passed",
+      "files": 152,
+      "tests": 943
+    },
+    {
+      "command": "core npm run test:integration -- tests/integration/profile-keys.test.ts tests/integration/wallet-recovery.test.ts tests/integration/vault-recovery.test.ts",
+      "result": "passed",
+      "files": 3,
+      "tests": 77,
+      "boundaries": "real PostgreSQL; native/wallet reads and proofs simulated as stated by the component suites; actual pg_dump/pg_restore and restore CLI exercised"
+    },
+    {
+      "command": "core npm run test:native -- tests/native/profile-key-readers.test.ts",
+      "result": "passed",
+      "tests": 1,
+      "boundaries": "actual Spring/native permissions and installed WASM; no encryption-key rotation API was added"
+    },
+    {
+      "command": "frontend npm run typecheck && npm run lint && npm test && npm run build",
+      "result": "passed",
+      "files": 49,
+      "tests": 304,
+      "notes": "existing bundle-size warning"
+    },
+    {
+      "command": "modules npm run typecheck && npm run docs:check && npm test -- tests/sdk.test.ts",
+      "result": "passed",
+      "tests": 6,
+      "notes": "module logic and all native headers/binaries unchanged; full 201-test module suite passed in P1"
+    },
+    {
+      "command": "profile crypto/exclusion focused suites",
+      "result": "passed",
+      "tests": 9
+    },
+    {
+      "command": "frontend profile/vault recovery focused suites",
+      "result": "passed",
+      "tests": 22
+    },
+    {
+      "command": "frontend exact-body API wire test",
+      "result": "passed",
+      "tests": 1
+    }
+  ],
+  "regressions": [
+    "missing crypto/store helpers failed before implementation",
+    "removing staged recovery caused SQL activation-fault failure",
+    "staged fallback initially suppressed PROFILE_KEY_CHANGED; real regression failed and policy refusal now propagates",
+    "frontend options wrapper produced a wrong JSON body; exact posted-body/proof-hash regression failed and now passes",
+    "initial native fixture incorrectly treated rotatekey as an encryption-key update; corrected to actual member enrollment"
+  ],
+  "review": "inline author review; no independent reviewer or subagent",
+  "limitations": [
+    "service defaults disabled; configuring retention does not delete provider snapshots",
+    "the actual mount, all controlled replicas/backups, expiry and independent-host restore need Q2/Q3 qualification",
+    "historical ciphertext/plaintext, exported private keys and independently retained envelopes remain outside unilateral erasure",
+    "P3 audience editor and full native/browser privacy journey remain pending",
+    "native publication and SQL cleanup are separate; pending state remains explicit; current native commitment confirmation is not a claim of global blockchain-history erasure"
+  ],
+  "deployment": "none"
+}

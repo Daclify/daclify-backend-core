@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ChainIdSchema, IdSchema, NativeAccountSchema } from './base.js';
 import { PublicProfileSchema } from './people.js';
+import { EncryptionPublicKeySchema, EpochGrantSchema } from './crypto.js';
 export const MAX_PROFILE_PLAINTEXT_BYTES = 4096;
 export const MAX_PROFILE_ENVELOPE_BYTES = 8192;
 const canonicalBase64 = (minimum: number, maximum: number) =>
@@ -56,3 +57,103 @@ export function profileCipherDomain(input: ProfileContext): string {
     context: ProfileContextSchema.parse(input),
   });
 }
+export const ProfileKeyGrantSchema = z.strictObject({
+  version: z.literal(1),
+  context: ProfileContextSchema,
+  recipientEncryptionKey: EncryptionPublicKeySchema,
+  ciphertextCommitment: ChainIdSchema,
+  grant: EpochGrantSchema.extend({
+    salt: canonicalBase64(32, 32),
+    envelope: EpochGrantSchema.shape.envelope.extend({
+      iv: canonicalBase64(12, 12),
+      ciphertext: canonicalBase64(48, 48),
+    }),
+  }),
+});
+export type ProfileKeyGrant = z.infer<typeof ProfileKeyGrantSchema>;
+export const ProfileShareSchema = z
+  .strictObject({
+    context: ProfileContextSchema,
+    grants: z.array(ProfileKeyGrantSchema).min(1).max(64),
+  })
+  .superRefine((value, ctx) => {
+    const audience = new Set<string>();
+    const commitment = value.grants[0]?.ciphertextCommitment;
+    for (const grant of value.grants) {
+      const recipient = JSON.stringify(grant.recipientEncryptionKey);
+      if (
+        audience.has(recipient) ||
+        profileCipherDomain(grant.context) !== profileCipherDomain(value.context) ||
+        grant.ciphertextCommitment !== commitment
+      )
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Profile grants must have one context, one cipher and distinct recipients.',
+        });
+      audience.add(recipient);
+    }
+  });
+export const ProfileRemoveSchema = z.strictObject({
+  context: ProfileContextSchema,
+  ciphertextCommitment: ChainIdSchema,
+});
+export const KeyDeletionStatusSchema = z.strictObject({
+  state: z.enum(['removed', 'backup-expiry-pending', 'unavailable']),
+  backupExpiresAt: z.iso.datetime().nullable(),
+});
+export type KeyDeletionStatus = z.infer<typeof KeyDeletionStatusSchema>;
+export const ProfileKeyStatusSchema = z.strictObject({
+  state: z.enum(['staged', 'active']),
+  expiresAt: z.iso.datetime().nullable(),
+});
+export const ProfileRecipientSchema = z.strictObject({
+  memberId: IdSchema,
+  encryptionKey: EncryptionPublicKeySchema,
+});
+export type ProfileRecipient = z.infer<typeof ProfileRecipientSchema>;
+export const ProfileRecipientPageSchema = z.strictObject({
+  recipients: z.array(ProfileRecipientSchema).max(50),
+  next: IdSchema.nullable(),
+});
+export type ProfileRecipientPage = z.infer<typeof ProfileRecipientPageSchema>;
+export function profileKeyGrantDomain(
+  input: Pick<ProfileKeyGrant, 'context' | 'recipientEncryptionKey' | 'ciphertextCommitment'>,
+): string {
+  return JSON.stringify({
+    domain: 'daclify.profile.key.v1',
+    context: ProfileContextSchema.parse(input.context),
+    recipientEncryptionKey: EncryptionPublicKeySchema.parse(input.recipientEncryptionKey),
+    ciphertextCommitment: ChainIdSchema.parse(input.ciphertextCommitment),
+  });
+}
+export const ProfileRoutes = {
+  profileRecipients: {
+    method: 'GET',
+    path: '/v1/profiles/:daoId/recipients',
+    params: z.strictObject({ daoId: IdSchema }),
+    query: z.strictObject({ after: IdSchema.optional() }),
+    response: ProfileRecipientPageSchema,
+    helpTopic: 'accounts',
+  },
+  profileKeysShare: {
+    method: 'POST',
+    path: '/v1/profiles/keys/share',
+    input: ProfileShareSchema,
+    response: ProfileKeyStatusSchema,
+    helpTopic: 'accounts',
+  },
+  profileKeysRemove: {
+    method: 'POST',
+    path: '/v1/profiles/keys/remove',
+    input: ProfileRemoveSchema,
+    response: KeyDeletionStatusSchema,
+    helpTopic: 'accounts',
+  },
+  profileKeysGet: {
+    method: 'GET',
+    path: '/v1/profiles/:daoId/:memberId/keys/:profileRevision',
+    params: ProfileContextSchema.pick({ daoId: true, memberId: true, profileRevision: true }),
+    response: ProfileKeyGrantSchema,
+    helpTopic: 'accounts',
+  },
+} as const;

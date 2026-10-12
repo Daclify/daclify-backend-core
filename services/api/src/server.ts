@@ -1,4 +1,6 @@
 import type { CreationService } from './creation.js';
+import { ProfileKeys, type ProfileKeysConfiguration } from './profiles/keys.js';
+import { registerProfileRoutes } from './profiles/routes.js';
 import {
   APP_BEARER_PATHS,
   APP_METADATA_PATHS,
@@ -107,6 +109,7 @@ export async function createServer(
   chain: ChainGateway,
   origin: string,
   options: {
+    profileKeys?: ProfileKeysConfiguration;
     connectedApps?: ConnectedApps;
     miniApps?: MiniAppConnections;
     content?: ContentService;
@@ -276,6 +279,8 @@ export async function createServer(
     return account;
   }
   registerRecoveryRoutes(app, recovery, cookieName, session, origin);
+  const profileKeys = new ProfileKeys(pool, chain, options.profileKeys);
+  registerProfileRoutes(app, profileKeys, chain, cookieName, session);
   if (options.connectedApps)
     registerConnectedAppsRoutes(app, options.connectedApps, cookieName, session, spend);
   const miniApps =
@@ -713,7 +718,18 @@ export async function createServer(
   app.get<{ Params: { id: string } }>(ApiRoutes.governance.path, async (request) =>
     chain.governance(IdSchema.parse(request.params.id)),
   );
-  app.get(ApiRoutes.network.path, async () => chain.network());
+  app.get(ApiRoutes.network.path, async () => {
+    const network = await chain.network();
+    return {
+      ...network,
+      capabilities: [
+        ...network.capabilities,
+        ...(profileKeys.enabled && network.capabilities.includes('encrypted-profiles-v2')
+          ? ['profile-key-envelopes-v1']
+          : []),
+      ],
+    };
+  });
   app.get(ApiRoutes.daos.path, async (request) => {
     const query = ApiRoutes.daos.query.parse(request.query);
     return chain.listDaosPage

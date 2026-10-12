@@ -72,7 +72,14 @@ export async function consumeAccountControl(
   const checked = AccountControlProofSchema.safeParse(input);
   if (!AccountControlChallengeSchema.shape.id.safeParse(id).success || !checked.success)
     throw new ApiError('ACCOUNT_CONTROL_REQUIRED', 403);
-  if (path === '/v1/account/reconnect/native' && checked.data.kind !== 'root')
+  if (
+    [
+      '/v1/account/reconnect/native',
+      '/v1/profiles/keys/share',
+      '/v1/profiles/keys/remove',
+    ].includes(path) &&
+    checked.data.kind !== 'root'
+  )
     throw new ApiError('ACCOUNT_CONTROL_REQUIRED', 403);
   const result = await pool.query<{ message: string; expires_at: Date }>(
     `UPDATE account_control_intents SET consumed_at=now()
