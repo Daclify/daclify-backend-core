@@ -15,7 +15,7 @@
 - [x] Frontend recovery/reconciliation: one account flow, exact consent, error/pending/cancel handling, mobile and desktop tests.
 - [x] Create/Join full-access setup: shared recovery controls, no duplicate identity, destination preservation.
 - [x] Private DAO grants and continuity: permitted member access preparation and honest successor readiness checks.
-- [ ] Review, generated/user documentation, relevant verification, commits, push, and authorized testnet publication.
+- [x] Review, generated/user documentation, relevant verification, commits, push, and authorized testnet publication.
 
 ## Review focus
 
@@ -63,3 +63,5 @@ Run relevant security/database/browser tests, strict TypeScript and Vue builds, 
 - Module compatibility recognizes the new pinned core package and rejects the next unqualified version. Final module verification and testnet delivery are recorded in the evidence report.
 - Review completed inline across the proof/session handlers, migration constraints, historical ownership callers, pinned packages, Create/Join and private access controls. An unrelated mini-app/account-exit design file is outside this change.
 - Continuity uses existing on-chain grants and contract last-admin protection. The new handover check is in the portal; successor decryption/recovery on another device is a human confirmation, not a protocol attestation. Under from-join history, a later member cannot be granted older epochs; retain an administrator who already has that history. No new contract safeguard or deployment is claimed.
+
+Delivery completed on testnet; see [verification and publication evidence](../../evidence/2026-10-12-account-access-continuity.md).

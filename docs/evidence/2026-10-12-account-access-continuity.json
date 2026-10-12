@@ -1,0 +1,88 @@
+{
+  "format": 1,
+  "date": "2026-10-12",
+  "status": "completed-testnet-development",
+  "sources": {
+    "core": "7d7a8ec58adbcc5bdd69b2783030fd80cb73846d",
+    "modules": "d4e42dc9129903e1719e60f759847f0ebc649f09",
+    "frontend": "093d0aca5d526bcfa61e1813fec79c9a368311c2"
+  },
+  "versions": {
+    "core": "0.14.0-alpha.3",
+    "modules": "0.10.0-alpha.3",
+    "frontend": "0.14.0-alpha.6"
+  },
+  "packages": {
+    "coreSha256": "325bf61036bee8a2102c14e165c4fe84dff7e0571873014edaf46edfe3c3129a",
+    "modulesSha256": "e4fa36fc6901fdb8724ad8a93792806185f5c81d4f9d72d78f36983d0d7e018d"
+  },
+  "checks": {
+    "coreUnitWasm": {
+      "passed": 887,
+      "failed": 0,
+      "skipped": 0
+    },
+    "coreIntegration": {
+      "passed": 287,
+      "failed": 0,
+      "skipped": 0
+    },
+    "coreFinalReconnection": {
+      "passed": 23,
+      "failed": 0,
+      "skipped": 0
+    },
+    "modules": {
+      "passed": 192,
+      "failed": 0,
+      "skipped": 0
+    },
+    "frontendUnit": {
+      "passed": 286,
+      "failed": 0,
+      "skipped": 0
+    },
+    "frontendFinalAffectedUnit": {
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0
+    },
+    "browserDesktopMobile": {
+      "passed": 44,
+      "failed": 0,
+      "skipped": 0
+    },
+    "publicBrowser": {
+      "desktop": "passed",
+      "mobile": "passed",
+      "browserErrors": 0
+    }
+  },
+  "publication": {
+    "api": "https://testnet.api.daclify.com",
+    "frontend": "https://testnet.app.daclify.com",
+    "indexSha256": "31f34ce1a60cf779f1185096ac46286fa5d87d7380361437b219026a9a353d1f",
+    "apiHealthy": true,
+    "migration041Applied": true,
+    "accountKeysPairingsAndMembershipsUnchanged": true,
+    "accountReconnectionsByDeployment": 0,
+    "chainActionsByDeployment": 0
+  },
+  "recoveryValidation": {
+    "mode": "testnet-single-host",
+    "freshIsolatedTlsSnapshotRestore": "passed",
+    "originalSyntheticKeyRecovered": true,
+    "destroyedDisposableSource": true,
+    "leastPrivilegeDenials": 4,
+    "liveSyntheticWrapUnwrap": "passed",
+    "independentHostQualified": false,
+    "walletOrPasskeyQualificationAdded": false
+  },
+  "limitations": [
+    "Portal handover checks can be bypassed by direct native actions; no new contract invariant was deployed.",
+    "Successor recovery on another device is a human confirmation; local verification checks actual grants and epoch commitments.",
+    "From-join policy prevents granting pre-join epochs; retaining that history needs an administrator who already has it.",
+    "Production package publication, independent-host recovery, new live user enrollment/reconnection and native-runtime requalification are outside this delivery."
+  ],
+  "review": "Inline connected-code review; user account and DAO authority state preserved; unrelated untracked mini-app/account-exit design left outside this work."
+}
