@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, expect, it, vi } from 'vitest';
-import { ABI, Action, PrivateKey, Serializer, UInt64 } from '@wharfkit/antelope';
+import { ABI, Action, PrivateKey, Serializer, UInt64, Transaction } from '@wharfkit/antelope';
 import { ModulePermissions } from '@daclify/modules';
 import {
   ModuleCodeHashes,
@@ -759,4 +759,27 @@ it('requires the linked native wallet for operation-bound exit and preserves its
  await expect(f().call('daclifycore','exitnative',input,'alice')).rejects.toThrow();
  const result=await f().call('daclifycore','exitnative',input,'bob');measurements.push({scenario:'linked-wallet-operation-exit',cpuUs:cpu(result)});
  expect((await dao.member('2')).active).toBe(false);await expect(f().call('daclifycore','exitnative',input,'bob')).rejects.toThrow();
+});
+it('binds linked EVM departure to the reviewed operation and step without a hosted account',async()=>{
+ const {bindingTypedData,exitGovernanceTypedData,evmTypedDigest}=await import('../../sdk/evm.js'),{secp256k1}=await import('@noble/curves/secp256k1.js');
+ const dao=await f().dummyDao(),binding={chainId:41 as const,address:'0x7e5f4552091a69125d5dfcb7b8c2659029395bdf',epoch:'1'},scalar=new Uint8Array(32);scalar[31]=1;
+ const sign=(data:Parameters<typeof evmTypedDigest>[0])=>{const raw=secp256k1.sign(evmTypedDigest(data),scalar,{prehash:false,format:'recovered'});return Buffer.concat([Buffer.from(raw.subarray(1)),Buffer.from([(raw[0]??0)+27])]).toString('hex');};
+ const person=await dao.member('2'),expires=Math.floor(Date.now()/1000)+300;
+ await dao.act('daclifycore','linkevm',encodeAction('linkevm',{...dao.actor('2'),evm_chain_id:'41',address:binding.address.slice(2),epoch:'1',nonce:person.nonce,expires,proof:sign(bindingTypedData(dao.reference,'2',binding,person.nonce,expires))}),'2');
+ const request=await dao.request('daclifycore','leave',encodeAction('leave',dao.actor('2')),'2'),operation='cd'.repeat(32),step_digest='ef'.repeat(32),proof=sign(exitGovernanceTypedData(operation,step_digest,request,binding));
+ const input={operation,step_digest,request,evm_chain_id:'41',address:binding.address.slice(2),binding_epoch:'1',proof};
+ await expect(f().call('daclifycore','exitevm',{...input,operation:'cc'.repeat(32)},'relay')).rejects.toThrow();
+ await expect(f().call('daclifycore','exitevm',{...input,step_digest:'ee'.repeat(32)},'relay')).rejects.toThrow();
+ const packet=await f().gateway.prepareExitSubmission(input);expect((await dao.member('2')).active).toBe(true);const result=await f().gateway.submitPreparedExit(packet);expect(result.transactionId).toBe(packet.transactionId);expect((await f().gateway.reconcileExitSubmission(packet)).state).toBe('confirmed');expect((await dao.member('2')).active).toBe(false);
+ await expect(f().call('daclifycore','exitevm',input,'relay')).rejects.toThrow();
+});
+
+it('verifies and tracks a prepared native wallet exit without hosted credentials',async()=>{
+ const dao=await f().dummyDao();await dao.act('daclifycore','linknative',encodeAction('linknative',{...dao.actor('2'),account:'bob'}),'2','bob');
+ const request=await dao.request('daclifycore','leave',encodeAction('leave',dao.actor('2')),'2'),operation='af'.repeat(32),step_digest='bf'.repeat(32),info=await f().api.v1.chain.get_info();
+ const transaction=Transaction.from({...info.getTransactionHeader(60),actions:[Action.from({account:'daclifycore',name:'exitnative',authorization:[{actor:'bob',permission:'active'}],data:encodeAction('exitnative',{operation,step_digest,request})})]}),input={operation,step_digest,request,account:'bob',permission:'active',packedTransaction:Serializer.encode({object:transaction}).hexString,signatures:[f().key('bob').signDigest(transaction.signingDigest(info.chain_id)).toString()]};
+ await expect(f().gateway.prepareExitSubmission({...input,signatures:[f().key('alice').signDigest(transaction.signingDigest(info.chain_id)).toString()]})).rejects.toThrow();
+ await expect(f().gateway.prepareExitSubmission({...input,operation:'cf'.repeat(32)})).rejects.toThrow();
+ const packet=await f().gateway.prepareExitSubmission(input);expect((await dao.member('2')).active).toBe(true);
+ await f().gateway.submitPreparedExit(packet);expect((await f().gateway.reconcileExitSubmission(packet)).state).toBe('confirmed');expect((await dao.member('2')).active).toBe(false);
 });

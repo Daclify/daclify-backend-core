@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = '1289bc84afd5d065b40cb88c82fe1c4424731c48e14fdfa6a4f5281de41e5f73';
+export const runtimeAbiHash = 'ed0a44c9bfd898bc05c6fc474ab3eb55d9cad90e98187d8c04ef222f39befcf9';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -2058,6 +2058,40 @@ export const runtimeAbi = {
         {
           "name": "election_id",
           "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "exitevm",
+      "base": "",
+      "fields": [
+        {
+          "name": "operation",
+          "type": "checksum256"
+        },
+        {
+          "name": "step_digest",
+          "type": "checksum256"
+        },
+        {
+          "name": "request",
+          "type": "instruction"
+        },
+        {
+          "name": "evm_chain_id",
+          "type": "uint64"
+        },
+        {
+          "name": "address",
+          "type": "checksum160"
+        },
+        {
+          "name": "binding_epoch",
+          "type": "uint64"
+        },
+        {
+          "name": "proof",
+          "type": "bytes"
         }
       ]
     },
@@ -5887,6 +5921,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "exitevm",
+      "type": "exitevm",
+      "ricardian_contract": ""
+    },
+    {
       "name": "exitnative",
       "type": "exitnative",
       "ricardian_contract": ""
@@ -7480,6 +7519,15 @@ export interface executive_record {
   office_epoch: string;
   election_id: string;
 }
+export interface exitevm {
+  operation: string;
+  step_digest: string;
+  request: instruction;
+  evm_chain_id: string;
+  address: string;
+  binding_epoch: string;
+  proof: string;
+}
 export interface exitnative {
   operation: string;
   step_digest: string;
@@ -8505,6 +8553,7 @@ export interface RuntimeActions {
   electexec: electexec;
   enroll: enroll;
   enrollagent: enrollagent;
+  exitevm: exitevm;
   exitnative: exitnative;
   finishram: finishram;
   fulfilram: fulfilram;

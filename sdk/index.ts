@@ -31,6 +31,7 @@ export {
 export {
   bindingTypedData,
   governanceTypedData,
+  exitGovernanceTypedData,
   evmTypedDigest,
   canonicalEvmSignature,
   type EvmBinding,

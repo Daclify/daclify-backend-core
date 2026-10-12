@@ -28,3 +28,21 @@ it('binds exit signatures to the operation and prepared step without accepting a
  expect(exitInstructionDigest('ac'.repeat(32),'be'.repeat(32),request).hexString).not.toBe(a);
  expect(()=>exitInstructionDigest('ac'.repeat(32),'bd'.repeat(32),{...request,action:'setcredits'})).toThrow('EXIT_ACTION');
 });
+it('binds EVM exit authorization to the operation and step as well as its native instruction',async()=>{
+ const {exitGovernanceTypedData,evmTypedDigest}=await import('../sdk/evm.js');
+ const {makeInstruction,encodeAction}=await import('../sdk/index.js');
+ const ref={chainId:'ab'.repeat(32),contract:'daclifycore',daoId:'1',interfaceVersion:1 as const},request=makeInstruction(ref,'1','0',12345,'daclifycore','leave',encodeAction('leave',{runtime:'daclifycore',dao_id:'1',member_id:'1'})),binding={chainId:41 as const,address:'0x1111111111111111111111111111111111111111',epoch:'1'};
+ const first=evmTypedDigest(exitGovernanceTypedData('ac'.repeat(32),'bd'.repeat(32),request,binding));
+ expect(evmTypedDigest(exitGovernanceTypedData('ad'.repeat(32),'bd'.repeat(32),request,binding))).not.toEqual(first);
+ expect(evmTypedDigest(exitGovernanceTypedData('ac'.repeat(32),'be'.repeat(32),request,binding))).not.toEqual(first);
+});
+
+it('accepts scoped EVM and native exit transports without granting the report capability signing authority',async()=>{
+ const {SignedExitInstructionSchema}=await import('../protocol/account-exit.js');
+ const {makeInstruction,encodeAction}=await import('../sdk/index.js');
+ const ref={chainId:'ab'.repeat(32),contract:'daclifycore',daoId:'1',interfaceVersion:1 as const};
+ const common={operation:'ac'.repeat(32),step_digest:'bd'.repeat(32),request:makeInstruction(ref,'1','0',12345,'daclifycore','leave',encodeAction('leave',{runtime:'daclifycore',dao_id:'1',member_id:'1'}))};
+ expect(SignedExitInstructionSchema.parse({...common,evm_chain_id:'41',address:'11'.repeat(20),binding_epoch:'1',proof:'ab'.repeat(65)}).request.dao_id).toBe('1');
+ expect(SignedExitInstructionSchema.parse({...common,account:'alice',permission:'active',packedTransaction:'ab',signatures:['SIG_K1_test']}).request.dao_id).toBe('1');
+ expect(()=>SignedExitInstructionSchema.parse({...common,statusCapability:'a'.repeat(43)})).toThrow();
+});

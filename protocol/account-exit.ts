@@ -49,7 +49,10 @@ export const AccountExitRoutes = {
   },
 } as const;
 
-export const SignedExitInstructionSchema=RuntimeActionSchemas.submitexit.refine(value=>value.request.data.length<=1024,'Exit payload bound');
+const ExitContextSchema=RuntimeActionSchemas.exitnative.shape;
+export const NativeSignedExitInstructionSchema=z.strictObject({...ExitContextSchema,account:NativeAccountSchema,permission:z.literal('active'),packedTransaction:z.string().regex(/^(?:[a-f0-9]{2})+$/).max(8192),signatures:z.array(z.string().min(1).max(200)).min(1).max(32)});
+export const SignedExitInstructionSchema=z.union([RuntimeActionSchemas.submitexit,RuntimeActionSchemas.exitevm,NativeSignedExitInstructionSchema]).refine(value=>value.request.data.length<=1024,'Exit payload bound');
+export type SignedExitInstruction=z.infer<typeof SignedExitInstructionSchema>;
 export const ExitSubmissionSchema=z.strictObject({transactionId:ChainIdSchema,packet:z.string().regex(/^(?:[a-f0-9]{2})+$/).max(8192),firstBlock:z.int().positive(),cursor:z.int().nonnegative(),expiresAt:z.iso.datetime()}).refine(value=>value.cursor>=value.firstBlock&&value.cursor<=value.firstBlock+129,'Receipt scan bound');
 export type ExitSubmission=z.infer<typeof ExitSubmissionSchema>;
 export const ExitNativeStepInputSchema=z.strictObject({signed:SignedExitInstructionSchema});

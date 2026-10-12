@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle={
   "producer": "core",
-  "packageVersion": "0.15.0-alpha.8",
+  "packageVersion": "0.15.0-alpha.9",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -598,7 +598,7 @@ export const CoreHelpBundle={
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "1289bc84afd5d065b40cb88c82fe1c4424731c48e14fdfa6a4f5281de41e5f73",
+      "sourceAbiHash": "ed0a44c9bfd898bc05c6fc474ab3eb55d9cad90e98187d8c04ef222f39befcf9",
       "actions": [
         {
           "name": "accepthand",
@@ -1483,6 +1483,39 @@ export const CoreHelpBundle={
             {
               "name": "operator_label",
               "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "exitevm",
+          "fields": [
+            {
+              "name": "operation",
+              "type": "checksum256"
+            },
+            {
+              "name": "step_digest",
+              "type": "checksum256"
+            },
+            {
+              "name": "request",
+              "type": "instruction"
+            },
+            {
+              "name": "evm_chain_id",
+              "type": "uint64"
+            },
+            {
+              "name": "address",
+              "type": "checksum160"
+            },
+            {
+              "name": "binding_epoch",
+              "type": "uint64"
+            },
+            {
+              "name": "proof",
+              "type": "bytes"
             }
           ]
         },
@@ -7645,89 +7678,301 @@ export const CoreHelpBundle={
       "path": "/v1/account-exit/settlement/prepare",
       "input": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "operation": {
-            "type": "string",
-            "pattern": "^[0-9a-f]{64}$"
-          },
-          "step_digest": {
-            "type": "string",
-            "pattern": "^[0-9a-f]{64}$"
-          },
-          "request": {
+        "anyOf": [
+          {
             "type": "object",
             "properties": {
-              "version": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 65535
-              },
-              "chain_id": {
+              "operation": {
                 "type": "string",
                 "pattern": "^[0-9a-f]{64}$"
               },
-              "deployment": {
+              "step_digest": {
                 "type": "string",
-                "maxLength": 13
+                "pattern": "^[0-9a-f]{64}$"
               },
-              "dao_id": {
+              "request": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65535
+                  },
+                  "chain_id": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "deployment": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "dao_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "member_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "nonce": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "expires": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4294967295
+                  },
+                  "target": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "action": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "data": {
+                    "type": "string",
+                    "maxLength": 32768,
+                    "pattern": "^(?:[0-9a-f]{2})*$"
+                  }
+                },
+                "required": [
+                  "version",
+                  "chain_id",
+                  "deployment",
+                  "dao_id",
+                  "member_id",
+                  "nonce",
+                  "expires",
+                  "target",
+                  "action",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              "sig": {
+                "type": "string",
+                "maxLength": 160
+              }
+            },
+            "required": [
+              "operation",
+              "step_digest",
+              "request",
+              "sig"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "operation": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "step_digest": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "request": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65535
+                  },
+                  "chain_id": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "deployment": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "dao_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "member_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "nonce": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "expires": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4294967295
+                  },
+                  "target": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "action": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "data": {
+                    "type": "string",
+                    "maxLength": 32768,
+                    "pattern": "^(?:[0-9a-f]{2})*$"
+                  }
+                },
+                "required": [
+                  "version",
+                  "chain_id",
+                  "deployment",
+                  "dao_id",
+                  "member_id",
+                  "nonce",
+                  "expires",
+                  "target",
+                  "action",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              "evm_chain_id": {
                 "type": "string",
                 "maxLength": 20
               },
-              "member_id": {
+              "address": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}$"
+              },
+              "binding_epoch": {
                 "type": "string",
                 "maxLength": 20
               },
-              "nonce": {
-                "type": "string",
-                "maxLength": 20
-              },
-              "expires": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 4294967295
-              },
-              "target": {
-                "type": "string",
-                "maxLength": 13
-              },
-              "action": {
-                "type": "string",
-                "maxLength": 13
-              },
-              "data": {
+              "proof": {
                 "type": "string",
                 "maxLength": 32768,
                 "pattern": "^(?:[0-9a-f]{2})*$"
               }
             },
             "required": [
-              "version",
-              "chain_id",
-              "deployment",
-              "dao_id",
-              "member_id",
-              "nonce",
-              "expires",
-              "target",
-              "action",
-              "data"
+              "operation",
+              "step_digest",
+              "request",
+              "evm_chain_id",
+              "address",
+              "binding_epoch",
+              "proof"
             ],
             "additionalProperties": false
           },
-          "sig": {
-            "type": "string",
-            "maxLength": 160
+          {
+            "type": "object",
+            "properties": {
+              "operation": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "step_digest": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "request": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65535
+                  },
+                  "chain_id": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "deployment": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "dao_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "member_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "nonce": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "expires": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4294967295
+                  },
+                  "target": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "action": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "data": {
+                    "type": "string",
+                    "maxLength": 32768,
+                    "pattern": "^(?:[0-9a-f]{2})*$"
+                  }
+                },
+                "required": [
+                  "version",
+                  "chain_id",
+                  "deployment",
+                  "dao_id",
+                  "member_id",
+                  "nonce",
+                  "expires",
+                  "target",
+                  "action",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              "account": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "permission": {
+                "type": "string",
+                "const": "active"
+              },
+              "packedTransaction": {
+                "type": "string",
+                "maxLength": 8192,
+                "pattern": "^(?:[a-f0-9]{2})+$"
+              },
+              "signatures": {
+                "minItems": 1,
+                "maxItems": 32,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                }
+              }
+            },
+            "required": [
+              "operation",
+              "step_digest",
+              "request",
+              "account",
+              "permission",
+              "packedTransaction",
+              "signatures"
+            ],
+            "additionalProperties": false
           }
-        },
-        "required": [
-          "operation",
-          "step_digest",
-          "request",
-          "sig"
-        ],
-        "additionalProperties": false
+        ]
       },
       "response": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -7901,89 +8146,301 @@ export const CoreHelpBundle={
         "type": "object",
         "properties": {
           "signed": {
-            "type": "object",
-            "properties": {
-              "operation": {
-                "type": "string",
-                "pattern": "^[0-9a-f]{64}$"
-              },
-              "step_digest": {
-                "type": "string",
-                "pattern": "^[0-9a-f]{64}$"
-              },
-              "request": {
+            "anyOf": [
+              {
                 "type": "object",
                 "properties": {
-                  "version": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 65535
-                  },
-                  "chain_id": {
+                  "operation": {
                     "type": "string",
                     "pattern": "^[0-9a-f]{64}$"
                   },
-                  "deployment": {
+                  "step_digest": {
                     "type": "string",
-                    "maxLength": 13
+                    "pattern": "^[0-9a-f]{64}$"
                   },
-                  "dao_id": {
+                  "request": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 65535
+                      },
+                      "chain_id": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "deployment": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "dao_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "member_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "nonce": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "expires": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 4294967295
+                      },
+                      "target": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "action": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "data": {
+                        "type": "string",
+                        "maxLength": 32768,
+                        "pattern": "^(?:[0-9a-f]{2})*$"
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "chain_id",
+                      "deployment",
+                      "dao_id",
+                      "member_id",
+                      "nonce",
+                      "expires",
+                      "target",
+                      "action",
+                      "data"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "sig": {
+                    "type": "string",
+                    "maxLength": 160
+                  }
+                },
+                "required": [
+                  "operation",
+                  "step_digest",
+                  "request",
+                  "sig"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operation": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "step_digest": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "request": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 65535
+                      },
+                      "chain_id": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "deployment": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "dao_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "member_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "nonce": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "expires": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 4294967295
+                      },
+                      "target": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "action": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "data": {
+                        "type": "string",
+                        "maxLength": 32768,
+                        "pattern": "^(?:[0-9a-f]{2})*$"
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "chain_id",
+                      "deployment",
+                      "dao_id",
+                      "member_id",
+                      "nonce",
+                      "expires",
+                      "target",
+                      "action",
+                      "data"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "evm_chain_id": {
                     "type": "string",
                     "maxLength": 20
                   },
-                  "member_id": {
+                  "address": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{40}$"
+                  },
+                  "binding_epoch": {
                     "type": "string",
                     "maxLength": 20
                   },
-                  "nonce": {
-                    "type": "string",
-                    "maxLength": 20
-                  },
-                  "expires": {
-                    "type": "integer",
-                    "minimum": 0,
-                    "maximum": 4294967295
-                  },
-                  "target": {
-                    "type": "string",
-                    "maxLength": 13
-                  },
-                  "action": {
-                    "type": "string",
-                    "maxLength": 13
-                  },
-                  "data": {
+                  "proof": {
                     "type": "string",
                     "maxLength": 32768,
                     "pattern": "^(?:[0-9a-f]{2})*$"
                   }
                 },
                 "required": [
-                  "version",
-                  "chain_id",
-                  "deployment",
-                  "dao_id",
-                  "member_id",
-                  "nonce",
-                  "expires",
-                  "target",
-                  "action",
-                  "data"
+                  "operation",
+                  "step_digest",
+                  "request",
+                  "evm_chain_id",
+                  "address",
+                  "binding_epoch",
+                  "proof"
                 ],
                 "additionalProperties": false
               },
-              "sig": {
-                "type": "string",
-                "maxLength": 160
+              {
+                "type": "object",
+                "properties": {
+                  "operation": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "step_digest": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "request": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 65535
+                      },
+                      "chain_id": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "deployment": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "dao_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "member_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "nonce": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "expires": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 4294967295
+                      },
+                      "target": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "action": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "data": {
+                        "type": "string",
+                        "maxLength": 32768,
+                        "pattern": "^(?:[0-9a-f]{2})*$"
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "chain_id",
+                      "deployment",
+                      "dao_id",
+                      "member_id",
+                      "nonce",
+                      "expires",
+                      "target",
+                      "action",
+                      "data"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "account": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "permission": {
+                    "type": "string",
+                    "const": "active"
+                  },
+                  "packedTransaction": {
+                    "type": "string",
+                    "maxLength": 8192,
+                    "pattern": "^(?:[a-f0-9]{2})+$"
+                  },
+                  "signatures": {
+                    "minItems": 1,
+                    "maxItems": 32,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 200
+                    }
+                  }
+                },
+                "required": [
+                  "operation",
+                  "step_digest",
+                  "request",
+                  "account",
+                  "permission",
+                  "packedTransaction",
+                  "signatures"
+                ],
+                "additionalProperties": false
               }
-            },
-            "required": [
-              "operation",
-              "step_digest",
-              "request",
-              "sig"
-            ],
-            "additionalProperties": false
+            ]
           }
         },
         "required": [

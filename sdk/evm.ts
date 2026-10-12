@@ -1,3 +1,4 @@
+import {ExitCoreActions} from './account-exit.js';
 import { Checksum256, Name } from '@wharfkit/antelope';
 import { keccak_256 } from '@noble/hashes/sha3.js';
 import { z } from 'zod';
@@ -130,6 +131,13 @@ export function governanceTypedData(input: instruction, binding: EvmBinding) {
     },
   };
 }
+const exitInstructionFields:Field[]=[{name:'operation',type:'bytes32'},{name:'stepDigest',type:'bytes32'},...instructionFields];
+export function exitGovernanceTypedData(operation:string,stepDigest:string,input:instruction,binding:EvmBinding){
+ const nonzero=z.string().regex(/^[a-f0-9]{64}$/).refine(value=>value!=='0'.repeat(64));nonzero.parse(operation);nonzero.parse(stepDigest);
+ if(input.target!==input.deployment||!ExitCoreActions.some(action=>action===input.action))throw Error('EXIT_ACTION');
+ const base=governanceTypedData(input,binding);
+ return {domain:base.domain,types:{EIP712Domain:domainFields,DaclifyExitInstruction:exitInstructionFields},primaryType:'DaclifyExitInstruction' as const,message:{operation:'0x'+operation,stepDigest:'0x'+stepDigest,...base.message,signatureVersion:2}};
+}
 function hashStruct(
   name: string,
   fields: Field[],
@@ -166,9 +174,9 @@ function hashStruct(
   );
 }
 export function evmTypedDigest(
-  data: ReturnType<typeof bindingTypedData> | ReturnType<typeof governanceTypedData>,
+  data: ReturnType<typeof bindingTypedData> | ReturnType<typeof governanceTypedData> | ReturnType<typeof exitGovernanceTypedData>,
 ): Uint8Array {
-  const fields = data.primaryType === 'DaclifyBinding' ? bindingFields : instructionFields;
+  const fields = data.primaryType === 'DaclifyBinding' ? bindingFields : data.primaryType==='DaclifyExitInstruction'?exitInstructionFields:instructionFields;
   return keccak_256(
     join([
       new Uint8Array([0x19, 0x01]),

@@ -1,3 +1,4 @@
+import {checkNativeAuthority} from './auth/native-proof.js';
 import { NamesActionSchemas, NamesTableSchemas } from '../../../sdk/generated/names-schemas.js';
 import { EncryptionPublicKeySchema } from '../../../protocol/crypto.js';
 import { ProfileRecipientPageSchema } from '../../../protocol/profiles.js';
@@ -132,7 +133,7 @@ import {
 import type { ChainGateway } from './chain.js';
 import type { EvmRelay } from '../../../protocol/evm-wallet.js';
 import type { Pool } from 'pg';
-import { canonicalEvmSignature, evmTypedDigest, governanceTypedData } from '../../../sdk/evm.js';
+import { canonicalEvmSignature, evmTypedDigest, governanceTypedData, exitGovernanceTypedData } from '../../../sdk/evm.js';
 import { recoverEvmDigest } from './auth/evm-proof.js';
 import {
   resourcePolicyFromRow,
@@ -3766,8 +3767,8 @@ export class NativeChainGateway implements ChainGateway {
     return this.prepareExitSubmission(signed);
   }
   async submitSettlement(input:ExitSubmission):Promise<{transactionId:string}>{
-    const {transaction}=this.exitPacket(input),action=transaction.actions[0];if(!action)throw new ApiError('EXIT_PACKET',403);
-    const decoded=z.object({request:z.object({action:z.string()})}).parse(Serializer.objectify(Serializer.decode({abi:runtimeAbi,type:'submitexit',data:action.data})));
+    const {transaction}=await this.exitPacket(input),action=transaction.actions[0];if(!action)throw new ApiError('EXIT_PACKET',403);
+    const decoded=z.object({request:z.object({action:z.string()})}).parse(Serializer.objectify(Serializer.decode({abi:runtimeAbi,type:action.name.toString(),data:action.data})));
     if(!['withdraw','unstake'].includes(decoded.request.action))throw new ApiError('EXIT_SETTLEMENT_SCOPE',403);
     return this.submitPreparedExit(input);
   }
@@ -3777,28 +3778,51 @@ export class NativeChainGateway implements ChainGateway {
     if(request.chain_id!==this.config.chainId||request.deployment!==this.config.runtime)throw new ApiError('INSTRUCTION_DOMAIN',403);
     const member=(await this.table('members',request.dao_id,request.member_id,1))[0];
     if(!member||member.id!==request.member_id||member.nonce!==request.nonce)throw new ApiError('EXIT_MEMBER_CHANGED',409);
-    let valid=false;try{valid=Signature.from(signed.sig).verifyDigest(exitInstructionDigest(signed.operation,signed.step_digest,request),PublicKey.from(member.signing_key));}catch{}
-    if(!valid)throw new ApiError('SIGNATURE_INVALID',403);
+    let name:'submitexit'|'exitevm'='submitexit';
+    if('sig' in signed){
+      let valid=false;try{valid=Signature.from(signed.sig).verifyDigest(exitInstructionDigest(signed.operation,signed.step_digest,request),PublicKey.from(member.signing_key));}catch{}
+      if(!valid)throw new ApiError('SIGNATURE_INVALID',403);
+    }else if('proof' in signed){
+      name='exitevm';const binding=await this.evmBinding(request.dao_id,request.member_id),chainId=Number(signed.evm_chain_id);
+      if(!binding?.active||binding.chain_id!==signed.evm_chain_id||binding.address!==signed.address||binding.epoch!==signed.binding_epoch||(chainId!==40&&chainId!==41))throw new ApiError('EVM_BINDING',409);
+      try{const typed=exitGovernanceTypedData(signed.operation,signed.step_digest,request,{chainId,address:'0x'+signed.address,epoch:signed.binding_epoch});if(recoverEvmDigest(evmTypedDigest(typed),canonicalEvmSignature('0x'+signed.proof))!=='0x'+signed.address)throw Error('Signature');}catch{throw new ApiError('EVM_SIGNATURE_INVALID',401);}
+    }else{
+      exitInstructionDigest(signed.operation,signed.step_digest,request);
+      if(member.native_account!==signed.account)throw new ApiError('EXIT_SIGNER_REQUIRED',403);
+      const transaction=Serializer.decode({type:Transaction,data:signed.packedTransaction}),expected=Action.from({account:this.config.runtime,name:'exitnative',authorization:[{actor:signed.account,permission:signed.permission}],data:encodeAction('exitnative',{operation:signed.operation,step_digest:signed.step_digest,request})});
+      if(Serializer.encode({object:transaction}).hexString!==signed.packedTransaction||!transaction.actions[0]?.equals(expected)||transaction.actions.length!==1||transaction.expiration.toMilliseconds()<=Date.now()||transaction.expiration.toMilliseconds()>Date.now()+61000)throw new ApiError('EXIT_PACKET',403);
+      const info=await this.api.v1.chain.get_info();if(info.chain_id.toString()!==this.config.chainId)throw new ApiError('CHAIN_ID_MISMATCH',503);
+      const packet=ExitSubmissionSchema.parse({transactionId:transaction.id.toString(),packet:Serializer.encode({object:SignedTransaction.from({...transaction,signatures:signed.signatures})}).hexString,firstBlock:Number(info.head_block_num),cursor:Number(info.head_block_num),expiresAt:transaction.expiration.toDate().toISOString()});
+      await this.exitPacket(packet);return packet;
+    }
     await this.assertResources(this.config.relayActor);
     const info=await this.api.v1.chain.get_info();if(info.chain_id.toString()!==this.config.chainId)throw new ApiError('CHAIN_ID_MISMATCH',503);
-    const transaction=Transaction.from({...info.getTransactionHeader(60),actions:[Action.from({account:this.config.runtime,name:'submitexit',authorization:[{actor:this.config.relayActor,permission:this.config.relayPermission??'active'}],data:encodeAction('submitexit',signed)})]});
+    const transaction=Transaction.from({...info.getTransactionHeader(60),actions:[Action.from({account:this.config.runtime,name,authorization:[{actor:this.config.relayActor,permission:this.config.relayPermission??'active'}],data:encodeAction(name,signed)})]});
     const packet=SignedTransaction.from({...transaction,signatures:[this.config.relayKey.signDigest(transaction.signingDigest(info.chain_id))]});
     return ExitSubmissionSchema.parse({transactionId:transaction.id.toString(),packet:Serializer.encode({object:packet}).hexString,firstBlock:Number(info.head_block_num),cursor:Number(info.head_block_num),expiresAt:transaction.expiration.toDate().toISOString()});
   }
-  private exitPacket(input:ExitSubmission){
+  private async exitPacket(input:ExitSubmission){
     const packet=ExitSubmissionSchema.parse(input),transaction=Serializer.decode({type:SignedTransaction,data:packet.packet});
-    if(transaction.id.toString()!==packet.transactionId||transaction.actions.length!==1||transaction.signatures.length!==1||transaction.context_free_actions.length||transaction.context_free_data.length||transaction.expiration.toDate().toISOString()!==packet.expiresAt)throw new ApiError('EXIT_PACKET',403);
-    const action=transaction.actions[0];if(!action||action.account.toString()!==this.config.runtime||action.name.toString()!=='submitexit'||action.authorization.length!==1||action.authorization[0]?.actor.toString()!==this.config.relayActor||action.authorization[0]?.permission.toString()!==(this.config.relayPermission??'active'))throw new ApiError('EXIT_PACKET',403);
-    const signature=transaction.signatures[0];if(!signature||!signature.verifyDigest(transaction.transaction.signingDigest(this.config.chainId),this.config.relayKey.toPublic()))throw new ApiError('EXIT_PACKET',403);
+    if(Serializer.encode({object:transaction}).hexString!==packet.packet||transaction.id.toString()!==packet.transactionId||transaction.actions.length!==1||transaction.signatures.length<1||transaction.signatures.length>32||transaction.context_free_actions.length||transaction.context_free_data.length||transaction.transaction_extensions.length||Number(transaction.delay_sec)!==0||transaction.expiration.toDate().toISOString()!==packet.expiresAt)throw new ApiError('EXIT_PACKET',403);
+    const action=transaction.actions[0];if(!action||action.account.toString()!==this.config.runtime||action.authorization.length!==1)throw new ApiError('EXIT_PACKET',403);
+    const authorization=action.authorization[0];if(!authorization)throw new ApiError('EXIT_PACKET',403);
+    if(action.name.toString()==='exitnative'){
+      const account=await this.api.v1.chain.get_account(authorization.actor),permission=account.permissions.find(value=>value.perm_name.toString()===authorization.permission.toString());
+      if(authorization.permission.toString()!=='active'||!permission)throw new ApiError('EXIT_PACKET',403);
+      checkNativeAuthority(transaction.transaction,transaction.signatures.map(value=>value.toString()),this.config.chainId,permission.required_auth);
+    }else{
+      if(!['submitexit','exitevm'].includes(action.name.toString())||transaction.signatures.length!==1||authorization.actor.toString()!==this.config.relayActor||authorization.permission.toString()!==(this.config.relayPermission??'active'))throw new ApiError('EXIT_PACKET',403);
+      const signature=transaction.signatures[0];if(!signature||!signature.verifyDigest(transaction.transaction.signingDigest(this.config.chainId),this.config.relayKey.toPublic()))throw new ApiError('EXIT_PACKET',403);
+    }
     return {packet,transaction};
   }
   async submitPreparedExit(input:ExitSubmission):Promise<{transactionId:string}>{
-    const {packet,transaction}=this.exitPacket(input);await this.reviewedRuntime(this.config.runtime);
+    const {packet,transaction}=await this.exitPacket(input);await this.reviewedRuntime(this.config.runtime);
     const result=executedChainResult(await this.api.v1.chain.push_transaction(transaction),packet.transactionId);
     await this.confirmBlock(result.blockNum);return {transactionId:result.transactionId};
   }
   async reconcileExitSubmission(input:ExitSubmission):Promise<{state:'confirmed'|'pending'|'unavailable';cursor:number}>{
-    const {packet}=this.exitPacket(input);await this.reviewedRuntime(this.config.runtime);
+    const {packet}=await this.exitPacket(input);await this.reviewedRuntime(this.config.runtime);
     try{const result=await this.api.v1.chain.get_transaction_status(packet.transactionId);if(result.state==='IRREVERSIBLE')return {state:'confirmed',cursor:packet.cursor};}catch{/* Nodes may not enable finality tracking; reconcile the exact ID in irreversible blocks. */}
     const info=await this.api.v1.chain.get_info();if(info.chain_id.toString()!==this.config.chainId)throw new ApiError('CHAIN_ID_MISMATCH',503);
     const end=Math.min(Number(info.last_irreversible_block_num),packet.firstBlock+128,packet.cursor+24);

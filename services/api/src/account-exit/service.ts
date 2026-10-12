@@ -4,7 +4,7 @@ import { runtimeAbi } from '../../../../sdk/generated/runtime.js';
 import { RuntimeActionSchemas } from '../../../../sdk/generated/schemas.js';
 import { Serializer } from '@wharfkit/antelope';
 import { createHash,randomBytes,randomUUID,timingSafeEqual } from 'node:crypto';
-import type { Pool } from 'pg';
+import type { Pool,PoolClient } from 'pg';
 import { z } from 'zod';
 import { ExitIntentSchema,ExitReportSchema,ExitCapabilitySchema,type ExitOperation,type ExitReport,type ErasureComponent,ExitPreflightSchema,type ExitPreflight,SignedExitInstructionSchema,ExitSubmissionSchema } from '../../../../protocol/account-exit.js';
 import type { ChainGateway } from '../chain.js';
@@ -67,6 +67,7 @@ export class AccountExit {
    for(const member of preflight.memberships){
     const context=[member.reference.chainId,member.reference.contract,member.reference.daoId,member.memberId].join(':');
     await db.query('INSERT INTO account_exit_memberships(operation_id,context,reference) VALUES($1,$2,$3)',[id,context,member]);
+    components.push({id:'membership:'+context,state:preflight.nativeAvailable?(member.active?'pending':'confirmed'):'unavailable',reason:preflight.nativeAvailable?(member.active?'OWN_DEPARTURE_SIGNATURE_REQUIRED':'NATIVE_MEMBER_ALREADY_INACTIVE'):'NATIVE_REFERENCE_REQUIRES_RECHECK'});
     if(intent.mode==='delete-account')components.push({id:'native-profile:'+context,state:preflight.nativeAvailable?'pending':'unavailable',reason:'OWN_SIGNATURE_REQUIRED_FOR_CURRENT_PROFILE_ROW'});
    }
    await db.query('UPDATE account_exit_operations SET components=$2 WHERE id=$1',[id,JSON.stringify(components)]);
@@ -86,10 +87,35 @@ export class AccountExit {
   return withTransaction(this.pool,async db=>{
    const stored=(await db.query('SELECT * FROM account_exit_operations WHERE status_hash=$1 AND expires_at>now() FOR UPDATE',[hash(capability)])).rows[0];
    if(!stored)throw new ApiError('EXIT_STATUS_UNAVAILABLE',404);const row=OperationRow.parse(stored);
-   const components=row.components.map(c=>c.id==='backups'&&c.state==='pending'&&c.expiresAt&&Date.parse(c.expiresAt)<=Date.now()?{...c,state:'confirmed' as const,reason:'CONTROLLED_BACKUP_HORIZON_ELAPSED'}:c);
+   const reader=this.chain.reconcileExitSubmission;
+   if(reader){
+    const steps=z.array(z.object({id:z.string(),instruction:z.object({submission:ExitSubmissionSchema})})).parse((await db.query("SELECT id,instruction FROM account_exit_steps WHERE operation_id=$1 AND state<>'confirmed' ORDER BY id LIMIT 25",[row.id])).rows);
+    for(const step of steps){
+     try{const result=await reader.call(this.chain,step.instruction.submission);await db.query("UPDATE account_exit_steps SET state=$3,instruction=jsonb_set(instruction,'{submission,cursor}',$4::jsonb) WHERE operation_id=$1 AND id=$2",[row.id,step.id,result.state==='confirmed'?'confirmed':'unavailable',JSON.stringify(result.cursor)]);}catch{/* Receipt-only refresh cannot authorize a new submission. */}
+    }
+   }
+   await this.recordClosureReceipts(db,row);
+   const confirmed=z.array(z.object({descriptor:z.object({action:z.string(),chainId:z.string(),runtime:z.string(),daoId:z.string(),memberId:z.string()})})).parse((await db.query("SELECT descriptor FROM account_exit_steps WHERE operation_id=$1 AND state='confirmed'",[row.id])).rows);
+   const matched=(action:string,context:string)=>confirmed.some(step=>step.descriptor.action===action&&[step.descriptor.chainId,step.descriptor.runtime,step.descriptor.daoId,step.descriptor.memberId].join(':')===context);
+   const departed=row.intent.memberships.length>0&&row.intent.memberships.every(member=>matched('leave',[member.chainId,member.runtime,member.daoId,member.memberId].join(':')));
+   const components=row.components.map(c=>c.id.startsWith('membership:')&&matched('leave',c.id.slice(11))?{...c,state:'confirmed' as const,reason:'SIGNED_DEPARTURE_CONFIRMED'}:c.id==='native'&&departed?{...c,state:'confirmed' as const,reason:'SIGNED_DEPARTURES_CONFIRMED'}:c.id.startsWith('native-profile:')&&matched('delprofile',c.id.slice(15))?{...c,state:'confirmed' as const,reason:'CURRENT_NATIVE_PROFILE_ROW_REMOVED'}:c.id==='backups'&&c.state==='pending'&&c.expiresAt&&Date.parse(c.expiresAt)<=Date.now()?{...c,state:'confirmed' as const,reason:'CONTROLLED_BACKUP_HORIZON_ELAPSED'}:c);
    const state=components.every(c=>c.state==='confirmed'||c.state==='retained')?'complete':'processing';
    await db.query('UPDATE account_exit_operations SET components=$2,state=$3 WHERE id=$1',[row.id,JSON.stringify(components),state]);return report({...row,components,state});
   });
+ }
+ private async recordClosureReceipts(db:PoolClient,row:z.infer<typeof OperationRow>){
+  const confirmed=z.array(z.object({descriptor:z.object({chainId:z.string(),runtime:z.string(),daoId:z.string(),memberId:z.string(),action:z.enum(['startclose','closedao'])})})).parse((await db.query("SELECT descriptor FROM account_exit_steps WHERE operation_id=$1 AND state='confirmed' AND descriptor->>'action' IN('startclose','closedao')",[row.id])).rows);
+  if(!confirmed.length)return;
+  row.intent={...row.intent,memberships:row.intent.memberships.map(member=>confirmed.some(step=>step.descriptor.chainId===member.chainId&&step.descriptor.runtime===member.runtime&&step.descriptor.daoId===member.daoId&&step.descriptor.memberId===member.memberId)?{...member,choice:'close' as const}:member)};
+  for(const step of confirmed){const context=[step.descriptor.chainId,step.descriptor.runtime,step.descriptor.daoId].join(':'),id='hosted-dao:'+context;if(!row.components.some(component=>component.id===id))row.components.push({id,state:'pending',reason:'HOSTED_CLOSURE_RECONCILIATION_REQUIRED'});const closed=confirmed.some(value=>value.descriptor.action==='closedao'&&[value.descriptor.chainId,value.descriptor.runtime,value.descriptor.daoId].join(':')===context),lifecycle:ErasureComponent={id:'dao-lifecycle:'+context,state:closed?'confirmed':'pending',reason:closed?'DAO_NATIVE_CLOSED':'DAO_CLOSING_AWAITING_SETTLEMENT'},position=row.components.findIndex(component=>component.id===lifecycle.id);if(position<0)row.components.push(lifecycle);else row.components[position]=lifecycle;}
+  await db.query('UPDATE account_exit_operations SET intent=$2,components=$3 WHERE id=$1',[row.id,row.intent,JSON.stringify(row.components)]);
+  await db.query("INSERT INTO jobs(module_id,kind,job_key,payload,due_at) VALUES('core-account-exit','close-hosted',$1,$2,now()) ON CONFLICT(job_key) DO NOTHING",['account-exit-closure:'+row.id,{operationId:row.id}]);
+ }
+ async reconcileClosures(operationId:string){
+  const row=OperationRow.parse((await this.pool.query('SELECT * FROM account_exit_operations WHERE id=$1',[z.uuid().parse(operationId)])).rows[0]),components:ErasureComponent[]=[];
+  for(const member of row.intent.memberships.filter(m=>m.choice==='close'))components.push(await reconcileHostedClosure(this.pool,this.chain,{chainId:member.chainId,contract:member.runtime,daoId:member.daoId,interfaceVersion:1},this.configuration.hostedReconciliation??{}));
+  await withTransaction(this.pool,async db=>{const current=OperationRow.parse((await db.query('SELECT * FROM account_exit_operations WHERE id=$1 FOR UPDATE',[row.id])).rows[0]);for(const component of components){const position=current.components.findIndex(c=>c.id===component.id);if(position<0)current.components.push(component);else current.components[position]=component;}await db.query('UPDATE account_exit_operations SET components=$2 WHERE id=$1',[row.id,JSON.stringify(current.components)]);});
+  return components.every(c=>c.state==='confirmed'||c.state==='retained')?'completed':'retry';
  }
  async eraseHosted(operationId:string){
   const operation=(await this.pool.query('SELECT * FROM account_exit_operations WHERE id=$1',[z.uuid().parse(operationId)])).rows[0];if(!operation)throw new ApiError('EXIT_UNKNOWN',404);
@@ -186,7 +212,7 @@ export class AccountExit {
    }
    if(!choice||request.target!==request.deployment||context.runtime!==request.deployment||context.dao_id!==request.dao_id||context.member_id!==request.member_id)throw new ApiError('EXIT_MEMBERSHIP',403);
    const allowed=choice.choice==='close'?['startclose','closedao','leave','delprofile']:choice.choice==='handover'?['beginhand','scanhand','leave','delprofile']:['leave','delprofile'];
-   if(!allowed.includes(action)||(action==='delprofile'&&row.mode!=='delete-account'))throw new ApiError('EXIT_ACTION',403);
+   if((!allowed.includes(action)&&action!=='startclose')||(action==='delprofile'&&row.mode!=='delete-account'))throw new ApiError('EXIT_ACTION',403);
    if(action==='beginhand'&&RuntimeActionSchemas.beginhand.parse(params).departing!==choice.memberId)throw new ApiError('EXIT_HANDOVER',403);
    const existing=(await db.query('SELECT * FROM account_exit_steps WHERE operation_id=$1 AND id=$2',[operationId,stepId])).rows[0];
    if(existing){const value=z.object({digest:z.string(),instruction:z.object({signed:SignedExitInstructionSchema,submission:ExitSubmissionSchema}),state:z.string()}).parse(existing);if(value.digest!==signed.step_digest||JSON.stringify(value.instruction.signed)!==JSON.stringify(signed))throw new ApiError('EXIT_STEP_CHANGED',409);return {submission:value.instruction.submission,new:false,confirmed:value.state==='confirmed'};}
@@ -205,10 +231,12 @@ export class AccountExit {
   }
   return withTransaction(this.pool,async db=>{
    const row=OperationRow.parse((await db.query('SELECT * FROM account_exit_operations WHERE id=$1 FOR UPDATE',[operationId])).rows[0]);
+   await this.recordClosureReceipts(db,row);
    const complete=z.array(z.object({descriptor:z.object({chainId:z.string(),runtime:z.string(),daoId:z.string(),memberId:z.string(),action:z.string()})})).parse((await db.query("SELECT descriptor FROM account_exit_steps WHERE operation_id=$1 AND state='confirmed'",[operationId])).rows);
    const all=row.intent.memberships.every(member=>complete.some(step=>step.descriptor.action==='leave'&&step.descriptor.chainId===member.chainId&&step.descriptor.runtime===member.runtime&&step.descriptor.daoId===member.daoId&&step.descriptor.memberId===member.memberId));
    const profileContext='native-profile:'+ [request.chain_id,request.deployment,request.dao_id,request.member_id].join(':');
-   const components=row.components.map(component=>confirmed&&action==='delprofile'&&component.id===profileContext?{...component,state:'confirmed' as const,reason:'CURRENT_NATIVE_PROFILE_ROW_REMOVED'}:component.id==='native'?{...component,state:all?'confirmed' as const:'pending' as const,reason:all?'SIGNED_DEPARTURES_CONFIRMED':'NATIVE_STEPS_PENDING'}:component);
+   const membershipContext='membership:'+ [request.chain_id,request.deployment,request.dao_id,request.member_id].join(':');
+   const components=row.components.map(component=>confirmed&&action==='leave'&&component.id===membershipContext?{...component,state:'confirmed' as const,reason:'SIGNED_DEPARTURE_CONFIRMED'}:confirmed&&action==='delprofile'&&component.id===profileContext?{...component,state:'confirmed' as const,reason:'CURRENT_NATIVE_PROFILE_ROW_REMOVED'}:component.id==='native'?{...component,state:all?'confirmed' as const:'pending' as const,reason:all?'SIGNED_DEPARTURES_CONFIRMED':'NATIVE_STEPS_PENDING'}:component);
    const state=components.every(component=>['confirmed','retained'].includes(component.state))?'complete':'processing';
    await db.query('UPDATE account_exit_operations SET components=$2,state=$3 WHERE id=$1',[operationId,JSON.stringify(components),state]);
    return report({...row,components,state});

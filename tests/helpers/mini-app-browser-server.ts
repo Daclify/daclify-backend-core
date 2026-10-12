@@ -1,3 +1,6 @@
+import {AccountExit} from '../../services/api/src/account-exit/service.js';
+import {AccountErasureExclusions} from '../../services/api/src/account-exit/exclusions.js';
+import {startAccountExitWorker} from '../../services/api/src/account-exit/jobs.js';
 // Owned disposable native/SQL fixture; never part of the API server or public package.
 import { randomBytes, generateKeyPairSync } from 'node:crypto';
 import { writeFile, mkdir, rm, mkdtemp } from 'node:fs/promises';
@@ -38,6 +41,7 @@ const f = await nativeContracts();
 let server: Awaited<ReturnType<typeof createServer>> | undefined;
 const profileDirectory = await mkdtemp(join(tmpdir(), 'daclify-browser-profile-exclusions-'));
 const profileExclusions = new FileProfileExclusions(profileDirectory);
+let exitWorker:ReturnType<typeof startAccountExitWorker>|undefined;
 let profileWorker: ReturnType<typeof startProfileWorker> | undefined;
 await owner.query(`CREATE DATABASE ${name}`);
 try {
@@ -150,7 +154,9 @@ try {
     '.artifacts/mini-apps/eb6e4433379827b8f570d2dfae6c77cbeca5b33b5a0072b3914bb64eddb5a5f6';
   const artifacts = await MiniAppArtifacts.load(artifactRoot);
   const profileKeys = { backupRetentionSeconds: 86400, exclusions: profileExclusions };
+  const accountExit=new AccountExit(pool,gateway,{backupRetentionSeconds:86400,profileExclusions,exclusions:new AccountErasureExclusions(join(profileDirectory,'accounts'))});
   server = await createServer(pool, gateway, origin, {
+    accountExit,
     connectedApps: apps,
     miniApps: new MiniAppConnections(apps, artifacts),
     profileKeys,
@@ -158,6 +164,7 @@ try {
     trustedProxyIps: [],
     sharedProxyIps: ['127.0.0.1'],
   });
+  exitWorker=startAccountExitWorker(pool,accountExit);
   profileWorker = startProfileWorker(pool, new ProfileKeys(pool, gateway, profileKeys));
   const token = randomBytes(32).toString('hex');
   server.addHook('onRequest', async (request, reply) => {
@@ -316,6 +323,7 @@ try {
     process.once('SIGINT', resolve);
   });
 } finally {
+  await exitWorker?.stop();
   await profileWorker?.stop();
   await server?.close();
   await profileExclusions.close();

@@ -7,7 +7,7 @@ import type {ChainGateway} from '../chain.js';
 import type {ErasureComponent} from '../../../../protocol/account-exit.js';
 export interface HostedClosureReconciliation{hosting?:(dao:DaoRef)=>Promise<void>;storage?:(dao:DaoRef)=>Promise<void>}
 export async function reconcileHostedClosure(pool:Pool,chain:ChainGateway,dao:DaoRef,providers:HostedClosureReconciliation):Promise<ErasureComponent>{
- const component={id:'hosted-dao:'+dao.daoId,state:'unavailable' as const,reason:'HOSTED_CLOSURE_RECONCILIATION_REQUIRED'};
+ const component={id:'hosted-dao:'+ [dao.chainId,dao.contract,dao.daoId].join(':'),state:'unavailable' as const,reason:'HOSTED_CLOSURE_RECONCILIATION_REQUIRED'};
  if(!chain.attestHostedClosure)return component;
  const summary=await chain.dao(dao.daoId);if(summary.lifecycle!=='closing')return {...component,reason:summary.lifecycle==='closed'?'DAO_ALREADY_CLOSED':'USER_CLOSURE_SIGNATURE_REQUIRED',state:summary.lifecycle==='closed'?'confirmed':'pending'};
  try{

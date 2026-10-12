@@ -681,6 +681,14 @@ public:
     const auto& m=rows.get(request.member_id,"MEMBER_UNKNOWN"); check(m.native_account.value,"NATIVE_UNLINKED");
     require_auth(m.native_account); dispatch(request);
   }
+  ACTION exitevm(checksum256 operation,checksum256 step_digest,instruction request,uint64_t evm_chain_id,checksum160 address,uint64_t binding_epoch,std::vector<char> proof){
+    validate_exit(operation,step_digest,request);validate_instruction(request);
+    evm_bindings bindings(get_self(),request.dao_id);const auto& binding=bindings.get(request.member_id,"EVM_UNLINKED");
+    check(binding.active&&binding.chain_id==evm_chain_id&&binding.address==address&&binding.epoch==binding_epoch,"EVM_BINDING");
+    const auto data_hash=sha256(request.data.data(),request.data.size()).extract_as_byte_array();
+    const auto body=evm_hash_words({evm_text("DaclifyExitInstruction(bytes32 operation,bytes32 stepDigest,uint16 version,bytes32 nativeChain,uint64 runtime,uint64 daoId,uint64 memberId,uint64 evmChainId,address wallet,uint64 bindingEpoch,uint64 nonce,uint32 expires,uint64 target,uint64 action,bytes32 dataHash,uint16 signatureVersion)"),operation.extract_as_byte_array(),step_digest.extract_as_byte_array(),evm_uint(request.version),request.chain_id.extract_as_byte_array(),evm_uint(request.deployment.value),evm_uint(request.dao_id),evm_uint(request.member_id),evm_uint(evm_chain_id),evm_address_word(address),evm_uint(binding_epoch),evm_uint(request.nonce),evm_uint(request.expires),evm_uint(request.target.value),evm_uint(request.action.value),data_hash,evm_uint(2)});
+    check(recover_evm_address(evm_typed_digest(request.chain_id,get_self(),evm_chain_id,body),proof)==address,"EVM_ADDRESS");dispatch(request);
+  }
   ACTION submitevm(instruction request,uint64_t evm_chain_id,checksum160 address,uint64_t binding_epoch,std::vector<char> proof) {
     validate_instruction(request);evm_bindings bindings(get_self(),request.dao_id);const auto& binding=bindings.get(request.member_id,"EVM_UNLINKED");
     check(binding.active&&binding.chain_id==evm_chain_id&&binding.address==address&&binding.epoch==binding_epoch,"EVM_BINDING");
@@ -1484,7 +1492,7 @@ private:
 extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
   if(code==receiver){switch(action_name){
     EOSIO_DISPATCH_HELPER(runtime,(appoint)(setexecs)(setnativegov)(handover)(heartbeat)(refreshgov)(syncexec)(electexec)(recallexec)(setvoter))
-    EOSIO_DISPATCH_HELPER(runtime,(authproof)(submitexit)(exitnative)(unlinknat)(linkevm)(unlinkevm)(submitevm)(setadmit)(admitfrom))
+    EOSIO_DISPATCH_HELPER(runtime,(authproof)(submitexit)(exitnative)(exitevm)(unlinknat)(linkevm)(unlinkevm)(submitevm)(setadmit)(admitfrom))
     EOSIO_DISPATCH_HELPER(runtime,(docsrc)(docref)(docscanstep)(backfilldocs)(prunedocs)(restoredoc))
     EOSIO_DISPATCH_HELPER(runtime,(beginram)(scanram)(adoptram)(sealram)(setarchcfg)(archattest)(archapprove)(archrevoke)(archstep)(clearholds)(initramobs)(rebindramobs)(setramauto)(setrampool)(grantdaoram)(inheritram)(setdaoquota)(checkdaoram)(checkrampool)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram)(fulfilram))
     EOSIO_DISPATCH_HELPER(runtime,(leave)(startclose)(closedao)(beginhand)(scanhand)(accepthand)(clearhand)(setlifecode)(clearlifecode)(closehost))

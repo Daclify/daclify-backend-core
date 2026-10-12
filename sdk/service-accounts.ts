@@ -7,6 +7,7 @@ export const RelayCoreActions = [
   'submit',
   'submitexit',
   'exitnative',
+  'exitevm',
   'submitsess',
   'submitevm',
   'orderfree',

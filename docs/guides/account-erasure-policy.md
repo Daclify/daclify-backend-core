@@ -4,6 +4,12 @@ Leaving a DAO, closing a DAO and deleting the hosted Daclify account are separat
 
 ## Start and resume
 
+In the portal, open **Account → Leave DAOs or delete account**. Review the current roles, claims, stake and outstanding duties before choosing leave-all or deletion. Each sole-member DAO offers a separate closure choice; selecting deletion does not silently close it. Leaving one DAO has its own signed button and keeps the hosted account.
+
+Complete any private administrator handover before deletion: load the current policy and complete history, grant the selected eligible successor access, verify decryption in their own client, confirm recovery on another device, prepare and scan the native handover, then have that successor sign acceptance. Recorded native grants, client decryption and human recovery confirmation are different checks. A changed policy, epoch, recipient key or incomplete page invalidates the preparation.
+
+Save the downloadable exit report and original recovery kit. Reopening or importing a report reads status without signing, sending a payment or recreating login. The report is bound to its operator API. If an initial response is lost, the locally saved pending capability recovers that same operation. Keep report files private.
+
 Read `GET /v1/me/exit/preflight`, review every DAO and generate a random 32-byte status capability locally. Submit `POST /v1/me/exit` with the reviewed intent and capability using the existing fresh account-control ceremony. Its proof binds the current session, origin, audience, route, body and expiry. A paired sign-in is not this proof. Save the capability before sending: an unknown HTTP response must not lose report access.
 
 The service stores its hash, freezes canonical and retired account ownership under ordered locks, revokes hosted sessions and app refresh families, and blocks new operational authority immediately. A leased worker removes disposable records in batches of at most 25 per class. A crashed or competing worker cannot claim another worker's completion. Hosted cleanup proceeds independently when the native chain or an app is unavailable.
@@ -14,9 +20,13 @@ The service stores its hash, freezes canonical and retired account ownership und
 
 Every exit step uses the producer-owned instruction format, full native chain/runtime/DAO/member context, live nonce, expiry, operation commitment and step commitment. Root signatures use the distinct `daclify.account-exit.v1` domain. A linked native wallet can sign `exitnative` itself. The server never holds the member's Root private key.
 
+Linked EVM wallets use the distinct `DaclifyExitInstruction` EIP-712 type, bound to the current wallet address, EVM chain, native binding epoch, operation and step. A saved Root kit can sign a narrowly permitted exit with its password without ordinary hosted login. The API currently verifies direct-key native authorities, including supported multisignature thresholds; delegated accounts and wait authorities require a separately qualified chain evaluation path.
+
 The exact relayer packet and transaction ID are saved before delivery. Retries reconcile that identity against irreversible native receipts and retransmit only the identical unexpired packet. An uncertain or expired delivery is unresolved; it is never automatically replaced with a new nonce or financial event. A new reviewed step requires a fresh native check and signature. Native profile deletion is an idempotent own-member action; an envelope deletion alone does not prove that its current on-chain row was removed.
 
 Claims and stake retain their immutable native member identity. The restricted settlement prepare/submit/receipt endpoints accept separately requested own-signed `withdraw` or `unstake` packets without a hosted account or ordinary login. Keep the existing recovery kit and native wallet credentials until those rights and duties are settled. Read-only report access is insufficient. Linked-wallet settlement uses its existing native authorized instruction path. These paths do not recreate the erased hosted UUID.
+
+The portal persists a signed settlement packet before submission. After restart, explicitly check its receipt or retry that identical packet; a packet from another exit operation cannot be retried through the current report. Clearing the local vault is a separate deliberate choice after the report and usable claim credentials have been saved. Review native duties again before a later departure or closure because roles and liabilities may have changed while hosted cleanup proceeded.
 
 ## Data inventory
 

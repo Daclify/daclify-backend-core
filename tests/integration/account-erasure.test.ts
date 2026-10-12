@@ -15,7 +15,8 @@ const database='daclify_erasure_'+randomBytes(6).toString('hex')+'_test',target=
 const owner=new Pool({connectionString:url}),pool=new Pool({connectionString:target.toString()});
 let canonical:string,retired:string;
 beforeAll(async()=>{await owner.query(`CREATE DATABASE ${database}`);await migrate(pool);});
-afterAll(async()=>{await pool.end();await owner.query(`DROP DATABASE ${database} WITH(FORCE)`);await owner.end();});
+async function dropDatabase(name:string){if(!/^daclify_erasure_[a-z0-9_]+_test$/.test(name))throw Error('OWNED_FIXTURE_REQUIRED');if(!(await owner.query('SELECT 1 FROM pg_database WHERE datname=$1',[name])).rowCount)return;for(let attempt=0;attempt<100;attempt++){if(!(await owner.query('SELECT 1 FROM pg_stat_activity WHERE datname=$1',[name])).rowCount){await owner.query(`DROP DATABASE ${name}`);return;}await new Promise(resolve=>setTimeout(resolve,10));}throw Error('FIXTURE_CONNECTIONS_REMAIN');}
+afterAll(async()=>{await pool.end();await dropDatabase(database);await owner.end();});
 async function fixture(){
  canonical=randomUUID();retired=randomUUID();const key=PrivateKey.generate('K1');
  await pool.query("INSERT INTO accounts(id,signing_key,custody,encryption_key) VALUES($1,$2,'user-controlled',$3)",[canonical,key.toPublic().toString(),generateKeyPairSync('ec',{namedCurve:'prime256v1'}).publicKey.export({format:'jwk'})]);
@@ -82,7 +83,7 @@ it('applies the independent exclusion journal before restored SQL can serve an o
  const directory=await mkdtemp('/tmp/daclify-erasure-restore-'),restoreName='daclify_erasure_restore_'+randomBytes(6).toString('hex')+'_test',restoreUrl=new URL(url??'');restoreUrl.pathname='/'+restoreName;
  const restored=new Pool({connectionString:restoreUrl.toString()});
  try{
-  await fixture();const journal=new AccountErasureExclusions(directory),capability=randomBytes(32).toString('base64url');
+  await fixture();await pool.query("INSERT INTO memberships(account_id,chain_id,contract,dao_id,member_id) VALUES($1,$2,'daclifycore',1,1)",[canonical,'ab'.repeat(32)]);const journal=new AccountErasureExclusions(directory),capability=randomBytes(32).toString('base64url');
   const env={...process.env,LD_LIBRARY_PATH:'/data/daclify-runtime/postgres/usr/lib/x86_64-linux-gnu'};
   const dump=directory+'/before.dump';
   execFileSync('/data/daclify-runtime/postgres/usr/lib/postgresql/17/bin/pg_dump',['--dbname',target.toString(),'--format=custom','--no-owner','--no-acl','--file',dump],{env,stdio:'pipe'});
@@ -94,12 +95,14 @@ it('applies the independent exclusion journal before restored SQL can serve an o
   expect(await readAccount(restored,canonical)).not.toBeNull();
   await journal.applyBeforeServe(restored);
   expect(await readAccount(restored,canonical)).toBeNull();
+  expect((await restored.query('SELECT reference FROM account_exit_memberships WHERE operation_id=$1',[operation.id])).rows).toHaveLength(1);
+  expect((await restored.query('SELECT intent FROM account_exit_operations WHERE id=$1',[operation.id])).rows[0]?.intent.memberships).toEqual([{chainId:'ab'.repeat(32),runtime:'daclifycore',daoId:'1',memberId:'1',choice:'leave'}]);
   await expect(openAccountSession(restored,canonical)).rejects.toMatchObject({code:'AUTH_REQUIRED'});
   const resumed=new AccountExit(restored,authChain,{backupRetentionSeconds:86400,exclusions:journal});
   expect(await resumed.status(capability)).toMatchObject({id:operation.id,components:expect.arrayContaining([expect.objectContaining({id:'native',state:'unavailable'})])});
   await resumed.eraseHosted(operation.id);
   expect((await restored.query('SELECT signing_key,encryption_key,erasure_state FROM accounts WHERE id=$1',[canonical])).rows[0]).toEqual({signing_key:null,encryption_key:null,erasure_state:'erased'});
- }finally{await restored.end();await owner.query(`DROP DATABASE IF EXISTS ${restoreName} WITH(FORCE)`);await rm(directory,{recursive:true,force:true});}
+ }finally{await restored.end();await dropDatabase(restoreName);await rm(directory,{recursive:true,force:true});}
 });
 it('requires fresh body-bound ownership and leaves only a read-only status capability after logout',async()=>{
  const {createServer}=await import('../../services/api/src/server.js'),{controlledInject}=await import('../helpers/account-control.js');
@@ -131,8 +134,8 @@ it('stores a native packet before send and reconciles an unknown response withou
  const request=makeInstruction(reference,'1','0',Math.floor(Date.now()/1000)+300,'daclifycore','leave',encodeAction('leave',{runtime:'daclifycore',dao_id:'1',member_id:'1'}));
  const signed={operation:exitOperationCommitment(operation.id),step_digest:exitStepCommitment(operation.id,'departure',request),request,sig:''};signed.sig=key.signDigest(exitInstructionDigest(signed.operation,signed.step_digest,request)).toString();
  await service.submitNativeStep(operation.id,'departure',signed);expect(submissions).toBe(1);
- visible=true;const completed=await service.submitNativeStep(operation.id,'departure',signed);expect(submissions).toBe(1);
- expect(completed.components.find(component=>component.id==='native')?.state).toBe('confirmed');
+ visible=true;expect((await service.status(operation.statusCapability)).components.find(c=>c.id==='native')?.state).toBe('confirmed');const completed=await service.submitNativeStep(operation.id,'departure',signed);expect(submissions).toBe(1);
+ expect(completed.components.find(component=>component.id==='native')?.state).toBe('confirmed');expect(completed.components.find(component=>component.id==='membership:'+ [reference.chainId,reference.contract,'1','1'].join(':'))?.state).toBe('confirmed');
  await expect(service.submitNativeStep(operation.id,'changed-step',signed)).rejects.toMatchObject({code:'EXIT_STEP_CONTEXT'});
 });
 it('upgrades the published 041 account guards without changing their hash or historical identities',async()=>{
@@ -156,7 +159,7 @@ it('upgrades the published 041 account guards without changing their hash or his
   await old.query("UPDATE accounts SET signing_key=NULL,encryption_key=NULL,wallet_origin=NULL,erasure_state='erased',erased_at=now() WHERE id=ANY($1::uuid[])",[[id,alias]]);
   expect((await old.query("SELECT hash FROM schema_migrations WHERE name='041_account_reconnect.sql'")).rows[0]).toEqual(before);
   expect((await old.query('SELECT id,merged_into FROM accounts ORDER BY id')).rows).toEqual(expect.arrayContaining([{id,merged_into:null},{id:alias,merged_into:id}]));
- }finally{await old.end();await owner.query(`DROP DATABASE IF EXISTS ${name} WITH(FORCE)`);}
+ }finally{await old.end();await dropDatabase(name);}
 });
 it('removes key/email challenges and personal reconciliation jobs before nulling the owner',async()=>{
  const key=await fixture(),mailbox=canonical+'@example.com';
@@ -210,7 +213,7 @@ it('keeps closure blocked by hosted liabilities and rejects late billing creatio
  const subscription=randomUUID();await pool.query("INSERT INTO hosting_subscriptions(id,dao_key,dao,created_by,request_id,pricing,extra_slots,price_key) VALUES($1,$2,$3,$4,$5,$6,1,$7)",[subscription,JSON.stringify([reference.chainId,reference.contract,reference.daoId,1]),reference,canonical,randomUUID(),{freeSlots:1,rates:{}},policy]);
  const service=new AccountExit(pool,chain,{backupRetentionSeconds:86400});const op=await service.begin(canonical,{version:1,mode:'delete-account',memberships:[{chainId:reference.chainId,runtime:reference.contract,daoId:'1',memberId:'1',choice:'close'}]},{reauthenticated:true});
  expect(await service.eraseHosted(op.id)).toBe('retry');expect(acknowledgments).toBe(0);
- expect((await service.status(op.statusCapability)).components.find(c=>c.id==='hosted-dao:1')).toMatchObject({state:'unavailable',reason:'HOSTED_SERVICE_LIABILITIES_REMAIN'});
+ expect((await service.status(op.statusCapability)).components.find(c=>c.id==='hosted-dao:'+ ['ab'.repeat(32),'daclifycore','1'].join(':'))).toMatchObject({state:'unavailable',reason:'HOSTED_SERVICE_LIABILITIES_REMAIN'});
  await pool.query("UPDATE hosting_subscriptions SET state='ended' WHERE id=$1",[subscription]);await service.eraseHosted(op.id);expect(acknowledgments).toBe(1);
  await expect(pool.query("INSERT INTO hosting_subscriptions(id,dao_key,dao,created_by,request_id,pricing,extra_slots,price_key) VALUES($1,$2,$3,$4,$5,$6,1,$7)",[randomUUID(),JSON.stringify([reference.chainId,reference.contract,reference.daoId,1]),reference,canonical,randomUUID(),{freeSlots:1,rates:{}},policy])).rejects.toThrow('HOSTED_DAO_CLOSING');
 });
@@ -261,4 +264,20 @@ it('rejects an expired account-control signature before starting irreversible er
 it('expires minimal unavailable provider pointers instead of retaining them after the disclosed reconciliation window',async()=>{
  await fixture();const pointer='de'.repeat(32);await pool.query("INSERT INTO recovery_object_cleanup(receipt_hash,account_id,receipt,state,expires_at) VALUES($1,$2,'{}','unavailable',now()-interval '1 second')",[pointer,canonical]);
  const service=new AccountExit(pool,{...authChain,memberships:async()=>[]},{backupRetentionSeconds:86400}),op=await service.begin(canonical,{version:1,mode:'delete-account',memberships:[]},{reauthenticated:true});await service.eraseHosted(op.id);await service.cleanup();expect((await pool.query('SELECT 1 FROM recovery_object_cleanup WHERE receipt_hash=$1',[pointer])).rowCount).toBe(0);await service.eraseHosted(op.id);expect((await service.status(op.statusCapability)).components.find(c=>c.id==='recovery-provider')).toMatchObject({state:'unavailable',reason:'PROVIDER_RECONCILIATION_WINDOW_EXPIRED'});
+});
+it('accepts the documented 256-membership limit with lossless maximum IDs and separately bounded reports',async()=>{
+ await fixture();const members=Array.from({length:256},(_,index)=>({dao:{chainId:'ab'.repeat(32),contract:'daclifycore',daoId:(18446744073709551615n-BigInt(index)).toString(),interfaceVersion:1 as const},memberId:'18446744073709551615',nonce:'0',active:true,admin:false,reviewer:false,credits:'0',claim:'0',stake:'0',nativeAccount:'',custody:'user-controlled' as const}));
+ const service=new AccountExit(pool,{...authChain,memberships:async()=>members},{backupRetentionSeconds:86400});
+ const operation=await service.begin(canonical,{version:1,mode:'delete-account',memberships:members.map(member=>({chainId:member.dao.chainId,runtime:member.dao.contract,daoId:member.dao.daoId,memberId:member.memberId,choice:'leave'}))},{reauthenticated:true});
+ expect(operation.components.length).toBe(518);expect(operation.components.some(c=>c.id.includes('18446744073709551615'))).toBe(true);
+});
+
+it('records a later explicit closure only after its own native signature is confirmed',async()=>{
+ const {makeInstruction,encodeAction}=await import('../../sdk/index.js'),{exitInstructionDigest,exitOperationCommitment,exitStepCommitment}=await import('../../sdk/account-exit.js'),key=await fixture(),reference={chainId:'ab'.repeat(32),contract:'daclifycore',daoId:'1',interfaceVersion:1 as const};
+ const service=new AccountExit(pool,{...authChain,memberships:async()=>{throw Error('offline');},prepareExitSubmission:async()=>({transactionId:'ab'.repeat(32),packet:'aa',firstBlock:1,cursor:1,expiresAt:new Date(Date.now()+60000).toISOString()}),submitPreparedExit:async()=>({transactionId:'ab'.repeat(32)}),reconcileExitSubmission:async()=>({state:'confirmed' as const,cursor:1})},{backupRetentionSeconds:86400});
+ const operation=await service.begin(canonical,{version:1,mode:'delete-account',memberships:[{chainId:reference.chainId,runtime:reference.contract,daoId:'1',memberId:'1',choice:'leave'}]},{reauthenticated:true}),request=makeInstruction(reference,'1','0',Math.floor(Date.now()/1000)+300,reference.contract,'startclose',encodeAction('startclose',{runtime:reference.contract,dao_id:'1',member_id:'1'})),stepId='explicit-later-close',context={operation:exitOperationCommitment(operation.id),step_digest:exitStepCommitment(operation.id,stepId,request),request};
+ const closing=await service.submitNativeStep(operation.id,stepId,{...context,sig:key.signDigest(exitInstructionDigest(context.operation,context.step_digest,request)).toString()});
+ expect(closing.components.find(component=>component.id==='dao-lifecycle:'+ [reference.chainId,reference.contract,'1'].join(':'))).toMatchObject({state:'pending',reason:'DAO_CLOSING_AWAITING_SETTLEMENT'});
+ expect((await pool.query('SELECT intent FROM account_exit_operations WHERE id=$1',[operation.id])).rows[0]?.intent.memberships[0].choice).toBe('close');
+ expect((await pool.query("SELECT 1 FROM jobs WHERE job_key=$1 AND kind='close-hosted'",['account-exit-closure:'+operation.id])).rowCount).toBe(1);
 });

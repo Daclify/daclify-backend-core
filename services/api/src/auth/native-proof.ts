@@ -47,24 +47,7 @@ export function checkNativeProof(
       runtimeAbi,
     );
     if (!transaction.actions[0]?.equals(expected)) throw new Error('Wrong intent');
-    // Explicitly qualify direct-key authority only; delegated accounts/waits need chain evaluation.
-    if (
-      authority.accounts.length ||
-      authority.waits.length ||
-      Number(authority.threshold) < 1 ||
-      authority.keys.length > 32
-    )
-      throw new ApiError('NATIVE_AUTHORITY_UNSUPPORTED', 409);
-    const unique = new Set<string>();
-    let weight = 0;
-    for (const text of proof.signatures) {
-      const key = Signature.from(text).recoverDigest(transaction.signingDigest(identity.chainId));
-      const canonical = key.toString();
-      if (unique.has(canonical)) throw new Error('Duplicate key');
-      unique.add(canonical);
-      weight += authority.keyWeight(key);
-    }
-    if (weight < Number(authority.threshold)) throw new Error('Insufficient authority');
+    checkNativeAuthority(transaction, proof.signatures, identity.chainId, authority);
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new ApiError('NATIVE_PROOF_INVALID', 401);
@@ -92,4 +75,12 @@ export async function verifyNativeProof(
     throw new ApiError('NATIVE_AUTHORITY_UNAVAILABLE', 503);
   }
   checkNativeProof(input, identity, runtime, message, expires, authority);
+}
+
+export function checkNativeAuthority(transaction:Transaction,signatures:readonly string[],chainId:string,authority:Authority):void {
+ // Delegated accounts and waits require chain evaluation and are never guessed locally.
+ if(authority.accounts.length||authority.waits.length||Number(authority.threshold)<1||authority.keys.length>32)throw new ApiError('NATIVE_AUTHORITY_UNSUPPORTED',409);
+ const unique=new Set<string>();let weight=0;
+ for(const text of signatures){const key=Signature.from(text).recoverDigest(transaction.signingDigest(chainId)),canonical=key.toString();if(unique.has(canonical))throw new ApiError('NATIVE_PROOF_INVALID',401);unique.add(canonical);weight+=authority.keyWeight(key);}
+ if(weight<Number(authority.threshold))throw new ApiError('NATIVE_PROOF_INVALID',401);
 }
