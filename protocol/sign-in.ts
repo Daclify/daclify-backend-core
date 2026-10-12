@@ -54,6 +54,7 @@ export const AccountControlPaths = Object.freeze([
   '/v1/payments/operator',
   '/v1/payments/operator/revoke',
   '/v1/account/vault',
+  '/v1/account/reconnect',
   '/v1/account/recovery/enable',
   '/v1/account/recovery/assisted/options',
   '/v1/account/recovery/assisted/opt-out',

@@ -18,7 +18,7 @@ import {
   VaultAttachRequestSchema,
   VaultAttachFinishSchema,
 } from './api.js';
-import { ContentPageQuerySchema, DaoContentSchema } from './content.js';
+import { ContentPageQuerySchema, DaoContentSchema, PrivateAccessPolicySchema } from './content.js';
 import { RuntimeActionSchemas } from '../sdk/generated/schemas.js';
 import { DaoPresetSchema, GovernanceStateSchema } from './dao.js';
 import {
@@ -112,7 +112,27 @@ export const ApiRoutes = {
     response: SessionSchema,
     helpTopic: 'recovery',
   },
+  accountReconnectChallenge: {
+    method: 'POST',
+    path: '/v1/account/reconnect/challenge',
+    input: VaultAttachRequestSchema,
+    response: ChallengeSchema,
+    helpTopic: 'recovery',
+  },
+  accountReconnect: {
+    method: 'POST',
+    path: '/v1/account/reconnect',
+    input: VaultAttachFinishSchema,
+    response: SessionSchema,
+    helpTopic: 'recovery',
+  },
   ...PlatformRoutes,
+  privateAccessPolicy: {
+    method: 'GET',
+    path: '/v1/daos/:id/private-access',
+    response: PrivateAccessPolicySchema,
+    helpTopic: 'documents',
+  },
   spendingReport: {
     method: 'GET',
     path: '/v1/daos/:id/reports/spending',

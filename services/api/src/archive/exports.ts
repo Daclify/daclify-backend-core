@@ -186,7 +186,7 @@ export class ArchiveExports {
       request_hash: Buffer;
       provider_scope: string;
     }>(
-      'SELECT id,request_hash,provider_scope FROM archive_exports WHERE requested_by=$1 AND request_id=$2',
+      'SELECT id,request_hash,provider_scope FROM archive_exports WHERE requested_by IN (SELECT account_scope($1)) AND request_id=$2',
       [account.id, input.requestId],
     );
     if (previous.rows[0]) {
@@ -220,7 +220,7 @@ export class ArchiveExports {
         request_hash: Buffer;
         provider_scope: string;
       }>(
-        'SELECT id,request_hash,provider_scope FROM archive_exports WHERE requested_by=$1 AND request_id=$2',
+        'SELECT id,request_hash,provider_scope FROM archive_exports WHERE requested_by IN (SELECT account_scope($1)) AND request_id=$2',
         [account.id, input.requestId],
       );
       if (raced.rows[0]) {
@@ -304,7 +304,7 @@ export class ArchiveExports {
     bytes: Uint8Array,
   ) {
     const saved = await this.pool.query<{ id: string; state: string }>(
-      'SELECT id,state FROM asset_uploads WHERE account_id=$1 AND request_id=$2',
+      'SELECT id,state FROM asset_uploads WHERE account_id IN (SELECT account_scope($1)) AND request_id=$2',
       [account.id, requestId],
     );
     if (saved.rows[0] && !['verified', 'published'].includes(saved.rows[0].state)) {
@@ -348,7 +348,7 @@ export class ArchiveExports {
       if (row.state === 'verified') return 'completed';
       if (!['planned', 'exporting', 'review'].includes(row.state)) return 'manual';
       const accountResult = await client.query<Record<string, unknown>>(
-          'SELECT id,signing_key AS "signingKey",encryption_key AS "encryptionKey",custody FROM accounts WHERE id=$1',
+          'SELECT a.id,a.signing_key AS "signingKey",a.encryption_key AS "encryptionKey",a.custody FROM accounts h JOIN accounts a ON a.id=coalesce(h.merged_into,h.id) WHERE h.id=$1',
           [row.requested_by],
         ),
         account = AccountSchema.parse(accountResult.rows[0]);
@@ -405,7 +405,7 @@ export class ArchiveExports {
         ],
       );
       const members = await client.query<{ id: string }>(
-        `SELECT storage_object_id AS id FROM asset_uploads WHERE account_id=$1 AND request_id=$2 AND storage_object_id IS NOT NULL UNION SELECT storage_object_id AS id FROM archive_chunks WHERE export_id=$3 AND state='verified' AND storage_object_id IS NOT NULL`,
+        `SELECT storage_object_id AS id FROM asset_uploads WHERE account_id IN (SELECT account_scope($1)) AND request_id=$2 AND storage_object_id IS NOT NULL UNION SELECT storage_object_id AS id FROM archive_chunks WHERE export_id=$3 AND state='verified' AND storage_object_id IS NOT NULL`,
         [account.id, row.manifest_request_id, id],
       );
       await recordArchiveGroup(
@@ -469,7 +469,7 @@ export class ArchiveExports {
       await this.provider.retrieve(receipt.cid, receipt.bytes),
     );
     const object = await this.pool.query<{ storage_object_id: string }>(
-      "SELECT storage_object_id FROM asset_uploads WHERE account_id=$1 AND request_id=$2 AND state='verified'",
+      "SELECT storage_object_id FROM asset_uploads WHERE account_id IN (SELECT account_scope($1)) AND request_id=$2 AND state='verified'",
       [account.id, chunk.asset_request_id],
     );
     if (!object.rows[0]?.storage_object_id) throw new ApiError('ARCHIVE_CONTENTS_INCOMPLETE', 409);

@@ -184,7 +184,7 @@ export async function readSession(pool: Pool, token: string): Promise<Account | 
   if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return undefined;
   const row = (
     await pool.query<AccountRow>(
-      'SELECT a.id,a.signing_key,a.custody,a.encryption_key,a.wallet_origin FROM sessions s JOIN accounts a ON a.id=s.account_id WHERE s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now() AND NOT EXISTS(SELECT 1 FROM quick_signup_pending_accounts p WHERE p.account_id=a.id)',
+      'SELECT a.id,a.signing_key,a.custody,a.encryption_key,a.wallet_origin FROM sessions s JOIN accounts a ON a.id=s.account_id WHERE a.merged_into IS NULL AND s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now() AND NOT EXISTS(SELECT 1 FROM quick_signup_pending_accounts p WHERE p.account_id=a.id)',
       [hash(token)],
     )
   ).rows[0];

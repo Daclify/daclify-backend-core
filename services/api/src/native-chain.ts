@@ -2169,6 +2169,23 @@ export class NativeChainGateway implements ChainGateway {
     if (!row || row.id !== daoId) throw new ApiError('DAO_UNKNOWN', 404);
     return this.summary(row);
   }
+  async privateAccessPolicy(daoId: string) {
+    const row = (await this.table('daos', this.config.runtime, daoId, 1))[0];
+    if (!row || row.id !== daoId) throw new ApiError('DAO_UNKNOWN', 404);
+    if (row.history_policy > 1) throw new ApiError('DAO_POLICY_UNAVAILABLE', 503);
+    const { PrivateAccessPolicySchema } = await import('../../../protocol/content.js');
+    return PrivateAccessPolicySchema.parse({
+      dao: {
+        chainId: this.config.chainId,
+        contract: this.config.runtime,
+        daoId,
+        interfaceVersion: 1,
+      },
+      privacy: ['public', 'encrypted-managed-allowed', 'encrypted-user-controlled'][row.privacy],
+      historyPolicy: row.history_policy === 0 ? 'full-history' : 'from-join',
+      keyEpoch: row.key_epoch,
+    });
+  }
   async treasury(daoId: string): Promise<Treasury> {
     const dao = await this.dao(daoId);
     const abi = await this.api.v1.chain.get_abi(this.config.runtime);

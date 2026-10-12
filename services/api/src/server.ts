@@ -61,6 +61,7 @@ import {
   type TelosPins,
 } from './telos-governance.js';
 import { registerVaultAttachRoutes } from './auth/vault-attach.js';
+import { registerAccountReconnectRoutes } from './auth/account-reconnect.js';
 import { registerEvmSignInRoutes } from './auth/evm-sign-in.js';
 import { EvmRelaySchema } from '../../../protocol/evm-wallet.js';
 import { beginAccountControl, consumeAccountControl } from './auth/intent.js';
@@ -729,6 +730,10 @@ export async function createServer(
   app.get<{ Params: { id: string } }>(ApiRoutes.content.path, async (request) =>
     chain.content(IdSchema.parse(request.params.id), ApiRoutes.content.query.parse(request.query)),
   );
+  app.get<{ Params: { id: string } }>(ApiRoutes.privateAccessPolicy.path, async (request) => {
+    if (!chain.privateAccessPolicy) throw new ApiError('PRIVATE_ACCESS_UNAVAILABLE', 503);
+    return chain.privateAccessPolicy(IdSchema.parse(request.params.id));
+  });
   app.get<{ Params: { id: string } }>(ModuleApiRoutes.state.path, async (request) =>
     chain.moduleState(
       IdSchema.parse(request.params.id),
@@ -1249,6 +1254,16 @@ export async function createServer(
   );
   registerEvmRoutes(app, pool, cookieName, session);
   registerVaultAttachRoutes(app, pool, origin, cookieName, session, sessionCookie, audience);
+  registerAccountReconnectRoutes(
+    app,
+    pool,
+    chain,
+    origin,
+    cookieName,
+    session,
+    sessionCookie,
+    audience,
+  );
   registerEvmSignInRoutes(
     app,
     pool,

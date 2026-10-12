@@ -65,6 +65,15 @@ export const VaultAttachMessageSchema = VaultAttachRequestSchema.extend({
   id: z.uuid(),
   expires: z.string().datetime(),
 });
+export const AccountReconnectMessageSchema = VaultAttachRequestSchema.extend({
+  domain: z.literal('daclify.account-reconnect.v1'),
+  audience: ApiOriginSchema,
+  origin: z.url(),
+  accountId: z.uuid(),
+  targetAccountId: z.uuid(),
+  id: z.uuid(),
+  expires: z.iso.datetime(),
+});
 export const LoginRequestSchema = z.strictObject({
   challengeId: z.uuid(),
   signature: z.string().max(160),

@@ -269,7 +269,7 @@ export class CreationService {
     try {
       await client.query('BEGIN');
       const result = await client.query(
-        'SELECT *,dao_id::text FROM creation_orders WHERE id=$1 AND account_id=$2 FOR UPDATE',
+        'SELECT *,dao_id::text FROM creation_orders WHERE id=$1 AND account_owns($2,account_id) FOR UPDATE',
         [id, accountId],
       );
       if (!result.rows[0]) throw new ApiError('CREATION_ORDER_UNKNOWN', 404);

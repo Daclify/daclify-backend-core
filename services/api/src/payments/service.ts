@@ -1,4 +1,5 @@
 import { rollbackTransaction } from '../transaction.js';
+import { ownsAccount } from '../auth/account-ownership.js';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
 import { z } from 'zod';
@@ -412,7 +413,8 @@ export class ConnectedPayments {
   }
   async readOrder(account: Account, id: string) {
     const row = await this.order(id);
-    if (row.customer_account !== account.id) await this.admin(account, row.dao);
+    if (!(await ownsAccount(this.pool, account.id, row.customer_account)))
+      await this.admin(account, row.dao);
     if (row.checkout_id) await this.reconcile(row);
     return view(await this.order(id));
   }
@@ -472,8 +474,11 @@ export class ConnectedPayments {
     }
     if (
       row.product_id !== productId ||
-      row.customer_reference !== customerReference ||
-      row.customer_account !== customerAccount
+      (row.customer_account === null
+        ? row.customer_reference !== customerReference || customerAccount !== null
+        : customerAccount === null ||
+          !(await ownsAccount(this.pool, customerAccount, row.customer_account)) ||
+          row.customer_reference !== 'account:' + row.customer_account)
     )
       throw new ApiError('PAYMENT_REQUEST_CONFLICT', 409);
     if (row.checkout_id) return view(row);

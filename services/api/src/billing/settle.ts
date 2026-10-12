@@ -141,7 +141,7 @@ export class PostgresServicePayments {
       payment_status: string;
     }>(
       `SELECT status, currency, amount_minor::text, payment_status
-       FROM service_payments WHERE account_id=$1 ORDER BY updated_at DESC`,
+       FROM service_payments WHERE account_id IN (SELECT account_scope($1)) ORDER BY updated_at DESC`,
       [accountId],
     );
     return result.rows.map((row) => ({

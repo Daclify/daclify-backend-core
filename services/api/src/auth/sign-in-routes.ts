@@ -109,7 +109,7 @@ export function registerSignInRoutes(
     const current = await session(request.cookies[cookieName]);
     const query = CredentialHistoryQuerySchema.parse(request.query);
     const result = await pool.query<{ id: string; public_reference: unknown; created_at: Date }>(
-      "SELECT id::text,public_reference,created_at FROM audit_events WHERE account_id=$1 AND kind='credential.change' AND ($2::bigint IS NULL OR id<$2) ORDER BY id DESC LIMIT 51",
+      "SELECT id::text,public_reference,created_at FROM audit_events WHERE account_id IN (SELECT account_scope($1)) AND kind='credential.change' AND ($2::bigint IS NULL OR id<$2) ORDER BY id DESC LIMIT 51",
       [current.id, query.before ?? null],
     );
     const entries = result.rows.slice(0, 50).map((row) => ({

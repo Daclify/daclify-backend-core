@@ -124,7 +124,7 @@ export class StorageNotices {
           error = null;
         } else {
           const contacts = await this.pool.query<{ provider_key: string }>(
-            "SELECT provider_key FROM credentials WHERE account_id=$1 AND provider_key LIKE 'email:%' ORDER BY provider_key LIMIT 1",
+            "SELECT c.provider_key FROM credentials c JOIN accounts h ON c.account_id=coalesce(h.merged_into,h.id) WHERE h.id=$1 AND c.provider_key LIKE 'email:%' ORDER BY c.provider_key LIMIT 1",
             [account.id],
           );
           const contact = contacts.rows[0];

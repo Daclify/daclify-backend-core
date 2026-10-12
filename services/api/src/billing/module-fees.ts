@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { ownsAccount } from '../auth/account-ownership.js';
 import { isDeepStrictEqual } from 'node:util';
 import type { Pool, PoolClient } from 'pg';
 import type Stripe from 'stripe';
@@ -172,7 +173,10 @@ export class ModuleFees {
         throw new ApiError('MODULE_ORDER_PENDING', 409);
     }
     return this.locked(id, async (row, client) => {
-      if (row.account_id !== account.id || !isDeepStrictEqual(row.approval, approval))
+      if (
+        !(await ownsAccount(client, account.id, row.account_id)) ||
+        !isDeepStrictEqual(row.approval, approval)
+      )
         throw new ApiError('MODULE_ORDER_CONFLICT', 409);
       if (!row.checkout_id) {
         // Stripe only guarantees idempotency for 24 hours. Unknown expired checkouts need review, never a second charge.
@@ -359,7 +363,7 @@ export class ModuleFees {
         plan = state.modules.find((m) => m.pricing.account === row.module_account);
       if (!row.receipt) {
         const result = await client.query(
-          'SELECT id,signing_key AS "signingKey",encryption_key AS "encryptionKey",custody FROM accounts WHERE id=$1',
+          'SELECT a.id,a.signing_key AS "signingKey",a.encryption_key AS "encryptionKey",a.custody FROM accounts h JOIN accounts a ON a.id=coalesce(h.merged_into,h.id) WHERE h.id=$1',
           [row.account_id],
         );
         let authorized = true;

@@ -122,7 +122,7 @@ export class HostedAssets {
       const key = contentDaoKey(input.dao);
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`upload-dao:${key}`]);
       const existing = await client.query<Record<string, unknown>>(
-        'SELECT * FROM asset_uploads WHERE account_id=$1 AND request_id=$2 FOR UPDATE',
+        'SELECT * FROM asset_uploads WHERE account_id IN (SELECT account_scope($1)) AND request_id=$2 FOR UPDATE',
         [account.id, input.requestId],
       );
       if (existing.rows[0]) {
@@ -148,7 +148,7 @@ export class HostedAssets {
       if (archiveHoldId) {
         if (input.kind !== 'archive') throw new ApiError('ARCHIVE_HOLD_INVALID', 409);
         const debit = await client.query(
-          "UPDATE archive_storage_holds SET remaining_bytes=remaining_bytes-$1 WHERE id=$2 AND requested_by=$3 AND dao_key=$4 AND provider_scope=$5 AND state='held' AND remaining_bytes>=$1 RETURNING id",
+          "UPDATE archive_storage_holds SET remaining_bytes=remaining_bytes-$1 WHERE id=$2 AND account_owns($3,requested_by) AND dao_key=$4 AND provider_scope=$5 AND state='held' AND remaining_bytes>=$1 RETURNING id",
           [growth.toString(), archiveHoldId, account.id, key, this.scope],
         );
         if (!debit.rowCount) throw new ApiError('ARCHIVE_HOLD_INVALID', 409);

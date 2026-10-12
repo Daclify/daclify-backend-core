@@ -1,4 +1,5 @@
 import type { Pool } from 'pg';
+import { ownsAccount } from '../auth/account-ownership.js';
 import { z } from 'zod';
 import { ConnectedPaymentClient } from '@daclify/modules/sdk';
 import {
@@ -92,10 +93,10 @@ export class OperatorPayments {
       !saved ||
       saved.dao_key !== key ||
       saved.product_id !== productId ||
-      saved.account_id !== customerAccount
+      !(await ownsAccount(this.pool, customerAccount, saved.account_id))
     )
       throw new ApiError('PAYMENT_REQUEST_CONFLICT', 409);
-    const result = await client.checkout(productId, requestId, customerAccount);
+    const result = await client.checkout(productId, requestId, saved.account_id);
     if (result.productId !== productId) throw new ApiError('PAYMENT_RECEIPT_INVALID', 502);
     const savedOrder = await this.pool.query(
       'UPDATE operator_payment_requests SET central_order_id=$2 WHERE request_id=$1 AND (central_order_id IS NULL OR central_order_id=$2)',
@@ -115,7 +116,8 @@ export class OperatorPayments {
     if (!record.success) throw new ApiError('PAYMENT_ORDER_UNKNOWN', 404);
     const entry = this.config.daos.find((e) => daoPaymentKey(e.dao) === record.data.dao_key);
     if (!entry) throw new ApiError('PAYMENT_DAO', 403);
-    if (account.id !== record.data.account_id) await this.admin(account, entry.dao);
+    if (!(await ownsAccount(this.pool, account.id, record.data.account_id)))
+      await this.admin(account, entry.dao);
     const order = PaymentOrderSchema.parse(await this.client(entry.dao).order(id));
     if (order.productId !== record.data.product_id)
       throw new ApiError('PAYMENT_RECEIPT_INVALID', 502);

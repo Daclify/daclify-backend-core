@@ -214,7 +214,7 @@ export class ContentService {
   }
   async #existing(accountId: string, requestId: string): Promise<UploadRow | undefined> {
     const result = await this.pool.query<Record<string, unknown>>(
-      'SELECT * FROM uploads WHERE account_id=$1 AND request_id=$2',
+      'SELECT * FROM uploads WHERE account_id IN (SELECT account_scope($1)) AND request_id=$2',
       [accountId, requestId],
     );
     return result.rows[0] ? RowSchema.parse(result.rows[0]) : undefined;
@@ -235,7 +235,7 @@ export class ContentService {
       ]);
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`upload-dao:${key}`]);
       const existing = await client.query<Record<string, unknown>>(
-        'SELECT * FROM uploads WHERE account_id=$1 AND request_id=$2 FOR UPDATE',
+        'SELECT * FROM uploads WHERE account_id IN (SELECT account_scope($1)) AND request_id=$2 FOR UPDATE',
         [account.id, input.requestId],
       );
       if (existing.rows[0]) {

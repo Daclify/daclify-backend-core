@@ -29,7 +29,7 @@ function accountFromRow(row: AccountRow): Account {
 
 export async function readAccount(db: Pool | PoolClient, id: string): Promise<Account | null> {
   const result = await db.query<AccountRow>(
-    'SELECT id,signing_key,custody,encryption_key,wallet_origin FROM accounts WHERE id=$1',
+    'SELECT id,signing_key,custody,encryption_key,wallet_origin FROM accounts WHERE id=$1 AND merged_into IS NULL',
     [z.uuid().parse(id)],
   );
   return result.rows[0] ? accountFromRow(result.rows[0]) : null;
@@ -61,6 +61,12 @@ export async function withTransaction<T>(
         .safeParse(error).success
     )
       throw new ApiError('LAST_CONTROL_CREDENTIAL', 409);
+    if (
+      z
+        .object({ code: z.literal('23514'), constraint: z.literal('retired_account_credential') })
+        .safeParse(error).success
+    )
+      throw new ApiError('ACCOUNT_RECONNECT_CHANGED', 409);
     throw error;
   } finally {
     client.release(discard);
@@ -82,7 +88,7 @@ export async function insertAccountSession(
     throw new ApiError('SIGNUP_INCOMPLETE', 409);
   const row = (
     await client.query<AccountRow>(
-      'SELECT id,signing_key,custody,encryption_key,wallet_origin FROM accounts WHERE id=$1',
+      'SELECT id,signing_key,custody,encryption_key,wallet_origin FROM accounts WHERE id=$1 AND merged_into IS NULL',
       [accountId],
     )
   ).rows[0];

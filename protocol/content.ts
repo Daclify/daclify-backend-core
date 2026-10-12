@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DaoRefSchema, IdSchema, Uint64Schema } from './base.js';
+import { DaoRefSchema, IdSchema, Uint64Schema, PrivacySchema } from './base.js';
 import { RuntimeTableSchemas } from '../sdk/generated/schemas.js';
 export const ContentPageQuerySchema = z.strictObject({
   members: z.union([Uint64Schema, z.literal('done')]).optional(),
@@ -25,6 +25,13 @@ export const DaoContentSchema = z.strictObject({
   epochs: z.array(RuntimeTableSchemas.epochs),
 });
 export type DaoContent = z.infer<typeof DaoContentSchema>;
+export const PrivateAccessPolicySchema = z.strictObject({
+  dao: DaoRefSchema,
+  privacy: PrivacySchema,
+  historyPolicy: z.enum(['full-history', 'from-join']),
+  keyEpoch: Uint64Schema,
+});
+export type PrivateAccessPolicy = z.infer<typeof PrivateAccessPolicySchema>;
 export function contentDomain(
   dao: z.infer<typeof DaoRefSchema>,
   document: string,

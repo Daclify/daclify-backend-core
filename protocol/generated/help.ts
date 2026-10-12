@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle={
   "producer": "core",
-  "packageVersion": "0.14.0-alpha.2",
+  "packageVersion": "0.14.0-alpha.3",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -18,16 +18,18 @@ export const CoreHelpBundle={
       "id": "accounts",
       "title": "Quick signup or your own encrypted vault",
       "paragraphs": [
-        "New visitors can choose Get started quickly with a verified email code or Telegram identity, or Create with your own keys using a vault password and saved encrypted kit. Quick signup explicitly authorizes Daclify-assisted recovery and opens the original signing and private-document keys without requiring a password or kit first. It does not create DAO membership or voting rights. Keys are generated only after provider verification and remain in browser memory; the service verifies the encrypted backup and both original keys before activating the account. Mainnet quick signup requires independent storage and qualified recovery hosts. An explicitly labelled single-VM testnet mode can use a verified local key restore; it cannot prove recovery after losing the VM and does not qualify wallet or passkey unlocks. The signup screen shows the operator’s recovery notice before consent.",
+        "You have one Daclify account, several paired sign-in methods and one encrypted recovery kit. The account uses separate signing and document-encryption keys internally. These serve different cryptographic purposes but are created and recovered together; you do not manage two account key sets.",
+        "New visitors can choose Get started quickly with a verified email code or Telegram identity, or Create with your own keys using a vault password and saved encrypted kit. Quick signup explicitly authorizes Daclify-assisted recovery and opens the original signing and private-document keys without requiring a password or kit first. It does not create DAO membership or voting rights. Keys are generated only after provider verification and remain in browser memory; the service verifies the encrypted backup and both original keys before activating the account. Mainnet quick signup requires independent storage and qualified recovery hosts. An explicitly labelled single-VM testnet mode can use a verified local key restore; it cannot prove recovery after losing the VM and does not qualify wallet or passkey unlocks.",
         "A previously paired email or Telegram identity opens its existing account with its current recovery settings. Choosing the quick-signup screen never silently enables assisted recovery on an existing account. Ordinary sign-in with an unpaired identity offers an explicit new-account path. Telegram redirects preserve the requested destination and resume a short-lived browser-bound signup; no plaintext vault crosses the redirect. Keep the setup tab open to retry a backup outage with the same keys. Expired or abandoned ceremonies must restart provider verification, and committed assisted-key history is retained.",
         "Daclify-key login signs both your public signing key and public encryption key in a short-lived v3 challenge. The app checks the keys and issuing API before asking the vault to sign. An API/frontend update may require refreshing the app and restarting an in-progress login; your existing account, recovery kit and private keys are preserved.",
         "Sign in with your Daclify keys or a previously paired supported email, Telegram, passkey, Telos Zero account or Telos EVM wallet. A currently activated on-chain wallet can also reconstruct wallet-only access after the service database is lost. Signing in and recovering service access do not create membership or grant new permissions in a DAO. Provider availability depends on server configuration; complete Google browser login remains unfinished.",
         "The Telos network voting page offers explicit native-wallet signup. A fresh verified Telos Zero proof creates a wallet-only Daclify account and pairing before the external vote. Returning native login reuses that signup account without DAO membership. Existing pairings and vault keys are preserved; recovered wallet-only accounts still need their current on-chain membership. Signup grants no Daclify membership or private-document keys. Use Account and key setup before joining a new Daclify DAO.",
         "Adding or removing a sign-in method requires a fresh proof from existing Daclify keys or an already verified paired wallet, plus proof of the incoming credential. Review the exact credential before confirming. Removal revokes sessions opened with that credential; history is available in Account → Sign-in methods → Sign-in changes.",
-        "A paired native or EVM wallet can authorize governance after explicit activation for the same member in each DAO. It adds no member or voting weight. Private documents still require the separate encryption keys.",
+        "A paired native or EVM wallet can authorize governance after explicit activation for the same member in each DAO. It adds no member or voting weight. Full access also unlocks the document keys held by your same Daclify account; a wallet login alone cannot decrypt private documents.",
         "User-controlled accounts keep encrypted signing and decryption keys in your browser. Restore an encrypted kit using either the vault password saved with that kit or its separate recovery code, shown as the recovery credential during setup. Choose a new password for this device; the original signing and decryption keys stay the same. A publicly visible login signature cannot derive these keys. Explicitly enabled full-access methods can restore the original keys on another device, without a vault password.",
-        "Managed recovery delegates signing and decryption recovery to an operator. The prepared OpenBao service remains disabled until independent service, audit, backup and restore qualification passes. Users choose full-access methods and consent explicitly to operator recovery authority.",
+        "Managed recovery delegates signing and decryption recovery to an operator. Full-access methods and operator recovery need explicit consent. Availability comes from the current service configuration; the optional single-VM testnet mode is development recovery, while production requires independent service, audit, backup and restore qualification.",
         "Accounts with vault keys can share Account → Access & recovery → Public join identity with a DAO administrator. Never share recovery kits or their credentials. A saved service-to-member association can survive DAO signing-key rotation while its database exists; a lost mapping cannot make an old signing key current again. Current chain permissions and wallet bindings remain authoritative.",
+        "Create and Join show Enable full access within your current journey when your original account keys are unavailable. Unlock or restore the original account, or use a paired method explicitly enabled for full access. The app keeps the destination and offers your public join identity after setup. An existing wallet-controlled member must restore the original encryption identity to read its private history; creating replacement keys cannot do that.",
         "The Users directory includes all public DAO membership records, including members without a published profile. Cards and list rows show published avatars, names, location, contact links, community links and the latest successful authenticated DAO action. Matching native accounts or current signing public keys connect memberships within one chain/runtime; distinct native accounts sharing a key remain separate. Private service pairings and similar profile details never establish public identity. Key rotation can leave unpaired memberships separate until public identity evidence reconnects them. Profiles remain stored and edited with their original DAO membership; no Hub-wide identity registry has been added. Unpublished details remain absent.",
         "The directory automatically loads up to 20 pages per batch, each containing at most 50 members from one DAO. Small directories load all communities automatically; larger directories expose Load more users and label partial search. Each community badge opens its DAO. User details show all loaded proven memberships and per-membership profile links. A failed later page retains earlier results and Retry continues from its cursor. Independent operators remain limited to their configured DAO.",
         "Last active means the latest successful authenticated member instruction in any connected DAO, including installed module actions. Failed actions and replays do not advance it. Sign-ins, enrollment and direct administration do not count. Older members need bounded governance-authorized activity-row initialization; absent or zero timestamps show DAO activity not recorded. Initialization never invents historical dates, changes permissions or spends tokens. Public profile contacts and avatar CIDs are published on chain; publish only information intended to be public.",
@@ -123,21 +125,21 @@ export const CoreHelpBundle={
       "title": "Recover keys and blockchain access",
       "paragraphs": [
         "In Account → Sign-in methods → Fast sign-in with full access, choose which paired methods may unlock your original signing and private-document keys. Pairing alone grants sign-in only. Once enabled, sign in through that method on another device; no JSON file or vault password is needed. Keys stay in unlocked browser memory and lock when idle. Existing account IDs and DAO rights stay the same.",
-        "Wallet-protected recovery uses a separate private unlock signature that the wallet must reproduce; keep it private and never broadcast it. Passkey-protected recovery requires a supported PRF authenticator. Both require actual client qualification. Daclify-assisted recovery can use any supported paired method, including email or Telegram, but explicitly authorizes Daclify to recover signing and document keys. This is off by default and unavailable until independent storage and OpenBao recovery are qualified. Disabling assisted recovery cannot undo past operator access; strict private DAO policy blocks assisted vaults.",
+        "Wallet-protected recovery uses a separate private unlock signature that the wallet must reproduce; keep it private and never broadcast it. Passkey-protected recovery requires a supported PRF authenticator. Both require actual client qualification. Daclify-assisted recovery can use any supported paired method, including email or Telegram, but explicitly authorizes Daclify to recover signing and document keys. Existing accounts require explicit enrollment; availability is reported by the service. Production requires independently qualified storage and recovery hosts. An explicitly enabled single-VM testnet mode does not establish recovery after losing that VM. Disabling assisted recovery cannot undo past operator access; strict private DAO policy blocks assisted vaults.",
         "Account → Access & recovery → Turn off Daclify-assisted recovery removes every assisted full-access route, outstanding assisted unlock grant and pending assisted enrollment. Telegram/email pairings remain for sign-in, and independent client-protected methods remain enrolled. Before removing the final assisted route, retain a currently qualified independent method or create a same-key encrypted recovery kit: the app decrypts both envelopes locally, checks the original keys, and requires downloading and acknowledging the saved password or recovery code. A kit for another account is refused. Existing local kits for other accounts are preserved. Cancelling leaves assisted recovery enabled.",
         "Opt-out stops future recovery through these service routes. It cannot erase plaintext or keys already copied, rotate existing keys, or relabel this vault as never operator-exposed. Permanent assisted-recovery history remains visible for strict private DAO admission. Re-enabling assistance requires fresh explicit consent after the opt-out; an earlier pending consent cannot revive it.",
         "If another device is unlocked, request approval from Account → Access & recovery on the new device. Open the QR/link on the unlocked device, compare both verification codes and approve. The encrypted transfer expires in five minutes and can be claimed once. The link contains no unlocking key or polling secret. Recognize the receiving device before approval.",
-        "User-controlled signing and P-256 decryption private keys are encrypted in this browser’s local vault and downloaded recovery kit. The kit contains a local envelope protected by the vault password saved when the kit was downloaded and a recovery envelope protected by the separate recovery code. In Account, choose Recover from an encrypted kit, select the original JSON, enter that kit’s vault password or matching recovery code, and choose a new vault password of at least 12 characters. Restore and sign in verifies the original keys and protects them with the new device password. A password change does not update older downloaded kits. Older clients require the separate recovery credential; refresh the app to use password recovery. Both envelopes use PBKDF2-SHA256 with 600,000 iterations and AES-256-GCM. The JSON fallback does not send your password or plaintext private keys to the API.",
+        "User-controlled signing and P-256 decryption private keys are encrypted in this browser’s local vault and downloaded recovery kit. The kit contains a local envelope protected by the vault password saved when the kit was downloaded and a recovery envelope protected by the separate recovery code. In Account, choose Recover from an encrypted kit, select the original JSON, enter that kit’s vault password or matching recovery code, and choose a new vault password of at least 12 characters. Restore verifies the original keys and protects them with the new device password. A password change does not update older downloaded kits. Older clients require the separate recovery credential; refresh the app to use password recovery. Both envelopes use PBKDF2-SHA256 with 600,000 iterations and AES-256-GCM. The JSON fallback does not send your password or plaintext private keys to the API.",
         "The contracts retain DAO membership, permissions, balances, document CIDs, key-epoch commitments and per-member encrypted epoch-key grants. Large encrypted document bytes are on IPFS. A recovered original decryption key opens its surviving grants and ciphertext; a public login signature or a replacement encryption key cannot decrypt old content. Keep the encrypted kit and recovery credential in separate safe places and retain durable IPFS pins or a content export.",
         "After losing the service database, connect a Telos Zero wallet or supported Telos EVM EOA and sign a fresh browser-bound challenge. The API verifies wallet control and finds current bindings in the configured runtime. It reconstructs wallet-only service access with no claimed vault keys, no new membership or creation fee. Each DAO’s current binding and permissions are checked again. Matching public signing keys in another DAO do not grant wallet access there.",
-        "A recovered wallet profile has a new service ID; the chain membership ID stays unchanged. Restore the original encrypted kit and confirm with the wallet to attach your proved vault identity to that same recovered profile. You can instead create new keys for new DAOs; new keys do not recover old private documents or change existing contract keys. Both current wallet control and incoming signing-key possession are required. An already registered vault identity is not silently merged with another service profile.",
+        "A recovered wallet profile may have a separate service ID while retaining the same chain membership. If the original kit matches an existing registered account, the app offers Restore account and keep my sign-ins, Restore account only, or Cancel. Keeping sign-ins requires fresh control of the current paired wallet and a signature from the recovered original account. The registered account remains canonical. Conflicting wallets or different members in the same DAO are refused. Only a wallet-only profile can be reconnected; two registered identities are not merged.",
+        "Reconnection preserves the original signing and encryption identity, chain memberships, roles, balances, document grants and ciphertext. It moves paired methods and passkey counters, while payment receipts, uploads and archive evidence keep their original immutable owner IDs. The canonical account recognizes that historical ownership. Both accounts’ old sessions and pending ceremonies are revoked; connected applications and payment brokers must authorize again. Moved sign-ins remain sign-in only until you explicitly enable full access. Cancelling or a rejected proof leaves the current profile usable.",
         "Google, Telegram and email pairings, passkey public credentials, wallet sign-in pairings and service sessions are PostgreSQL records. Blockchain governance bindings are separate. These pairing metadata columns are not application-encrypted. Restrict database access and encrypt off-host backups. Lost social pairings require a verified database restore or explicit re-pairing after recovering control. Do not publish email addresses, Telegram IDs or raw provider tokens on the public chain. Restore does not make an old session or provider proof fresh.",
         "For a ten-member DAO, one recovered administrator can manage the existing DAO again, but their kit restores only their own keys and access. Every other member must recover independently. An ordinary member remains an ordinary member. Losing a server does not lose login pairings if a verified database backup survives; if all database copies are lost, pair those methods again after recovering your own control.",
         "An old kit may still decrypt old documents after its signing key was rotated on chain, but that old signing key alone no longer authorizes governance. Use a surviving current wallet or other current control path. Human-member signing-key rotation requires that member’s authorization; another administrator’s kit cannot reset it. New vault keys do not replace the member’s existing encryption identity.",
         "Wallet-only profiles must retain a blockchain control credential. Removing the last one is rejected transactionally. Unlinking or revoking a governance binding on chain removes the corresponding access; an old service pairing does not restore it. Inactive memberships do not gain new governance rights; existing exit rights remain governed by the contract.",
-        "Operators need encrypted off-host PostgreSQL backups, a separate secret/configuration backup, retained provider and IPFS credentials, and tested restore drills. Revoke all restored sessions and pending login/control challenges before exposing a restored API. A stale backup can restore removed social pairings; reconfirm them if revocation history is uncertain. Jobs and payment records need reconciliation with the chain and provider before workers resume.",
-        "After recovering current administrator access, Resources can rebuild hosted document, public-card and Archive references in bounded batches from surviving chain references and Daclify-owned provider inventory. Every imported object needs verified size and committed bytes. Repeated CIDs count once per DAO; released hosting is not silently resumed. This restores neither Stripe payments nor social pairings and never uploads or deletes a file. Missing original file pins still need your independent copies.",
-        "The prepared assisted-recovery service remains disabled until actual independent-host and off-site restore qualification passes. Restore a current database, retained encrypted backup and original key-service material on a replacement host; revoke restored sessions and quarantine full-access methods until current pairing/revocation history is reconciled. A stale snapshot must not revive a revoked pairing. If every wallet key, vault recovery path and independent backup is lost, Daclify cannot manufacture the missing secrets."
+        "After recovering current administrator access, Resources can rebuild hosted document, public-card and Archive references in bounded batches from surviving chain references and Daclify-owned provider inventory. Every imported object needs verified size and committed bytes. Repeated CIDs count once per DAO; released hosting is not silently resumed. This restores neither Stripe payments nor social pairings and never uploads or deletes a file. Missing original file pins still need your independent copies. Production assisted recovery requires actual independent-host and off-site restore qualification. Development testnet availability does not establish this qualification. Restore a current database, retained encrypted backup and original key-service material on a replacement host; revoke restored sessions and quarantine full-access methods until current pairing/revocation history is reconciled. A stale snapshot must not revive a revoked pairing. If every wallet key, vault recovery path and independent backup is lost, Daclify cannot manufacture the missing secrets.",
+        "After recovering current administrator access, Resources can rebuild hosted document, public-card and Archive references in bounded batches from surviving chain references and Daclify-owned provider inventory. Every imported object needs verified size and committed bytes. Repeated CIDs count once per DAO; released hosting is not silently resumed. This restores neither Stripe payments nor social pairings and never uploads or deletes a file. Missing original file pins still need your independent copies."
       ]
     },
     {
@@ -148,6 +150,8 @@ export const CoreHelpBundle={
         "The 4096-byte inline limit includes the complete stored JSON. For private content it includes the encrypted envelope, so the available plaintext space is smaller. Members can create documents; only their author or an administrator can publish later versions.",
         "Hosted file uploads have a 5 MiB stored-byte limit and use a bounded backend path with an explicit storage allowance. Private filenames and file contents are encrypted before upload; encoding reduces the maximum original size. Upload and verify the file, then sign its permanent contract record. Keep the request ID to resume after a reload or lost response. The backend retrieves the stored bytes and checks their separate SHA-256 commitment; a matching CID or on-chain record alone does not establish byte verification.",
         "Private documents use a committed key for each DAO epoch. Initialization stores the commitment and the creator’s encrypted grant atomically. An administrator can grant that epoch to admitted members. Different recipients, DAO deployments and document versions have distinct encryption domains.",
+        "Private data access reads the DAO’s actual full-history or from-join policy. Prepare private access for members initializes the current epoch when needed and prepares up to 20 missing encrypted grants per explicit approval for active, custody-eligible members. An administrator can prepare only epochs for which they hold a valid grant. Missing original keys remain pending; opening the page submits no transaction. Completed grants survive an interrupted batch, so refresh and retry only the missing work.",
+        "Verify my private access decrypts your permitted grants locally and checks each epoch commitment, up to 20 epochs per click. The status describes verification on this device. No private key, epoch key or decrypted document is sent to the API. Test the original account recovery on another device before relying on it for continuity.",
         "Changing membership or rotating an epoch protects future content after the next key is initialized. Old grants and disclosed plaintext remain accessible to anyone who kept the old key. A client checks content integrity and the epoch commitment before decryption.",
         "Download checks the recorded byte count and commitment before opening a file. A private download also checks the DAO epoch commitment and decrypts in your browser. Previous file versions remain downloadable from version history. A saved plaintext download is not erased when your vault locks. The local disk fixture is labelled explicitly and does not establish live Pinata or public IPFS availability.",
         "Changing DAO deployment, account, member identity or privacy clears document drafts and decrypted views. Late responses from a previous context are discarded. Content histories are read in scoped pages with advancing cursors; a large DAO does not fail merely because it exceeds the former row ceiling.",
@@ -166,7 +170,8 @@ export const CoreHelpBundle={
         "Administrators assign administrator and reviewer roles. The final active administrator cannot be demoted or removed. Reviewers can review contributions within the Works policy; contribution authors cannot approve their own work.",
         "Governance credits are nontransferable units. Their issuance and removal require DAO authority and stop while an active ballot has locked weights. Removing access preserves recorded balances and accepted payment rights.",
         "Encrypted DAOs rotate the future-content epoch when a member is deactivated. Remaining authorized members need grants for the new committed key. Deactivation cannot revoke earlier keys or erase exported history.",
-        "In Members, an active administrator pastes the applicant’s public join identity and signs admission. Confirm the keys through a trusted channel first. Then select the admitted member to assign roles and governance credits; grant an encryption epoch separately for private documents. Admission never makes an applicant an administrator automatically. Managed admission remains unavailable in this deployment.",
+        "In Members, an active administrator pastes and confirms the applicant’s public join identity, then signs admission. For a private DAO, Include private access allowed by this DAO requests the permitted grants after admission when the administrator’s original account keys are unlocked. Otherwise access remains pending and an administrator can use Prepare private access for members later. Admission, each encrypted grant, roles and governance credits remain separately authorized actions; admission never makes an applicant an administrator automatically. Managed admission remains unavailable in this deployment.",
+        "Before deactivating or demoting a private-DAO administrator, the portal requires a remaining active administrator with every recorded history grant and your confirmation that they verified decryption and tested account recovery on another device. A failed access refresh stops the operation. Recorded grants and your confirmation are distinct from the local cryptographic verification status. This is a portal handover check, not a new contract invariant or an independent attestation of the successor’s device. Direct native actions can bypass it; the existing contract guard still protects the final active administrator. After departure, the remaining administrator prepares the new epoch and grants for active members.",
         "Members displays each public on-chain member record, with published profile cards when available. Switch between cards and list, search names, locations or roles, and filter active/inactive members. The page labels administrator, reviewer, executive and non-voting membership using the connected runtime state. Admission, role changes, credits and private key grants retain their existing separate authorization rules."
       ]
     },
@@ -14417,6 +14422,216 @@ export const CoreHelpBundle={
       "helpTopic": "recovery"
     },
     {
+      "method": "POST",
+      "path": "/v1/account/reconnect/challenge",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "signingKey": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "encryptionKey": {
+            "type": "object",
+            "properties": {
+              "kty": {
+                "type": "string",
+                "const": "EC"
+              },
+              "crv": {
+                "type": "string",
+                "const": "P-256"
+              },
+              "x": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              },
+              "y": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              }
+            },
+            "required": [
+              "kty",
+              "crv",
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "signingKey",
+          "encryptionKey"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 2048
+          },
+          "expires": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "id",
+          "message",
+          "expires"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "recovery"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/account/reconnect",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "signature": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          }
+        },
+        "required": [
+          "id",
+          "signature"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "account": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "signingKey": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  "custody": {
+                    "type": "string",
+                    "enum": [
+                      "user-controlled",
+                      "managed"
+                    ]
+                  },
+                  "encryptionKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "signingKey",
+                  "custody",
+                  "encryptionKey"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "custody": {
+                    "type": "string",
+                    "const": "user-controlled"
+                  },
+                  "signingKey": {
+                    "type": "null"
+                  },
+                  "encryptionKey": {
+                    "type": "null"
+                  },
+                  "walletOrigin": {
+                    "type": "string",
+                    "enum": [
+                      "signup",
+                      "recovered"
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "custody",
+                  "signingKey",
+                  "encryptionKey"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "csrfToken": {
+            "type": "string",
+            "minLength": 32,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "account",
+          "csrfToken"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "recovery"
+    },
+    {
       "method": "GET",
       "path": "/v1/platform/status",
       "response": {
@@ -18448,6 +18663,71 @@ export const CoreHelpBundle={
         "additionalProperties": false
       },
       "helpTopic": "creation-fees"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/daos/:id/private-access",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "privacy": {
+            "type": "string",
+            "enum": [
+              "public",
+              "encrypted-managed-allowed",
+              "encrypted-user-controlled"
+            ]
+          },
+          "historyPolicy": {
+            "type": "string",
+            "enum": [
+              "full-history",
+              "from-join"
+            ]
+          },
+          "keyEpoch": {
+            "type": "string",
+            "maxLength": 20
+          }
+        },
+        "required": [
+          "dao",
+          "privacy",
+          "historyPolicy",
+          "keyEpoch"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "documents"
     },
     {
       "method": "GET",
@@ -31759,6 +32039,7 @@ export const CoreHelpBundle={
               "/v1/payments/operator",
               "/v1/payments/operator/revoke",
               "/v1/account/vault",
+              "/v1/account/reconnect",
               "/v1/account/recovery/enable",
               "/v1/account/recovery/assisted/options",
               "/v1/account/recovery/assisted/opt-out",

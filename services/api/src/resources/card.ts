@@ -1,4 +1,5 @@
 import { rollbackTransaction } from '../transaction.js';
+import { ownsAccount } from '../auth/account-ownership.js';
 import { createHash } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import type { Pool, PoolClient } from 'pg';
@@ -200,7 +201,10 @@ export class CardRam {
       );
     }
     return this.locked(approval.requestId, async (row, client) => {
-      if (row.account_id !== account.id || !isDeepStrictEqual(row.approval, approval))
+      if (
+        !(await ownsAccount(client, account.id, row.account_id)) ||
+        !isDeepStrictEqual(row.approval, approval)
+      )
         throw new ApiError('RAM_ORDER_CONFLICT', 409);
       if (!row.checkout_id) {
         if (row.approval.quote.order.expires <= Date.now() / 1000)
@@ -438,7 +442,7 @@ export class CardRam {
       let native = await this.chain.ramOrder(row.reference);
       if (!native) {
         const accountResult = await client.query(
-          'SELECT id,signing_key AS "signingKey",encryption_key AS "encryptionKey",custody FROM accounts WHERE id=$1',
+          'SELECT a.id,a.signing_key AS "signingKey",a.encryption_key AS "encryptionKey",a.custody FROM accounts h JOIN accounts a ON a.id=coalesce(h.merged_into,h.id) WHERE h.id=$1',
           [row.account_id],
         );
         try {

@@ -1,4 +1,8 @@
-import type { ContentPageQuery, DaoContent } from '../../../protocol/content.js';
+import type {
+  ContentPageQuery,
+  DaoContent,
+  PrivateAccessPolicy,
+} from '../../../protocol/content.js';
 import type { Treasury, SettlementRequest, SettlementResult } from '../../../protocol/treasury.js';
 import type {
   ModulePageQuery,
@@ -98,6 +102,7 @@ export interface ChainGateway {
   settle(input: SettlementRequest): Promise<SettlementResult>;
   finalize(input: FinalizationRequest): Promise<FinalizationResult>;
   content(daoId: string, query?: ContentPageQuery): Promise<DaoContent>;
+  privateAccessPolicy?(daoId: string): Promise<PrivateAccessPolicy>;
   dao(daoId: string): Promise<DaoSummary>;
   network(): Promise<Network>;
   moduleState(daoId: string, query?: ModulePageQuery): Promise<ModuleState>;
