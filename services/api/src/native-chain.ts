@@ -1,6 +1,7 @@
 import { NamesActionSchemas, NamesTableSchemas } from '../../../sdk/generated/names-schemas.js';
 import { EncryptionPublicKeySchema } from '../../../protocol/crypto.js';
 import { ProfileRecipientPageSchema } from '../../../protocol/profiles.js';
+import { decodeRawNativeProfile } from '../../../sdk/profiles.js';
 import { namesAbi, NamesCodeHash } from '../../../sdk/names.js';
 import {
   ContentPageQuerySchema,
@@ -2551,7 +2552,19 @@ export class NativeChainGateway implements ChainGateway {
       if (query.daoId && row.dao_id !== query.daoId)
         throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
       try {
-        const profile = PublicProfileSchema.parse(JSON.parse(row.profile));
+        const decoded = decodeRawNativeProfile(row);
+        if (
+          decoded.version === 2 &&
+          (decoded.context.chainId !== this.config.chainId ||
+            decoded.context.runtime !== this.config.runtime ||
+            decoded.context.daoId !== row.dao_id ||
+            decoded.context.memberId !== row.member_id)
+        )
+          throw new Error('PROFILE_CONTEXT');
+        const profile =
+          decoded.version === 1
+            ? decoded.profile
+            : PublicProfileSchema.parse({ name: row.account_name });
         if (profile.name !== row.account_name) throw new Error('PROFILE_NAME');
         profiles.push({
           id: row.id,

@@ -93,7 +93,7 @@ try {
     .tuple([z.object({ filename: z.literal(`daclify-core-protocol-${VERSION}.tgz`) })])
     .parse(result)[0];
   const bytes = await readFile(stage + '/' + packed.filename);
-  if (development) await writeFile('.artifacts/' + packed.filename, bytes);
+  if (development) writeImmutableArtifact('.artifacts/' + packed.filename, bytes);
   else {
     if (!qualification) throw new Error('RELEASE_EVIDENCE_REQUIRED');
     if (

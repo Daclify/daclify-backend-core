@@ -187,8 +187,8 @@ Execution is now authorized and running inline. The [durable execution ledger](.
 | ------- | ----------------------------------------------- | --------------------------- |
 | B0      | Baseline/native recorded; browser setup pending | Baseline and durable ledger |
 | F1–F4   | F1–F4 complete                                  | Durable ledger              |
-| C1–C3   | C1–C2 complete; C3 pending                                         | —                           |
-| P1–P3   | P1–P2 complete; P3 pending                                         | —                           |
+| C1–C3   | C1–C2 complete; C3 pending                      | —                           |
+| P1–P3   | P1–P3 complete                                  | —                           |
 | X1–X4   | Pending                                         | —                           |
 | M1–M4   | Pending                                         | —                           |
 | Q1–Q3   | Pending                                         | —                           |

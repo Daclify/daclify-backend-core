@@ -1,6 +1,6 @@
 # Profile key custody, recovery and removal
 
-This is a development implementation. The service is disabled by default; the audience editor and complete privacy journey still require P3 qualification. No production privacy or independent-host recovery qualification is implied.
+This is a development implementation. The service is disabled by default. The audience editor requires its recorded native/browser checks and final provider/privacy qualification. No production privacy or independent-host recovery qualification is implied.
 
 Profile contents stay encrypted on chain. Every revision uses an independent random 32-byte data key. The trusted client seals that key to the owner's registered P-256 encryption key and at most 63 explicitly chosen active native members. Joining a DAO does not grant profile access. Neither a shared signing key nor canonical account ownership supplies another encryption private key.
 
@@ -34,3 +34,11 @@ Before enabling, inventory all controlled PostgreSQL replicas, snapshots, filesy
 After a SQL restore, keep the latest journal mounted. Key reads already apply exclusions; run `npm run profiles:restore-exclusions` with the configured database and latest journal before taking a new recoverable snapshot of restored rows. Expired backups must not be restored as ordinary recovery. Journal loss, unknown backup age or an unavailable journal requires withholding envelope access until the controlled restore exclusions are restored and verified. Qualify host loss, backup expiry and provider deletion before public activation.
 
 Current encrypted-profile removal also needs the native `delprofile` action. Neither that live-row removal nor key deletion removes historical plaintext, public aliases/member metadata, historical ciphertext or independently retained copies. The privacy assessment and account-exit component report remain separate acceptance requirements.
+
+## Using the trusted editor
+
+Open your user card, choose **Edit profile & account**, then **Profile**. Unlock the account vault. Only the owner is selected by default; load eligible native recipients and explicitly select up to 63 others for the next version. Loading an existing profile does not automatically reselect its old audience. After publication the next draft returns to owner-only selection. Publish a new version to remove future access from an omitted reader; earlier copies cannot be revoked.
+
+Image references are excluded unless you acknowledge their separate asset policy. A publicly uploaded image remains public even if its CID appears inside ciphertext. Locking, signing out, changing account/deployment or removing the current profile clears locally decrypted fields. Public Users/search projections use only the public alias for format 2; selected readers decrypt in the profile view. Mini-app tokens and AI harnesses receive no profile-decryption API or automatic plaintext disclosure.
+
+Removal requires explicit confirmation. The editor first requests service-held key exclusion/removal and reports unavailable or the backup-expiry deadline, then signs native current-row removal. A native removal failure remains retryable after key exclusion. Historical public plaintext/ciphertext, aliases, financial records and copies held by recipients remain. Encryption and key removal do not by themselves establish GDPR anonymity or legal erasure; the scoped privacy assessment remains required.

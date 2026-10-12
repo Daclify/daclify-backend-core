@@ -1,6 +1,11 @@
 // Owned disposable native/SQL fixture; never part of the API server or public package.
 import { randomBytes, generateKeyPairSync } from 'node:crypto';
-import { writeFile, mkdir, rm } from 'node:fs/promises';
+import { writeFile, mkdir, rm, mkdtemp } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { FileProfileExclusions } from '../../services/api/src/profiles/exclusions.js';
+import { ProfileKeys } from '../../services/api/src/profiles/keys.js';
+import { startProfileWorker } from '../../services/api/src/profiles/jobs.js';
 import { Pool } from 'pg';
 import { ABI, Authority, PublicKey } from '@wharfkit/antelope';
 import { z } from 'zod';
@@ -31,6 +36,9 @@ const owner = new Pool({ connectionString: source }),
   pool = new Pool({ connectionString: database.toString() });
 const f = await nativeContracts();
 let server: Awaited<ReturnType<typeof createServer>> | undefined;
+const profileDirectory = await mkdtemp(join(tmpdir(), 'daclify-browser-profile-exclusions-'));
+const profileExclusions = new FileProfileExclusions(profileDirectory);
+let profileWorker: ReturnType<typeof startProfileWorker> | undefined;
 await owner.query(`CREATE DATABASE ${name}`);
 try {
   await migrate(pool);
@@ -141,13 +149,16 @@ try {
     process.env.MINI_APP_TEST_RELEASE_DIRECTORY ??
     '.artifacts/mini-apps/eb6e4433379827b8f570d2dfae6c77cbeca5b33b5a0072b3914bb64eddb5a5f6';
   const artifacts = await MiniAppArtifacts.load(artifactRoot);
+  const profileKeys = { backupRetentionSeconds: 86400, exclusions: profileExclusions };
   server = await createServer(pool, gateway, origin, {
     connectedApps: apps,
     miniApps: new MiniAppConnections(apps, artifacts),
+    profileKeys,
     apiOrigin: origin,
     trustedProxyIps: [],
     sharedProxyIps: ['127.0.0.1'],
   });
+  profileWorker = startProfileWorker(pool, new ProfileKeys(pool, gateway, profileKeys));
   const token = randomBytes(32).toString('hex');
   server.addHook('onRequest', async (request, reply) => {
     if (request.url.startsWith('/fixture/') && request.headers['x-fixture-token'] !== token)
@@ -174,6 +185,7 @@ try {
     };
   });
   let sequence = 990000;
+  const profileDaos = new Set<string>();
   server.post('/fixture/dao', async (request) => {
     const input = z
       .strictObject({
@@ -240,7 +252,36 @@ try {
       },
       'alice',
     );
+    profileDaos.add(daoId);
     return { dao: result.reference, memberId: input.admin ? '1' : '2' };
+  });
+  server.post('/fixture/profile-member', async (request) => {
+    const input = z
+      .strictObject({
+        daoId: z.string().regex(/^[1-9][0-9]*$/),
+        signingKey: SigningPublicKeySchema,
+        encryptionKey: EncryptionPublicKeySchema,
+      })
+      .parse(request.body);
+    if (!profileDaos.has(input.daoId)) throw new Error('FIXTURE_DAO_REQUIRED');
+    const page = await gateway.tablePage('daos', 'daclifycore', input.daoId, 1);
+    const dao = page.rows.find((row) => row.id === input.daoId);
+    if (!dao) throw new Error('FIXTURE_DAO_REQUIRED');
+    const memberId = String(BigInt(dao.max_member) + 1n);
+    await f.call(
+      'daclifycore',
+      'enroll',
+      {
+        dao_id: input.daoId,
+        member_id: memberId,
+        native_account: '',
+        signing_key: input.signingKey,
+        encryption_key: JSON.stringify(input.encryptionKey),
+        custody: 0,
+      },
+      'alice',
+    );
+    return { memberId };
   });
   server.post('/fixture/expire-consent', async (request) => {
     const { id } = z.strictObject({ id: z.uuid() }).parse(request.body);
@@ -275,7 +316,10 @@ try {
     process.once('SIGINT', resolve);
   });
 } finally {
+  await profileWorker?.stop();
   await server?.close();
+  await profileExclusions.close();
+  await rm(profileDirectory, { recursive: true, force: true });
   await f.stop();
   await pool.end();
   await owner.query(`DROP DATABASE ${name}`);

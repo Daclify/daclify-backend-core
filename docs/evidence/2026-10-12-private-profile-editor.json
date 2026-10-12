@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-12T17:33:00Z",
+  "task": "P3",
+  "status": "source-checkpoint-complete",
+  "review": "Author-only inline; no independent reviewer or live release approval.",
+  "sourceSha256": {
+    "daclify-backend-core/services/api/src/native-chain.ts": "e1d88903183742292d1d07427e9064f04c48bc267737db0eda853459763e0757",
+    "daclify-backend-core/tests/helpers/mini-app-browser-server.ts": "d1c54ed4023b4a88e776d390d66df79771182d7e18e7ab907a763545e096f0bd",
+    "daclify-backend-core/tests/integration/profile-privacy.test.ts": "83170b0cece54aa34f8ae0c6a883431c96058b9e41c0615e00f86c89643cfe3d",
+    "daclify-backend-core/tools/release/package.ts": "2489b7a57b3c4f9cf724fcfb55311ea2e50e23e147382c37db863440d8d67611",
+    "daclify-backend-core/docs/guides/topics.json": "24fb739bf9705596e867cf42f62eefff51a085051b1a18d762b136cb454e3668",
+    "daclify-frontend/src/auth/profile.ts": "4798b0be09c5aeaba8069e6bd789bea2e81cd68797a45678c55e484b8c071680",
+    "daclify-frontend/src/components/ProfilePanel.vue": "2c139dd841bdacc56fff0ded893dbf04ae1bcaafadf18438ff3fdaf805d3b58f",
+    "daclify-frontend/src/views/UserDetail.vue": "f6a77c1ee2e56e5962d75325c46a2c73b6ba96521740ab829c9fbefca9787ac6",
+    "daclify-frontend/src/views/Users.vue": "cf4c63875da66578c7e9e47eff547dd879b47a7fdb305f74c57fe8953736e9a1",
+    "daclify-frontend/src/api/client.ts": "24dd6a7451dbbef55cf63b8fa9053736da8aec375db221e33a1a01b31d7487a7",
+    "daclify-frontend/tests/unit/profile-encryption.test.ts": "1a6421f7c845477b75a7dc3d251c632de0da8a99c9c5ccf45443f9aead715acf",
+    "daclify-frontend/tests/e2e/profile.spec.ts": "0852724f81706f07bb6f2148c09f799f983754bb3f1f6aac4640db515fb643f3",
+    "daclify-frontend/tests/e2e/people-workspace.spec.ts": "70a25d4ed0be65f06c5ae2b23bf57f2526c7352d5bd97db355255ade27b419d5"
+  },
+  "artifacts": {
+    "core": {
+      "version": "0.15.0-alpha.3",
+      "sha256": "6f38dc23aa6477aa3da9ed45f08485960af0183301a2da59110596e62b9c818f"
+    },
+    "modules": {
+      "version": "0.10.0-alpha.11",
+      "sha256": "260cc3d71593bd0b3c1827d19c70162bc15af714544493a45b64e93065c902e3"
+    },
+    "frontendVersion": "0.15.0-alpha.3",
+    "starterReleaseId": "140ca5f21b23b5085a5f3a87ad42e26d4792674087c402756ae8ee46d6831f82",
+    "starterManifestSha256": "ab01f8ec0aec0612ec22ac740f28d9996b476eacb08536302a5088b5dfb2b3c2",
+    "preservedCoreAlpha2Sha256": "44fab08e34f04b9f73d82c2e3c4803b970460536981ad94337588af0cbbf498a",
+    "runtimeWasmSha256": "5cb464cc861f1662781f6fa56267403e22c217bfbd5041158953a07f0007bc58",
+    "runtimeBytes": 919165,
+    "nativeSourceChanged": false
+  },
+  "checks": [
+    {
+      "command": "npm test (core)",
+      "passed": 943,
+      "files": 152
+    },
+    {
+      "command": "npm test (frontend)",
+      "passed": 310,
+      "files": 50
+    },
+    {
+      "command": "npm run test:integration -- tests/integration/profile-privacy.test.ts",
+      "passed": 3,
+      "boundary": "Actual HTTP/native gateway projection, crypto; native table RPC simulated."
+    },
+    {
+      "command": "npm test -- tests/sdk.test.ts (modules)",
+      "passed": 6
+    },
+    {
+      "command": "npm run test:e2e:paid -- tests/e2e/profile.spec.ts tests/e2e/private-access-continuity.spec.ts tests/e2e/people-workspace.spec.ts",
+      "passed": 28,
+      "boundary": "2 actual-native profile cases, 2 route-controlled DAO private history cases, 24 route-controlled people/UI cases."
+    },
+    {
+      "command": "npm run test:e2e:paid -- tests/e2e/profile.spec.ts (final clearing/AI check)",
+      "passed": 2,
+      "boundary": "Actual disposable native WASM/permissions/SQL/root proofs; key outage and missing-envelope faults simulated; Daxi response simulated."
+    },
+    {
+      "command": "Core/frontend/module strict typechecks; core/frontend lint; producer docs checks; frontend build",
+      "result": "passed",
+      "warning": "Existing frontend chunks exceed 500 kB."
+    }
+  ],
+  "observed": {
+    "encryptedBeforeSigning": true,
+    "defaultOwnerOnly": true,
+    "joiningDoesNotGrantAccess": true,
+    "selectedReaderCanRead": true,
+    "omittedReaderCannotReadNextRevision": true,
+    "publicProjection": "Only explicitly public alias for encrypted profiles; legacy plaintext retains its public fields.",
+    "payloadScan": [
+      "fullName",
+      "email",
+      "location",
+      "introduction"
+    ],
+    "imageReferences": "Absent by default; explicit inclusion encrypts references but does not make publicly uploaded originals private.",
+    "vaultClearing": [
+      "lock",
+      "sign out",
+      "account/deployment change guards",
+      "current removal"
+    ],
+    "serviceOutage": "Zero signed native publication requests before staging succeeds.",
+    "missingEnvelope": "No plaintext displayed; retry opens a surviving envelope.",
+    "deletion": "Explicit consent, service key exclusion/removal before native current-row removal; backup-expiry-pending shown with deadline.",
+    "aiHelp": "Captured request equals the explicitly typed question only; no private fields in its payload or simulated answer.",
+    "onChainProfiles": "Ciphertext only for new writes; public alias and native metadata remain."
+  },
+  "failuresAndCorrections": [
+    "Public encrypted alias initially disappeared; actual regression failed, reader corrected.",
+    "New helper absence caused feature-absence failures; crypto/audience checks passed after implementation.",
+    "Browser login helper raced initial rendering; wait for login/password entry and use a valid destination.",
+    "Simulated outage omitted required ErrorSchema.message; fixture corrected without weakening validation.",
+    "Development packer overwrote a local older archive after a version mismatch. Original archive restored from verified frozen vendor copy before consumer installation; packer now uses the existing immutable-write guard.",
+    "One concurrent people browser run was interrupted; later combined 28-case run passed."
+  ],
+  "limits": [
+    "No live deployment, publication, account deletion, DAO closure or authority/funds change.",
+    "No live AI/MCP/private-profile disclosure integration is qualified here; M1-M4 remain pending.",
+    "Provider backup expiry, independent failure domains, replicas and host-loss restore require Q2/Q3 qualification.",
+    "Historical plaintext/ciphertext and independently held reader copies remain. Encryption/key removal alone does not establish GDPR anonymity or legal erasure.",
+    "Account erasure is not implemented by P3; X2/X3 remain pending."
+  ]
+}
