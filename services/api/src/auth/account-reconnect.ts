@@ -228,6 +228,10 @@ export function registerAccountReconnectRoutes(
             target.id,
           ]);
         await db.query(
+          'UPDATE challenges SET consumed_at=now() WHERE signing_key=$1 AND consumed_at IS NULL',
+          [message.signingKey],
+        );
+        await db.query(
           'UPDATE sessions SET revoked_at=now() WHERE account_id=ANY($1::uuid[]) AND revoked_at IS NULL',
           [ids],
         );

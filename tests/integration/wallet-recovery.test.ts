@@ -735,8 +735,19 @@ it('reconnects proved wallet sign-ins to the original account and preserves immu
     "INSERT INTO service_payments(checkout_id,account_id,price_id,status,payment_status,currency,amount_minor) VALUES('cs_reconnect',$1,'price_fixture','paid','paid','usd',1234)",
     [f.current.account.id],
   );
+  const pendingVault = await createChallenge(
+    pool,
+    { signingKey: memberRoot.toPublic().toString(), encryptionKey },
+    origin,
+  );
+  const pendingSignature = memberRoot
+    .signMessage(new TextEncoder().encode(pendingVault.message))
+    .toString();
   const result = await app.inject(await f.request());
   expect(result.statusCode, result.body).toBe(200);
+  await expect(
+    authenticate(pool, pendingVault.id, pendingSignature, encryptionKey),
+  ).rejects.toMatchObject({ code: 'AUTH_INVALID' });
   const restored = SessionSchema.parse(result.json());
   expect(restored.account).toEqual(f.original.account);
   expect(
