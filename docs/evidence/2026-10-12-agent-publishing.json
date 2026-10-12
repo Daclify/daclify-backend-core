@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "candidateSourceBase": "0dd7f64",
+  "sourceHashes": {
+    "examples/agent-publish.ts": "8525a76a7201ec4392ca6ecb044276d992dda39990a4c7518438eb0eb71b6db4",
+    "examples/agent-publish-config.ts": "744cee6688e5e6b2a7c56aa0b29ec2846168d96c6f6821a1c2d5b049e4a8854d",
+    "services/api/src/native-chain.ts": "c839573bac878c5637e4041e2f01ba8820474a216a07c2bc27577eb55aac85d3",
+    "tests/agent-publish.test.ts": "59fd15a0288d66259aaa7050e1219be55795281bfc52c97c2f772772ecd5581e",
+    "tests/integration/agent-publish.test.ts": "77b07d7f66500547bb65753e51be914e7a6bc7d2bd1de4cdd16f32992d345d8f"
+  },
+  "runtime": "Spring 1.2.2",
+  "contracts": "Existing immutable pinned CDT 4.1.1 -O=s artifacts; no contract source changed by F4",
+  "publicCore": {
+    "version": "0.14.0-alpha.8",
+    "sha256": "33069b5e63c1b46878e4ce00bb50da9c4c5687c3e569ece353960cf6fa30208c"
+  },
+  "checks": {
+    "core": {
+      "files": 147,
+      "passed": 915
+    },
+    "nativePermissions": {
+      "files": 2,
+      "passed": 73
+    },
+    "agentNativeIntegration": {
+      "files": 1,
+      "passed": 10
+    },
+    "unit": {
+      "files": 1,
+      "passed": 3
+    },
+    "typecheck": "passed",
+    "lint": "passed"
+  },
+  "installation": {
+    "directory": "Fresh disposable directory; no sibling dependencies",
+    "command": "npm install ./daclify-core-protocol-0.14.0-alpha.8.tgz tsx@4.23.15 @wharfkit/antelope@4.0.2 zod@4.6.5 --ignore-scripts",
+    "run": "node --env-file=<protected-config> --import tsx agent-publish.ts",
+    "result": "Native publication confirmed; one enrolled agent identity; public-file permissions refusal redacted"
+  },
+  "limits": [
+    "Local PostgreSQL and owned native process only",
+    "No external AI provider/MCP qualification",
+    "No live or production deployment",
+    "Public JSON only; authors decide whether plaintext is appropriate",
+    "Uncertain submission needs document-version/commitment reconciliation before retries"
+  ]
+}

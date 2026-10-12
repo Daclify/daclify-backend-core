@@ -3440,28 +3440,28 @@ export class NativeChainGateway implements ChainGateway {
     if (account.signingKey === null) throw new ApiError('VAULT_IDENTITY_REQUIRED', 409);
     if (request.chain_id !== this.config.chainId || request.deployment !== this.config.runtime)
       throw new ApiError('INSTRUCTION_DOMAIN');
+    const member = (await this.table('members', request.dao_id, request.member_id, 1))[0];
+    if (!member || member.id !== request.member_id || member.signing_key !== account.signingKey)
+      throw new ApiError('MEMBERSHIP_REQUIRED', 403);
+    let signingKey = account.signingKey;
+    if (sessionId !== undefined) {
+      IdSchema.parse(sessionId);
+      const credential = (await this.table('sessions', request.dao_id, sessionId, 1))[0];
+      if (!credential || credential.id !== sessionId || credential.member_id !== request.member_id)
+        throw new ApiError('MEMBERSHIP_REQUIRED', 403);
+      signingKey = credential.signing_key;
+    }
     let valid = false;
     try {
       valid = Signature.from(signature).verifyDigest(
         instructionDigest(request),
-        PublicKey.from(account.signingKey),
+        PublicKey.from(signingKey),
       );
     } catch {
       valid = false;
     }
     if (!valid) throw new ApiError('SIGNATURE_INVALID', 403);
-    const member = (await this.table('members', request.dao_id, request.member_id, 1))[0];
-    if (!member || member.id !== request.member_id) throw new ApiError('MEMBERSHIP_REQUIRED', 403);
     if (sessionId !== undefined) {
-      IdSchema.parse(sessionId);
-      const credential = (await this.table('sessions', request.dao_id, sessionId, 1))[0];
-      if (
-        !credential ||
-        credential.id !== sessionId ||
-        credential.member_id !== request.member_id ||
-        credential.signing_key !== account.signingKey
-      )
-        throw new ApiError('MEMBERSHIP_REQUIRED', 403);
       return this.push(
         'submitsess',
         { request, session_id: sessionId, sig: signature },
@@ -3469,7 +3469,6 @@ export class NativeChainGateway implements ChainGateway {
         this.config.relayKey,
       );
     }
-    if (member.signing_key !== account.signingKey) throw new ApiError('MEMBERSHIP_REQUIRED', 403);
     return this.push(
       'submit',
       { request, sig: signature },
