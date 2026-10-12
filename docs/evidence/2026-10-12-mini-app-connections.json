@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "candidateSourceBase": "d987780",
+  "release": {
+    "version": 1,
+    "releaseId": "eb6e4433379827b8f570d2dfae6c77cbeca5b33b5a0072b3914bb64eddb5a5f6",
+    "coreVersion": "0.14.0-alpha.9",
+    "modulesVersion": "0.10.0-alpha.7",
+    "packageLockHash": "471824eec3b413083f96b0c77c6bb82b58064f94de46511125ebc001d8e8ab87",
+    "files": [
+      {
+        "name": "core.tgz",
+        "sha256": "d6e9b1ac9a382f0ff3acfba5af5dc249a2c83df3fec75a1417ef089b189c9d04",
+        "bytes": 509881
+      },
+      {
+        "name": "modules.tgz",
+        "sha256": "a70a21f43ce60f79cc24926f612447ce429ef328d9daedfe52ce7c2892a593b7",
+        "bytes": 196674
+      },
+      {
+        "name": "starter.tgz",
+        "sha256": "8a48cbffa785758f2653f9b39e944271fbdf02721c01abdb566d21765983133a",
+        "bytes": 726571
+      }
+    ]
+  },
+  "manifestHash": "7c7603b079922b46db6c165089c6c9623193a706a078740312443da0a7df8da4",
+  "checks": {
+    "core": {
+      "files": 148,
+      "passed": 923
+    },
+    "integration": {
+      "files": 4,
+      "passed": 59
+    },
+    "connectionUnit": {
+      "passed": 8
+    },
+    "frontendFocused": {
+      "passed": 25
+    },
+    "moduleSdk": {
+      "passed": 6
+    },
+    "coreTypecheck": "passed",
+    "coreLint": "passed",
+    "generatedDocs": "passed",
+    "frontendBuild": "passed",
+    "moduleTypecheck": "passed",
+    "moduleDocs": "passed"
+  },
+  "starterInstall": "Fresh directory: npm ci --ignore-scripts, canonical config generation, browser build, trusted local TLS readiness, production ephemeral storage refusal",
+  "retrieval": "Actual API byte/hash/immutable-header download checks; no deployed HTTPS/public registry claim",
+  "sourceHashes": {
+    "protocol/mini-apps.ts": "758ce0f221e0969f2a7a05e85f15da17daca0e27d1772d6c5a5197bb40560aa0",
+    "services/api/src/mini-apps/connections.ts": "d3b232b5c00580ed421db1f1cf0ec91ed589a3fc9866044c28fb41b64b68ca9f",
+    "services/api/src/mini-apps/routes.ts": "97e5a9badd843dff31170b7fee21c84111954fc0d7a48fa4a1434a9bb7776ed3",
+    "services/api/src/mini-apps/probe.ts": "a686e2b627931acd541e864bba84ace1fd113e57e85cb0c45a439e40328dd274",
+    "services/api/src/mini-apps/artifacts.ts": "fda4463bf1ced95a89b780825a778ae349f18eeb712fc9998a6142d439f6da8b",
+    "tools/release/mini-app-starter.ts": "f7640ac0addbe04d4af29340b8934b2758d0ba06636ad44dfcb6ca568b1bf146",
+    "tools/release/mini-app-starter/configure.mjs": "02bbb68957aad046551bf573ba6fdd9b86ee7cfef60de29e7d8b4f4657df2354",
+    "examples/community-mini-app/server.ts": "08cb6f0ae142b7fe120111f8d080095730ba26b4ddc6a4228063fa563d043642"
+  },
+  "limits": [
+    "Selected release remains local source candidate, not deployed or published",
+    "Connection authority/registered-client RPC boundary is simulated in four connection integration cases",
+    "Native signing/rotation cases use actual owned Spring runtime; they do not prove external harness integration",
+    "Readiness is not app identity/event/recording/decryption verification",
+    "Persistent-volume declaration is operator configuration; it is not a universal hosting/backup guarantee"
+  ]
+}

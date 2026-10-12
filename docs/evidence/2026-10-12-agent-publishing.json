@@ -46,5 +46,17 @@
     "No live or production deployment",
     "Public JSON only; authors decide whether plaintext is appropriate",
     "Uncertain submission needs document-version/commitment reconciliation before retries"
-  ]
+  ],
+  "continuityFollowup": {
+    "candidateSourceBase": "d987780",
+    "nativeIntegrationPassed": 11,
+    "sourceHashes": {
+      "services/api/src/native-chain.ts": "55909168b1e269adc67983499b0e84b117d54cb73ef2c3a5f4e2e70cc481c138",
+      "examples/agent-publish.ts": "62372dfdde04727ff59696ea22a7cb1c5c29c2774ce47a6dce17a9f77fbfb5df",
+      "tests/integration/agent-publish.test.ts": "d2b90a25519f964874d1f9b258b2466b4dcfd97bd7872648eaf78a826a8aadba"
+    },
+    "behavior": "Original hosted account root and member ID survive a proved DAO signing-key rotation; a newly approved native delegate publishes without changing that account root. Original root and current native signer are separate capabilities.",
+    "red": "MEMBER_UNKNOWN in the harness, then AGENT_API_REJECTED in the API before native membership mapping was reused",
+    "fullSuite": "Combined C1/followup: 148 files/923 core tests passed"
+  }
 }

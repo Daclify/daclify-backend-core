@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.14.0-alpha.8 · interface 1.
+Package 0.14.0-alpha.9 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -618,7 +618,7 @@ Sources:
 
 ## Mini-app accounts, databases and recovery
 
-Mini apps operate their own persistent databases; a hosted Daclify mini-app database service is deferred. SQLite and PostgreSQL must pass the same identity, tenancy, transaction, restart and cleanup conformance requirements before being labelled supported.
+Mini apps operate their own persistent databases; a hosted Daclify mini-app database service is deferred. The candidate SQLite and PostgreSQL recipes now pass shared local identity, tenancy, transaction, concurrency, restart/restore and cleanup checks; the recorded engine evidence does not certify other databases.
 
 Bind chain, runtime, DAO, app, verified identity issuer and registered client before reading records. A dedicated file persists one binding and refuses another connection. Shared storage includes the namespace in every query, uniqueness rule and foreign key. Nonempty unbound legacy data needs an explicit backup and verified adoption; it never silently joins the next configured DAO.
 
@@ -2860,6 +2860,336 @@ Source ABI JSON SHA-256: `0e0d996e5ac592ba29a1d1531a575d88d2370d314123b848932631
 | ram_bytes | uint32 |
 | net_stake | asset |
 | cpu_stake | asset |
+
+## GET /v1/mini-apps/connections/:daoId/:appId
+
+Guide: connected-apps.
+
+No request body.
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "number",
+      "const": 1
+    },
+    "binding": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "type": "number",
+          "const": 1
+        },
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "runtime": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "daoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "appId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "issuer": {
+          "type": "string",
+          "maxLength": 512,
+          "format": "uri"
+        },
+        "clientId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "chainId",
+        "runtime",
+        "daoId",
+        "appId",
+        "issuer",
+        "clientId"
+      ],
+      "additionalProperties": false
+    },
+    "callbackUrl": {
+      "type": "string",
+      "maxLength": 1024,
+      "format": "uri"
+    },
+    "frontendOrigin": {
+      "type": "string",
+      "maxLength": 512,
+      "format": "uri"
+    },
+    "activityAccount": {
+      "type": "string",
+      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+    },
+    "releaseId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "coreVersion": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[a-z0-9.-]+)?$"
+    },
+    "modulesVersion": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[a-z0-9.-]+)?$"
+    },
+    "manifestHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "starterUrl": {
+      "type": "string",
+      "maxLength": 1024,
+      "format": "uri"
+    },
+    "diagnostics": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "number",
+          "const": 1
+        },
+        "checks": {
+          "minItems": 4,
+          "maxItems": 4,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "stage": {
+                "type": "string",
+                "enum": [
+                  "configuration",
+                  "readiness",
+                  "identity",
+                  "event"
+                ]
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "passed",
+                  "failed",
+                  "not-run"
+                ]
+              },
+              "codes": {
+                "maxItems": 4,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[A-Z][A-Z0-9_]{1,63}$"
+                }
+              }
+            },
+            "required": [
+              "stage",
+              "status",
+              "codes"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "version",
+        "checks"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "version",
+    "binding",
+    "callbackUrl",
+    "frontendOrigin",
+    "activityAccount",
+    "releaseId",
+    "coreVersion",
+    "modulesVersion",
+    "manifestHash",
+    "starterUrl",
+    "diagnostics"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/mini-apps/connections/:daoId/:appId/check
+
+Guide: connected-apps.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "default": {},
+  "type": "object",
+  "properties": {},
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "number",
+      "const": 1
+    },
+    "checks": {
+      "minItems": 4,
+      "maxItems": 4,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "stage": {
+            "type": "string",
+            "enum": [
+              "configuration",
+              "readiness",
+              "identity",
+              "event"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "passed",
+              "failed",
+              "not-run"
+            ]
+          },
+          "codes": {
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9_]{1,63}$"
+            }
+          }
+        },
+        "required": [
+          "stage",
+          "status",
+          "codes"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "version",
+    "checks"
+  ],
+  "additionalProperties": false
+}
+```
+
+## GET /v1/mini-apps/releases/:releaseId
+
+Guide: connected-apps.
+
+No request body.
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "number",
+      "const": 1
+    },
+    "releaseId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "coreVersion": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[a-z0-9.-]+)?$"
+    },
+    "modulesVersion": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[a-z0-9.-]+)?$"
+    },
+    "packageLockHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "files": {
+      "minItems": 3,
+      "maxItems": 3,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": [
+              "core.tgz",
+              "modules.tgz",
+              "starter.tgz"
+            ]
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 16777216
+          }
+        },
+        "required": [
+          "name",
+          "sha256",
+          "bytes"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "version",
+    "releaseId",
+    "coreVersion",
+    "modulesVersion",
+    "packageLockHash",
+    "files"
+  ],
+  "additionalProperties": false
+}
+```
 
 ## POST /v1/account/reconnect/native
 

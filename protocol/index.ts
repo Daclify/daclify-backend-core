@@ -25,3 +25,4 @@ export * from './storage-retention.js';
 export * from './connected-apps.js';
 
 export * from './mini-app-database.js';
+export * from './mini-apps.js';

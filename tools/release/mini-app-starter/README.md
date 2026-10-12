@@ -1,0 +1,14 @@
+# Community mini-app starter
+
+Requires Node 24.21 through 24.x and npm 11.19 through 11.x. This candidate contains exact vendored public Daclify packages; no sibling checkout, private registry account or Daclify founder intervention is needed.
+
+1. Download your connection JSON from Daclify's Mini apps page using the community administrator account. The community still approves registration/member recording consent through its existing controls.
+2. Download the release manifest and starter from that trusted API. Verify the manifest's SHA-256 against the connection's manifestHash and the starter's SHA-256 against its manifest entry before extracting executable code. All three immutable files and their lengths/hashes are in the manifest.
+3. Extract this archive into a new application directory. Run `npm ci --ignore-scripts` and `node configure.mjs connection.json`. The configurator checks the exact installed release and creates public connection settings. It never creates a root identity or receives a Daclify signing key.
+4. Copy .env.example to a private environment file outside static assets. Configure the project's trusted HTTPS certificate/key and database. SQLite requires a persistent local volume and one-host maintenance; set MINI_APP_PERSISTENT_VOLUME=1 only after arranging it. For concurrent hosts use MINI_APP_DATABASE_ENGINE=postgres and the project's protected PostgreSQL URL in MINI_APP_DB. PostgreSQL SSL/limits/backups belong to the operator. Expose the loopback service through your own HTTPS reverse proxy at the registered origin.
+5. Run `npm run build`, then `node --env-file=/private/local/mini-app.env --import tsx examples/community-mini-app/server.ts`. The database refuses a conflicting existing binding. Its public readiness endpoint describes the binding; it does not prove login or a native event.
+6. Sign in with Daclify, approve a bounded recording credential, complete the task and confirm the exact native event. Restart and retry pending delivery without creating a new event. Renew/revoke native consent through the community's controls.
+
+The example stores full lossless identities, a frozen transactional outbox and one completion per task. A general multi-revision app needs its own revision-aware event rule. Roles stay projections; current Daclify membership and actual native scopes are authoritative. Back up data/files, test restore, reapply completed deletion/revocation exclusions and define finite purpose-specific retention. Removing an identity link does not anonymize surviving content or public native history. Secrets and database files stay outside web assets, source and model prompts. A hosted database service is outside this recipe.
+
+Read the installed public connected-app/database help through @daclify/core-protocol/help. This source candidate is not a production or mainnet qualification. Install only into an isolated review environment until its release is approved.

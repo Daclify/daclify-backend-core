@@ -1,5 +1,7 @@
 import { CreationService } from './creation.js';
 import { ConnectedApps } from './connected-apps/service.js';
+import { MiniAppArtifacts } from './mini-apps/artifacts.js';
+import { MiniAppConnections } from './mini-apps/connections.js';
 import { readConnectedAppsConfiguration } from './connected-apps/config.js';
 import './load-local-env.js';
 import { Pool } from 'pg';
@@ -256,9 +258,18 @@ const appConfig = readConnectedAppsConfiguration(
 const connectedApps = appConfig
   ? await ConnectedApps.create(pool, chain.connectedApps, appConfig)
   : undefined;
+const miniAppArtifacts = process.env.MINI_APP_RELEASE_DIRECTORY
+  ? await MiniAppArtifacts.load(
+      z.string().min(1).max(4096).parse(process.env.MINI_APP_RELEASE_DIRECTORY),
+    )
+  : undefined;
+const miniApps = connectedApps
+  ? new MiniAppConnections(connectedApps, miniAppArtifacts)
+  : undefined;
 const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
   telosGovernance: readTelosPins(process.env),
   ...(connectedApps ? { connectedApps } : {}),
+  ...(miniApps ? { miniApps } : {}),
   ...(recovery ? { recovery } : {}),
   origins,
   creation,

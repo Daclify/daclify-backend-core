@@ -2,7 +2,7 @@
 
 This runnable example keeps garden tasks in SQLite and uses Daclify for member identity and selected, member-signed completion receipts. Run a second copy for equipment using another app ID/client ID/database; both copies can belong to the same seven-member DAO. Managers and ordinary members keep their existing DAO roles.
 
-The current starter build consumes public core `0.14.0-alpha.8` and modules `0.10.0-alpha.6` development archives (frontend candidate `0.14.0-alpha.9`). It persists a full binding and checks the verified client context returned by the new API. This is local development work; the older testnet core `0.14.0-alpha.4` does not supply that context and the starter fails closed against it. Public self-service distribution and PostgreSQL qualification remain separate implementation tasks. Node `>=24.21 <25` is required for the pinned SQLite recipe.
+The current starter build consumes public core `0.14.0-alpha.9` and modules `0.10.0-alpha.7` development archives (frontend candidate `0.14.0-alpha.10`). It persists a full binding and checks the verified client context returned by the new API. This is local development work; the older testnet core `0.14.0-alpha.4` does not supply that context and the starter fails closed against it. PostgreSQL has passed the shared local recipe checks. Connection-bundle/distribution tooling is implemented locally; public deployment remains a separate release step. Node `>=24.21 <25` is required for the pinned SQLite recipe.
 
 Read the [database contract](../../docs/guides/mini-app-database-contract.md) and use one matched API/SDK set. The account root, pairwise subject and full native membership are distinct. The file is permanently bound to chain/runtime/DAO/app/issuer/client; changing any field refuses access rather than reusing another community's records.
 
@@ -25,6 +25,8 @@ MINI_APP_ORIGIN=https://localhost:9443
 MINI_APP_PORT=9443
 MINI_APP_DB=/absolute/private/path/garden.sqlite
 MINI_APP_DATABASE_ENGINE=sqlite
+# Production SQLite: declare an actual persistent local volume; temporary paths are refused.
+MINI_APP_PERSISTENT_VOLUME=1
 MINI_APP_TLS_CERT=/absolute/private/path/certificate.pem
 MINI_APP_TLS_KEY=/absolute/private/path/private-key.pem
 # Optional: the project's own server-only Pinata credential, for snapshot pinning.
@@ -40,7 +42,7 @@ npx tsx examples/community-mini-app/build.ts
 node --env-file=/absolute/private/path/mini-app.env --import tsx examples/community-mini-app/server.ts
 ```
 
-Outside this workspace, use the candidate archives from the implementation checkout or its versioned frontend vendor directory. Their SHA-256 values are core `33069b5e63c1b46878e4ce00bb50da9c4c5687c3e569ece353960cf6fa30208c` and modules `83da6a9e6284866af21dd10f494059c12bd89a431e6f226b79870cdbffdfc92c`; a private repository still needs authorized access. Install those files with `npm install ./daclify-core-protocol-0.14.0-alpha.8.tgz ./daclify-modules-0.10.0-alpha.6.tgz tsx@4.23.15 esbuild@0.28.2 zod@4.6.5 pg@8.23.1`, and copy the example files. A public download path still needs implementation. The `build.ts` script uses the local esbuild binary. Never ship the environment file, SQLite database, TLS private key or provider credential in static assets.
+Outside this workspace, use the candidate archives from the implementation checkout or its versioned frontend vendor directory. Their SHA-256 values are core `d6e9b1ac9a382f0ff3acfba5af5dc249a2c83df3fec75a1417ef089b189c9d04` and modules `a70a21f43ce60f79cc24926f612447ce429ef328d9daedfe52ce7c2892a593b7`; a private repository still needs authorized access. Install those files with `npm install ./daclify-core-protocol-0.14.0-alpha.9.tgz ./daclify-modules-0.10.0-alpha.7.tgz tsx@4.23.15 esbuild@0.28.2 zod@4.6.5 pg@8.23.1`, and copy the example files. The candidate API supplies an immutable starter/download route when its reviewed release directory is configured. It has not been deployed by this execution. The `build.ts` script uses the local esbuild binary. Never ship the environment file, SQLite database, TLS private key or provider credential in static assets.
 
 ## PostgreSQL and database qualification
 

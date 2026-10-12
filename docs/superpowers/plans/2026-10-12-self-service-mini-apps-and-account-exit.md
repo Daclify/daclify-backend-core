@@ -186,7 +186,7 @@ Execution is now authorized and running inline. The [durable execution ledger](.
 | Package | State                                           | Evidence/commit             |
 | ------- | ----------------------------------------------- | --------------------------- |
 | B0      | Baseline/native recorded; browser setup pending | Baseline and durable ledger |
-| F1–F4   | F1–F4 complete; C1 next                         | Durable ledger              |
+| F1–F4   | F1–F4 complete                                  | Durable ledger              |
 | C1–C3   | Pending                                         | —                           |
 | P1–P3   | Pending                                         | —                           |
 | X1–X4   | Pending                                         | —                           |

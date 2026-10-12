@@ -5,6 +5,8 @@ import {
   registerConnectedAppsRoutes,
 } from './connected-apps/routes.js';
 import type { ConnectedApps } from './connected-apps/service.js';
+import { MiniAppConnections } from './mini-apps/connections.js';
+import { registerMiniAppsRoutes } from './mini-apps/routes.js';
 import type { ConnectedPayments } from './payments/service.js';
 import type { OperatorPayments } from './payments/operator.js';
 import type { HostedStorage } from './billing/storage.js';
@@ -106,6 +108,7 @@ export async function createServer(
   origin: string,
   options: {
     connectedApps?: ConnectedApps;
+    miniApps?: MiniAppConnections;
     content?: ContentService;
     recovery?: RecoveryConfiguration;
     gatewayAllowance?: GatewayAllowance;
@@ -275,6 +278,10 @@ export async function createServer(
   registerRecoveryRoutes(app, recovery, cookieName, session, origin);
   if (options.connectedApps)
     registerConnectedAppsRoutes(app, options.connectedApps, cookieName, session, spend);
+  const miniApps =
+    options.miniApps ??
+    (options.connectedApps ? new MiniAppConnections(options.connectedApps) : undefined);
+  if (miniApps) registerMiniAppsRoutes(app, miniApps, cookieName, session, spend);
   app.addHook('onSend', async (request, reply, payload) => {
     if (request.routeOptions.url === '/v1/sign-in/session' && reply.statusCode < 400) {
       const token = request.cookies[cookieName],

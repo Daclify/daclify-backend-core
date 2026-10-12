@@ -3441,9 +3441,18 @@ export class NativeChainGateway implements ChainGateway {
     if (request.chain_id !== this.config.chainId || request.deployment !== this.config.runtime)
       throw new ApiError('INSTRUCTION_DOMAIN');
     const member = (await this.table('members', request.dao_id, request.member_id, 1))[0];
-    if (!member || member.id !== request.member_id || member.signing_key !== account.signingKey)
+    if (
+      !member ||
+      member.id !== request.member_id ||
+      (await this.memberIdentity(
+        account,
+        request.dao_id,
+        [member],
+        await this.linkedWallets(account.id),
+      )) !== request.member_id
+    )
       throw new ApiError('MEMBERSHIP_REQUIRED', 403);
-    let signingKey = account.signingKey;
+    let signingKey = member.signing_key;
     if (sessionId !== undefined) {
       IdSchema.parse(sessionId);
       const credential = (await this.table('sessions', request.dao_id, sessionId, 1))[0];

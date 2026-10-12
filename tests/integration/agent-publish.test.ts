@@ -66,7 +66,7 @@ async function member() {
   });
   return RuntimeTableSchemas.members.parse(rows.rows[0]);
 }
-async function rootAction(name: string, data: Uint8Array) {
+async function rootAction(name: string, data: Uint8Array, signer = root) {
   const request = makeInstruction(
     domain(),
     '1',
@@ -79,7 +79,7 @@ async function rootAction(name: string, data: Uint8Array) {
   return f.call(
     'daclifycore',
     'submit',
-    { request, sig: root.signDigest(instructionDigest(request)).toString() },
+    { request, sig: signer.signDigest(instructionDigest(request)).toString() },
     'relay',
   );
 }
@@ -266,6 +266,80 @@ it('publishes with a scoped delegate while authenticating only the enrolled root
       ])
     ).rows[0],
   ).toEqual({ total: '0' });
+});
+
+it('preserves the original account root after a proved DAO signing-key rotation', async () => {
+  const { session, headers } = await login();
+  const memberships = await app.inject({ method: 'GET', url: ApiRoutes.memberships.path, headers });
+  expect(memberships.statusCode).toBe(200);
+  expect(ApiRoutes.memberships.response.parse(memberships.json()).memberships).toContainEqual(
+    expect.objectContaining({ dao: domain(), memberId: '1' }),
+  );
+  const successor = PrivateKey.generate('K1');
+  await rootAction(
+    'rotatekey',
+    encodeAction('rotatekey', { ...actor(), signing_key: successor.toPublic().toString() }),
+  );
+  await rootAction(
+    'addsession',
+    encodeAction('addsession', {
+      ...actor(),
+      session_id: '1',
+      signing_key: delegate.toPublic().toString(),
+      expires: Math.floor(Date.now() / 1000) + 600,
+      permissions: [{ target: 'daclifycore', action: 'putjson', code_hash: '00'.repeat(32) }],
+    }),
+    successor,
+  );
+  const result = await publishAgent({
+    api: apiOrigin,
+    origin,
+    dao: domain(),
+    documentId: '1',
+    documentVersion: 1,
+    accountAuthentication: { signingKey: root.toString(), encryptionKey },
+    scopedSigner: { signingKey: delegate.toString(), memberId: '1', sessionId: '1' },
+    visibility: 'public',
+    publicJson: { decision: 'Original account with rotated DAO signer' },
+  });
+  expect(result.accountId).toBe(session.account.id);
+  expect(result.memberId).toBe('1');
+  expect((await member()).signing_key).toBe(successor.toPublic().toString());
+  expect(
+    (await pool.query('SELECT signing_key FROM accounts WHERE id=$1', [session.account.id]))
+      .rows[0],
+  ).toEqual({ signing_key: root.toPublic().toString() });
+  const request = makeInstruction(
+    domain(),
+    '1',
+    (await member()).nonce,
+    Math.floor(Date.now() / 1000) + 300,
+    'daclifycore',
+    'putjson',
+    encodeAction('putjson', {
+      ...actor(),
+      document_id: '1',
+      version: 2,
+      value: '{"decision":"Current DAO signer"}',
+      envelope_version: 0,
+      key_epoch: '0',
+    }),
+  );
+  const refused = await app.inject({
+    method: 'POST',
+    url: ApiRoutes.relay.path,
+    headers,
+    payload: { request, sig: root.signDigest(instructionDigest(request)).toString() },
+  });
+  expect(refused.statusCode).toBe(403);
+  expect(refused.json()).toMatchObject({ code: 'SIGNATURE_INVALID' });
+  const current = await app.inject({
+    method: 'POST',
+    url: ApiRoutes.relay.path,
+    headers,
+    payload: { request, sig: successor.signDigest(instructionDigest(request)).toString() },
+  });
+  expect(current.statusCode, current.body).toBe(200);
 });
 
 it('does not let another authenticated root use the enrolled member delegate', async () => {

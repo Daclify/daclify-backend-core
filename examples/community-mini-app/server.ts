@@ -1,5 +1,7 @@
 import { createServer } from 'node:https';
 import { readFileSync } from 'node:fs';
+import { resolve, sep } from 'node:path';
+import { tmpdir } from 'node:os';
 import { z } from 'zod';
 import {
   AppBindingSchema,
@@ -7,6 +9,7 @@ import {
   ApiOriginSchema,
   AppSnapshotEnvelopeSchema,
   CidSchema,
+  AppReadinessSchema,
 } from '@daclify/core-protocol';
 import { createHash } from 'node:crypto';
 import { readAppResponse } from '@daclify/core-protocol/connected-apps';
@@ -15,6 +18,18 @@ import { Pool } from 'pg';
 import { sqliteStore } from './database.js';
 import { createPostgresStore } from './postgres-store.js';
 import { verifyAppAccess } from './access.js';
+function sqlitePath(path: string): string {
+  if (process.env.NODE_ENV === 'production') {
+    const absolute = resolve(path);
+    const temporary = [resolve(tmpdir()), resolve('/var/tmp')];
+    if (
+      process.env.MINI_APP_PERSISTENT_VOLUME !== '1' ||
+      temporary.some((root) => absolute === root || absolute.startsWith(root + sep))
+    )
+      throw new Error('APP_STORAGE_PERSISTENCE');
+  }
+  return path;
+}
 const issuer = ApiOriginSchema.parse(process.env.DACLIFY_ISSUER),
   clientId = z.uuid().parse(process.env.DACLIFY_CLIENT_ID),
   appId = z
@@ -43,7 +58,7 @@ const issuer = ApiOriginSchema.parse(process.env.DACLIFY_ISSUER),
   pool = engine === 'postgres' ? new Pool({ connectionString: database }) : null,
   store = pool
     ? await createPostgresStore(pool, binding)
-    : sqliteStore(new Store(database, binding));
+    : sqliteStore(new Store(sqlitePath(database), binding));
 const config = {
   issuer,
   clientId,
@@ -80,6 +95,11 @@ const server = createServer(
         return;
       }
 
+      if (request.method === 'GET' && url.pathname === '/.well-known/daclify-mini-app.json') {
+        response.setHeader('content-type', 'application/json');
+        response.end(JSON.stringify(AppReadinessSchema.parse({ version: 1, binding })));
+        return;
+      }
       if (
         request.method === 'GET' &&
         ['/', '/callback', '/browser.js', '/callback.js', '/config'].includes(url.pathname)

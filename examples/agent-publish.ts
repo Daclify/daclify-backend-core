@@ -112,8 +112,7 @@ export async function publishAgent(input: AgentPublishInput): Promise<AgentPubli
           member.dao.daoId === config.dao.daoId &&
           member.memberId === config.scopedSigner.memberId,
       );
-    if (!membership?.active || membership.signingKey !== root.toPublic().toString())
-      throw new Error('MEMBER_UNKNOWN');
+    if (!membership?.active) throw new Error('MEMBER_UNKNOWN');
     const governance = ApiRoutes.governance.response.parse(
       await request(ApiRoutes.governance.path.replace(':id', config.dao.daoId)),
     );

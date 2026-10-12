@@ -132,3 +132,14 @@ console.log(
     ? 'Packaged a local development SDK; publishing still requires release verification.'
     : 'Packaged an immutable qualified SDK; no registry publication or deployment was performed.',
 );
+if (process.env.BUILD_MINI_APP_STARTER === '1') {
+  const { buildMiniAppStarter } = await import('./mini-app-starter.js');
+  const { VERSION: modulesVersion } = await import('@daclify/modules');
+  await buildMiniAppStarter({
+    coreArchive: resolve('.artifacts/daclify-core-protocol-' + VERSION + '.tgz'),
+    modulesArchive: resolve(
+      '../daclify-backend-modules/.artifacts/daclify-modules-' + modulesVersion + '.tgz',
+    ),
+    outputDirectory: resolve('.artifacts/mini-apps'),
+  });
+}
