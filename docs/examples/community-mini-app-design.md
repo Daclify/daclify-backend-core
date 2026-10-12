@@ -4,7 +4,7 @@ Status: reusable project design example, 11 October 2026. All people, apps and t
 
 This example describes a small garden task app using Daclify for sign-in eligibility, community membership and member-authorised completion/review records. Replace the garden workflow with equipment bookings, volunteer shifts or another community process while preserving the identity, permission, privacy and delivery boundaries.
 
-Read the [database and identity contract](../guides/mini-app-database-contract.md) before choosing storage or defining account mappings. The current SQLite binding gap and pending PostgreSQL recipe are identified in the connection guide.
+Read the [database and identity contract](../guides/mini-app-database-contract.md) before choosing storage or defining account mappings. The starter candidate implements persisted SQLite binding and explicit legacy adoption; PostgreSQL qualification remains pending. The connection guide distinguishes that candidate from the currently installed testnet API.
 
 Read the [connected-app guide](../connected-community-apps.md) for the product overview and the [platform design](../superpowers/specs/2026-10-11-connected-community-apps-design.md) for Daclify implementation dependencies. A project can copy this document and fill in the adaptation checklist at the end.
 

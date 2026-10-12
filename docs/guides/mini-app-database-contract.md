@@ -6,7 +6,7 @@ These requirements apply whenever an app uses Daclify accounts, regardless of it
 
 Persist a versioned binding containing chain ID, runtime, DAO ID, app ID, identity issuer and registered client ID. Compare every field with the configured connection on open. A dedicated SQLite database has one binding; shared PostgreSQL storage includes its full binding namespace in every query, unique key and foreign key. A mismatch refuses access before returning tasks or pending events.
 
-Configuration changes are explicit migrations with a backup and verified original binding. A nonempty legacy database without metadata must not silently adopt whichever DAO starts the app first. Preserve native identifiers as validated decimal strings or a database representation supporting their full uint64 range. Never convert them through JavaScript `Number`.
+Configuration changes are explicit migrations with a backup and verified original binding. A nonempty legacy database without metadata must not silently adopt whichever DAO starts the app first. Legacy rows do not prove their missing chain/DAO/issuer/client; the explicit adoption operator must confirm the original trusted deployment configuration and verify the original actor mappings before migration. Preserve native identifiers as validated decimal strings or a database representation supporting their full uint64 range. Never convert them through JavaScript `Number`.
 
 ## Derive the actor from current verified access
 

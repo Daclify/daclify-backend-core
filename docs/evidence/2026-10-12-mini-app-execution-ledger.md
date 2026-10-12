@@ -26,7 +26,7 @@ Ruling: F1 records exact current archive names/hashes and their access limitatio
 
 ## Progress
 
-B0: baseline recorded; native/browser fixture checks pending until their task setup. All 21 implementation tasks pending.
+B0: baseline recorded; native/browser fixture checks pending until their task setup. F1 complete (core `069cc78`, frontend `de15f4d`); F2 checks complete, commit follows; F3–Q3 pending.
 
 ### F1 — documentation source complete
 
@@ -34,3 +34,15 @@ B0: baseline recorded; native/browser fixture checks pending until their task se
 - Added the normative database contract and builder handbook topic/group; refreshed the design and runnable instructions. Consumer delivery of the changed bundle follows F2's new immutable package set.
 - Checks: core `npm run docs:generate` and `npm run docs:check` passed; all 21 local explanatory-guide links resolved. Frontend `npm test -- tests/unit/documentation.test.ts` passed 7 tests and `npm run typecheck` passed. Generated public help contains both connected-app/database topics.
 - Human prose and guide-group data changes earn no new behavior tests; existing generated-guide/catalog checks cover their consuming boundaries.
+
+### F2 — binding and client verification
+
+- RED: the reopened-database and wrong-DAO actor assertions failed because the old example accepted both; the real PostgreSQL userinfo test returned 200 for a wrong expected client. A second regression showed no returned client context.
+- Implemented canonical AppBinding/AppActor schemas and an ordered SHA-256 golden vector, full deployment/issuer/client checks, persisted binding format 1, unique subject/member mappings, transactional frozen outbox and exact review reconciliation. Added explicit backup-before-adoption CLI with current issuer/client/member verification and redacted errors.
+- Ruling: `AppClaims` omits issuer/client, so configuring a client ID alone is insufficient for opaque-bearer verification. Add a backward-compatible optional expected-client query and canonical API-returned client header; new starters require the header, old clients retain their original JSON response. Cost if wrong: an unverified client could enter the wrong database namespace.
+- Ruling: unbound legacy tasks/outbox do not contain their original chain/DAO/issuer/client. Adoption requires the operator's trusted original configuration and verified original actor mappings, validates all observable source/event/revision data and makes a consistent backup. It does not infer a DAO from member numbers or prove missing historical context cryptographically. Cost if wrong: an incorrect operator assertion could mislabel legacy history; uncertain provenance requires a separately reviewed migration.
+- Ruling: protocol-only compilation bootstraps the new public exports while example signatures are changing; final full strict checking remains required. Private alpha.5–alpha.7/core and alpha.5/modules prototypes remain untouched and are not public install recommendations. Final F2 candidates are core `0.14.0-alpha.8`, modules `0.10.0-alpha.6`, frontend `0.14.0-alpha.9`; immutable source pins and exact peer/range/vendor/lock files move together.
+- Initial full checks: core 883/904 passed and modules 180/192 passed; failures were missing historical fixtures/frontend build in the fresh worktrees. Copied original binary/ABI fixtures without recompilation, built the frontend, then all six affected core files (27 tests) and six affected module files (59 tests) passed. No product behavior was weakened for setup.
+- Core lint, strict typecheck and generated-documentation checks passed with the final pins; focused SQLite/access/protocol/adoption 21 tests (including maximum uint64 storage) and all 18 connected-app PostgreSQL integration tests passed. Modules SDK 6 tests, typecheck and documentation checks passed. Frontend production build passed; its 25 focused account/help tests and typecheck are recorded with the final package pins.
+- F2 file-map expansion: verified-client API response handling/integration coverage and the access/adoption helpers and their tests are necessary to make the planned actor verification and explicit adoption executable. Binding format is 1; existing unbound databases require the documented offline backup/attestation flow. No existing app database was changed.
+- Production-only npm audit: zero advisories. The unchanged development VERT chain has four advisories (two high, two low), with no registry-proposed fix; record/review these for qualification, do not run an unqualified automatic upgrade.

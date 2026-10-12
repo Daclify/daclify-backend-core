@@ -83,6 +83,7 @@ export const AppClaimsSchema = z.strictObject({
   sessionId: IdSchema.nullable(),
   sessionExpires: z.number().int().nullable(),
 });
+export type AppClaims = z.infer<typeof AppClaimsSchema>;
 export const AppConsentSchema = z.strictObject({
   id: z.uuid(),
   app: ConnectedAppSchema,
@@ -237,6 +238,8 @@ export const ConnectedAppsRoutes = {
   appMembership: {
     method: 'GET',
     path: '/v1/connected-apps/userinfo',
+    query: z.strictObject({ clientId: z.uuid().optional() }),
+    clientHeader: 'x-daclify-client-id',
     response: AppClaimsSchema,
     helpTopic: 'connected-apps',
   },

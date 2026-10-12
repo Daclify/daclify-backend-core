@@ -2,9 +2,9 @@
 
 This runnable example keeps garden tasks in SQLite and uses Daclify for member identity and selected, member-signed completion receipts. Run a second copy for equipment using another app ID/client ID/database; both copies can belong to the same seven-member DAO. Managers and ordinary members keep their existing DAO roles.
 
-It uses the public interfaces `@daclify/core-protocol/connected-apps` and `@daclify/modules/sdk`. The tested development archives are core `0.14.0-alpha.4` and modules `0.10.0-alpha.4`, matching frontend `0.14.0-alpha.7`; their exact filenames/hashes and current repository-access limitation are in the [connection guide](../../docs/connected-community-apps.md#developer-integration). Do not assume these packages are published to public npm. Node `>=24.21 <25` is required for this pinned recipe and built-in SQLite driver.
+The current starter build consumes public core `0.14.0-alpha.8` and modules `0.10.0-alpha.6` development archives (frontend candidate `0.14.0-alpha.9`). It persists a full binding and checks the verified client context returned by the new API. This is local development work; the older testnet core `0.14.0-alpha.4` does not supply that context and the starter fails closed against it. Public self-service distribution and PostgreSQL qualification remain separate implementation tasks. Node `>=24.21 <25` is required for the pinned SQLite recipe.
 
-The existing SQLite/outbox example does not yet persist the complete DAO/client binding. Use synthetic data until the planned binding fix passes its regressions. Follow the [database contract](../../docs/guides/mini-app-database-contract.md) when building or adapting an app; a PostgreSQL recipe and public self-service downloads are separate pending implementation tasks.
+Read the [database contract](../../docs/guides/mini-app-database-contract.md) and use one matched API/SDK set. The account root, pairwise subject and full native membership are distinct. The file is permanently bound to chain/runtime/DAO/app/issuer/client; changing any field refuses access rather than reusing another community's records.
 
 ## Setup
 
@@ -18,6 +18,8 @@ DACLIFY_FRONTEND_ORIGIN=https://testnet.app.daclify.com
 DACLIFY_CLIENT_ID=<registered client UUID>
 DACLIFY_APP_ID=<native app ID>
 DACLIFY_DAO_ID=<your DAO ID>
+DACLIFY_CHAIN_ID=<verified 64-character native chain ID>
+DACLIFY_RUNTIME=<verified native runtime account>
 DACLIFY_ACTIVITY_ACCOUNT=daclifyactiv
 MINI_APP_ORIGIN=https://localhost:9443
 MINI_APP_PORT=9443
@@ -37,7 +39,21 @@ npx tsx examples/community-mini-app/build.ts
 node --env-file=/absolute/private/path/mini-app.env --import tsx examples/community-mini-app/server.ts
 ```
 
-Outside this workspace, obtain the two exact archives through authorized frontend repository access and check their SHA-256 values from the connection guide. Install those files with `npm install ./daclify-core-protocol-0.14.0-alpha.4.tgz ./daclify-modules-0.10.0-alpha.4.tgz tsx@4.23.15 esbuild@0.28.2 zod@4.6.5`, and copy the example files. A public download path still needs implementation. The `build.ts` script uses the local esbuild binary. Never ship the environment file, SQLite database, TLS private key or provider credential in static assets.
+Outside this workspace, use the candidate archives from the implementation checkout or its versioned frontend vendor directory. Their SHA-256 values are core `33069b5e63c1b46878e4ce00bb50da9c4c5687c3e569ece353960cf6fa30208c` and modules `83da6a9e6284866af21dd10f494059c12bd89a431e6f226b79870cdbffdfc92c`; a private repository still needs authorized access. Install those files with `npm install ./daclify-core-protocol-0.14.0-alpha.8.tgz ./daclify-modules-0.10.0-alpha.6.tgz tsx@4.23.15 esbuild@0.28.2 zod@4.6.5`, and copy the example files. A public download path still needs implementation. The `build.ts` script uses the local esbuild binary. Never ship the environment file, SQLite database, TLS private key or provider credential in static assets.
+
+## Existing SQLite databases
+
+A nonempty database without binding metadata refuses normal startup with `APP_DATABASE_ADOPTION_REQUIRED`. Never delete it to make startup pass. Stop its old writers and confirm the original chain/runtime/DAO/app/issuer/client from trusted deployment records; those missing fields cannot be reconstructed from a task or member number. Adoption is an explicit operator assertion of that original scope, not automatic identity recovery.
+
+Supply that original `AppBinding` as a JSON file, choose a new backup path, and supply a private `0600` JSON array of fresh app access tokens for the original outbox members. Obtain tokens through their own normal app sign-in; never use root keys, passwords or email matching. The command verifies current membership/client/subject, checks the old source/event/revision identities, creates a consistent SQLite backup while holding a writer lock, and binds/backfills in one transaction:
+
+```sh
+node --import tsx examples/community-mini-app/adopt.ts --database /absolute/private/path/garden.sqlite --binding /absolute/private/path/original-binding.json --backup /absolute/private/path/garden-before-binding.sqlite --access /absolute/private/path/member-access.json
+```
+
+If the original scope, an actor or frozen source revision cannot be verified, the command refuses and preserves the old database. Missing/removed-member access requires a separately reviewed migration; it cannot justify guessing a new author. A populated or existing backup path is never overwritten. Protect/remove the short-lived token file afterward, back up actual photos separately, and retain the database backup only under the app's disclosed retention policy. The `adoptLegacyDatabase` helper accepts already verified actors; callers must meet that same original-scope boundary.
+
+New files initialize binding format 1 before task/outbox data. Actor mapping is unique by subject and native member within that binding. Tasks bound IDs to 64 characters, titles to 256 and details to 4096; builders can design other validated schemas. The one-completion task model intentionally does not support automatic reassignment or multiple completion revisions.
 
 ## Complete a task
 
@@ -61,7 +77,7 @@ From the DAO's activity list, fetch current task details through the app API or 
 
 ## Adapter endpoints
 
-Every protected request validates the opaque bearer against Daclify's current `/userinfo`, including live DAO membership and app configuration. The example supports trusted source-access tokens for reading and snapshot submission, while ordinary task completion additionally requires an active recording grant.
+Every protected request validates the opaque bearer against Daclify's current `/userinfo`, including live DAO membership, full deployment and app configuration. The request supplies its expected client ID and checks the API-owned `x-daclify-client-id` response header; absent or different context refuses access. No previous actor is cached after a membership denial. The example supports trusted source-access tokens for reading and snapshot submission, while ordinary task completion additionally requires an active recording grant.
 
 | Endpoint                               | Purpose                                                     |
 | -------------------------------------- | ----------------------------------------------------------- |

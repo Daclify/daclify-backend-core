@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.14.0-alpha.4 · interface 1.
+Package 0.14.0-alpha.8 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -106,7 +106,7 @@ The Community Activity module supplies nonfinancial reviews reusable across app 
 
 Compact receipts still consume RAM. Apps need explicit capacity, bounded references, measured native costs and safe expired-grant cleanup. Registration alone uses no signing-session slot; active delegated credentials initially retain the current sixteen-session and seven-day limits. Concurrent apps share a member nonce and require SDK coordination. Exhaustion leaves local work visibly pending; completed receipts are not automatically deleted.
 
-Builders register their own apps in the DAO Connected apps tab; Daclify owner intervention is not an approval step. The current exact development archives are in the authorized frontend repository vendor directory; public self-service download distribution remains pending, so do not invent an npm install path. The SQLite example also requires its planned persisted binding fix before real data; PostgreSQL conformance is pending. Follow the database contract for issuer/client/subject mapping, full membership namespace, transactional outbox, restore and finite per-purpose cleanup.
+Builders register their own apps in the DAO Connected apps tab; Daclify owner intervention is not an approval step. The current exact development archives are in the authorized frontend repository vendor directory; public self-service download distribution remains pending, so do not invent an npm install path. The current starter candidate persists its full SQLite binding and verifies the API-returned client context. This candidate is not yet installed on testnet; an older API without verified client context fails closed. PostgreSQL conformance is pending. Follow the database contract for issuer/client/subject mapping, full membership namespace, transactional outbox, restore and finite per-purpose cleanup.
 
 One Daclify account can have several paired sign-in methods. A registered app gets a pairwise subject and complete native membership, not a copy of email/Telegram pairings. Both supported account reconnection paths preserve a sole client subject and member anchor, revoke old app tokens and require new consent. If both account profiles already have a subject for the same client, reconnection rejects; matching personal fields never authorizes a history merge.
 
@@ -4638,6 +4638,23 @@ Response:
 Guide: connected-apps.
 
 No request body.
+
+Query:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "clientId": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    }
+  },
+  "additionalProperties": false
+}
+```
 
 Response:
 

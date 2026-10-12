@@ -2,7 +2,7 @@ import { createServer } from 'node:https';
 import { readFileSync } from 'node:fs';
 import { z } from 'zod';
 import {
-  AppClaimsSchema,
+  AppBindingSchema,
   AppActivityPageSchema,
   ApiOriginSchema,
   AppSnapshotEnvelopeSchema,
@@ -11,6 +11,7 @@ import {
 import { createHash } from 'node:crypto';
 import { readAppResponse } from '@daclify/core-protocol/connected-apps';
 import { Store } from './store.js';
+import { verifyAppAccess } from './access.js';
 const issuer = ApiOriginSchema.parse(process.env.DACLIFY_ISSUER),
   clientId = z.uuid().parse(process.env.DACLIFY_CLIENT_ID),
   appId = z
@@ -22,7 +23,16 @@ const issuer = ApiOriginSchema.parse(process.env.DACLIFY_ISSUER),
     .regex(/^[1-9][0-9]*$/)
     .parse(process.env.DACLIFY_DAO_ID),
   origin = ApiOriginSchema.parse(process.env.MINI_APP_ORIGIN),
-  store = new Store(process.env.MINI_APP_DB ?? 'community.sqlite', appId);
+  binding = AppBindingSchema.parse({
+    schemaVersion: 1,
+    chainId: process.env.DACLIFY_CHAIN_ID,
+    runtime: process.env.DACLIFY_RUNTIME,
+    daoId,
+    appId,
+    issuer,
+    clientId,
+  }),
+  store = new Store(z.string().min(1).parse(process.env.MINI_APP_DB), binding);
 const config = {
   issuer,
   clientId,
@@ -88,17 +98,8 @@ const server = createServer(
           );
         return;
       }
-      const authorization = request.headers.authorization;
-      if (!authorization?.startsWith('Bearer ')) throw new Error('LOGIN_REQUIRED');
-      const live = await fetch(issuer + '/v1/connected-apps/userinfo', {
-        headers: { authorization },
-        redirect: 'error',
-        cache: 'no-store',
-        signal: AbortSignal.timeout(15000),
-      });
-      if (!live.ok) throw new Error('MEMBERSHIP_REQUIRED');
-      const claims = AppClaimsSchema.parse(await live.json());
-      if (claims.appId !== appId || claims.dao.daoId !== daoId) throw new Error('APP_SCOPE');
+      const authorization = request.headers.authorization ?? '';
+      const { claims, actor } = await verifyAppAccess(binding, authorization);
       if (
         request.method === 'POST' &&
         !url.pathname.startsWith('/v1/evidence/') &&
@@ -108,15 +109,16 @@ const server = createServer(
       // A public DAO still requires active membership for its operational tasks.
       response.setHeader('content-type', 'application/json');
       let result: unknown;
-      if (request.method === 'GET' && url.pathname === '/v1/tasks') result = store.tasks();
+      if (request.method === 'GET' && url.pathname === '/v1/tasks') result = store.tasks(actor);
       else if (request.method === 'GET' && url.pathname === '/v1/outbox')
-        result = store.pending(claims.memberId);
+        result = store.pending(actor);
       else if (request.method === 'GET' && url.pathname.startsWith('/v1/sources/'))
         result = store.source(
           z
             .string()
             .regex(/^[a-f0-9]{64}$/)
             .parse(url.pathname.split('/')[3]),
+          actor,
         );
       else if (request.method === 'GET' && url.pathname.startsWith('/v1/outbox/'))
         result = store.draft(
@@ -124,14 +126,14 @@ const server = createServer(
             .string()
             .regex(/^[a-f0-9]{64}$/)
             .parse(url.pathname.split('/')[3]),
-          claims.memberId,
+          actor,
         );
       else if (request.method === 'POST' && url.pathname.startsWith('/v1/evidence/')) {
         const event = z
             .string()
             .regex(/^[a-f0-9]{64}$/)
             .parse(url.pathname.split('/')[3]),
-          draft = store.draft(event, claims.memberId),
+          draft = store.draft(event, actor),
           chunks: Buffer[] = [];
         let size = 0;
         for await (const chunk of request) {
@@ -175,7 +177,7 @@ const server = createServer(
             .parse(JSON.parse(new TextDecoder().decode(await readAppResponse(pinned, 65536))));
         result = store.evidence(
           event,
-          claims.memberId,
+          actor,
           upload.data.cid,
           createHash('sha256').update(bytes).digest('hex'),
           context.keyEpoch,
@@ -183,7 +185,7 @@ const server = createServer(
       } else if (request.method === 'POST' && url.pathname.startsWith('/v1/complete/'))
         result = store.complete(
           z.string().max(64).parse(url.pathname.split('/')[3]),
-          claims,
+          actor,
           url.searchParams.get('evidence') === '1',
           url.searchParams.get('review') === '1',
         );
@@ -198,11 +200,7 @@ const server = createServer(
             signal: AbortSignal.timeout(15000),
           });
         if (!native.ok) throw new Error('RECEIPT_UNCONFIRMED');
-        result = store.confirm(
-          event,
-          AppActivityPageSchema.parse(await native.json()),
-          claims.memberId,
-        );
+        result = store.confirm(event, AppActivityPageSchema.parse(await native.json()), actor);
       } else {
         response.statusCode = 404;
         result = { error: 'NOT_FOUND' };

@@ -134,11 +134,14 @@ export function registerConnectedAppsRoutes(
       id(request.params),
     );
   });
-  app.get(
-    ConnectedAppsRoutes.appMembership.path,
-    async (request) =>
-      (await service.access(bearer(request.headers.authorization), request.headers.origin)).claims,
-  );
+  app.get(ConnectedAppsRoutes.appMembership.path, async (request, reply) => {
+    const query = ConnectedAppsRoutes.appMembership.query.parse(request.query),
+      access = await service.access(bearer(request.headers.authorization), request.headers.origin);
+    if (query.clientId && query.clientId !== access.app.clientId)
+      throw new ApiError('APP_SCOPE', 403);
+    reply.header(ConnectedAppsRoutes.appMembership.clientHeader, access.app.clientId);
+    return access.claims;
+  });
   app.get(ConnectedAppsRoutes.appActivities.path, async (request) => {
     const access = await service.access(
       bearer(request.headers.authorization),

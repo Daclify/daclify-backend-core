@@ -686,3 +686,34 @@ it('issues short-lived source access without signing authority or private pairin
   members.delete(account(2).id);
   await expect(service.access(access.accessToken)).rejects.toThrow();
 });
+
+it('checks the expected client before returning userinfo to a bound mini-app backend', async () => {
+  const issued = await token();
+  const headers = { authorization: 'Bearer ' + issued.access_token };
+  const wrong = await server.inject({
+    method: 'GET',
+    url: '/v1/connected-apps/userinfo?clientId=' + app(1).clientId,
+    headers,
+  });
+  expect(wrong.statusCode).toBe(403);
+  const correct = await server.inject({
+    method: 'GET',
+    url: '/v1/connected-apps/userinfo?clientId=' + app().clientId,
+    headers,
+  });
+  expect(correct.statusCode).toBe(200);
+  expect(AppClaimsSchema.parse(correct.json()).memberId).toBe('3');
+  expect(correct.headers['x-daclify-client-id']).toBe(app().clientId);
+  const legacy = await server.inject({
+    method: 'GET',
+    url: '/v1/connected-apps/userinfo',
+    headers,
+  });
+  expect(legacy.statusCode).toBe(200);
+  const malformed = await server.inject({
+    method: 'GET',
+    url: '/v1/connected-apps/userinfo?clientId=wrong',
+    headers,
+  });
+  expect(malformed.statusCode).toBe(400);
+});

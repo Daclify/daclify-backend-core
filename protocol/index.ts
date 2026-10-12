@@ -23,3 +23,5 @@ export * from './module-fees.js';
 export * from './directory.js';
 export * from './storage-retention.js';
 export * from './connected-apps.js';
+
+export * from './mini-app-database.js';
