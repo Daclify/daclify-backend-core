@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-12",
+  "scope": "C2 local source candidate; no deployment or public availability qualification",
+  "sourceHashes": {
+    "daclify-frontend/src/App.vue": "12b0d68a7fd8a45d87c0feb83239913d56e9f00282e169ff58442e0a90bfb3b2",
+    "daclify-frontend/src/main.ts": "1eaca6ef1a597db974b58ba354dcc19e72811a21e1ce2548eaa9be538f470920",
+    "daclify-frontend/src/api/client.ts": "810647cfed3027dee08e1b8fcc94467447c995de31699f485d016f0b06dfb7a9",
+    "daclify-frontend/src/views/MiniApps.vue": "c461fafad719730e35f656ba7d45e38a754fa91b9cc7626434930141c573cee2",
+    "daclify-frontend/src/components/MiniAppConnection.vue": "d985da5e50a7f05e86ac1154536da1e41f25bb9c9fb33313f3e2ef98fc0c311a",
+    "daclify-frontend/src/mini-apps/connection.ts": "a1485b672eb11ff4a83191b31da616a9fddc12916d2467f66efe0717b108379b",
+    "daclify-frontend/src/views/ConnectedApps.vue": "db72aaa25f9f648368b81efa89c92062e7ab01f3fdfe54cb4cd22b1361657f99",
+    "daclify-frontend/tools/check-browser-fixture.ts": "d736c7483b344d2c4b5ad9f8c357b8ac6138df0989ef7f103d91fe28fcbd618f",
+    "daclify-frontend/tests/e2e/mini-apps.spec.ts": "644968fb04cf3237c8fd59d4014509e66eb21c30455881d4128aa3d05af7119b",
+    "daclify-frontend/tests/e2e/connected-apps.spec.ts": "2e7c0bc5ef3f19795c5687784c173278162a3f1107c3347531e80e919528a657",
+    "daclify-frontend/tests/unit/mini-app-connection.test.ts": "932face91ad8533ba2622df60933e756c4e5b6934b1ac633441473742d0dfd02",
+    "daclify-backend-core/tests/helpers/mini-app-browser-server.ts": "c8f02213c44b6b68de300a7768eed20eae47aa139f0bf19e8c254b311bea7951"
+  },
+  "checks": {
+    "frontendUnit": {
+      "files": 46,
+      "passed": 296
+    },
+    "browser": {
+      "command": "npm run test:e2e:paid -- tests/e2e/mini-apps.spec.ts tests/e2e/connected-apps.spec.ts",
+      "passed": 14,
+      "projects": [
+        "chromium",
+        "mobile-chromium"
+      ],
+      "actualNativeCases": 4,
+      "signedOutCases": 2,
+      "existingRouteControlledCases": 8
+    },
+    "frontendTypecheck": "passed",
+    "frontendBuild": "passed",
+    "frontendLint": "passed",
+    "coreTypecheck": "passed",
+    "coreLint": "passed"
+  },
+  "fixture": {
+    "runtime": "Spring 1.2.2",
+    "database": "owned disposable loopback PostgreSQL",
+    "nativeContracts": "exact pinned core and modules WASM/ABI",
+    "creation": "paid native order/card attestation/createpaid; card attestation is synthetic, no live provider qualification",
+    "ownership": "private local token, no production signers; signed native probe and chain/package checks retained"
+  },
+  "journey": [
+    "signed-out navigation/mobile/keyboard",
+    "active nonadmin without registration controls",
+    "real native paid creation and root account login",
+    "native app registration/exact callback",
+    "canonical full DAO/client config export",
+    "unavailable configuration clears downloadable state",
+    "decline consent before signing",
+    "duplicate approval creates one native scoped grant",
+    "PKCE code exchange and live member/client verification",
+    "real signed native activity receipt shown in reused DAO controls",
+    "native grant revocation blocks old bearer",
+    "renewal preserves subject/member and replaces session",
+    "expired consent gives actionable error and no approval control"
+  ],
+  "limitations": [
+    "MCP and directory still explicitly planned at this task",
+    "existing connected-app browser tests control HTTP routes and do not prove native authorization",
+    "no live card provider, independent hosting, public artifact deployment or production qualification",
+    "inline author review; no independent agent authorized"
+  ],
+  "screenshots": {
+    "2026-10-12-mini-app-chromium.png": "21951106cea9132994a524b179c321fdac65be1d6895396211508cb8cb45afb5",
+    "2026-10-12-mini-app-mobile-chromium.png": "a2eedd6a429eede72144fc282ae8bfc26b8e6d5696333cdf4b267cec2db7d506"
+  },
+  "frontendCommit": "66d167d"
+}
