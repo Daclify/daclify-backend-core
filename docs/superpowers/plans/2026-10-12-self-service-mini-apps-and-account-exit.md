@@ -8,7 +8,7 @@
 
 **Tech Stack:** Antelope C++/pinned CDT, strict TypeScript, Node 24.21.x, PostgreSQL, Node SQLite, Vue/Pinia/Vue Router, Vitest, Playwright, the stable MCP TypeScript SDK and the existing static website/export tools.
 
-**Spec:** [Full design](../specs/2026-10-12-self-service-mini-apps-and-account-exit-design.md). Also consume the concurrent [account continuity design](../specs/2026-10-12-account-access-continuity-design.md); do not reimplement or overwrite it.
+**Spec:** [Full design](../specs/2026-10-12-self-service-mini-apps-and-account-exit-design.md). Consume the implemented [account continuity design](../specs/2026-10-12-account-access-continuity-design.md) and its [testnet delivery evidence](../../evidence/2026-10-12-account-access-continuity.md); do not reimplement or overwrite it. The [pushed-source compatibility review](../../evidence/2026-10-12-mini-app-plan-compatibility.md) records the baseline and corrections.
 
 ## Global Constraints
 
@@ -20,6 +20,7 @@
 - Native authorization, backed liabilities, replay protection, private-history handover and recovery survive retries and upgrades. Neither SQL deletion nor browser state substitutes for native checks.
 - Compile current contracts/probes with pinned CDT `-O=s`; preserve historical fixture flags/hashes. Bound stored values, justify indexes, provide eligible-record cleanup and measure WASM/RAM/native action CPU.
 - Use producer-owned schemas/ABIs and exact public artifact pins. No application `any`, unchecked boundary casts, TypeScript suppressions, arbitrary module UI execution or private cross-repository imports.
+- Treat core `0.14.0-alpha.3`, modules `0.10.0-alpha.3` and frontend `0.14.0-alpha.6` as verified testnet-development artifacts, not production-qualified releases. Never overwrite their tarballs. Each changed producer artifact must have a distinct development version/hash before clients consume it; update modules' exact peer pin, `CORE_RANGE`, SDK tests and frontend vendor/lock pins together. Removing plaintext profile writes is a breaking capability change and requires the applicable `0.x` minor-version advance.
 - Reuse PostgreSQL leases/jobs and current services. No new hosted database product, Redis, queue or independent signer service in this scope.
 - Record actual results, including blocked/unrun checks. Development does not authorize production deployment, real account erasure/closure, authority changes, asset movement or website publication.
 
@@ -33,13 +34,30 @@
 
 ## What exists, what changes
 
-The inspected source already implements connected apps, their exact-origin login, narrow Activity grants and a DAO Connected apps screen. The handbook still describes them as proposed, and guide/example pins lag later rollout evidence. Current source versions include concurrent work; a newer package number is not qualification evidence.
+The inspected source already implements connected apps, their exact-origin login, narrow Activity grants and a DAO Connected apps screen. The handbook still describes them as proposed, and guide/example pins lag later rollout evidence. Account continuity is implemented and published to testnet; its tested development artifacts remain below the production release gate. A package version or testnet publication is not production qualification evidence.
 
 A disposable reproduction showed the SQLite example returning the first DAO's pending completion when reopened with another DAO sharing its member number. It also exposed the previous task under a changed app ID. Fix persisted binding first. This finding is not evidence of a native authorization bypass.
 
 The agent example sends an incomplete challenge and needs complete root-authentication versus delegate-signing verification. There is no qualified MCP server in the inspected implementation. Profiles currently write public plaintext; ordinary self-departure, account erasure and DAO closure require new authoritative behavior. Activity receipts currently have no pruning lifecycle.
 
 This is an execution-ready proposal, not a claim that those additions have shipped. Engineering defaults below are recommendations implementing the conversation; directory moderation and transport order were not separately selected by the user.
+
+## Latest pushed baseline, reviewed 12 October 2026
+
+| Repository | Pushed branch/ref reviewed                                | Relevant state                                                                                               |
+| ---------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Core       | `dev` at `9de10a8`; deployed application source `7d7a8ec` | Canonical account reconnection, migration 041, private-access policy API, release-specific recovery evidence |
+| Modules    | `dev` at `d4e42dc`                                        | Module package `0.10.0-alpha.3`, exact core alpha.3 peer and explicit `CORE_RANGE`                           |
+| Frontend   | `dev` at `093d0ac`                                        | Single-kit Account/Create/Join recovery, private grant batches/local verification and portal handover        |
+| Website    | `main` at `d5c913d`                                       | Main app remains “soon”; existing links point to the test app                                                |
+
+All four local heads matched fetched pushed refs at review. Frontend vendor tarball hashes matched the account-continuity evidence. No current contract binary/source changed in that continuity delivery. Existing source facts, evidence and new proposed behavior must remain distinct. A registered-account native reconnection continuation was being edited concurrently in the shared workspace; preserve it and have B0 consume its eventual pushed schemas/pins instead of restoring this older baseline over it.
+
+Account reconnection transfers sign-ins/memberships and the sole app-subject mapping for a client, preserves the full native member reference, and requires fresh app authorization. If both accounts already have a subject for the same client, the operation rejects; this plan must not silently combine their app histories. `account_scope`/`account_owns` and `ownsAccount` are the current historical-ownership boundary. Ownership never substitutes for native signing or decryption-key possession.
+
+Migration 041's immutable retired owners, canonical-key guard and wallet-control/credential triggers require an additive erased-account transition in X2; a cascade or simple key-null update is incompatible. The current frontend request helper issues GET/POST and the fresh-proof hook protects enumerated POST paths. P2/M2/X2 use explicit POST write routes and extend those producer-owned proof paths. Private access consumes `ApiRoutes.privateAccessPolicy`, full paginated content, the current epoch and existing batch/local-verification helpers; it never bypasses from-join history or user-controlled custody.
+
+Current portal handover can be bypassed by native actions. X1 therefore specifies a new bounded recorded-grant/recipient-acceptance guard for private administrator transitions. This guard is proposed, not deployed; it cannot prove a recipient decrypted a key or recovered on another device. X3 reuses the current client checks and keeps those verification/confirmation statuses separate.
 
 ## Workstreams and delivery order
 
@@ -72,9 +90,9 @@ flowchart LR
 
 **Files:** Create `docs/evidence/2026-10-12-mini-app-execution-baseline.json` and `docs/evidence/2026-10-12-mini-app-execution-ledger.md` in core. Modify this plan's ledger only to record actual progress.
 
-- [ ] Record branch/HEAD/status for core, modules, frontend and website; current package versions; toolchain pins; known concurrent account-continuity ownership; qualified release manifest hashes versus unqualified working source. No secrets in evidence.
+- [ ] Record branch/HEAD/status for core, modules, frontend and website; current package versions; toolchain pins; the implemented account-continuity baseline above; qualified release manifest hashes versus development artifacts/working source. Re-fetch and compare against the compatibility review before editing. No secrets in evidence.
 - [ ] Read each repository's `AGENTS.md`, the canonical programme/release policy and relevant scoped plan before its first edit. Read Garden Care's `AGENTS.md` and `HANDOFF.md` before any optional preview work.
-- [ ] Resolve the next unused migration number at execution time. Reserve distinct additive migrations for directory discovery, profile keys, erasure and MCP pairing/OAuth; never edit published migration hashes or collide with concurrent `041_account_reconnect.sql`. `NNN` in a subplan is an allocation instruction, not a literal filename: replace it in the ledger before editing. Starter database migrations stay inside their independent app recipe.
+- [ ] Resolve the next unused migration number at execution time, starting after the already published `041_account_reconnect.sql`. Reserve distinct additive migrations for directory discovery, profile keys, erasure and MCP pairing/OAuth; never edit published migration hashes. `NNN` in a subplan is an allocation instruction, not a literal filename: replace it in the ledger before editing. Starter database migrations stay inside their independent app recipe.
 - [ ] Set up disposable local integration databases whose names end `_test`, and isolated native/browser fixtures. Integration guards must reject other database destinations. Never reuse Garden Care's normal fallback data directory.
 - [ ] Run the existing focused baseline: `npm test -- tests/community-mini-app.test.ts tests/connected-app-client.test.ts tests/connected-apps-protocol.test.ts tests/connected-app-contract.test.ts`. Save actual results and note existing failures without attributing them to new work.
 
@@ -157,7 +175,7 @@ Prepare additive database migrations, legacy profile decoders, pinned ABI/schema
 
 Before any authorized rollout, compare immutable supported releases, rehearse upgrade/restore with outstanding receipts/claims and publish a user-readable capability matrix. New registration, listing and MCP features can remain disabled while existing app login/Activity continue. DAO closing is a native state transition, not a reversible UI toggle. Account-erasure jobs reconcile submitted transactions before retry and never reconstruct deleted personal fields from projections.
 
-Q3 prepares a source-bound release candidate and a concrete rollout/rollback runbook. Production deployment, website publication, live changes and irreversible actions require the user's separate instruction; local fixture operations do not.
+Q3 prepares a source-bound release candidate and a concrete rollout/rollback runbook. A core version change invalidates the current version-bound managed-recovery report: qualify a fresh report/restore for the candidate and include its environment override in rollback. The current single-host testnet result does not qualify independent-host production recovery. Preserve migration 041 and subsequent user reconnections; never restore an older database over new user actions. Production deployment, website publication, live changes and irreversible actions require the user's separate instruction; local fixture operations do not.
 
 ## Execution ledger
 
@@ -184,3 +202,5 @@ Managed mini-app database hosting, arbitrary engine certification, a commercial 
 Check spec coverage, existing-versus-proposed file/API names, cross-plan type consistency, each Review Focus regression, migration allocation, single-kit recovery/deletion limits and release gates. Record only checks actually performed. The linked task plans supply exact file maps, interface ownership, failing-test assertions, commands and commit boundaries; implementations remain pending.
 
 The authoring review covered all design requirements and all 21 task interfaces inline. It corrected missing public exports, the issuer/client context absent from existing app claims, the canonical lowercase instruction type, the hosted MCP service adapter, local bounded signing and key-envelope size limits. Verification checked all eight documents, 30 local links, 76 existing source paths and task/checklist structure; Markdown formatting passed. No product code, migration, contract, browser or external-harness qualification was performed by writing this plan.
+
+The subsequent pushed-source review updated the implemented baseline, schema/proof-route handoffs, account-erasure migration requirements, bounded native handover design and release/recovery gates. Fresh checks passed: core 30, frontend 16 and modules 6. PostgreSQL integration, browser/native-runtime and live provider/harness suites were not rerun for this documentation review; their previous delivery evidence is attributed separately. All implementation tasks remain pending.
