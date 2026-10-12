@@ -1,3 +1,4 @@
+import { encryptProfile } from '../../sdk/profiles.js';
 import { expect, it } from 'vitest';
 import { randomBytes, createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -590,12 +591,25 @@ it.each([false, true])(
     push(runtime, 'inheritram', { ...inherited, dao_id: 2 });
     push(runtime, 'setdaoquota', { dao_id: 1, enabled: true });
     push(runtime, 'setdaoquota', { dao_id: 2, enabled: true });
-    await govern('setprofile', {
-      runtime,
-      dao_id: '1',
-      member_id: '1',
+    await govern('setencprof', {
+      actor: { runtime, dao_id: '1', member_id: '1' },
       account_name: 'capdao',
-      profile: JSON.stringify({ name: 'capdao', introduction: 'x'.repeat(1200) }),
+      profile: JSON.stringify(
+        await encryptProfile(
+          new TextEncoder().encode(
+            JSON.stringify({ name: 'capdao', introduction: 'x'.repeat(1200) }),
+          ),
+          crypto.getRandomValues(new Uint8Array(32)),
+          {
+            version: 2,
+            chainId: network.chainId,
+            runtime,
+            daoId: '1',
+            memberId: '1',
+            profileRevision: crypto.randomUUID(),
+          },
+        ),
+      ),
     });
     const remaining = Number(await ordinaryRemaining());
     expect(remaining).toBeGreaterThan(10);

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { StoredProfileJsonSchema } from './profiles.js';
 import { Uint64Schema } from './base.js';
 import { RecoveryRoutes } from './recovery.js';
 import { PeopleRoutes } from './people.js';
@@ -54,7 +55,7 @@ export const ServiceReceiptSchema = z.strictObject({
 export const ServiceReceiptsSchema = z.strictObject({ receipts: z.array(ServiceReceiptSchema) });
 export const MemberProfileSchema = z.strictObject({
   accountName: z.string().nullable(),
-  profile: z.string().nullable(),
+  profile: StoredProfileJsonSchema.nullable(),
 });
 export const SignInDeliverySchema = z.enum(['local', 'mail', 'unavailable']);
 export const SignInOptionsSchema = z.strictObject({

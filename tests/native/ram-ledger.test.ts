@@ -1,3 +1,4 @@
+import { encryptProfile } from '../../sdk/profiles.js';
 import { Pool } from 'pg';
 import { NativeChainGateway } from '../../services/api/src/native-chain.js';
 import { beforeAll, expect, it } from 'vitest';
@@ -459,9 +460,23 @@ it('reconciles core and all five module payers against actual native RAM', async
   };
   await check();
   for (const n of [127, 128, 1]) {
-    await act(runtime, 'setprofile', {
+    await act(runtime, 'setencprof', {
+      actor: { runtime, dao_id: '1', member_id: '1' },
       account_name: 'member',
-      profile: JSON.stringify({ name: 'member', introduction: 'ą'.repeat(n) }),
+      profile: JSON.stringify(
+        await encryptProfile(
+          new TextEncoder().encode(JSON.stringify({ name: 'member', introduction: 'ą'.repeat(n) })),
+          crypto.getRandomValues(new Uint8Array(32)),
+          {
+            version: 2,
+            chainId: network.chainId,
+            runtime,
+            daoId: '1',
+            memberId: '1',
+            profileRevision: crypto.randomUUID(),
+          },
+        ),
+      ),
     });
     await check();
   }

@@ -60,6 +60,7 @@ struct [[eosio::table("profiles"), eosio::contract("runtime")]] profile_record {
   uint64_t by_name() const { return account_name.value; }
   EOSLIB_SERIALIZE(profile_record,(id)(dao_id)(member_id)(account_name)(profile))
 };
+// Existing indexes serve exact full-member lookup and globally unique public aliases; serialization stays unchanged.
 using profiles = ram_table<"profiles"_n,profile_record,indexed_by<"bymember"_n,const_mem_fun<profile_record,uint128_t,&profile_record::by_member>>,indexed_by<"byname"_n,const_mem_fun<profile_record,uint64_t,&profile_record::by_name>>>;
 struct [[eosio::table("modules"), eosio::contract("runtime")]] module_record {
   name account; uint16_t version; std::vector<name> actions; std::vector<name> grants; checksum256 code_hash;

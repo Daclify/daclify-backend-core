@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.14.0-alpha.9 · interface 1.
+Package 0.15.0-alpha.1 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -635,7 +635,7 @@ Sources:
 
 ## runtime contract
 
-Source ABI JSON SHA-256: `d31f9e6c7d2a3608956cbab683d5212c905b21ab9fe3ec751b6ea7e5e5f2652d`.
+Source ABI JSON SHA-256: `300b7f5029c9b9d4f13935db1b152cee3b42ad5d78c69b5d7f5e11a9b0b0eaee`.
 
 ### Action: addappses
 
@@ -871,6 +871,12 @@ Source ABI JSON SHA-256: `d31f9e6c7d2a3608956cbab683d5212c905b21ab9fe3ec751b6ea7
 | token_symbol | symbol |
 | reference | checksum256 |
 | creator | public_key |
+
+### Action: delprofile
+
+| Field | ABI type |
+| --- | --- |
+| actor | actor_context |
 
 ### Action: delsession
 
@@ -1546,6 +1552,14 @@ Source ABI JSON SHA-256: `d31f9e6c7d2a3608956cbab683d5212c905b21ab9fe3ec751b6ea7
 | --- | --- |
 | dao_id | uint64 |
 | enabled | bool |
+
+### Action: setencprof
+
+| Field | ABI type |
+| --- | --- |
+| actor | actor_context |
+| account_name | name |
+| profile | string |
 
 ### Action: setexecs
 

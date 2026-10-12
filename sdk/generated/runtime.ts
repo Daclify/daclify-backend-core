@@ -1,10 +1,28 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = 'd31f9e6c7d2a3608956cbab683d5212c905b21ab9fe3ec751b6ea7e5e5f2652d';
+export const runtimeAbiHash = '300b7f5029c9b9d4f13935db1b152cee3b42ad5d78c69b5d7f5e11a9b0b0eaee';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
   "structs": [
+    {
+      "name": "actor_context",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        }
+      ]
+    },
     {
       "name": "addappses",
       "base": "",
@@ -1304,6 +1322,16 @@ export const runtimeAbi = {
         {
           "name": "history_policy",
           "type": "uint8"
+        }
+      ]
+    },
+    {
+      "name": "delprofile",
+      "base": "",
+      "fields": [
+        {
+          "name": "actor",
+          "type": "actor_context"
         }
       ]
     },
@@ -4677,6 +4705,24 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "setencprof",
+      "base": "",
+      "fields": [
+        {
+          "name": "actor",
+          "type": "actor_context"
+        },
+        {
+          "name": "account_name",
+          "type": "name"
+        },
+        {
+          "name": "profile",
+          "type": "string"
+        }
+      ]
+    },
+    {
       "name": "setexecs",
       "base": "",
       "fields": [
@@ -5397,6 +5443,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "delprofile",
+      "type": "delprofile",
+      "ricardian_contract": ""
+    },
+    {
       "name": "delsession",
       "type": "delsession",
       "ricardian_contract": ""
@@ -5744,6 +5795,11 @@ export const runtimeAbi = {
     {
       "name": "setdaoquota",
       "type": "setdaoquota",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "setencprof",
+      "type": "setencprof",
       "ricardian_contract": ""
     },
     {
@@ -6404,6 +6460,11 @@ export const runtimeAbi = {
   "ricardian_clauses": [],
   "action_results": []
 } satisfies ABI.Def;
+export interface actor_context {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+}
 export interface addappses {
   runtime: string;
   dao_id: string;
@@ -6750,6 +6811,9 @@ export interface dao_record {
   admin_count: number;
   key_epoch: string;
   history_policy: number;
+}
+export interface delprofile {
+  actor: actor_context;
 }
 export interface delsession {
   runtime: string;
@@ -7662,6 +7726,11 @@ export interface setdaoquota {
   dao_id: string;
   enabled: boolean;
 }
+export interface setencprof {
+  actor: actor_context;
+  account_name: string;
+  profile: string;
+}
 export interface setexecs {
   runtime: string;
   dao_id: string;
@@ -7851,6 +7920,7 @@ export interface RuntimeActions {
   confirmext: confirmext;
   createdao: createdao;
   createpaid: createpaid;
+  delprofile: delprofile;
   delsession: delsession;
   docref: docref;
   docscanstep: docscanstep;
@@ -7921,6 +7991,7 @@ export interface RuntimeActions {
   setcrrate: setcrrate;
   setdaogov: setdaogov;
   setdaoquota: setdaoquota;
+  setencprof: setencprof;
   setexecs: setexecs;
   setfees: setfees;
   setgov: setgov;

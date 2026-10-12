@@ -15,6 +15,8 @@ export const CoreContextActions = [
   'rotatekey',
   'setmeta',
   'setprofile',
+  'setencprof',
+  'delprofile',
   'putdoc',
   'putjson',
   'restoredoc',

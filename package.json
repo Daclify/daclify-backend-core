@@ -1,6 +1,6 @@
 {
   "name": "@daclify/backend-core",
-  "version": "0.14.0-alpha.9",
+  "version": "0.15.0-alpha.1",
   "license": "AGPL-3.0-only",
   "type": "module",
   "description": "Daclify core services and Antelope runtime",
@@ -52,11 +52,12 @@
     "prepare:audit-remediation": "tsx tools/deploy/prepare-audit-remediation.ts",
     "build:legacy-ownership": "tsx tools/build/legacy-ownership.ts",
     "prepare:unified-users": "tsx tools/deploy/prepare-unified-users.ts",
-    "package:mini-app-starter": "tsx tools/release/mini-app-starter.ts"
+    "package:mini-app-starter": "tsx tools/release/mini-app-starter.ts",
+    "build:profile-legacy": "tsx tools/build/profile-legacy.ts"
   },
   "dependencies": {
-    "@daclify/core-protocol": "file:.artifacts/daclify-core-protocol-0.14.0-alpha.9.tgz",
-    "@daclify/modules": "file:../daclify-backend-modules/.artifacts/daclify-modules-0.10.0-alpha.7.tgz",
+    "@daclify/core-protocol": "file:.artifacts/daclify-core-protocol-0.15.0-alpha.1.tgz",
+    "@daclify/modules": "file:../daclify-backend-modules/.artifacts/daclify-modules-0.10.0-alpha.9.tgz",
     "@fastify/cookie": "11.1.2",
     "@fastify/cors": "11.3.0",
     "@noble/curves": "2.4.0",

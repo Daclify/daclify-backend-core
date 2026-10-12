@@ -731,6 +731,9 @@ export class NativeChainGateway implements ChainGateway {
         'internal-k1',
         'native-linked',
         'encrypted-documents',
+        ...(actions.includes('setencprof') && actions.includes('delprofile')
+          ? ['encrypted-profiles-v2']
+          : []),
         ...(actions.includes('authproof') ? ['native-sign-in'] : []),
         ...(actions.includes('handover') &&
         actions.includes('refreshgov') &&
@@ -3637,6 +3640,12 @@ export class NativeChainGateway implements ChainGateway {
     if (account.signingKey === null) throw new ApiError('VAULT_IDENTITY_REQUIRED', 409);
     if (request.chain_id !== this.config.chainId || request.deployment !== this.config.runtime)
       throw new ApiError('INSTRUCTION_DOMAIN');
+    if (
+      request.target === this.config.runtime &&
+      request.action === 'setprofile' &&
+      (await this.network()).capabilities.includes('encrypted-profiles-v2')
+    )
+      throw new ApiError('PROFILE_ENCRYPTION_REQUIRED', 409);
     const member = (await this.table('members', request.dao_id, request.member_id, 1))[0];
     if (
       !member ||

@@ -18,7 +18,7 @@ const profileRow = z.object({
 beforeEach(async () => {
   const chain = new Blockchain();
   chain.createAccounts('alice', 'bob');
-  runtime = loadContract(chain, 'daclifycore', '.artifacts/contracts/runtime');
+  runtime = loadContract(chain, 'daclifycore', '.artifacts/profile-legacy/runtime');
   cid = CID.createV1(0x55, await sha256.digest(new TextEncoder().encode('avatar'))).toString();
   await send(runtime, 'init', ['ab'.repeat(32)], 'daclifycore@active');
   await send(runtime, 'createdao', [1, 'alice', '{}', 0, 'eosio.token', '4,TLOS'], 'alice@active');
@@ -40,7 +40,7 @@ function profile(account: string, fields: Record<string, string> = {}) {
   return JSON.stringify({ name: account, ...fields });
 }
 
-describe('member profile images', () => {
+describe('legacy member profile compatibility', () => {
   it('stores an avatar with the same CID a document accepts', async () => {
     await send(
       runtime,

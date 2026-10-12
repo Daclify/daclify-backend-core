@@ -1,0 +1,177 @@
+{
+  "task": "P1",
+  "state": "P1 complete; P2/P3 pending",
+  "date": "2026-10-12",
+  "scope": "isolated source and owned disposable fixtures; no deployment",
+  "versions": {
+    "core": "0.15.0-alpha.1",
+    "modulesSdk": "0.10.0-alpha.9",
+    "moduleContracts": "0.10.0-alpha.1",
+    "frontend": "0.15.0-alpha.1"
+  },
+  "integratedHeads": {
+    "daclify-backend-core": "42854617e4c937a7b1723e3a066b11ca7505aa9a",
+    "daclify-backend-modules": "f31328c58d95e1472adb527ad135d66c301cf772",
+    "daclify-frontend": "468a2a94ee6574a938803c36b072166b5d6abf28"
+  },
+  "sourceHashes": {
+    "protocol/profiles.ts": "0643ca18ef3eb413a911c2da9ba8333ea48915c9d73f6c781d85d17f2cac4f34",
+    "sdk/profiles.ts": "249a13e38d53c069a381197e5dac9f1dd23dbd3b0629edff2f5efaa7c4cbfa22",
+    "contracts/runtime/runtime.cpp": "472546df75fa58cc85488cecced8143e4a6347b083559366e3f64f26afb26a6d",
+    "contracts/common/records.hpp": "62ee89e99b227714557e84892e3e5dc7399bd54dbe7a026f1d9b36b4aa6512fe",
+    "sdk/permissions.ts": "3dd33d3244282baabe3f6c23a721f4da07218122f3cc8690c7986d9cc9e1fa5e",
+    "services/api/src/native-chain.ts": "c90343144d3e908fe66b457484aaa00df1fb9c153c35f1ca4344d317f80992a1",
+    "tests/profile-encryption.test.ts": "9815742a586050341c18f4941eff09d3e3580ff598e7b9af7c749a33b516b48b",
+    "tests/native/encrypted-profiles.test.ts": "a8662c868e0a680f8bda365619aa9176ec4ff8b69069ed4c3237275cf6a9f03a",
+    "tests/permission-audit.test.ts": "9fb5847a7e3ea4d34f995cd062b5b37ad2fa283ee872843b481a23336ea5d395",
+    "tools/build/profile-legacy.ts": "38340de098400f7b07394b1618e1d2c3fab3eaa8ffb66a9cfbadf7a92e240a04"
+  },
+  "artifacts": {
+    "corePackage": {
+      "sha256": "ee0280855b853f272caa29ff009920bcef7b84712554050953f6a14b0fb90d9e",
+      "bytes": 516184
+    },
+    "modulesPackage": {
+      "sha256": "636ca47ab6275798ac57bf3868045f90c2e166d0054e30363fa724e613e7da07",
+      "bytes": 207139
+    },
+    "runtimeWasm": {
+      "sha256": "5cb464cc861f1662781f6fa56267403e22c217bfbd5041158953a07f0007bc58",
+      "bytes": 919165
+    },
+    "runtimeAbiJson": {
+      "sha256": "300b7f5029c9b9d4f13935db1b152cee3b42ad5d78c69b5d7f5e11a9b0b0eaee",
+      "bytes": 170201
+    },
+    "starterManifest": {
+      "sha256": "7453466506624a06a6eb686f8e4e6a52dd98f36d7d23e80aff78d13b7b8f8cff",
+      "bytes": 722
+    },
+    "starter": {
+      "version": 1,
+      "releaseId": "a4f16eb1df7c8eda01328fe0764b522ae63729765f769681f5b7fac954563f22",
+      "coreVersion": "0.15.0-alpha.1",
+      "modulesVersion": "0.10.0-alpha.9",
+      "packageLockHash": "0c8a344ef555e06fd1c8467ee20d5e31770ae40c8ae3a958700aca3f8b1809e9",
+      "files": [
+        {
+          "name": "core.tgz",
+          "sha256": "ee0280855b853f272caa29ff009920bcef7b84712554050953f6a14b0fb90d9e",
+          "bytes": 516184
+        },
+        {
+          "name": "modules.tgz",
+          "sha256": "636ca47ab6275798ac57bf3868045f90c2e166d0054e30363fa724e613e7da07",
+          "bytes": 207139
+        },
+        {
+          "name": "starter.tgz",
+          "sha256": "63dcc5835196c47f300edac1eaf86aa563fee783fa94cf532374dbbd31681e1c",
+          "bytes": 745790
+        }
+      ]
+    }
+  },
+  "historicalFixture": {
+    "sourceRef": "50fb975e09a86b6d2e4f7b3890b6cb3eb180e6e0",
+    "cdt": "4.1.1",
+    "optimization": "-O=s",
+    "wasm": "b0c1826a210d273b3250915b7db0a4c1a4cc70be465153195b52febfb3272fb4",
+    "abi": "d31f9e6c7d2a3608956cbab683d5212c905b21ab9fe3ec751b6ea7e5e5f2652d"
+  },
+  "measurements": {
+    "wasmBytes": 919165,
+    "profileInsertRam": 1030,
+    "profileDeleteRam": 1030,
+    "cpuMicroseconds": {
+      "write": 6179,
+      "remove": 1319
+    }
+  },
+  "governingDocuments": {
+    "kind": "disposable-native-contract-flow",
+    "moduleCodeHash": "387dd60f2a6c3135e7c47bf75a6af1e27c7a06fef3246cdcbcfbc12d7b5a8033",
+    "ramBytes": 1840,
+    "actions": {
+      "register": {
+        "cpu_usage_us": 2527,
+        "net_usage_words": 30
+      },
+      "propose": {
+        "cpu_usage_us": 2237,
+        "net_usage_words": 30
+      },
+      "adopt": {
+        "cpu_usage_us": 1525,
+        "net_usage_words": 30
+      },
+      "accept": {
+        "cpu_usage_us": 1723,
+        "net_usage_words": 30
+      }
+    },
+    "preservesAdoptedVersion": true,
+    "duplicateAcceptanceRejected": true,
+    "unsignedDispatchRejected": true
+  },
+  "checks": [
+    {
+      "command": "npm test -- tests/profile-encryption.test.ts tests/profile.test.ts",
+      "result": "passed",
+      "tests": 10
+    },
+    {
+      "command": "npm run test:native -- tests/native/encrypted-profiles.test.ts tests/native/governing-documents.test.ts tests/native/permission-tree.test.ts tests/native/contract-workflows.test.ts",
+      "result": "passed",
+      "files": 4,
+      "tests": 85
+    },
+    {
+      "command": "npm run test:integration -- tests/integration/agent-publish.test.ts tests/integration/wallet-recovery.test.ts",
+      "result": "passed",
+      "tests": 47,
+      "boundaries": "real PostgreSQL and native agent workflow; wallet RPC proof fixtures simulated where existing suite specifies"
+    },
+    {
+      "command": "modules npm run verify",
+      "result": "passed",
+      "files": 32,
+      "tests": 201
+    },
+    {
+      "command": "frontend npm run lint && npm run typecheck && npm test && npm run build",
+      "result": "passed",
+      "files": 47,
+      "tests": 300,
+      "notes": "existing bundle-size warning"
+    },
+    {
+      "command": "frontend npm run test:e2e:paid -- tests/e2e/mini-apps.spec.ts tests/e2e/connected-apps.spec.ts",
+      "result": "passed",
+      "tests": 14,
+      "boundaries": "owned paid native fixture; synthetic card attestation; four native desktop/mobile cases, two signed-out cases, eight route-controlled cases"
+    },
+    {
+      "command": "core npm run lint && npm run typecheck && npm run docs:check",
+      "result": "passed"
+    },
+    {
+      "command": "core npm test (final rerun)",
+      "result": "passed",
+      "files": 150,
+      "tests": 934
+    }
+  ],
+  "failuresCorrected": [
+    "actual native leading-dot alias accepted before restoring the canonical alias guard",
+    "stale current core fixture refused by module hash guard; refreshed only the current fixture",
+    "old permission audit counts omitted the two new actions and ABI inspection omitted nested actor_context"
+  ],
+  "review": "inline author review; no independent reviewer or subagent",
+  "limitations": [
+    "P2 key custody/recovery and P3 audience editor remain pending; P1 is a format/native-action checkpoint",
+    "historical plaintext and independently retained ciphertext/keys are not erased",
+    "CPU observations are local samples under concurrent test load, not production estimates",
+    "no live provider, independent-host recovery or production qualification"
+  ]
+}

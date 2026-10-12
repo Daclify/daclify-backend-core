@@ -1,3 +1,4 @@
+import { encryptProfile } from '../../sdk/profiles.js';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { generateKeyPairSync, randomUUID } from 'node:crypto';
@@ -371,11 +372,24 @@ it('requires incoming wallet consent and accepts submitnat only from the paired 
   await first.submit(link, '2', 'bob');
   const request = await first.request(
     'daclifycore',
-    'setprofile',
-    encodeAction('setprofile', {
-      ...first.actor('2'),
+    'setencprof',
+    encodeAction('setencprof', {
+      actor: first.actor('2'),
       account_name: 'bobprofile11',
-      profile: '{"name":"bobprofile11"}',
+      profile: JSON.stringify(
+        await encryptProfile(
+          new TextEncoder().encode('{"name":"bobprofile11"}'),
+          crypto.getRandomValues(new Uint8Array(32)),
+          {
+            version: 2,
+            chainId: f.chainId,
+            runtime: 'daclifycore',
+            daoId: first.daoId,
+            memberId: '2',
+            profileRevision: crypto.randomUUID(),
+          },
+        ),
+      ),
     }),
     '2',
   );

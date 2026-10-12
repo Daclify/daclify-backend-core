@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle={
   "producer": "core",
-  "packageVersion": "0.14.0-alpha.9",
+  "packageVersion": "0.15.0-alpha.1",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -590,7 +590,7 @@ export const CoreHelpBundle={
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "d31f9e6c7d2a3608956cbab683d5212c905b21ab9fe3ec751b6ea7e5e5f2652d",
+      "sourceAbiHash": "300b7f5029c9b9d4f13935db1b152cee3b42ad5d78c69b5d7f5e11a9b0b0eaee",
       "actions": [
         {
           "name": "addappses",
@@ -1169,6 +1169,15 @@ export const CoreHelpBundle={
             {
               "name": "creator",
               "type": "public_key"
+            }
+          ]
+        },
+        {
+          "name": "delprofile",
+          "fields": [
+            {
+              "name": "actor",
+              "type": "actor_context"
             }
           ]
         },
@@ -2814,6 +2823,23 @@ export const CoreHelpBundle={
             {
               "name": "enabled",
               "type": "bool"
+            }
+          ]
+        },
+        {
+          "name": "setencprof",
+          "fields": [
+            {
+              "name": "actor",
+              "type": "actor_context"
+            },
+            {
+              "name": "account_name",
+              "type": "name"
+            },
+            {
+              "name": "profile",
+              "type": "string"
             }
           ]
         },
