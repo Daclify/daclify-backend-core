@@ -166,6 +166,8 @@ it('builds a clean installable starter with exact vendored public dependency ver
       DACLIFY_ACTIVITY_ACCOUNT: bundle.activityAccount,
       MINI_APP_ORIGIN: 'https://app.example',
       MINI_APP_DB: join(install, 'data/app.sqlite'),
+      MINI_APP_CLEANUP_EXCLUSIONS_DIRECTORY: join(directory, 'separate-cleanup-exclusions'),
+      MINI_APP_MAX_BACKUP_AGE_SECONDS: '86400',
       MINI_APP_TLS_KEY: key,
       MINI_APP_TLS_CERT: certificate,
       MINI_APP_PORT: String(address.port),

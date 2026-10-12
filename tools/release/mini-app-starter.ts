@@ -53,6 +53,8 @@ export async function buildMiniAppStarter(input: {
       'browser.ts',
       'callback.ts',
       'access.ts',
+      'cleanup-journal.ts',
+      'cleanup-access.ts',
       'adopt.ts',
       'database.ts',
       'store.ts',

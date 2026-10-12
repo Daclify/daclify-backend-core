@@ -20,12 +20,14 @@ CREATE TABLE IF NOT EXISTS mini_app.outbox (
  namespace text NOT NULL REFERENCES mini_app.bindings(namespace),
  event_id text NOT NULL CHECK(event_id ~ '^[0-9a-f]{64}$'),
  source_id text NOT NULL CHECK(source_id ~ '^[0-9a-f]{64}$'),
- member_id numeric(20,0) NOT NULL, subject uuid NOT NULL,
+ member_id numeric(20,0) NOT NULL, subject uuid,
  intent jsonb NOT NULL CHECK(octet_length(intent::text)<=8192),
  snapshot jsonb NOT NULL CHECK(octet_length(snapshot::text)<=65536),
  needs_evidence boolean NOT NULL DEFAULT false, confirmed boolean NOT NULL DEFAULT false,
  PRIMARY KEY(namespace,event_id), UNIQUE(namespace,source_id),
  FOREIGN KEY(namespace,subject,member_id) REFERENCES mini_app.actors(namespace,subject,member_id)
 );
+-- Additive upgrade: retain the exact receipt/source identity while removing login linkage.
+ALTER TABLE mini_app.outbox ALTER COLUMN subject DROP NOT NULL;
 -- These indexes enforce scope/ownership and serve the example's exact lookups.
 -- source_id is unique only because this example permits one completion per task.

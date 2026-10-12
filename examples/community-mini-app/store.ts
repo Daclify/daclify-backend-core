@@ -15,6 +15,8 @@ import {
 } from '@daclify/core-protocol';
 import { z } from 'zod';
 import { ActivityIntentSchema, type ActivityIntent } from '@daclify/modules/sdk';
+import { CleanupJournal, type CleanupStorageOptions } from './cleanup-journal.js';
+import { CleanupNoticeSchema, CleanupAckSchema, type CleanupNotice } from '@daclify/core-protocol';
 const hash = (value: string) => createHash('sha256').update(value).digest('hex');
 export const TaskSchema = z.strictObject({
   id: z.string().min(1).max(64),
@@ -34,7 +36,7 @@ const LegacyOutbox = z.object({
   snapshot: z.string().nullable(),
   needs_evidence: z.number().int().min(0).max(1),
 });
-const Outbox = LegacyOutbox.extend({ subject: z.uuid() });
+const Outbox = LegacyOutbox.extend({ subject: z.uuid().nullable() });
 const ActorRow = z.object({ subject: z.uuid(), member_id: IdSchema });
 const schema = `
 CREATE TABLE IF NOT EXISTS app_binding(id INTEGER PRIMARY KEY CHECK(id=1),value TEXT NOT NULL);
@@ -42,7 +44,7 @@ CREATE TABLE IF NOT EXISTS actors(subject TEXT NOT NULL,member_id TEXT NOT NULL,
  PRIMARY KEY(subject,member_id),UNIQUE(subject),UNIQUE(member_id));
 CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY,value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS outbox(event_id TEXT PRIMARY KEY,source_id TEXT NOT NULL,
- member_id TEXT NOT NULL,subject TEXT NOT NULL,intent TEXT NOT NULL,
+ member_id TEXT NOT NULL,subject TEXT,intent TEXT NOT NULL,
  confirmed INTEGER NOT NULL DEFAULT 0 CHECK(confirmed IN(0,1)),snapshot TEXT,
  needs_evidence INTEGER NOT NULL DEFAULT 0 CHECK(needs_evidence IN(0,1)),UNIQUE(source_id),
  FOREIGN KEY(subject,member_id) REFERENCES actors(subject,member_id));`;
@@ -70,8 +72,14 @@ export function taskSource(appId: string, task: Task) {
 export class Store {
   readonly db: DatabaseSync;
   readonly binding: AppBinding;
-  constructor(path: string, binding: AppBinding) {
+  private readonly journal: CleanupJournal;
+  constructor(path: string, binding: AppBinding, options: CleanupStorageOptions = {}) {
     this.binding = Object.freeze(AppBindingSchema.parse(binding));
+    this.journal = new CleanupJournal(
+      options.exclusionsDirectory ??
+        (path === ':memory:' ? undefined : resolve(path + '.cleanup-exclusions')),
+      options.maxBackupAgeSeconds,
+    );
     this.db = new DatabaseSync(path);
     try {
       this.db.exec('PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000');
@@ -102,6 +110,23 @@ export class Store {
           );
         }
       });
+      transaction(this.db, () => {
+        if (
+          this.db
+            .prepare('PRAGMA table_info(outbox)')
+            .all()
+            .some((row) => row.name === 'subject' && row.notnull === 1)
+        ) {
+          this.db.exec('ALTER TABLE outbox RENAME TO outbox_cleanup_v1');
+          this.db.exec(schema);
+          this.db.exec(
+            'INSERT INTO outbox SELECT * FROM outbox_cleanup_v1; DROP TABLE outbox_cleanup_v1',
+          );
+        }
+      });
+      for (const notice of this.journal.records())
+        if (appBindingHash(notice.binding) === appBindingHash(this.binding))
+          this.applyCleanup(notice);
       this.db.exec('PRAGMA journal_mode=WAL');
     } catch (error) {
       this.db.close();
@@ -115,6 +140,7 @@ export class Store {
     const actor = AppActorSchema.parse(input);
     if (appBindingHash(actor.binding) !== appBindingHash(this.binding))
       throw new Error('APP_ACTOR_BINDING');
+    if (this.journal.excludes(actor)) throw Error('APP_ACTOR_ERASED');
     this.db
       .prepare('INSERT OR IGNORE INTO actors(subject,member_id) VALUES(?,?)')
       .run(actor.subject, actor.memberId);
@@ -282,6 +308,43 @@ export class Store {
   }
   close() {
     this.db.close();
+  }
+  private applyCleanup(notice: CleanupNotice) {
+    return transaction(this.db, () => {
+      const actor = this.db
+        .prepare('SELECT member_id FROM actors WHERE subject=?')
+        .get(notice.subject);
+      if (actor && actor.member_id !== notice.memberId) throw Error('APP_CLEANUP_ACTOR');
+      const retained = this.db
+        .prepare('SELECT 1 FROM outbox WHERE member_id=? LIMIT 1')
+        .get(notice.memberId);
+      this.db
+        .prepare('UPDATE outbox SET subject=NULL WHERE subject=? AND member_id=?')
+        .run(notice.subject, notice.memberId);
+      this.db
+        .prepare('DELETE FROM actors WHERE subject=? AND member_id=?')
+        .run(notice.subject, notice.memberId);
+      return CleanupAckSchema.parse({
+        eventId: notice.eventId,
+        bindingHash: appBindingHash(this.binding),
+        state: retained ? 'retained' : 'confirmed',
+        retentionCodes: retained ? ['DAO_COMPLETION_EVIDENCE'] : [],
+      });
+    });
+  }
+  cleanupExpired() {
+    this.journal.cleanupExpired();
+  }
+  cleanup(input: CleanupNotice) {
+    const notice = CleanupNoticeSchema.parse(input);
+    if (appBindingHash(notice.binding) !== appBindingHash(this.binding))
+      throw Error('APP_CLEANUP_BINDING');
+    const actor = this.db
+      .prepare('SELECT member_id FROM actors WHERE subject=?')
+      .get(notice.subject);
+    if (actor && actor.member_id !== notice.memberId) throw Error('APP_CLEANUP_ACTOR');
+    this.journal.record(notice);
+    return this.applyCleanup(notice);
   }
 }
 

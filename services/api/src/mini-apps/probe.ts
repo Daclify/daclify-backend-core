@@ -38,7 +38,7 @@ export function isPublicAddress(address: string): boolean {
     ? !blocked.check(address, 'ipv4')
     : family === 6 && globalV6.check(address, 'ipv6') && !blocked.check(address, 'ipv6');
 }
-type Address = { address: string; family: 4 | 6 };
+export type Address = { address: string; family: 4 | 6 };
 type ProbeResponse = { status: number; bytes: Uint8Array };
 export interface ProbeDependencies {
   lookup(hostname: string): Promise<readonly Address[]>;
@@ -49,17 +49,27 @@ export async function pinnedHttpsRequest(
   url: URL,
   address: Address,
   signal: AbortSignal,
+  post?: { token: string },
 ): Promise<ProbeResponse> {
   return new Promise((resolve, reject) => {
     const pending = request(
       url,
       {
-        method: 'GET',
+        method: post ? 'POST' : 'GET',
         agent: false,
         family: address.family,
         signal,
         lookup: (_hostname, _options, callback) => callback(null, address.address, address.family),
-        headers: { accept: 'application/json' },
+        headers: {
+          accept: 'application/json',
+          ...(post
+            ? {
+                authorization: 'Bearer ' + post.token,
+                'content-type': 'application/json',
+                'content-length': '2',
+              }
+            : {}),
+        },
       },
       (response) => {
         let size = 0;
@@ -86,10 +96,10 @@ export async function pinnedHttpsRequest(
       },
     );
     pending.on('error', reject);
-    pending.end();
+    pending.end(post ? '{}' : undefined);
   });
 }
-const defaults: ProbeDependencies = {
+export const probeDependencies: ProbeDependencies = {
   lookup: async (hostname) =>
     (await lookup(hostname, { all: true, verbatim: true })).map((row) => {
       if (row.family !== 4 && row.family !== 6) throw new Error('APP_ENDPOINT_ADDRESS');
@@ -100,7 +110,7 @@ const defaults: ProbeDependencies = {
 export async function probeReadiness(
   url: URL,
   binding: AppBinding,
-  deps: ProbeDependencies = defaults,
+  deps: ProbeDependencies = probeDependencies,
 ): Promise<z.infer<typeof ConnectionCheckSchema>> {
   const failed = (code: string) => ({
     stage: 'readiness' as const,

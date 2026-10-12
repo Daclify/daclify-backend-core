@@ -1,3 +1,4 @@
+import ts from 'typescript';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
@@ -33,6 +34,33 @@ function assertInsideWorkspace(root: string, testPath: string): void {
     throw new Error(`REQUIREMENT_PATH: ${testPath}`);
 }
 
+function hasTestDeclaration(source: string): boolean {
+  const file = ts.createSourceFile(
+    'requirement.test.ts',
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS,
+  );
+  let found = false;
+  function visit(node: ts.Node): void {
+    if (found) return;
+    if (ts.isCallExpression(node)) {
+      const callee = node.expression;
+      found =
+        (ts.isIdentifier(callee) && ['it', 'test'].includes(callee.text)) ||
+        (ts.isCallExpression(callee) &&
+          ts.isPropertyAccessExpression(callee.expression) &&
+          callee.expression.name.text === 'each' &&
+          ts.isIdentifier(callee.expression.expression) &&
+          ['it', 'test'].includes(callee.expression.expression.text));
+    }
+    if (!found) ts.forEachChild(node, visit);
+  }
+  visit(file);
+  return found;
+}
+
 export function checkRequirementRegister(root: string, register: unknown): RequirementRegister {
   if (!record(register)) throw new Error('REQUIREMENTS_SHAPE: register must be an object');
   const { requirements, requiredSuites } = register;
@@ -63,11 +91,8 @@ export function checkRequirementRegister(root: string, register: unknown): Requi
       assertInsideWorkspace(root, testPath);
       const absolute = path.resolve(root, testPath);
       if (!existsSync(absolute)) throw new Error(`REQUIREMENT_TEST_MISSING: ${testPath}`);
-      const source = readFileSync(absolute, 'utf8')
-        .replace(/\/\*[\s\S]*?\*\//g, '')
-        .replace(/^\s*\/\/.*$/gm, '');
-      if (!/\b(?:it|test)(?:\.each\s*\([\s\S]*?\))?\s*\(/.test(source))
-        throw new Error(`REQUIREMENT_TEST_EMPTY: ${testPath}`);
+      const source = readFileSync(absolute, 'utf8');
+      if (!hasTestDeclaration(source)) throw new Error(`REQUIREMENT_TEST_EMPTY: ${testPath}`);
       tests.push(testPath);
     }
     if (tests.length === 0) throw new Error(`REQUIREMENT_TEST_EMPTY: ${entry.id}`);

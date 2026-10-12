@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle={
   "producer": "core",
-  "packageVersion": "0.15.0-alpha.9",
+  "packageVersion": "0.15.0-alpha.10",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -9759,93 +9759,196 @@ export const CoreHelpBundle={
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             },
             "config": {
-              "type": "object",
-              "properties": {
-                "dao": {
+              "anyOf": [
+                {
                   "type": "object",
                   "properties": {
-                    "chainId": {
-                      "type": "string",
-                      "pattern": "^[0-9a-f]{64}$"
+                    "dao": {
+                      "type": "object",
+                      "properties": {
+                        "chainId": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{64}$"
+                        },
+                        "contract": {
+                          "type": "string",
+                          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                        },
+                        "daoId": {
+                          "type": "string",
+                          "maxLength": 20
+                        },
+                        "interfaceVersion": {
+                          "type": "number",
+                          "const": 1
+                        }
+                      },
+                      "required": [
+                        "chainId",
+                        "contract",
+                        "daoId",
+                        "interfaceVersion"
+                      ],
+                      "additionalProperties": false
                     },
-                    "contract": {
-                      "type": "string",
-                      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
-                    },
-                    "daoId": {
+                    "appId": {
                       "type": "string",
                       "maxLength": 20
                     },
-                    "interfaceVersion": {
-                      "type": "number",
-                      "const": 1
+                    "revision": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80
+                    },
+                    "origins": {
+                      "minItems": 1,
+                      "maxItems": 8,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "format": "uri"
+                      }
+                    },
+                    "redirectUris": {
+                      "minItems": 1,
+                      "maxItems": 8,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "format": "uri"
+                      }
+                    },
+                    "sourceApiBase": {
+                      "type": "string",
+                      "maxLength": 512,
+                      "format": "uri"
+                    },
+                    "activityAccount": {
+                      "type": "string",
+                      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                    },
+                    "enabled": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
-                    "chainId",
-                    "contract",
-                    "daoId",
-                    "interfaceVersion"
+                    "dao",
+                    "appId",
+                    "revision",
+                    "name",
+                    "origins",
+                    "redirectUris",
+                    "activityAccount",
+                    "enabled"
                   ],
                   "additionalProperties": false
                 },
-                "appId": {
-                  "type": "string",
-                  "maxLength": 20
-                },
-                "revision": {
-                  "type": "string",
-                  "maxLength": 20
-                },
-                "name": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 80
-                },
-                "origins": {
-                  "minItems": 1,
-                  "maxItems": 8,
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "maxLength": 512,
-                    "format": "uri"
-                  }
-                },
-                "redirectUris": {
-                  "minItems": 1,
-                  "maxItems": 8,
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "maxLength": 512,
-                    "format": "uri"
-                  }
-                },
-                "sourceApiBase": {
-                  "type": "string",
-                  "maxLength": 512,
-                  "format": "uri"
-                },
-                "activityAccount": {
-                  "type": "string",
-                  "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
-                },
-                "enabled": {
-                  "type": "boolean"
+                {
+                  "type": "object",
+                  "properties": {
+                    "dao": {
+                      "type": "object",
+                      "properties": {
+                        "chainId": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{64}$"
+                        },
+                        "contract": {
+                          "type": "string",
+                          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                        },
+                        "daoId": {
+                          "type": "string",
+                          "maxLength": 20
+                        },
+                        "interfaceVersion": {
+                          "type": "number",
+                          "const": 1
+                        }
+                      },
+                      "required": [
+                        "chainId",
+                        "contract",
+                        "daoId",
+                        "interfaceVersion"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "appId": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "revision": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80
+                    },
+                    "origins": {
+                      "minItems": 1,
+                      "maxItems": 8,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "format": "uri"
+                      }
+                    },
+                    "redirectUris": {
+                      "minItems": 1,
+                      "maxItems": 8,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "format": "uri"
+                      }
+                    },
+                    "sourceApiBase": {
+                      "type": "string",
+                      "maxLength": 512,
+                      "format": "uri"
+                    },
+                    "activityAccount": {
+                      "type": "string",
+                      "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "schemaVersion": {
+                      "type": "number",
+                      "const": 2
+                    },
+                    "cleanupUrl": {
+                      "type": "string",
+                      "maxLength": 512,
+                      "format": "uri"
+                    }
+                  },
+                  "required": [
+                    "dao",
+                    "appId",
+                    "revision",
+                    "name",
+                    "origins",
+                    "redirectUris",
+                    "activityAccount",
+                    "enabled",
+                    "schemaVersion"
+                  ],
+                  "additionalProperties": false
                 }
-              },
-              "required": [
-                "dao",
-                "appId",
-                "revision",
-                "name",
-                "origins",
-                "redirectUris",
-                "activityAccount",
-                "enabled"
-              ],
-              "additionalProperties": false
+              ]
             },
             "configHash": {
               "type": "string",
@@ -9912,104 +10015,8 @@ export const CoreHelpBundle={
       "path": "/v1/connected-apps/configurations",
       "input": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "dao": {
-            "type": "object",
-            "properties": {
-              "chainId": {
-                "type": "string",
-                "pattern": "^[0-9a-f]{64}$"
-              },
-              "contract": {
-                "type": "string",
-                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
-              },
-              "daoId": {
-                "type": "string",
-                "maxLength": 20
-              },
-              "interfaceVersion": {
-                "type": "number",
-                "const": 1
-              }
-            },
-            "required": [
-              "chainId",
-              "contract",
-              "daoId",
-              "interfaceVersion"
-            ],
-            "additionalProperties": false
-          },
-          "appId": {
-            "type": "string",
-            "maxLength": 20
-          },
-          "revision": {
-            "type": "string",
-            "maxLength": 20
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 80
-          },
-          "origins": {
-            "minItems": 1,
-            "maxItems": 8,
-            "type": "array",
-            "items": {
-              "type": "string",
-              "maxLength": 512,
-              "format": "uri"
-            }
-          },
-          "redirectUris": {
-            "minItems": 1,
-            "maxItems": 8,
-            "type": "array",
-            "items": {
-              "type": "string",
-              "maxLength": 512,
-              "format": "uri"
-            }
-          },
-          "sourceApiBase": {
-            "type": "string",
-            "maxLength": 512,
-            "format": "uri"
-          },
-          "activityAccount": {
-            "type": "string",
-            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
-          },
-          "enabled": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "dao",
-          "appId",
-          "revision",
-          "name",
-          "origins",
-          "redirectUris",
-          "activityAccount",
-          "enabled"
-        ],
-        "additionalProperties": false
-      },
-      "response": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "clientId": {
-            "type": "string",
-            "format": "uuid",
-            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-          },
-          "config": {
+        "anyOf": [
+          {
             "type": "object",
             "properties": {
               "dao": {
@@ -10098,86 +10105,119 @@ export const CoreHelpBundle={
             ],
             "additionalProperties": false
           },
-          "configHash": {
-            "type": "string",
-            "pattern": "^[0-9a-f]{64}$"
-          },
-          "native": {
-            "anyOf": [
-              {
+          {
+            "type": "object",
+            "properties": {
+              "dao": {
                 "type": "object",
                 "properties": {
-                  "id": {
-                    "type": "string",
-                    "maxLength": 20
-                  },
-                  "target": {
-                    "type": "string",
-                    "maxLength": 13
-                  },
-                  "revision": {
-                    "type": "string",
-                    "maxLength": 20
-                  },
-                  "config_hash": {
+                  "chainId": {
                     "type": "string",
                     "pattern": "^[0-9a-f]{64}$"
                   },
-                  "enabled": {
-                    "type": "boolean"
+                  "contract": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
                   },
-                  "security_epoch": {
+                  "daoId": {
                     "type": "string",
                     "maxLength": 20
+                  },
+                  "interfaceVersion": {
+                    "type": "number",
+                    "const": 1
                   }
                 },
                 "required": [
-                  "id",
-                  "target",
-                  "revision",
-                  "config_hash",
-                  "enabled",
-                  "security_epoch"
+                  "chainId",
+                  "contract",
+                  "daoId",
+                  "interfaceVersion"
                 ],
                 "additionalProperties": false
               },
-              {
-                "type": "null"
+              "appId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "revision": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "origins": {
+                "minItems": 1,
+                "maxItems": 8,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 512,
+                  "format": "uri"
+                }
+              },
+              "redirectUris": {
+                "minItems": 1,
+                "maxItems": 8,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 512,
+                  "format": "uri"
+                }
+              },
+              "sourceApiBase": {
+                "type": "string",
+                "maxLength": 512,
+                "format": "uri"
+              },
+              "activityAccount": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "schemaVersion": {
+                "type": "number",
+                "const": 2
+              },
+              "cleanupUrl": {
+                "type": "string",
+                "maxLength": 512,
+                "format": "uri"
               }
-            ]
+            },
+            "required": [
+              "dao",
+              "appId",
+              "revision",
+              "name",
+              "origins",
+              "redirectUris",
+              "activityAccount",
+              "enabled",
+              "schemaVersion"
+            ],
+            "additionalProperties": false
           }
-        },
-        "required": [
-          "clientId",
-          "config",
-          "configHash",
-          "native"
-        ],
-        "additionalProperties": false
+        ]
       },
-      "helpTopic": "connected-apps"
-    },
-    {
-      "method": "GET",
-      "path": "/v1/connected-apps/requests/:id",
       "response": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
         "properties": {
-          "id": {
+          "clientId": {
             "type": "string",
             "format": "uuid",
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
           },
-          "app": {
-            "type": "object",
-            "properties": {
-              "clientId": {
-                "type": "string",
-                "format": "uuid",
-                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-              },
-              "config": {
+          "config": {
+            "anyOf": [
+              {
                 "type": "object",
                 "properties": {
                   "dao": {
@@ -10265,6 +10305,378 @@ export const CoreHelpBundle={
                   "enabled"
                 ],
                 "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "dao": {
+                    "type": "object",
+                    "properties": {
+                      "chainId": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "contract": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "daoId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "interfaceVersion": {
+                        "type": "number",
+                        "const": 1
+                      }
+                    },
+                    "required": [
+                      "chainId",
+                      "contract",
+                      "daoId",
+                      "interfaceVersion"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "appId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "origins": {
+                    "minItems": 1,
+                    "maxItems": 8,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 512,
+                      "format": "uri"
+                    }
+                  },
+                  "redirectUris": {
+                    "minItems": 1,
+                    "maxItems": 8,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 512,
+                      "format": "uri"
+                    }
+                  },
+                  "sourceApiBase": {
+                    "type": "string",
+                    "maxLength": 512,
+                    "format": "uri"
+                  },
+                  "activityAccount": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "schemaVersion": {
+                    "type": "number",
+                    "const": 2
+                  },
+                  "cleanupUrl": {
+                    "type": "string",
+                    "maxLength": 512,
+                    "format": "uri"
+                  }
+                },
+                "required": [
+                  "dao",
+                  "appId",
+                  "revision",
+                  "name",
+                  "origins",
+                  "redirectUris",
+                  "activityAccount",
+                  "enabled",
+                  "schemaVersion"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "configHash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "native": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "target": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "config_hash": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "security_epoch": {
+                    "type": "string",
+                    "maxLength": 20
+                  }
+                },
+                "required": [
+                  "id",
+                  "target",
+                  "revision",
+                  "config_hash",
+                  "enabled",
+                  "security_epoch"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "clientId",
+          "config",
+          "configHash",
+          "native"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "connected-apps"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/connected-apps/requests/:id",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "app": {
+            "type": "object",
+            "properties": {
+              "clientId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "config": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "dao": {
+                        "type": "object",
+                        "properties": {
+                          "chainId": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "contract": {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          },
+                          "daoId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "interfaceVersion": {
+                            "type": "number",
+                            "const": 1
+                          }
+                        },
+                        "required": [
+                          "chainId",
+                          "contract",
+                          "daoId",
+                          "interfaceVersion"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "appId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "origins": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "redirectUris": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "sourceApiBase": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "format": "uri"
+                      },
+                      "activityAccount": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "dao",
+                      "appId",
+                      "revision",
+                      "name",
+                      "origins",
+                      "redirectUris",
+                      "activityAccount",
+                      "enabled"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "dao": {
+                        "type": "object",
+                        "properties": {
+                          "chainId": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "contract": {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          },
+                          "daoId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "interfaceVersion": {
+                            "type": "number",
+                            "const": 1
+                          }
+                        },
+                        "required": [
+                          "chainId",
+                          "contract",
+                          "daoId",
+                          "interfaceVersion"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "appId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "origins": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "redirectUris": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "sourceApiBase": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "format": "uri"
+                      },
+                      "activityAccount": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      },
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 2
+                      },
+                      "cleanupUrl": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "format": "uri"
+                      }
+                    },
+                    "required": [
+                      "dao",
+                      "appId",
+                      "revision",
+                      "name",
+                      "origins",
+                      "redirectUris",
+                      "activityAccount",
+                      "enabled",
+                      "schemaVersion"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
               },
               "configHash": {
                 "type": "string",

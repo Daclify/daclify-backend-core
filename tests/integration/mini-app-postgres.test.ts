@@ -8,6 +8,10 @@ import { miniAppConformance, miniBinding } from '../helpers/mini-app-store.js';
 import { createPostgresStore } from '../../examples/community-mini-app/postgres-store.js';
 import { appBindingHash } from '@daclify/core-protocol';
 import { TaskSchema } from '../../examples/community-mini-app/store.js';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { miniActor } from '../helpers/mini-app-store.js';
+import { CleanupNoticeSchema } from '../../protocol/account-exit.js';
 const url = process.env.DATABASE_URL;
 if (
   !url ||
@@ -111,4 +115,80 @@ it('initializes simultaneous cold starts without duplicating namespace metadata 
     total: '1',
   });
   for (const store of stores) await store.close();
+});
+
+it('keeps other tenant rows byte-identical and reapplies cleanup before a SQL restore serves old identity links', async () => {
+  await pool.query('DROP SCHEMA IF EXISTS mini_app CASCADE');
+  const dir = await mkdtemp('/tmp/daclify-mini-app-exclusions-'),
+    options = { exclusionsDirectory: dir, maxBackupAgeSeconds: 86400 };
+  try {
+    const store = await createPostgresStore(pool, miniBinding, options),
+      otherBinding = { ...miniBinding, appId: '2', clientId: randomUUID() },
+      other = await createPostgresStore(pool, otherBinding, options),
+      otherActor = { ...miniActor, binding: otherBinding };
+    await store.complete('chillies', miniActor, {});
+    await other.complete('chillies', otherActor, {});
+    const otherNamespace = appBindingHash(otherBinding),
+      readOther = async () => ({
+        actors: (
+          await pool.query('SELECT * FROM mini_app.actors WHERE namespace=$1', [otherNamespace])
+        ).rows,
+        outbox: (
+          await pool.query('SELECT * FROM mini_app.outbox WHERE namespace=$1', [otherNamespace])
+        ).rows,
+        tasks: (
+          await pool.query('SELECT * FROM mini_app.tasks WHERE namespace=$1', [otherNamespace])
+        ).rows,
+      }),
+      before = await readOther();
+    const { stdout } = await promisify(execFile)(
+      process.env.MINI_APP_PG_DUMP ?? 'pg_dump',
+      [
+        '--dbname',
+        target.toString(),
+        '--schema=mini_app',
+        '--inserts',
+        '--no-owner',
+        '--no-privileges',
+      ],
+      { maxBuffer: 8 * 1024 * 1024 },
+    );
+    const notice = CleanupNoticeSchema.parse({
+      version: 1,
+      eventId: randomUUID(),
+      binding: miniBinding,
+      subject: miniActor.subject,
+      memberId: miniActor.memberId,
+      kind: 'account-erased',
+      issuedAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 300000).toISOString(),
+    });
+    expect(await store.cleanup(notice)).toMatchObject({
+      state: 'retained',
+      retentionCodes: ['DAO_COMPLETION_EVIDENCE'],
+    });
+    const otherTenantRows = await readOther();
+    expect(otherTenantRows).toEqual(before);
+    await expect(store.tasks(miniActor)).rejects.toThrow('APP_ACTOR_ERASED');
+    expect(await store.cleanup(notice)).toMatchObject({ state: 'retained' });
+    await pool.query('DROP SCHEMA mini_app CASCADE');
+    await pool.query(
+      stdout
+        .split('\n')
+        .filter((line) => !line.startsWith('\\'))
+        .join('\n'),
+    );
+    const restored = await createPostgresStore(pool, miniBinding, options);
+    await expect(restored.tasks(miniActor)).rejects.toThrow('APP_ACTOR_ERASED');
+    expect(
+      (
+        await pool.query('SELECT subject FROM mini_app.outbox WHERE namespace=$1', [
+          appBindingHash(miniBinding),
+        ])
+      ).rows,
+    ).toEqual([{ subject: null }]);
+    expect(await readOther()).toEqual(before);
+  } finally {
+    await rm(dir, { recursive: true });
+  }
 });

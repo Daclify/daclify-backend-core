@@ -148,7 +148,7 @@ IDs use the existing lossless uint64 decimal-string schema; never browser floati
 - **Profile format:** explicit encrypted version 2 with AES-256-GCM, 12-byte IV and context-bound authenticated data; reuse audited existing P-256/HKDF key delivery primitives with a separate profile domain. Maximum plaintext 4,096 UTF-8 bytes; maximum stored envelope 8,192 UTF-8 bytes. Keep existing legacy serialization/readers and measure the real overhead.
 - **Identity visibility:** public native identifiers and a user-chosen public account alias may remain public. Real name, contact details, location, biography, social links and sensitive image references are inside the encrypted payload. Explain this before a profile write; no default publication of personal fields.
 - **Listings:** recommended policy is self-service maintainer/origin verification, bounded submissions and community moderation/reporting. Listing proves a maintainer controls a listing/origin, not platform endorsement, security certification or DAO authority. Use existing platform governance/role policy for moderation; no permanent founder inbox.
-- **MCP:** local stdio first, hosted Streamable HTTP second; same bounded capabilities. Pin stable SDK `@modelcontextprotocol/sdk@1.32.1`, verified 12 October 2026, in a separate package with public Daclify pins. If official support has changed when executing, revalidate and record any replacement pin before implementing.
+- **MCP:** local stdio first, hosted Streamable HTTP second; same bounded capabilities. Use stable v2 split packages `@modelcontextprotocol/server@2.3.1`, `@modelcontextprotocol/client@2.3.1` and hosted adapter `@modelcontextprotocol/node@2.1.1`, reverified 12 October 2026, in a separate package with public Daclify pins. If official support has changed when executing, revalidate and record any replacement pin before implementing.
 - **Hosted signing:** remote tools prepare intents and may submit an already signed permitted intent. Signing occurs in the user/community's supported companion or protected harness; the hosted MCP service never receives root/private signing keys. An HTTP-only harness without a compatible signer qualifies for read/prepare, not autonomous submission.
 - **Local signing:** after trusted consent, a protected local signer can execute only the selected routine proposal/activity/vote/review scopes through `submit_prepared`. No private key enters model text and no arbitrary-sign tool is exposed. Human-assisted confirmation and agent autonomy follow the selected consent/DAO policy; administrative roots stay outside MCP.
 - **Retirement:** active→closing→closed native DAO lifecycle. Closing prevents new commitments but allows already authorized settlement, claim withdrawal, unstaking, evidence/reconciliation and safe handover. Final closure requires zero unresolved liabilities/locks and an independently valid native controller.
@@ -189,7 +189,7 @@ Execution is now authorized and running inline. The [durable execution ledger](.
 | F1–F4   | F1–F4 complete                   | Durable ledger              |
 | C1–C3   | C1–C2 complete; C3 pending       | —                           |
 | P1–P3   | P1–P3 complete                   | —                           |
-| X1–X4   | X1–X3 complete; X4 pending       | —                           |
+| X1–X4   | X1–X4 complete       | —                           |
 | M1–M4   | Pending                          | —                           |
 | Q1–Q3   | Pending                          | —                           |
 

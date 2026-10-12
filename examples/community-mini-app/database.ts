@@ -3,6 +3,8 @@ import type {
   AppActivityPageSchema,
   AppSnapshotDraftSchema,
   AppSourceRecordSchema,
+  CleanupNotice,
+  CleanupAck,
 } from '@daclify/core-protocol';
 import type { ActivityIntent } from '@daclify/modules/sdk';
 import type { z } from 'zod';
@@ -10,6 +12,8 @@ import { Store, type Task } from './store.js';
 export type { Task } from './store.js';
 export type CompletionOptions = { requireEvidence?: boolean; review?: boolean };
 export interface MiniAppStore {
+  cleanup(notice: CleanupNotice): Promise<CleanupAck>;
+  cleanupExpired(): Promise<void>;
   tasks(actor: AppActor): Promise<Task[]>;
   source(sourceId: string, actor: AppActor): Promise<z.infer<typeof AppSourceRecordSchema>>;
   complete(taskId: string, actor: AppActor, options: CompletionOptions): Promise<ActivityIntent>;
@@ -31,6 +35,12 @@ export interface MiniAppStore {
 }
 export function sqliteStore(store: Store): MiniAppStore {
   return {
+    async cleanupExpired() {
+      store.cleanupExpired();
+    },
+    async cleanup(notice) {
+      return store.cleanup(notice);
+    },
     async tasks(actor) {
       return store.tasks(actor);
     },

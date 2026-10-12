@@ -75,4 +75,28 @@ describe('requirement register', () => {
       }).requirements,
     ).toHaveLength(1);
   });
+  it('recognizes declarations between quoted route globs without treating strings as comments', () => {
+    writeFileSync(
+      join(root, 'route-globs.test.ts'),
+      "const routes=['**/v1/**']; test('keeps scope',()=>{}); const retry=['**/v1/**'];\n",
+    );
+    expect(() =>
+      checkRequirementRegister(root, {
+        requiredSuites: ['browser'],
+        requirements: [{ id: 'CLEANUP-UI', suite: 'browser', tests: ['route-globs.test.ts'] }],
+      }),
+    ).not.toThrow();
+  });
+  it('does not count a test declaration inside a string', () => {
+    writeFileSync(
+      join(root, 'quoted.test.ts'),
+      `const example="it('a fictional check',()=>{});";\n`,
+    );
+    expect(() =>
+      checkRequirementRegister(root, {
+        requiredSuites: ['unit'],
+        requirements: [{ id: 'QUOTED', suite: 'unit', tests: ['quoted.test.ts'] }],
+      }),
+    ).toThrow('REQUIREMENT_TEST_EMPTY');
+  });
 });

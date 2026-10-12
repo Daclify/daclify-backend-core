@@ -1,3 +1,4 @@
+import { MiniAppCleanup } from './mini-apps/cleanup.js';
 import { AccountExit } from './account-exit/service.js';
 import { readAccountExitConfiguration } from './account-exit/config.js';
 import { startAccountExitWorker } from './account-exit/jobs.js';
@@ -257,9 +258,9 @@ const storageNotices =
     : undefined;
 const recovery = await readRecoveryConfiguration(process.env);
 const profileKeysConfiguration = await readProfileKeysConfiguration(process.env);
-const exitConfiguration=await readAccountExitConfiguration(process.env);
-if(exitConfiguration)await exitConfiguration.exclusions.applyBeforeServe(pool);
-const accountExit=exitConfiguration?new AccountExit(pool,chain,{...exitConfiguration,hostedReconciliation:{...(hosting?{hosting:(dao)=>hosting.reconcileRetention(dao)}:{}),...(hostedStorage?{storage:(dao)=>hostedStorage.reconcileRetention(dao)}:{})},...(profileKeysConfiguration?{profileExclusions:profileKeysConfiguration.exclusions}:{}),...(recovery?{recoveryStore:recovery.store}:{})}):undefined;
+const exitConfiguration = await readAccountExitConfiguration(process.env);
+if (exitConfiguration) await exitConfiguration.exclusions.applyBeforeServe(pool);
+
 const appConfig = readConnectedAppsConfiguration(
   process.env,
   process.env.API_PUBLIC_ORIGIN ?? env.FRONTEND_ORIGIN,
@@ -267,6 +268,20 @@ const appConfig = readConnectedAppsConfiguration(
 );
 const connectedApps = appConfig
   ? await ConnectedApps.create(pool, chain.connectedApps, appConfig)
+  : undefined;
+const accountExit = exitConfiguration
+  ? new AccountExit(pool, chain, {
+      ...exitConfiguration,
+      ...(connectedApps ? { appCleanup: new MiniAppCleanup(pool, connectedApps) } : {}),
+      hostedReconciliation: {
+        ...(hosting ? { hosting: (dao) => hosting.reconcileRetention(dao) } : {}),
+        ...(hostedStorage ? { storage: (dao) => hostedStorage.reconcileRetention(dao) } : {}),
+      },
+      ...(profileKeysConfiguration
+        ? { profileExclusions: profileKeysConfiguration.exclusions }
+        : {}),
+      ...(recovery ? { recoveryStore: recovery.store } : {}),
+    })
   : undefined;
 const miniAppArtifacts = process.env.MINI_APP_RELEASE_DIRECTORY
   ? await MiniAppArtifacts.load(
@@ -278,7 +293,7 @@ const miniApps = connectedApps
   : undefined;
 const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
   ...(profileKeysConfiguration ? { profileKeys: profileKeysConfiguration } : {}),
-  ...(accountExit?{accountExit}:{}),
+  ...(accountExit ? { accountExit } : {}),
   telosGovernance: readTelosPins(process.env),
   ...(connectedApps ? { connectedApps } : {}),
   ...(miniApps ? { miniApps } : {}),
@@ -309,7 +324,7 @@ const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
 });
 await app.listen({ host: env.API_HOST, port: env.API_PORT });
 const authWorker = startAuthMaintenance(pool);
-const exitWorker=accountExit?startAccountExitWorker(pool,accountExit):undefined;
+const exitWorker = accountExit ? startAccountExitWorker(pool, accountExit) : undefined;
 const profileWorker = profileKeysConfiguration
   ? startProfileWorker(pool, new ProfileKeys(pool, chain, profileKeysConfiguration))
   : undefined;

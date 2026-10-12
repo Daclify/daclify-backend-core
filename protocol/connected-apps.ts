@@ -14,7 +14,7 @@ const httpsUrl = z
     return u.protocol === 'https:' && !u.username && !u.password && !u.hash;
   });
 const httpsOrigin = httpsUrl.refine((value) => new URL(value).origin === value);
-export const ConnectedAppConfigSchema = z
+export const ConnectedAppConfigV1Schema = z
   .strictObject({
     dao: DaoRefSchema,
     appId: IdSchema,
@@ -35,13 +35,27 @@ export const ConnectedAppConfigSchema = z
     )
       ctx.addIssue({ code: 'custom', message: 'Callbacks must use unique approved origins.' });
   });
+export const ConnectedAppConfigV2Schema = ConnectedAppConfigV1Schema.safeExtend({
+  schemaVersion: z.literal(2),
+  cleanupUrl: httpsUrl.optional(),
+}).refine(
+  (value) => !value.cleanupUrl || value.origins.includes(new URL(value.cleanupUrl).origin),
+  'Cleanup must use an approved origin.',
+);
+export const ConnectedAppConfigSchema = z.union([
+  ConnectedAppConfigV1Schema,
+  ConnectedAppConfigV2Schema,
+]);
 export type ConnectedAppConfig = z.infer<typeof ConnectedAppConfigSchema>;
 export function appConfigurationHash(value: unknown): string {
   return bytesToHex(
     sha256(
       new TextEncoder().encode(
         JSON.stringify({
-          domain: 'daclify.connected-app.v1',
+          domain:
+            'schemaVersion' in ConnectedAppConfigSchema.parse(value)
+              ? 'daclify.connected-app.v2'
+              : 'daclify.connected-app.v1',
           config: ConnectedAppConfigSchema.parse(value),
         }),
       ),

@@ -24,6 +24,8 @@ const lines = {
   MINI_APP_DATABASE_ENGINE: 'sqlite',
   MINI_APP_DB: './data/app.sqlite',
   MINI_APP_PERSISTENT_VOLUME: '0',
+  MINI_APP_CLEANUP_EXCLUSIONS_DIRECTORY: '/private/app-exclusions',
+  MINI_APP_MAX_BACKUP_AGE_SECONDS: '86400',
   MINI_APP_TLS_CERT: '/private/local/certificate.pem',
   MINI_APP_TLS_KEY: '/private/local/private-key.pem',
 };

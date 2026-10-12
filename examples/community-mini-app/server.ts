@@ -1,6 +1,6 @@
 import { createServer } from 'node:https';
 import { readFileSync } from 'node:fs';
-import { resolve, sep } from 'node:path';
+import { resolve, sep, isAbsolute } from 'node:path';
 import { tmpdir } from 'node:os';
 import { z } from 'zod';
 import {
@@ -18,6 +18,7 @@ import { Pool } from 'pg';
 import { sqliteStore } from './database.js';
 import { createPostgresStore } from './postgres-store.js';
 import { verifyAppAccess } from './access.js';
+import { verifyCleanupAccess } from './cleanup-access.js';
 function sqlitePath(path: string): string {
   if (process.env.NODE_ENV === 'production') {
     const absolute = resolve(path);
@@ -56,9 +57,36 @@ const issuer = ApiOriginSchema.parse(process.env.DACLIFY_ISSUER),
     .default('sqlite')
     .parse(process.env.MINI_APP_DATABASE_ENGINE),
   pool = engine === 'postgres' ? new Pool({ connectionString: database }) : null,
+  cleanupOptions = {
+    ...(process.env.MINI_APP_CLEANUP_EXCLUSIONS_DIRECTORY
+      ? {
+          exclusionsDirectory: z
+            .string()
+            .refine(isAbsolute)
+            .parse(process.env.MINI_APP_CLEANUP_EXCLUSIONS_DIRECTORY),
+        }
+      : {}),
+    maxBackupAgeSeconds: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(90 * 86400)
+      .parse(
+        process.env.MINI_APP_MAX_BACKUP_AGE_SECONDS ??
+          (process.env.NODE_ENV === 'production' ? undefined : 86400),
+      ),
+  },
   store = pool
-    ? await createPostgresStore(pool, binding)
-    : sqliteStore(new Store(sqlitePath(database), binding));
+    ? await createPostgresStore(pool, binding, cleanupOptions)
+    : sqliteStore(new Store(sqlitePath(database), binding, cleanupOptions));
+if (process.env.NODE_ENV === 'production' && !cleanupOptions.exclusionsDirectory)
+  throw Error('APP_CLEANUP_STORAGE_REQUIRED');
+const cleanupTimer = setInterval(() => {
+  void store.cleanupExpired().catch(() => {
+    console.error('APP_CLEANUP_MAINTENANCE_UNAVAILABLE');
+  });
+}, 3600000);
+cleanupTimer.unref();
 const config = {
   issuer,
   clientId,
@@ -130,6 +158,17 @@ const server = createServer(
         return;
       }
       const authorization = request.headers.authorization ?? '';
+      if (request.method === 'POST' && url.pathname === '/v1/cleanup') {
+        const notice = await verifyCleanupAccess(binding, authorization);
+        let size = 0;
+        for await (const chunk of request) {
+          size += Buffer.byteLength(chunk);
+          if (size > 16384) throw Error('APP_CLEANUP_SIZE');
+        }
+        response.setHeader('content-type', 'application/json');
+        response.end(JSON.stringify(await store.cleanup(notice)));
+        return;
+      }
       const { claims, actor } = await verifyAppAccess(binding, authorization);
       if (
         request.method === 'POST' &&
@@ -250,6 +289,7 @@ const server = createServer(
 server.listen(Number(process.env.MINI_APP_PORT ?? 9443), '127.0.0.1');
 
 process.once('SIGTERM', () => {
+  clearInterval(cleanupTimer);
   server.close(() => {
     store
       .close()

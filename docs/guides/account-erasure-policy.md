@@ -61,3 +61,7 @@ Enable account erasure only with `ACCOUNT_EXIT_ENABLED=1`, a persistent owner-on
 An exclusion contains minimal account UUIDs, operation ID, status hash and finite expiry. Restoring an earlier SQL snapshot blocks the old identities before service starts and recreates only the scoped cleanup/report work. It never silently repeats uncertain native actions. Keep exclusions through the last controlled backup horizon, including scheduler/expiry margin. Backup copies outside the qualified retention process invalidate that guarantee. Production qualification requires independent failure-domain evidence; a directory on the API host is not independent recovery.
 
 The report says backup-expiry-pending until that recorded controlled horizon passes. Deleted current rows or controlled pins do not retract immutable public history, earlier public plaintext, downloaded keys, recipient copies or independently hosted backups. Do not claim “all data erased” or automatic GDPR compliance. Deliberate later enrollment creates a fresh UUID; it does not revive the erased identity, and there is no permanent personal-key blacklist.
+
+## Independent app cleanup
+
+See the [mini-app cleanup contract](mini-app-database-contract.md#cleanup-notices-and-restored-databases). Reports distinguish finite pending/unavailable notices, app operator acknowledgments and retained shared evidence. A missing legacy member/configuration binding is never reconstructed by guessing from the current account or an unpublished draft.

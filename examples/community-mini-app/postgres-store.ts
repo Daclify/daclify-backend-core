@@ -11,17 +11,21 @@ import {
   AppSnapshotDraftSchema,
   type AppBinding,
   type AppActor,
+  CleanupNoticeSchema,
+  CleanupAckSchema,
+  type CleanupNotice,
 } from '@daclify/core-protocol';
 import { ActivityIntentSchema } from '@daclify/modules/sdk';
 import { TaskSchema, taskSource } from './store.js';
 import type { MiniAppStore } from './database.js';
+import { CleanupJournal, type CleanupStorageOptions } from './cleanup-journal.js';
 
 const TaskRow = z.object({ value: TaskSchema });
 const Outbox = z.object({
   event_id: z.string(),
   source_id: z.string(),
   member_id: IdSchema,
-  subject: z.uuid(),
+  subject: z.uuid().nullable(),
   intent: ActivityIntentSchema,
   snapshot: AppSnapshotDraftSchema,
   needs_evidence: z.boolean(),
@@ -42,8 +46,13 @@ async function transaction<T>(pool: Pool, work: (db: PoolClient) => Promise<T>):
     db.release();
   }
 }
-export async function createPostgresStore(pool: Pool, input: AppBinding): Promise<MiniAppStore> {
+export async function createPostgresStore(
+  pool: Pool,
+  input: AppBinding,
+  options: CleanupStorageOptions = {},
+): Promise<MiniAppStore> {
   const binding = Object.freeze(AppBindingSchema.parse(input));
+  const journal = new CleanupJournal(options.exclusionsDirectory, options.maxBackupAgeSeconds);
   const namespace = appBindingHash(binding);
   await transaction(pool, async (db) => {
     // PostgreSQL IF NOT EXISTS alone does not serialize simultaneous schema creation.
@@ -76,6 +85,7 @@ export async function createPostgresStore(pool: Pool, input: AppBinding): Promis
   async function actor(input: AppActor, db: Pool | PoolClient = pool): Promise<AppActor> {
     const actor = AppActorSchema.parse(input);
     if (appBindingHash(actor.binding) !== namespace) throw new Error('APP_ACTOR_BINDING');
+    if (journal.excludes(actor)) throw Error('APP_ACTOR_ERASED');
     await db.query(
       'INSERT INTO mini_app.actors(namespace,subject,member_id) VALUES($1,$2,$3) ON CONFLICT DO NOTHING',
       [namespace, actor.subject, actor.memberId],
@@ -96,6 +106,13 @@ export async function createPostgresStore(pool: Pool, input: AppBinding): Promis
       rows[0]?.member_id !== actor.memberId
     )
       throw new Error('APP_ACTOR_CHANGED');
+    if (journal.excludes(actor)) {
+      await db.query(
+        'DELETE FROM mini_app.actors WHERE namespace=$1 AND subject=$2 AND member_id=$3',
+        [namespace, actor.subject, actor.memberId],
+      );
+      throw Error('APP_ACTOR_ERASED');
+    }
     return actor;
   }
   async function ownedOutbox(event: string, input: AppActor, db: PoolClient) {
@@ -110,6 +127,25 @@ export async function createPostgresStore(pool: Pool, input: AppBinding): Promis
     return row;
   }
   const store: MiniAppStore = {
+    async cleanupExpired() {
+      journal.cleanupExpired();
+    },
+    async cleanup(input) {
+      const notice = CleanupNoticeSchema.parse(input);
+      if (appBindingHash(notice.binding) !== namespace) throw Error('APP_CLEANUP_BINDING');
+      return transaction(pool, async (db) => {
+        const owner = (
+          await db.query(
+            'SELECT member_id::text FROM mini_app.actors WHERE namespace=$1 AND subject=$2 FOR UPDATE',
+            [namespace, notice.subject],
+          )
+        ).rows[0];
+        if (owner && z.object({ member_id: z.string() }).parse(owner).member_id !== notice.memberId)
+          throw Error('APP_CLEANUP_ACTOR');
+        journal.record(notice);
+        return applyCleanup(db, notice);
+      });
+    },
     async tasks(input) {
       await actor(input);
       return (
@@ -271,5 +307,30 @@ export async function createPostgresStore(pool: Pool, input: AppBinding): Promis
     // No connections are held between calls; the caller owns and closes the shared pool.
     async close() {},
   };
+  async function applyCleanup(db: PoolClient, notice: CleanupNotice) {
+    const retained = (
+      await db.query('SELECT 1 FROM mini_app.outbox WHERE namespace=$1 AND member_id=$2 LIMIT 1', [
+        namespace,
+        notice.memberId,
+      ])
+    ).rowCount;
+    await db.query(
+      'UPDATE mini_app.outbox SET subject=NULL WHERE namespace=$1 AND subject=$2 AND member_id=$3',
+      [namespace, notice.subject, notice.memberId],
+    );
+    await db.query(
+      'DELETE FROM mini_app.actors WHERE namespace=$1 AND subject=$2 AND member_id=$3',
+      [namespace, notice.subject, notice.memberId],
+    );
+    return CleanupAckSchema.parse({
+      eventId: notice.eventId,
+      bindingHash: namespace,
+      state: retained ? 'retained' : 'confirmed',
+      retentionCodes: retained ? ['DAO_COMPLETION_EVIDENCE'] : [],
+    });
+  }
+  for (const notice of journal.records())
+    if (appBindingHash(notice.binding) === namespace)
+      await transaction(pool, (db) => applyCleanup(db, notice));
   return store;
 }

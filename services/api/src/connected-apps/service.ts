@@ -17,6 +17,7 @@ import {
 } from '../../../../protocol/connected-apps.js';
 import { ApiError } from '../errors.js';
 import { rollbackTransaction } from '../transaction.js';
+import { CleanupNoticeSchema, type CleanupNotice } from '../../../../protocol/account-exit.js';
 import type { ConnectedAppsChain } from './chain.js';
 import type { ConnectedAppsConfiguration } from './config.js';
 const hash = (value: string) => createHash('sha256').update(value).digest();
@@ -62,6 +63,23 @@ export class ConnectedApps {
   jwks() {
     const { kty, crv, x, y, kid } = this.config.signingKey;
     return { keys: [{ kty, crv, x, y, kid, alg: 'ES256', use: 'sig' }] };
+  }
+  async signCleanupNotice(input: CleanupNotice): Promise<string> {
+    const notice = CleanupNoticeSchema.parse(input);
+    if (notice.binding.issuer !== this.config.issuer) throw new ApiError('APP_DOMAIN', 403);
+    return new SignJWT(notice)
+      .setProtectedHeader({
+        alg: 'ES256',
+        kid: this.config.signingKey.kid,
+        typ: 'daclify-cleanup+jwt',
+      })
+      .setIssuer(this.config.issuer)
+      .setAudience('daclify.cleanup:' + notice.binding.clientId)
+      .setSubject(notice.subject)
+      .setJti(notice.eventId)
+      .setIssuedAt(Math.floor(Date.parse(notice.issuedAt) / 1000))
+      .setExpirationTime(Math.floor(Date.parse(notice.expiresAt) / 1000))
+      .sign(this.key);
   }
   async allowedOrigin(origin: string) {
     const ids = await this.pool.query(
@@ -274,18 +292,27 @@ export class ConnectedApps {
     }
     return apps;
   }
-  private async subject(clientId: string, accountId: string, db: Pool | PoolClient = this.pool) {
-    return z
+  private async subject(
+    clientId: string,
+    accountId: string,
+    memberId: string,
+    configurationHash: string,
+    db: Pool | PoolClient = this.pool,
+  ) {
+    const row = z
       .object({ subject: z.uuid() })
-      .parse(
+      .safeParse(
         (
           await db.query(
-            'INSERT INTO connected_app_subjects(client_id,account_id) VALUES($1,$2) ON CONFLICT(client_id,account_id) DO UPDATE SET account_id=excluded.account_id RETURNING subject',
-            [clientId, accountId],
+            'INSERT INTO connected_app_subjects(client_id,account_id,member_id,configuration_hash) VALUES($1,$2,$3,$4) ON CONFLICT(client_id,account_id) DO UPDATE SET member_id=excluded.member_id,configuration_hash=excluded.configuration_hash WHERE connected_app_subjects.member_id IS NULL OR connected_app_subjects.member_id=excluded.member_id RETURNING subject',
+            [clientId, accountId, memberId, configurationHash],
           )
         ).rows[0],
-      ).subject;
+      );
+    if (!row.success) throw new ApiError('APP_SUBJECT_MEMBER_CHANGED', 409);
+    return row.data.subject;
   }
+
   async claims(
     account: Account,
     clientId: string,
@@ -310,7 +337,7 @@ export class ConnectedApps {
         throw new ApiError('APP_GRANT_REVOKED', 403);
     }
     return AppClaimsSchema.parse({
-      sub: await this.subject(clientId, account.id, db),
+      sub: await this.subject(clientId, account.id, member.memberId, app.configHash, db),
       dao: app.config.dao,
       memberId: member.memberId,
       admin: member.admin,
