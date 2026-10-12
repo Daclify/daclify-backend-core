@@ -32,6 +32,8 @@ An attempted broader browser selection included the existing real-backend files/
 
 ## Live activation boundary
 
+This section records the implementation-only boundary at its original completion. The user later authorized testnet activation; the completed upgrade and publication are recorded in [the separate rollout evidence](2026-10-12-governing-documents-testnet-rollout.md).
+
 No live contract, catalogue pin, member action permission or frontend/API publication was changed by this task. All artifacts are development review artifacts; the general release qualifier still reports `publication: refused`, `qualified: false`.
 
 Live activation requires a reviewed coordinated upgrade, because shared RAM classification changes the compiled core and all module hashes. Before replacing binaries, inventory and drain pending governed Works/grant executions under their approved hashes; do not rewrite those approvals. Preserve existing state and back up contracts/service data. Repin the approved binaries, migrate/backfill the new RAM families and document-source coverage, and add only the five member actions `regdoc`, `proposedoc`, `adoptdoc`, `canceldoc`, `ackdoc` to Decide's authorized context. `cleardocs` is service-only bounded cleanup and is excluded from member execution links. Use the existing deployment/permission planner and review its exact action list against the connected deployment before applying it.

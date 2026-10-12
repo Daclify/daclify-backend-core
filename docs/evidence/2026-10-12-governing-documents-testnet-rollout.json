@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-12",
+  "timezone": "Atlantic/Canary",
+  "environment": "testnet",
+  "live": true,
+  "sources": {
+    "daclify-backend-core": "dd5ee8982ef0763710c5311c19652cc8bf123c4f",
+    "daclify-backend-modules": "29ec2a6b4c70a393b8c9e1f98aa871b20b6e0978",
+    "daclify-frontend": "c6b6479362d6b51d75ed6643b6db71510bde5bfb"
+  },
+  "coreVersion": "0.14.0-alpha.5",
+  "moduleSdkVersion": "0.10.0-alpha.5",
+  "frontendVersion": "0.14.0-alpha.8",
+  "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+  "targets": [
+    {
+      "account": "daclifycore1",
+      "previousCodeHash": "b0c1826a210d273b3250915b7db0a4c1a4cc70be465153195b52febfb3272fb4",
+      "codeHash": "6bb89e59c38975928e6d85827c2ff8a4589f3ab0e315f52d88ffa55b62d0fb46",
+      "rawAbiHash": "b4ef5b238da08e9934a0b89ba1ead01a7e66cc2b45eac11f06f0aa759782ecb2"
+    },
+    {
+      "account": "daclifydecid",
+      "previousCodeHash": "f99a964c4eadd6d33ff261f79e546bd8a98f41a02785b41994490b319860cbf2",
+      "codeHash": "387dd60f2a6c3135e7c47bf75a6af1e27c7a06fef3246cdcbcfbc12d7b5a8033",
+      "rawAbiHash": "0c66c06757672d7899765839be540145b39666f0f201be342bf85b7dee1bf53d"
+    },
+    {
+      "account": "daclifyworks",
+      "previousCodeHash": "9e4117b18393b0de1a090acf87788d908419ecb5dc85e8354a28dacb707bc308",
+      "codeHash": "5d373c56b33caf9df7d2b1486936790119d6be32bb187d680ca8e6a9d46b017c",
+      "rawAbiHash": "70cd84482d7e045c7db88bf2a0531b32f5150510b18fec31ed043de322f047bc"
+    },
+    {
+      "account": "daclifypayr1",
+      "previousCodeHash": "4db6a327656d81fb055da26f359beb6d97cb4f3bb172b1efbd1e71c59ff7a8e7",
+      "codeHash": "78662537ea5adf3e61439120ead312c2cb10a41c683da7a82db7e9f2f49a63bc",
+      "rawAbiHash": "c3dc83e99ef7f172e158cb1d2db230dfa39718b96be4daa47c31011e99ac6f6d"
+    },
+    {
+      "account": "daclifygrant",
+      "previousCodeHash": "e973f83fbe27e548d4ef14733f511d705d066db74a32a5ff65ca7f005af138fa",
+      "codeHash": "e8a83ff38208071ac423a642d7b00e76be4d7487fffc82bbf8feb218aa5a3f7c",
+      "rawAbiHash": "ad57534f046b320108d9e47833997d824570936f2f901f6ec6531abf32d6cce8"
+    },
+    {
+      "account": "daclifyendor",
+      "previousCodeHash": "e1a0f64dc42c8e8ad1d324cf92d1dfe01cebba77b130fb2be74ba9ee4d88df48",
+      "codeHash": "7dbff93a850760a43b741baf40406260c6bea006f934c406a9560367e28f0454",
+      "rawAbiHash": "d1f4fe0ffe18d2cb458efe60cd3f5654ca32e9b245a2e15728569b82393a3602"
+    },
+    {
+      "account": "daclifyactiv",
+      "previousCodeHash": "225b7070235779ccc6f001d21209f243cdfd6fc0619e8a334405d30d7e6f6866",
+      "codeHash": "ae3e24978ab8ed84de4b5d99c30cc84f4edc513ceed0af12699fa683f2d8d3d6",
+      "rawAbiHash": "229bfc22c81507e3c116f4d02bc5dc6f8d668d6a7125568f4fbe5525f71731ed"
+    }
+  ],
+  "transactions": [
+    {
+      "transactionId": "48f66638cfc6329e6c29dae8e0f67e20400247470d650f7a1dcff4d10895f86b",
+      "blockNum": 449833678
+    },
+    {
+      "transactionId": "c8224ab5bc8175a817dd85abefdab1f4e3916fe4f71533d85b619ee12b56a97a",
+      "blockNum": 449833944
+    },
+    {
+      "transactionId": "40aec3c4f606092a9492b5aedb39531fe7ea6d17ba7eebb17c34ce63b3a5742c",
+      "blockNum": 449833955
+    },
+    {
+      "transactionId": "cbc898c2da96d2252fe17f5129f4f5a3aaebacae072063ddc90aeb51d2b1142f",
+      "blockNum": 449833966
+    },
+    {
+      "transactionId": "a5b2537bcabf7abbd59e2ddf592cd4517c6260f111f4a1ac67a7452f231d28bf",
+      "blockNum": 449833976
+    },
+    {
+      "transactionId": "295d1fb43d5200a26ff2e8d92e59408b0e38a8fe4ac5dcc84ac668e012020372",
+      "blockNum": 449833986
+    },
+    {
+      "transactionId": "65daba30bf8c02feb9f4af29e14b9c695c012ac0ee7649fbccb88bfda9efe34c",
+      "blockNum": 449833997
+    }
+  ],
+  "upgrade": {
+    "irreversible": true,
+    "existingStatePreserved": true,
+    "ownerActiveAuthoritiesPreserved": true,
+    "primaryScopesBefore": 65,
+    "rowsBefore": 173,
+    "ramPurchases": [
+      {
+        "account": "daclifydecid",
+        "bytes": 376832
+      }
+    ],
+    "simulatedRamCostTlos": "21.5801",
+    "ramCostLimitTlos": "50.0000",
+    "memberActions": [
+      "regdoc",
+      "proposedoc",
+      "adoptdoc",
+      "canceldoc",
+      "ackdoc"
+    ],
+    "cleanupPermission": {
+      "account": "daclifyrelay",
+      "permission": "operator",
+      "code": "daclifydecid",
+      "action": "cleardocs"
+    },
+    "ramObserverInitialized": false,
+    "decideReferenceCoverageBackfilled": true
+  },
+  "publication": {
+    "apiOrigin": "https://testnet.api.daclify.com",
+    "appOrigin": "https://testnet.app.daclify.com",
+    "indexSha256": "7100e35bf4a94600e38b79541f9541e21f7d9e41094ba00472972f73f8008401",
+    "entryAssetsVerified": 22,
+    "oldHashedAssetsRetained": true,
+    "namesOracleUpdated": true,
+    "namesOracleActualRefreshPassed": true
+  },
+  "verification": {
+    "coreReleaseTests": 14,
+    "coreDocumentApiPermissionTests": 7,
+    "moduleContractTests": 8,
+    "nativeContractTests": 3,
+    "mockBrowserTests": 2,
+    "publicGeneralBrowserViewports": 2,
+    "publicDocumentBrowserViewports": 2,
+    "liveReadOnlySimulation": {
+      "status": "passed",
+      "kind": "signed-live-chain-compute",
+      "broadcast": false,
+      "exactPins": true,
+      "actions": [
+        "putjson",
+        "regdoc",
+        "proposedoc",
+        "adoptdoc",
+        "ackdoc"
+      ],
+      "duplicateAcceptanceRejected": true,
+      "persistedStateUnchanged": true
+    },
+    "databaseAccountCount": 18,
+    "accountKeyPairingMemberRecordHashesUnchanged": true,
+    "accountMergeOwnershipUnchanged": true,
+    "recovery": {
+      "status": "passed",
+      "coreVersion": "0.14.0-alpha.5",
+      "configurationLoaded": true,
+      "liveTlsWrapUnwrap": true,
+      "developmentOnly": true,
+      "independentHost": false
+    }
+  },
+  "productionQualified": false,
+  "review": "Inline operator self-review; no independent reviewer or subagent.",
+  "limits": [
+    "Testnet development activation only; no production package publication or mainnet changes.",
+    "Live document write workflow used signed compute_transaction without broadcast; no constitution or acceptance was saved.",
+    "Wallet/passkey/provider ceremonies and independent-host recovery were not newly qualified.",
+    "Unfinished Mini apps feature-branch work was excluded by user choice."
+  ],
+  "operatorPacket": "/data/daclify-runtime/releases/20261012-governing-documents"
+}
