@@ -16,6 +16,10 @@ import { revokeCredentialSessions } from './intent.js';
 import { ApiError } from '../errors.js';
 import { createWindowLimiter } from '../limits.js';
 import { walletAccount } from './wallet-recovery.js';
+import { reconnectAccounts } from './account-reconnect.js';
+import { readAccount } from './account-session.js';
+import { ApiRoutes } from '../../../../protocol/routes.js';
+import type { ChainGateway } from '../chain.js';
 const hash = (text: string) => createHash('sha256').update(text).digest();
 const credential = (chain: string, account: string) => `native:${chain}:${account}`;
 interface Intent {
@@ -33,6 +37,7 @@ interface Intent {
 export function registerNativeRoutes(
   app: FastifyInstance,
   pool: Pool,
+  chain: ChainGateway,
   origin: string,
   cookieName: string,
   network: () => Promise<Network>,
@@ -195,6 +200,32 @@ export function registerNativeRoutes(
       throw error;
     }
     return identity;
+  });
+  app.post(ApiRoutes.accountReconnectNative.path, async (request, reply) => {
+    const { current, identity } = await finish(request, 'pair');
+    if (!current || current.signingKey === null) throw new ApiError('VAULT_IDENTITY_REQUIRED', 403);
+    const owner = (
+      await pool.query<{ account_id: string }>(
+        'SELECT account_id FROM native_links WHERE chain_id=$1 AND native_account=$2',
+        [identity.chainId, identity.account],
+      )
+    ).rows[0];
+    const source = owner && (await readAccount(pool, owner.account_id));
+    if (!source) throw new ApiError('NATIVE_UNLINKED', 409);
+    const token = request.cookies[cookieName];
+    if (!token) throw new ApiError('AUTH_REQUIRED', 401);
+    const opened = await reconnectAccounts(
+      pool,
+      chain,
+      source,
+      current,
+      current.id,
+      token,
+      identity,
+    );
+    await sessionCookie(reply, opened.token);
+    reply.clearCookie(attemptCookie, { path: '/' });
+    return { account: opened.account, csrfToken: opened.csrfToken };
   });
   async function enter(request: FastifyRequest, reply: FastifyReply, purpose: 'login' | 'signup') {
     const { identity } = await finish(request, purpose);

@@ -47,6 +47,7 @@ let nativeAddress = 1;
 let memberRoot = root,
   linkedNative = 'alice';
 let daoPrivacy = 0;
+let beforeMembershipRead: (() => Promise<void>) | undefined;
 let bound = true,
   evmActive = true,
   chainMismatch = false,
@@ -142,6 +143,9 @@ beforeAll(async () => {
       });
     if (path.endsWith('get_abi')) return Response.json({ account_name: runtime, abi: runtimeAbi });
     if (!path.endsWith('get_table_rows')) throw new Error('Unexpected RPC fixture path');
+    const pending = beforeMembershipRead;
+    beforeMembershipRead = undefined;
+    await pending?.();
     return Response.json({
       rows:
         body.table === 'daos'
@@ -177,6 +181,7 @@ beforeAll(async () => {
   app = await createServer(pool, gateway, origin, { origins: ['http://localhost:5198'] });
 });
 beforeEach(() => {
+  beforeMembershipRead = undefined;
   ++nativeAddress;
   bound = true;
   evmActive = true;
@@ -718,6 +723,227 @@ async function reconnectionFixture(name: string) {
   }
   return { current, original, logged, headers, payload, request };
 }
+
+async function restoredReconnectRequest(
+  f: Awaited<ReturnType<typeof reconnectionFixture>>,
+  name: string,
+  signer = native,
+  rootSigner = memberRoot,
+) {
+  const headers = {
+    origin,
+    cookie: 'daclify_session=' + f.original.token,
+    'x-csrf-token': f.original.csrfToken,
+  };
+  const started = await app.inject({
+    method: 'POST',
+    url: '/v1/account/native/challenge',
+    headers,
+    remoteAddress: '127.0.1.' + nativeAddress,
+    payload: { purpose: 'pair', account: name, permission: 'active' },
+  });
+  expect(started.statusCode, started.body).toBe(200);
+  const challenge = NativeChallengeSchema.parse(started.json());
+  const transaction = Transaction.from({
+    expiration: new Date(Date.now() + 60000),
+    ref_block_num: 1,
+    ref_block_prefix: 2,
+    actions: [
+      Action.from({
+        account: runtime,
+        name: 'authproof',
+        authorization: [{ actor: name, permission: 'active' }],
+        data: encodeAction('authproof', {
+          account: name,
+          intent: createHash('sha256').update(challenge.message).digest('hex'),
+        }),
+      }),
+    ],
+  });
+  const payload = {
+    id: challenge.id,
+    proof: {
+      packedTransaction: Serializer.encode({ object: transaction }).hexString,
+      signatures: [signer.signDigest(transaction.signingDigest(chainId)).toString()],
+    },
+  };
+  const controlled = await app.inject({
+    method: 'POST',
+    url: '/v1/account/control',
+    headers,
+    payload: {
+      path: '/v1/account/reconnect/native',
+      bodyHash: createHash('sha256').update(JSON.stringify(payload)).digest('hex'),
+    },
+  });
+  expect(controlled.statusCode, controlled.body).toBe(200);
+  const control = z.object({ id: z.uuid(), message: z.string() }).parse(controlled.json());
+  return {
+    method: 'POST' as const,
+    url: '/v1/account/reconnect/native',
+    payload,
+    headers: {
+      ...headers,
+      cookie: headers.cookie + '; ' + cookies(started),
+      'x-account-intent-id': control.id,
+      'x-account-proof': JSON.stringify({
+        kind: 'root',
+        signature: rootSigner.signMessage(new TextEncoder().encode(control.message)).toString(),
+      }),
+    },
+  };
+}
+
+it('reconnects existing sign-ins from the restored account and retains its newly paired methods', async () => {
+  const f = await reconnectionFixture('restoredpair');
+  await pool.query(
+    'INSERT INTO credentials(provider_key,account_id) VALUES($1,$3),($2,$3),($4,$5)',
+    [
+      'email:old-restored@example.test',
+      'telegram:restored-fixture',
+      f.current.account.id,
+      'email:new-restored@example.test',
+      f.original.account.id,
+    ],
+  );
+  await pool.query(
+    'INSERT INTO passkeys(credential_id,account_id,public_key,sign_count) VALUES($1,$2,$3,17)',
+    [randomBytes(32), f.current.account.id, randomBytes(96)],
+  );
+  await pool.query(
+    'INSERT INTO passkeys(credential_id,account_id,public_key,sign_count) VALUES($1,$2,$3,23)',
+    [randomBytes(32), f.original.account.id, randomBytes(96)],
+  );
+  const newAddress = '0x' + '43'.repeat(20);
+  await pool.query(
+    'INSERT INTO evm_links(account_id,chain_id,address,control_verified_at) VALUES($1,41,$2,now())',
+    [f.original.account.id, newAddress],
+  );
+  const request = await restoredReconnectRequest(f, 'restoredpair');
+  const response = await app.inject(request);
+  expect(response.statusCode, response.body).toBe(200);
+  expect(SessionSchema.parse(response.json()).account).toEqual(f.original.account);
+  expect(
+    (
+      await pool.query('SELECT account_id FROM credentials WHERE provider_key LIKE $1', [
+        '%restored%',
+      ])
+    ).rows.every((row) => row.account_id === f.original.account.id),
+  ).toBe(true);
+  expect(
+    (
+      await pool.query('SELECT sign_count FROM passkeys WHERE account_id=$1 ORDER BY sign_count', [
+        f.original.account.id,
+      ])
+    ).rows,
+  ).toEqual([{ sign_count: '17' }, { sign_count: '23' }]);
+  expect(
+    (await pool.query('SELECT account_id FROM evm_links WHERE address=$1', [newAddress])).rows[0]
+      ?.account_id,
+  ).toBe(f.original.account.id);
+  expect(
+    (await pool.query('SELECT merged_into FROM accounts WHERE id=$1', [f.current.account.id]))
+      .rows[0]?.merged_into,
+  ).toBe(f.original.account.id);
+  expect((await app.inject(request)).statusCode).toBe(401);
+});
+
+it.each(['wallet', 'root', 'missing', 'non-root', 'origin'] as const)(
+  'keeps both profiles intact when the restored reconnection %s proof is invalid',
+  async (fault) => {
+    const name = 'rejectpair';
+    const f = await reconnectionFixture(name);
+    const forged = PrivateKey.generate('K1');
+    const request = await restoredReconnectRequest(
+      f,
+      name,
+      fault === 'wallet' ? forged : native,
+      fault === 'root' ? forged : memberRoot,
+    );
+    if (fault === 'missing') request.headers['x-account-proof'] = '';
+    if (fault === 'non-root')
+      request.headers['x-account-proof'] = JSON.stringify({
+        kind: 'evm',
+        chainId: 41,
+        address: evm.address,
+        signature: await evm.signMessage({ message: 'irrelevant' }),
+      });
+    if (fault === 'origin') request.headers.origin = 'http://localhost:5198';
+    const result = await app.inject(request);
+    expect([401, 403]).toContain(result.statusCode);
+    expect(
+      (await pool.query('SELECT merged_into FROM accounts WHERE id=$1', [f.current.account.id]))
+        .rows[0]?.merged_into,
+    ).toBeNull();
+    expect(
+      (await pool.query('SELECT account_id FROM native_links WHERE native_account=$1', [name]))
+        .rows[0]?.account_id,
+    ).toBe(f.current.account.id);
+  },
+);
+
+it('refuses to reconnect a wallet whose profile has a separate registered identity', async () => {
+  const f = await reconnectionFixture('registered');
+  const request = await restoredReconnectRequest(f, 'registered');
+  await pool.query('UPDATE accounts SET signing_key=$2,encryption_key=$3 WHERE id=$1', [
+    f.current.account.id,
+    PrivateKey.generate('K1').toPublic().toString(),
+    encryptionKey,
+  ]);
+  const result = await app.inject(request);
+  expect(result.statusCode, result.body).toBe(409);
+  expect(result.json()).toMatchObject({ code: 'ACCOUNT_RECONNECT_REGISTERED' });
+  expect(
+    (await pool.query('SELECT merged_into FROM accounts WHERE id=$1', [f.current.account.id]))
+      .rows[0]?.merged_into,
+  ).toBeNull();
+});
+
+it('does not reconnect profiles during an ordinary native pairing request', async () => {
+  const f = await reconnectionFixture('ordinarypair');
+  const request = await restoredReconnectRequest(f, 'ordinarypair');
+  request.url = '/v1/account/native/link';
+  const controlled = await app.inject({
+    method: 'POST',
+    url: '/v1/account/control',
+    headers: request.headers,
+    payload: {
+      path: request.url,
+      bodyHash: createHash('sha256').update(JSON.stringify(request.payload)).digest('hex'),
+    },
+  });
+  const control = z.object({ id: z.uuid(), message: z.string() }).parse(controlled.json());
+  request.headers['x-account-intent-id'] = control.id;
+  request.headers['x-account-proof'] = JSON.stringify({
+    kind: 'root',
+    signature: memberRoot.signMessage(new TextEncoder().encode(control.message)).toString(),
+  });
+  const result = await app.inject(request);
+  expect(result.statusCode, result.body).toBe(409);
+  expect(result.json()).toMatchObject({ code: 'NATIVE_LINKED' });
+  expect(
+    (await pool.query('SELECT merged_into FROM accounts WHERE id=$1', [f.current.account.id]))
+      .rows[0]?.merged_into,
+  ).toBeNull();
+});
+
+it('rechecks wallet ownership if the native pairing changes after proof verification', async () => {
+  const f = await reconnectionFixture('changedpair');
+  const request = await restoredReconnectRequest(f, 'changedpair');
+  beforeMembershipRead = async () => {
+    await pool.query('UPDATE native_links SET native_account=$2 WHERE account_id=$1', [
+      f.current.account.id,
+      'replacement',
+    ]);
+  };
+  const result = await app.inject(request);
+  expect(result.statusCode, result.body).toBe(409);
+  expect(result.json()).toMatchObject({ code: 'ACCOUNT_RECONNECT_CHANGED' });
+  expect(
+    (await pool.query('SELECT merged_into FROM accounts WHERE id=$1', [f.current.account.id]))
+      .rows[0]?.merged_into,
+  ).toBeNull();
+});
 
 it('reconnects proved wallet sign-ins to the original account and preserves immutable history', async () => {
   const f = await reconnectionFixture('recoverpair');

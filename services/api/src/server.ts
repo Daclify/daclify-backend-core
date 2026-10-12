@@ -1278,6 +1278,7 @@ export async function createServer(
   registerNativeRoutes(
     app,
     pool,
+    chain,
     origin,
     cookieName,
     () => chain.network(),

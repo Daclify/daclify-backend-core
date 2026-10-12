@@ -65,3 +65,14 @@ Run relevant security/database/browser tests, strict TypeScript and Vue builds, 
 - Continuity uses existing on-chain grants and contract last-admin protection. The new handover check is in the portal; successor decryption/recovery on another device is a human confirmation, not a protocol attestation. Under from-join history, a later member cannot be granted older epochs; retain an administrator who already has that history. No new contract safeguard or deployment is claimed.
 
 Delivery completed on testnet; see [verification and publication evidence](../../evidence/2026-10-12-account-access-continuity.md).
+
+## Restored-account pairing regression
+
+Verified read-only testnet state on 2026-10-12: the registered original account now has a passkey and verified EVM link; its wallet-only profile retains email, Telegram, a passkey and native pairing. Native pair attempts from the registered account conflict. Existing reconnection only starts from the wallet-only session.
+
+Continue the approved reconciliation design from the registered account. Reuse the native pairing challenge to prove the incoming wallet, require a separate restored-root signature over `/v1/account/reconnect/native` and the exact proof body, then execute the existing reconciliation transaction with the wallet-only profile as source. Explicit consent moves all source sign-ins; keep current target methods and immutable ownership. Do not merge registered roots or silently transfer a credential during ordinary pairing. Recheck the incoming wallet owner under the transaction's account locks. No new database fields or migration are needed.
+
+- [x] Failing integration regression: restored root reconnects native/email/Telegram/passkey ownership while retaining target methods and counters; no mutation on ordinary pairing, forged/missing proofs, registered source, conflicting identity or replay.
+- [x] Extract the existing transaction and add the root-controlled native continuation with canonical route schema.
+- [x] Add readable pairing conflicts and an explicit native reconnect action; guard stale account/network/route responses before installing CSRF or refreshing methods. Explain unlock and consent; refresh all method counts.
+- [ ] Verify strict types, unit/database/browser behavior, generated docs and pinned package compatibility; review inline; commit/push only task files and publish authorized testnet artifacts with recovery qualification and rollback checks.

@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle={
   "producer": "core",
-  "packageVersion": "0.14.0-alpha.3",
+  "packageVersion": "0.14.0-alpha.4",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -132,7 +132,7 @@ export const CoreHelpBundle={
         "User-controlled signing and P-256 decryption private keys are encrypted in this browser’s local vault and downloaded recovery kit. The kit contains a local envelope protected by the vault password saved when the kit was downloaded and a recovery envelope protected by the separate recovery code. In Account, choose Recover from an encrypted kit, select the original JSON, enter that kit’s vault password or matching recovery code, and choose a new vault password of at least 12 characters. Restore verifies the original keys and protects them with the new device password. A password change does not update older downloaded kits. Older clients require the separate recovery credential; refresh the app to use password recovery. Both envelopes use PBKDF2-SHA256 with 600,000 iterations and AES-256-GCM. The JSON fallback does not send your password or plaintext private keys to the API.",
         "The contracts retain DAO membership, permissions, balances, document CIDs, key-epoch commitments and per-member encrypted epoch-key grants. Large encrypted document bytes are on IPFS. A recovered original decryption key opens its surviving grants and ciphertext; a public login signature or a replacement encryption key cannot decrypt old content. Keep the encrypted kit and recovery credential in separate safe places and retain durable IPFS pins or a content export.",
         "After losing the service database, connect a Telos Zero wallet or supported Telos EVM EOA and sign a fresh browser-bound challenge. The API verifies wallet control and finds current bindings in the configured runtime. It reconstructs wallet-only service access with no claimed vault keys, no new membership or creation fee. Each DAO’s current binding and permissions are checked again. Matching public signing keys in another DAO do not grant wallet access there.",
-        "A recovered wallet profile may have a separate service ID while retaining the same chain membership. If the original kit matches an existing registered account, the app offers Restore account and keep my sign-ins, Restore account only, or Cancel. Keeping sign-ins requires fresh control of the current paired wallet and a signature from the recovered original account. The registered account remains canonical. Conflicting wallets or different members in the same DAO are refused. Only a wallet-only profile can be reconnected; two registered identities are not merged.",
+        "A recovered wallet profile may have a separate service ID while retaining the same chain membership. If the original kit matches an existing registered account, the app offers Restore account and keep my sign-ins, Restore account only, or Cancel. Keeping sign-ins requires fresh control of the current paired wallet and a signature from the recovered original account. If you already chose Restore account only, unlock that account in Access & recovery, open Sign-in methods > Telos Zero and choose Reconnect existing sign-ins. Approve with the previously paired native wallet; the restored root key separately signs the exact reconnection operation. Email, Telegram, passkeys and wallets from the wallet-only profile move together, while methods already added to the restored account remain. Ordinary pairing never silently moves another account’s credentials. The registered account remains canonical. Conflicting wallets or different members in the same DAO are refused. Only a wallet-only profile can be reconnected; two registered identities are not merged.",
         "Reconnection preserves the original signing and encryption identity, chain memberships, roles, balances, document grants and ciphertext. It moves paired methods and passkey counters, while payment receipts, uploads and archive evidence keep their original immutable owner IDs. The canonical account recognizes that historical ownership. Both accounts’ old sessions and pending ceremonies are revoked; connected applications and payment brokers must authorize again. Moved sign-ins remain sign-in only until you explicitly enable full access. Cancelling or a rejected proof leaves the current profile usable.",
         "Google, Telegram and email pairings, passkey public credentials, wallet sign-in pairings and service sessions are PostgreSQL records. Blockchain governance bindings are separate. These pairing metadata columns are not application-encrypted. Restrict database access and encrypt off-host backups. Lost social pairings require a verified database restore or explicit re-pairing after recovering control. Do not publish email addresses, Telegram IDs or raw provider tokens on the public chain. Restore does not make an old session or provider proof fresh.",
         "For a ten-member DAO, one recovered administrator can manage the existing DAO again, but their kit restores only their own keys and access. Every other member must recover independently. An ordinary member remains an ordinary member. Losing a server does not lose login pairings if a verified database backup survives; if all database copies are lost, pair those methods again after recovering your own control.",
@@ -6050,6 +6050,161 @@ export const CoreHelpBundle={
     }
   ],
   "api": [
+    {
+      "method": "POST",
+      "path": "/v1/account/reconnect/native",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "proof": {
+            "type": "object",
+            "properties": {
+              "packedTransaction": {
+                "type": "string",
+                "pattern": "^(?:[0-9a-f]{2}){1,4096}$"
+              },
+              "signatures": {
+                "minItems": 1,
+                "maxItems": 8,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 160
+                }
+              }
+            },
+            "required": [
+              "packedTransaction",
+              "signatures"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "proof"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "account": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "signingKey": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  "custody": {
+                    "type": "string",
+                    "enum": [
+                      "user-controlled",
+                      "managed"
+                    ]
+                  },
+                  "encryptionKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "signingKey",
+                  "custody",
+                  "encryptionKey"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "custody": {
+                    "type": "string",
+                    "const": "user-controlled"
+                  },
+                  "signingKey": {
+                    "type": "null"
+                  },
+                  "encryptionKey": {
+                    "type": "null"
+                  },
+                  "walletOrigin": {
+                    "type": "string",
+                    "enum": [
+                      "signup",
+                      "recovered"
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "custody",
+                  "signingKey",
+                  "encryptionKey"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "csrfToken": {
+            "type": "string",
+            "minLength": 32,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "account",
+          "csrfToken"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "recovery"
+    },
     {
       "method": "GET",
       "path": "/v1/modules/pricing",
@@ -32040,6 +32195,7 @@ export const CoreHelpBundle={
               "/v1/payments/operator/revoke",
               "/v1/account/vault",
               "/v1/account/reconnect",
+              "/v1/account/reconnect/native",
               "/v1/account/recovery/enable",
               "/v1/account/recovery/assisted/options",
               "/v1/account/recovery/assisted/opt-out",
