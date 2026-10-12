@@ -3,11 +3,62 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AppClaimsSchema, AppActivityPageSchema } from '../protocol/connected-apps.js';
-import { DatabaseSync } from 'node:sqlite';
+import { DatabaseSync, backup } from 'node:sqlite';
 import { createHash } from 'node:crypto';
 import { actorFromVerifiedClaims, type AppClaims } from '../protocol/index.js';
 import { Store, adoptLegacyDatabase } from '../examples/community-mini-app/store.js';
 import { z } from 'zod';
+import { miniAppConformance, miniBinding, miniActor } from './helpers/mini-app-store.js';
+import { sqliteStore } from '../examples/community-mini-app/database.js';
+
+miniAppConformance('SQLite', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mini-app-conformance-'));
+  const paths = new Map<string, string>();
+  const stores: Store[] = [];
+  const open = async (binding: typeof miniBinding) => {
+    const key = JSON.stringify(binding);
+    const path = paths.get(key) ?? join(dir, paths.size + '.sqlite');
+    paths.set(key, path);
+    const store = new Store(path, binding);
+    stores.push(store);
+    return sqliteStore(store);
+  };
+  const store = await open(miniBinding);
+  const raw = stores[0];
+  if (!raw) throw new Error('FIXTURE_STORE');
+  return {
+    store,
+    open,
+    async edit(details) {
+      const task = raw.tasks(miniActor)[0];
+      if (!task) throw new Error('FIXTURE_TASK');
+      raw.db
+        .prepare('UPDATE tasks SET value=? WHERE id=?')
+        .run(JSON.stringify({ ...task, details }), task.id);
+    },
+    async breakOutbox() {
+      raw.db.exec(
+        "CREATE TRIGGER fail_outbox BEFORE INSERT ON outbox BEGIN SELECT RAISE(ABORT,'fixture outbox failure'); END",
+      );
+    },
+    async outboxCount() {
+      return z
+        .object({ total: z.number() })
+        .parse(raw.db.prepare('SELECT count(*) AS total FROM outbox').get()).total;
+    },
+    async backupAndRestore() {
+      const path = join(dir, 'restored.sqlite');
+      await backup(raw.db, path);
+      const restored = new Store(path, miniBinding);
+      stores.push(restored);
+      return sqliteStore(restored);
+    },
+    async cleanup() {
+      for (const store of stores) store.close();
+      rmSync(dir, { recursive: true });
+    },
+  };
+});
 it('persists one member-bound completion across retries and database restart', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mini-app-')),
     path = join(dir, 'tasks.sqlite'),

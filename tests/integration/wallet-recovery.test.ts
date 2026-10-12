@@ -1,4 +1,4 @@
-import { createHash, randomBytes, generateKeyPairSync } from 'node:crypto';
+import { createHash, randomBytes, generateKeyPairSync, randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, expect, it, vi } from 'vitest';
 import { Pool } from 'pg';
 import { z } from 'zod';
@@ -14,6 +14,12 @@ import { EvmSignInChallengeSchema } from '../../protocol/evm-wallet.js';
 import { EncryptionPublicKeySchema } from '../../protocol/crypto.js';
 import { SessionSchema } from '../../protocol/api.js';
 import { encodeAction, runtimeAbi } from '../../sdk/index.js';
+import { ConnectedApps } from '../../services/api/src/connected-apps/service.js';
+import { AppIssuerKeySchema } from '../../services/api/src/connected-apps/config.js';
+import { ConnectedAppConfigSchema } from '../../protocol/connected-apps.js';
+import { RuntimeTableSchemas } from '../../sdk/generated/schemas.js';
+import { actorFromVerifiedClaims } from '../../protocol/mini-app-database.js';
+import { Store } from '../../examples/community-mini-app/store.js';
 const url = process.env.DATABASE_URL;
 if (
   !url ||
@@ -89,6 +95,7 @@ const dao = (id: string) => ({
   active_ballots: 0,
 });
 let app: Awaited<ReturnType<typeof createServer>>;
+let gateway: NativeChainGateway;
 beforeAll(async () => {
   await owner.query(`CREATE DATABASE ${database}`);
   await migrate(pool);
@@ -150,6 +157,8 @@ beforeAll(async () => {
       rows:
         body.table === 'daos'
           ? [dao('1'), dao('2')]
+              .filter((row) => BigInt(row.id) >= BigInt(String(body.lower_bound ?? '0')))
+              .slice(0, Number(body.limit ?? 100))
           : body.table === 'members'
             ? [member(String(body.scope))]
             : body.table === 'evmbindings' && body.scope === '1'
@@ -166,7 +175,7 @@ beforeAll(async () => {
       more: false,
     });
   });
-  const gateway = new NativeChainGateway(
+  gateway = new NativeChainGateway(
     {
       rpcUrl: 'http://127.0.0.1:19888',
       chainId,
@@ -1190,3 +1199,158 @@ it('preserves a registered canonical identity while historical owners reference 
     ]),
   ).rejects.toMatchObject({ constraint: 'account_reconnect_canonical' });
 });
+
+let miniAppId = 1000;
+async function reconnectMiniApp(f: Awaited<ReturnType<typeof reconnectionFixture>>) {
+  // Each case replaces the fixture's native member root; discard earlier cases' projections.
+  await pool.query('DELETE FROM memberships WHERE chain_id=$1 AND contract=$2', [chainId, runtime]);
+  const registrations: z.infer<typeof RuntimeTableSchemas.appregs>[] = [];
+  const service = await ConnectedApps.create(
+    pool,
+    {
+      ...gateway.connectedApps,
+      registry: async () => registrations,
+      membership: async (account, daoId) =>
+        (await gateway.memberships(account)).find((member) => member.dao.daoId === daoId) ?? null,
+    },
+    {
+      issuer: 'https://api.example',
+      frontendOrigin: 'https://daclify.example',
+      signingKey: AppIssuerKeySchema.parse({
+        ...generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).privateKey.export({
+          format: 'jwk',
+        }),
+        kid: 'mini-app-reconnect-fixture',
+      }),
+    },
+  );
+  const config = ConnectedAppConfigSchema.parse({
+    dao: { chainId, contract: runtime, daoId: '1', interfaceVersion: 1 },
+    appId: String(++miniAppId),
+    revision: '1',
+    name: 'Reconnection fixture',
+    origins: ['https://app.example'],
+    redirectUris: ['https://app.example/callback'],
+    sourceApiBase: 'https://app.example',
+    activityAccount: 'activity',
+    enabled: true,
+  });
+  const staged = await service.stage(f.current.account, config);
+  registrations.push(
+    RuntimeTableSchemas.appregs.parse({
+      id: config.appId,
+      target: 'activity',
+      revision: '1',
+      config_hash: staged.configHash,
+      enabled: true,
+      security_epoch: '1',
+    }),
+  );
+  return {
+    service,
+    staged,
+    binding: {
+      schemaVersion: 1 as const,
+      chainId,
+      runtime,
+      daoId: '1',
+      appId: config.appId,
+      issuer: 'https://api.example',
+      clientId: staged.clientId,
+    },
+  };
+}
+
+it.each(['wallet', 'restored'] as const)(
+  'preserves mini-app subject and native history but requires fresh consent after %s reconnection',
+  async (direction) => {
+    const name = direction === 'wallet' ? 'miniwallet' : 'minirestored';
+    const f = await reconnectionFixture(name);
+    const { service, staged, binding } = await reconnectMiniApp(f);
+    const access = await service.sourceAccess(f.current.account, staged.clientId);
+    const originalClaims = (await service.access(access.accessToken)).claims;
+    const actor = actorFromVerifiedClaims(binding, originalClaims, binding);
+    const db = new Store(':memory:', binding);
+    try {
+      const intent = db.complete('chillies', actor);
+      const targetToken = randomBytes(32).toString('base64url');
+      await pool.query(
+        "INSERT INTO connected_app_tokens(token_hash,client_id,account_id,revision,expires_at) VALUES($1,$2,$3,1,now()+interval '5 minutes')",
+        [createHash('sha256').update(targetToken).digest(), staged.clientId, f.original.account.id],
+      );
+      for (const account of [f.current.account, f.original.account]) {
+        await pool.query(
+          "INSERT INTO connected_app_refresh_families(id,client_id,account_id,revision,nonce,expires_at) VALUES($1,$2,$3,1,'fixture-reconnect',now()+interval '1 hour')",
+          [randomUUID(), staged.clientId, account.id],
+        );
+      }
+      const request =
+        direction === 'wallet' ? await f.request() : await restoredReconnectRequest(f, name);
+      const response = await app.inject(request);
+      expect(response.statusCode, response.body).toBe(200);
+      expect(SessionSchema.parse(response.json()).account.id).toBe(f.original.account.id);
+      for (const token of [access.accessToken, targetToken])
+        await expect(service.access(token)).rejects.toMatchObject({ code: 'APP_TOKEN_REQUIRED' });
+      expect(
+        (
+          await pool.query(
+            'SELECT revoked_at IS NOT NULL AS revoked FROM connected_app_refresh_families WHERE client_id=$1',
+            [staged.clientId],
+          )
+        ).rows,
+      ).toEqual([{ revoked: true }, { revoked: true }]);
+      const fresh = await service.sourceAccess(f.original.account, staged.clientId);
+      const claims = (await service.access(fresh.accessToken)).claims;
+      expect({ subject: claims.sub, dao: claims.dao, memberId: claims.memberId }).toEqual({
+        subject: originalClaims.sub,
+        dao: originalClaims.dao,
+        memberId: originalClaims.memberId,
+      });
+      const restoredActor = actorFromVerifiedClaims(binding, claims, binding);
+      expect(db.pending(restoredActor)).toEqual([intent]);
+      expect(() => db.pending({ ...restoredActor, subject: randomUUID() })).toThrow(
+        'APP_ACTOR_CHANGED',
+      );
+    } finally {
+      db.close();
+    }
+  },
+);
+
+it.each(['wallet', 'restored'] as const)(
+  'rejects two existing same-client subjects without moving history during %s reconnection',
+  async (direction) => {
+    const name = direction === 'wallet' ? 'clashwallet' : 'clashrestore';
+    const f = await reconnectionFixture(name);
+    const { service, staged } = await reconnectMiniApp(f);
+    const tokens = await Promise.all([
+      service.sourceAccess(f.current.account, staged.clientId),
+      service.sourceAccess(f.original.account, staged.clientId),
+    ]);
+    const before = (
+      await pool.query(
+        'SELECT account_id,subject FROM connected_app_subjects WHERE client_id=$1 ORDER BY account_id',
+        [staged.clientId],
+      )
+    ).rows;
+    const response = await app.inject(
+      direction === 'wallet' ? await f.request() : await restoredReconnectRequest(f, name),
+    );
+    expect(response.statusCode, response.body).toBe(409);
+    expect(response.json()).toMatchObject({ code: 'ACCOUNT_RECONNECT_CONFLICT' });
+    expect(
+      (
+        await pool.query(
+          'SELECT account_id,subject FROM connected_app_subjects WHERE client_id=$1 ORDER BY account_id',
+          [staged.clientId],
+        )
+      ).rows,
+    ).toEqual(before);
+    expect(
+      (await pool.query('SELECT merged_into FROM accounts WHERE id=$1', [f.current.account.id]))
+        .rows[0],
+    ).toEqual({ merged_into: null });
+    for (const token of tokens)
+      expect((await service.access(token.accessToken)).claims.memberId).toBe('1');
+  },
+);

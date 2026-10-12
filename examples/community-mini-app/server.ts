@@ -11,6 +11,9 @@ import {
 import { createHash } from 'node:crypto';
 import { readAppResponse } from '@daclify/core-protocol/connected-apps';
 import { Store } from './store.js';
+import { Pool } from 'pg';
+import { sqliteStore } from './database.js';
+import { createPostgresStore } from './postgres-store.js';
 import { verifyAppAccess } from './access.js';
 const issuer = ApiOriginSchema.parse(process.env.DACLIFY_ISSUER),
   clientId = z.uuid().parse(process.env.DACLIFY_CLIENT_ID),
@@ -32,7 +35,15 @@ const issuer = ApiOriginSchema.parse(process.env.DACLIFY_ISSUER),
     issuer,
     clientId,
   }),
-  store = new Store(z.string().min(1).parse(process.env.MINI_APP_DB), binding);
+  database = z.string().min(1).parse(process.env.MINI_APP_DB),
+  engine = z
+    .enum(['sqlite', 'postgres'])
+    .default('sqlite')
+    .parse(process.env.MINI_APP_DATABASE_ENGINE),
+  pool = engine === 'postgres' ? new Pool({ connectionString: database }) : null,
+  store = pool
+    ? await createPostgresStore(pool, binding)
+    : sqliteStore(new Store(database, binding));
 const config = {
   issuer,
   clientId,
@@ -109,11 +120,12 @@ const server = createServer(
       // A public DAO still requires active membership for its operational tasks.
       response.setHeader('content-type', 'application/json');
       let result: unknown;
-      if (request.method === 'GET' && url.pathname === '/v1/tasks') result = store.tasks(actor);
+      if (request.method === 'GET' && url.pathname === '/v1/tasks')
+        result = await store.tasks(actor);
       else if (request.method === 'GET' && url.pathname === '/v1/outbox')
-        result = store.pending(actor);
+        result = await store.pending(actor);
       else if (request.method === 'GET' && url.pathname.startsWith('/v1/sources/'))
-        result = store.source(
+        result = await store.source(
           z
             .string()
             .regex(/^[a-f0-9]{64}$/)
@@ -121,7 +133,7 @@ const server = createServer(
           actor,
         );
       else if (request.method === 'GET' && url.pathname.startsWith('/v1/outbox/'))
-        result = store.draft(
+        result = await store.draft(
           z
             .string()
             .regex(/^[a-f0-9]{64}$/)
@@ -133,7 +145,7 @@ const server = createServer(
             .string()
             .regex(/^[a-f0-9]{64}$/)
             .parse(url.pathname.split('/')[3]),
-          draft = store.draft(event, actor),
+          draft = await store.draft(event, actor),
           chunks: Buffer[] = [];
         let size = 0;
         for await (const chunk of request) {
@@ -175,7 +187,7 @@ const server = createServer(
           upload = z
             .object({ data: z.object({ cid: CidSchema, size: z.literal(bytes.length) }) })
             .parse(JSON.parse(new TextDecoder().decode(await readAppResponse(pinned, 65536))));
-        result = store.evidence(
+        result = await store.evidence(
           event,
           actor,
           upload.data.cid,
@@ -183,12 +195,10 @@ const server = createServer(
           context.keyEpoch,
         );
       } else if (request.method === 'POST' && url.pathname.startsWith('/v1/complete/'))
-        result = store.complete(
-          z.string().max(64).parse(url.pathname.split('/')[3]),
-          actor,
-          url.searchParams.get('evidence') === '1',
-          url.searchParams.get('review') === '1',
-        );
+        result = await store.complete(z.string().max(64).parse(url.pathname.split('/')[3]), actor, {
+          requireEvidence: url.searchParams.get('evidence') === '1',
+          review: url.searchParams.get('review') === '1',
+        });
       else if (request.method === 'POST' && url.pathname.startsWith('/v1/confirm/')) {
         const event = z
             .string()
@@ -200,7 +210,11 @@ const server = createServer(
             signal: AbortSignal.timeout(15000),
           });
         if (!native.ok) throw new Error('RECEIPT_UNCONFIRMED');
-        result = store.confirm(event, AppActivityPageSchema.parse(await native.json()), actor);
+        result = await store.confirm(
+          event,
+          AppActivityPageSchema.parse(await native.json()),
+          actor,
+        );
       } else {
         response.statusCode = 404;
         result = { error: 'NOT_FOUND' };
@@ -214,3 +228,14 @@ const server = createServer(
   },
 );
 server.listen(Number(process.env.MINI_APP_PORT ?? 9443), '127.0.0.1');
+
+process.once('SIGTERM', () => {
+  server.close(() => {
+    store
+      .close()
+      .then(() => pool?.end())
+      .catch(() => {
+        process.exitCode = 1;
+      });
+  });
+});

@@ -24,6 +24,7 @@ DACLIFY_ACTIVITY_ACCOUNT=daclifyactiv
 MINI_APP_ORIGIN=https://localhost:9443
 MINI_APP_PORT=9443
 MINI_APP_DB=/absolute/private/path/garden.sqlite
+MINI_APP_DATABASE_ENGINE=sqlite
 MINI_APP_TLS_CERT=/absolute/private/path/certificate.pem
 MINI_APP_TLS_KEY=/absolute/private/path/private-key.pem
 # Optional: the project's own server-only Pinata credential, for snapshot pinning.
@@ -39,7 +40,28 @@ npx tsx examples/community-mini-app/build.ts
 node --env-file=/absolute/private/path/mini-app.env --import tsx examples/community-mini-app/server.ts
 ```
 
-Outside this workspace, use the candidate archives from the implementation checkout or its versioned frontend vendor directory. Their SHA-256 values are core `33069b5e63c1b46878e4ce00bb50da9c4c5687c3e569ece353960cf6fa30208c` and modules `83da6a9e6284866af21dd10f494059c12bd89a431e6f226b79870cdbffdfc92c`; a private repository still needs authorized access. Install those files with `npm install ./daclify-core-protocol-0.14.0-alpha.8.tgz ./daclify-modules-0.10.0-alpha.6.tgz tsx@4.23.15 esbuild@0.28.2 zod@4.6.5`, and copy the example files. A public download path still needs implementation. The `build.ts` script uses the local esbuild binary. Never ship the environment file, SQLite database, TLS private key or provider credential in static assets.
+Outside this workspace, use the candidate archives from the implementation checkout or its versioned frontend vendor directory. Their SHA-256 values are core `33069b5e63c1b46878e4ce00bb50da9c4c5687c3e569ece353960cf6fa30208c` and modules `83da6a9e6284866af21dd10f494059c12bd89a431e6f226b79870cdbffdfc92c`; a private repository still needs authorized access. Install those files with `npm install ./daclify-core-protocol-0.14.0-alpha.8.tgz ./daclify-modules-0.10.0-alpha.6.tgz tsx@4.23.15 esbuild@0.28.2 zod@4.6.5 pg@8.23.1`, and copy the example files. A public download path still needs implementation. The `build.ts` script uses the local esbuild binary. Never ship the environment file, SQLite database, TLS private key or provider credential in static assets.
+
+## PostgreSQL and database qualification
+
+For PostgreSQL, set `MINI_APP_DATABASE_ENGINE=postgres` and `MINI_APP_DB` to the project's protected PostgreSQL connection URL. Keep it in the server environment file. The same HTTPS server, verified actors and outbox flow apply. Database TLS, connection limits and backups belong to the app operator. `postgres-schema.sql` initializes the namespaced tables; the application needs privileges on its own `mini_app` schema. Schema initialization is serialized, and each completion locks its task row before reading the frozen outbox.
+
+Each PostgreSQL tenant uses the full binding hash in primary, unique and foreign keys and every data query. Creating another binding creates a separate empty tenant; it cannot adopt the old tenant's tasks. One SQLite file holds one binding and refuses a different binding on open. Actor mappings never infer identity from names/email or member numbers alone. The caller owns the PostgreSQL pool; store calls release their transaction connections, and process shutdown closes the pool.
+
+Both engines implement `MiniAppStore` and run the same conformance cases: tenant isolation, verified subject/member pairs, uint64 boundaries, atomic outbox persistence, concurrency, stable retries and exact evidence/review reconciliation. SQLite backup and PostgreSQL `pg_dump` restore are exercised with pending events. Both account-reconnection routes preserve the sole subject/native anchor, revoke old app access/refresh credentials and reject two existing subjects for the same client. Fresh source access is demonstrated separately from recording permission.
+
+Run the disposable fixtures with an owned loopback database whose name ends in `_test`:
+
+```sh
+npm test -- tests/community-mini-app.test.ts
+DATABASE_URL=<owned-loopback-_test-db> npm run test:integration -- tests/integration/mini-app-postgres.test.ts tests/integration/wallet-recovery.test.ts tests/integration/mini-app-database-maintenance.test.ts
+```
+
+`pg_dump` must be installed and match the server's supported major version; an explicit executable can be supplied through `MINI_APP_PG_DUMP`. These tests refuse nonlocal databases. They qualify this small recipe against the recorded engines; they do not certify arbitrary databases or establish a live native-chain/provider integration.
+
+Restore only into the original binding. Back up app files and their surviving keys separately. Reapply completed deletion/revocation exclusions before allowing access after restore. An issuer/client migration needs a reviewed mapping with proof of both old and new actors; changing configuration never merges history. Versioned schema changes need a backup and pending-outbox upgrade test before installing newer pinned packages.
+
+The [synthetic storage record](../../docs/evidence/2026-10-12-mini-app-database-storage.json) measures 256 disposable personal payloads. Logical deletion left both files allocated. Coordinated SQLite checkpoint/`VACUUM` reclaimed the fixture file; PostgreSQL normal vacuum reclaimed some empty tail space and made the remainder reusable. Future deletions need not repeat those exact sizes. Coordinate SQLite maintenance and allow rebuild space; shared network files and ephemeral-only volumes are unsuitable. Each app defines finite purpose-specific retention and backup handling.
 
 ## Existing SQLite databases
 

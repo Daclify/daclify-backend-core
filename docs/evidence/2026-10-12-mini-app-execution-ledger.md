@@ -26,7 +26,7 @@ Ruling: F1 records exact current archive names/hashes and their access limitatio
 
 ## Progress
 
-B0: baseline recorded; native/browser fixture checks pending until their task setup. F1 complete (core `069cc78`, frontend `de15f4d`); F2 checks complete, commit follows; F3–Q3 pending.
+B0: baseline recorded; native/browser fixture checks pending until their task setup. F1 complete (core `069cc78`, frontend `de15f4d`); F2 complete (core `de636ca`, modules `4bec5cb`, frontend `c9bc9c1`); F3 checks complete, commit follows; F4–Q3 pending.
 
 ### F1 — documentation source complete
 
@@ -46,3 +46,13 @@ B0: baseline recorded; native/browser fixture checks pending until their task se
 - Core lint, strict typecheck and generated-documentation checks passed with the final pins; focused SQLite/access/protocol/adoption 21 tests (including maximum uint64 storage) and all 18 connected-app PostgreSQL integration tests passed. Modules SDK 6 tests, typecheck and documentation checks passed. Frontend production build passed; its 25 focused account/help tests and typecheck are recorded with the final package pins.
 - F2 file-map expansion: verified-client API response handling/integration coverage and the access/adoption helpers and their tests are necessary to make the planned actor verification and explicit adoption executable. Binding format is 1; existing unbound databases require the documented offline backup/attestation flow. No existing app database was changed.
 - Production-only npm audit: zero advisories. The unchanged development VERT chain has four advisories (two high, two low), with no registry-proposed fix; record/review these for qualification, do not run an unqualified automatic upgrade.
+
+### F3 — PostgreSQL recipe and database conformance
+
+- Added the asynchronous MiniAppStore interface/SQLite adapter and a PostgreSQL recipe with full binding namespaces, composite actor foreign keys, lossless numeric(20,0) member IDs and atomic locked task/outbox writes. The HTTPS example selects either engine and closes its owned pool on shutdown. No role projection authorizes an operation.
+- Initial engine tests could not load the absent implementations; that is feature-absence evidence, not a behavioral regression result. The added simultaneous cold-start case then failed with `pg_namespace_nspname_index` despite `IF NOT EXISTS`; schema/binding initialization now runs under a transaction-scoped advisory lock. That case passed with one binding/seed task after four simultaneous opens.
+- Shared seven-case conformance runs against both engines. SQLite uses a real database backup; PostgreSQL uses version-matched pg_dump and restores the schema/data, preserving pending event IDs/revisions. Covers same-member-number tenants, wrong DAO/client actors, forged mappings, outbox rollback, competing completion, source edits, restart, uint64 maxima and immutable evidence/exact-version reviews.
+- Both account-reconnection routes preserve the sole existing subject/full native membership anchor and the app's frozen history, revoke source/target access and refresh credentials, and require fresh access. Both reject same-client subject collisions without transferring history. Real PostgreSQL and K1 proof signatures are used; the wallet suite's RPC boundary is simulated. Earlier fixture projections and DAO pagination needed isolation/correct range handling; product authorization was not weakened.
+- File-map expansion: wallet-recovery integration coverage and the maintenance integration test/evidence are required by F3's reconnection/storage steps. Binding format 1 defines this recipe's initial schema. Public SDK files did not change, so the frozen F2 archives remain intact.
+- Checks: full core suite **146 files/912 tests passed** after fixture setup; integration **3 files/45 tests passed** (PostgreSQL conformance/cold start 8, wallet/reconnection 36, storage maintenance 1). Strict typecheck, lint and generated-documentation check passed. Current core/modules public pins remain alpha.8/alpha.6.
+- Storage: Node 24.21.0, SQLite 3.53.4, PostgreSQL 17.11; 256 synthetic 16 KiB personal payloads. Deletion removed every row but left allocated bytes unchanged (SQLite 4,374,528; PostgreSQL 4,497,408). Coordinated SQLite vacuum reduced its file to 49,152 bytes; PostgreSQL normal vacuum left 122,880 bytes after reclaiming empty tail space. See the JSON record; this is engine-specific synthetic evidence, not backup/history erasure or universal anonymity.

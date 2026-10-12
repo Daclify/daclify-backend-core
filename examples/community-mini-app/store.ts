@@ -57,7 +57,7 @@ function transaction<T>(db: DatabaseSync, work: () => T): T {
     throw error;
   }
 }
-function source(appId: string, task: Task) {
+export function taskSource(appId: string, task: Task) {
   return AppSourceRecordSchema.parse({
     schemaVersion: 1,
     sourceId: hash(appId + ':' + task.id),
@@ -140,7 +140,7 @@ export class Store {
   source(id: string, input: AppActor) {
     const task = this.tasks(input).find((task) => hash(this.appId + ':' + task.id) === id);
     if (!task) throw new Error('SOURCE_UNKNOWN');
-    return source(this.appId, task);
+    return taskSource(this.appId, task);
   }
   complete(id: string, input: AppActor, requireEvidence = false, review = false): ActivityIntent {
     const actor = this.actor(input);
@@ -163,7 +163,7 @@ export class Store {
       if (task.state !== 'open' || task.doneBy !== null) throw new Error('TASK_ALREADY_COMPLETED');
       task.state = review ? 'awaiting-review' : 'completed';
       task.doneBy = actor.memberId;
-      const draft = source(this.appId, task);
+      const draft = taskSource(this.appId, task);
       const intent = ActivityIntentSchema.parse({
         action: review ? 'askreview' : 'recordact',
         sourceId,
@@ -337,7 +337,7 @@ export async function adoptLegacyDatabase(
         )
           throw new Error('APP_DATABASE_ADOPTION_RECORD');
       } else {
-        const saved = source(binding.appId, task);
+        const saved = taskSource(binding.appId, task);
         if (saved.sourceRevision !== intent.sourceRevision)
           throw new Error('APP_DATABASE_ADOPTION_RECORD');
         snapshot = JSON.stringify(

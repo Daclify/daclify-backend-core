@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-12T13:38:53.010Z",
+  "node": "24.21.0",
+  "sqlite": "3.53.4",
+  "postgres": "17.11 (Ubuntu 17.11-1.pgdg24.04+2)",
+  "appBindingFormat": 1,
+  "rows": 256,
+  "payloadBytes": 16384,
+  "before": {
+    "sqlite": 49152,
+    "postgres": 16384
+  },
+  "filled": {
+    "sqlite": 4374528,
+    "postgres": 4497408
+  },
+  "deleted": {
+    "sqlite": 4374528,
+    "postgres": 4497408
+  },
+  "vacuumed": {
+    "sqlite": 49152,
+    "postgres": 122880
+  },
+  "remainingPersonalRows": 0,
+  "scope": "Disposable synthetic personal payload table. Logical deletion and disk reuse/reclamation only; no historical, backup or universal GDPR erasure claim.",
+  "command": "RECORD_MINI_APP_STORAGE=1 DATABASE_URL=<owned-loopback-_test-db> npm run test:integration -- tests/integration/mini-app-database-maintenance.test.ts"
+}

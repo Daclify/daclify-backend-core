@@ -53,4 +53,6 @@ Keep database credentials, signing keys, TLS keys and provider secrets outside f
 - Recovery/reconnection retains the verified mapping and requires renewed access; ambiguous subject collisions reject.
 - Controlled finite cleanup and engine maintenance demonstrate actual outcomes without claiming universal anonymity or physical reclamation.
 
+The local candidate's shared suite exercises SQLite 3.53.4 and PostgreSQL 17.11 on Node 24.21.0. It includes pending-outbox database restores, concurrent writers and both real-SQL account-reconnection routes with genuine root/native proof signatures; the RPC boundary is a fixture, so this does not establish native-chain qualification. The [storage measurement](../evidence/2026-10-12-mini-app-database-storage.json) records logical deletion separately from coordinated engine maintenance. Creating another PostgreSQL namespace cannot access or migrate the original namespace. Startup checks its stored binding; actor mismatches refuse reads/writes. Explicit schema/client/issuer migrations still need the original backup and verified old/new mapping.
+
 See the [connection guide](../connected-community-apps.md), [project design template](../examples/community-mini-app-design.md) and [runnable starter](../../examples/community-mini-app/README.md). These are acceptance requirements, not certification of every SQL/NoSQL engine.
