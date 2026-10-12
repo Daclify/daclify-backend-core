@@ -183,15 +183,15 @@ Q3 prepares a source-bound release candidate and a concrete rollout/rollback run
 
 Execution is now authorized and running inline. The [durable execution ledger](../../evidence/2026-10-12-mini-app-execution-ledger.md) and [baseline](../../evidence/2026-10-12-mini-app-execution-baseline.json) record actual progress; unchecked tasks remain pending.
 
-| Package | State                                           | Evidence/commit             |
-| ------- | ----------------------------------------------- | --------------------------- |
-| B0      | Baseline/native recorded; browser setup pending | Baseline and durable ledger |
-| F1–F4   | F1–F4 complete                                  | Durable ledger              |
-| C1–C3   | C1–C2 complete; C3 pending                      | —                           |
-| P1–P3   | P1–P3 complete                                  | —                           |
-| X1–X4   | Pending                                         | —                           |
-| M1–M4   | Pending                                         | —                           |
-| Q1–Q3   | Pending                                         | —                           |
+| Package | State                            | Evidence/commit             |
+| ------- | -------------------------------- | --------------------------- |
+| B0      | Baseline/native/browser recorded | Baseline and durable ledger |
+| F1–F4   | F1–F4 complete                   | Durable ledger              |
+| C1–C3   | C1–C2 complete; C3 pending       | —                           |
+| P1–P3   | P1–P3 complete                   | —                           |
+| X1–X4   | X1 complete; X2–X4 pending       | —                           |
+| M1–M4   | Pending                          | —                           |
+| Q1–Q3   | Pending                          | —                           |
 
 Update the durable ledger after each task with commands, passed/failed/unrun results, changed files, immutable artifact references and any material policy/access blocker. Continue independent work when one release qualification is blocked. No repeated internal checkpoint approvals and no sub-agent delegation.
 

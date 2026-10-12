@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle={
   "producer": "core",
-  "packageVersion": "0.15.0-alpha.3",
+  "packageVersion": "0.15.0-alpha.7",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -590,8 +590,29 @@ export const CoreHelpBundle={
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "300b7f5029c9b9d4f13935db1b152cee3b42ad5d78c69b5d7f5e11a9b0b0eaee",
+      "sourceAbiHash": "70fad149e20d22989c9412b7ac38e337e74fa407340d6270d5440c26a2ebd807",
       "actions": [
+        {
+          "name": "accepthand",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "expected_commitment",
+              "type": "checksum256"
+            }
+          ]
+        },
         {
           "name": "addappses",
           "fields": [
@@ -930,6 +951,35 @@ export const CoreHelpBundle={
           ]
         },
         {
+          "name": "beginhand",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "departing",
+              "type": "uint64"
+            },
+            {
+              "name": "successor",
+              "type": "uint64"
+            },
+            {
+              "name": "expires",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
           "name": "beginram",
           "fields": [
             {
@@ -1003,6 +1053,15 @@ export const CoreHelpBundle={
           ]
         },
         {
+          "name": "clearhand",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            }
+          ]
+        },
+        {
           "name": "clearholds",
           "fields": [
             {
@@ -1020,6 +1079,15 @@ export const CoreHelpBundle={
           ]
         },
         {
+          "name": "clearlifecode",
+          "fields": [
+            {
+              "name": "account",
+              "type": "name"
+            }
+          ]
+        },
+        {
           "name": "clearmterms",
           "fields": [
             {
@@ -1033,6 +1101,40 @@ export const CoreHelpBundle={
             {
               "name": "limit",
               "type": "uint32"
+            }
+          ]
+        },
+        {
+          "name": "closedao",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "closehost",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "closing_at",
+              "type": "uint32"
+            },
+            {
+              "name": "receipt",
+              "type": "checksum256"
             }
           ]
         },
@@ -1999,6 +2101,23 @@ export const CoreHelpBundle={
           "fields": []
         },
         {
+          "name": "leave",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            }
+          ]
+        },
+        {
           "name": "linkevm",
           "fields": [
             {
@@ -2567,6 +2686,27 @@ export const CoreHelpBundle={
           ]
         },
         {
+          "name": "scanhand",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "limit",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
           "name": "scanram",
           "fields": [
             {
@@ -2924,6 +3064,23 @@ export const CoreHelpBundle={
           ]
         },
         {
+          "name": "setlifecode",
+          "fields": [
+            {
+              "name": "account",
+              "type": "name"
+            },
+            {
+              "name": "code_hash",
+              "type": "checksum256"
+            },
+            {
+              "name": "kind",
+              "type": "uint8"
+            }
+          ]
+        },
+        {
           "name": "setmeta",
           "fields": [
             {
@@ -3230,6 +3387,23 @@ export const CoreHelpBundle={
             {
               "name": "can_vote",
               "type": "bool"
+            }
+          ]
+        },
+        {
+          "name": "startclose",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
             }
           ]
         },
@@ -3709,6 +3883,35 @@ export const CoreHelpBundle={
           ]
         },
         {
+          "name": "closechecks",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "code_hash",
+              "type": "checksum256"
+            },
+            {
+              "name": "closing_at",
+              "type": "uint32"
+            },
+            {
+              "name": "stage",
+              "type": "uint8"
+            },
+            {
+              "name": "cursor",
+              "type": "uint64"
+            },
+            {
+              "name": "complete",
+              "type": "bool"
+            }
+          ]
+        },
+        {
           "name": "createcfg",
           "fields": [
             {
@@ -3816,6 +4019,23 @@ export const CoreHelpBundle={
             {
               "name": "receipt",
               "type": "checksum256"
+            }
+          ]
+        },
+        {
+          "name": "daolife",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "state",
+              "type": "uint8"
+            },
+            {
+              "name": "transitioned_at",
+              "type": "uint32"
             }
           ]
         },
@@ -4334,6 +4554,88 @@ export const CoreHelpBundle={
           ]
         },
         {
+          "name": "handovers",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "initiator",
+              "type": "uint64"
+            },
+            {
+              "name": "departing",
+              "type": "uint64"
+            },
+            {
+              "name": "successor",
+              "type": "uint64"
+            },
+            {
+              "name": "departing_credentials",
+              "type": "uint64"
+            },
+            {
+              "name": "successor_credentials",
+              "type": "uint64"
+            },
+            {
+              "name": "successor_key",
+              "type": "checksum256"
+            },
+            {
+              "name": "key_epoch",
+              "type": "uint64"
+            },
+            {
+              "name": "history_policy",
+              "type": "uint8"
+            },
+            {
+              "name": "last_epoch",
+              "type": "uint64"
+            },
+            {
+              "name": "cursor",
+              "type": "uint64"
+            },
+            {
+              "name": "complete",
+              "type": "bool"
+            },
+            {
+              "name": "accepted",
+              "type": "bool"
+            },
+            {
+              "name": "expires",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
+          "name": "hostclose",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "closing_at",
+              "type": "uint32"
+            },
+            {
+              "name": "settler",
+              "type": "name"
+            },
+            {
+              "name": "receipt",
+              "type": "checksum256"
+            }
+          ]
+        },
+        {
           "name": "keygrants",
           "fields": [
             {
@@ -4355,6 +4657,23 @@ export const CoreHelpBundle={
             {
               "name": "envelope",
               "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "lifehashes",
+          "fields": [
+            {
+              "name": "account",
+              "type": "name"
+            },
+            {
+              "name": "code_hash",
+              "type": "checksum256"
+            },
+            {
+              "name": "kind",
+              "type": "uint8"
             }
           ]
         },
@@ -6736,6 +7055,112 @@ export const CoreHelpBundle={
           "grant"
         ],
         "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/daos/:id/handover",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "dao_id": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "initiator": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "departing": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "successor": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "departing_credentials": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "successor_credentials": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "successor_key": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "key_epoch": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "history_policy": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "last_epoch": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "cursor": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "complete": {
+                "type": "boolean"
+              },
+              "accepted": {
+                "type": "boolean"
+              },
+              "expires": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              "commitment": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "ready",
+                  "expired",
+                  "stale"
+                ]
+              }
+            },
+            "required": [
+              "dao_id",
+              "initiator",
+              "departing",
+              "successor",
+              "departing_credentials",
+              "successor_credentials",
+              "successor_key",
+              "key_epoch",
+              "history_policy",
+              "last_epoch",
+              "cursor",
+              "complete",
+              "accepted",
+              "expires",
+              "commitment",
+              "status"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "null"
+          }
+        ]
       },
       "helpTopic": "accounts"
     },
@@ -21713,6 +22138,15 @@ export const CoreHelpBundle={
                   "type": "string",
                   "maxLength": 20
                 },
+                "lifecycle": {
+                  "default": "active",
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "closing",
+                    "closed"
+                  ]
+                },
                 "purpose": {
                   "type": "string",
                   "enum": [
@@ -21920,7 +22354,8 @@ export const CoreHelpBundle={
                 "available",
                 "reserved",
                 "claims",
-                "keyEpoch"
+                "keyEpoch",
+                "lifecycle"
               ],
               "additionalProperties": false
             }
@@ -22413,6 +22848,15 @@ export const CoreHelpBundle={
             "type": "string",
             "maxLength": 20
           },
+          "lifecycle": {
+            "default": "active",
+            "type": "string",
+            "enum": [
+              "active",
+              "closing",
+              "closed"
+            ]
+          },
           "purpose": {
             "type": "string",
             "enum": [
@@ -22620,7 +23064,8 @@ export const CoreHelpBundle={
           "available",
           "reserved",
           "claims",
-          "keyEpoch"
+          "keyEpoch",
+          "lifecycle"
         ],
         "additionalProperties": false
       },

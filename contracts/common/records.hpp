@@ -31,6 +31,14 @@ struct [[eosio::table("daos"), eosio::contract("runtime")]] dao_record {
   EOSLIB_SERIALIZE(dao_record,(id)(owner)(metadata)(privacy)(token_contract)(token_symbol)(credit_supply)(member_count)(max_member)(active_ballots)(available)(reserved)(claims)(staked)(eligible_credits)(eligible_stake)(admin_count)(key_epoch)(history_policy))
 };
 using daos = ram_table<"daos"_n,dao_record>;
+// Missing means active. Separate serialization preserves every existing DAO row.
+struct [[eosio::table("daolife"),eosio::contract("runtime")]] dao_lifecycle_record {
+ uint64_t dao_id;uint8_t state=1;uint32_t transitioned_at=0;
+ uint64_t primary_key()const{return dao_id;}
+ uint64_t ram_owner(name,uint64_t)const{return dao_id;}
+ EOSLIB_SERIALIZE(dao_lifecycle_record,(dao_id)(state)(transitioned_at))
+};
+using dao_lifecycles=ram_table<"daolife"_n,dao_lifecycle_record>;
 struct [[eosio::table("members"), eosio::contract("runtime")]] member_record {
   uint64_t id; name native_account; public_key signing_key; std::string encryption_key; uint8_t custody;
   uint64_t nonce=0; uint64_t credits=0; bool active=true; bool admin=false; bool reviewer=false; int64_t stake=0; int64_t claim=0; uint64_t join_epoch=1;

@@ -99,7 +99,7 @@ describe('deployment permission inspection', () => {
       plan,
       account([permission('execctx', [{ account: 'auditworks', action: null }])]),
     );
-    expect(audit.missingLinks).toHaveLength(52);
+    expect(audit.missingLinks).toHaveLength(58);
     expect(audit.unexpectedLinks).toEqual([{ account: 'auditworks', action: '*' }]);
   });
   it.each([
@@ -123,7 +123,7 @@ describe('deployment permission inspection', () => {
   it('reports a missing execution authority and refuses a wrong account', () => {
     const audit = auditContextPermission(plan, account([]));
     expect(audit.authorityMatches).toBe(false);
-    expect(audit.missingLinks).toHaveLength(52);
+    expect(audit.missingLinks).toHaveLength(58);
     expect(() => auditContextPermission(plan, account([], 'othercore'))).toThrow(
       'PERMISSION_ACCOUNT_MISMATCH',
     );
@@ -187,12 +187,30 @@ describe('deployment permission inspection', () => {
   it('uses all configured modules while keeping service-only accounts out of member execution', async () => {
     const audit = deploymentContextPermissionPlan(await loadEnvironment('testnet'));
     expect(audit.account).toBe('daclifycore1');
-    expect(audit.links).toHaveLength(84);
-    for (const action of ['setencprof', 'delprofile'])
+    expect(audit.links).toHaveLength(90);
+    for (const action of [
+      'setencprof',
+      'delprofile',
+      'leave',
+      'startclose',
+      'closedao',
+      'beginhand',
+      'scanhand',
+      'accepthand',
+    ])
       expect(audit.links).toContainEqual({ account: 'daclifycore1', action });
     for (const action of ['regdoc', 'proposedoc', 'adoptdoc', 'canceldoc', 'ackdoc'])
       expect(audit.links).toContainEqual({ account: 'daclifydecid', action });
     expect(audit.links.map((link) => link.action)).not.toContain('cleardocs');
+    for (const action of [
+      'clearhand',
+      'scanclose',
+      'clearclose',
+      'setlifecode',
+      'clearlifecode',
+      'closehost',
+    ])
+      expect(audit.links.map((link) => link.action)).not.toContain(action);
     expect(audit.links).toContainEqual({ account: 'daclifygrant', action: 'applygrant' });
     expect(audit.links).toContainEqual({ account: 'daclifyactiv', action: 'recordact' });
     expect(audit.links).toContainEqual({ account: 'daclifycore1', action: 'addappses' });

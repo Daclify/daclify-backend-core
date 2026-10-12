@@ -1,10 +1,32 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = '300b7f5029c9b9d4f13935db1b152cee3b42ad5d78c69b5d7f5e11a9b0b0eaee';
+export const runtimeAbiHash = '70fad149e20d22989c9412b7ac38e337e74fa407340d6270d5440c26a2ebd807';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
   "structs": [
+    {
+      "name": "accepthand",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "expected_commitment",
+          "type": "checksum256"
+        }
+      ]
+    },
     {
       "name": "actor_context",
       "base": "",
@@ -764,6 +786,36 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "beginhand",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "departing",
+          "type": "uint64"
+        },
+        {
+          "name": "successor",
+          "type": "uint64"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
       "name": "beginram",
       "base": "",
       "fields": [
@@ -924,6 +976,16 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "clearhand",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
       "name": "clearholds",
       "base": "",
       "fields": [
@@ -942,6 +1004,16 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "clearlifecode",
+      "base": "",
+      "fields": [
+        {
+          "name": "account",
+          "type": "name"
+        }
+      ]
+    },
+    {
       "name": "clearmterms",
       "base": "",
       "fields": [
@@ -956,6 +1028,72 @@ export const runtimeAbi = {
         {
           "name": "limit",
           "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "closedao",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "closehost",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "closing_at",
+          "type": "uint32"
+        },
+        {
+          "name": "receipt",
+          "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "closure_check",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "code_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "closing_at",
+          "type": "uint32"
+        },
+        {
+          "name": "stage",
+          "type": "uint8"
+        },
+        {
+          "name": "cursor",
+          "type": "uint64"
+        },
+        {
+          "name": "complete",
+          "type": "bool"
         }
       ]
     },
@@ -1240,6 +1378,24 @@ export const runtimeAbi = {
         {
           "name": "receipt",
           "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "dao_lifecycle_record",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "state",
+          "type": "uint8"
+        },
+        {
+          "name": "transitioned_at",
+          "type": "uint32"
         }
       ]
     },
@@ -2662,6 +2818,28 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "hosted_closure",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "closing_at",
+          "type": "uint32"
+        },
+        {
+          "name": "settler",
+          "type": "name"
+        },
+        {
+          "name": "receipt",
+          "type": "checksum256"
+        }
+      ]
+    },
+    {
       "name": "hosted_policy",
       "base": "",
       "fields": [
@@ -2817,6 +2995,42 @@ export const runtimeAbi = {
         {
           "name": "envelope",
           "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "leave",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "lifecycle_source",
+      "base": "",
+      "fields": [
+        {
+          "name": "account",
+          "type": "name"
+        },
+        {
+          "name": "code_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "kind",
+          "type": "uint8"
         }
       ]
     },
@@ -3391,6 +3605,68 @@ export const runtimeAbi = {
         {
           "name": "source_id",
           "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "private_handover_record",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "initiator",
+          "type": "uint64"
+        },
+        {
+          "name": "departing",
+          "type": "uint64"
+        },
+        {
+          "name": "successor",
+          "type": "uint64"
+        },
+        {
+          "name": "departing_credentials",
+          "type": "uint64"
+        },
+        {
+          "name": "successor_credentials",
+          "type": "uint64"
+        },
+        {
+          "name": "successor_key",
+          "type": "checksum256"
+        },
+        {
+          "name": "key_epoch",
+          "type": "uint64"
+        },
+        {
+          "name": "history_policy",
+          "type": "uint8"
+        },
+        {
+          "name": "last_epoch",
+          "type": "uint64"
+        },
+        {
+          "name": "cursor",
+          "type": "uint64"
+        },
+        {
+          "name": "complete",
+          "type": "bool"
+        },
+        {
+          "name": "accepted",
+          "type": "bool"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
         }
       ]
     },
@@ -4363,6 +4639,28 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "scanhand",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "limit",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
       "name": "scanram",
       "base": "",
       "fields": [
@@ -4807,6 +5105,24 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "setlifecode",
+      "base": "",
+      "fields": [
+        {
+          "name": "account",
+          "type": "name"
+        },
+        {
+          "name": "code_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "kind",
+          "type": "uint8"
+        }
+      ]
+    },
+    {
       "name": "setmeta",
       "base": "",
       "fields": [
@@ -5145,6 +5461,24 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "startclose",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
       "name": "submit",
       "base": "",
       "fields": [
@@ -5323,6 +5657,11 @@ export const runtimeAbi = {
   ],
   "actions": [
     {
+      "name": "accepthand",
+      "type": "accepthand",
+      "ricardian_contract": ""
+    },
+    {
       "name": "addappses",
       "type": "addappses",
       "ricardian_contract": ""
@@ -5388,6 +5727,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "beginhand",
+      "type": "beginhand",
+      "ricardian_contract": ""
+    },
+    {
       "name": "beginram",
       "type": "beginram",
       "ricardian_contract": ""
@@ -5413,13 +5757,33 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "clearhand",
+      "type": "clearhand",
+      "ricardian_contract": ""
+    },
+    {
       "name": "clearholds",
       "type": "clearholds",
       "ricardian_contract": ""
     },
     {
+      "name": "clearlifecode",
+      "type": "clearlifecode",
+      "ricardian_contract": ""
+    },
+    {
       "name": "clearmterms",
       "type": "clearmterms",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "closedao",
+      "type": "closedao",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "closehost",
+      "type": "closehost",
       "ricardian_contract": ""
     },
     {
@@ -5618,6 +5982,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "leave",
+      "type": "leave",
+      "ricardian_contract": ""
+    },
+    {
       "name": "linkevm",
       "type": "linkevm",
       "ricardian_contract": ""
@@ -5738,6 +6107,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "scanhand",
+      "type": "scanhand",
+      "ricardian_contract": ""
+    },
+    {
       "name": "scanram",
       "type": "scanram",
       "ricardian_contract": ""
@@ -5823,6 +6197,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "setlifecode",
+      "type": "setlifecode",
+      "ricardian_contract": ""
+    },
+    {
       "name": "setmeta",
       "type": "setmeta",
       "ricardian_contract": ""
@@ -5890,6 +6269,11 @@ export const runtimeAbi = {
     {
       "name": "setvoter",
       "type": "setvoter",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "startclose",
+      "type": "startclose",
       "ricardian_contract": ""
     },
     {
@@ -6022,6 +6406,13 @@ export const runtimeAbi = {
       "key_types": []
     },
     {
+      "name": "closechecks",
+      "type": "closure_check",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "createcfg",
       "type": "creation_policy",
       "index_type": "i64",
@@ -6038,6 +6429,13 @@ export const runtimeAbi = {
     {
       "name": "daocaps",
       "type": "dao_capacity",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "daolife",
+      "type": "dao_lifecycle_record",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -6169,8 +6567,29 @@ export const runtimeAbi = {
       "key_types": []
     },
     {
+      "name": "handovers",
+      "type": "private_handover_record",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "hostclose",
+      "type": "hosted_closure",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "keygrants",
       "type": "key_grant_record",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "lifehashes",
+      "type": "lifecycle_source",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -6460,6 +6879,12 @@ export const runtimeAbi = {
   "ricardian_clauses": [],
   "action_results": []
 } satisfies ABI.Def;
+export interface accepthand {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  expected_commitment: string;
+}
 export interface actor_context {
   runtime: string;
   dao_id: string;
@@ -6662,6 +7087,14 @@ export interface backfilldocs {
   dao_id: string;
   limit: number;
 }
+export interface beginhand {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  departing: string;
+  successor: string;
+  expires: number;
+}
 export interface beginram {
   sources: ram_migration_source[];
 }
@@ -6706,15 +7139,39 @@ export interface checkdaoram {
 export interface checkrampool {
   payer: string;
 }
+export interface clearhand {
+  dao_id: string;
+}
 export interface clearholds {
   dao_id: string;
   recipient: string;
   limit: number;
 }
+export interface clearlifecode {
+  account: string;
+}
 export interface clearmterms {
   dao_id: string;
   after: string;
   limit: number;
+}
+export interface closedao {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+}
+export interface closehost {
+  dao_id: string;
+  closing_at: number;
+  receipt: string;
+}
+export interface closure_check {
+  dao_id: string;
+  code_hash: string;
+  closing_at: number;
+  stage: number;
+  cursor: string;
+  complete: boolean;
 }
 export interface commitepoch {
   runtime: string;
@@ -6790,6 +7247,11 @@ export interface dao_capacity {
   members: number;
   expires: number;
   receipt: string;
+}
+export interface dao_lifecycle_record {
+  dao_id: string;
+  state: number;
+  transitioned_at: number;
 }
 export interface dao_record {
   id: string;
@@ -7171,6 +7633,12 @@ export interface heartbeat {
   dao_id: string;
   member_id: string;
 }
+export interface hosted_closure {
+  dao_id: string;
+  closing_at: number;
+  settler: string;
+  receipt: string;
+}
 export interface hosted_policy {
   free_members: number;
   settler: string;
@@ -7215,6 +7683,16 @@ export interface key_grant_record {
   recipient: string;
   grantor: string;
   envelope: string;
+}
+export interface leave {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+}
+export interface lifecycle_source {
+  account: string;
+  code_hash: string;
+  kind: number;
 }
 export interface linkevm {
   runtime: string;
@@ -7369,6 +7847,22 @@ export interface payob {
   dao_id: string;
   source: string;
   source_id: string;
+}
+export interface private_handover_record {
+  dao_id: string;
+  initiator: string;
+  departing: string;
+  successor: string;
+  departing_credentials: string;
+  successor_credentials: string;
+  successor_key: string;
+  key_epoch: string;
+  history_policy: number;
+  last_epoch: string;
+  cursor: string;
+  complete: boolean;
+  accepted: boolean;
+  expires: number;
 }
 export interface profile_record {
   id: string;
@@ -7633,6 +8127,12 @@ export interface rotatekey {
   member_id: string;
   signing_key: string;
 }
+export interface scanhand {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  limit: number;
+}
 export interface scanram {
   dao_id: string;
   table: string;
@@ -7754,6 +8254,11 @@ export interface sethosted {
   free_members: number;
   settler: string;
 }
+export interface setlifecode {
+  account: string;
+  code_hash: string;
+  kind: number;
+}
 export interface setmeta {
   runtime: string;
   dao_id: string;
@@ -7846,6 +8351,11 @@ export interface setvoter {
   target: string;
   can_vote: boolean;
 }
+export interface startclose {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+}
 export interface submit {
   request: instruction;
   sig: string;
@@ -7896,6 +8406,7 @@ export interface withdraw {
   quantity: string;
 }
 export interface RuntimeActions {
+  accepthand: accepthand;
   addappses: addappses;
   addmember: addmember;
   addsession: addsession;
@@ -7909,13 +8420,18 @@ export interface RuntimeActions {
   archstep: archstep;
   authproof: authproof;
   backfilldocs: backfilldocs;
+  beginhand: beginhand;
   beginram: beginram;
   cancelob: cancelob;
   cardcreate: cardcreate;
   checkdaoram: checkdaoram;
   checkrampool: checkrampool;
+  clearhand: clearhand;
   clearholds: clearholds;
+  clearlifecode: clearlifecode;
   clearmterms: clearmterms;
+  closedao: closedao;
+  closehost: closehost;
   commitepoch: commitepoch;
   confirmext: confirmext;
   createdao: createdao;
@@ -7955,6 +8471,7 @@ export interface RuntimeActions {
   initactivity: initactivity;
   initgov: initgov;
   initramobs: initramobs;
+  leave: leave;
   linkevm: linkevm;
   linknative: linknative;
   listmod: listmod;
@@ -7979,6 +8496,7 @@ export interface RuntimeActions {
   revokecap: revokecap;
   rotateepoch: rotateepoch;
   rotatekey: rotatekey;
+  scanhand: scanhand;
   scanram: scanram;
   sealram: sealram;
   setactive: setactive;
@@ -7996,6 +8514,7 @@ export interface RuntimeActions {
   setfees: setfees;
   setgov: setgov;
   sethosted: sethosted;
+  setlifecode: setlifecode;
   setmeta: setmeta;
   setmodcopy: setmodcopy;
   setmodterm: setmodterm;
@@ -8010,6 +8529,7 @@ export interface RuntimeActions {
   setresources: setresources;
   setroles: setroles;
   setvoter: setvoter;
+  startclose: startclose;
   submit: submit;
   submitevm: submitevm;
   submitnat: submitnat;

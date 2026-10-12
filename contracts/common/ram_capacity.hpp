@@ -46,6 +46,7 @@ inline uint64_t ram_used(const ram_counter& row){return add64(add64(row.identity
 inline uint64_t ram_limit_bytes(const ram_dao_limit& value){return add64(add64(value.activity,value.identity),value.completion);}
 inline bool ram_completion_table(name table){
  switch(table.value){case "receipts"_n.value:case "ramholds"_n.value:case "ramclmholds"_n.value:
+ case "daolife"_n.value:case "handovers"_n.value:case "hostclose"_n.value:case "closechecks"_n.value:
  case "termholds"_n.value:case "terms"_n.value:case "pollends"_n.value:
  case "ramorders"_n.value:case "ramcards"_n.value:case "ramalloc"_n.value:case "ramlimits"_n.value:
  case "ramgrants"_n.value:case "raminherit"_n.value:case "ramentitle"_n.value:return true;default:return false;}

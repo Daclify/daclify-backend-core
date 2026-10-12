@@ -2,6 +2,8 @@ import { NamesActionSchemas, NamesTableSchemas } from '../../../sdk/generated/na
 import { EncryptionPublicKeySchema } from '../../../protocol/crypto.js';
 import { ProfileRecipientPageSchema } from '../../../protocol/profiles.js';
 import { decodeRawNativeProfile } from '../../../sdk/profiles.js';
+import { privateHandoverCommitment } from '../../../sdk/account-exit.js';
+import { DaoHandoverSchema } from '../../../protocol/account-exit.js';
 import { namesAbi, NamesCodeHash } from '../../../sdk/names.js';
 import {
   ContentPageQuerySchema,
@@ -1930,14 +1932,14 @@ export class NativeChainGateway implements ChainGateway {
       signal: AbortSignal.timeout(10000),
     });
     if (!response.ok) {
-      if (table === 'memberacts') {
+      if (table === 'memberacts' || table === 'daolife') {
         const legacy = z
           .object({ error: z.object({ details: z.array(z.object({ message: z.string() })) }) })
           .safeParse(await response.json().catch(() => undefined));
         if (
           legacy.success &&
           legacy.data.error.details.some(
-            (detail) => detail.message === 'Table memberacts is not specified in the ABI',
+            (detail) => detail.message === `Table ${table} is not specified in the ABI`,
           )
         )
           return { rows: [], next: null };
@@ -1994,6 +1996,11 @@ export class NativeChainGateway implements ChainGateway {
     if (setup && (!policy || policy.dao_id !== row.id))
       throw new ApiError('DAO_POLICY_UNAVAILABLE', 503);
     const [precision, symbol] = row.token_symbol.split(',');
+    const life = (await this.tablePage('daolife', this.config.runtime, row.id, 1)).rows.find(
+      (item) => item.dao_id === row.id,
+    );
+    if (life && life.state !== 1 && life.state !== 2)
+      throw new ApiError('DAO_LIFECYCLE_UNSUPPORTED', 503);
     return DaoSummarySchema.parse({
       reference: {
         chainId: this.config.chainId,
@@ -2016,6 +2023,7 @@ export class NativeChainGateway implements ChainGateway {
       reserved: row.reserved,
       claims: row.claims,
       keyEpoch: row.key_epoch,
+      lifecycle: !life ? 'active' : life.state === 1 ? 'closing' : 'closed',
       purpose:
         metadata.success && metadata.data.schemaVersion !== 1 ? metadata.data.purpose : 'custom',
       participantMode: policy
@@ -2462,6 +2470,68 @@ export class NativeChainGateway implements ChainGateway {
     if (stored && rows.some((row) => row.id === stored)) ids.add(stored);
     if (ids.size > 1) throw new ApiError('WALLET_MEMBERSHIP_CONFLICT', 409);
     return ids.values().next().value;
+  }
+  async privateHandover(daoId: string) {
+    IdSchema.parse(daoId);
+    const { abi } = await this.api.v1.chain.get_abi(this.config.runtime);
+    const action = abi?.actions.find((row) => row.name.toString() === 'accepthand');
+    const acceptsBinding = abi?.structs
+      .find((row) => row.name === action?.type)
+      ?.fields.some((field) => field.name === 'expected_commitment');
+    if (!acceptsBinding || !abi?.tables.some((row) => row.name === 'handovers'))
+      throw new ApiError('PRIVATE_HANDOVER_UNSUPPORTED', 409);
+    const page = await this.tablePage('handovers', this.config.runtime, daoId, 1);
+    const h = page.rows.find((row) => row.dao_id === daoId);
+    if (!h) return null;
+    const [daos, from, to, fromActor, toActor, epochs, lifecycle, info] = await Promise.all([
+      this.tablePage('daos', this.config.runtime, daoId, 1),
+      this.tablePage('members', daoId, h.departing, 1),
+      this.tablePage('members', daoId, h.successor, 1),
+      this.tablePage('actors', daoId, h.departing, 1),
+      this.tablePage('actors', daoId, h.successor, 1),
+      this.tablePage('epochs', daoId, h.last_epoch, 2),
+      this.tablePage('daolife', this.config.runtime, daoId, 1),
+      this.api.v1.chain.get_info(),
+    ]);
+    const d = daos.rows.find((row) => row.id === daoId);
+    if (lifecycle.rows.some((row) => row.dao_id === daoId && row.state !== 1 && row.state !== 2))
+      throw new ApiError('DAO_LIFECYCLE_UNSUPPORTED', 503);
+    const departing = from.rows.find((row) => row.id === h.departing),
+      successor = to.rows.find((row) => row.id === h.successor);
+    const stale =
+      !d ||
+      !d.privacy ||
+      d.key_epoch !== h.key_epoch ||
+      d.history_policy !== h.history_policy ||
+      !departing?.active ||
+      !departing.admin ||
+      !successor?.active ||
+      !successor.admin ||
+      (fromActor.rows.find((row) => row.id === h.departing)?.credential_epoch ?? '1') !==
+        h.departing_credentials ||
+      (toActor.rows.find((row) => row.id === h.successor)?.credential_epoch ?? '1') !==
+        h.successor_credentials ||
+      (!!successor &&
+        Checksum256.hash(new TextEncoder().encode(successor.encryption_key)).toString() !==
+          h.successor_key) ||
+      epochs.rows.length !== 1 ||
+      epochs.rows[0]?.epoch !== h.last_epoch ||
+      lifecycle.rows.some((row) => row.dao_id === daoId && row.state === 2);
+    return DaoHandoverSchema.parse({
+      ...h,
+      commitment: privateHandoverCommitment(
+        { chainId: this.config.chainId, contract: this.config.runtime, daoId, interfaceVersion: 1 },
+        h,
+      ),
+      status:
+        h.expires <= info.head_block_time.toMilliseconds() / 1000
+          ? 'expired'
+          : stale
+            ? 'stale'
+            : h.complete && h.accepted
+              ? 'ready'
+              : 'pending',
+    });
   }
   async memberProfile(
     daoId: string,

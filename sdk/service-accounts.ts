@@ -17,6 +17,7 @@ export const RelayCoreActions = [
   'setmodterm',
   'revmodterm',
   'resmodterm',
+  'closehost',
   'fulfilram',
   'archattest',
   'prunedocs',

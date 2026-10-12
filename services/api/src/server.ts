@@ -757,6 +757,12 @@ export async function createServer(
     if (!chain.privateAccessPolicy) throw new ApiError('PRIVATE_ACCESS_UNAVAILABLE', 503);
     return chain.privateAccessPolicy(IdSchema.parse(request.params.id));
   });
+  app.get<{ Params: { id: string } }>(ApiRoutes.daoHandover.path, async (request) => {
+    if (!chain.privateHandover) throw new ApiError('PRIVATE_HANDOVER_UNSUPPORTED', 409);
+    return ApiRoutes.daoHandover.response.parse(
+      await chain.privateHandover(IdSchema.parse(request.params.id)),
+    );
+  });
   app.get<{ Params: { id: string } }>(ModuleApiRoutes.state.path, async (request) =>
     chain.moduleState(
       IdSchema.parse(request.params.id),

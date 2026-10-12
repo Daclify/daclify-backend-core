@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { DaoLifecycleSchema } from './account-exit.js';
 import { EncryptionPublicKeySchema, SigningPublicKeySchema } from './crypto.js';
 import type { NativeIdentity } from './native-wallet.js';
 import type { EvmIntentSchema } from './evm-wallet.js';
@@ -109,6 +110,7 @@ export const DaoSummarySchema = z.strictObject({
   reserved: Uint64Schema,
   claims: Uint64Schema,
   keyEpoch: Uint64Schema,
+  lifecycle: DaoLifecycleSchema.default('active'),
   purpose: DaoPurposeSchema.optional(),
   participantMode: ParticipantModeSchema.optional(),
   setup: DaoSetupSchema.nullable().optional(),

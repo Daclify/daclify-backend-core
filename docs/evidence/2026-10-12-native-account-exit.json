@@ -1,0 +1,197 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-12T19:42:40Z",
+  "task": "X1",
+  "status": "source-checkpoint-complete",
+  "review": "Author-only inline; independent review and live release are not qualified.",
+  "sourceSha256": {
+    "daclify-backend-core/contracts/common/dao_lifecycle.hpp": "d25eac0a951cbe88b981e759bbae0fbb8eace26c26f5711847ba5a34323ce732",
+    "daclify-backend-core/contracts/common/private_handover.hpp": "dfab6881c6f6d0de0a7df0d585dce9f4d70da99bb6fddbcc3468a164cd51b558",
+    "daclify-backend-core/contracts/common/records.hpp": "0cdcef88846779bd1a23263c7ed01eb802d2cd583979bab33084096f7bb7330e",
+    "daclify-backend-core/contracts/common/ram_capacity.hpp": "1c72c168fa80f7c9aa67a3f91f0d2f9f8d9ad523a6047cf6fb766f2f16acfae4",
+    "daclify-backend-core/contracts/common/ram_families.hpp": "9e284067cb6801bf1de7d3b199195d3bebd2cfa25b6a09ffc5338cd30ae32c91",
+    "daclify-backend-core/contracts/common/resources.hpp": "911223ae161a4891adfa92f51444106d9f50712587e1036f5b6895f9bb35d378",
+    "daclify-backend-core/contracts/runtime/runtime.cpp": "e57e29be7fe953e296e79b622eac3f733526d314944fbefa8e65f9a182e7eb2f",
+    "daclify-backend-core/contracts/boot/boot.cpp": "c42141932a778f64a082c63534f0b756c127e17c626f07797d700c369fa42691",
+    "daclify-backend-core/protocol/account-exit.ts": "b8badca655f37e5f544aa4dde65c9ee3b66542b620f8bedb420b361dea9b8dff",
+    "daclify-backend-core/protocol/api.ts": "daed224f61b7c0120c0a598ba70aa7ddfca60774fa30b497159cc498f089fd23",
+    "daclify-backend-core/sdk/account-exit.ts": "48a8a289dd96e9641842cf0b1cbf3d86c4d727b608dbc367660af1bff718d7c4",
+    "daclify-backend-core/sdk/permissions.ts": "3ad22d93f7923c34ffcee6a007782adf26f18bb2d871096ed8cd325f4592759a",
+    "daclify-backend-core/sdk/service-accounts.ts": "6a760f4000c59f906802885e4f55b55ce03ee5ada6326859cc49136fb7aa17d7",
+    "daclify-backend-core/services/api/src/native-chain.ts": "e3b029fe6abbb800573a4cedb7f4feaa92a7b9919d95f9b707e49e1e20860066",
+    "daclify-backend-core/services/api/src/server.ts": "1ac3eefa0933b957dedc79cbeca5314b6d17496440fd39cc9ea05722a7ff4a19",
+    "daclify-backend-core/tests/account-exit-contract.test.ts": "42c1f19bdd45708cc6bff3af726e827afa57a007f5ec12777e44404e02d00780",
+    "daclify-backend-core/tests/private-handover-contract.test.ts": "9b41672a4d1edcc944ce2ef7300240f891e026afa77e840221222f3d2a83f27f",
+    "daclify-backend-core/tests/native/account-exit.test.ts": "3c547b005d7c2e70e3b899b0f54595372551887c9134c560fcde08e998f66d7f",
+    "daclify-backend-core/tools/build/account-exit-legacy.ts": "f9643ad847632785cb8f46ba06a178cc43dad3a205c9caee1431f6b659247eaa",
+    "daclify-backend-modules/contracts/common/module.hpp": "3b488d5c02d783d763c6eae036368cba1aebbf461994cb0380d8ac8b096f3d03",
+    "daclify-backend-modules/contracts/activity/activity.cpp": "2636c0b545feaf3b3848fd09c627bc7711342159c93981e4999b7b1042b3292a",
+    "daclify-backend-modules/contracts/decide/decide.cpp": "7a5a1fe6e8139486610ef704b03ad0cc3b6ad8220fff5bd0b44c814c14a9f390",
+    "daclify-backend-modules/contracts/works/works.cpp": "1db7e8ca372381841a115bea1fe06b1b4581e939262b50885950577108989565",
+    "daclify-backend-modules/contracts/payroll/payroll.cpp": "85a9d5c2ddbb0f2edffd946ef7c86d19c3e9eb586a4c2d1586f70efc50cffd2a",
+    "daclify-backend-modules/contracts/grants/grants.cpp": "77a30204f4c4accbbf727a7fbe628a9f49f09c074704df69466841df21e23bf7",
+    "daclify-backend-modules/contracts/endorse/endorse.cpp": "c04004f42fce2f4a818dc794c1c2a316d643a5928b8b209d52f4938f7f82f928",
+    "daclify-backend-modules/protocol/index.ts": "712b8d2c6dca66d6ffa82955d3d2a77e37d823fdc692b6a5fa38d0080b6ceb54",
+    "daclify-backend-modules/tests/dao-lifecycle.test.ts": "26b30ac24c5614c59209d57094b785b486f9730c6f69a0928db74c2a67080fbc",
+    "daclify-backend-modules/tests/activity.test.ts": "bf989c9a22ee28fcf3628be4dbb0486e98737b33d442f485a7a2b8ff6ba8597d",
+    "daclify-backend-modules/sdk/generated/releases.ts": "023618aaa7309456d7835d872f16b5e33ee72ba7db4fb21357ed8282bf0a62d1",
+    "daclify-frontend/package.json": "b73db910171754c4b2512191ff92d3cf7118c03e6102435986fddc0ddbfd6c4b",
+    "daclify-frontend/src/components/ModulesPanel.vue": "b0036ebc6c7124629f289ced801996fe566fcc32b061ce745a9dc68e01a974e2",
+    "daclify-frontend/src/components/ElectionPanel.vue": "399b65fcde69672cae0a99313ebeb655ccc74ca7da8e6347112fa51030266c0c",
+    "daclify-frontend/tests/e2e/mini-apps.spec.ts": "24cc7d84c6c262503394e8de3435907bdbb63bec0b9af9d361f258b86a13b27c",
+    "daclify-frontend/src/components/ProfilePanel.vue": "2c139dd841bdacc56fff0ded893dbf04ae1bcaafadf18438ff3fdaf805d3b58f"
+  },
+  "artifacts": {
+    "core": {
+      "version": "0.15.0-alpha.7",
+      "sha256": "c33fbd8e8188595cb8f7af2bc9d5f842f9b28530f50e13e19299fc45605ef323"
+    },
+    "modules": {
+      "version": "0.10.0-alpha.14",
+      "contractVersion": "0.10.0-alpha.3",
+      "sha256": "0b71d00d2772f5d8d00d2fe6e1633773b6a88e622ce5547531b067cc06a82e6f"
+    },
+    "frontendVersion": "0.15.0-alpha.7",
+    "starterReleaseId": "2fe86bb855f958de0cb00d1580ba11a9157143b86eb9c8956910e3eddb74a828",
+    "starterManifestSha256": "00b04c4c5834b861eb921e8c1d693a8a412e59ccd4305af233f6d8866a9b5c14",
+    "runtimeWasmSha256": "5778adbf4b72c67b2c2a0844aa8ec2f915c43ac6818c62af79883b7bf75dccd2",
+    "runtimeBytes": 975158,
+    "runtimeGrowthBytes": 55993,
+    "runtimeAbiJsonSha256": "70fad149e20d22989c9412b7ac38e337e74fa407340d6270d5440c26a2ebd807",
+    "disposableBootWasmSha256": "40c7123bf82a539ccab4499eb5e9e2f285bf589a04fd20521a0873341ad69c12",
+    "cdt": "4.1.1",
+    "compilerFlags": [
+      "-O=s"
+    ],
+    "historicalRuntimeWasmSha256": "5cb464cc861f1662781f6fa56267403e22c217bfbd5041158953a07f0007bc58"
+  },
+  "checks": [
+    {
+      "command": "npm test (core)",
+      "files": 155,
+      "passed": 966,
+      "boundary": "Full units before the final unsupported lifecycle API refusal; final native regression separately rerun."
+    },
+    {
+      "command": "npm test (modules)",
+      "files": 33,
+      "passed": 215
+    },
+    {
+      "command": "npm test (frontend after origin/dev through ef91cf8)",
+      "files": 52,
+      "passed": 319
+    },
+    {
+      "command": "npm run test:native -- tests/native/account-exit.test.ts",
+      "files": 1,
+      "passed": 6,
+      "boundary": "Actual owned Spring permissions, pending-work/receipt upgrade, once-only inactive claims/stake, physical quota rollback and funded retry; one future-state RPC response injected explicitly."
+    },
+    {
+      "command": "npm run test:native:permissions",
+      "files": 9,
+      "passed": 138
+    },
+    {
+      "command": "npm run test:e2e:paid -- tests/e2e/mini-apps.spec.ts tests/e2e/profile.spec.ts",
+      "passed": 8,
+      "boundary": "Actual owned native/SQL fixture and desktop/mobile browsers."
+    },
+    {
+      "command": "types/lint/docs/build",
+      "status": "passed",
+      "boundary": "Core/module and pre-merge frontend; merged frontend also passed types/lint/full units/build."
+    },
+    {
+      "command": "npm run test:e2e:paid -- tests/e2e/decide-design.spec.ts tests/e2e/works-design.spec.ts tests/e2e/mini-apps.spec.ts tests/e2e/profile.spec.ts",
+      "passed": 44,
+      "boundary": "Merged latest frontend source, desktop/mobile; actual owned native/SQL mini-app and profile flows, controlled Works/Elections responses."
+    }
+  ],
+  "measurements": {
+    "coreVersion": "0.15.0-alpha.7",
+    "runtimeCodeHash": "5778adbf4b72c67b2c2a0844aa8ec2f915c43ac6818c62af79883b7bf75dccd2",
+    "environment": "owned local Spring; concurrent test load",
+    "measurements": [
+      {
+        "scenario": "departure",
+        "releasedRam": 735,
+        "cpuUs": 2244
+      },
+      {
+        "scenario": "handover acceptance",
+        "cpuUs": 1406
+      },
+      {
+        "scenario": "handover departure",
+        "releasedRam": 335,
+        "cpuUs": 1749
+      },
+      {
+        "scenario": "module closure scan",
+        "module": "decide",
+        "insertedRam": 278,
+        "cpuUs": 689
+      },
+      {
+        "scenario": "module closure scan",
+        "module": "works",
+        "insertedRam": 278,
+        "cpuUs": 295
+      },
+      {
+        "scenario": "module closure scan",
+        "module": "payroll",
+        "insertedRam": 278,
+        "cpuUs": 435
+      },
+      {
+        "scenario": "module closure scan",
+        "module": "grants-rounds",
+        "insertedRam": 278,
+        "cpuUs": 585
+      },
+      {
+        "scenario": "module closure scan",
+        "module": "endorsement-admission",
+        "insertedRam": 278,
+        "cpuUs": 319
+      },
+      {
+        "scenario": "module closure scan",
+        "module": "activity",
+        "insertedRam": 278,
+        "cpuUs": 329
+      },
+      {
+        "scenario": "funded native retirement after exhausted quota",
+        "insertedRam": 125,
+        "cpuUs": 1242
+      }
+    ]
+  },
+  "supportedModuleKinds": [
+    "decide",
+    "works",
+    "payroll",
+    "grants-rounds",
+    "endorsement-admission",
+    "activity"
+  ],
+  "limits": {
+    "handoverExpirySeconds": 3600,
+    "scanRowsPerCall": 25,
+    "installedModulesForClosure": 64,
+    "operatorRegistryAccounts": 256,
+    "existingMemberSessions": 16,
+    "newSecondaryIndexes": 0
+  },
+  "unrunOrRemaining": [
+    "Full hosted-account erasure/settlement/report workflow and UI (X2/X3).",
+    "Independent app cleanup acknowledgments and backup exclusions (X4).",
+    "Native funded DAO logical-quota/Telos-market closure qualification; this physical-limit fixture does not establish it.",
+    "Provider subscriptions/invoices/resources reconciliation and independent-host profile/recovery restoration (Q2/Q3).",
+    "Live deployment, account deletion/DAO closure, asset disposition and website publication."
+  ]
+}

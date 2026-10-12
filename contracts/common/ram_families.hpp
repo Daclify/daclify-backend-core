@@ -2,10 +2,11 @@
 #include "ram_migration.hpp"
 #include "connected_apps.hpp"
 #include "module_fees.hpp"
+#include "private_handover.hpp"
 namespace daclify {
 // Canonical aliases retain their row/index recipes; these lists define required scan coverage.
 #define DACLIFY_RAM_GLOBALS(X) \
- X("settings",config) X("daos",daos) X("profiles",profiles) X("evidence",evidence) \
+ X("settings",config) X("daos",daos) X("daolife",dao_lifecycles) X("handovers",private_handovers) X("lifehashes",lifecycle_sources) X("hostclose",hosted_closures) X("closechecks",closure_checks) X("profiles",profiles) X("evidence",evidence) \
  X("feecfg",fee_settings) X("paycfg",payment_settings) X("catalogue",catalogue) \
  X("modpays",modpays) X("modcopy",modcopy) X("modfees",module_fee_prices) X("mktcfg",market_settings) \
  X("createcfg",creation_settings) X("createords",creation_orders) \
@@ -27,12 +28,12 @@ namespace daclify {
  X("ramlimits",ram_limits) X("ramgrants",ram_grants) X("ramentitle",ram_entitlements) X("ramclmholds",ram_claim_holds) X("raminherit",ram_inherited)
 inline std::vector<eosio::name> module_ram_families(uint8_t kind){
  switch(kind){
- case 1:return {"ballots"_n,"votes"_n,"pollends"_n,"voteids"_n,"elections"_n,"nominations"_n,"terms"_n,"termholds"_n,"executions"_n,"grantplans"_n,"adoptelect"_n,"adoptpolls"_n,"docregs"_n,"docchanges"_n,"docaccepts"_n};
- case 2:return {"projects"_n,"milestones"_n,"agreements"_n,"adoptwork"_n};
- case 3:return {"schedules"_n,"entries"_n,"controls"_n,"adoptpay"_n};
- case 4:return {"rounds"_n,"applications"_n};
- case 5:return {"joinapps"_n};
- case 6:return {"activities"_n,"actreviews"_n,"appcounts"_n,"appkeys"_n,"appgrants"_n,"actdecisions"_n};
+ case 1:return {"closechecks"_n,"ballots"_n,"votes"_n,"pollends"_n,"voteids"_n,"elections"_n,"nominations"_n,"terms"_n,"termholds"_n,"executions"_n,"grantplans"_n,"adoptelect"_n,"adoptpolls"_n,"docregs"_n,"docchanges"_n,"docaccepts"_n};
+ case 2:return {"closechecks"_n,"projects"_n,"milestones"_n,"agreements"_n,"adoptwork"_n};
+ case 3:return {"closechecks"_n,"schedules"_n,"entries"_n,"controls"_n,"adoptpay"_n};
+ case 4:return {"closechecks"_n,"rounds"_n,"applications"_n};
+ case 5:return {"closechecks"_n,"joinapps"_n};
+ case 6:return {"closechecks"_n,"activities"_n,"actreviews"_n,"appcounts"_n,"appkeys"_n,"appgrants"_n,"actdecisions"_n};
  default:eosio::check(false,"RAM_MIGRATION_SOURCE_KIND");return {};
  }
 }

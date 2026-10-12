@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.15.0-alpha.3 · interface 1.
+Package 0.15.0-alpha.7 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -635,7 +635,16 @@ Sources:
 
 ## runtime contract
 
-Source ABI JSON SHA-256: `300b7f5029c9b9d4f13935db1b152cee3b42ad5d78c69b5d7f5e11a9b0b0eaee`.
+Source ABI JSON SHA-256: `70fad149e20d22989c9412b7ac38e337e74fa407340d6270d5440c26a2ebd807`.
+
+### Action: accepthand
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| expected_commitment | checksum256 |
 
 ### Action: addappses
 
@@ -770,6 +779,17 @@ Source ABI JSON SHA-256: `300b7f5029c9b9d4f13935db1b152cee3b42ad5d78c69b5d7f5e11
 | dao_id | uint64 |
 | limit | uint32 |
 
+### Action: beginhand
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| departing | uint64 |
+| successor | uint64 |
+| expires | uint32 |
+
 ### Action: beginram
 
 | Field | ABI type |
@@ -807,6 +827,12 @@ Source ABI JSON SHA-256: `300b7f5029c9b9d4f13935db1b152cee3b42ad5d78c69b5d7f5e11
 | --- | --- |
 | payer | name |
 
+### Action: clearhand
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+
 ### Action: clearholds
 
 | Field | ABI type |
@@ -815,6 +841,12 @@ Source ABI JSON SHA-256: `300b7f5029c9b9d4f13935db1b152cee3b42ad5d78c69b5d7f5e11
 | recipient | uint64 |
 | limit | uint32 |
 
+### Action: clearlifecode
+
+| Field | ABI type |
+| --- | --- |
+| account | name |
+
 ### Action: clearmterms
 
 | Field | ABI type |
@@ -822,6 +854,22 @@ Source ABI JSON SHA-256: `300b7f5029c9b9d4f13935db1b152cee3b42ad5d78c69b5d7f5e11
 | dao_id | uint64 |
 | after | uint64 |
 | limit | uint32 |
+
+### Action: closedao
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+
+### Action: closehost
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| closing_at | uint32 |
+| receipt | checksum256 |
 
 ### Action: commitepoch
 
@@ -1211,6 +1259,14 @@ Source ABI JSON SHA-256: `300b7f5029c9b9d4f13935db1b152cee3b42ad5d78c69b5d7f5e11
 | --- | --- |
 
 
+### Action: leave
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+
 ### Action: linkevm
 
 | Field | ABI type |
@@ -1443,6 +1499,15 @@ Source ABI JSON SHA-256: `300b7f5029c9b9d4f13935db1b152cee3b42ad5d78c69b5d7f5e11
 | member_id | uint64 |
 | signing_key | public_key |
 
+### Action: scanhand
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| limit | uint32 |
+
 ### Action: scanram
 
 | Field | ABI type |
@@ -1596,6 +1661,14 @@ Source ABI JSON SHA-256: `300b7f5029c9b9d4f13935db1b152cee3b42ad5d78c69b5d7f5e11
 | free_members | uint32 |
 | settler | name |
 
+### Action: setlifecode
+
+| Field | ABI type |
+| --- | --- |
+| account | name |
+| code_hash | checksum256 |
+| kind | uint8 |
+
 ### Action: setmeta
 
 | Field | ABI type |
@@ -1725,6 +1798,14 @@ Source ABI JSON SHA-256: `300b7f5029c9b9d4f13935db1b152cee3b42ad5d78c69b5d7f5e11
 | member_id | uint64 |
 | target | uint64 |
 | can_vote | bool |
+
+### Action: startclose
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
 
 ### Action: submit
 
@@ -1923,6 +2004,17 @@ Source ABI JSON SHA-256: `300b7f5029c9b9d4f13935db1b152cee3b42ad5d78c69b5d7f5e11
 | code_hash | checksum256 |
 | title | string |
 
+### Table: closechecks
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| code_hash | checksum256 |
+| closing_at | uint32 |
+| stage | uint8 |
+| cursor | uint64 |
+| complete | bool |
+
 ### Table: createcfg
 
 | Field | ABI type |
@@ -1961,6 +2053,14 @@ Source ABI JSON SHA-256: `300b7f5029c9b9d4f13935db1b152cee3b42ad5d78c69b5d7f5e11
 | members | uint32 |
 | expires | uint32 |
 | receipt | checksum256 |
+
+### Table: daolife
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| state | uint8 |
+| transitioned_at | uint32 |
 
 ### Table: daos
 
@@ -2158,6 +2258,34 @@ Source ABI JSON SHA-256: `300b7f5029c9b9d4f13935db1b152cee3b42ad5d78c69b5d7f5e11
 | paused_until | uint32 |
 | reason | checksum256 |
 
+### Table: handovers
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| initiator | uint64 |
+| departing | uint64 |
+| successor | uint64 |
+| departing_credentials | uint64 |
+| successor_credentials | uint64 |
+| successor_key | checksum256 |
+| key_epoch | uint64 |
+| history_policy | uint8 |
+| last_epoch | uint64 |
+| cursor | uint64 |
+| complete | bool |
+| accepted | bool |
+| expires | uint32 |
+
+### Table: hostclose
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| closing_at | uint32 |
+| settler | name |
+| receipt | checksum256 |
+
 ### Table: keygrants
 
 | Field | ABI type |
@@ -2167,6 +2295,14 @@ Source ABI JSON SHA-256: `300b7f5029c9b9d4f13935db1b152cee3b42ad5d78c69b5d7f5e11
 | recipient | uint64 |
 | grantor | uint64 |
 | envelope | string |
+
+### Table: lifehashes
+
+| Field | ABI type |
+| --- | --- |
+| account | name |
+| code_hash | checksum256 |
+| kind | uint8 |
 
 ### Table: memberacts
 
@@ -3535,6 +3671,118 @@ Response:
     "grant"
   ],
   "additionalProperties": false
+}
+```
+
+## GET /v1/daos/:id/handover
+
+Guide: accounts.
+
+No request body.
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "dao_id": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "initiator": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "departing": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "successor": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "departing_credentials": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "successor_credentials": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "successor_key": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "key_epoch": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "history_policy": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "last_epoch": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "cursor": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "complete": {
+          "type": "boolean"
+        },
+        "accepted": {
+          "type": "boolean"
+        },
+        "expires": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "commitment": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "ready",
+            "expired",
+            "stale"
+          ]
+        }
+      },
+      "required": [
+        "dao_id",
+        "initiator",
+        "departing",
+        "successor",
+        "departing_credentials",
+        "successor_credentials",
+        "successor_key",
+        "key_epoch",
+        "history_policy",
+        "last_epoch",
+        "cursor",
+        "complete",
+        "accepted",
+        "expires",
+        "commitment",
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "null"
+    }
+  ]
 }
 ```
 
@@ -19051,6 +19299,15 @@ Response:
             "type": "string",
             "maxLength": 20
           },
+          "lifecycle": {
+            "default": "active",
+            "type": "string",
+            "enum": [
+              "active",
+              "closing",
+              "closed"
+            ]
+          },
           "purpose": {
             "type": "string",
             "enum": [
@@ -19258,7 +19515,8 @@ Response:
           "available",
           "reserved",
           "claims",
-          "keyEpoch"
+          "keyEpoch",
+          "lifecycle"
         ],
         "additionalProperties": false
       }
@@ -19768,6 +20026,15 @@ Response:
       "type": "string",
       "maxLength": 20
     },
+    "lifecycle": {
+      "default": "active",
+      "type": "string",
+      "enum": [
+        "active",
+        "closing",
+        "closed"
+      ]
+    },
     "purpose": {
       "type": "string",
       "enum": [
@@ -19975,7 +20242,8 @@ Response:
     "available",
     "reserved",
     "claims",
-    "keyEpoch"
+    "keyEpoch",
+    "lifecycle"
   ],
   "additionalProperties": false
 }

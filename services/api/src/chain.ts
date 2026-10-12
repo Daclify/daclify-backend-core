@@ -24,6 +24,7 @@ import type { RuntimeTableSchemas } from '../../../sdk/generated/schemas.js';
 import type { CreateDaoSchema } from '../../../protocol/api.js';
 import type { z } from 'zod';
 import type { GovernanceState } from '../../../protocol/dao.js';
+import type { DaoHandover } from '../../../protocol/account-exit.js';
 import type { ExecutionRequest, ExecutionResult } from '@daclify/modules';
 import type { DaoRef } from '../../../protocol/base.js';
 import type { PaymentPolicy } from '../../../protocol/payments.js';
@@ -103,6 +104,7 @@ export interface ChainGateway {
   finalize(input: FinalizationRequest): Promise<FinalizationResult>;
   content(daoId: string, query?: ContentPageQuery): Promise<DaoContent>;
   privateAccessPolicy?(daoId: string): Promise<PrivateAccessPolicy>;
+  privateHandover?(daoId: string): Promise<DaoHandover | null>;
   dao(daoId: string): Promise<DaoSummary>;
   network(): Promise<Network>;
   moduleState(daoId: string, query?: ModulePageQuery): Promise<ModuleState>;
