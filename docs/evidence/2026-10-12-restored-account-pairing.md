@@ -19,4 +19,10 @@ The client forces this operation to use the recovered root even when a native/EV
 
 ## Publication
 
-Pending snapshot publication and public verification. Development and test tools have not reconnected a live user account, transferred any live credential, rotated keys or submitted a DAO action. Actual Anchor approval and live user reconnection require the user's wallet and are not claimed by fixture or public-page checks.
+Published to `https://testnet.app.daclify.com` and `https://testnet.api.daclify.com` from the private immutable snapshot `/data/daclify-runtime/releases/20261012-restored-account-pairing`.
+
+- Source commits pushed to `dev`: core `8ad9072265f56473c50b8d2891adc935b935c5d3`, modules `b5e1721522d6b287814a368c5db4bfc16467ca3f`, frontend `398060fa841378d4b68c093dc3c54d6514d29797`.
+- Both snapshot builds passed. API service is active and the public network reports core alpha.4. The new native reconnection endpoint returns `AUTH_REQUIRED` to an anonymous request.
+- Public index bytes match the prepared snapshot exactly: SHA256 `cb4b7d0f007736cc85ac04775bcc2fd2f1f33f4c98ff9ca1fe1088bfd508c601`. Existing hashed assets were retained and the new entry point was published last. API source and recovery report move together; previous source/index and a private prepublication database backup are retained for rollback.
+- The real public browser check passed at desktop 1440 and phone 390 widths, including account entry, recovery navigation, public DAO reads, documentation/status, accessibility and correct API origin. No page errors or misplaced API requests were observed.
+- Private before/after/final record digests confirmed that all 18 account rows, public key fields, credentials, passkey counters, wallet links and member associations remained unchanged, with no new account aliases. No migration changed. Development and test tools have not reconnected a live user account, transferred any live credential, rotated keys or submitted a DAO action. Actual Anchor approval and live user reconnection require the user's wallet and are not claimed by fixture or public-page checks.

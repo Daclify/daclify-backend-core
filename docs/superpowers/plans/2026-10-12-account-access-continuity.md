@@ -75,4 +75,6 @@ Continue the approved reconciliation design from the registered account. Reuse t
 - [x] Failing integration regression: restored root reconnects native/email/Telegram/passkey ownership while retaining target methods and counters; no mutation on ordinary pairing, forged/missing proofs, registered source, conflicting identity or replay.
 - [x] Extract the existing transaction and add the root-controlled native continuation with canonical route schema.
 - [x] Add readable pairing conflicts and an explicit native reconnect action; guard stale account/network/route responses before installing CSRF or refreshing methods. Explain unlock and consent; refresh all method counts.
-- [ ] Verify strict types, unit/database/browser behavior, generated docs and pinned package compatibility; review inline; commit/push only task files and publish authorized testnet artifacts with recovery qualification and rollback checks.
+- [x] Verify strict types, unit/database/browser behavior, generated docs and pinned package compatibility; review inline; commit/push only task files and publish authorized testnet artifacts with recovery qualification and rollback checks.
+
+Restored-account continuation completed and published; see [pairing regression evidence](../../evidence/2026-10-12-restored-account-pairing.md).
