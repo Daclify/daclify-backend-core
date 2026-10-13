@@ -3,7 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { createMcpHttpHandler } from '../../../../packages/community-mcp/src/http.js';
 import type { Account } from '../../../../protocol/api.js';
-import { McpOAuthRoutes } from '../../../../protocol/mcp.js';
+import { McpOAuthRoutes, McpOAuthAuthorizeSchema } from '../../../../protocol/mcp.js';
 import type { McpOAuth } from './oauth.js';
 import { RemoteCommunityAccess } from './remote-access.js';
 import { ApiError } from '../errors.js';
@@ -36,7 +36,21 @@ export function registerMcpHttpRoutes(
   app.get('/.well-known/oauth-authorization-server/mcp/oauth', async () => service.metadata());
   app.get('/mcp/oauth/.well-known/oauth-authorization-server', async () => service.metadata());
   app.get('/mcp/oauth/authorize', async (request, reply) => {
-    const started = await service.begin(request.query);
+    const values = new URL(request.url, service.pairings.api).searchParams;
+    if (new Set(values.keys()).size !== values.size) throw new ApiError('INPUT_INVALID', 400);
+    // OAuth ignores extension parameters; persist only the canonical DAO request.
+    const input = McpOAuthAuthorizeSchema.parse(
+      Object.fromEntries(
+        [...values].filter(([name]) => Object.hasOwn(McpOAuthAuthorizeSchema.shape, name)),
+      ),
+    );
+    const scopes = input.scope.split(' ');
+    if (new Set(scopes).size !== scopes.length) throw new ApiError('INPUT_INVALID', 400);
+    // No OIDC grant is issued; token responses report only supported Daclify scopes.
+    const started = await service.begin({
+      ...input,
+      scope: scopes.filter((scope) => scope !== 'openid').join(' '),
+    });
     return reply.redirect(started.consentUrl);
   });
   app.get(McpOAuthRoutes.mcpOAuthConsent.path, async (request) =>

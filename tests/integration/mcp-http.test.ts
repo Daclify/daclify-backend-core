@@ -2,6 +2,8 @@ import { afterAll, beforeAll, it, expect } from 'vitest';
 import { Pool } from 'pg';
 import { createHash, randomBytes } from 'node:crypto';
 import { McpOAuth } from '../../services/api/src/mcp/oauth.js';
+import { McpOAuthAuthorizeSchema } from '../../protocol/mcp.js';
+import { CHATGPT_CLIENT_METADATA } from '../../services/api/src/mcp/clients.js';
 import { McpPairings } from '../../services/api/src/mcp/pairing.js';
 import { migrate } from '../../services/api/src/store.js';
 const url = process.env.DATABASE_URL;
@@ -61,6 +63,113 @@ it('discovers a dedicated resource and refuses foreign tokens and unsafe authori
 import Fastify from 'fastify';
 import { z } from 'zod';
 import { registerMcpHttpRoutes } from '../../services/api/src/mcp/http.js';
+it('accepts ChatGPT language hints and grants only supported DAO scopes', async () => {
+  const oauth = new McpOAuth(service.pairings, [
+      {
+        clientId: CHATGPT_CLIENT_METADATA,
+        redirectUris: ['https://chatgpt.com/connector_platform_oauth_redirect'],
+      },
+    ]),
+    app = Fastify(),
+    input = {
+      response_type: 'code',
+      client_id: CHATGPT_CLIENT_METADATA,
+      redirect_uri: 'https://chatgpt.com/connector_platform_oauth_redirect',
+      resource: oauth.resource,
+      scope: 'openid daclify:read daclify:prepare daclify:submit',
+      state: 'owned-chatgpt-regression',
+      code_challenge: createHash('sha256').update(randomBytes(32)).digest('base64url'),
+      code_challenge_method: 'S256',
+      ui_locales: 'en-US',
+    };
+  registerMcpHttpRoutes(app, oauth, 'session', async () => {
+    throw Error('unused');
+  });
+  let requestId: string | undefined;
+  try {
+    const response = await app.inject({
+      method: 'GET',
+      url: '/mcp/oauth/authorize?' + new URLSearchParams(input),
+    });
+    expect(response.statusCode, response.body).toBe(302);
+    const location = new URL(z.url().parse(response.headers.location));
+    expect(location.origin + location.pathname).toBe('https://app.example/mcp/oauth/consent');
+    requestId = z.uuid().parse(location.searchParams.get('request'));
+    const stored = await pool.query<{ request: unknown }>(
+      'SELECT request FROM mcp_oauth_requests WHERE id=$1',
+      [requestId],
+    );
+    expect(McpOAuthAuthorizeSchema.parse(stored.rows[0]?.request)).toEqual({
+      response_type: input.response_type,
+      client_id: input.client_id,
+      redirect_uri: input.redirect_uri,
+      resource: input.resource,
+      scope: 'daclify:read daclify:prepare daclify:submit',
+      state: input.state,
+      code_challenge: input.code_challenge,
+      code_challenge_method: input.code_challenge_method,
+    });
+  } finally {
+    if (requestId) await pool.query('DELETE FROM mcp_oauth_requests WHERE id=$1', [requestId]);
+    await app.close();
+  }
+});
+
+it('preserves authorization checks and rejects duplicated parameters with OAuth hints', async () => {
+  const app = Fastify(),
+    input = {
+      response_type: 'code',
+      client_id: 'official-sdk',
+      redirect_uri: 'https://client.example/callback',
+      resource: service.resource,
+      scope: 'openid daclify:read',
+      state: 'owned-authorization-guards',
+      code_challenge: createHash('sha256').update(randomBytes(32)).digest('base64url'),
+      code_challenge_method: 'S256',
+      ui_locales: 'en-US',
+    };
+  app.setErrorHandler((error, _request, reply) => {
+    if (error instanceof z.ZodError) return reply.code(400).send({ code: 'INPUT_INVALID' });
+    return reply.send(error);
+  });
+  registerMcpHttpRoutes(app, service, 'session', async () => {
+    throw Error('unused');
+  });
+  try {
+    for (const change of [
+      { scope: 'openid' },
+      { scope: 'openid daclify:admin' },
+      { scope: 'openid openid daclify:read' },
+      { scope: 'openid daclify:read daclify:read' },
+      { scope: 'openid ' + 'x'.repeat(129) },
+      { resource: 'https://foreign.example/mcp' },
+      { redirect_uri: 'https://client.example/other' },
+      { client_id: 'unregistered' },
+      { code_challenge_method: 'plain' },
+      { code_challenge: 'invalid' },
+      { state: '' },
+      { state: 'x'.repeat(513) },
+    ]) {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/mcp/oauth/authorize?' + new URLSearchParams({ ...input, ...change }),
+      });
+      expect(response.statusCode).toBeGreaterThanOrEqual(400);
+      expect(response.statusCode).toBeLessThan(500);
+      expect(response.headers.location).toBeUndefined();
+    }
+    for (const name of Object.keys(input)) {
+      const query = new URLSearchParams(input);
+      query.append(name, 'duplicate');
+      const response = await app.inject({ method: 'GET', url: '/mcp/oauth/authorize?' + query });
+      expect(response.statusCode).toBe(400);
+      expect(response.headers.location).toBeUndefined();
+    }
+  } finally {
+    await app.close();
+  }
+});
+
 it('coexists with the ordinary app form parser and returns OAuth-shaped token errors', async () => {
   const app = Fastify();
   app.addContentTypeParser(

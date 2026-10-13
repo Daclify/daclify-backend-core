@@ -354,7 +354,18 @@ it('issues resource-bound OAuth under real account proof, rotates refresh tokens
     code_challenge: createHash('sha256').update(verifier).digest('base64url'),
     code_challenge_method: 'S256',
   };
-  const started = await oauth.begin(input);
+  const authorize = await server.inject({
+    method: 'GET',
+    url:
+      '/mcp/oauth/authorize?' +
+      new URLSearchParams({ ...input, scope: 'openid ' + input.scope, ui_locales: 'en-US' }),
+  });
+  expect(authorize.statusCode, authorize.body).toBe(302);
+  const started = {
+    id: z
+      .uuid()
+      .parse(new URL(z.url().parse(authorize.headers.location)).searchParams.get('request')),
+  };
   const consent = await server.inject({
     method: 'GET',
     url: McpOAuthRoutes.mcpOAuthConsent.path.replace(':id', started.id),
@@ -422,6 +433,8 @@ it('issues resource-bound OAuth under real account proof, rotates refresh tokens
     await expect(oauth.token({ ...tokenInput, ...change })).rejects.toThrow();
   const tokens = await oauth.token(tokenInput);
   expect(tokens.expires_in).toBeLessThanOrEqual(300);
+  expect(tokens.scope).toBe(input.scope);
+  expect(tokens).not.toHaveProperty('id_token');
   const current = await oauth.authorizeToken(tokens.access_token);
   expect(current.claims.memberId).toBe('1');
   expect(current.claims.sub).toBe(fixture.account.account.id);
@@ -429,7 +442,12 @@ it('issues resource-bound OAuth under real account proof, rotates refresh tokens
     method: 'POST',
     url: '/mcp',
     headers: { host: 'api.example' },
-    payload: { jsonrpc: '2.0', id: 1, method: 'tools/list' },
+    payload: {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'tools/call',
+      params: { name: 'get_membership', arguments: {} },
+    },
   });
   expect(unsigned.statusCode).toBe(401);
   expect(unsigned.headers['www-authenticate']).toContain(
