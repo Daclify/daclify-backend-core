@@ -1,0 +1,600 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-13T09:49:16.933792+00:00",
+  "environment": "public Telos testnet; development client follow-up",
+  "qualified": false,
+  "productionRelease": "held",
+  "origins": {
+    "frontend": "https://testnet.app.daclify.com",
+    "api": "https://testnet.api.daclify.com",
+    "mcp": "https://testnet.api.daclify.com/mcp",
+    "rpc": "https://testnet.telos.caleos.io"
+  },
+  "source": [
+    {
+      "name": "daclify-backend-core",
+      "commit": "da54ff0f347402918cb60a91bffb67ff14c5d870",
+      "version": "0.15.0-alpha.17",
+      "lockfileSha256": "3de8544e4e2ea3b11425409211def8f08119b063a48f1eeb9a7a395e15860a00",
+      "dirty": false
+    },
+    {
+      "name": "daclify-backend-modules",
+      "commit": "455e2f311632fb546325a6b4ff240f23be069148",
+      "version": "0.10.0-alpha.24",
+      "lockfileSha256": "81c1851f8fda32c96c077c8f3604234cbfa1a1fe365a33a852ea87ad770796da",
+      "dirty": false
+    },
+    {
+      "name": "daclify-frontend",
+      "commit": "15869000e8f32a9b8c1f42d60e063f63ddf5f186",
+      "version": "0.15.0-alpha.21",
+      "lockfileSha256": "edefe570cf155c15a18590521e58475150a653dce0fd79406b9ab3176faa3930",
+      "dirty": false
+    }
+  ],
+  "previousHostedSource": {
+    "core": "65ee66213b08bd4575cf683633d4a3c7869f53d7",
+    "mcpVersion": "0.1.0-alpha.7",
+    "supersededOnlyByDiscoveryFix": true
+  },
+  "publicArtifacts": {
+    "at": "2026-10-13T09:41:39.649224+00:00",
+    "manifest": {
+      "version": 1,
+      "coreVersion": "0.15.0-alpha.17",
+      "modulesVersion": "0.10.0-alpha.24",
+      "mcpVersion": "0.1.0-alpha.8",
+      "files": [
+        {
+          "name": "core.tgz",
+          "sha256": "095f49a4a537dc310ceb79241e29a02319009f04780f1e2925b5ae39398342f7",
+          "bytes": 506220
+        },
+        {
+          "name": "modules.tgz",
+          "sha256": "c2633a129d4bb0e545b21688c96b93839698763f9e6d00d8ad46605332c05264",
+          "bytes": 209944
+        },
+        {
+          "name": "mcp.tgz",
+          "sha256": "74663328aeee96aa463b8f67dff1b81a41f3970504ded43a4206b58cb87855c7",
+          "bytes": 12579
+        }
+      ],
+      "releaseId": "1491f2d2f79466503c8cbb91682fe1ac807c18db87039831000873ab0d17a306"
+    },
+    "checked": [
+      {
+        "name": "core.tgz",
+        "sha256": "095f49a4a537dc310ceb79241e29a02319009f04780f1e2925b5ae39398342f7",
+        "bytes": 506220,
+        "etag": "\"095f49a4a537dc310ceb79241e29a02319009f04780f1e2925b5ae39398342f7\"",
+        "status": 200
+      },
+      {
+        "name": "modules.tgz",
+        "sha256": "c2633a129d4bb0e545b21688c96b93839698763f9e6d00d8ad46605332c05264",
+        "bytes": 209944,
+        "etag": "\"c2633a129d4bb0e545b21688c96b93839698763f9e6d00d8ad46605332c05264\"",
+        "status": 200
+      },
+      {
+        "name": "mcp.tgz",
+        "sha256": "74663328aeee96aa463b8f67dff1b81a41f3970504ded43a4206b58cb87855c7",
+        "bytes": 12579,
+        "etag": "\"74663328aeee96aa463b8f67dff1b81a41f3970504ded43a4206b58cb87855c7\"",
+        "status": 200
+      }
+    ]
+  },
+  "consumedArtifactsPreserved": {
+    "core17": true,
+    "modules24": true,
+    "mcp6": true,
+    "mcp7": true,
+    "nativeContracts": true
+  },
+  "mcpManifestSha256": "f6211f03b191be79a3eb94eb529c1bdf5b3da6ae34b69b546b77f02b60f0fc7c",
+  "mcpLockfileSha256": "c9a88f08e4bd527820679002cdcf732f6b9aa98c549715016143220299a00975",
+  "frontendEntry": {
+    "sourceCommit": "15869000e8f32a9b8c1f42d60e063f63ddf5f186",
+    "version": "0.15.0-alpha.21",
+    "sha256": "8016abedf4843e5e3ed7543f9c92a5a853b1b924ee59a4d86a7fbcbcc1688eb1",
+    "publicStatus": 200,
+    "matched": true
+  },
+  "clients": {
+    "registrations": [
+      {
+        "clientId": "daclify-codex-testnet",
+        "redirectUris": [
+          "http://127.0.0.1:35829/callback"
+        ]
+      },
+      {
+        "clientId": "daclify-claude-testnet",
+        "redirectUris": [
+          "http://localhost:35839/callback"
+        ]
+      },
+      {
+        "clientId": "https://chatgpt.com/oauth/client.json",
+        "redirectUris": [
+          "https://chatgpt.com/connector_platform_oauth_redirect"
+        ]
+      }
+    ],
+    "codexCli": {
+      "client": "codex-cli",
+      "version": "codex-cli 0.162.0-alpha.17.2",
+      "memberId": "1",
+      "previewState": "signer-required",
+      "scope": "proposal",
+      "inferenceRun": false,
+      "signed": false
+    },
+    "claudeCode": {
+      "client": "claude-code",
+      "version": "2.1.296 (Claude Code)",
+      "connected": true,
+      "callback": "http://localhost:35839/callback",
+      "inferenceRun": false
+    },
+    "chatgpt": {
+      "initialAttempt": "failed-before-linking",
+      "userReported": "Plugin created, no tools listed, no Daclify sign-in",
+      "serverGapReproduced": "Unauthenticated initialize and tools/list both 401; missing tool OAuth descriptors",
+      "serverCorrection": "Only individual catalog/handshake requests public; per-tool OAuth metadata and safety annotations; calls and batches authenticated",
+      "publicCatalog": "passed; eight tools",
+      "accountRefreshSignInAndModelToolUse": "awaiting-user-confirmation",
+      "successfulQualification": false
+    },
+    "providerModelInference": "unrun in CLI qualification",
+    "publicNativeSigning": "unrun; no submission; Codex preview signer-required"
+  },
+  "publicCatalog": {
+    "status": "passed",
+    "tools": [
+      {
+        "name": "list_daos",
+        "scopes": [
+          "daclify:read"
+        ],
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "get_membership",
+        "scopes": [
+          "daclify:read"
+        ],
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "list_activity",
+        "scopes": [
+          "daclify:read"
+        ],
+        "annotations": {
+          "readOnlyHint": true,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "prepare_proposal",
+        "scopes": [
+          "daclify:prepare"
+        ],
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "prepare_vote",
+        "scopes": [
+          "daclify:prepare"
+        ],
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "prepare_review",
+        "scopes": [
+          "daclify:prepare"
+        ],
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "prepare_activity",
+        "scopes": [
+          "daclify:prepare"
+        ],
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        }
+      },
+      {
+        "name": "submit_signed",
+        "scopes": [
+          "daclify:submit"
+        ],
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "openWorldHint": false
+        }
+      }
+    ],
+    "unauthenticatedMembershipHttpStatus": 401,
+    "privateDataAnonymous": false
+  },
+  "publicBrowser": {
+    "status": "passed",
+    "at": "2026-10-13T09:43:38.791Z",
+    "checks": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "miniApps": true,
+        "localMcp": true,
+        "hostedClientInstructions": true,
+        "directory": true,
+        "guideAndAccountRoutes": 6,
+        "accessibilityViolations": 0,
+        "errors": [],
+        "failures": []
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "miniApps": true,
+        "localMcp": true,
+        "hostedClientInstructions": true,
+        "directory": true,
+        "guideAndAccountRoutes": 6,
+        "accessibilityViolations": 0,
+        "errors": [],
+        "failures": []
+      }
+    ],
+    "entryMatchesCandidate": true
+  },
+  "verification": {
+    "coreFullUnit": {
+      "passed": 1002,
+      "files": 166
+    },
+    "mcpPackage": {
+      "passed": 12,
+      "files": 7
+    },
+    "actualNativeSqlCliAndOAuth": {
+      "passed": 9,
+      "files": 2
+    },
+    "frontendPriorMergedSource": {
+      "unitPassed": 342,
+      "files": 58,
+      "desktopMobileMcpPassed": 4,
+      "frontendChangedByDiscoveryFix": false
+    },
+    "strictTypecheck": "passed",
+    "lint": "passed",
+    "coreAndMcpBuilds": "passed",
+    "generatedDocsCheck": "passed",
+    "publicSdkFilesByteCompared": 140,
+    "cleanLockedCoreAndMcpInstallsAndBuilds": "passed",
+    "productionDependencyAudit": {
+      "scope": "core --omit=dev",
+      "vulnerabilities": 0
+    },
+    "developmentDependencyAudit": {
+      "scope": "unchanged development VERT chain",
+      "low": 2,
+      "high": 2
+    },
+    "observedFailures": [
+      {
+        "check": "catalog regression before fix",
+        "failed": 1,
+        "reason": "initialization returned 401 before linking",
+        "resolution": "fixed; catalog/security regressions passed"
+      },
+      {
+        "check": "first full unit run during release setup",
+        "failed": 16,
+        "passed": 986,
+        "reason": "MCP8 exact companion bundle not yet generated",
+        "resolution": "generated immutable companion before final full run; 1002 passed"
+      },
+      {
+        "check": "earlier combined MCP7 token run",
+        "reason": "one unexpected token-endpoint failure; cause unestablished",
+        "resolution": "subsequent complete runs passed; fixture retains redacted error-type/code hook; no fixed-defect claim"
+      }
+    ],
+    "probeCorrections": [
+      "Unsupported CLI --help was refused; actual client journeys provide CLI verification.",
+      "Download probe initially omitted /files; final producer-owned routes passed exact SHA/size/ETag checks.",
+      "Public browser rerun first lacked existing browser library path; final run used the qualified libraries and passed.",
+      "Native ABI probe initially compared a packed ABI digest to the JSON ABI digest; corrected to the historical raw ABI pin."
+    ]
+  },
+  "native": {
+    "discoveryPostflight": {
+      "at": "2026-10-13T09:46:45.957184+00:00",
+      "rpc": "https://testnet.telos.caleos.io",
+      "account": "daclifycore1",
+      "codeHash": "e6aaeeccb949710444e0fe4ca32331ffeeb5a6eeae688a417ae3d22cd3469d95",
+      "chainRawAbiSha256": "a4b835b6a0b09aa0bb9aeee98dea54d8bd78a742dd51d67c60177ebf2f0f4dfc",
+      "unchanged": true,
+      "ramUsage": 10021484,
+      "ramQuota": 10208621,
+      "ramRemaining": 187137,
+      "contractDeploymentsInDiscoveryFix": 0,
+      "nativeTransactionsInPublicClientRerun": 0
+    },
+    "ownedFixture": {
+      "daoId": "8122199153663004859",
+      "members": 7,
+      "administratorMemberId": "1",
+      "purpose": "retained explicitly owned qualification DAO; no real-user native mutation",
+      "governanceConfiguration": {
+        "dao": {
+          "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+          "contract": "daclifycore1",
+          "daoId": "8122199153663004859",
+          "interfaceVersion": 1
+        },
+        "memberId": "1",
+        "transactionId": "dbf7975e5cba03bac7444a7e6229ac46efb0ccd10de8caaabee20baf13881cd2",
+        "settings": {
+          "participant_mode": 0,
+          "decide": "daclifydecid",
+          "guardian": "",
+          "kind": 0,
+          "duration": 60,
+          "quorum": 5000,
+          "approval": 5001,
+          "governed_works": false,
+          "max_commitment": "0",
+          "daily_commitment": "0"
+        },
+        "actorsPreserved": true,
+        "sessionsPreserved": true,
+        "policy": {
+          "dao_id": "8122199153663004859",
+          "revision": "1",
+          "config": {
+            "participant_mode": 0,
+            "decide": "daclifydecid",
+            "guardian": "",
+            "kind": 0,
+            "duration": 60,
+            "quorum": 5000,
+            "approval": 5001,
+            "governed_works": false,
+            "max_commitment": "0",
+            "daily_commitment": "0"
+          }
+        }
+      },
+      "decideConfiguration": {
+        "dao": {
+          "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+          "contract": "daclifycore1",
+          "daoId": "8122199153663004859",
+          "interfaceVersion": 1
+        },
+        "memberId": "1",
+        "transactionId": "5552ca4a8aae3ba4b1fad6ece26e81a82bac3d0de22241e52cf294a2745537a9",
+        "settings": {
+          "account": "daclifydecid",
+          "version": 1,
+          "actions": [
+            "open",
+            "vote",
+            "close"
+          ],
+          "grants": [
+            "govlock"
+          ],
+          "code_hash": "be206e53fb5580c238e48536dc4dd9ff74ce0de61d2a9ec089512667823c7fe5"
+        },
+        "actorsPreserved": true,
+        "sessionsPreserved": true,
+        "policy": {
+          "dao_id": "8122199153663004859",
+          "revision": "1",
+          "config": {
+            "participant_mode": 0,
+            "decide": "daclifydecid",
+            "guardian": "",
+            "kind": 0,
+            "duration": 60,
+            "quorum": 5000,
+            "approval": 5001,
+            "governed_works": false,
+            "max_commitment": "0",
+            "daily_commitment": "0"
+          }
+        }
+      },
+      "memberNonceAdvancedBy": 2,
+      "configurationRowsAdded": 2,
+      "actorsSessionsKeysRolesPreserved": true,
+      "assetMovement": false,
+      "proposalsOrVotesSubmitted": false,
+      "transactionHistoryConfirmation": [
+        {
+          "transactionId": "dbf7975e5cba03bac7444a7e6229ac46efb0ccd10de8caaabee20baf13881cd2",
+          "status": 404,
+          "irreversible": null,
+          "history": "unavailable-on-this-public-rpc"
+        },
+        {
+          "transactionId": "5552ca4a8aae3ba4b1fad6ece26e81a82bac3d0de22241e52cf294a2745537a9",
+          "status": 404,
+          "irreversible": null,
+          "history": "unavailable-on-this-public-rpc"
+        }
+      ],
+      "note": "Executed relay responses and current native readback passed; these public RPCs did not supply transaction history. Irreversibility remains unknown, and transactions were not resubmitted."
+    }
+  },
+  "operations": {
+    "at": "2026-10-13T09:43:21.153976+00:00",
+    "services": [
+      {
+        "unit": "daclify-api.service",
+        "state": "active"
+      },
+      {
+        "unit": "daclify-names-oracle.timer",
+        "state": "active"
+      },
+      {
+        "unit": "daclify-testnet-profile-backup.timer",
+        "state": "active"
+      },
+      {
+        "unit": "daclify-testnet-profile-expiry.timer",
+        "state": "active"
+      },
+      {
+        "unit": "daclify-testnet-recovery-agent.service",
+        "state": "active"
+      },
+      {
+        "unit": "daclify-testnet-recovery.service",
+        "state": "active"
+      }
+    ],
+    "rollback": {
+      "syntax": "passed",
+      "previousMcp7SourceAndConfigurationBackedUp": true,
+      "preservesFrontend21": true,
+      "actualRollbackExecuted": false
+    },
+    "temporaryOwnedSessionCookieRemoved": true
+  },
+  "cleanup": {
+    "at": "2026-10-13T09:41:56.330Z",
+    "ownedOAuthFamiliesChecked": 6,
+    "ownedOAuthFamiliesRevoked": true,
+    "temporaryOwnedBrowserSessionLoggedOut": true,
+    "oldSessionStatus": 401,
+    "temporaryCookieFileRemoved": true,
+    "ownedAccountKeysPreserved": true
+  },
+  "rollback": {
+    "prepared": true,
+    "syntaxAndPrerequisitesChecked": true,
+    "executed": false,
+    "preservesCombinedFrontend21": true,
+    "doesNotRestoreSqlOrNativeState": true
+  },
+  "capabilities": {
+    "connectedMiniApps": true,
+    "localMcp": true,
+    "hostedMcp": true,
+    "directory": true,
+    "accountErasure": false,
+    "daoClosureDuringAccountErasure": false
+  },
+  "recovery": {
+    "mode": "previously qualified single-host development topology",
+    "coreVersion": "0.15.0-alpha.17",
+    "expiresAt": "2026-10-17T14:46:09.233Z",
+    "independentFailureDomainQualified": false
+  },
+  "held": [
+    "Successful actual ChatGPT linking/model tool use after Refresh",
+    "Actual Claude model-selected tool use; CLI OAuth/initialization only verified",
+    "Source-bound production/privacy/provider reports, named controller/legal basis/retention/DPIA",
+    "Independent failure-domain key/exclusion/database recovery and external provider/wallet/client ceremonies",
+    "Real-user account erasure/DAO closure enablement",
+    "Production/mainnet deployment and website production publication after review"
+  ],
+  "risk": "Verified fixed ChatGPT metadata is a ten-second/16-KiB bounded startup dependency; provider outage or incompatible metadata refuses API startup. Earlier reviewed source/configuration rollback is prepared; no validation bypass.",
+  "review": "Author self-review inline; delegation unauthorized; independent review unrun.",
+  "privatePacket": "/data/daclify-runtime/hosted-mcp-20261013; raw keys, cookies, backups and logs are excluded from Git.",
+  "privatePublicRecordHashes": [
+    {
+      "name": "public-clients.json",
+      "sha256": "66e08c7005392a799560fca97e2e2b54afae509367386a91273dbed144485fbe"
+    },
+    {
+      "name": "public-artifacts.json",
+      "sha256": "25b5d37409981508d3fef858ccbefbe6a9c3bba3626370a5bd2191d975ae7f8f"
+    },
+    {
+      "name": "chatgpt-discovery-before.json",
+      "sha256": "36b29ff9879f1e32989c7e635e400716a72115418bd0d36ab39e25f85816c388"
+    },
+    {
+      "name": "chatgpt-discovery-after.json",
+      "sha256": "f818f0230da9fd8a2c59a45132d90f8a9265379c508947b13e9803524d2a34d0"
+    },
+    {
+      "name": "chatgpt-oauth-observation.json",
+      "sha256": "f596edc6ef88aed307317cecaa07e3288e738b8ac9768f658e549fcc3a782294"
+    },
+    {
+      "name": "public-metadata-discovery.json",
+      "sha256": "3a057179098b0dd4692f51267e4f85e118cbe445ed761e85c94d08c365f11eac"
+    },
+    {
+      "name": "public-browser-discovery.json",
+      "sha256": "3078b8356027a450f7aece91811769da2dc837d9237d48e9235ab5c0dcefcecb"
+    },
+    {
+      "name": "native-discovery-postflight.json",
+      "sha256": "e5f63311f0ca6be989dcbacbe75d867a9d8145ed6e638f090030f70bd2469a4d"
+    },
+    {
+      "name": "native-postflight.json",
+      "sha256": "b1b90dad2f9e347595150688e0bbf17ccbc6b840fdc9751ed05e43fdfdacadc0"
+    },
+    {
+      "name": "owned-fixture-policy.json",
+      "sha256": "c8975558f7b36b70b5bf3f1a109cd83be66d25dabaaf917db20cc6ef4af34db5"
+    },
+    {
+      "name": "owned-fixture-decide.json",
+      "sha256": "db4e0636c599fe5d06607cf21426e37e3ed7f7b18de261a0f7794d25014eb1bb"
+    },
+    {
+      "name": "operations-discovery.json",
+      "sha256": "91557dfa26cd7e0da6120bcda54bbcb67f29e6f3d8a9ba34e73fce20c77f3c81"
+    },
+    {
+      "name": "cleanup.json",
+      "sha256": "373031748b58b337a39ddd11c451f9b0d9578e4394d0f2a2ff9ee0266108bb78"
+    }
+  ]
+}

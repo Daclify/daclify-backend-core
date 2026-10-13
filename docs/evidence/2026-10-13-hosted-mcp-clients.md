@@ -24,9 +24,9 @@ MCP alpha.6 reported alpha.4 in both actual transport handshakes. A new immutabl
 - One combined run produced a redacted unexpected token-endpoint failure; a subsequent complete combined run passed. Its original cause was not established, so this is not recorded as a fixed product defect. A fixture-only redacted error-type/code hook makes a recurrence diagnosable without tokens or keys.
 - Strict types/lint/build/docs passed before committing. All 140 public package/SDK/header/document files byte-match the frozen core17 archive. Production-only dependency audit found zero vulnerabilities; development dependencies are excluded. Final deployment evidence records clean locked installs and actual public-client checks separately.
 
-MCP archive SHA-256: `cbab7d4608a1ab7dcdf2143190e1ceabb5c303de9d7d6a48847c08719d8c414b`.
-MCP release ID: `3b829d0e1367706c09aeec681072cf691a7d3d3128a510be1200d0edfe68d00a`.
-Manifest SHA-256: `d31425c600b2ea17440148a263aeb4286be7f6d15064ab41ae27da10f2c1af56`.
+Initial MCP7 archive SHA-256: `cbab7d4608a1ab7dcdf2143190e1ceabb5c303de9d7d6a48847c08719d8c414b`.
+Initial MCP7 release ID: `3b829d0e1367706c09aeec681072cf691a7d3d3128a510be1200d0edfe68d00a`.
+Initial MCP7 manifest SHA-256: `d31425c600b2ea17440148a263aeb4286be7f6d15064ab41ae27da10f2c1af56`.
 
 ## Remaining account and operational checks
 
@@ -53,6 +53,10 @@ The user created the plugin, but its detail page contained no tools and it never
 
 The new regression failed with initialization 401. The fix permits only individual initialization, initialized notification, ping and catalog-list requests before linking. It advertises each HTTP tool's required OAuth scope through the pinned SDK's supported `_meta.securitySchemes` mirror, plus safety annotations. Calls and batches still require authenticated current account/DAO/member authority; malformed/invalid credentials and foreign hosts/origins stay refused. No personal data becomes anonymous, and no new signer or scope is granted. The catalog/authentication regressions passed **4 / 1** after the fix.
 
-Publish immutable MCP **0.1.0-alpha.8**, preserving alpha.7 and the frozen core17/module24/native artifacts. The frontend remains the combined alpha.21. Final delivery evidence records the new source, artifact and deployed discovery checks. Successful ChatGPT linking/model use still needs the real account-side refresh and test; the protocol regression is not a ChatGPT client pass.
+Immutable MCP **0.1.0-alpha.8** is deployed from clean core `da54ff0f347402918cb60a91bffb67ff14c5d870`, preserving alpha.7 and the frozen core17/module24/native artifacts. The frontend remains the combined alpha.21. [Exact delivery evidence](2026-10-13-hosted-mcp-testnet-delivery.json) records source/artifact pins, tests, native fixture changes and held checks. Public discovery lists eight tools, unauthenticated membership remains 401, and all three download hashes/sizes/ETags pass. Actual public Codex membership/proposal preview and Claude OAuth/initialization passed again; all six owned CLI families were checked revoked and the temporary browser session removed. Public desktop/mobile 14 routes passed with zero accessibility/page/server errors. Native code/raw ABI pins and RAM remain unchanged by this correction. Successful ChatGPT linking/model use still needs the real account-side refresh and test; the protocol regression is not a ChatGPT client pass.
+
+MCP8 archive SHA-256: `74663328aeee96aa463b8f67dff1b81a41f3970504ded43a4206b58cb87855c7`.
+MCP8 release ID: `1491f2d2f79466503c8cbb91682fe1ac807c18db87039831000873ab0d17a306`.
+MCP8 manifest SHA-256: `f6211f03b191be79a3eb94eb529c1bdf5b3da6ae34b69b546b77f02b60f0fc7c`.
 
 The [official authentication guidance](https://developers.openai.com/plugins/build/auth) and [metadata reference](https://developers.openai.com/plugins/reference) document OAuth scopes/challenges and the metadata mirror. The [connection guide](https://developers.openai.com/plugins/deploy/connect-chatgpt) documents Refresh and starting a new conversation after metadata changes.
