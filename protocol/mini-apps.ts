@@ -92,3 +92,132 @@ export const MiniAppsRoutes = {
     helpTopic: 'connected-apps',
   },
 } as const;
+
+const boundedText = (bytes: number) =>
+  z
+    .string()
+    .trim()
+    .min(1)
+    .refine(
+      (value) => new TextEncoder().encode(value).length <= bytes,
+      'Text exceeds its UTF-8 byte limit',
+    );
+const directoryUrl = z
+  .url()
+  .max(2048)
+  .refine((value) => {
+    const url = new URL(value);
+    return url.protocol === 'https:' && !url.username && !url.password && !url.hash;
+  });
+export const MiniAppListingInputSchema = z.strictObject({
+  origin: directoryUrl.refine(
+    (value) => new URL(value).origin === value,
+    'Use the canonical HTTPS origin',
+  ),
+  title: boundedText(120),
+  description: boundedText(2000),
+  documentation: directoryUrl.optional(),
+  source: directoryUrl.optional(),
+  releases: z
+    .array(ChainIdSchema)
+    .max(8)
+    .refine((values) => new Set(values).size === values.length),
+});
+export const MiniAppListingSchema = MiniAppListingInputSchema.extend({
+  id: z.uuid(),
+  status: z.enum(['unverified', 'published', 'hidden']),
+  created: z.iso.datetime(),
+  updated: z.iso.datetime(),
+  expires: z.iso.datetime(),
+});
+export const MiniAppOriginProofSchema = z.strictObject({
+  version: z.literal(1),
+  listingId: z.uuid(),
+  accountId: z.uuid(),
+  origin: MiniAppListingInputSchema.shape.origin,
+  challenge: ChainIdSchema,
+  expires: z.iso.datetime(),
+});
+const listingId = z.object({ id: z.uuid() });
+export const MiniAppDirectoryRoutes = {
+  miniAppListingReports: {
+    method: 'GET',
+    path: '/v1/mini-apps/directory/reports',
+    query: z.strictObject({ id: z.uuid(), after: z.uuid().optional() }),
+    response: z.strictObject({
+      reports: z
+        .array(
+          z.strictObject({
+            reason: boundedText(500),
+            created: z.iso.datetime(),
+            expires: z.iso.datetime(),
+          }),
+        )
+        .max(25),
+      next: z.uuid().nullable(),
+    }),
+    helpTopic: 'mini-app-directory',
+  },
+  miniAppDirectory: {
+    method: 'GET',
+    path: '/v1/mini-apps/directory',
+    query: z.strictObject({ after: z.uuid().optional(), mine: z.enum(['1']).optional() }),
+    response: z.strictObject({
+      listings: z.array(MiniAppListingSchema).max(25),
+      next: z.uuid().nullable(),
+      publicationAvailable: z.boolean(),
+    }),
+    helpTopic: 'mini-app-directory',
+  },
+  miniAppListingSubmit: {
+    method: 'POST',
+    path: '/v1/mini-apps/directory/submit',
+    input: MiniAppListingInputSchema,
+    response: MiniAppListingSchema,
+    helpTopic: 'mini-app-directory',
+  },
+  miniAppListingUpdate: {
+    method: 'POST',
+    path: '/v1/mini-apps/directory/update',
+    input: listingId
+      .extend({ listing: MiniAppListingInputSchema, withdraw: z.boolean().default(false) })
+      .strict(),
+    response: MiniAppListingSchema,
+    helpTopic: 'mini-app-directory',
+  },
+  miniAppListingVerify: {
+    method: 'POST',
+    path: '/v1/mini-apps/directory/verify',
+    input: listingId.extend({ complete: z.boolean().default(false) }).strict(),
+    response: z.discriminatedUnion('state', [
+      z.strictObject({
+        state: z.literal('challenge'),
+        proof: MiniAppOriginProofSchema,
+        proofUrl: directoryUrl,
+      }),
+      z.strictObject({ state: z.literal('verified'), listing: MiniAppListingSchema }),
+    ]),
+    helpTopic: 'mini-app-directory',
+  },
+  miniAppListingTransfer: {
+    method: 'POST',
+    path: '/v1/mini-apps/directory/transfer',
+    input: listingId.extend({ successorAccountId: z.uuid() }).strict(),
+    response: z.strictObject({ expires: z.iso.datetime() }),
+    helpTopic: 'mini-app-directory',
+  },
+  miniAppListingReport: {
+    method: 'POST',
+    path: '/v1/mini-apps/directory/report',
+    input: listingId.extend({ reason: boundedText(500) }).strict(),
+    response: z.strictObject({ received: z.literal(true) }),
+    helpTopic: 'mini-app-directory',
+  },
+  miniAppListingModerate: {
+    method: 'POST',
+    path: '/v1/mini-apps/directory/moderate',
+    input: listingId.extend({ decision: z.enum(['hide', 'restore']) }).strict(),
+    response: MiniAppListingSchema,
+    helpTopic: 'mini-app-directory',
+  },
+} as const;

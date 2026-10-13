@@ -1,3 +1,5 @@
+import { governedDirectoryModeration } from './mini-apps/directory-moderation.js';
+import { DirectoryService } from './mini-apps/directory.js';
 import { McpArtifacts } from './mcp/artifacts.js';
 import { MiniAppCleanup } from './mini-apps/cleanup.js';
 import { McpOAuth } from './mcp/oauth.js';
@@ -92,6 +94,7 @@ const configuration = z
     API_HOST: z.union([z.ipv4(), z.ipv6()]).default('127.0.0.1'),
     API_PORT: z.coerce.number().int().min(1).max(65535).default(3008),
     COMMUNITY_MCP_ENABLED: z.enum(['0', '1']).default('0'),
+    MINI_APP_DIRECTORY_ENABLED: z.enum(['0', '1']).default('0'),
     COMMUNITY_MCP_HTTP_ENABLED: z.enum(['0', '1']).default('0'),
     TRUSTED_PROXY_IPS: z.string().min(2).max(8192).optional(),
     SHARED_PROXY_IPS: z.string().min(2).max(8192).optional(),
@@ -315,6 +318,10 @@ if (mcpOAuth && !mcpOAuth.clients.length) throw Error('MCP_REGISTERED_CLIENT_REQ
 const mcpArtifacts = process.env.COMMUNITY_MCP_RELEASE_DIRECTORY
   ? await McpArtifacts.load(process.env.COMMUNITY_MCP_RELEASE_DIRECTORY)
   : undefined;
+const miniAppDirectory =
+  env.MINI_APP_DIRECTORY_ENABLED === '1'
+    ? new DirectoryService(pool, governedDirectoryModeration(pool, chain))
+    : undefined;
 const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
   ...(mcpPairings ? { mcpPairings } : {}),
   ...(mcpOAuth ? { mcpOAuth } : {}),
@@ -324,6 +331,7 @@ const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
   telosGovernance: readTelosPins(process.env),
   ...(connectedApps ? { connectedApps } : {}),
   ...(miniApps ? { miniApps } : {}),
+  ...(miniAppDirectory ? { miniAppDirectory } : {}),
   ...(recovery ? { recovery } : {}),
   origins,
   creation,
@@ -358,6 +366,12 @@ const mcpWorker = mcpPairings
       'MCP_MAINTENANCE_UNAVAILABLE',
     )
   : undefined;
+const directoryWorker = miniAppDirectory
+  ? startPollingWorker(async () => {
+      await miniAppDirectory.cleanup();
+      return 'idle';
+    }, 'MINI_APP_DIRECTORY_MAINTENANCE_UNAVAILABLE')
+  : undefined;
 const exitWorker = accountExit ? startAccountExitWorker(pool, accountExit) : undefined;
 const profileWorker = profileKeysConfiguration
   ? startProfileWorker(pool, new ProfileKeys(pool, chain, profileKeysConfiguration))
@@ -384,6 +398,7 @@ async function shutdown() {
   await app.close();
   await authWorker.stop();
   await mcpWorker?.stop();
+  await directoryWorker?.stop();
   await exitWorker?.stop();
   await profileWorker?.stop();
   await profileKeysConfiguration?.exclusions.close?.();

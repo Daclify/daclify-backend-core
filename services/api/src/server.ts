@@ -1,3 +1,5 @@
+import { registerDirectoryRoutes } from './mini-apps/directory-routes.js';
+import type { DirectoryService } from './mini-apps/directory.js';
 import { registerMcpSetupRoutes } from './mcp/setup.js';
 import type { McpArtifacts } from './mcp/artifacts.js';
 import type { AccountExit } from './account-exit/service.js';
@@ -124,6 +126,7 @@ export async function createServer(
     mcpArtifacts?: McpArtifacts;
     mcpOAuth?: McpOAuth;
     miniApps?: MiniAppConnections;
+    miniAppDirectory?: DirectoryService;
     content?: ContentService;
     recovery?: RecoveryConfiguration;
     gatewayAllowance?: GatewayAllowance;
@@ -332,6 +335,8 @@ export async function createServer(
     options.miniApps ??
     (options.connectedApps ? new MiniAppConnections(options.connectedApps) : undefined);
   if (miniApps) registerMiniAppsRoutes(app, miniApps, cookieName, session, spend);
+  if (options.miniAppDirectory)
+    registerDirectoryRoutes(app, options.miniAppDirectory, cookieName, session);
   app.addHook('onSend', async (request, reply, payload) => {
     if (request.routeOptions.url === '/v1/sign-in/session' && reply.statusCode < 400) {
       const token = request.cookies[cookieName],
@@ -770,6 +775,7 @@ export async function createServer(
       capabilities: [
         ...network.capabilities,
         ...(options.mcpPairings ? ['community-mcp-local-v1'] : []),
+        ...(options.miniAppDirectory ? ['mini-app-directory-v1'] : []),
         ...(options.mcpOAuth ? ['community-mcp-http-v1'] : []),
         ...(options.accountExit ? ['account-exit-v1'] : []),
         ...(profileKeys.enabled && network.capabilities.includes('encrypted-profiles-v2')

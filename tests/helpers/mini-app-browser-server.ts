@@ -1,3 +1,7 @@
+import { CreationService } from '../../services/api/src/creation.js';
+import { DirectoryService } from '../../services/api/src/mini-apps/directory.js';
+import { governedDirectoryModeration } from '../../services/api/src/mini-apps/directory-moderation.js';
+import { MiniAppOriginProofSchema } from '../../protocol/mini-apps.js';
 import { AccountExit } from '../../services/api/src/account-exit/service.js';
 import { McpOAuth } from '../../services/api/src/mcp/oauth.js';
 import { McpPairings } from '../../services/api/src/mcp/pairing.js';
@@ -162,13 +166,20 @@ try {
     profileExclusions,
     exclusions: new AccountErasureExclusions(join(profileDirectory, 'accounts')),
   });
+  let directoryProof: unknown;
+  const miniAppDirectory = new DirectoryService(pool, governedDirectoryModeration(pool, gateway), {
+    lookup: async () => [{ address: '8.8.8.8', family: 4 }],
+    request: async () => ({ status: 200, bytes: Buffer.from(JSON.stringify(directoryProof)) }),
+  });
   const mcpPairings = new McpPairings(pool, gateway, 'http://127.0.0.1:' + apiPort, origin, apps);
   server = await createServer(pool, gateway, origin, {
     accountExit,
+    creation: new CreationService(pool,gateway),
     mcpPairings,
-    mcpArtifacts: process.env.MCP_TEST_RELEASE_DIRECTORY
-      ? await McpArtifacts.load(process.env.MCP_TEST_RELEASE_DIRECTORY)
-      : undefined,
+    miniAppDirectory,
+    ...(process.env.MCP_TEST_RELEASE_DIRECTORY
+      ? { mcpArtifacts: await McpArtifacts.load(process.env.MCP_TEST_RELEASE_DIRECTORY) }
+      : {}),
     mcpOAuth: new McpOAuth(mcpPairings, [
       { clientId: 'browser-fixture', redirectUris: ['https://client.example/callback'] },
     ]),
@@ -214,6 +225,7 @@ try {
         signingKey: SigningPublicKeySchema,
         encryptionKey: EncryptionPublicKeySchema,
         admin: z.boolean().default(true),
+        platform: z.boolean().default(false),
       })
       .parse(request.body);
     const reference = randomBytes(32).toString('hex'),
@@ -247,6 +259,7 @@ try {
       }),
       { reference, daoId },
     );
+    if (input.platform) await f.call('daclifycore', 'setgov', { dao_id: daoId });
     if (!input.admin)
       await f.call(
         'daclifycore',
@@ -313,6 +326,10 @@ try {
     );
     if (result.rowCount !== 1) throw new Error('FIXTURE_CONSENT_REQUIRED');
     return { expired: true };
+  });
+  server.post('/fixture/directory-proof', async (request) => {
+    directoryProof = MiniAppOriginProofSchema.parse(request.body);
+    return { stored: true };
   });
   await server.listen({ host: '127.0.0.1', port: apiPort });
   await mkdir('.artifacts/native', { recursive: true });

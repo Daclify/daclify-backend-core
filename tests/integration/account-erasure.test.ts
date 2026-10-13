@@ -290,3 +290,23 @@ it('removes OAuth codes and rotating families before their native companion reco
  const service=new AccountExit(pool,{...authChain,memberships:async()=>[]},{backupRetentionSeconds:86400}),op=await service.begin(canonical,{version:1,mode:'delete-account',memberships:[]},{reauthenticated:true});await service.eraseHosted(op.id);
  for(const table of ['mcp_oauth_tokens','mcp_oauth_families','mcp_oauth_requests','mcp_local_grants'])expect((await pool.query('SELECT 1 FROM '+table+' WHERE account_id=$1',[canonical])).rowCount).toBe(0);
 });
+it('removes directory dependents owned by other accounts and preserves a verified successor listing',async()=>{
+ const {DirectoryService}=await import('../../services/api/src/mini-apps/directory.js');
+ await fixture();const departing=canonical;await fixture();const successor=canonical;
+ let proof:unknown;
+ const directory=new DirectoryService(pool,{available:async()=>true,authorize:async()=>false},{lookup:async()=>[{address:'8.8.8.8',family:4}],request:async()=>({status:200,bytes:Buffer.from(JSON.stringify(proof))})});
+ const orphan=await directory.submit(departing,{origin:'https://orphan-'+departing+'.example',title:'Orphan',description:'Owned listing',releases:[]});
+ const transferred=await directory.submit(departing,{origin:'https://successor-'+departing+'.example',title:'Transferred',description:'Owned listing',releases:[]});
+ await directory.report(successor,orphan.id,'Test report');
+ await directory.transfer(departing,orphan.id,successor);
+ await directory.verify(successor,orphan.id);
+ await directory.transfer(departing,transferred.id,successor);
+ const offered=await directory.verify(successor,transferred.id);if(offered.state!=='challenge')throw Error('Origin challenge missing');proof=offered.proof;
+ await directory.verify(successor,transferred.id,true);
+ const service=new AccountExit(pool,{...authChain,memberships:async()=>[]},{backupRetentionSeconds:86400});
+ const operation=await service.begin(departing,{version:1,mode:'delete-account',memberships:[]},{reauthenticated:true});
+ await service.eraseHosted(operation.id);
+ expect((await pool.query('SELECT 1 FROM mini_app_listings WHERE id=$1',[orphan.id])).rowCount).toBe(0);
+ for(const table of ['mini_app_directory_reports','mini_app_directory_proofs','mini_app_directory_transfers'])expect((await pool.query('SELECT 1 FROM '+table+' WHERE listing_id=$1',[orphan.id])).rowCount).toBe(0);
+ expect((await pool.query('SELECT account_id,status FROM mini_app_listings WHERE id=$1',[transferred.id])).rows).toEqual([{account_id:successor,status:'published'}]);
+});

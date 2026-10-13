@@ -1,6 +1,10 @@
 import type { Pool, PoolClient } from 'pg';
 import { z } from 'zod';
 const personal = [
+  'public.mini_app_directory_reports:account_id',
+  'public.mini_app_directory_proofs:account_id',
+  'public.mini_app_directory_transfers:account_id',
+  'public.mini_app_listings:account_id',
   'public.mcp_oauth_tokens:account_id',
   'public.mcp_oauth_families:account_id',
   'public.mcp_oauth_requests:account_id',

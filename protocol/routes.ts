@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { NativeFinishSchema } from './native-wallet.js';
 import { ConnectedAppsRoutes } from './connected-apps.js';
-import { MiniAppsRoutes } from './mini-apps.js';
+import { MiniAppsRoutes, MiniAppDirectoryRoutes } from './mini-apps.js';
 import { McpPairingRoutes, McpOAuthRoutes, McpInventoryRoutes, McpSetupRoutes } from './mcp.js';
 import { ProfileRoutes } from './profiles.js';
 import { AccountExitRoutes, ExitNativeStepRoute, ExitSettlementRoutes } from './account-exit.js';
@@ -58,6 +58,7 @@ export const ApiRoutes = {
   ...ExitSettlementRoutes,
   exitNativeStep: ExitNativeStepRoute,
   ...MiniAppsRoutes,
+  ...MiniAppDirectoryRoutes,
   ...McpPairingRoutes,
   ...McpOAuthRoutes,
   ...McpInventoryRoutes,

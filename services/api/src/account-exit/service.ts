@@ -767,6 +767,20 @@ export class AccountExit {
           )
         ).rowCount;
       }
+      for (const table of [
+        'mini_app_directory_reports',
+        'mini_app_directory_proofs',
+        'mini_app_directory_transfers',
+      ]) {
+        if (
+          await purge(
+            table,
+            'listing_id',
+            'listing_id IN(SELECT id FROM mini_app_listings WHERE account_id=ANY($1::uuid[]))',
+          )
+        )
+          return 'retry';
+      }
       // Remove indirect personal identifiers before their owning credentials and keys disappear.
       if (
         await purge(
