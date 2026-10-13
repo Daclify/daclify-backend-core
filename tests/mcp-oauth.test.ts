@@ -70,23 +70,48 @@ it('keeps an HTTP-only preview outside the signed preparation contract', () => {
 import { McpOAuth } from '../services/api/src/mcp/oauth.js';
 import { McpPairings } from '../services/api/src/mcp/pairing.js';
 import { Pool } from 'pg';
-it('preregisters one fixed native loopback callback without relaxing app or arbitrary HTTP redirects', () => {
+it('preregisters exact Codex, Claude Code and ChatGPT callbacks without relaxing app or arbitrary HTTP redirects', async () => {
   const pool = new Pool(),
     service = new McpPairings(pool, undefined, 'https://api.example', 'https://app.example');
   expect(
     () =>
       new McpOAuth(service, [
         { clientId: 'codex-owned', redirectUris: ['http://127.0.0.1:35719/callback'] },
+        { clientId: 'claude-owned', redirectUris: ['http://localhost:35729/callback'] },
+        {
+          clientId: 'chatgpt-owned',
+          redirectUris: ['https://chatgpt.com/connector_platform_oauth_redirect'],
+        },
       ]),
   ).not.toThrow();
   for (const uri of [
     'http://127.0.0.1/callback',
-    'http://localhost:35719/callback',
+    'http://localhost/callback',
+    'http://localhost:80/callback',
+    'http://localhost.evil.example:35729/callback',
     'http://evil.example:35719/callback',
     'http://127.0.0.1:35719/callback#secret',
     'http://127.0.0.1:35719/other',
+    'http://localhost:35729/callback?code=secret',
+    'http://localhost:35729/callback#secret',
   ])
     expect(
       () => new McpOAuth(service, [{ clientId: 'codex-owned', redirectUris: [uri] }]),
     ).toThrow();
+  const oauth = new McpOAuth(service, [
+    { clientId: 'claude-owned', redirectUris: ['http://localhost:35729/callback'] },
+  ]);
+  for (const redirect_uri of ['http://localhost:35730/callback', 'http://127.0.0.1:35729/callback'])
+    await expect(
+      oauth.begin({
+        response_type: 'code',
+        client_id: 'claude-owned',
+        redirect_uri,
+        resource: oauth.resource,
+        scope: 'daclify:read',
+        state: 'owned',
+        code_challenge: 'a'.repeat(43),
+        code_challenge_method: 'S256',
+      }),
+    ).rejects.toMatchObject({ code: 'MCP_TOKEN_REQUIRED' });
 });

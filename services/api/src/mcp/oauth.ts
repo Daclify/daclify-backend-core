@@ -15,6 +15,7 @@ import {
 import { readAccount, withTransaction } from '../auth/account-session.js';
 import { ApiError } from '../errors.js';
 import type { McpPairings } from './pairing.js';
+import { CHATGPT_CLIENT_METADATA } from './clients.js';
 const hash = (value: string) => createHash('sha256').update(value).digest();
 const invalid = () => new ApiError('MCP_TOKEN_REQUIRED', 401);
 const opaque = () => randomBytes(32).toString('base64url');
@@ -69,7 +70,7 @@ export class McpOAuth {
         const url = new URL(uri);
         const fixedLoopback =
           url.protocol === 'http:' &&
-          url.hostname === '127.0.0.1' &&
+          (url.hostname === '127.0.0.1' || url.hostname === 'localhost') &&
           Number(url.port) >= 1024 &&
           Number(url.port) <= 65535 &&
           url.pathname === '/callback' &&
@@ -106,6 +107,9 @@ export class McpOAuth {
       token_endpoint_auth_methods_supported: ['none'],
       scopes_supported: ['daclify:read', 'daclify:prepare', 'daclify:submit'],
       authorization_response_iss_parameter_supported: true,
+      ...(this.clients.some((client) => client.clientId === CHATGPT_CLIENT_METADATA)
+        ? { client_id_metadata_document_supported: true }
+        : {}),
     };
   }
   private scopes(value: string) {
@@ -179,7 +183,9 @@ export class McpOAuth {
     if (!this.pairings.chain) throw invalid();
     const row = await this.request(approval.id),
       request = McpOAuthAuthorizeSchema.parse(row.request),
-      scopes = this.scopes(request.scope),
+      scopes = this.scopes(request.scope).filter(
+        (scope) => scope !== 'daclify:submit' || approval.localGrantId !== null,
+      ),
       familyId = randomUUID();
     if (
       new Set(approval.nativeScopes).size !== approval.nativeScopes.length ||
@@ -189,7 +195,7 @@ export class McpOAuth {
     const local = approval.localGrantId
       ? await this.pairings.authorizeGrant(approval.localGrantId, account.id)
       : undefined;
-    if (scopes.includes('daclify:submit') && !local)
+    if (!scopes.length || (scopes.includes('daclify:submit') && !local))
       throw new ApiError('MCP_LOCAL_SIGNER_REQUIRED', 403);
     if (
       local &&

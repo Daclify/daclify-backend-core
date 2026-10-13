@@ -1,3 +1,8 @@
+import { readFileSync } from 'node:fs';
+import { z } from 'zod';
+const packageVersion = z
+  .object({ version: z.string() })
+  .parse(JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))).version;
 import { it, expect } from 'vitest';
 import { createMcpHttpHandler } from '../src/http.js';
 it('creates the genuine SDK HTTP handler without a local signing tool', async () => {
@@ -50,6 +55,10 @@ it('initializes two genuine HTTP clients without sharing authenticated context',
         },
       });
       await client.connect(transport);
+      expect(client.getServerVersion()).toEqual({
+        name: 'daclify-community',
+        version: packageVersion,
+      });
       const tools = await client.listTools();
       expect(tools.tools.map((tool) => tool.name)).not.toContain('submit_prepared');
       const result = await client.callTool({ name: 'get_membership', arguments: {} });

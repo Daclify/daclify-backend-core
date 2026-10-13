@@ -1,6 +1,6 @@
 # Daclify community MCP
 
-Local development package `0.1.0-alpha.4`: core `0.15.0-alpha.14`, modules SDK `0.10.0-alpha.21`, stable MCP server/client `2.3.1`. Native contracts are unchanged. The package is an immutable review artifact, not a registry publication or production qualification.
+The release manifest and `package.json` specify this immutable development package’s version and exact dependency pins. Install the three archives from the same release. This is a review artifact; production qualification is recorded separately.
 
 Install the three version-matched archives together (`npm install --ignore-scripts ./core.tgz ./modules.tgz ./mcp.tgz`). Generate public connection configuration through Daclify's AI connection page when that deployment advertises `community-mcp-local-v1`.
 

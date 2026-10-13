@@ -3,6 +3,7 @@ import { DirectoryService } from './mini-apps/directory.js';
 import { McpArtifacts } from './mcp/artifacts.js';
 import { MiniAppCleanup } from './mini-apps/cleanup.js';
 import { McpOAuth } from './mcp/oauth.js';
+import { loadMcpOAuthClients } from './mcp/clients.js';
 import { McpPairings } from './mcp/pairing.js';
 import { ApiOriginSchema } from '../../../protocol/base.js';
 import { AccountExit } from './account-exit/service.js';
@@ -312,7 +313,10 @@ const mcpPairings =
     : undefined;
 const mcpOAuth =
   env.COMMUNITY_MCP_HTTP_ENABLED === '1' && mcpPairings
-    ? new McpOAuth(mcpPairings, JSON.parse(process.env.COMMUNITY_MCP_HTTP_CLIENTS ?? '[]'))
+    ? new McpOAuth(
+        mcpPairings,
+        await loadMcpOAuthClients(JSON.parse(process.env.COMMUNITY_MCP_HTTP_CLIENTS ?? '[]')),
+      )
     : undefined;
 if (mcpOAuth && !mcpOAuth.clients.length) throw Error('MCP_REGISTERED_CLIENT_REQUIRED');
 const mcpArtifacts = process.env.COMMUNITY_MCP_RELEASE_DIRECTORY

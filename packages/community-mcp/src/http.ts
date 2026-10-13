@@ -1,3 +1,4 @@
+import { communityServerInfo } from './server-info.js';
 import {
   createMcpHandler,
   McpServer,
@@ -10,7 +11,7 @@ export function createMcpHttpHandler(
   access: (context: McpRequestContext) => CommunityAccess,
 ): McpHttpHandler {
   return createMcpHandler((context) => {
-    const server = new McpServer({ name: 'daclify-community', version: '0.1.0-alpha.4' });
+    const server = new McpServer(communityServerInfo);
     createCommunityTools(access(context)).register(server);
     return server;
   });

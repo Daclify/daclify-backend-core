@@ -2,6 +2,7 @@ import { EncryptionPrivateKeySchema, EncryptionPublicKeySchema } from '../../pro
 import { createHash, randomBytes, generateKeyPairSync } from 'node:crypto';
 import { PrivateKey } from '@wharfkit/antelope';
 import { Pool } from 'pg';
+import { z } from 'zod';
 import { migrate } from '../../services/api/src/store.js';
 import { nativeContracts, nativeModules } from './native-contracts.js';
 import { NativeChainGateway } from '../../services/api/src/native-chain.js';
@@ -43,11 +44,19 @@ export async function mcpFixture() {
     pairings = new McpPairings(pool, chain, api, frontend),
     oauth = new McpOAuth(pairings, [
       { clientId: 'codex-owned-fixture', redirectUris: ['http://127.0.0.1:35829/callback'] },
+      { clientId: 'claude-owned-fixture', redirectUris: ['http://localhost:35839/callback'] },
     ]);
   const server = await createServer(pool, chain, frontend, {
     apiOrigin: api,
     mcpPairings: pairings,
     mcpOAuth: oauth,
+  });
+  server.addHook('onError', async (_request, _reply, error) => {
+    const diagnostic = z.object({ code: z.string().optional() }).safeParse(error);
+    console.error({
+      fixtureErrorType: error.name,
+      fixtureErrorCode: diagnostic.success ? diagnostic.data.code : undefined,
+    });
   });
   await server.listen({ host: '127.0.0.1', port: 35819 });
   async function paired(mode: 0 | 1 | 2 = 0, recipientKeys: readonly string[] = []) {

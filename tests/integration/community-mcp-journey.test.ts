@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { McpOAuthRoutes } from '../../protocol/mcp.js';
+import { McpOAuthRoutes, McpSetupRoutes } from '../../protocol/mcp.js';
 import { beforeAll, afterAll, it, expect } from 'vitest';
 import { mcpFixture } from '../helpers/mcp-fixture.js';
 import { LocalCommunityClient } from '../../packages/community-mcp/src/local-client.js';
@@ -263,3 +263,107 @@ it('uses the installed Codex app-server client and a separate trusted terminal c
     await rm(directory, { recursive: true, force: true });
   }
 }, 180000);
+
+it('authenticates the actual Claude Code CLI with exact localhost callback and native member consent', async () => {
+  const client = process.env.DACLIFY_CLAUDE_CLI;
+  if (!client) throw Error('ACTUAL_CLAUDE_CLI_REQUIRED');
+  const current = await fixture.paired(),
+    directory = await mkdtemp(join(tmpdir(), 'owned-claude-mcp-'));
+  try {
+    const configuration = join(directory, 'controller.json');
+    await writeFile(configuration, JSON.stringify({ cwd: directory, api: fixture.api, client }), {
+      mode: 0o600,
+    });
+    const stdout = await new Promise<string>((resolveDone, reject) => {
+      const child = spawn('python3', ['tests/helpers/claude-mcp-driver.py', configuration], {
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      let pending = '',
+        output = '',
+        diagnostics = '';
+      const deadline = setTimeout(() => {
+        child.kill();
+        reject(Error('CLAUDE_HARNESS_DEADLINE'));
+      }, 120000);
+      child.stderr.on('data', (data: Buffer) => {
+        diagnostics += data.toString();
+        if (diagnostics.length > 65536) {
+          child.kill();
+          reject(Error('CLAUDE_OUTPUT_LIMIT'));
+        }
+      });
+      child.stdout.on('data', (data: Buffer) => {
+        pending += data.toString();
+        if (pending.length > 65536) {
+          child.kill();
+          reject(Error('CLAUDE_OUTPUT_LIMIT'));
+          return;
+        }
+        let index;
+        while ((index = pending.indexOf('\n')) >= 0) {
+          const line = pending.slice(0, index);
+          pending = pending.slice(index + 1);
+          void (async () => {
+            const envelope = z.object({ kind: z.string().optional() }).parse(JSON.parse(line));
+            if (envelope.kind === 'consent-request') {
+              const request = z.object({ requestId: z.uuid() }).parse(JSON.parse(line));
+              await fixture.oauth.consent(current.account.account, request.requestId);
+              const approved = await current.approve('/v1/mcp/oauth/approve', {
+                id: request.requestId,
+                dao: current.dao.reference,
+                memberId: '1',
+                nativeScopes: ['vote'],
+                localGrantId: null,
+              });
+              child.stdin.write(
+                JSON.stringify(McpOAuthRoutes.mcpOAuthApprove.response.parse(approved.json())) +
+                  '\n',
+              );
+            } else output = line;
+          })().catch((error: unknown) => {
+            child.kill();
+            reject(error);
+          });
+        }
+      });
+      child.on('error', reject);
+      child.on('exit', (code) => {
+        clearTimeout(deadline);
+        if (code !== 0) reject(Error('CLAUDE_HARNESS_FAILED ' + diagnostics));
+        else resolveDone(output);
+      });
+    });
+    expect(JSON.parse(stdout)).toMatchObject({
+      client: 'claude-code',
+      connected: true,
+      callback: 'http://localhost:35839/callback',
+      inferenceRun: false,
+    });
+    expect(stdout).not.toContain(current.root.toString());
+    expect(stdout).not.toContain(current.delegate.toString());
+    const families = await fixture.pool.query<{ id: string; context: unknown }>(
+      "SELECT id,context FROM mcp_oauth_families WHERE account_id=$1 AND context->>'clientId'=$2",
+      [current.account.account.id, 'claude-owned-fixture'],
+    );
+    expect(families.rows).toHaveLength(1);
+    const family = z
+      .object({
+        id: z.uuid(),
+        context: z.object({
+          scopes: z.array(z.string()),
+          sessionId: z.null(),
+          delegatePublicKey: z.null(),
+        }),
+      })
+      .parse(families.rows[0]);
+    expect(family.context.scopes).toEqual(['daclify:read', 'daclify:prepare']);
+    await current.approve(McpSetupRoutes.mcpRevokeFamily.path, { id: family.id });
+    const revoked = await fixture.pool.query<{ revoked: boolean }>(
+      'SELECT revoked_at IS NOT NULL AS revoked FROM mcp_oauth_families WHERE id=$1',
+      [family.id],
+    );
+    expect(revoked.rows[0]?.revoked).toBe(true);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+}, 150000);

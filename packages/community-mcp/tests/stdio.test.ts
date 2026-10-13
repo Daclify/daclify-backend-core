@@ -1,3 +1,8 @@
+import { readFileSync } from 'node:fs';
+import { z } from 'zod';
+const packageVersion = z
+  .object({ version: z.string() })
+  .parse(JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))).version;
 import { it, expect } from 'vitest';
 import { McpServer } from '@modelcontextprotocol/server';
 import { createStdioServer } from '../src/stdio.js';
@@ -29,6 +34,10 @@ it('runs a genuine SDK client against a separate stdio server process', async ()
     client = new Client({ name: 'daclify-stdio-fixture', version: '1.0.0' });
   await client.connect(transport);
   try {
+    expect(client.getServerVersion()).toEqual({
+      name: 'daclify-community',
+      version: packageVersion,
+    });
     const tools = await client.listTools();
     expect(tools.tools.map((value) => value.name)).toContain('prepare_vote');
     expect(tools.tools.map((value) => value.name)).not.toContain('sign_transaction');
