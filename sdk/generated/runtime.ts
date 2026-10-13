@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = 'ed0a44c9bfd898bc05c6fc474ab3eb55d9cad90e98187d8c04ef222f39befcf9';
+export const runtimeAbiHash = '05453044395d37ad1552d232fc89d8e4fed64e232a7e806e5a24597b5499cc19';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -976,6 +976,24 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "claim_founder",
+      "base": "",
+      "fields": [
+        {
+          "name": "encryption_key",
+          "type": "string"
+        },
+        {
+          "name": "custody",
+          "type": "uint8"
+        },
+        {
+          "name": "settings",
+          "type": "gov_settings"
+        }
+      ]
+    },
+    {
       "name": "clearhand",
       "base": "",
       "fields": [
@@ -1264,6 +1282,10 @@ export const runtimeAbi = {
         {
           "name": "creator",
           "type": "public_key"
+        },
+        {
+          "name": "founder",
+          "type": "claim_founder$"
         }
       ]
     },
@@ -7228,6 +7250,11 @@ export interface checkdaoram {
 export interface checkrampool {
   payer: string;
 }
+export interface claim_founder {
+  encryption_key: string;
+  custody: number;
+  settings: gov_settings;
+}
 export interface clearhand {
   dao_id: string;
 }
@@ -7306,6 +7333,7 @@ export interface createpaid {
   token_symbol: string;
   reference: string;
   creator: string;
+  founder?: claim_founder | undefined;
 }
 export interface creation_order {
   id: string;
@@ -7900,7 +7928,7 @@ export interface native_governance {
   signers: string[];
   threshold: number;
   admin_members: string[];
-  ownership: native_ownership_policy | undefined;
+  ownership?: native_ownership_policy | undefined;
 }
 export interface native_ownership_policy {
   policy_version: number;

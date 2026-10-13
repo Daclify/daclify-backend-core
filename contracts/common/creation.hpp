@@ -1,6 +1,11 @@
 #pragma once
 #include "records.hpp"
+#include "governance.hpp"
 namespace daclify {
+struct claim_founder {
+ std::string encryption_key;uint8_t custody;gov_settings settings;
+ EOSLIB_SERIALIZE(claim_founder,(encryption_key)(custody)(settings))
+};
 struct [[eosio::table("createcfg"), eosio::contract("runtime")]] creation_policy {
  uint32_t shared_usd=2000;uint32_t independent_usd=5000;uint16_t premium_bps=2000;name settler;
  uint64_t median=0;uint8_t precision=0;uint32_t observed_at=0;

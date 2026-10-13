@@ -344,12 +344,17 @@ public:
     check(!creation_settings(get_self(),get_self().value).exists(),"CREATION_PAYMENT_REQUIRED");
     create_dao(dao_id,owner,metadata,privacy,token_contract,token_symbol);
   }
-  ACTION createpaid(uint64_t dao_id,name owner,std::string metadata,uint8_t privacy,name token_contract,symbol token_symbol,checksum256 reference,public_key creator) {
+  ACTION createpaid(uint64_t dao_id,name owner,std::string metadata,uint8_t privacy,name token_contract,symbol token_symbol,checksum256 reference,public_key creator,eosio::binary_extension<claim_founder> founder) {
     auto cfg=creation_settings(get_self(),get_self().value).get();require_auth(cfg.settler);
     creation_orders orders(get_self(),get_self().value);auto index=orders.get_index<"byref"_n>();const auto& order=index.get(reference,"CREATION_UNKNOWN");
     check(order.creator==creator&&order.deployment==0,"CREATION_OWNER");check(order.paid,"CREATION_UNPAID");check(!order.used,"CREATION_USED");
     create_dao(dao_id,owner,metadata,privacy,token_contract,token_symbol);
     index.modify(order,same_payer,[&](auto& r){r.used=true;r.dao_id=dao_id;});
+    if(founder.has_value()){
+      const auto& first=founder.value();check(first.settings.participant_mode<=1,"CLAIM_PARTICIPANT_MODE");
+      initgov(dao_id,first.settings);enroll_member(dao_id,1,name{},creator,first.encryption_key,first.custody,0,"");
+      replace_executives(dao_id,{1},0,10000);
+    }
   }
 private:
   void create_dao(uint64_t dao_id,name owner,const std::string& metadata,uint8_t privacy,name token_contract,symbol token_symbol) {

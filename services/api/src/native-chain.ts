@@ -2846,7 +2846,7 @@ export class NativeChainGateway implements ChainGateway {
   async createDao(
     account: Account,
     input: z.infer<typeof CreateDaoSchema>,
-    paid?: { reference: string; daoId: string },
+    paid?: { reference: string; daoId: string; founderExecutive?: boolean },
   ): Promise<DaoSummary> {
     if (account.signingKey === null) throw new ApiError('VAULT_IDENTITY_REQUIRED', 409);
     await this.validateCreation(input);
@@ -2867,6 +2867,16 @@ export class NativeChainGateway implements ChainGateway {
       : undefined;
     const installations: RuntimeActions['setmodule'][] = [];
     const decide = this.config.modules?.find((module) => module.id === 'decide');
+    let founder: RuntimeActions['createpaid']['founder'];
+    if (paid?.founderExecutive) {
+      if (!setup || !decide || setup.participantMode === 'agents-guarded' || input.foundingAgent)
+        throw new ApiError('CLAIM_PARTICIPANT_MODE', 409);
+      founder = {
+        encryption_key: JSON.stringify(account.encryptionKey),
+        custody: account.custody === 'managed' ? 1 : 0,
+        settings: governanceSettings(setup, decide.account),
+      };
+    }
     if (setup) {
       if (!preset || !decide) throw new ApiError('PRESET_MODULE_UNAVAILABLE', 503);
       if (!(await this.supportsPresets())) throw new ApiError('DAO_POLICY_UNAVAILABLE', 503);
@@ -2936,6 +2946,7 @@ export class NativeChainGateway implements ChainGateway {
         ],
         data: encodeAction(paid ? 'createpaid' : 'createdao', {
           ...(paid ? { reference: paid.reference, creator: account.signingKey } : {}),
+          ...(founder ? { founder } : {}),
           dao_id: id,
           owner: bootstrap.owner,
           metadata: JSON.stringify(
@@ -2969,7 +2980,8 @@ export class NativeChainGateway implements ChainGateway {
         }),
       }),
     ];
-    if (setup && decide) {
+    if (founder) actions.pop();
+    if (setup && decide && !founder) {
       actions.splice(
         1,
         0,
@@ -2999,16 +3011,16 @@ export class NativeChainGateway implements ChainGateway {
           }),
         });
       }
-      for (const installation of installations)
-        actions.push(
-          Action.from({
-            account: this.config.runtime,
-            name: 'setmodule',
-            authorization: [{ actor: bootstrap.owner, permission: creationPermission }],
-            data: encodeAction('setmodule', { ...installation, dao_id: id }),
-          }),
-        );
     }
+    for (const installation of installations)
+      actions.push(
+        Action.from({
+          account: this.config.runtime,
+          name: 'setmodule',
+          authorization: [{ actor: bootstrap.owner, permission: creationPermission }],
+          data: encodeAction('setmodule', { ...installation, dao_id: id }),
+        }),
+      );
     const transaction = Transaction.from({ ...info.getTransactionHeader(60), actions });
     await this.assertResources(bootstrap.owner);
     try {
