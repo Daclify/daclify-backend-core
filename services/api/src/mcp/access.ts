@@ -3,6 +3,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { PublicKey, Signature } from '@wharfkit/antelope';
 import { ApiRoutes } from '../../../../protocol/routes.js';
 import {
+  McpDiagnosticCodeSchema,
   McpReadInputSchema,
   McpReadResultSchema,
   McpPrepareInputSchema,
@@ -21,7 +22,7 @@ import {
 } from '../../../../sdk/community-agent.js';
 import { instructionDigest } from '../../../../sdk/index.js';
 import { communityModuleAdapter } from '../../../../packages/community-mcp/src/modules.js';
-import { ModuleApiRoutes } from '@daclify/modules';
+import { ModuleApiRoutes, ModulePageQuerySchema } from '@daclify/modules';
 import { ConnectedAppsRoutes } from '../../../../protocol/connected-apps.js';
 import type { McpPairings } from './pairing.js';
 import { withTransaction } from '../auth/account-session.js';
@@ -43,8 +44,15 @@ export class LocalCommunityAccess implements CommunityAccess {
     const request = async (path: string): Promise<unknown> => {
       if (path === ApiRoutes.dao.path.replace(':id', grant.dao.daoId))
         return chain.dao(grant.dao.daoId);
-      if (path === ModuleApiRoutes.state.path.replace(':id', grant.dao.daoId))
-        return chain.moduleState(grant.dao.daoId);
+      if (path.split('?')[0] === ModuleApiRoutes.state.path.replace(':id', grant.dao.daoId)) {
+        const url = new URL(path, this.service.api);
+        const query = url.search
+          ? ModulePageQuerySchema.parse(Object.fromEntries(url.searchParams))
+          : undefined;
+        if (query?.memberId && query.memberId !== member.memberId)
+          throw new ApiError('MCP_SCOPE_REQUIRED', 403);
+        return chain.moduleState(grant.dao.daoId, query);
+      }
       if (
         path === ConnectedAppsRoutes.connectedApps.path.replace(':id', grant.dao.daoId) &&
         this.service.apps
@@ -86,7 +94,21 @@ export class LocalCommunityAccess implements CommunityAccess {
   }
   async prepare(input: McpPrepareInput): Promise<PreparedInstruction> {
     const parsed = McpPrepareInputSchema.parse(input),
-      { current, prepared } = await this.resolve(parsed);
+      authorized = await this.authorize();
+    if (
+      (
+        await this.service.pool.query(
+          "SELECT 1 FROM mcp_preparations WHERE grant_id=$1 AND state='submitting' AND expires_at>now() LIMIT 1",
+          [authorized.grant.id],
+        )
+      ).rowCount
+    )
+      throw new ApiError('MCP_RECONCILE_REQUIRED', 409);
+    const { current, prepared } = await this.resolve(parsed).catch((cause) => {
+      const code = McpDiagnosticCodeSchema.safeParse(cause instanceof Error ? cause.message : '');
+      if (code.success) throw new ApiError(code.data, 403);
+      throw cause;
+    });
     const value = PreparedInstructionSchema.parse({ id: randomUUID(), ...prepared });
     await withTransaction(this.service.pool, async (db) => {
       await db.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [

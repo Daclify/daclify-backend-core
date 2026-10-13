@@ -67,7 +67,19 @@ export class McpOAuth {
     for (const client of this.clients)
       for (const uri of client.redirectUris) {
         const url = new URL(uri);
-        if (url.protocol !== 'https:' || url.username || url.password || url.hash)
+        const fixedLoopback =
+          url.protocol === 'http:' &&
+          url.hostname === '127.0.0.1' &&
+          Number(url.port) >= 1024 &&
+          Number(url.port) <= 65535 &&
+          url.pathname === '/callback' &&
+          !url.search;
+        if (
+          (url.protocol !== 'https:' && !fixedLoopback) ||
+          url.username ||
+          url.password ||
+          url.hash
+        )
           throw Error('MCP_REDIRECT_INVALID');
       }
     const api = ApiOriginSchema.parse(pairings.api);

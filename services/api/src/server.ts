@@ -1,3 +1,5 @@
+import { registerMcpSetupRoutes } from './mcp/setup.js';
+import type { McpArtifacts } from './mcp/artifacts.js';
 import type { AccountExit } from './account-exit/service.js';
 import { registerSettlementRoutes, registerAccountExitRoutes } from './account-exit/routes.js';
 import type { CreationService } from './creation.js';
@@ -119,6 +121,7 @@ export async function createServer(
     accountExit?: AccountExit;
     connectedApps?: ConnectedApps;
     mcpPairings?: McpPairings;
+    mcpArtifacts?: McpArtifacts;
     mcpOAuth?: McpOAuth;
     miniApps?: MiniAppConnections;
     content?: ContentService;
@@ -314,6 +317,8 @@ export async function createServer(
     return account;
   }
   registerRecoveryRoutes(app, recovery, cookieName, session, origin);
+  if (options.mcpPairings)
+    registerMcpSetupRoutes(app, options.mcpPairings, options.mcpArtifacts, cookieName, session);
   if (options.mcpOAuth) registerMcpHttpRoutes(app, options.mcpOAuth, cookieName, session);
   if (options.mcpPairings) registerMcpPairingRoutes(app, options.mcpPairings, cookieName, session);
   if (options.accountExit)

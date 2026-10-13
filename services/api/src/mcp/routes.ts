@@ -23,7 +23,7 @@ export function registerMcpPairingRoutes(
   cookieName: string,
   session: (token: string | undefined, csrf?: string) => Promise<Account>,
 ) {
-  const admit = createWindowLimiter(30, 300000, 2000),
+  const admit = createWindowLimiter(120, 300000, 2000),
     admitRedeem = createWindowLimiter(240, 300000, 2000),
     id = (params: unknown) => z.object({ id: z.uuid() }).parse(params).id;
   const bearer = (value: string | undefined) => {
@@ -38,8 +38,10 @@ export function registerMcpPairingRoutes(
       throw new ApiError('ORIGIN_REJECTED', 403);
   });
   app.addHook('onSend', async (request, reply) => {
-    if (request.url.startsWith('/v1/mcp/'))
-      reply.header('cache-control', 'no-store').header('referrer-policy', 'no-referrer');
+    if (request.url.startsWith('/v1/mcp/')) {
+      reply.header('referrer-policy', 'no-referrer');
+      if (!request.url.startsWith('/v1/mcp/releases/')) reply.header('cache-control', 'no-store');
+    }
   });
   app.get(McpInventoryRoutes.mcpGrants.path, async (request) => {
     const account = await session(request.cookies[cookieName]);

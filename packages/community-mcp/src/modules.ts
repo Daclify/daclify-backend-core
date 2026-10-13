@@ -52,7 +52,7 @@ export function communityModuleAdapter(app?: {
       )
         throw new Error('MCP_PUBLIC_DAO_REQUIRED');
       const state = ModuleApiRoutes.state.response.parse(
-        await request(ModuleApiRoutes.state.path.replace(':id', connection.dao.daoId)),
+        await request(ModuleApiRoutes.state.path.replace(':id', connection.dao.daoId)+(input.tool==='prepare_vote'?'?memberId='+member.memberId+'&ballots='+input.input.pollId:input.tool==='prepare_proposal'?'?memberId='+member.memberId+'&ballots='+input.input.ballotId:'')),
       );
       if (JSON.stringify(state.dao) !== JSON.stringify(connection.dao))
         throw new Error('MCP_DOMAIN');
@@ -119,6 +119,7 @@ export function communityModuleAdapter(app?: {
           poll.status !== 0 ||
           poll.closes <= Date.now() / 1000 ||
           choice >= poll.choices ||
+          state.votes.some(value=>value.ballot===poll.id&&value.member===member.memberId)||
           governance.excludedVoters.some((value) => value.member_id === member.memberId)
         )
           throw new Error('MCP_VOTE_UNAVAILABLE');

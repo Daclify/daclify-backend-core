@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {connectCompanion,serveCompanion} from './companion.js';
 import { readFile, unlink } from 'node:fs/promises';
 import { createWriteStream, openSync } from 'node:fs';
 import { ReadStream } from 'node:tty';
@@ -10,10 +11,8 @@ import { randomBytes, createHash } from 'node:crypto';
 import { PrivateKey } from '@wharfkit/antelope';
 import { z } from 'zod';
 import {
-  ApiOriginSchema,
-  DaoRefSchema,
-  IdSchema,
-  McpConnectionSchema,
+  McpDiagnosticCodeSchema,
+  McpLocalConfigurationSchema,
   McpPairingInputSchema,
   McpPairingRoutes,
 } from '@daclify/core-protocol';
@@ -23,15 +22,7 @@ import { LocalCommunityClient, mcpRequest } from './local-client.js';
 import { ProtectedCommunitySigner } from './signer.js';
 import { createCommunityTools } from './tools.js';
 import { createStdioServer } from './stdio.js';
-export const PairConfigurationSchema = z.strictObject({
-  version: z.literal(1),
-  api: ApiOriginSchema,
-  frontend: ApiOriginSchema,
-  dao: DaoRefSchema,
-  memberId: IdSchema,
-  scopes: McpConnectionSchema.shape.scopes,
-  app: McpPairingInputSchema.shape.app,
-});
+export const PairConfigurationSchema = McpLocalConfigurationSchema;
 async function trustedPrompt(prompt: string, secret = false): Promise<string> {
   const input = new ReadStream(openSync('/dev/tty', 'r+'));
   const output = createWriteStream('/dev/tty');
@@ -80,9 +71,10 @@ export async function main(args: string[]): Promise<void> {
   const { positionals, values } = parseArgs({
     args,
     allowPositionals: true,
-    options: { credentials: { type: 'string' }, config: { type: 'string' } },
+    options: { credentials: { type: 'string' }, config: { type: 'string' },socket:{type:'string'} },
   });
-  const command = z.enum(['pair', 'serve', 'status', 'revoke']).parse(positionals[0]);
+  const command = z.enum(['pair', 'serve', 'bridge', 'status', 'revoke']).parse(positionals[0]);
+  if(command==='bridge'){const socket=await connectCompanion(z.string().min(1).max(100).parse(values.socket));process.stdin.pipe(socket);socket.pipe(process.stdout);socket.on('error',()=>{process.stderr.write('Daclify companion connection failed.\n');process.exitCode=1;});socket.on('close',()=>process.stdin.destroy());return;}
   const file = z.string().min(1).max(4096).parse(values.credentials);
   if (!isAbsolute(file)) throw Error('MCP_CREDENTIALS');
   if (command === 'pair') {
@@ -146,13 +138,14 @@ export async function main(args: string[]): Promise<void> {
           },
           password,
         );
+        if(values.socket)process.stderr.write('Start a trusted foreground companion with serve --credentials '+file+' --socket '+values.socket+' before connecting the harness.\n');
         process.stdout.write(
           JSON.stringify(
             {
               mcpServers: {
                 daclify: {
                   command: process.execPath,
-                  args: [fileURLToPath(import.meta.url), 'serve', '--credentials', file],
+                  args: [fileURLToPath(import.meta.url),...(values.socket?['bridge','--socket',values.socket]:['serve','--credentials',file])],
                 },
               },
             },
@@ -198,6 +191,11 @@ export async function main(args: string[]): Promise<void> {
     return;
   }
   await client.status();
+  if(values.socket){
+    const host=await serveCompanion(createCommunityTools(client,new ProtectedCommunitySigner(client,credentials.delegateKey)),values.socket);
+    process.stderr.write('Daclify companion ready. Connect the harness through its private socket reference.\n');
+    const stop=()=>void host.close().catch(()=>{process.exitCode=1;});process.once('SIGINT',stop);process.once('SIGTERM',stop);return;
+  }
   await serveStdio(
     () =>
       createStdioServer(
@@ -210,7 +208,8 @@ export async function main(args: string[]): Promise<void> {
   );
 }
 if (import.meta.main)
-  await main(process.argv.slice(2)).catch(() => {
+  await main(process.argv.slice(2)).catch(cause => {
+    const code=McpDiagnosticCodeSchema.safeParse(cause instanceof Error?cause.message:'');if(code.success)process.stderr.write('Daclify MCP: '+code.data+'\n');
     process.stderr.write(
       'Daclify MCP could not continue. Check consent, current permissions, the encrypted credential file and trusted terminal access. No private diagnostic is printed.\n',
     );

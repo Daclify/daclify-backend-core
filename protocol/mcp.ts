@@ -333,6 +333,122 @@ export const McpOAuthRoutes = {
   },
 } as const;
 export const McpInventoryRoutes = {
-  mcpGrants: { method: 'GET', path: '/v1/mcp/grants', response: z.array(McpGrantSchema).max(32), helpTopic: 'agents' },
-  mcpRevokeGrant: { method: 'POST', path: '/v1/mcp/grants/revoke', input: z.strictObject({ id: z.uuid() }), response: z.strictObject({ revoked: z.literal(true) }), helpTopic: 'agents' },
+  mcpGrants: {
+    method: 'GET',
+    path: '/v1/mcp/grants',
+    response: z.array(McpGrantSchema).max(32),
+    helpTopic: 'agents',
+  },
+  mcpRevokeGrant: {
+    method: 'POST',
+    path: '/v1/mcp/grants/revoke',
+    input: z.strictObject({ id: z.uuid() }),
+    response: z.strictObject({ revoked: z.literal(true) }),
+    helpTopic: 'agents',
+  },
 } as const;
+
+const McpReleaseVersion = z
+  .string()
+  .max(64)
+  .regex(/^\d+\.\d+\.\d+(?:-[a-z0-9.-]+)?$/);
+export const McpArtifactNameSchema = z.enum(['core.tgz', 'modules.tgz', 'mcp.tgz']);
+export const McpReleaseIdentitySchema = z
+  .strictObject({
+    version: z.literal(1),
+    coreVersion: McpReleaseVersion,
+    modulesVersion: McpReleaseVersion,
+    mcpVersion: McpReleaseVersion,
+    files: z
+      .array(
+        z.strictObject({
+          name: McpArtifactNameSchema,
+          sha256: ChainIdSchema,
+          bytes: z
+            .int()
+            .min(1)
+            .max(16 * 1024 * 1024),
+        }),
+      )
+      .length(3),
+  })
+  .refine((value) => new Set(value.files.map((file) => file.name)).size === 3);
+export const McpReleaseManifestSchema = McpReleaseIdentitySchema.safeExtend({
+  releaseId: ChainIdSchema,
+});
+export const McpLocalConfigurationSchema = z.strictObject({
+  version: z.literal(1),
+  api: ApiOriginSchema,
+  frontend: ApiOriginSchema,
+  dao: DaoRefSchema,
+  memberId: IdSchema,
+  scopes: McpConnectionSchema.shape.scopes,
+  app: McpPairingInputSchema.shape.app,
+});
+export const McpConnectionInventorySchema = z.strictObject({
+  local: z.array(z.strictObject({ grant: McpGrantSchema, revoked: z.boolean() })).max(32),
+  remote: z
+    .array(
+      z.strictObject({
+        id: z.uuid(),
+        clientId: z.string().min(1).max(128),
+        dao: DaoRefSchema,
+        memberId: IdSchema,
+        scopes: z.array(McpOAuthScopeSchema).max(3),
+        expires: z.iso.datetime(),
+        revoked: z.boolean(),
+      }),
+    )
+    .max(32),
+});
+export const McpSetupRoutes = {
+  mcpRelease: {
+    method: 'GET',
+    path: '/v1/mcp/release',
+    response: McpReleaseManifestSchema,
+    helpTopic: 'agents',
+  },
+  mcpConnections: {
+    method: 'GET',
+    path: '/v1/mcp/connections',
+    response: McpConnectionInventorySchema,
+    helpTopic: 'agents',
+  },
+  mcpRevokeFamily: {
+    method: 'POST',
+    path: '/v1/mcp/oauth/revoke-family',
+    input: z.strictObject({ id: z.uuid() }),
+    response: z.strictObject({ revoked: z.literal(true) }),
+    helpTopic: 'agents',
+  },
+} as const;
+export const McpDiagnosticCodeSchema = z.enum([
+  'MCP_VOTE_UNAVAILABLE',
+  'MCP_PUBLIC_DAO_REQUIRED',
+  'MCP_DOMAIN',
+  'MCP_POLICY_CHANGED',
+  'MCP_INDEPENDENT_REVIEW_REQUIRED',
+  'MCP_APP_REVISION_CHANGED',
+  'MCP_ACTIVITY_RECONCILE_REQUIRED',
+  'MCP_COMPANION_PRIVATE',
+  'MCP_CREDENTIALS',
+  'MCP_API_REJECTED',
+  'MCP_TRUSTED_CONFIRMATION_REQUIRED',
+  'MCP_ROOT_CEREMONY_REQUIRED',
+  'MCP_APPROVAL_PENDING',
+  'MCP_MEMBER_INACTIVE',
+  'MCP_GRANT_REVOKED',
+  'MCP_TOKEN_REQUIRED',
+  'MCP_SCOPE_REQUIRED',
+  'MCP_REVIEWER_REQUIRED',
+  'MCP_MODULE_PIN',
+  'MCP_GRANT_REQUIRED',
+  'MCP_APP_CREDENTIAL_REQUIRED',
+  'MCP_RECONCILE_REQUIRED',
+  'MCP_PREPARED_CHANGED',
+  'MCP_SIGNATURE',
+  'MCP_UNAVAILABLE',
+  'MCP_DOWNLOAD_UNAVAILABLE',
+  'MCP_FRESH_CONSENT_REQUIRED',
+  'RATE_LIMIT',
+]);

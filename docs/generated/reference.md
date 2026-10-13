@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.15.0-alpha.13 · interface 1.
+Package 0.15.0-alpha.14 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -7907,6 +7907,361 @@ Response:
 ```
 
 ## POST /v1/mcp/grants/revoke
+
+Guide: agents.
+
+Request:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    }
+  },
+  "required": [
+    "id"
+  ],
+  "additionalProperties": false
+}
+```
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "revoked": {
+      "type": "boolean",
+      "const": true
+    }
+  },
+  "required": [
+    "revoked"
+  ],
+  "additionalProperties": false
+}
+```
+
+## GET /v1/mcp/release
+
+Guide: agents.
+
+No request body.
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "number",
+      "const": 1
+    },
+    "coreVersion": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[a-z0-9.-]+)?$"
+    },
+    "modulesVersion": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[a-z0-9.-]+)?$"
+    },
+    "mcpVersion": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[a-z0-9.-]+)?$"
+    },
+    "files": {
+      "minItems": 3,
+      "maxItems": 3,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": [
+              "core.tgz",
+              "modules.tgz",
+              "mcp.tgz"
+            ]
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 16777216
+          }
+        },
+        "required": [
+          "name",
+          "sha256",
+          "bytes"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "releaseId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "version",
+    "coreVersion",
+    "modulesVersion",
+    "mcpVersion",
+    "files",
+    "releaseId"
+  ],
+  "additionalProperties": false
+}
+```
+
+## GET /v1/mcp/connections
+
+Guide: agents.
+
+No request body.
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "local": {
+      "maxItems": 32,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "grant": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "dao": {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "contract": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "daoId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "interfaceVersion": {
+                    "type": "number",
+                    "const": 1
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "contract",
+                  "daoId",
+                  "interfaceVersion"
+                ],
+                "additionalProperties": false
+              },
+              "memberId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "scopes": {
+                "minItems": 1,
+                "maxItems": 4,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "proposal",
+                    "activity",
+                    "vote",
+                    "review"
+                  ]
+                }
+              },
+              "delegatePublicKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "sessionId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "sessionExpires": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 4294967295
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "autonomous",
+                  "confirm"
+                ]
+              },
+              "app": {
+                "type": "object",
+                "properties": {
+                  "appId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "configHash": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                },
+                "required": [
+                  "appId",
+                  "revision",
+                  "configHash"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "dao",
+              "memberId",
+              "scopes",
+              "delegatePublicKey",
+              "sessionId",
+              "sessionExpires",
+              "mode"
+            ],
+            "additionalProperties": false
+          },
+          "revoked": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "grant",
+          "revoked"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "remote": {
+      "maxItems": 32,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "clientId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "memberId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "scopes": {
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "daclify:read",
+                "daclify:prepare",
+                "daclify:submit"
+              ]
+            }
+          },
+          "expires": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "revoked": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "clientId",
+          "dao",
+          "memberId",
+          "scopes",
+          "expires",
+          "revoked"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "local",
+    "remote"
+  ],
+  "additionalProperties": false
+}
+```
+
+## POST /v1/mcp/oauth/revoke-family
 
 Guide: agents.
 
@@ -35644,6 +35999,7 @@ Request:
       "type": "string",
       "enum": [
         "/v1/me/exit",
+        "/v1/mcp/oauth/revoke-family",
         "/v1/mcp/grants/revoke",
         "/v1/mcp/oauth/approve",
         "/v1/mcp/pairings/approve",

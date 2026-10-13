@@ -11,7 +11,7 @@ import { ApiRoutes } from '../../../../protocol/routes.js';
 import { ConnectedAppsRoutes } from '../../../../protocol/connected-apps.js';
 import { instructionDigest, makeInstruction } from '../../../../sdk/index.js';
 import type { CommunityAccess } from '../../../../sdk/community-agent.js';
-import { ModuleApiRoutes } from '@daclify/modules';
+import { ModuleApiRoutes, ModulePageQuerySchema } from '@daclify/modules';
 import { communityModuleAdapter } from '../../../../packages/community-mcp/src/modules.js';
 import type { McpOAuth } from './oauth.js';
 import { LocalCommunityAccess } from './access.js';
@@ -76,8 +76,15 @@ export class RemoteCommunityAccess implements CommunityAccess {
     const dao = current.claims.dao,
       request = async (path: string): Promise<unknown> => {
         if (path === ApiRoutes.dao.path.replace(':id', dao.daoId)) return chain.dao(dao.daoId);
-        if (path === ModuleApiRoutes.state.path.replace(':id', dao.daoId))
-          return chain.moduleState(dao.daoId);
+        if (path.split('?')[0] === ModuleApiRoutes.state.path.replace(':id', dao.daoId)) {
+          const url = new URL(path, this.service.pairings.api),
+            query = url.search
+              ? ModulePageQuerySchema.parse(Object.fromEntries(url.searchParams))
+              : undefined;
+          if (query?.memberId && query.memberId !== current.member.memberId)
+            throw new ApiError('MCP_SCOPE_REQUIRED', 403);
+          return chain.moduleState(dao.daoId, query);
+        }
         if (path === ConnectedAppsRoutes.connectedApps.path.replace(':id', dao.daoId))
           throw new ApiError('MCP_APP_CREDENTIAL_REQUIRED', 403);
         throw new ApiError('MCP_SCOPE_REQUIRED', 403);

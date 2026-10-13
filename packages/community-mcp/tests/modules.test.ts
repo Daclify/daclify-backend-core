@@ -105,7 +105,7 @@ function fixture() {
       privacy = 'encrypted-user-controlled';
     },
     request: async (path: string) => {
-      if (path === ModuleApiRoutes.state.path.replace(':id', '1')) return state;
+      if (path.split('?')[0] === ModuleApiRoutes.state.path.replace(':id', '1')) return state;
       if (path === ApiRoutes.dao.path.replace(':id', '1'))
         return {
           reference: dao,

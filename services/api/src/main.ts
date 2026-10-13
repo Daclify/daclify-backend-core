@@ -1,3 +1,4 @@
+import { McpArtifacts } from './mcp/artifacts.js';
 import { MiniAppCleanup } from './mini-apps/cleanup.js';
 import { McpOAuth } from './mcp/oauth.js';
 import { McpPairings } from './mcp/pairing.js';
@@ -311,9 +312,13 @@ const mcpOAuth =
     ? new McpOAuth(mcpPairings, JSON.parse(process.env.COMMUNITY_MCP_HTTP_CLIENTS ?? '[]'))
     : undefined;
 if (mcpOAuth && !mcpOAuth.clients.length) throw Error('MCP_REGISTERED_CLIENT_REQUIRED');
+const mcpArtifacts = process.env.COMMUNITY_MCP_RELEASE_DIRECTORY
+  ? await McpArtifacts.load(process.env.COMMUNITY_MCP_RELEASE_DIRECTORY)
+  : undefined;
 const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
   ...(mcpPairings ? { mcpPairings } : {}),
   ...(mcpOAuth ? { mcpOAuth } : {}),
+  ...(mcpArtifacts ? { mcpArtifacts } : {}),
   ...(profileKeysConfiguration ? { profileKeys: profileKeysConfiguration } : {}),
   ...(accountExit ? { accountExit } : {}),
   telosGovernance: readTelosPins(process.env),

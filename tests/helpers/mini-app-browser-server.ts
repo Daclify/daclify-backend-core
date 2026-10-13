@@ -1,6 +1,7 @@
 import { AccountExit } from '../../services/api/src/account-exit/service.js';
 import { McpOAuth } from '../../services/api/src/mcp/oauth.js';
 import { McpPairings } from '../../services/api/src/mcp/pairing.js';
+import { McpArtifacts } from '../../services/api/src/mcp/artifacts.js';
 import { AccountErasureExclusions } from '../../services/api/src/account-exit/exclusions.js';
 import { startAccountExitWorker } from '../../services/api/src/account-exit/jobs.js';
 // Owned disposable native/SQL fixture; never part of the API server or public package.
@@ -165,6 +166,9 @@ try {
   server = await createServer(pool, gateway, origin, {
     accountExit,
     mcpPairings,
+    mcpArtifacts: process.env.MCP_TEST_RELEASE_DIRECTORY
+      ? await McpArtifacts.load(process.env.MCP_TEST_RELEASE_DIRECTORY)
+      : undefined,
     mcpOAuth: new McpOAuth(mcpPairings, [
       { clientId: 'browser-fixture', redirectUris: ['https://client.example/callback'] },
     ]),

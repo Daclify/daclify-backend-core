@@ -66,3 +66,27 @@ it('keeps an HTTP-only preview outside the signed preparation contract', () => {
   expect(PreparedInstructionSchema.safeParse(preview).success).toBe(false);
   expect(JSON.stringify(preview)).not.toContain('signingPublicKey');
 });
+
+import { McpOAuth } from '../services/api/src/mcp/oauth.js';
+import { McpPairings } from '../services/api/src/mcp/pairing.js';
+import { Pool } from 'pg';
+it('preregisters one fixed native loopback callback without relaxing app or arbitrary HTTP redirects', () => {
+  const pool = new Pool(),
+    service = new McpPairings(pool, undefined, 'https://api.example', 'https://app.example');
+  expect(
+    () =>
+      new McpOAuth(service, [
+        { clientId: 'codex-owned', redirectUris: ['http://127.0.0.1:35719/callback'] },
+      ]),
+  ).not.toThrow();
+  for (const uri of [
+    'http://127.0.0.1/callback',
+    'http://localhost:35719/callback',
+    'http://evil.example:35719/callback',
+    'http://127.0.0.1:35719/callback#secret',
+    'http://127.0.0.1:35719/other',
+  ])
+    expect(
+      () => new McpOAuth(service, [{ clientId: 'codex-owned', redirectUris: [uri] }]),
+    ).toThrow();
+});

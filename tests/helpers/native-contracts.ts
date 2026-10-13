@@ -168,7 +168,11 @@ export async function nativeContracts(legacyRuntime = false) {
       modules: nativeModules,
     });
     let daoSequence = 90000;
-    async function dummyDao(owner: 'alice' | 'bob' = 'alice', governedWorks = false) {
+    async function dummyDao(
+      owner: 'alice' | 'bob' = 'alice',
+      governedWorks = false,
+      participantMode: 0 | 1 | 2 = 0,
+    ) {
       const daoId = String(++daoSequence),
         keys = Array.from({ length: 3 }, () => PrivateKey.generate('K1'));
       await call(
@@ -190,24 +194,25 @@ export async function nativeContracts(legacyRuntime = false) {
         {
           dao_id: daoId,
           settings: {
-            participant_mode: 0,
+            participant_mode: participantMode,
             decide: 'decide',
             guardian: owner,
             kind: 0,
             duration: 60,
             quorum: 5000,
             approval: 5001,
-            governed_works: governedWorks,
+            governed_works: governedWorks || participantMode === 2,
             max_commitment: '100000',
             daily_commitment: '300000',
           },
         },
         owner,
       );
-      for (const [index, key] of keys.entries())
+      for (const [index, key] of keys.entries()) {
+        const agent = participantMode === 2 || (participantMode === 1 && index === 0);
         await call(
           'daclifycore',
-          'enroll',
+          agent ? 'enrollagent' : 'enroll',
           {
             dao_id: daoId,
             member_id: index + 1,
@@ -215,9 +220,11 @@ export async function nativeContracts(legacyRuntime = false) {
             signing_key: key.toPublic(),
             encryption_key: 'disposable',
             custody: 0,
+            ...(agent ? { operator_label: 'Owned MCP qualification operator' } : {}),
           },
           owner,
         );
+      }
       for (const module of nativeModules)
         await call(
           'daclifycore',
