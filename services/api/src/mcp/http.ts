@@ -8,6 +8,7 @@ import type { McpOAuth } from './oauth.js';
 import { RemoteCommunityAccess } from './remote-access.js';
 import { ApiError } from '../errors.js';
 import { createWindowLimiter } from '../limits.js';
+import { pairedSignInApprovalExpires } from '../auth/intent.js';
 export const MCP_HTTP_PUBLIC_PATHS = ['/mcp', '/mcp/oauth/token', '/mcp/oauth/revoke'];
 const DiscoveryRequest = z.object({
   jsonrpc: z.literal('2.0'),
@@ -59,6 +60,12 @@ export function registerMcpHttpRoutes(
       z.object({ id: z.uuid() }).parse(request.params).id,
     ),
   );
+  app.get(McpOAuthRoutes.mcpOAuthSignInApproval.path, async (request) => {
+    const token = request.cookies[cookieName],
+      account = await session(token);
+    if (!token) throw new ApiError('AUTH_REQUIRED', 401);
+    return { expires: await pairedSignInApprovalExpires(service.pairings.pool, account.id, token) };
+  });
   app.post(McpOAuthRoutes.mcpOAuthApprove.path, { bodyLimit: 4096 }, async (request) =>
     service.approve(
       await session(

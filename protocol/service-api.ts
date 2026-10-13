@@ -58,6 +58,9 @@ export const MemberProfileSchema = z.strictObject({
   profile: StoredProfileJsonSchema.nullable(),
 });
 export const SignInDeliverySchema = z.enum(['local', 'mail', 'unavailable']);
+export const GoogleSignInConfigurationSchema = z.strictObject({
+  clientId: z.string().min(1).max(255).nullable(),
+});
 export const SignInOptionsSchema = z.strictObject({
   telegram: z.strictObject({
     configured: z.boolean(),
@@ -224,6 +227,7 @@ export const DocsAnswerSchema = z.strictObject({
 });
 
 export const ServiceResponseRoutes = [
+  { method: 'GET', path: '/v1/sign-in/google', response: GoogleSignInConfigurationSchema },
   ...Object.values(ModuleFeeRoutes),
   ...Object.values(RecoveryRoutes),
   PeopleRoutes.members,

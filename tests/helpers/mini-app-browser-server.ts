@@ -9,7 +9,7 @@ import { McpArtifacts } from '../../services/api/src/mcp/artifacts.js';
 import { AccountErasureExclusions } from '../../services/api/src/account-exit/exclusions.js';
 import { startAccountExitWorker } from '../../services/api/src/account-exit/jobs.js';
 // Owned disposable native/SQL fixture; never part of the API server or public package.
-import { randomBytes, generateKeyPairSync } from 'node:crypto';
+import { createHash, randomBytes, generateKeyPairSync } from 'node:crypto';
 import { writeFile, mkdir, rm, mkdtemp } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -172,9 +172,16 @@ try {
     request: async () => ({ status: 200, bytes: Buffer.from(JSON.stringify(directoryProof)) }),
   });
   const mcpPairings = new McpPairings(pool, gateway, 'http://127.0.0.1:' + apiPort, origin, apps);
+  const deliveredEmailCodes = new Map<string, string>();
   server = await createServer(pool, gateway, origin, {
+    signIn: {
+      environment: 'local',
+      deliverEmail: async (to, code) => {
+        deliveredEmailCodes.set(to, code);
+      },
+    },
     accountExit,
-    creation: new CreationService(pool,gateway),
+    creation: new CreationService(pool, gateway),
     mcpPairings,
     miniAppDirectory,
     ...(process.env.MCP_TEST_RELEASE_DIRECTORY
@@ -216,6 +223,24 @@ try {
       activityCodeHash: ModuleCodeHashes.activity,
       paidCreation: true,
     };
+  });
+  server.post('/fixture/email-code', async (request) => {
+    const { email } = z.strictObject({ email: z.email() }).parse(request.body);
+    const code = deliveredEmailCodes.get(email);
+    if (!code) throw Error('FIXTURE_EMAIL_CODE_MISSING');
+    deliveredEmailCodes.delete(email);
+    return { code };
+  });
+  server.post('/fixture/expire-mcp-sign-in', async (request) => {
+    z.strictObject({}).parse(request.body);
+    const session = request.cookies.daclify_session;
+    if (!session) throw Error('FIXTURE_SESSION_MISSING');
+    const changed = await pool.query(
+      "UPDATE sessions SET step_up_at=now()-interval '6 minutes' WHERE token_hash=$1 AND revoked_at IS NULL AND expires_at>now()",
+      [createHash('sha256').update(session).digest()],
+    );
+    if (changed.rowCount !== 1) throw Error('FIXTURE_SESSION_MISSING');
+    return { expired: true };
   });
   let sequence = 990000;
   const profileDaos = new Set<string>();

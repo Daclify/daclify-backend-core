@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.15.0-alpha.18 development
+
+Hosted MCP connections can be approved with a recent paired sign-in or an account-paired wallet without a DAO wallet binding. Fresh login provenance, a five-minute window and one-use body/session/origin-bound intents apply only to hosted OAuth approval; existing native delegation, key and recovery authorization remain enforced. Adds public Google client configuration for the consent sign-in button, with no provider secrets or new database/native fields.
+
 ## 0.14.0-alpha.2 development
 
 Host validated public producer standings and bounded Foundation/election list filters from modules 0.10.0-alpha.2. Existing unfiltered reads and vote preparation remain compatible. No contract, authority or database changes.

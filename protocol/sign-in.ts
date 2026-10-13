@@ -28,6 +28,7 @@ export const NativeProofSchema = z.strictObject({
   signatures: z.array(z.string().min(1).max(160)).min(1).max(8),
 });
 export const AccountControlProofSchema = z.discriminatedUnion('kind', [
+  z.strictObject({ kind: z.literal('sign-in') }),
   z.strictObject({ kind: z.literal('root'), signature: z.string().min(1).max(160) }),
   z.strictObject({
     kind: z.literal('native'),

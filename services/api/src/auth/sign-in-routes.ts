@@ -147,6 +147,7 @@ export function registerSignInRoutes(
     email: { delivery },
     passkey: { rpId: new URL(origin).hostname },
   }));
+  app.get('/v1/sign-in/google', async () => ({ clientId: providers?.google?.clientId ?? null }));
   app.get('/v1/sign-in/methods', async (request) => {
     const current = await session(request.cookies[cookieName]);
     const credentials = await pool.query<{ provider_key: string }>(

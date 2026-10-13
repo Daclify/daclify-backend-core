@@ -312,6 +312,12 @@ export const McpPreparationSchema = z.union([PreparedInstructionSchema, McpPrevi
 export type McpPreparation = z.infer<typeof McpPreparationSchema>;
 export type McpOAuthClaims = z.infer<typeof McpOAuthClaimsSchema>;
 export const McpOAuthRoutes = {
+  mcpOAuthSignInApproval: {
+    method: 'GET',
+    path: '/v1/mcp/oauth/sign-in-approval',
+    response: z.strictObject({ expires: z.iso.datetime().nullable() }),
+    helpTopic: 'agents',
+  },
   mcpOAuthConsent: {
     method: 'GET',
     path: '/v1/mcp/oauth/requests/:id',

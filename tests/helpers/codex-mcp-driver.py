@@ -4,7 +4,8 @@ configuration=json.load(open(sys.argv[1]))
 master,slave=pty.openpty()
 def setup_tty():
  os.setsid();fcntl.ioctl(slave,termios.TIOCSCTTY,0)
-server='daclify_owned_qualification';remote='daclify_owned_http'
+suffix=''.join(character if character.isalnum() else '_' for character in os.path.basename(configuration['cwd']))
+server='daclify_owned_qualification_'+suffix;remote='daclify_owned_http_'+suffix
 remote_config=', '+remote+'={url='+json.dumps(configuration['api']+'/mcp')+',required=false,oauth={client_id="codex-owned-fixture",callback_url="http://127.0.0.1:35829/callback",callback_port=35829}}'
 args=['codex','app-server','--stdio','-c','analytics.enabled=false','-c','features.apps=false','-c','mcp_servers={'+server+'={command="node",args='+json.dumps(configuration['args'])+',required=true,startup_timeout_sec=30,tool_timeout_sec=30}'+remote_config+'}']
 host=subprocess.Popen(['node']+configuration['serveArgs'],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,preexec_fn=setup_tty,pass_fds=(slave,))
@@ -74,6 +75,8 @@ try:
  completion=next((value['params']for value in messages if value.get('method')=='mcpServer/oauthLogin/completed' and value.get('params',{}).get('name')==remote),None)
  if not completion or not completion.get('success'):raise RuntimeError('HARNESS_OAUTH_INCOMPLETE')
  request('config/mcpServer/reload',None)
+ thread=request('thread/start',{'cwd':configuration['cwd'],'ephemeral':True,'sandbox':'read-only','approvalPolicy':'never'})
+ thread_id=thread['thread']['id']
  member_remote=call('get_membership',{},remote);prepared_remote=call('prepare_vote',configuration['remoteIntent'],remote)
  print(json.dumps({'kind':'external-signature-request','prepared':prepared_remote}),flush=True);signature=json.loads(sys.stdin.readline())['signature']
  remote_result=call('submit_signed',{'prepared':prepared_remote,'signature':signature},remote)

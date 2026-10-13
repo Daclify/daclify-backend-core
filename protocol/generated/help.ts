@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle:HelpBundle={
   "producer": "core",
-  "packageVersion": "0.15.0-alpha.17",
+  "packageVersion": "0.15.0-alpha.18",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -11723,6 +11723,33 @@ export const CoreHelpBundle:HelpBundle={
           "target",
           "action",
           "data"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "agents"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/mcp/oauth/sign-in-approval",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "expires": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "expires"
         ],
         "additionalProperties": false
       },
@@ -30677,6 +30704,33 @@ export const CoreHelpBundle:HelpBundle={
         "additionalProperties": false
       },
       "helpTopic": "modules"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/sign-in/google",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "clientId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "clientId"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
     },
     {
       "method": "GET",

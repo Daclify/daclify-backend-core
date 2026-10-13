@@ -14,6 +14,35 @@ import { verifyNativeProof } from './native-proof.js';
 import { recoverEvmAddress } from './evm-proof.js';
 import { ApiError } from '../errors.js';
 
+export async function pairedSignInApprovalExpires(
+  pool: Pool,
+  accountId: string,
+  token: string,
+): Promise<string | null> {
+  const row = (
+    await pool.query<{ expires: Date }>(
+      `SELECT least(s.step_up_at+interval '5 minutes',s.expires_at) AS expires
+       FROM sessions s
+       WHERE s.token_hash=$1 AND s.account_id=$2 AND s.revoked_at IS NULL
+         AND s.expires_at>now() AND s.step_up_at>now()-interval '5 minutes'
+         AND s.step_up_at<=now()
+         AND ((s.credential_key ~ '^(google|telegram|email):' AND EXISTS
+           (SELECT 1 FROM credentials c WHERE c.account_id=s.account_id AND c.provider_key=s.credential_key))
+           OR (s.credential_key LIKE 'passkey:%' AND EXISTS
+           (SELECT 1 FROM passkeys p WHERE p.account_id=s.account_id
+             AND 'passkey:' || translate(rtrim(encode(p.credential_id,'base64'),'='),E'+/\\n','-_')=s.credential_key))
+           OR (s.credential_key LIKE 'native:%' AND EXISTS
+           (SELECT 1 FROM native_links n WHERE n.account_id=s.account_id
+             AND 'native:' || n.chain_id || ':' || n.native_account=s.credential_key))
+           OR (s.credential_key LIKE 'evm:%' AND EXISTS
+           (SELECT 1 FROM evm_links e WHERE e.account_id=s.account_id AND e.control_verified_at IS NOT NULL
+             AND 'evm:' || e.chain_id::text || ':' || e.address=s.credential_key)))`,
+      [createHash('sha256').update(token).digest(), accountId],
+    )
+  ).rows[0];
+  return row?.expires.toISOString() ?? null;
+}
+
 export async function beginAccountControl(
   pool: Pool,
   account: Account,
@@ -72,6 +101,8 @@ export async function consumeAccountControl(
   const checked = AccountControlProofSchema.safeParse(input);
   if (!AccountControlChallengeSchema.shape.id.safeParse(id).success || !checked.success)
     throw new ApiError('ACCOUNT_CONTROL_REQUIRED', 403);
+  if (checked.data.kind === 'sign-in' && path !== '/v1/mcp/oauth/approve')
+    throw new ApiError('ACCOUNT_CONTROL_REQUIRED', 403);
   if (
     [
       '/v1/account/reconnect/native',
@@ -81,7 +112,8 @@ export async function consumeAccountControl(
     checked.data.kind !== 'root'
   )
     throw new ApiError('ACCOUNT_CONTROL_REQUIRED', 403);
-  if(path==='/v1/me/exit'&&account.signingKey!==null&&checked.data.kind!=='root')throw new ApiError('ACCOUNT_CONTROL_REQUIRED',403);
+  if (path === '/v1/me/exit' && account.signingKey !== null && checked.data.kind !== 'root')
+    throw new ApiError('ACCOUNT_CONTROL_REQUIRED', 403);
   const result = await pool.query<{ message: string; expires_at: Date }>(
     `UPDATE account_control_intents SET consumed_at=now()
      WHERE id=$1 AND account_id=$2 AND session_hash=$3 AND path=$4 AND body_hash=$5
@@ -95,7 +127,8 @@ export async function consumeAccountControl(
     ],
   );
   const row = result.rows[0];
-  let valid = false;
+  let valid = false,
+    signInRequired = false;
   if (row) {
     try {
       const context = AccountControlMessageSchema.parse(JSON.parse(row.message));
@@ -106,7 +139,10 @@ export async function consumeAccountControl(
       )
         throw new Error('Changed proof context');
       const proof = checked.data;
-      if (proof.kind === 'root')
+      if (proof.kind === 'sign-in') {
+        valid = (await pairedSignInApprovalExpires(pool, account.id, token)) !== null;
+        signInRequired = !valid;
+      } else if (proof.kind === 'root')
         valid =
           account.signingKey !== null &&
           Signature.from(proof.signature).verifyMessage(
@@ -149,7 +185,8 @@ export async function consumeAccountControl(
       /* Invalid proof remains consumed; do not expose cryptographic internals. */
     }
   }
-  if (!valid) throw new ApiError('ACCOUNT_CONTROL_REQUIRED', 403);
+  if (!valid)
+    throw new ApiError(signInRequired ? 'MCP_SIGN_IN_REQUIRED' : 'ACCOUNT_CONTROL_REQUIRED', 403);
 }
 
 export async function revokeCredentialSessions(
