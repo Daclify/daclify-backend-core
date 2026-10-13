@@ -1,0 +1,257 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-13T03:25:25.901Z",
+  "environment": "public Telos testnet; development candidate",
+  "implementationTasks": {
+    "complete": 21,
+    "total": 21
+  },
+  "qualified": false,
+  "publicRelease": "held",
+  "origins": {
+    "frontend": "https://testnet.app.daclify.com",
+    "api": "https://testnet.api.daclify.com",
+    "rpc": "https://testnet.telos.caleos.io"
+  },
+  "source": [
+    {
+      "name": "daclify-backend-core",
+      "commit": "3b20dd804d68ce5bd5184c02f38ece4485f2dbb1",
+      "version": "0.15.0-alpha.17",
+      "lockfileSha256": "3de8544e4e2ea3b11425409211def8f08119b063a48f1eeb9a7a395e15860a00",
+      "dirty": false
+    },
+    {
+      "name": "daclify-backend-modules",
+      "commit": "455e2f311632fb546325a6b4ff240f23be069148",
+      "version": "0.10.0-alpha.24",
+      "lockfileSha256": "81c1851f8fda32c96c077c8f3604234cbfa1a1fe365a33a852ea87ad770796da",
+      "dirty": false
+    },
+    {
+      "name": "daclify-frontend",
+      "commit": "8bcef0589b8cc561653e43fe01199f817b2d8440",
+      "version": "0.15.0-alpha.19",
+      "lockfileSha256": "1a44fef341598f0a186a068fb79dca2ab2fb1a6bef623ed033279408c3b6d377",
+      "dirty": false
+    }
+  ],
+  "manifest": {
+    "subject": "5c34fc189b74d80872f25f0dca1a31654cf554e60b3e24fc991492243fd587c8",
+    "sha256": "4f611151ab257443a7a9a21a3844cd1bda094074d5129b13aa4d94e6b43f4c9d",
+    "unchangedAfterDeployment": true,
+    "requiredExternalChecks": 17
+  },
+  "versions": {
+    "core": "0.15.0-alpha.17",
+    "modules": "0.10.0-alpha.24",
+    "frontend": "0.15.0-alpha.19",
+    "mcp": "0.1.0-alpha.6",
+    "nativeModules": "0.10.0-alpha.3"
+  },
+  "artifacts": {
+    "runtimeCodeHash": "e6aaeeccb949710444e0fe4ca32331ffeeb5a6eeae688a417ae3d22cd3469d95",
+    "runtimeAbiSha256": "ed0a44c9bfd898bc05c6fc474ab3eb55d9cad90e98187d8c04ef222f39befcf9",
+    "runtimeRawAbiSha256": "a4b835b6a0b09aa0bb9aeee98dea54d8bd78a742dd51d67c60177ebf2f0f4dfc",
+    "documentationSha256": "3874dac3fe0abad0e90953720e0fa6d9272442dfcd7f0fcd715cd8739a64589c",
+    "corePackageSha256": "095f49a4a537dc310ceb79241e29a02319009f04780f1e2925b5ae39398342f7",
+    "modulesPackageSha256": "c2633a129d4bb0e545b21688c96b93839698763f9e6d00d8ad46605332c05264",
+    "frontendBuildSha256": "cb5e93c3f5fb953aa1d895b12bab7d302882f619392b2b27066d8fabe2b00b3b",
+    "sdkBuildSha256": "d3eaf93310f95d2d9a0ce79dee600db4864a08dde8118876f99ff2cf7a6d2893",
+    "requirementsSha256": "af7a6620d454189ed4f67241b6b52fe803f4120ae5a727cb0bba5d1c29e1c552",
+    "requirementSourcesSha256": "ae821c000f2a315a470036d9094432073e04b16a0b1acf0beed1fb66bc504326",
+    "companionArtifacts": {
+      "communityMcpPackageSha256": "59b55845eb30dbf64ae5e71706fdd23d54e5e518dd609b3b98c3cde6047b69e2",
+      "miniAppReleaseManifestSha256": "c1812494a7aeec9431576e26a28d78749b1240f83c5fbd802b0c61761020e202",
+      "mcpReleaseManifestSha256": "a69c90a9f62db0011d9fc5d5dddeb12a506f873c80f517cbc2fdbb066dcf27f9"
+    }
+  },
+  "native": {
+    "transaction": {
+      "transactionId": "94fa4fb28e94920148346b9171705b8e3550e5bcf88a76e08299cd16548b33c1",
+      "blockNum": 449917188
+    },
+    "simulationStatus": "executed",
+    "simulationCpuUs": 44192,
+    "accountsVerified": 11,
+    "primaryTablesPreserved": 83,
+    "primaryRowsPreserved": 208,
+    "ownerActiveAndPermissionAuthoritiesUnchanged": true,
+    "serviceBalancesAndRamQuotasUnchanged": true,
+    "hubOwnerMetadataAndListingPreserved": true,
+    "ramObserver": "absent before and after; no initialization",
+    "relayLinksAdded": [
+      "submitexit",
+      "exitnative",
+      "exitevm",
+      "pruneappses"
+    ],
+    "ram": {
+      "quota": 10208621,
+      "beforeUsage": 9860347,
+      "afterUsage": 10021125,
+      "growth": 160778,
+      "remaining": 187496,
+      "wasmGrowth": 16040,
+      "rawAbiGrowth": 378,
+      "additionalFunding": false
+    }
+  },
+  "database": {
+    "accountsPreserved": 18,
+    "canonicalOwnersKeysCredentialsWalletLinksAndMembershipHashesUnchanged": true,
+    "appliedAdditiveMigrations": [
+      {
+        "namespace": "core",
+        "name": "043_account_erasure.sql",
+        "hash": "2ac73d95d6994f9294e9c2b29d15b2623d8c903f631ede86bc2023e1540fbe41"
+      },
+      {
+        "namespace": "core",
+        "name": "044_exit_reporting.sql",
+        "hash": "ce676748920d7ff81666def5b2188d4841eef564d53492780839af510dc88cbb"
+      },
+      {
+        "namespace": "core",
+        "name": "045_mini_app_cleanup.sql",
+        "hash": "3a6d66bce5c1b4924bc3e5d53954b8109d9ed8fa246e8de79d3c45ab358fb43f"
+      },
+      {
+        "namespace": "core",
+        "name": "046_mcp_pairing.sql",
+        "hash": "bb5bf06ba550e32f6ee2da83b5321c0adf537ebd9de4496d4c9849ce5c90eed9"
+      },
+      {
+        "namespace": "core",
+        "name": "047_mcp_oauth.sql",
+        "hash": "5f4ae6a90088a8f512d3165b7667d094e6c2036b0406411b268eaf4dee806af8"
+      },
+      {
+        "namespace": "core",
+        "name": "048_mini_app_directory.sql",
+        "hash": "8523a3f9aa93e7fdef124cd71c6d709d98e7b4e504020f6ce804bcfbdeae5f8b"
+      },
+      {
+        "namespace": "core",
+        "name": "049_restore_guard_functions.sql",
+        "hash": "d68e59c7e5e80ab94fa5d4357a889254d01a4693913b09be06dc4c5ad56f9aa1"
+      }
+    ],
+    "erasureStarted": false,
+    "privateBackupSha256": "efc0d897c8a889adc49bd2d49913ab26685f6544140f99b38ffec64698eaf894"
+  },
+  "publicChecks": {
+    "desktopMobile": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "miniApps": true,
+        "localMcp": true,
+        "directory": true,
+        "guideAndAccountRoutes": 6,
+        "accessibilityViolations": 0,
+        "errors": [],
+        "failures": []
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "miniApps": true,
+        "localMcp": true,
+        "directory": true,
+        "guideAndAccountRoutes": 6,
+        "accessibilityViolations": 0,
+        "errors": [],
+        "failures": []
+      }
+    ],
+    "entryMatchesCandidate": true,
+    "downloadFiles": [
+      {
+        "kind": "starter",
+        "name": "core.tgz",
+        "sha256": "095f49a4a537dc310ceb79241e29a02319009f04780f1e2925b5ae39398342f7",
+        "bytes": 506220
+      },
+      {
+        "kind": "starter",
+        "name": "modules.tgz",
+        "sha256": "c2633a129d4bb0e545b21688c96b93839698763f9e6d00d8ad46605332c05264",
+        "bytes": 209944
+      },
+      {
+        "kind": "starter",
+        "name": "starter.tgz",
+        "sha256": "1c871e73a5505f77679e10e0500e177394f1ec3cd369be96abbe76062adc1d1a",
+        "bytes": 746522
+      },
+      {
+        "kind": "mcp",
+        "name": "core.tgz",
+        "sha256": "095f49a4a537dc310ceb79241e29a02319009f04780f1e2925b5ae39398342f7",
+        "bytes": 506220
+      },
+      {
+        "kind": "mcp",
+        "name": "modules.tgz",
+        "sha256": "c2633a129d4bb0e545b21688c96b93839698763f9e6d00d8ad46605332c05264",
+        "bytes": 209944
+      },
+      {
+        "kind": "mcp",
+        "name": "mcp.tgz",
+        "sha256": "59b55845eb30dbf64ae5e71706fdd23d54e5e518dd609b3b98c3cde6047b69e2",
+        "bytes": 12141
+      }
+    ],
+    "daoCount": 7,
+    "directoryPublicationAvailable": true
+  },
+  "capabilities": {
+    "connectedMiniApps": true,
+    "encryptedProfiles": true,
+    "localMcp": true,
+    "directory": true,
+    "hostedMcp": false,
+    "accountErasure": false
+  },
+  "recovery": {
+    "mode": "testnet-single-host",
+    "candidateCoreVersion": "0.15.0-alpha.17",
+    "tlsSourceRemovalRestore": "passed",
+    "configuredOriginScopeWrapUnwrap": "passed",
+    "independentFailureDomain": false,
+    "expiresAt": "2026-10-17T14:46:09.233Z"
+  },
+  "cleanInstall": {
+    "publicSdkFilesCompared": 140,
+    "starterNpmCiBuildAndSyntheticConfigurator": "passed",
+    "standaloneMcpActualCodexClient": "passed",
+    "coreModulesFrontendAndMcpCandidateLockfiles": "passed",
+    "productionDependencyAudit": {
+      "vulnerabilities": 0,
+      "scope": "core --omit=dev"
+    }
+  },
+  "review": "Author self-review; delegation unauthorized. Independent review remains unrun.",
+  "held": [
+    "Public qualified packaging: all 17 required source-bound external reports",
+    "Named controller/operator and approved legal basis, retention and DPIA",
+    "Independent failure-domain key, exclusion and database recovery",
+    "Actual independent operator/provider/wallet/client checks for this candidate",
+    "Exact registered hosted OAuth clients before enabling HTTP",
+    "Account erasure release qualification before enabling real-user erasure",
+    "Production/mainnet deployment and website production publication after review"
+  ],
+  "website": {
+    "branch": "feat/community-mini-apps",
+    "commit": "3641b015501bb25839650bf0f9a8253ad4defaaa",
+    "pushed": true,
+    "productionPublished": false
+  },
+  "privatePacket": "Owner-only /data/daclify-runtime/releases/20261013-mini-apps-q3; raw data, keys, backups and recovery journals are not in Git."
+}

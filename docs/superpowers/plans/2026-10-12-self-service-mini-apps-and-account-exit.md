@@ -181,17 +181,17 @@ Q3 prepares a source-bound release candidate and a concrete rollout/rollback run
 
 ## Execution ledger
 
-Execution is now authorized and running inline. The [durable execution ledger](../../evidence/2026-10-12-mini-app-execution-ledger.md) and [baseline](../../evidence/2026-10-12-mini-app-execution-baseline.json) record actual progress; unchecked tasks remain pending.
+All 21 implementation tasks are complete; the authorized testnet candidate is deployed. Public qualification and production publication remain held. The [durable execution ledger](../../evidence/2026-10-12-mini-app-execution-ledger.md) and [baseline](../../evidence/2026-10-12-mini-app-execution-baseline.json) record actual progress. The original step checklists are historical instructions; current completion and held external checks are recorded in the ledger and delivery report.
 
-| Package | State                            | Evidence/commit             |
-| ------- | -------------------------------- | --------------------------- |
-| B0      | Baseline/native/browser recorded | Baseline and durable ledger |
-| F1–F4   | F1–F4 complete                   | Durable ledger              |
-| C1–C3   | C1–C2 complete; C3 pending       | —                           |
-| P1–P3   | P1–P3 complete                   | —                           |
-| X1–X4   | X1–X4 complete       | —                           |
-| M1–M4   | Pending                          | —                           |
-| Q1–Q3   | Pending                          | —                           |
+| Package | State                                | Evidence/commit             |
+| ------- | ------------------------------------ | --------------------------- |
+| B0      | Baseline/native/browser recorded     | Baseline and durable ledger |
+| F1–F4   | F1–F4 complete                       | Durable ledger              |
+| C1–C3   | Complete                             | Durable ledger              |
+| P1–P3   | P1–P3 complete                       | —                           |
+| X1–X4   | X1–X4 complete                       | —                           |
+| M1–M4   | Complete                             | Durable ledger              |
+| Q1–Q3   | Complete source; public release held | Testnet delivery report     |
 
 Update the durable ledger after each task with commands, passed/failed/unrun results, changed files, immutable artifact references and any material policy/access blocker. Continue independent work when one release qualification is blocked. No repeated internal checkpoint approvals and no sub-agent delegation.
 
@@ -201,7 +201,7 @@ Managed mini-app database hosting, arbitrary engine certification, a commercial 
 
 ## Inline plan review
 
-Check spec coverage, existing-versus-proposed file/API names, cross-plan type consistency, each Review Focus regression, migration allocation, single-kit recovery/deletion limits and release gates. Record only checks actually performed. The linked task plans supply exact file maps, interface ownership, failing-test assertions, commands and commit boundaries; implementations remain pending.
+Check spec coverage, existing-versus-proposed file/API names, cross-plan type consistency, each Review Focus regression, migration allocation, single-kit recovery/deletion limits and release gates. Record only checks actually performed. The linked task plans supply exact file maps, interface ownership, failing-test assertions, commands and commit boundaries. Implementation is complete; public-release qualification remains held as recorded above.
 
 The authoring review covered all design requirements and all 21 task interfaces inline. It corrected missing public exports, the issuer/client context absent from existing app claims, the canonical lowercase instruction type, the hosted MCP service adapter, local bounded signing and key-envelope size limits. Verification checked all eight documents, 30 local links, 76 existing source paths and task/checklist structure; Markdown formatting passed. No product code, migration, contract, browser or external-harness qualification was performed by writing this plan.
 

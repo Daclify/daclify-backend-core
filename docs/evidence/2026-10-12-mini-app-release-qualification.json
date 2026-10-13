@@ -93,9 +93,10 @@
     "Actual independent app operator/provider/client qualification required by release checks",
     "Production/mainnet and website production publication"
   ],
-  "sourceBinding": "The detached deployment packet records exact clean commits, locks, test-source register, archive/build hashes and the existing validator subject after these evidence-only documents are committed. This summary is not a forged eligible evidence bundle.",
+  "sourceBinding": "Exact clean source refs, locks, requirement sources, build/archive/ABI hashes and validator subject are recorded in the testnet delivery report. Public qualification remains refused; no eligible evidence bundle was fabricated.",
   "rolloutGuide": "../guides/mini-app-release-rollout.md",
   "resourceEvidence": "2026-10-12-mini-app-resource-measurements.json",
   "journeyEvidence": "2026-10-12-mini-app-complete-journeys.md",
-  "review": "Author self-review inline; independent reviewer not authorized in this workspace."
+  "review": "Author self-review inline; independent reviewer not authorized in this workspace.",
+  "testnetDelivery": "2026-10-13-mini-apps-testnet-delivery.json"
 }
