@@ -363,5 +363,26 @@
     "runtime": "guarded code/ABI rollback; fulfillment remains paused; current native rows and SQL reservations retained",
     "legacyFrontend": "archival backup only; must rebuild against current SDKs before compatible UI rollback",
     "liveRollbackPerformed": false
+  },
+  "frontendConnectionCorrection": {
+    "status": "passed",
+    "date": "2026-10-13",
+    "frontendSource": "86412538bf4eb37237bf97bb81c17da2fb28795f",
+    "frontendVersion": "0.15.0-alpha.27",
+    "buildMode": "testnet",
+    "network": "testnet",
+    "apiOrigin": "https://testnet.api.daclify.com",
+    "previousFrontendEntrySha256": "260cd2503d00cbfa67c0abbc16fe96cec4c647210761936489da6e0fd79d9129",
+    "frontendEntrySha256": "04ec5fb82b59cb156f6968a10083d33c69cbeadb7202b6c11c66d5f099e54503",
+    "browserCandidateChecks": 8,
+    "browserLiveChecks": 8,
+    "networkUnitTests": 31,
+    "realNetworkAndDaoReads": true,
+    "savedProductionPreferenceIgnored": true,
+    "initialPublicProbe": "Failed: missing Testnet deployment badge",
+    "previousBrowserClaim": "Static/layout checks did not establish a working API connection",
+    "nativeAndApiUnchanged": true,
+    "authenticatedProviderLoginRequalified": false,
+    "evidence": "https://github.com/Daclify/daclify-frontend/blob/dev/docs/evidence/2026-10-13-testnet-connection.md"
   }
 }
