@@ -2,6 +2,10 @@
 
 ## 0.15.0-alpha.18 development
 
+Add an optional GET to the existing sign-in session endpoint for browser startup. Signed-out sessions return an empty 204; valid sessions use the existing canonical account response. Reading does not rotate CSRF, renew sign-in freshness or return recovery grants. Protected account/MCP routes and POST session resumption keep their existing guards. No protocol SDK, contract or storage layout changes.
+
+Apply existing validated shared-proxy admission to local and hosted MCP routes. Ordinary client limits, global caps and forwarded-address spoofing protection remain enforced; clients behind an explicitly configured shared peer use the existing aggregate allowance.
+
 Hosted MCP consent reports unearned review preparation as a reviewer-permission refusal instead of a token failure. Proposal and vote consent remain available to other active members.
 
 Hosted MCP connections can be approved with a recent paired sign-in or an account-paired wallet without a DAO wallet binding. Fresh login provenance, a five-minute window and one-use body/session/origin-bound intents apply only to hosted OAuth approval; existing native delegation, key and recovery authorization remain enforced. Adds public Google client configuration for the consent sign-in button, with no provider secrets or new database/native fields.

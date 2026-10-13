@@ -1,7 +1,7 @@
 import { controlledInject } from '../helpers/account-control.js';
 import { readFileSync } from 'node:fs';
 import { createHash, createHmac, generateKeyPairSync, randomInt, randomUUID } from 'node:crypto';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { Pool } from 'pg';
 import { PrivateKey } from '@wharfkit/antelope';
 import { generateKeyPair, SignJWT } from 'jose';
@@ -129,6 +129,92 @@ async function account() {
   );
   return { ...result, key, sentinel };
 }
+it('reports a signed-out browser session without an HTTP error and keeps protected routes guarded', async () => {
+  for (const cookie of [undefined, 'daclify_session=' + 'a'.repeat(43)]) {
+    const headers = cookie ? { cookie } : {};
+    const response = await configured.inject({
+      method: 'GET',
+      url: '/v1/sign-in/session',
+      headers,
+    });
+    expect(response.statusCode).toBe(204);
+    expect(response.body).toBe('');
+    expect(response.headers['cache-control']).toBe('no-store');
+    expect((await configured.inject({ method: 'GET', url: '/v1/me', headers })).statusCode).toBe(
+      401,
+    );
+    expect(
+      (await configured.inject({ method: 'GET', url: '/v1/me/memberships', headers })).statusCode,
+    ).toBe(401);
+    expect(
+      (
+        await configured.inject({
+          method: 'POST',
+          url: '/v1/sign-in/session',
+          headers: { ...headers, origin },
+          payload: {},
+        })
+      ).statusCode,
+    ).toBe(401);
+  }
+});
+it('keeps a session service outage distinct from a signed-out browser', async () => {
+  const query = vi.spyOn(pool, 'query').mockRejectedValueOnce(new Error('Owned database outage'));
+  try {
+    const response = await configured.inject({
+      method: 'GET',
+      url: '/v1/sign-in/session',
+      headers: { cookie: 'daclify_session=' + 'b'.repeat(43) },
+    });
+    expect(response.statusCode).toBe(500);
+    expect(response.json()).toEqual({
+      code: 'SERVICE_UNAVAILABLE',
+      message: 'The service could not complete the request.',
+    });
+    expect(response.body).not.toContain('Owned database outage');
+  } finally {
+    query.mockRestore();
+  }
+});
+it('reads the existing account without renewing sign-in freshness or rotating CSRF', async () => {
+  const current = await account(),
+    tokenHash = createHash('sha256').update(current.token).digest();
+  const before = await pool.query(
+    'SELECT csrf_hash,step_up_at,credential_key FROM sessions WHERE token_hash=$1',
+    [tokenHash],
+  );
+  const response = await configured.inject({
+    method: 'GET',
+    url: '/v1/sign-in/session',
+    headers: { cookie: 'daclify_session=' + current.token, origin },
+  });
+  expect(response.statusCode).toBe(200);
+  expect(response.json()).toEqual({ account: current.account });
+  expect(response.headers['cache-control']).toBe('no-store');
+  expect(response.headers['set-cookie']).toBeUndefined();
+  expect(response.headers['x-daclify-recovery-grant']).toBeUndefined();
+  const after = await pool.query(
+    'SELECT csrf_hash,step_up_at,credential_key FROM sessions WHERE token_hash=$1',
+    [tokenHash],
+  );
+  expect(after.rows).toEqual(before.rows);
+  for (const field of ['revoked_at', 'expires_at']) {
+    await pool.query(`UPDATE sessions SET ${field}=now()-interval '1 second' WHERE token_hash=$1`, [
+      tokenHash,
+    ]);
+    const unavailable = await configured.inject({
+      method: 'GET',
+      url: '/v1/sign-in/session',
+      headers: { cookie: 'daclify_session=' + current.token },
+    });
+    expect(unavailable.statusCode).toBe(204);
+    expect(unavailable.body).toBe('');
+    await pool.query(
+      "UPDATE sessions SET revoked_at=NULL,expires_at=now()+interval '1 hour' WHERE token_hash=$1",
+      [tokenHash],
+    );
+  }
+});
 async function google(subject: string, email = 'same-person@example.test') {
   return new SignJWT({
     iss: 'https://accounts.google.com',

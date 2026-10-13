@@ -121,6 +121,17 @@ export function registerSignInRoutes(
     }));
     return { entries, next: result.rows.length > 50 ? (entries.at(-1)?.id ?? null) : null };
   });
+  app.get('/v1/sign-in/session', async (request, reply) => {
+    reply.header('cache-control', 'no-store');
+    try {
+      return ApiRoutes.me.response.parse({ account: await session(request.cookies[cookieName]) });
+    } catch (cause) {
+      // Signed-out startup is ordinary; service failures still reach the error handler.
+      if (cause instanceof ApiError && cause.code === 'AUTH_REQUIRED')
+        return reply.code(204).send();
+      throw cause;
+    }
+  });
   app.post('/v1/sign-in/session', async (request) => {
     z.strictObject({}).parse(request.body);
     const token = request.cookies[cookieName];

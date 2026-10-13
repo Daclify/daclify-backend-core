@@ -22,8 +22,9 @@ export function registerMcpPairingRoutes(
   service: McpPairings,
   cookieName: string,
   session: (token: string | undefined, csrf?: string) => Promise<Account>,
+  sharedProxyIps: readonly string[] = [],
 ) {
-  const admit = createWindowLimiter(120, 300000, 2000),
+  const admit = createWindowLimiter(120, 300000, 2000, sharedProxyIps),
     admitRedeem = createWindowLimiter(240, 300000, 2000),
     id = (params: unknown) => z.object({ id: z.uuid() }).parse(params).id;
   const bearer = (value: string | undefined) => {

@@ -19,11 +19,12 @@ export function registerMcpHttpRoutes(
   service: McpOAuth,
   cookieName: string,
   session: (token: string | undefined, csrf?: string) => Promise<Account>,
+  sharedProxyIps: readonly string[] = [],
 ) {
   const handler = createMcpHttpHandler((context) => {
     return new RemoteCommunityAccess(service, context.authInfo?.token ?? '');
   });
-  const admit = createWindowLimiter(120, 60000, 2000);
+  const admit = createWindowLimiter(120, 60000, 2000, sharedProxyIps);
   app.addHook('onClose', async () => handler.close());
   app.addHook('onRequest', async (request, reply) => {
     const path = request.url.split('?')[0];

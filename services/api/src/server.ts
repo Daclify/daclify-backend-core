@@ -322,8 +322,10 @@ export async function createServer(
   registerRecoveryRoutes(app, recovery, cookieName, session, origin);
   if (options.mcpPairings)
     registerMcpSetupRoutes(app, options.mcpPairings, options.mcpArtifacts, cookieName, session);
-  if (options.mcpOAuth) registerMcpHttpRoutes(app, options.mcpOAuth, cookieName, session);
-  if (options.mcpPairings) registerMcpPairingRoutes(app, options.mcpPairings, cookieName, session);
+  if (options.mcpOAuth)
+    registerMcpHttpRoutes(app, options.mcpOAuth, cookieName, session, sharedProxyIps);
+  if (options.mcpPairings)
+    registerMcpPairingRoutes(app, options.mcpPairings, cookieName, session, sharedProxyIps);
   if (options.accountExit)
     registerAccountExitRoutes(app, options.accountExit, cookieName, session, spend);
   registerSettlementRoutes(app, chain);
@@ -338,7 +340,11 @@ export async function createServer(
   if (options.miniAppDirectory)
     registerDirectoryRoutes(app, options.miniAppDirectory, cookieName, session);
   app.addHook('onSend', async (request, reply, payload) => {
-    if (request.routeOptions.url === '/v1/sign-in/session' && reply.statusCode < 400) {
+    if (
+      request.method === 'POST' &&
+      request.routeOptions.url === '/v1/sign-in/session' &&
+      reply.statusCode < 400
+    ) {
       const token = request.cookies[cookieName],
         grant = request.cookies[recoveryCookie];
       if (
