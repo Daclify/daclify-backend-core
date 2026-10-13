@@ -12,7 +12,7 @@ export function createMcpHttpHandler(
 ): McpHttpHandler {
   return createMcpHandler((context) => {
     const server = new McpServer(communityServerInfo);
-    createCommunityTools(access(context)).register(server);
+    createCommunityTools(access(context)).register(server, { oauth: true });
     return server;
   });
 }

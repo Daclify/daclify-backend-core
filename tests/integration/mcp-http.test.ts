@@ -59,6 +59,7 @@ it('discovers a dedicated resource and refuses foreign tokens and unsafe authori
 });
 
 import Fastify from 'fastify';
+import { z } from 'zod';
 import { registerMcpHttpRoutes } from '../../services/api/src/mcp/http.js';
 it('coexists with the ordinary app form parser and returns OAuth-shaped token errors', async () => {
   const app = Fastify();
@@ -82,6 +83,145 @@ it('coexists with the ordinary app form parser and returns OAuth-shaped token er
     });
     expect(response.statusCode, response.body).toBe(400);
     expect(response.json()).toEqual({ error: 'invalid_grant' });
+  } finally {
+    await app.close();
+  }
+});
+
+it('discovers the authenticated tool catalog before linking an account', async () => {
+  const app = Fastify();
+  registerMcpHttpRoutes(app, service, 'session', async () => {
+    throw Error('unused');
+  });
+  const headers = { host: 'api.example', accept: 'application/json, text/event-stream' };
+  try {
+    const initialized = await app.inject({
+      method: 'POST',
+      url: '/mcp',
+      headers,
+      payload: {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: {
+          protocolVersion: '2025-06-18',
+          capabilities: {},
+          clientInfo: { name: 'catalog-client', version: '1' },
+        },
+      },
+    });
+    expect(initialized.statusCode, initialized.body).toBe(200);
+    const listed = await app.inject({
+      method: 'POST',
+      url: '/mcp',
+      headers,
+      payload: { jsonrpc: '2.0', id: 2, method: 'tools/list' },
+    });
+    expect(listed.statusCode, listed.body).toBe(200);
+    const event = listed.body.split('\n').find((line) => line.startsWith('data:'));
+    const result = z
+      .object({
+        result: z.object({
+          tools: z.array(
+            z.object({
+              name: z.string(),
+              _meta: z.object({
+                securitySchemes: z.array(
+                  z.object({ type: z.literal('oauth2'), scopes: z.array(z.string()) }),
+                ),
+              }),
+              annotations: z.object({
+                readOnlyHint: z.boolean(),
+                destructiveHint: z.boolean(),
+                openWorldHint: z.boolean(),
+              }),
+            }),
+          ),
+        }),
+      })
+      .parse(JSON.parse(event ? event.slice(5).trim() : listed.body));
+    expect(result.result.tools.map((tool) => tool.name)).toEqual([
+      'list_daos',
+      'get_membership',
+      'list_activity',
+      'prepare_proposal',
+      'prepare_vote',
+      'prepare_review',
+      'prepare_activity',
+      'submit_signed',
+    ]);
+    for (const tool of result.result.tools) {
+      const scope = tool.name.startsWith('prepare_')
+        ? 'daclify:prepare'
+        : tool.name === 'submit_signed'
+          ? 'daclify:submit'
+          : 'daclify:read';
+      expect(tool._meta.securitySchemes).toEqual([{ type: 'oauth2', scopes: [scope] }]);
+      expect(tool.annotations.readOnlyHint).toBe(scope === 'daclify:read');
+      expect(tool.annotations.destructiveHint).toBe(scope === 'daclify:submit');
+    }
+    expect(JSON.stringify(result)).not.toContain('accountId');
+  } finally {
+    await app.close();
+  }
+});
+
+it('keeps tool calls, batches, foreign origins and invalid credentials protected during discovery', async () => {
+  const app = Fastify();
+  registerMcpHttpRoutes(app, service, 'session', async () => {
+    throw Error('unused');
+  });
+  const headers = { host: 'api.example', accept: 'application/json, text/event-stream' };
+  try {
+    for (const payload of [
+      {
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'tools/call',
+        params: { name: 'get_membership', arguments: {} },
+      },
+      { jsonrpc: '2.0', id: 4, method: 'resources/read', params: { uri: 'private' } },
+      [
+        { jsonrpc: '2.0', id: 5, method: 'tools/list' },
+        {
+          jsonrpc: '2.0',
+          id: 6,
+          method: 'tools/call',
+          params: { name: 'get_membership', arguments: {} },
+        },
+      ],
+    ]) {
+      const response = await app.inject({ method: 'POST', url: '/mcp', headers, payload });
+      expect(response.statusCode).toBe(401);
+      expect(response.headers['www-authenticate']).toContain('resource_metadata=');
+    }
+    for (const authorization of [
+      'Bearer ',
+      'Basic foreign',
+      'Bearer ' + randomBytes(32).toString('base64url'),
+    ]) {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/mcp',
+        headers: { ...headers, authorization },
+        payload: { jsonrpc: '2.0', id: 7, method: 'tools/list' },
+      });
+      expect(response.statusCode).toBe(401);
+    }
+    const origin = await app.inject({
+      method: 'POST',
+      url: '/mcp',
+      headers: { ...headers, origin: 'https://foreign.example' },
+      payload: { jsonrpc: '2.0', id: 8, method: 'tools/list' },
+    });
+    expect(origin.statusCode).toBe(403);
+    const host = await app.inject({
+      method: 'POST',
+      url: '/mcp',
+      headers: { ...headers, host: 'foreign.example' },
+      payload: { jsonrpc: '2.0', id: 9, method: 'tools/list' },
+    });
+    expect(host.statusCode).toBe(403);
   } finally {
     await app.close();
   }

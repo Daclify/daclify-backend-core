@@ -9,6 +9,10 @@ import { RemoteCommunityAccess } from './remote-access.js';
 import { ApiError } from '../errors.js';
 import { createWindowLimiter } from '../limits.js';
 export const MCP_HTTP_PUBLIC_PATHS = ['/mcp', '/mcp/oauth/token', '/mcp/oauth/revoke'];
+const DiscoveryRequest = z.object({
+  jsonrpc: z.literal('2.0'),
+  method: z.enum(['initialize', 'notifications/initialized', 'ping', 'tools/list']),
+});
 export function registerMcpHttpRoutes(
   app: FastifyInstance,
   service: McpOAuth,
@@ -16,8 +20,7 @@ export function registerMcpHttpRoutes(
   session: (token: string | undefined, csrf?: string) => Promise<Account>,
 ) {
   const handler = createMcpHttpHandler((context) => {
-    if (!context.authInfo) throw new ApiError('MCP_TOKEN_REQUIRED', 401);
-    return new RemoteCommunityAccess(service, context.authInfo.token);
+    return new RemoteCommunityAccess(service, context.authInfo?.token ?? '');
   });
   const admit = createWindowLimiter(120, 60000, 2000);
   app.addHook('onClose', async () => handler.close());
@@ -100,20 +103,30 @@ export function registerMcpHttpRoutes(
         throw new ApiError('HOST_REJECTED', 403);
       const authorization = request.headers.authorization;
       if (!authorization?.startsWith('Bearer ')) {
-        reply.header(
-          'www-authenticate',
-          `Bearer resource_metadata="${service.pairings.api}/.well-known/oauth-protected-resource/mcp"`,
-        );
-        throw new ApiError('MCP_TOKEN_REQUIRED', 401);
+        // Only the public catalog can be discovered before linking; never a tool call or batch.
+        if (
+          authorization ||
+          request.method !== 'POST' ||
+          !DiscoveryRequest.safeParse(request.body).success
+        ) {
+          reply.header(
+            'www-authenticate',
+            `Bearer resource_metadata="${service.pairings.api}/.well-known/oauth-protected-resource/mcp"`,
+          );
+          throw new ApiError('MCP_TOKEN_REQUIRED', 401);
+        }
       }
-      const token = authorization.slice(7);
-      const current = await service.authorizeToken(token).catch(() => {
-        reply.header(
-          'www-authenticate',
-          `Bearer error="invalid_token", resource_metadata="${service.pairings.api}/.well-known/oauth-protected-resource/mcp"`,
-        );
-        throw new ApiError('MCP_TOKEN_REQUIRED', 401);
-      });
+      const token = authorization?.startsWith('Bearer ') ? authorization.slice(7) : undefined;
+      const current =
+        token === undefined
+          ? undefined
+          : await service.authorizeToken(token).catch(() => {
+              reply.header(
+                'www-authenticate',
+                `Bearer error="invalid_token", resource_metadata="${service.pairings.api}/.well-known/oauth-protected-resource/mcp"`,
+              );
+              throw new ApiError('MCP_TOKEN_REQUIRED', 401);
+            });
       const headers = new Headers();
       for (const [name, value] of Object.entries(request.headers)) {
         if (typeof value === 'string') headers.set(name, value);
@@ -129,15 +142,20 @@ export function registerMcpHttpRoutes(
         signal: controller.signal,
         ...(request.method === 'POST' ? { body: JSON.stringify(request.body) } : {}),
       });
-      const response = await handler.fetch(input, {
-        authInfo: {
-          token,
-          clientId: current.claims.clientId,
-          scopes: current.claims.scopes,
-          expiresAt: current.claims.exp,
-          resource: new URL(service.resource),
-        },
-      });
+      const response = await handler.fetch(
+        input,
+        current && token !== undefined
+          ? {
+              authInfo: {
+                token,
+                clientId: current.claims.clientId,
+                scopes: current.claims.scopes,
+                expiresAt: current.claims.exp,
+                resource: new URL(service.resource),
+              },
+            }
+          : {},
+      );
       reply.code(response.status);
       response.headers.forEach((value, name) => reply.header(name, value));
       if (!response.body) return reply.send();

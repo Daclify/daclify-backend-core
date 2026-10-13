@@ -51,17 +51,34 @@ export class CommunityTools {
     const prepare = McpPrepareInputSchema.parse({ tool: name, input });
     return McpPreparationSchema.parse(await this.access.prepare(prepare));
   }
-  register(server: McpServer): void {
+  register(server: McpServer, options?: { oauth: boolean }): void {
     for (const [name, inputSchema] of Object.entries(inputs))
-      this.registerTool(server, name, inputSchema);
+      this.registerTool(server, name, inputSchema, options?.oauth ?? false);
     if (this.signer) this.registerTool(server, 'submit_prepared', PreparedInstructionSchema);
   }
-  private registerTool(server: McpServer, name: string, inputSchema: z.ZodType): void {
+  private registerTool(
+    server: McpServer,
+    name: string,
+    inputSchema: z.ZodType,
+    oauth = false,
+  ): void {
+    const scope = name.startsWith('prepare_')
+      ? 'daclify:prepare'
+      : name.startsWith('submit_')
+        ? 'daclify:submit'
+        : 'daclify:read';
     server.registerTool(
       name,
       {
+        title: name.replaceAll('_', ' '),
         description: `Daclify ${name.replaceAll('_', ' ')} within the approved community scope.`,
         inputSchema,
+        annotations: {
+          readOnlyHint: scope === 'daclify:read',
+          destructiveHint: scope === 'daclify:submit',
+          openWorldHint: false,
+        },
+        ...(oauth ? { _meta: { securitySchemes: [{ type: 'oauth2', scopes: [scope] }] } } : {}),
       },
       async (input) => {
         try {
