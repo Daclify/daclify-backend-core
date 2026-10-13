@@ -1,6 +1,6 @@
 # Daclify community MCP
 
-Local development package `0.1.0-alpha.2`: core `0.15.0-alpha.12`, modules SDK `0.10.0-alpha.19`, stable MCP server/client `2.3.1`. Native contracts are unchanged. The package is an immutable review artifact, not a registry publication or production qualification.
+Local development package `0.1.0-alpha.3`: core `0.15.0-alpha.13`, modules SDK `0.10.0-alpha.20`, stable MCP server/client `2.3.1`. Native contracts are unchanged. The package is an immutable review artifact, not a registry publication or production qualification.
 
 Install the three version-matched archives together (`npm install --ignore-scripts ./core.tgz ./modules.tgz ./mcp.tgz`). Generate public connection configuration through Daclify's AI connection page when that deployment advertises `community-mcp-local-v1`.
 
@@ -13,3 +13,5 @@ The tool inventory is `list_daos`, `get_membership`, `list_activity`, `prepare_p
 The shared producer validator checks current member, nonce, session expiry/epoch/revocation, guardian, role, policy and deployment before signing/submission. The service persists the exact protected native transaction first; missing responses reconcile the same ID in irreversible blocks before another event. Pairings, grants and preparation records have bounded cleanup and are covered by account deletion and both reconnection entry paths.
 
 `revoke` invalidates the service token and removes this local file. Retire the matching native session through Daclify to disable independent delegate copies. Delegates are replaceable through fresh consent; no second account recovery kit is created. The capability matrix and exact browser/native/stdio/clean-install/harness evidence qualify supported combinations separately. These checks do not imply universal harness or hosted OAuth compatibility.
+
+The `./http` export creates the real SDK stateless HTTP handler with an access resolver bound to each authenticated request. The API validates separate resource-bound OAuth first; the package does not treat SDK `authInfo` as proof by itself. Hosted HTTP supports read/prepare and external signed submission; a client without a native companion gets a `signer-required` preview. No private key or local signer enters this transport. See the versioned Daclify MCP guide for issuer/discovery/PKCE/rotation and exact preregistered client configuration.

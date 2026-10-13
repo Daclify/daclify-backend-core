@@ -281,3 +281,12 @@ it('records a later explicit closure only after its own native signature is conf
  expect((await pool.query('SELECT intent FROM account_exit_operations WHERE id=$1',[operation.id])).rows[0]?.intent.memberships[0].choice).toBe('close');
  expect((await pool.query("SELECT 1 FROM jobs WHERE job_key=$1 AND kind='close-hosted'",['account-exit-closure:'+operation.id])).rowCount).toBe(1);
 });
+it('removes OAuth codes and rotating families before their native companion records during erasure',async()=>{
+ await fixture();const grant=randomUUID(),family=randomUUID();
+ await pool.query("INSERT INTO mcp_local_grants(id,account_id,token_hash,context,credential_epoch,expires_at) VALUES($1,$2,$3,'{}',1,now()+interval '1 hour')",[grant,canonical,randomBytes(32)]);
+ await pool.query("INSERT INTO mcp_oauth_families(id,account_id,context,local_grant_id,expires_at) VALUES($1,$2,'{}',$3,now()+interval '1 hour')",[family,canonical,grant]);
+ for(const kind of ['code','access','refresh'])await pool.query("INSERT INTO mcp_oauth_tokens(token_hash,account_id,family_id,kind,context,expires_at) VALUES($1,$2,$3,$4,'{}',now()+interval '5 minutes')",[randomBytes(32),canonical,family,kind]);
+ await pool.query("INSERT INTO mcp_oauth_requests(id,account_id,request,expires_at) VALUES($1,$2,'{}',now()+interval '5 minutes')",[randomUUID(),canonical]);
+ const service=new AccountExit(pool,{...authChain,memberships:async()=>[]},{backupRetentionSeconds:86400}),op=await service.begin(canonical,{version:1,mode:'delete-account',memberships:[]},{reauthenticated:true});await service.eraseHosted(op.id);
+ for(const table of ['mcp_oauth_tokens','mcp_oauth_families','mcp_oauth_requests','mcp_local_grants'])expect((await pool.query('SELECT 1 FROM '+table+' WHERE account_id=$1',[canonical])).rowCount).toBe(0);
+});

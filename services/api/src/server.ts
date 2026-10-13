@@ -1,5 +1,5 @@
 import type { AccountExit } from './account-exit/service.js';
-import { registerSettlementRoutes,registerAccountExitRoutes } from './account-exit/routes.js';
+import { registerSettlementRoutes, registerAccountExitRoutes } from './account-exit/routes.js';
 import type { CreationService } from './creation.js';
 import { ProfileKeys, type ProfileKeysConfiguration } from './profiles/keys.js';
 import { registerProfileRoutes } from './profiles/routes.js';
@@ -11,6 +11,8 @@ import {
 import type { ConnectedApps } from './connected-apps/service.js';
 import { MiniAppConnections } from './mini-apps/connections.js';
 import { registerMiniAppsRoutes } from './mini-apps/routes.js';
+import { registerMcpHttpRoutes, MCP_HTTP_PUBLIC_PATHS } from './mcp/http.js';
+import type { McpOAuth } from './mcp/oauth.js';
 import { registerMcpPairingRoutes, MCP_LOCAL_PUBLIC_PATHS } from './mcp/routes.js';
 import type { McpPairings } from './mcp/pairing.js';
 import type { ConnectedPayments } from './payments/service.js';
@@ -117,6 +119,7 @@ export async function createServer(
     accountExit?: AccountExit;
     connectedApps?: ConnectedApps;
     mcpPairings?: McpPairings;
+    mcpOAuth?: McpOAuth;
     miniApps?: MiniAppConnections;
     content?: ContentService;
     recovery?: RecoveryConfiguration;
@@ -199,6 +202,29 @@ export async function createServer(
   await app.register(cors, {
     delegator: async (request: FastifyRequest) => {
       const path = request.url.split('?')[0] ?? '';
+      if (
+        options.mcpOAuth &&
+        (path.startsWith('/.well-known/oauth-') ||
+          path === '/mcp/oauth/.well-known/oauth-authorization-server')
+      )
+        return { origin: '*', credentials: false, methods: ['GET'] };
+      if (options.mcpOAuth && MCP_HTTP_PUBLIC_PATHS.includes(path))
+        return {
+          origin:
+            request.headers.origin === options.mcpOAuth.pairings.frontend
+              ? request.headers.origin
+              : false,
+          credentials: false,
+          methods: ['GET', 'POST', 'DELETE'],
+          allowedHeaders: [
+            'content-type',
+            'authorization',
+            'mcp-protocol-version',
+            'mcp-session-id',
+            'last-event-id',
+          ],
+          exposedHeaders: ['www-authenticate', 'mcp-session-id'],
+        };
       if (options.connectedApps && APP_METADATA_PATHS.includes(path))
         return { origin: '*', credentials: false, methods: ['GET'] };
       if (options.connectedApps && APP_BEARER_PATHS.includes(path))
@@ -271,8 +297,10 @@ export async function createServer(
       path === CONNECT_WEBHOOK ||
       path === TELEGRAM_DOCS_PATH ||
       BROKER_PATHS.some((route) => route === path) ||
-      (!!options.connectedApps && APP_BEARER_PATHS.includes(path ?? ''))
-      || (!!options.mcpPairings && MCP_LOCAL_PUBLIC_PATHS.includes(request.routeOptions.url ?? path ?? ''))
+      (!!options.connectedApps && APP_BEARER_PATHS.includes(path ?? '')) ||
+      (!!options.mcpOAuth && MCP_HTTP_PUBLIC_PATHS.includes(path ?? '')) ||
+      (!!options.mcpPairings &&
+        MCP_LOCAL_PUBLIC_PATHS.includes(request.routeOptions.url ?? path ?? ''))
     )
       return;
     if (!origins.includes(request.headers.origin ?? '')) throw new ApiError('ORIGIN_REJECTED', 403);
@@ -286,9 +314,11 @@ export async function createServer(
     return account;
   }
   registerRecoveryRoutes(app, recovery, cookieName, session, origin);
-  if(options.mcpPairings)registerMcpPairingRoutes(app,options.mcpPairings,cookieName,session);
-  if(options.accountExit)registerAccountExitRoutes(app,options.accountExit,cookieName,session,spend);
-  registerSettlementRoutes(app,chain);
+  if (options.mcpOAuth) registerMcpHttpRoutes(app, options.mcpOAuth, cookieName, session);
+  if (options.mcpPairings) registerMcpPairingRoutes(app, options.mcpPairings, cookieName, session);
+  if (options.accountExit)
+    registerAccountExitRoutes(app, options.accountExit, cookieName, session, spend);
+  registerSettlementRoutes(app, chain);
   const profileKeys = new ProfileKeys(pool, chain, options.profileKeys);
   registerProfileRoutes(app, profileKeys, chain, cookieName, session);
   if (options.connectedApps)
@@ -734,8 +764,9 @@ export async function createServer(
       ...network,
       capabilities: [
         ...network.capabilities,
-        ...(options.mcpPairings?['community-mcp-local-v1']:[]),
-        ...(options.accountExit?['account-exit-v1']:[]),
+        ...(options.mcpPairings ? ['community-mcp-local-v1'] : []),
+        ...(options.mcpOAuth ? ['community-mcp-http-v1'] : []),
+        ...(options.accountExit ? ['account-exit-v1'] : []),
         ...(profileKeys.enabled && network.capabilities.includes('encrypted-profiles-v2')
           ? ['profile-key-envelopes-v1']
           : []),

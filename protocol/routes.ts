@@ -2,9 +2,9 @@ import { z } from 'zod';
 import { NativeFinishSchema } from './native-wallet.js';
 import { ConnectedAppsRoutes } from './connected-apps.js';
 import { MiniAppsRoutes } from './mini-apps.js';
-import { McpPairingRoutes } from './mcp.js';
+import { McpPairingRoutes, McpOAuthRoutes, McpInventoryRoutes } from './mcp.js';
 import { ProfileRoutes } from './profiles.js';
-import { AccountExitRoutes,ExitNativeStepRoute,ExitSettlementRoutes } from './account-exit.js';
+import { AccountExitRoutes, ExitNativeStepRoute, ExitSettlementRoutes } from './account-exit.js';
 import { RecoveryRoutes } from './recovery.js';
 import { SignupRoutes } from './signup.js';
 import {
@@ -56,9 +56,11 @@ export const ApiRoutes = {
   ...ProfileRoutes,
   ...AccountExitRoutes,
   ...ExitSettlementRoutes,
-  exitNativeStep:ExitNativeStepRoute,
+  exitNativeStep: ExitNativeStepRoute,
   ...MiniAppsRoutes,
   ...McpPairingRoutes,
+  ...McpOAuthRoutes,
+  ...McpInventoryRoutes,
   accountReconnectNative: {
     method: 'POST',
     path: '/v1/account/reconnect/native',

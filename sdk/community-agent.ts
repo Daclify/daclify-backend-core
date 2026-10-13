@@ -9,6 +9,7 @@ import {
   McpPrepareInputSchema,
   PreparedInstructionSchema,
   SignedMcpInstructionSchema,
+  type McpPreparation,
   type McpConnection,
   type McpReadInput,
   type McpReadResult,
@@ -26,7 +27,7 @@ export interface CommunitySigner {
 }
 export interface CommunityAccess {
   read(input: McpReadInput): Promise<McpReadResult>;
-  prepare(input: McpPrepareInput): Promise<PreparedInstruction>;
+  prepare(input: McpPrepareInput): Promise<McpPreparation>;
   submitSigned(input: SignedMcpInstruction): Promise<SubmissionResult>;
 }
 export type CommunityRequest = (path: string, body?: unknown) => Promise<unknown>;

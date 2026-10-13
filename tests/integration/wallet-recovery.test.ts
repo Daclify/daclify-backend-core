@@ -1349,16 +1349,37 @@ it.each(['wallet', 'restored'] as const)(
           "INSERT INTO mcp_preparations(id,account_id,grant_id,prepared,expires_at) VALUES($1,$2,$3,$4,now()+interval '5 minutes')",
           [prepared.id, account.id, grantId, prepared],
         );
+        const familyId = randomUUID();
+        await pool.query(
+          "INSERT INTO mcp_oauth_requests(id,account_id,request,expires_at) VALUES($1,$2,$3,now()+interval '5 minutes')",
+          [randomUUID(), account.id, { client_id: 'reconnect-fixture' }],
+        );
+        await pool.query(
+          "INSERT INTO mcp_oauth_families(id,account_id,context,local_grant_id,expires_at) VALUES($1,$2,$3,$4,now()+interval '1 hour')",
+          [familyId, account.id, { sub: account.id }, grantId],
+        );
+        for (const kind of ['code', 'access', 'refresh'])
+          await pool.query(
+            "INSERT INTO mcp_oauth_tokens(token_hash,account_id,family_id,kind,context,expires_at) VALUES($1,$2,$3,$4,$5,now()+interval '5 minutes')",
+            [randomBytes(32), account.id, familyId, kind, { sub: account.id }],
+          );
       }
       const request =
         direction === 'wallet' ? await f.request() : await restoredReconnectRequest(f, name);
       const response = await app.inject(request);
       expect(response.statusCode, response.body).toBe(200);
       expect(SessionSchema.parse(response.json()).account.id).toBe(f.original.account.id);
-      for (const table of ['mcp_pairings', 'mcp_local_grants', 'mcp_preparations'])
+      for (const table of [
+        'mcp_oauth_tokens',
+        'mcp_oauth_families',
+        'mcp_oauth_requests',
+        'mcp_pairings',
+        'mcp_local_grants',
+        'mcp_preparations',
+      ])
         expect(
           (
-            await pool.query(`SELECT id FROM ${table} WHERE account_id=ANY($1::uuid[])`, [
+            await pool.query(`SELECT 1 FROM ${table} WHERE account_id=ANY($1::uuid[])`, [
               [f.current.account.id, f.original.account.id],
             ])
           ).rows,

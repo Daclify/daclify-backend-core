@@ -98,6 +98,39 @@ export type PreparedInstruction = z.infer<typeof PreparedInstructionSchema>;
 export type SignedMcpInstruction = z.infer<typeof SignedMcpInstructionSchema>;
 export type SubmissionResult = z.infer<typeof SubmissionResultSchema>;
 
+export const McpOAuthScopeSchema = z.enum(['daclify:read', 'daclify:prepare', 'daclify:submit']);
+export const McpOAuthClaimsSchema = z
+  .strictObject({
+    version: z.literal(1),
+    iss: z.url().max(512),
+    aud: z.url().max(512),
+    sub: z.uuid(),
+    clientId: z.string().min(1).max(128),
+    familyId: z.uuid(),
+    dao: DaoRefSchema,
+    memberId: IdSchema,
+    scopes: z
+      .array(McpOAuthScopeSchema)
+      .min(1)
+      .max(3)
+      .refine((values) => new Set(values).size === values.length),
+    nativeScopes: z
+      .array(McpScopeSchema)
+      .max(4)
+      .refine((values) => new Set(values).size === values.length),
+    iat: z.int().positive(),
+    exp: z.int().positive(),
+    sessionId: IdSchema.nullable(),
+    delegatePublicKey: SigningPublicKeySchema.nullable(),
+    credentialEpoch: IdSchema,
+  })
+  .refine(
+    (value) =>
+      (value.sessionId === null) === (value.delegatePublicKey === null) &&
+      (!value.scopes.includes('daclify:submit') || value.sessionId !== null),
+    'Signed submission needs its authorized native companion',
+  );
+
 const Pkce = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
 export const McpPairingInputSchema = z
   .strictObject({
@@ -232,3 +265,74 @@ export const McpPairingRoutes = {
     helpTopic: string;
   }
 >;
+
+export const McpOAuthClientSchema = z.strictObject({
+  clientId: z.string().min(1).max(128),
+  redirectUris: z.array(z.url().max(2048)).min(1).max(8),
+});
+export const McpOAuthAuthorizeSchema = z.strictObject({
+  response_type: z.literal('code'),
+  client_id: z.string().min(1).max(128),
+  redirect_uri: z.url().max(2048),
+  resource: z.url().max(512),
+  scope: z.string().min(1).max(128),
+  state: z.string().min(1).max(512),
+  code_challenge: Pkce,
+  code_challenge_method: z.literal('S256'),
+});
+export const McpOAuthApprovalSchema = z.strictObject({
+  id: z.uuid(),
+  dao: DaoRefSchema,
+  memberId: IdSchema,
+  nativeScopes: z.array(McpScopeSchema).max(4),
+  localGrantId: z.uuid().nullable(),
+});
+export const McpOAuthTokenInputSchema = z.discriminatedUnion('grant_type', [
+  z.strictObject({
+    grant_type: z.literal('authorization_code'),
+    code: Token,
+    code_verifier: z.string().regex(/^[A-Za-z0-9._~-]{43,128}$/),
+    client_id: z.string().min(1).max(128),
+    redirect_uri: z.url().max(2048),
+    resource: z.url().max(512),
+  }),
+  z.strictObject({
+    grant_type: z.literal('refresh_token'),
+    refresh_token: Token,
+    client_id: z.string().min(1).max(128),
+    resource: z.url().max(512),
+  }),
+]);
+export const McpPreviewSchema = PreparedInstructionSchema.omit({
+  id: true,
+  sessionId: true,
+  signingPublicKey: true,
+}).safeExtend({ state: z.literal('signer-required') });
+export const McpPreparationSchema = z.union([PreparedInstructionSchema, McpPreviewSchema]);
+export type McpPreparation = z.infer<typeof McpPreparationSchema>;
+export type McpOAuthClaims = z.infer<typeof McpOAuthClaimsSchema>;
+export const McpOAuthRoutes = {
+  mcpOAuthConsent: {
+    method: 'GET',
+    path: '/v1/mcp/oauth/requests/:id',
+    response: z.strictObject({
+      id: z.uuid(),
+      clientId: z.string().min(1).max(128),
+      redirectUri: z.url().max(2048),
+      scopes: z.array(McpOAuthScopeSchema).min(1).max(3),
+      expires: z.iso.datetime(),
+    }),
+    helpTopic: 'agents',
+  },
+  mcpOAuthApprove: {
+    method: 'POST',
+    path: '/v1/mcp/oauth/approve',
+    input: McpOAuthApprovalSchema,
+    response: z.strictObject({ redirectUrl: z.url().max(4096) }),
+    helpTopic: 'agents',
+  },
+} as const;
+export const McpInventoryRoutes = {
+  mcpGrants: { method: 'GET', path: '/v1/mcp/grants', response: z.array(McpGrantSchema).max(32), helpTopic: 'agents' },
+  mcpRevokeGrant: { method: 'POST', path: '/v1/mcp/grants/revoke', input: z.strictObject({ id: z.uuid() }), response: z.strictObject({ revoked: z.literal(true) }), helpTopic: 'agents' },
+} as const;

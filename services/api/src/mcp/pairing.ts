@@ -265,6 +265,17 @@ export class McpPairings {
         [hash(token)],
       )
     ).rows[0];
+    if (!row) throw new ApiError('MCP_TOKEN_REQUIRED', 401);
+    return this.authorizeGrant(row.id, row.account_id);
+  }
+  async authorizeGrant(id: string, accountId: string) {
+    if (!this.chain) throw new ApiError('MCP_TOKEN_REQUIRED', 401);
+    const row = (
+      await this.pool.query<GrantRow>(
+        'SELECT id,account_id,context,credential_epoch,expires_at FROM mcp_local_grants WHERE id=$1 AND account_id=$2 AND revoked_at IS NULL AND expires_at>now()',
+        [id, accountId],
+      )
+    ).rows[0];
     const account = row ? await readAccount(this.pool, row.account_id) : null;
     if (!row || !account) throw new ApiError('MCP_TOKEN_REQUIRED', 401);
     const grant = McpGrantSchema.parse(row.context),
@@ -317,7 +328,7 @@ export class McpPairings {
     for (const table of ['mcp_preparations', 'mcp_pairings', 'mcp_local_grants']) {
       const unreferenced =
         table === 'mcp_local_grants'
-          ? ' AND NOT EXISTS(SELECT 1 FROM mcp_preparations p WHERE p.grant_id=mcp_local_grants.id) AND NOT EXISTS(SELECT 1 FROM mcp_pairings p WHERE p.approved_grant=mcp_local_grants.id)'
+          ? ' AND NOT EXISTS(SELECT 1 FROM mcp_preparations p WHERE p.grant_id=mcp_local_grants.id) AND NOT EXISTS(SELECT 1 FROM mcp_pairings p WHERE p.approved_grant=mcp_local_grants.id) AND NOT EXISTS(SELECT 1 FROM mcp_oauth_families f WHERE f.local_grant_id=mcp_local_grants.id)'
           : '';
       count +=
         (

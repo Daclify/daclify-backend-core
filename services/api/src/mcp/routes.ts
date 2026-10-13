@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { Account } from '../../../../protocol/api.js';
-import { McpPairingRoutes } from '../../../../protocol/mcp.js';
+import { McpPairingRoutes, McpInventoryRoutes, McpGrantSchema } from '../../../../protocol/mcp.js';
 import type { McpPairings } from './pairing.js';
 import { LocalCommunityAccess } from './access.js';
 import { ApiError } from '../errors.js';
@@ -40,6 +40,26 @@ export function registerMcpPairingRoutes(
   app.addHook('onSend', async (request, reply) => {
     if (request.url.startsWith('/v1/mcp/'))
       reply.header('cache-control', 'no-store').header('referrer-policy', 'no-referrer');
+  });
+  app.get(McpInventoryRoutes.mcpGrants.path, async (request) => {
+    const account = await session(request.cookies[cookieName]);
+    const rows = await service.pool.query<{ context: unknown }>(
+      'SELECT context FROM mcp_local_grants WHERE account_id=$1 AND revoked_at IS NULL AND expires_at>now() ORDER BY created_at DESC LIMIT 32',
+      [account.id],
+    );
+    return rows.rows.map((row) => McpGrantSchema.parse(row.context));
+  });
+  app.post(McpInventoryRoutes.mcpRevokeGrant.path, { bodyLimit: 1024 }, async (request) => {
+    const account = await session(
+        request.cookies[cookieName],
+        typeof request.headers['x-csrf-token'] === 'string' ? request.headers['x-csrf-token'] : '',
+      ),
+      input = McpInventoryRoutes.mcpRevokeGrant.input.parse(request.body);
+    await service.pool.query(
+      'UPDATE mcp_local_grants SET revoked_at=now() WHERE id=$1 AND account_id=$2',
+      [input.id, account.id],
+    );
+    return { revoked: true };
   });
   app.post(McpPairingRoutes.mcpPair.path, { bodyLimit: 4096 }, async (request) =>
     service.begin(request.body),

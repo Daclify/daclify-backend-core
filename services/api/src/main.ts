@@ -1,4 +1,5 @@
 import { MiniAppCleanup } from './mini-apps/cleanup.js';
+import { McpOAuth } from './mcp/oauth.js';
 import { McpPairings } from './mcp/pairing.js';
 import { ApiOriginSchema } from '../../../protocol/base.js';
 import { AccountExit } from './account-exit/service.js';
@@ -89,7 +90,8 @@ const configuration = z
     NETWORK_ENVIRONMENT: z.enum(['local', 'testnet', 'mainnet']),
     API_HOST: z.union([z.ipv4(), z.ipv6()]).default('127.0.0.1'),
     API_PORT: z.coerce.number().int().min(1).max(65535).default(3008),
-    COMMUNITY_MCP_ENABLED: z.enum(['0','1']).default('0'),
+    COMMUNITY_MCP_ENABLED: z.enum(['0', '1']).default('0'),
+    COMMUNITY_MCP_HTTP_ENABLED: z.enum(['0', '1']).default('0'),
     TRUSTED_PROXY_IPS: z.string().min(2).max(8192).optional(),
     SHARED_PROXY_IPS: z.string().min(2).max(8192).optional(),
     PINATA_JWT: z.string().min(1).optional(),
@@ -294,9 +296,24 @@ const miniAppArtifacts = process.env.MINI_APP_RELEASE_DIRECTORY
 const miniApps = connectedApps
   ? new MiniAppConnections(connectedApps, miniAppArtifacts)
   : undefined;
-const mcpPairings=env.COMMUNITY_MCP_ENABLED==='1'?new McpPairings(pool,chain,ApiOriginSchema.parse(process.env.API_PUBLIC_ORIGIN),env.FRONTEND_ORIGIN,connectedApps):undefined;
+const mcpPairings =
+  env.COMMUNITY_MCP_ENABLED === '1' || env.COMMUNITY_MCP_HTTP_ENABLED === '1'
+    ? new McpPairings(
+        pool,
+        chain,
+        ApiOriginSchema.parse(process.env.API_PUBLIC_ORIGIN),
+        env.FRONTEND_ORIGIN,
+        connectedApps,
+      )
+    : undefined;
+const mcpOAuth =
+  env.COMMUNITY_MCP_HTTP_ENABLED === '1' && mcpPairings
+    ? new McpOAuth(mcpPairings, JSON.parse(process.env.COMMUNITY_MCP_HTTP_CLIENTS ?? '[]'))
+    : undefined;
+if (mcpOAuth && !mcpOAuth.clients.length) throw Error('MCP_REGISTERED_CLIENT_REQUIRED');
 const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
-  ...(mcpPairings?{mcpPairings}:{}),
+  ...(mcpPairings ? { mcpPairings } : {}),
+  ...(mcpOAuth ? { mcpOAuth } : {}),
   ...(profileKeysConfiguration ? { profileKeys: profileKeysConfiguration } : {}),
   ...(accountExit ? { accountExit } : {}),
   telosGovernance: readTelosPins(process.env),
@@ -329,7 +346,13 @@ const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
 });
 await app.listen({ host: env.API_HOST, port: env.API_PORT });
 const authWorker = startAuthMaintenance(pool);
-const mcpWorker=mcpPairings?startPollingWorker(async()=>await mcpPairings.cleanup()?'progress':'idle','MCP_MAINTENANCE_UNAVAILABLE'):undefined;
+const mcpWorker = mcpPairings
+  ? startPollingWorker(
+      async () =>
+        (await mcpPairings.cleanup()) + ((await mcpOAuth?.cleanup()) ?? 0) ? 'progress' : 'idle',
+      'MCP_MAINTENANCE_UNAVAILABLE',
+    )
+  : undefined;
 const exitWorker = accountExit ? startAccountExitWorker(pool, accountExit) : undefined;
 const profileWorker = profileKeysConfiguration
   ? startProfileWorker(pool, new ProfileKeys(pool, chain, profileKeysConfiguration))

@@ -4,6 +4,12 @@ import { PrivateKey } from '@wharfkit/antelope';
 import { createHash, randomBytes, generateKeyPairSync } from 'node:crypto';
 import { z } from 'zod';
 import { migrate } from '../../services/api/src/store.js';
+import { McpOAuth } from '../../services/api/src/mcp/oauth.js';
+import {
+  McpOAuthRoutes,
+  PreparedInstructionSchema,
+  SubmissionResultSchema,
+} from '../../protocol/mcp.js';
 import { McpPairings } from '../../services/api/src/mcp/pairing.js';
 import {
   nativeContracts,
@@ -26,7 +32,8 @@ const pool = new Pool({ connectionString: url });
 let native: NativeContracts,
   gateway: NativeChainGateway,
   server: Awaited<ReturnType<typeof createServer>>,
-  service: McpPairings;
+  service: McpPairings,
+  oauth: McpOAuth;
 const frontend = 'https://app.example',
   issuer = 'https://api.example';
 beforeAll(async () => {
@@ -46,7 +53,14 @@ beforeAll(async () => {
     pool,
   );
   service = new McpPairings(pool, gateway, issuer, frontend);
-  server = await createServer(pool, gateway, frontend, { apiOrigin: issuer, mcpPairings: service });
+  oauth = new McpOAuth(service, [
+    { clientId: 'official-sdk', redirectUris: ['https://client.example/callback'] },
+  ]);
+  server = await createServer(pool, gateway, frontend, {
+    apiOrigin: issuer,
+    mcpPairings: service,
+    mcpOAuth: oauth,
+  });
 }, 90000);
 afterAll(async () => {
   vi.restoreAllMocks();
@@ -171,6 +185,8 @@ async function approved() {
   return {
     dao,
     root,
+    account,
+    browserHeaders: headers,
     delegate,
     pairing,
     verifier,
@@ -324,4 +340,218 @@ it('persists the exact real native packet before delivery and reconciles a lost 
       .filter((value) => value.member === '1' && value.ballot === '900001'),
   ).toHaveLength(1);
   vi.restoreAllMocks();
+});
+it('issues resource-bound OAuth under real account proof, rotates refresh tokens and revokes a replayed family', async () => {
+  const fixture = await approved(),
+    verifier = randomBytes(32).toString('base64url');
+  const input = {
+    response_type: 'code',
+    client_id: 'official-sdk',
+    redirect_uri: 'https://client.example/callback',
+    resource: issuer + '/mcp',
+    scope: 'daclify:read daclify:prepare daclify:submit',
+    state: 'native-fixture',
+    code_challenge: createHash('sha256').update(verifier).digest('base64url'),
+    code_challenge_method: 'S256',
+  };
+  const started = await oauth.begin(input);
+  const consent = await server.inject({
+    method: 'GET',
+    url: McpOAuthRoutes.mcpOAuthConsent.path.replace(':id', started.id),
+    headers: fixture.browserHeaders,
+  });
+  expect(consent.statusCode, consent.body).toBe(200);
+  const body = McpOAuthRoutes.mcpOAuthApprove.input.parse({
+    id: started.id,
+    dao: fixture.dao.reference,
+    memberId: '1',
+    nativeScopes: ['vote'],
+    localGrantId: fixture.value.grant.id,
+  });
+  const refused = await server.inject({
+    method: 'POST',
+    url: McpOAuthRoutes.mcpOAuthApprove.path,
+    headers: fixture.browserHeaders,
+    payload: body,
+  });
+  expect(refused.statusCode).toBe(403);
+  const controlResponse = await server.inject({
+    method: 'POST',
+    url: '/v1/account/control',
+    headers: fixture.browserHeaders,
+    payload: {
+      path: McpOAuthRoutes.mcpOAuthApprove.path,
+      bodyHash: createHash('sha256').update(JSON.stringify(body)).digest('hex'),
+    },
+  });
+  expect(controlResponse.statusCode, controlResponse.body).toBe(200);
+  const control = AccountControlChallengeSchema.parse(controlResponse.json());
+  const approval = await server.inject({
+    method: 'POST',
+    url: McpOAuthRoutes.mcpOAuthApprove.path,
+    headers: {
+      ...fixture.browserHeaders,
+      'x-account-intent-id': control.id,
+      'x-account-signature': fixture.root
+        .signMessage(new TextEncoder().encode(control.message))
+        .toString(),
+    },
+    payload: body,
+  });
+  expect(approval.statusCode, approval.body).toBe(200);
+  const redirect = new URL(
+      McpOAuthRoutes.mcpOAuthApprove.response.parse(approval.json()).redirectUrl,
+    ),
+    code = redirect.searchParams.get('code');
+  if (!code) throw Error('OAuth code absent');
+  expect(redirect.searchParams.get('state')).toBe(input.state);
+  expect(redirect.searchParams.get('iss')).toBe(oauth.issuer);
+  const tokenInput = {
+    grant_type: 'authorization_code',
+    code,
+    code_verifier: verifier,
+    client_id: input.client_id,
+    redirect_uri: input.redirect_uri,
+    resource: input.resource,
+  };
+  for (const change of [
+    { resource: 'https://other.example/mcp' },
+    { code_verifier: 'w'.repeat(43) },
+    { redirect_uri: 'https://client.example/other' },
+  ])
+    await expect(oauth.token({ ...tokenInput, ...change })).rejects.toThrow();
+  const tokens = await oauth.token(tokenInput);
+  expect(tokens.expires_in).toBeLessThanOrEqual(300);
+  const current = await oauth.authorizeToken(tokens.access_token);
+  expect(current.claims.memberId).toBe('1');
+  expect(current.claims.sub).toBe(fixture.account.account.id);
+  const unsigned = await server.inject({
+    method: 'POST',
+    url: '/mcp',
+    headers: { host: 'api.example' },
+    payload: { jsonrpc: '2.0', id: 1, method: 'tools/list' },
+  });
+  expect(unsigned.statusCode).toBe(401);
+  expect(unsigned.headers['www-authenticate']).toContain(
+    '/.well-known/oauth-protected-resource/mcp',
+  );
+  const foreign = await server.inject({
+    method: 'POST',
+    url: '/mcp',
+    headers: { host: 'api.example', authorization: 'Bearer ' + fixture.value.token },
+    payload: { jsonrpc: '2.0', id: 1, method: 'tools/list' },
+  });
+  expect(foreign.statusCode).toBe(401);
+  const badOrigin = await server.inject({
+    method: 'POST',
+    url: '/mcp',
+    headers: {
+      host: 'api.example',
+      authorization: 'Bearer ' + tokens.access_token,
+      origin: 'https://evil.example',
+    },
+    payload: { jsonrpc: '2.0', id: 1, method: 'tools/list' },
+  });
+  expect(badOrigin.statusCode).toBe(403);
+  const list = await server.inject({
+    method: 'POST',
+    url: '/mcp',
+    headers: {
+      host: 'api.example',
+      authorization: 'Bearer ' + tokens.access_token,
+      accept: 'application/json, text/event-stream',
+      'mcp-protocol-version': '2025-11-25',
+    },
+    payload: { jsonrpc: '2.0', id: 2, method: 'tools/list' },
+  });
+  expect(list.statusCode, list.body).toBe(200);
+  expect(list.body).toContain('get_membership');
+  expect(list.body).not.toContain('submit_prepared');
+  expect(list.body).not.toContain(fixture.delegate.toString());
+  await fixture.dao.act(
+    'decide',
+    'open',
+    encodeDecide('open', {
+      ...fixture.dao.actor(),
+      ballot_id: '900002',
+      kind: 0,
+      choices: 2,
+      duration: 60,
+      quorum: 5000,
+      approval: 5001,
+      metadata: '{}',
+    }),
+  );
+  const call = async (name: string, args: unknown) => {
+    const response = await server.inject({
+      method: 'POST',
+      url: '/mcp',
+      headers: {
+        host: 'api.example',
+        authorization: 'Bearer ' + tokens.access_token,
+        accept: 'application/json, text/event-stream',
+        'mcp-protocol-version': '2025-11-25',
+      },
+      payload: { jsonrpc: '2.0', id: 4, method: 'tools/call', params: { name, arguments: args } },
+    });
+    expect(response.statusCode, response.body).toBe(200);
+    const data = response.body.includes('data: ')
+      ? response.body
+          .split('\n')
+          .find((line) => line.startsWith('data: '))
+          ?.slice(6)
+      : response.body;
+    if (!data) throw Error('MCP result absent');
+    const result = z
+      .object({
+        result: z.object({
+          isError: z.boolean().optional(),
+          content: z.array(z.object({ type: z.string(), text: z.string() })),
+        }),
+      })
+      .parse(JSON.parse(data)).result;
+    expect(result.isError, response.body).not.toBe(true);
+    const content = result.content[0];
+    if (!content) throw Error('MCP content absent');
+    return JSON.parse(content.text);
+  };
+  const prepared = PreparedInstructionSchema.parse(
+    await call('prepare_vote', { pollId: '900002', optionId: '1' }),
+  );
+  const submitted = SubmissionResultSchema.parse(
+    await call('submit_signed', {
+      prepared,
+      signature: fixture.delegate.signDigest(instructionDigest(prepared.request)).toString(),
+    }),
+  );
+  expect(submitted.state).toBe('submitted');
+  const votes = await native.api.v1.chain.get_table_rows({
+    code: 'decide',
+    scope: 'daclifycore',
+    table: 'votes',
+    limit: 10,
+  });
+  expect(
+    z
+      .array(DecideTableSchemas.votes)
+      .parse(votes.rows)
+      .filter((value) => value.ballot === '900002'),
+  ).toHaveLength(1);
+  const rotated = await oauth.token({
+    grant_type: 'refresh_token',
+    refresh_token: tokens.refresh_token,
+    client_id: input.client_id,
+    resource: input.resource,
+  });
+  expect(rotated.refresh_token).not.toBe(tokens.refresh_token);
+  await oauth.authorizeToken(rotated.access_token);
+  await expect(
+    oauth.token({
+      grant_type: 'refresh_token',
+      refresh_token: tokens.refresh_token,
+      client_id: input.client_id,
+      resource: input.resource,
+    }),
+  ).rejects.toThrow();
+  await expect(oauth.authorizeToken(rotated.access_token)).rejects.toThrow();
 });

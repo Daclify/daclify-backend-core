@@ -46,6 +46,8 @@ export type AccountControlProof = z.infer<typeof AccountControlProofSchema>;
 
 export const AccountControlPaths = Object.freeze([
   '/v1/me/exit',
+  '/v1/mcp/grants/revoke',
+  '/v1/mcp/oauth/approve',
   '/v1/mcp/pairings/approve',
   '/v1/profiles/keys/share',
   '/v1/profiles/keys/remove',

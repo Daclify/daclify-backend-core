@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/server';
 import type { CommunityTools } from './tools.js';
 export function createStdioServer(tools: CommunityTools): McpServer {
-  const server = new McpServer({ name: 'daclify-community', version: '0.1.0-alpha.2' });
+  const server = new McpServer({ name: 'daclify-community', version: '0.1.0-alpha.3' });
   tools.register(server);
   return server;
 }

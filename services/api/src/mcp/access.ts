@@ -30,10 +30,13 @@ type PreparationRow = { prepared: unknown; packet: unknown; state: string };
 export class LocalCommunityAccess implements CommunityAccess {
   constructor(
     private readonly service: McpPairings,
-    private readonly token: string,
+    private readonly token: string | (() => ReturnType<McpPairings['authorize']>),
   ) {}
+  private authorize() {
+    return typeof this.token === 'string' ? this.service.authorize(this.token) : this.token();
+  }
   private async resolve(input: McpPrepareInput) {
-    const current = await this.service.authorize(this.token),
+    const current = await this.authorize(),
       { grant, member, governance, account } = current,
       chain = this.service.chain;
     if (!chain) throw new ApiError('MCP_UNAVAILABLE', 503);
@@ -73,7 +76,7 @@ export class LocalCommunityAccess implements CommunityAccess {
   }
   async read(input: McpReadInput) {
     const parsed = McpReadInputSchema.parse(input),
-      current = await this.service.authorize(this.token);
+      current = await this.authorize();
     if (parsed.tool === 'list_daos') return { daos: [current.grant.dao] };
     if (parsed.tool === 'get_membership') return McpReadResultSchema.parse(current.member);
     if (!this.service.chain) throw new ApiError('MCP_UNAVAILABLE', 503);
@@ -135,7 +138,7 @@ export class LocalCommunityAccess implements CommunityAccess {
   }
   async submitSigned(input: SignedMcpInstruction): Promise<SubmissionResult> {
     const signed = SignedMcpInstructionSchema.parse(input),
-      current = await this.service.authorize(this.token),
+      current = await this.authorize(),
       chain = this.service.chain;
     if (
       !chain?.prepareScopedSubmission ||

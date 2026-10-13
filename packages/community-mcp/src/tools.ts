@@ -6,6 +6,7 @@ import {
   McpPrepareInputSchema,
   SignedMcpInstructionSchema,
   PreparedInstructionSchema,
+  McpPreparationSchema,
   McpReadResultSchema,
   SubmissionResultSchema,
 } from '@daclify/core-protocol';
@@ -48,7 +49,7 @@ export class CommunityTools {
     const read = McpReadInputSchema.safeParse({ tool: name, input });
     if (read.success) return McpReadResultSchema.parse(await this.access.read(read.data));
     const prepare = McpPrepareInputSchema.parse({ tool: name, input });
-    return PreparedInstructionSchema.parse(await this.access.prepare(prepare));
+    return McpPreparationSchema.parse(await this.access.prepare(prepare));
   }
   register(server: McpServer): void {
     for (const [name, inputSchema] of Object.entries(inputs))
