@@ -18,6 +18,8 @@ The recipient becomes the first administrator **and executive**. These are separ
 
 These are engineering/product recommendations, not additional user-selected policies: support the existing **Shared contracts and hosting** creation path first; expire links after seven days; let an eligible issuer revoke an unclaimed link; let an existing Daclify account sign in rather than create a duplicate account. Keep the existing setup schemas, presets, custody rules, account entry, creation orders, fees and resource limits.
 
+For this first version, use human or mixed participant mode so the person claiming the link can be its founding executive. Existing agent-only setup enrolls a nominated agent instead of the operator; keep that separate until its claim flow explicitly identifies the agent that will hold the executive office. Do not silently enroll a human into an agent-only DAO.
+
 The issuer uses the normal setup fields and selects **Create claim link**. Review shows the setup, network, expiration and the fact that only the recipient will join. Store a bounded immutable draft and return a secret link that can be copied. Editing the setup means revoking the old draft and creating another link, so the recipient cannot approve terms that silently change.
 
 The recipient opens a compact setup summary. Opening the link, link previews and signing in do not reserve or consume it. Preserve the destination through the existing account entry flow. A new person creates one Daclify account and saves its recovery kit; an existing person signs in through an available paired method. An account without a public signing/encryption identity completes that setup. A paired sign-in with an existing public identity can proceed with its private keys locked.
@@ -55,6 +57,7 @@ Implementation must prove the following with real API/SQL/native and desktop/mob
 - Opening/previewing a link creates no account, reservation, native order or DAO. Expired, revoked, substituted and wrong-network links cannot create one.
 - Two simultaneous claimants produce exactly one reserved account and one DAO. Lost native/HTTP responses, reload, worker restart and repeated confirmation reconcile the same reference.
 - Only the claimant is enrolled initially, with actual administrator and executive state. Shared runtime authorities and the Daclify governing DAO roster remain unchanged.
+- Human claim drafts reject agent-only mode or a substituted founding-agent identity. The existing ordinary agent-only creation path retains its founding-agent semantics.
 - Native bootstrap cannot appoint an executive in an existing DAO, substitute a founder, overwrite a roster or bypass quota/payment/custody guards. All actions in failed creation roll back together.
 - Expiration/revocation races cannot free a link with unresolved native work. Cleanup is bounded and preserves recovery associations.
 - The compact review, recovery, errors and completion work with keyboard, screen readers and mobile layouts. Generated reference docs, user help and frozen SDKs match the exposed feature.
