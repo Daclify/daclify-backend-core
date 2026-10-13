@@ -28,3 +28,4 @@ export * from './mini-app-database.js';
 export * from './mini-apps.js';
 export * from './profiles.js';
 export * from './account-exit.js';
+export * from './mcp.js';

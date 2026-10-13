@@ -4,13 +4,12 @@ import { PrivateKey } from '@wharfkit/antelope';
 import { z } from 'zod';
 import {
   ApiRoutes,
-  LoginMessageSchema,
   DaoRefSchema,
   ChainIdSchema,
   NativeAccountSchema,
   IdSchema,
 } from '@daclify/core-protocol';
-import { readAppResponse } from '@daclify/core-protocol/connected-apps';
+import { CommunityAgentClient } from '@daclify/core-protocol/community-agent';
 import { encodeAction, makeInstruction, instructionDigest } from '@daclify/core-protocol/sdk';
 import {
   AgentPublishInputSchema,
@@ -26,34 +25,28 @@ export async function publishAgent(input: AgentPublishInput): Promise<AgentPubli
   const root = PrivateKey.from(config.accountAuthentication.signingKey);
   const delegate = PrivateKey.from(config.scopedSigner.signingKey);
   if (root.toPublic().equals(delegate.toPublic())) throw new Error('AGENT_SIGNER_KEYS');
-  const cookies = new Map<string, string>();
-  let csrf = '';
-  async function request(path: string, body?: unknown): Promise<unknown> {
-    const response = await fetch(new URL(path, config.api), {
-      method: body === undefined ? 'GET' : 'POST',
-      headers: {
-        origin: config.origin,
-        ...(cookies.size
-          ? { cookie: [...cookies].map(([name, value]) => name + '=' + value).join('; ') }
-          : {}),
-        ...(body === undefined ? {} : { 'content-type': 'application/json', 'x-csrf-token': csrf }),
+  const client = new CommunityAgentClient(
+    {
+      version: 1,
+      api: config.api,
+      origin: config.origin,
+      dao: config.dao,
+      memberId: config.scopedSigner.memberId,
+      authentication: {
+        signingPublicKey: root.toPublic().toString(),
+        encryptionPublicKey: config.accountAuthentication.encryptionKey,
       },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-      signal: AbortSignal.timeout(15000),
-      redirect: 'error',
-      cache: 'no-store',
-    });
-    if (!response.ok) throw new Error('AGENT_API_REJECTED');
-    for (const cookie of response.headers.getSetCookie()) {
-      const first = cookie.split(';')[0];
-      if (!first || first.length > 4096) throw new Error('AGENT_API_RESPONSE');
-      const equal = first.indexOf('=');
-      if (equal < 1) throw new Error('AGENT_API_RESPONSE');
-      cookies.set(first.slice(0, equal), first.slice(equal + 1));
-    }
-    if (response.status === 204) return null;
-    return JSON.parse(new TextDecoder().decode(await readAppResponse(response, 2 * 1024 * 1024)));
-  }
+      scopes: [],
+    },
+    {
+      signLoginMessage: async (message) =>
+        root.signMessage(new TextEncoder().encode(message)).toString(),
+      signInstruction: async (request) =>
+        delegate.signDigest(instructionDigest(request)).toString(),
+    },
+  );
+  await client.login();
+  const request = (path: string, body?: unknown) => client.authenticatedRequest(path, body);
   const network = ApiRoutes.network.response.parse(await request(ApiRoutes.network.path));
   if (
     network.chainId !== config.dao.chainId ||
@@ -67,41 +60,6 @@ export async function publishAgent(input: AgentPublishInput): Promise<AgentPubli
   );
   if (JSON.stringify(dao.reference) !== JSON.stringify(config.dao)) throw new Error('AGENT_DOMAIN');
   if (dao.privacy !== 'public') throw new Error('EXAMPLE_REQUIRES_PUBLIC_DAO');
-  const challenge = ApiRoutes.challenge.response.parse(
-    await request(
-      ApiRoutes.challenge.path,
-      ApiRoutes.challenge.input.parse({
-        signingKey: root.toPublic().toString(),
-        encryptionKey: config.accountAuthentication.encryptionKey,
-      }),
-    ),
-  );
-  const parsed = LoginMessageSchema.safeParse(JSON.parse(challenge.message));
-  if (
-    !parsed.success ||
-    parsed.data.origin !== config.origin ||
-    parsed.data.audience !== config.api ||
-    parsed.data.challenge !== challenge.id ||
-    parsed.data.signingKey !== root.toPublic().toString() ||
-    JSON.stringify(parsed.data.encryptionKey) !==
-      JSON.stringify(config.accountAuthentication.encryptionKey) ||
-    parsed.data.expires !== challenge.expires ||
-    Date.parse(parsed.data.expires) <= Date.now()
-  )
-    throw new Error('AGENT_LOGIN_CONTEXT');
-  const session = ApiRoutes.login.response.parse(
-    await request(
-      ApiRoutes.login.path,
-      ApiRoutes.login.input.parse({
-        challengeId: challenge.id,
-        signature: root.signMessage(new TextEncoder().encode(challenge.message)).toString(),
-        encryptionKey: config.accountAuthentication.encryptionKey,
-      }),
-    ),
-  );
-  if (session.account.signingKey !== root.toPublic().toString())
-    throw new Error('AGENT_LOGIN_CONTEXT');
-  csrf = session.csrfToken;
   try {
     const membership = ApiRoutes.memberships.response
       .parse(await request(ApiRoutes.memberships.path))
@@ -166,17 +124,16 @@ export async function publishAgent(input: AgentPublishInput): Promise<AgentPubli
     return AgentPublishResultSchema.parse({
       dao: config.dao,
       memberId: membership.memberId,
-      accountId: session.account.id,
+      accountId: client.authenticatedAccountId(),
       documentId: config.documentId,
       transactionId: result.transactionId,
     });
   } finally {
     try {
-      await request(ApiRoutes.logout.path, {});
+      await client.logout();
     } catch {
       /* A failed logout does not change the confirmed native receipt. */
     }
-    cookies.clear();
   }
 }
 

@@ -162,7 +162,7 @@ it('constructs the complete producer challenge and publishes using a different s
 });
 it('refuses a login challenge from another audience before signing it', async () => {
   const calls = apiFixture('https://other.example');
-  await expect(publishAgent(input)).rejects.toThrow('AGENT_LOGIN_CONTEXT');
+  await expect(publishAgent(input)).rejects.toThrow('MCP_LOGIN_CONTEXT');
   expect(calls.some((call) => call.path === ApiRoutes.login.path)).toBe(false);
 });
 it('rejects absent encryption identity, private classification, protected envelopes and oversized public JSON', () => {

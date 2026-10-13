@@ -27,6 +27,7 @@ import {
 } from '../../sdk/index.js';
 import { publishAgent } from '../../examples/agent-publish.js';
 import { AgentPublishResultSchema } from '../../examples/agent-publish-config.js';
+import { VERSION } from '../../protocol/base.js';
 const url = process.env.DATABASE_URL;
 if (
   !url ||
@@ -445,7 +446,7 @@ it('installs exact public packages and runs the protected CLI from a clean tempo
     );
     for (const name of ['agent-publish.ts', 'agent-publish-config.ts'])
       await copyFile(resolve('examples', name), join(directory, name));
-    const archive = resolve('.artifacts/daclify-core-protocol-0.14.0-alpha.8.tgz');
+    const archive = resolve('.artifacts/daclify-core-protocol-' + VERSION + '.tgz');
     await promisify(execFile)(
       'npm',
       [

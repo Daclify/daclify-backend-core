@@ -1,6 +1,6 @@
 {
   "name": "@daclify/core-protocol",
-  "version": "0.15.0-alpha.10",
+  "version": "0.15.0-alpha.11",
   "license": "AGPL-3.0-only",
   "type": "module",
   "description": "Daclify public protocol and generated contract SDK",
@@ -48,6 +48,10 @@
     "./mini-app-cleanup": {
       "types": "./dist/sdk/mini-app-cleanup.d.ts",
       "import": "./dist/sdk/mini-app-cleanup.js"
+    },
+    "./community-agent": {
+      "types": "./dist/sdk/community-agent.d.ts",
+      "import": "./dist/sdk/community-agent.js"
     }
   },
   "files": [

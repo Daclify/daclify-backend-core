@@ -6,7 +6,7 @@
 
 **Architecture:** A reusable tool layer consumes public Daclify SDK/schema artifacts. Local stdio uses a protected community signer and self-service browser pairing; hosted Streamable HTTP uses dedicated resource-bound OAuth and accepts only permitted externally signed submissions. Native scope/guardian/role checks remain authoritative on every operation.
 
-**Tech Stack:** Node 24.21.x, strict TypeScript/Zod, stable `@modelcontextprotocol/sdk@1.32.1`, existing Fastify/PostgreSQL API, canonical Antelope instruction codecs and actual native fixtures.
+**Tech Stack:** Node 24.21.x, strict TypeScript/Zod, stable v2 `@modelcontextprotocol/server@2.3.1` / `client@2.3.1` (Node transport adapter `@modelcontextprotocol/node@2.1.1`), existing Fastify/PostgreSQL API, canonical Antelope instruction codecs and actual native fixtures.
 
 **Spec:** [Design](../specs/2026-10-12-self-service-mini-apps-and-account-exit-design.md); [master](2026-10-12-self-service-mini-apps-and-account-exit.md); existing [agent cooperative design](../specs/2026-10-11-agents-only-service-cooperative-design.md), limited to its credential/guardian principles rather than its commercial platform.
 
