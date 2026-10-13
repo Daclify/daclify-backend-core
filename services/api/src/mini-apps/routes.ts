@@ -31,9 +31,8 @@ export function registerMiniAppsRoutes(
   });
   app.get(MiniAppsRoutes.miniAppRelease.path, async (request, reply) => {
     const { releaseId } = MiniAppsRoutes.miniAppRelease.params.parse(request.params);
-    const artifacts = connections.artifacts;
-    if (!artifacts || releaseId !== artifacts.manifest.releaseId)
-      throw new ApiError('MINI_APP_RELEASE_UNKNOWN', 404);
+    const artifacts = connections.artifacts?.findRelease(releaseId);
+    if (!artifacts) throw new ApiError('MINI_APP_RELEASE_UNKNOWN', 404);
     return reply
       .header('cache-control', 'public,max-age=31536000,immutable')
       .header('etag', '"' + artifacts.manifestHash + '"')
@@ -47,9 +46,8 @@ export function registerMiniAppsRoutes(
         file: z.enum(['core.tgz', 'modules.tgz', 'starter.tgz']),
       })
       .parse(request.params);
-    const artifacts = connections.artifacts;
-    if (!artifacts || params.releaseId !== artifacts.manifest.releaseId)
-      throw new ApiError('MINI_APP_RELEASE_UNKNOWN', 404);
+    const artifacts = connections.artifacts?.findRelease(params.releaseId);
+    if (!artifacts) throw new ApiError('MINI_APP_RELEASE_UNKNOWN', 404);
     const metadata = artifacts.manifest.files.find((file) => file.name === params.file);
     if (!metadata) throw new ApiError('MINI_APP_ARTIFACT_INTEGRITY', 503);
     const handle = await artifacts.openFile(params.file).catch(() => {

@@ -1,7 +1,7 @@
 import { beforeAll, afterAll, expect, it } from 'vitest';
 import { Pool } from 'pg';
 import { randomBytes, generateKeyPairSync, createHash } from 'node:crypto';
-import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, writeFile, rm, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { PrivateKey } from '@wharfkit/antelope';
@@ -19,7 +19,7 @@ import { VERSION } from '../../protocol/base.js';
 import { VERSION as MODULES_VERSION } from '@daclify/modules';
 import { MiniAppArtifacts, miniAppReleaseId } from '../../services/api/src/mini-apps/artifacts.js';
 import { MiniAppConnections } from '../../services/api/src/mini-apps/connections.js';
-import { MiniAppConnectionSchema } from '../../protocol/mini-apps.js';
+import { MiniAppConnectionSchema, MiniAppReleaseManifestSchema } from '../../protocol/mini-apps.js';
 import { createServer } from '../../services/api/src/server.js';
 import { authChain } from '../helpers/auth-chain.js';
 const url = process.env.DATABASE_URL;
@@ -44,7 +44,7 @@ const dao = {
 };
 let service: ConnectedApps, connections: MiniAppConnections, artifact: MiniAppArtifacts;
 let admin: Account, member: Account, foreign: Account;
-let clientId: string, directory: string;
+let clientId: string, directory: string, archiveId: string;
 let adminEnabled = true,
   networkOffline = false;
 let adminLogin: { token: string; csrfToken: string },
@@ -158,7 +158,18 @@ beforeAll(async () => {
   manifest.releaseId = miniAppReleaseId(manifest);
   for (const file of manifest.files) await writeFile(join(directory, file.name), bytes);
   await writeFile(join(directory, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
-  artifact = await MiniAppArtifacts.load(directory);
+  const archiveDirectory = join(directory, 'previous');
+  await mkdir(archiveDirectory);
+  const archived = {
+    ...manifest,
+    coreVersion: '0.15.0-alpha.17',
+    modulesVersion: '0.10.0-alpha.24',
+  };
+  archived.releaseId = miniAppReleaseId(archived);
+  archiveId = archived.releaseId;
+  for (const file of archived.files) await writeFile(join(archiveDirectory, file.name), bytes);
+  await writeFile(join(archiveDirectory, 'manifest.json'), JSON.stringify(archived));
+  artifact = await MiniAppArtifacts.load(directory, [archiveDirectory]);
   connections = new MiniAppConnections(service, artifact, {
     lookup: async () => [{ address: '1.1.1.1', family: 4 }],
     request: async () => {
@@ -264,4 +275,34 @@ it('requires an account session and CSRF for checks and returns the canonical bu
       })
     ).statusCode,
   ).toBe(200);
+});
+
+it('keeps previous immutable downloads while new connections use the current release', async () => {
+  const previousArtifacts = await MiniAppArtifacts.load(join(directory, 'previous'));
+  await expect(
+    new MiniAppConnections(service, previousArtifacts).buildConnection('1', '1', admin.id),
+  ).rejects.toMatchObject({ code: 'MINI_APP_RELEASE_VERSION' });
+  const bundle = await connections.buildConnection('1', '1', admin.id);
+  expect(bundle.coreVersion).toBe(VERSION);
+  expect(bundle.modulesVersion).toBe(MODULES_VERSION);
+  expect(bundle.releaseId).toBe(artifact.manifest.releaseId);
+  const previous = '/v1/mini-apps/releases/' + archiveId;
+  const manifest = await server.inject({ method: 'GET', url: previous });
+  expect(manifest.statusCode, manifest.body).toBe(200);
+  expect(MiniAppReleaseManifestSchema.parse(manifest.json()).coreVersion).toBe('0.15.0-alpha.17');
+  const downloaded = await server.inject({ method: 'GET', url: previous + '/files/starter.tgz' });
+  expect(downloaded.statusCode).toBe(200);
+  expect(downloaded.body).toBe('synthetic artifact fixture');
+  expect(downloaded.headers['cache-control']).toContain('immutable');
+  expect(downloaded.headers.etag).toBe(
+    '"' + createHash('sha256').update('synthetic artifact fixture').digest('hex') + '"',
+  );
+  expect(
+    (await server.inject({ method: 'GET', url: '/v1/mini-apps/releases/' + 'ff'.repeat(32) }))
+      .statusCode,
+  ).toBe(404);
+  await writeFile(join(directory, 'previous', 'starter.tgz'), 'changed archive');
+  expect(
+    (await server.inject({ method: 'GET', url: previous + '/files/starter.tgz' })).statusCode,
+  ).toBe(503);
 });

@@ -296,6 +296,7 @@ const accountExit = exitConfiguration
 const miniAppArtifacts = process.env.MINI_APP_RELEASE_DIRECTORY
   ? await MiniAppArtifacts.load(
       z.string().min(1).max(4096).parse(process.env.MINI_APP_RELEASE_DIRECTORY),
+      JSON.parse(process.env.MINI_APP_ARCHIVE_DIRECTORIES ?? '[]'),
     )
   : undefined;
 const miniApps = connectedApps

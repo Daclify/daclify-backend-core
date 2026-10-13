@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { open, lstat, type FileHandle } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { z } from 'zod';
 import {
   MiniAppReleaseManifestSchema,
   type MiniAppReleaseManifest,
@@ -20,8 +21,17 @@ export class MiniAppArtifacts {
     readonly manifest: MiniAppReleaseManifest,
     readonly manifestBytes: Buffer,
     readonly manifestHash: string,
+    private readonly archives: readonly MiniAppArtifacts[] = [],
   ) {}
-  static async load(directory: string): Promise<MiniAppArtifacts> {
+  static async load(
+    directory: string,
+    archiveDirectories: unknown = [],
+  ): Promise<MiniAppArtifacts> {
+    const parsedDirectories = z
+      .array(z.string().startsWith('/').max(4096))
+      .max(8)
+      .safeParse(archiveDirectories);
+    if (!parsedDirectories.success) throw integrity();
     const path = resolve(directory, 'manifest.json');
     const info = await lstat(path);
     if (!info.isFile() || info.size < 1 || info.size > 65536) throw integrity();
@@ -41,12 +51,23 @@ export class MiniAppArtifacts {
       parsed.data,
       bytes,
       createHash('sha256').update(bytes).digest('hex'),
+      await Promise.all(parsedDirectories.data.map((archive) => MiniAppArtifacts.load(archive))),
     );
+    const releaseIds = [
+      artifacts.manifest.releaseId,
+      ...artifacts.archives.map((archive) => archive.manifest.releaseId),
+    ];
+    if (new Set(releaseIds).size !== releaseIds.length) throw integrity();
     for (const file of parsed.data.files) {
       const handle = await artifacts.openFile(file.name);
       await handle.close();
     }
     return artifacts;
+  }
+  findRelease(releaseId: string): MiniAppArtifacts | undefined {
+    return this.manifest.releaseId === releaseId
+      ? this
+      : this.archives.find((archive) => archive.manifest.releaseId === releaseId);
   }
   async openFile(name: ArtifactName): Promise<FileHandle> {
     const file = this.manifest.files.find((file) => file.name === name);

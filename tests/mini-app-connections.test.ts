@@ -46,6 +46,15 @@ it('rejects tampered manifest identifiers and changed artifact bytes before serv
     );
     await expect(MiniAppArtifacts.load(directory)).rejects.toThrow('MINI_APP_ARTIFACT_INTEGRITY');
     await writeFile(join(directory, 'manifest.json'), JSON.stringify(manifest));
+    await expect(MiniAppArtifacts.load(directory, [directory])).rejects.toThrow(
+      'MINI_APP_ARTIFACT_INTEGRITY',
+    );
+    await expect(
+      MiniAppArtifacts.load(
+        directory,
+        Array.from({ length: 9 }, () => directory),
+      ),
+    ).rejects.toThrow('MINI_APP_ARTIFACT_INTEGRITY');
     const artifacts = await MiniAppArtifacts.load(directory);
     await writeFile(join(directory, 'starter.tgz'), 'tampered');
     await expect(artifacts.openFile('starter.tgz')).rejects.toThrow('MINI_APP_ARTIFACT_INTEGRITY');
