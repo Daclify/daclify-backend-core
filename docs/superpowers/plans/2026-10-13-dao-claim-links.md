@@ -80,11 +80,15 @@
 
 **Files:** Version/lock/changelog and generated help updates across core/modules/frontend; published SDK/starter manifests, requirements/evidence and deployment packet.
 
-- [ ] Publish core20/module28/frontend27/MCP11 as new immutable artifacts after strict/generated/full core/modules/frontend checks. Preserve older SDK/companion/starter archives and qualify their supported paths; release new active starter if the exact cohort requires it.
-- [ ] Review the complete change inline for authorization, isolation, retry/erasure/cleanup, legacy ABI compatibility and user journey; fix material findings with regression evidence.
-- [ ] Prepare clean source-bound testnet candidate and rollback. Requalify version-bound recovery before enabling a new API version; measure native deployment RAM correctly and preserve existing rows, balances, authorities, pins and paused operations. Deploy only within existing testnet authorization; no production/real erasure/asset movement.
+- [x] Publish core20/module28/frontend27/MCP11 as new immutable artifacts after strict/generated/full core/modules/frontend checks. Preserve older SDK/companion/starter archives and qualify their supported paths; release new active starter if the exact cohort requires it.
+- [x] Review the complete change inline for authorization, isolation, retry/erasure/cleanup, legacy ABI compatibility and user journey; fix material findings with regression evidence.
+- [x] Prepare clean source-bound testnet candidate and rollback. Requalify version-bound recovery before enabling a new API version; measure native deployment RAM correctly and preserve existing rows, balances, authorities, pins and paused operations. Deploy only within existing testnet authorization; no production/real erasure/asset movement.
 - [ ] Verify final public API/artifacts/form at desktop/mobile widths with owned identities, clean temporary sessions and disposable fixtures. Commit/push `dev`, synchronize clean IDE checkouts, record exact passed/failed/unrun checks and final feature limits.
 
 ## Inline plan review
 
 Tasks share the transient founder extension, draft/order association, typed routes, exact proof allowlist and frozen SDK cohort. The association is authoritative in the creation service rather than accepted from the claimant. Legacy `createpaid` bytes and all existing table layouts are preserved. Default executive policy is fixed for the sole initial office and can later be changed through normal DAO governance. A prefix reservation can resume after SQL/native failure without releasing the link. User authorization and the repository's continuous inline workflow replace the skill's repeated plan-handoff checkpoint; no delegation is used.
+
+## Final qualification
+
+Core 1,016/169; PostgreSQL/API integration 435/50; modules 215/33; frontend 348/61; portable native authority/upgrade 86/8 plus workflow 41/1; MCP11 12/7. Browser ownership/passkey/new-account/revoke and ordinary creation/resume were exercised at desktop/mobile widths. Testnet deployment, row/authority/balance preservation, recovery TLS round trip and active/archived public artifact integrity are recorded in [claim-link evidence](../../evidence/2026-10-13-dao-claim-links.md). The older fixed-container native presets harness remains unqualified; current VERT presets and portable/native/browser creation coverage passed. Production/provider/physical-device qualification is separate.

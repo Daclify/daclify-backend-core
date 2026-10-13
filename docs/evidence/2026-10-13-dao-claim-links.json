@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "date": "2026-10-13",
-  "status": "implementation-verified-delivery-in-progress",
+  "status": "testnet-delivered",
   "versions": {
     "core": "0.15.0-alpha.20",
     "modules": "0.10.0-alpha.28",
@@ -36,7 +36,16 @@
     "browser": {
       "firstRunPassed": 9,
       "firstRunFailed": 1,
-      "isolatedRetryPassed": 1
+      "isolatedRetryPassed": 1,
+      "freshFullRun": {
+        "passed": 10,
+        "failed": 0,
+        "projects": [
+          "desktop chromium",
+          "mobile chromium"
+        ]
+      },
+      "logSha256": "06ee4163970c19fa00efe9dacd4f30501a8f2de23560babb17a2138b0fdc666b"
     },
     "native": {
       "portablePassed": 86,
@@ -53,13 +62,25 @@
       "fullRunFailed": 2,
       "isolatedRetryPassed": 20,
       "isolatedRetryFiles": 2,
-      "freshFullRun": "pending"
+      "freshFullRun": {
+        "passed": 1016,
+        "files": 169,
+        "failed": 0,
+        "strictTypes": true,
+        "lint": true,
+        "generatedDocs": true,
+        "productionPublication": "refused as expected"
+      }
     },
     "integration": {
       "configuredRunPassed": 434,
       "configuredRunFailed": 1,
       "nativeHeadRetryPassed": 4,
-      "freshFullRun": "pending"
+      "freshFullRun": {
+        "passed": 435,
+        "files": 50,
+        "failed": 0
+      }
     },
     "mcp": {
       "passed": 12,
@@ -96,7 +117,42 @@
     "live platform executive claim acceptance belongs to account owner"
   ],
   "deployment": {
-    "status": "pending"
+    "status": "passed",
+    "at": "2026-10-13T19:23:38.269Z",
+    "sources": {
+      "daclify-backend-modules": "58664d5f25c8d32b93c1ea6e633e15e517b70aa4",
+      "daclify-backend-core": "e310978adc8e40cd1cdeb8901947a3767a1a4e54",
+      "daclify-frontend": "86412538bf4eb37237bf97bb81c17da2fb28795f"
+    },
+    "frontendVersion": "0.15.0-alpha.27",
+    "frontendEntrySha256": "260cd2503d00cbfa67c0abbc16fe96cec4c647210761936489da6e0fd79d9129",
+    "native": {
+      "status": "passed",
+      "at": "2026-10-13T19:23:31.842Z",
+      "transactionId": "d7494802ada43d5261dd04948dbb0a16d21c49a4fc6996f2de869352f3ace6bf",
+      "blockNum": 450032539,
+      "target": "daclifycore1",
+      "codeHash": "2b2755e64462a1e43a4b530e2f602f06479d8c3f85214feb8443d663a80fe3c3",
+      "abiHash": "e34b3bc13bdf4a08a1a12feb06fb317b36847b3f057c62a5fed788fb4e8b4306",
+      "tables": 71,
+      "rows": 192,
+      "unchangedPermissions": true,
+      "unchangedBalance": true,
+      "unchangedRows": true,
+      "noAssetMovement": true,
+      "ramUsage": 10035321,
+      "ramQuota": 10208621
+    },
+    "migration": "050_dao_claim_links.sql",
+    "changedEnvironmentFields": [
+      "RECOVERY_QUALIFICATION_FILE",
+      "MINI_APP_RELEASE_DIRECTORY",
+      "MINI_APP_ARCHIVE_DIRECTORIES",
+      "COMMUNITY_MCP_RELEASE_DIRECTORY",
+      "COMMUNITY_MCP_ARCHIVE_DIRECTORIES"
+    ],
+    "accountExitEnabled": false,
+    "previousDownloadCohortsPreserved": true
   },
   "sourceCommits": {
     "native": "9e13246",
@@ -114,6 +170,198 @@
     "task-5-mcp-archives-red.log": "e5aa8e985cd339f1a7c32c0ef6bb33e47dad93d4d6e6a135a24604ae648dca25",
     "task-5-mcp-archives-green.log": "6ef30349459868c6ed0c256778c8d8cfc0e46fde86f450004a900ebf5f8c0571",
     "task-5-recovery-qualification.log": "9b46155879a7fafe9a7e44872dfb588d3de5d379bfc48c64440ea2495feb4427",
-    "task-5-recovery-live.log": "1e30f10549a4a30067f539c476a6ef034585c66707c91b71582222bbce1fac44"
+    "task-5-recovery-live.log": "1e30f10549a4a30067f539c476a6ef034585c66707c91b71582222bbce1fac44",
+    "task-5-core-qualified-verify.log": "c1c018353147e7d92cc3b5e5e1d10c631a062483cacf876f33b8c9857a4d1f6d",
+    "task-5-core-qualified-build.log": "2c3f600efa1e0c251f79984958cc9ef535ed4afffcc9fb945e3d2951a26ab6fd",
+    "task-5-integration-qualified.log": "436cccc490d5d41fd52d8671725f92313b1b207f132cea309c6451b064559844"
+  },
+  "publicVerification": {
+    "status": "passed",
+    "at": "2026-10-13T19:26:03.726Z",
+    "coreVersion": "0.15.0-alpha.20",
+    "frontendVersion": "0.15.0-alpha.27",
+    "capability": true,
+    "sharedCreationAvailable": true,
+    "contractPinsVerified": true,
+    "anonymousProbeGuarded": true,
+    "oauthDiscoveryVerified": true,
+    "frontendEntrySha256": "260cd2503d00cbfa67c0abbc16fe96cec4c647210761936489da6e0fd79d9129",
+    "downloads": [
+      {
+        "kind": "mini-apps",
+        "releaseId": "d4b6dd2eb5e3248ab7e58f13e970a98aa97d265d082b7bb58078923e477ae034",
+        "file": "core.tgz",
+        "sha256": "13f06414eddc22d085d2740de8f6103495d031627992646dda64a147da749429",
+        "verified": true
+      },
+      {
+        "kind": "mini-apps",
+        "releaseId": "d4b6dd2eb5e3248ab7e58f13e970a98aa97d265d082b7bb58078923e477ae034",
+        "file": "modules.tgz",
+        "sha256": "0d672dd3ec16c43a33c544d418dd4d51290c859c8e8687b149de0a3d211a798b",
+        "verified": true
+      },
+      {
+        "kind": "mini-apps",
+        "releaseId": "d4b6dd2eb5e3248ab7e58f13e970a98aa97d265d082b7bb58078923e477ae034",
+        "file": "starter.tgz",
+        "sha256": "829107f241d30ee2919fb626d903aad6316a2c274f34a6428f9c73e826220bcc",
+        "verified": true
+      },
+      {
+        "kind": "mini-apps",
+        "releaseId": "1cbdc7613cbc06ddf1909d3fcc538ffd1e9d2a94cf8db65eec0196a9f01dd4a6",
+        "file": "core.tgz",
+        "sha256": "095f49a4a537dc310ceb79241e29a02319009f04780f1e2925b5ae39398342f7",
+        "verified": true
+      },
+      {
+        "kind": "mini-apps",
+        "releaseId": "1cbdc7613cbc06ddf1909d3fcc538ffd1e9d2a94cf8db65eec0196a9f01dd4a6",
+        "file": "modules.tgz",
+        "sha256": "c2633a129d4bb0e545b21688c96b93839698763f9e6d00d8ad46605332c05264",
+        "verified": true
+      },
+      {
+        "kind": "mini-apps",
+        "releaseId": "1cbdc7613cbc06ddf1909d3fcc538ffd1e9d2a94cf8db65eec0196a9f01dd4a6",
+        "file": "starter.tgz",
+        "sha256": "1c871e73a5505f77679e10e0500e177394f1ec3cd369be96abbe76062adc1d1a",
+        "verified": true
+      },
+      {
+        "kind": "mini-apps",
+        "releaseId": "a89bd803187f8a6ba547b60e7880fc9efeceeed61401414b6dbdab0694757672",
+        "file": "core.tgz",
+        "sha256": "9f65bdf66bc522a64194bbfa9d6ad8b265ae88ffd265314b3ff254d180023db4",
+        "verified": true
+      },
+      {
+        "kind": "mini-apps",
+        "releaseId": "a89bd803187f8a6ba547b60e7880fc9efeceeed61401414b6dbdab0694757672",
+        "file": "modules.tgz",
+        "sha256": "77af01a5436b4c7ac182839896932fbc9ba92e9798d2466ff84292c08fdcc319",
+        "verified": true
+      },
+      {
+        "kind": "mini-apps",
+        "releaseId": "a89bd803187f8a6ba547b60e7880fc9efeceeed61401414b6dbdab0694757672",
+        "file": "starter.tgz",
+        "sha256": "1c289ceb52b26362def5bbde63b268660deff0c5b3531d7eb01bc84d90b261fe",
+        "verified": true
+      },
+      {
+        "kind": "mcp",
+        "releaseId": "fd764b36d4c6e13bc187e0a6e83f1805621eff15799e29d3a1094c7702f70e80",
+        "file": "core.tgz",
+        "sha256": "13f06414eddc22d085d2740de8f6103495d031627992646dda64a147da749429",
+        "verified": true
+      },
+      {
+        "kind": "mcp",
+        "releaseId": "fd764b36d4c6e13bc187e0a6e83f1805621eff15799e29d3a1094c7702f70e80",
+        "file": "modules.tgz",
+        "sha256": "0d672dd3ec16c43a33c544d418dd4d51290c859c8e8687b149de0a3d211a798b",
+        "verified": true
+      },
+      {
+        "kind": "mcp",
+        "releaseId": "fd764b36d4c6e13bc187e0a6e83f1805621eff15799e29d3a1094c7702f70e80",
+        "file": "mcp.tgz",
+        "sha256": "a5b133ca9006fd9a305adeac37420f880fe721554447bcefc30edfc4ca7bd853",
+        "verified": true
+      },
+      {
+        "kind": "mcp",
+        "releaseId": "1491f2d2f79466503c8cbb91682fe1ac807c18db87039831000873ab0d17a306",
+        "file": "core.tgz",
+        "sha256": "095f49a4a537dc310ceb79241e29a02319009f04780f1e2925b5ae39398342f7",
+        "verified": true
+      },
+      {
+        "kind": "mcp",
+        "releaseId": "1491f2d2f79466503c8cbb91682fe1ac807c18db87039831000873ab0d17a306",
+        "file": "modules.tgz",
+        "sha256": "c2633a129d4bb0e545b21688c96b93839698763f9e6d00d8ad46605332c05264",
+        "verified": true
+      },
+      {
+        "kind": "mcp",
+        "releaseId": "1491f2d2f79466503c8cbb91682fe1ac807c18db87039831000873ab0d17a306",
+        "file": "mcp.tgz",
+        "sha256": "74663328aeee96aa463b8f67dff1b81a41f3970504ded43a4206b58cb87855c7",
+        "verified": true
+      },
+      {
+        "kind": "mcp",
+        "releaseId": "12fc168955297eb90a2b00b84ce7111d8a933dbf8d7014285ecab2f17cabdbd8",
+        "file": "core.tgz",
+        "sha256": "9f65bdf66bc522a64194bbfa9d6ad8b265ae88ffd265314b3ff254d180023db4",
+        "verified": true
+      },
+      {
+        "kind": "mcp",
+        "releaseId": "12fc168955297eb90a2b00b84ce7111d8a933dbf8d7014285ecab2f17cabdbd8",
+        "file": "modules.tgz",
+        "sha256": "77af01a5436b4c7ac182839896932fbc9ba92e9798d2466ff84292c08fdcc319",
+        "verified": true
+      },
+      {
+        "kind": "mcp",
+        "releaseId": "12fc168955297eb90a2b00b84ce7111d8a933dbf8d7014285ecab2f17cabdbd8",
+        "file": "mcp.tgz",
+        "sha256": "bf5474cf079fecbc03e569e8e69f49c5a5c37272831c48b8a8d97508064bb1f3",
+        "verified": true
+      }
+    ],
+    "database": {
+      "migrationVerified": true,
+      "unchangedAccounts": true,
+      "unchangedOrders": true,
+      "noTestDrafts": true
+    }
+  },
+  "hostedMcpRead": {
+    "app": "Daclify Testnet",
+    "tool": "get_membership",
+    "status": "passed",
+    "activeMembership": true,
+    "privateKeysReceived": false
+  },
+  "releaseSources": {
+    "daclify-backend-modules": "58664d5f25c8d32b93c1ea6e633e15e517b70aa4",
+    "daclify-backend-core": "e310978adc8e40cd1cdeb8901947a3767a1a4e54",
+    "daclify-frontend": "86412538bf4eb37237bf97bb81c17da2fb28795f"
+  },
+  "review": {
+    "mode": "inline",
+    "independentReviewer": false,
+    "delegationUsed": false,
+    "status": "completed"
+  },
+  "publicBrowser": {
+    "status": "passed",
+    "at": "2026-10-13T19:27:11.421Z",
+    "views": [
+      {
+        "name": "desktop",
+        "createPage": true,
+        "claimGuide": true,
+        "pageErrors": 0,
+        "horizontalOverflow": false
+      },
+      {
+        "name": "mobile",
+        "createPage": true,
+        "claimGuide": true,
+        "pageErrors": 0,
+        "horizontalOverflow": false
+      }
+    ]
+  },
+  "rollback": {
+    "runtime": "guarded code/ABI rollback; fulfillment remains paused; current native rows and SQL reservations retained",
+    "legacyFrontend": "archival backup only; must rebuild against current SDKs before compatible UI rollback",
+    "liveRollbackPerformed": false
   }
 }
