@@ -31,9 +31,9 @@
 
 **Interfaces:** `preferredApproval`, `saveApprovalPreference`, `startApprovalPreferences`; `activateMemberWallet(member: UserMembership, kind: 'native' | 'evm', check: () => void): Promise<void>` reuses current native/EVM activation and refreshes current authorization.
 
-- [ ] Write and run failing regressions for preference isolation and activation refusal/skip/retry, using typed producer data and real instruction encoding.
-- [ ] Implement scoped preferences and move existing activation logic into the shared signer helper, preserving validation and adding context/pairing checks.
-- [ ] Run targeted tests and strict typecheck; commit after all consumers in Task 2 use the helper.
+- [x] Write and run failing regressions for preference isolation and activation refusal/skip/retry, using typed producer data and real instruction encoding.
+- [x] Implement scoped preferences and move existing activation logic into the shared signer helper, preserving validation and adding context/pairing checks.
+- [x] Run targeted tests and strict typecheck; commit after all consumers in Task 2 use the helper.
 
 ### Task 2: One setup screen and all entry points
 
@@ -41,15 +41,15 @@
 
 **Interfaces:** ApprovalSetup consumes the shared default/activation helpers and existing pairing/recovery components. `approvalSetupLocation(returnTo: string, daoId?: string)` produces only a local Account setup destination.
 
-- [ ] Write a browser regression that reaches setup from an unready document signer; verify selected DAO, return destination, and no activation on navigation.
-- [ ] Implement account-level default and selected-DAO approval review, with visible progress and fail-stop retry. Keep recovery controls on the same page.
-- [ ] Replace standalone DAO activation with the shared setup entry. Route unready creation and join journeys there; preserve sign-in/return behavior.
-- [ ] Exercise desktop/mobile setup, wrong pairings, two DAO choices, retry, reload and return navigation; adapt existing flow tests to the new journey.
+- [x] Write a browser regression that reaches setup from an unready document signer; verify selected DAO, return destination, and no activation on navigation.
+- [x] Implement account-level default and selected-DAO approval review, with visible progress and fail-stop retry. Keep recovery controls on the same page.
+- [x] Replace standalone DAO activation with the shared setup entry. Route unready creation and join journeys there; preserve sign-in/return behavior.
+- [x] Exercise desktop/mobile setup, wrong pairings, two DAO choices, retry, reload and return navigation; adapt existing flow tests to the new journey.
 
 ### Task 3: Verification and delivery
 
 **Files:** README.md, CHANGELOG.md, docs/README.md, docs/evidence/2026-10-13-unified-approvals.md, frontend package/lock versions; core operations/paired-login.md.
 
-- [ ] Run `npm run verify`, relevant browser suites and production testnet build. Inspect the compact screen and review auth/recovery callers.
-- [ ] Record exact results and unqualified physical-wallet limitations, then commit/integrate/push dev preserving any concurrent work.
-- [ ] Build a clean testnet artifact, publish atomically with rollback assets retained, and run real portal network/DAO loading checks.
+- [x] Run `npm run verify`, relevant browser suites and production testnet build. Inspect the compact screen and review auth/recovery callers.
+- [x] Record exact results and unqualified physical-wallet limitations, then commit/integrate/push dev preserving any concurrent work.
+- [x] Build a clean testnet artifact, publish atomically with rollback assets retained, and run real portal network/DAO loading checks.
