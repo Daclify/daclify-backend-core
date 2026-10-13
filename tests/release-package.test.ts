@@ -37,6 +37,29 @@ it('packages complete synthetic evidence immutably and refuses a dirty source tr
     );
     put(join(core, 'docs/generated/reference.json'), '{}');
     put(
+      join(core, 'tests/qualification-fixture.test.ts'),
+      "it('synthetic qualification policy fixture',()=>{});\n",
+    );
+    put(
+      join(core, 'docs/releases/requirements.json'),
+      JSON.stringify({
+        requiredSuites: ['vert', 'native', 'integration', 'provider', 'modules', 'browser', 'unit'],
+        requirements: [
+          'vert',
+          'native',
+          'integration',
+          'provider',
+          'modules',
+          'browser',
+          'unit',
+        ].map((suite) => ({
+          id: 'synthetic-' + suite,
+          suite,
+          tests: ['tests/qualification-fixture.test.ts'],
+        })),
+      }),
+    );
+    put(
       join(core, 'sdk/public-package.json'),
       JSON.stringify({
         name: '@daclify/core-protocol',

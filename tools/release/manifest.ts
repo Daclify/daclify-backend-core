@@ -5,6 +5,11 @@ import { existsSync, readFileSync, readdirSync, realpathSync, statSync, lstatSyn
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { z } from 'zod';
+import { MiniAppReleaseManifestSchema } from '../../protocol/mini-apps.js';
+import { McpReleaseManifestSchema } from '../../protocol/mcp.js';
+import { miniAppReleaseId } from '../../services/api/src/mini-apps/artifacts.js';
+import { mcpReleaseId } from '../../services/api/src/mcp/artifacts.js';
+import { loadRequirementRegister } from './requirements.js';
 
 const REPOSITORIES = [
   'daclify-backend-core',
@@ -30,6 +35,16 @@ export const ReleaseChecks: Readonly<Record<string, string>> = Object.freeze({
     'Stripe sandbox RAM fulfilment and prepaid storage payment/grace lifecycle qualification',
   content:
     'separate Pinata account ownership, gateway funding/access controls, retention compensation and live delivery qualification',
+  nativePermissions:
+    'current native authorization, accounting, cleanup and supported-release upgrade qualification',
+  accountLifecycle:
+    'actual database restore, key-erasure exclusions, reconnect fencing and retained-claim qualification',
+  miniApps:
+    'clean public-artifact installation and complete SQLite/PostgreSQL/browser mini-app journeys',
+  privacy:
+    'approved controller, legal basis, retention and independent recovery/privacy assessment',
+  harness:
+    'actual local and hosted MCP harness, signer separation, consent and revocation qualification',
 });
 const HELD_CHECKS = Object.values(ReleaseChecks);
 
@@ -63,6 +78,7 @@ const RepositorySchema = z.object({
   commit: z.string().regex(/^[0-9a-f]{40}$/),
   version: z.string().min(1),
   lockfileSha256: HashSchema,
+  dirty: z.boolean().default(false),
 });
 const ManifestSchema = z.object({
   schemaVersion: z.literal(1),
@@ -85,6 +101,15 @@ const ManifestSchema = z.object({
     modulesPackageSha256: HashSchema,
     frontendBuildSha256: HashSchema,
     sdkBuildSha256: HashSchema,
+    requirementsSha256: HashSchema.optional(),
+    requirementSourcesSha256: HashSchema.optional(),
+    companionArtifacts: z
+      .strictObject({
+        communityMcpPackageSha256: HashSchema,
+        miniAppReleaseManifestSha256: HashSchema,
+        mcpReleaseManifestSha256: HashSchema,
+      })
+      .optional(),
   }),
   moduleCapabilities: z.array(z.string().min(1)).min(1),
   moduleCodeHashes: z.record(z.string(), HashSchema),
@@ -99,7 +124,7 @@ const ManifestSchema = z.object({
 export type ReleaseManifest = z.infer<typeof ManifestSchema>;
 
 export interface ManifestInput {
-  repositories: readonly z.infer<typeof RepositorySchema>[];
+  repositories: readonly z.input<typeof RepositorySchema>[];
   artifacts: ReleaseManifest['artifacts'];
   moduleCapabilities: readonly string[];
   moduleCodeHashes?: Readonly<Record<string, string>>;
@@ -174,6 +199,7 @@ export function qualifyRelease(
       evidence = EvidenceSchema.parse(value),
       subject = releaseSubject(base);
     if (
+      base.repositories.some((repository) => repository.dirty) ||
       base.moduleCapabilities.some(
         (id) => !base.moduleCodeHashes[id] || !base.moduleAbiSha256[id],
       ) ||
@@ -260,6 +286,57 @@ function gitCommit(cwd: string): string {
   if (!/^[0-9a-f]{40}$/.test(commit)) pin(`commit at ${cwd}`);
   return commit;
 }
+function gitDirty(cwd: string): boolean {
+  return (
+    execFileSync('git', ['status', '--porcelain'], { cwd, encoding: 'utf8' }).trim().length > 0
+  );
+}
+function companionBundleHash(
+  directory: string,
+  coreVersion: string,
+  modulesVersion: string,
+  expected: Readonly<Record<string, string>>,
+  mcpVersion?: string,
+): string {
+  const matches: string[] = [];
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    if (!entry.isDirectory() || !/^[0-9a-f]{64}$/.test(entry.name)) continue;
+    const folder = path.join(directory, entry.name),
+      file = path.join(folder, 'manifest.json');
+    const metadata = lstatSync(file);
+    if (!metadata.isFile() || metadata.size > 65536) pin('companion manifest');
+    const input: unknown = JSON.parse(readFileSync(file, 'utf8'));
+    const manifest = mcpVersion
+      ? McpReleaseManifestSchema.parse(input)
+      : MiniAppReleaseManifestSchema.parse(input);
+    if (
+      manifest.coreVersion !== coreVersion ||
+      manifest.modulesVersion !== modulesVersion ||
+      (mcpVersion && (!('mcpVersion' in manifest) || manifest.mcpVersion !== mcpVersion))
+    )
+      continue;
+    const { releaseId, ...identity } = manifest;
+    if (
+      releaseId !== entry.name ||
+      (mcpVersion ? mcpReleaseId(identity) : miniAppReleaseId(manifest)) !== entry.name
+    )
+      pin('companion identity');
+    for (const artifact of manifest.files) {
+      const target = path.join(folder, artifact.name),
+        info = lstatSync(target);
+      if (
+        !info.isFile() ||
+        info.size !== artifact.bytes ||
+        sha256(target) !== artifact.sha256 ||
+        (expected[artifact.name] && expected[artifact.name] !== artifact.sha256)
+      )
+        pin('companion archive');
+    }
+    matches.push(sha256(file));
+  }
+  if (matches.length !== 1 || !matches[0]) pin('one exact companion cohort is required');
+  return matches[0];
+}
 
 function packageVersion(file: string, expectedName: string): string {
   const parsed: unknown = JSON.parse(readFileSync(file, 'utf8'));
@@ -305,6 +382,12 @@ function modulePins(modulesRoot: string): {
 }
 
 export function loadCheckoutManifest(coreRoot: string): ReleaseManifest {
+  const requirements = loadRequirementRegister(coreRoot);
+  const requirementSources = createHash('sha256');
+  for (const source of [
+    ...new Set(requirements.requirements.flatMap((requirement) => requirement.tests)),
+  ].sort())
+    requirementSources.update(source + '\0' + sha256(path.resolve(coreRoot, source)) + '\0');
   const workspace = path.dirname(path.resolve(coreRoot));
   const modulesRoot = path.join(workspace, 'daclify-backend-modules');
   const frontendRoot = path.join(workspace, 'daclify-frontend');
@@ -318,28 +401,81 @@ export function loadCheckoutManifest(coreRoot: string): ReleaseManifest {
   )
     pin('toolchain record');
   const modules = modulePins(modulesRoot);
+  const coreVersion = packageVersion(
+      path.join(coreRoot, 'sdk/public-package.json'),
+      '@daclify/core-protocol',
+    ),
+    modulesVersion = packageVersion(path.join(modulesRoot, 'package.json'), '@daclify/modules');
+  const mcpPackage = path.join(coreRoot, 'packages/community-mcp/package.json');
+  const packageHashes = {
+    'core.tgz': sha256(
+      path.join(coreRoot, '.artifacts', `daclify-core-protocol-${coreVersion}.tgz`),
+    ),
+    'modules.tgz': sha256(
+      path.join(modulesRoot, '.artifacts', `daclify-modules-${modulesVersion}.tgz`),
+    ),
+  };
+  const companionArtifacts = existsSync(mcpPackage)
+    ? {
+        communityMcpPackageSha256: sha256(
+          path.join(
+            coreRoot,
+            '.artifacts/community-mcp',
+            `daclify-community-mcp-${packageVersion(mcpPackage, '@daclify/community-mcp')}.tgz`,
+          ),
+        ),
+        miniAppReleaseManifestSha256: companionBundleHash(
+          path.join(coreRoot, '.artifacts/mini-apps'),
+          coreVersion,
+          modulesVersion,
+          packageHashes,
+        ),
+        mcpReleaseManifestSha256: companionBundleHash(
+          path.join(coreRoot, '.artifacts/community-mcp/releases'),
+          coreVersion,
+          modulesVersion,
+          {
+            ...packageHashes,
+            'mcp.tgz': sha256(
+              path.join(
+                coreRoot,
+                '.artifacts/community-mcp',
+                `daclify-community-mcp-${packageVersion(mcpPackage, '@daclify/community-mcp')}.tgz`,
+              ),
+            ),
+          },
+          packageVersion(mcpPackage, '@daclify/community-mcp'),
+        ),
+      }
+    : undefined;
   return buildReleaseManifest({
     repositories: [
       {
         name: 'daclify-backend-core',
+        dirty: gitDirty(coreRoot),
         commit: gitCommit(coreRoot),
         version: packageVersion(path.join(coreRoot, 'package.json'), '@daclify/backend-core'),
         lockfileSha256: sha256(path.join(coreRoot, 'package-lock.json')),
       },
       {
         name: 'daclify-backend-modules',
+        dirty: gitDirty(modulesRoot),
         commit: gitCommit(modulesRoot),
         version: packageVersion(path.join(modulesRoot, 'package.json'), '@daclify/modules'),
         lockfileSha256: sha256(path.join(modulesRoot, 'package-lock.json')),
       },
       {
         name: 'daclify-frontend',
+        dirty: gitDirty(frontendRoot),
         commit: gitCommit(frontendRoot),
         version: packageVersion(path.join(frontendRoot, 'package.json'), '@daclify/frontend'),
         lockfileSha256: sha256(path.join(frontendRoot, 'package-lock.json')),
       },
     ],
     artifacts: {
+      requirementsSha256: sha256(path.join(coreRoot, 'docs/releases/requirements.json')),
+      requirementSourcesSha256: requirementSources.digest('hex'),
+      ...(companionArtifacts ? { companionArtifacts } : {}),
       corePackageSha256: sha256(
         path.join(
           coreRoot,

@@ -505,6 +505,34 @@
         "../daclify-frontend/tests/e2e/module-access.spec.ts",
         "../daclify-frontend/tests/e2e/dao-pricing.spec.ts"
       ]
+    },
+    {
+      "id": "MINI-APPS-COMPLETE-LIFECYCLE",
+      "suite": "integration",
+      "tests": [
+        "tests/integration/mini-app-self-service-journey.test.ts",
+        "tests/integration/profile-keys.test.ts",
+        "tests/integration/account-erasure.test.ts",
+        "tests/integration/mini-app-cleanup.test.ts"
+      ]
+    },
+    {
+      "id": "MINI-APPS-NATIVE-CLEANUP",
+      "suite": "native",
+      "tests": [
+        "tests/native/mini-app-lifecycle-journey.test.ts",
+        "tests/native/service-account-permissions.test.ts"
+      ]
+    },
+    {
+      "id": "MINI-APPS-COMPLETE-BROWSER",
+      "suite": "browser",
+      "tests": ["../daclify-frontend/tests/e2e/mini-app-account-lifecycle.spec.ts"]
+    },
+    {
+      "id": "MINI-APPS-ACTUAL-MCP-HARNESS",
+      "suite": "integration",
+      "tests": ["tests/integration/community-mcp-journey.test.ts"]
     }
   ]
 }

@@ -18,7 +18,12 @@ afterEach(() => {
 function evidence() {
   const root = mkdtempSync(join(tmpdir(), 'daclify-release-'));
   directories.push(root);
-  const manifest = loadCheckoutManifest(process.cwd()),
+  // Synthetic report-policy fixture; this normalization qualifies no real dirty checkout.
+  const checkout = loadCheckoutManifest(process.cwd()),
+    manifest = {
+      ...checkout,
+      repositories: checkout.repositories.map((repository) => ({ ...repository, dirty: false })),
+    },
     subject = releaseSubject(manifest);
   const checks = Object.keys(ReleaseChecks).map((id) => {
     const report = {
@@ -63,6 +68,29 @@ it('does not permit qualification from missing, duplicate or unknown checks', ()
     expect(() => qualifyRelease(f.manifest, f.root, { ...f.bundle, checks })).toThrow(
       'RELEASE_EVIDENCE',
     );
+});
+it('requires native permissions, restore/key erasure, complete journeys and actual harness evidence', () => {
+  const f = evidence();
+  for (const id of ['nativePermissions', 'accountLifecycle', 'miniApps', 'privacy', 'harness'])
+    expect(() =>
+      qualifyRelease(f.manifest, f.root, {
+        ...f.bundle,
+        checks: f.bundle.checks.filter((check) => check.id !== id),
+      }),
+    ).toThrow('RELEASE_EVIDENCE');
+});
+it('refuses a dirty source snapshot even when its report bundle otherwise matches', () => {
+  const f = evidence();
+  expect(() =>
+    qualifyRelease(
+      {
+        ...f.manifest,
+        repositories: f.manifest.repositories.map((repository) => ({ ...repository, dirty: true })),
+      },
+      f.root,
+      f.bundle,
+    ),
+  ).toThrow('RELEASE_EVIDENCE');
 });
 it('rejects stale pins and changed evidence bytes', () => {
   const f = evidence(),

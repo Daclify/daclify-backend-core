@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "qualification": "development-testnet-candidate",
+  "qualified": false,
+  "publicRelease": "held",
+  "versions": {
+    "core": "0.15.0-alpha.17",
+    "modules": "0.10.0-alpha.24",
+    "frontend": "0.15.0-alpha.19",
+    "mcp": "0.1.0-alpha.6"
+  },
+  "artifacts": {
+    "core": "095f49a4a537dc310ceb79241e29a02319009f04780f1e2925b5ae39398342f7",
+    "modules": "c2633a129d4bb0e545b21688c96b93839698763f9e6d00d8ad46605332c05264",
+    "mcp": "59b55845eb30dbf64ae5e71706fdd23d54e5e518dd609b3b98c3cde6047b69e2",
+    "runtime": "e6aaeeccb949710444e0fe4ca32331ffeeb5a6eeae688a417ae3d22cd3469d95",
+    "migration049": "d68e59c7e5e80ab94fa5d4357a889254d01a4693913b09be06dc4c5ad56f9aa1"
+  },
+  "passed": [
+    {
+      "suite": "core",
+      "tests": 994,
+      "files": 165
+    },
+    {
+      "suite": "modules",
+      "tests": 215,
+      "files": 33
+    },
+    {
+      "suite": "frontend",
+      "tests": 342,
+      "files": 58
+    },
+    {
+      "suite": "integration-native-SQL-frozen-Codex",
+      "tests": 93,
+      "files": 6
+    },
+    {
+      "suite": "native-permissions",
+      "tests": 139,
+      "files": 9
+    },
+    {
+      "suite": "native-profile-lifecycle-exit",
+      "tests": 24,
+      "files": 3
+    },
+    {
+      "suite": "native-EVM-resource-exit",
+      "tests": 13,
+      "files": 1
+    },
+    {
+      "suite": "desktop-mobile-integrated-workspace",
+      "tests": 38
+    },
+    {
+      "suite": "standalone-MCP",
+      "tests": 12,
+      "files": 7
+    },
+    {
+      "suite": "release-validator-requirements",
+      "tests": 31,
+      "files": 4
+    },
+    {
+      "suite": "website-preview-node",
+      "tests": 47
+    },
+    {
+      "suite": "website-preview-browser",
+      "tests": 52
+    }
+  ],
+  "cleanInstalls": [
+    "Frozen core/modules/MCP outside checkouts with actual client journey",
+    "Frozen starter outside checkouts with npm ci and build"
+  ],
+  "recovery": {
+    "mode": "testnet-single-host",
+    "coreVersion": "0.15.0-alpha.17",
+    "tlsSourceRemovalRestore": "passed",
+    "configuredOriginScopeRoundtrip": "passed",
+    "independentHost": false,
+    "expiresAt": "2026-10-17T14:46:09.233Z"
+  },
+  "unrun": [
+    "Named legal controller and approved legal basis/retention/DPIA",
+    "Independent failure-domain key/exclusion/database recovery",
+    "Actual independent app operator/provider/client qualification required by release checks",
+    "Production/mainnet and website production publication"
+  ],
+  "sourceBinding": "The detached deployment packet records exact clean commits, locks, test-source register, archive/build hashes and the existing validator subject after these evidence-only documents are committed. This summary is not a forged eligible evidence bundle.",
+  "rolloutGuide": "../guides/mini-app-release-rollout.md",
+  "resourceEvidence": "2026-10-12-mini-app-resource-measurements.json",
+  "journeyEvidence": "2026-10-12-mini-app-complete-journeys.md",
+  "review": "Author self-review inline; independent reviewer not authorized in this workspace."
+}
