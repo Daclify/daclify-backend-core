@@ -1,14 +1,27 @@
 import { z } from 'zod';
-import { ApiRoutes, ConnectedAppsRoutes } from '@daclify/core-protocol';
+import { ApiRoutes, ConnectedAppsRoutes, type McpConnection } from '@daclify/core-protocol';
 import type { CommunityModuleAdapter } from '@daclify/core-protocol/community-agent';
 import { ModuleApiRoutes } from '@daclify/modules';
 import { encodeDecide, encodeWorks, encodeActivity, ModuleCodeHashes } from '@daclify/modules/sdk';
 
+export interface ScopedModuleAdapter {
+  readActivity(
+    connection: Pick<McpConnection, 'dao'>,
+    input: Parameters<CommunityModuleAdapter['readActivity']>[1],
+    request: Parameters<CommunityModuleAdapter['readActivity']>[2],
+  ): ReturnType<CommunityModuleAdapter['readActivity']>;
+  prepare(
+    input: Parameters<CommunityModuleAdapter['prepare']>[0],
+    context: Omit<Parameters<CommunityModuleAdapter['prepare']>[1], 'connection'> & {
+      connection: Pick<McpConnection, 'dao'>;
+    },
+  ): ReturnType<CommunityModuleAdapter['prepare']>;
+}
 export function communityModuleAdapter(app?: {
   appId: string;
   revision: string;
   configHash: string;
-}): CommunityModuleAdapter {
+}): ScopedModuleAdapter {
   return {
     async readActivity(connection, input, request) {
       const state = ModuleApiRoutes.state.response.parse(

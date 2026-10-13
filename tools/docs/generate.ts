@@ -54,7 +54,7 @@ const files = new Map([
   ['docs/generated/reference.md', output.markdown],
   [
     'protocol/generated/help.ts',
-    `// Generated from producer-owned guides, compiled ABI and API schemas.\nimport type {HelpBundle} from '../docs.js';\nexport const CoreHelpBundle=${JSON.stringify(output.bundle, null, 2)} satisfies HelpBundle;\n`,
+    `// Generated from producer-owned guides, compiled ABI and API schemas.\nimport type {HelpBundle} from '../docs.js';\nexport const CoreHelpBundle:HelpBundle=${JSON.stringify(output.bundle, null, 2)};\n`,
   ],
 ]);
 const check = process.argv.includes('--check');

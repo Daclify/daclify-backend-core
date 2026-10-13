@@ -196,101 +196,29 @@ export class CommunityAgentClient implements CommunityAccess {
   }
   private async resolve(input: McpPrepareInput): Promise<Omit<PreparedInstruction, 'id'>> {
     const parsed = McpPrepareInputSchema.parse(input);
-    const scope =
-      parsed.tool === 'prepare_proposal'
-        ? 'proposal'
-        : parsed.tool === 'prepare_vote'
-          ? 'vote'
-          : parsed.tool === 'prepare_review'
-            ? 'review'
-            : 'activity';
-    if (!this.connection.scopes.includes(scope)) throw new Error('MCP_SCOPE_REQUIRED');
-    if (
-      scope === 'activity' &&
-      (!this.options.credential?.appId ||
-        parsed.tool !== 'prepare_activity' ||
-        this.options.credential.appId !== parsed.input.appId)
-    )
-      throw new Error('MCP_APP_CREDENTIAL_REQUIRED');
-    if (scope !== 'activity' && this.options.credential?.appId)
-      throw new Error('MCP_ROUTINE_CREDENTIAL_REQUIRED');
     if (!this.options.modules || !this.options.credential) throw new Error('MCP_DELEGATE_REQUIRED');
     await this.network();
     const member = await this.membership();
-    if (scope === 'review' && !member.reviewer) throw new Error('MCP_REVIEWER_REQUIRED');
     const governance = ApiRoutes.governance.response.parse(
       await this.request(ApiRoutes.governance.path.replace(':id', this.connection.dao.daoId)),
     );
-    if (JSON.stringify(governance.dao) !== JSON.stringify(this.connection.dao))
-      throw new Error('MCP_DOMAIN');
-    if (!governance.policy) throw new Error('MCP_POLICY_REQUIRED');
-    const now = Math.floor(Date.now() / 1000);
-    if (governance.guardian && governance.guardian.paused_until > now)
-      throw new Error('MCP_DAO_PAUSED');
-    const actor = governance.actors.find((value) => value.id === member.memberId);
-    if (actor?.revoked) throw new Error('MCP_ACTOR_REVOKED');
-    const credential = this.options.credential;
-    if (credential.signingPublicKey === this.connection.authentication.signingPublicKey)
-      throw new Error('MCP_SIGNER_KEYS');
-    const session = governance.sessions.find(
-      (value) =>
-        value.id === credential.sessionId &&
-        value.member_id === member.memberId &&
-        value.signing_key === credential.signingPublicKey,
-    );
-    if (
-      !session ||
-      session.expires <= now ||
-      session.credential_epoch !== (actor?.credential_epoch ?? '1')
-    )
-      throw new Error('MCP_SESSION_REVOKED');
+    // Resolve only producer-owned bounded intents; both local and hosted paths share native authority checks.
     const action = await this.options.modules.prepare(parsed, {
       connection: this.connection,
       member,
       governance,
       request: this.request,
     });
-    const expectedAction =
-      scope === 'proposal'
-        ? 'open'
-        : scope === 'vote'
-          ? 'vote'
-          : scope === 'review'
-            ? 'review'
-            : 'recordact';
-    if (action.action !== expectedAction || action.target === this.connection.dao.contract)
-      throw new Error('MCP_INTENT_ACTION');
-    if (
-      !session.permissions.some(
-        (value) =>
-          value.target === action.target &&
-          value.action === action.action &&
-          value.code_hash === action.codeHash,
-      )
-    )
-      throw new Error('MCP_SESSION_SCOPE');
-    const expires = Math.min(now + 300, session.expires);
-    const request = makeInstruction(
-      this.connection.dao,
-      member.memberId,
-      member.nonce,
-      expires,
-      action.target,
-      action.action,
-      action.data,
-    );
-    return {
-      intent: parsed,
-      request,
-      digest: instructionDigest(request).toString(),
-      scope,
-      sessionId: session.id,
-      signingPublicKey: session.signing_key,
-      codeHash: action.codeHash,
-      policyRevision: governance.policy.revision,
-      expires,
-    };
+    return prepareCommunityInstruction(parsed, {
+      connection: this.connection,
+      member,
+      governance,
+      credential: this.options.credential,
+      action,
+      rootSigningKey: this.connection.authentication.signingPublicKey,
+    });
   }
+
   async prepare(input: McpPrepareInput): Promise<PreparedInstruction> {
     if (this.pending) throw new Error('MCP_RECONCILE_REQUIRED');
     if (this.prepared.size >= 16) throw new Error('MCP_PREPARATION_LIMIT');
@@ -354,4 +282,105 @@ export class CommunityAgentClient implements CommunityAccess {
       };
     }
   }
+}
+
+export function prepareCommunityInstruction(
+  input: McpPrepareInput,
+  context: {
+    connection: Pick<McpConnection, 'dao' | 'memberId' | 'scopes'>;
+    member: UserMembership;
+    governance: GovernanceState;
+    credential: NonNullable<CommunityAgentOptions['credential']>;
+    action: Awaited<ReturnType<CommunityModuleAdapter['prepare']>>;
+    rootSigningKey?: string;
+  },
+): Omit<PreparedInstruction, 'id'> {
+  const parsed = McpPrepareInputSchema.parse(input);
+  const { connection, member, governance, credential, action, rootSigningKey } = context;
+  if (
+    !member.active ||
+    member.memberId !== connection.memberId ||
+    JSON.stringify(member.dao) !== JSON.stringify(connection.dao)
+  )
+    throw new Error('MCP_MEMBER_INACTIVE');
+  const scope =
+    parsed.tool === 'prepare_proposal'
+      ? 'proposal'
+      : parsed.tool === 'prepare_vote'
+        ? 'vote'
+        : parsed.tool === 'prepare_review'
+          ? 'review'
+          : 'activity';
+  if (!connection.scopes.includes(scope)) throw new Error('MCP_SCOPE_REQUIRED');
+  if (
+    scope === 'activity' &&
+    (!credential?.appId ||
+      parsed.tool !== 'prepare_activity' ||
+      credential.appId !== parsed.input.appId)
+  )
+    throw new Error('MCP_APP_CREDENTIAL_REQUIRED');
+  if (scope !== 'activity' && credential?.appId) throw new Error('MCP_ROUTINE_CREDENTIAL_REQUIRED');
+  if (scope === 'review' && !member.reviewer) throw new Error('MCP_REVIEWER_REQUIRED');
+  if (JSON.stringify(governance.dao) !== JSON.stringify(connection.dao))
+    throw new Error('MCP_DOMAIN');
+  if (!governance.policy) throw new Error('MCP_POLICY_REQUIRED');
+  const now = Math.floor(Date.now() / 1000);
+  if (governance.guardian && governance.guardian.paused_until > now)
+    throw new Error('MCP_DAO_PAUSED');
+  const actor = governance.actors.find((value) => value.id === member.memberId);
+  if (actor?.revoked) throw new Error('MCP_ACTOR_REVOKED');
+  if (rootSigningKey && credential.signingPublicKey === rootSigningKey)
+    throw new Error('MCP_SIGNER_KEYS');
+  const session = governance.sessions.find(
+    (value) =>
+      value.id === credential.sessionId &&
+      value.member_id === member.memberId &&
+      value.signing_key === credential.signingPublicKey,
+  );
+  if (
+    !session ||
+    session.expires <= now ||
+    session.credential_epoch !== (actor?.credential_epoch ?? '1')
+  )
+    throw new Error('MCP_SESSION_REVOKED');
+  const expectedAction =
+    scope === 'proposal'
+      ? 'open'
+      : scope === 'vote'
+        ? 'vote'
+        : scope === 'review'
+          ? 'review'
+          : 'recordact';
+  if (action.action !== expectedAction || action.target === connection.dao.contract)
+    throw new Error('MCP_INTENT_ACTION');
+  if (
+    !session.permissions.some(
+      (value) =>
+        value.target === action.target &&
+        value.action === action.action &&
+        value.code_hash === action.codeHash,
+    )
+  )
+    throw new Error('MCP_SESSION_SCOPE');
+  const expires = Math.min(now + 300, session.expires);
+  const request = makeInstruction(
+    connection.dao,
+    member.memberId,
+    member.nonce,
+    expires,
+    action.target,
+    action.action,
+    action.data,
+  );
+  return {
+    intent: parsed,
+    request,
+    digest: instructionDigest(request).toString(),
+    scope,
+    sessionId: session.id,
+    signingPublicKey: session.signing_key,
+    codeHash: action.codeHash,
+    policyRevision: governance.policy.revision,
+    expires,
+  };
 }

@@ -11,6 +11,8 @@ import {
 import type { ConnectedApps } from './connected-apps/service.js';
 import { MiniAppConnections } from './mini-apps/connections.js';
 import { registerMiniAppsRoutes } from './mini-apps/routes.js';
+import { registerMcpPairingRoutes, MCP_LOCAL_PUBLIC_PATHS } from './mcp/routes.js';
+import type { McpPairings } from './mcp/pairing.js';
 import type { ConnectedPayments } from './payments/service.js';
 import type { OperatorPayments } from './payments/operator.js';
 import type { HostedStorage } from './billing/storage.js';
@@ -114,6 +116,7 @@ export async function createServer(
     profileKeys?: ProfileKeysConfiguration;
     accountExit?: AccountExit;
     connectedApps?: ConnectedApps;
+    mcpPairings?: McpPairings;
     miniApps?: MiniAppConnections;
     content?: ContentService;
     recovery?: RecoveryConfiguration;
@@ -269,6 +272,7 @@ export async function createServer(
       path === TELEGRAM_DOCS_PATH ||
       BROKER_PATHS.some((route) => route === path) ||
       (!!options.connectedApps && APP_BEARER_PATHS.includes(path ?? ''))
+      || (!!options.mcpPairings && MCP_LOCAL_PUBLIC_PATHS.includes(request.routeOptions.url ?? path ?? ''))
     )
       return;
     if (!origins.includes(request.headers.origin ?? '')) throw new ApiError('ORIGIN_REJECTED', 403);
@@ -282,6 +286,7 @@ export async function createServer(
     return account;
   }
   registerRecoveryRoutes(app, recovery, cookieName, session, origin);
+  if(options.mcpPairings)registerMcpPairingRoutes(app,options.mcpPairings,cookieName,session);
   if(options.accountExit)registerAccountExitRoutes(app,options.accountExit,cookieName,session,spend);
   registerSettlementRoutes(app,chain);
   const profileKeys = new ProfileKeys(pool, chain, options.profileKeys);
@@ -729,6 +734,7 @@ export async function createServer(
       ...network,
       capabilities: [
         ...network.capabilities,
+        ...(options.mcpPairings?['community-mcp-local-v1']:[]),
         ...(options.accountExit?['account-exit-v1']:[]),
         ...(profileKeys.enabled && network.capabilities.includes('encrypted-profiles-v2')
           ? ['profile-key-envelopes-v1']

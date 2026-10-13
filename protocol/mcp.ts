@@ -97,3 +97,138 @@ export type McpPrepareInput = z.infer<typeof McpPrepareInputSchema>;
 export type PreparedInstruction = z.infer<typeof PreparedInstructionSchema>;
 export type SignedMcpInstruction = z.infer<typeof SignedMcpInstructionSchema>;
 export type SubmissionResult = z.infer<typeof SubmissionResultSchema>;
+
+const Pkce = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
+export const McpPairingInputSchema = z
+  .strictObject({
+    dao: DaoRefSchema,
+    memberId: IdSchema,
+    scopes: z.array(McpScopeSchema).min(1).max(4),
+    delegatePublicKey: SigningPublicKeySchema,
+    codeChallenge: Pkce,
+    app: z
+      .strictObject({ appId: IdSchema, revision: IdSchema, configHash: ChainIdSchema })
+      .optional(),
+  })
+  .refine(
+    (value) =>
+      new Set(value.scopes).size === value.scopes.length &&
+      (value.scopes.includes('activity') ? value.scopes.length === 1 && !!value.app : !value.app),
+    'Activity grants are distinct from routine grants',
+  );
+export const McpPairingSchema = McpPairingInputSchema.safeExtend({
+  id: z.uuid(),
+  expires: z.iso.datetime(),
+});
+export const McpPairingApprovalSchema = z.strictObject({
+  id: z.uuid(),
+  dao: DaoRefSchema,
+  memberId: IdSchema,
+  scopes: z.array(McpScopeSchema).min(1).max(4),
+  sessionId: IdSchema,
+  mode: z.enum(['autonomous', 'confirm']),
+});
+export const McpGrantSchema = z.strictObject({
+  id: z.uuid(),
+  dao: DaoRefSchema,
+  memberId: IdSchema,
+  scopes: z.array(McpScopeSchema).min(1).max(4),
+  delegatePublicKey: SigningPublicKeySchema,
+  sessionId: IdSchema,
+  sessionExpires: z.int().positive().max(4294967295),
+  mode: z.enum(['autonomous', 'confirm']),
+  app: McpPairingInputSchema.shape.app,
+});
+const Token = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
+export const McpPairingRoutes = {
+  mcpPair: {
+    method: 'POST',
+    path: '/v1/mcp/pairings',
+    input: McpPairingInputSchema,
+    response: McpPairingSchema.safeExtend({ consentUrl: z.url().max(2048) }),
+    helpTopic: 'agents',
+  },
+  mcpConsent: {
+    method: 'GET',
+    path: '/v1/mcp/pairings/:id/consent',
+    response: z.strictObject({
+      pairing: McpPairingSchema,
+      permissions: z
+        .array(
+          z.strictObject({
+            target: RuntimeActionSchemas.addsession.shape.permissions.element.shape.target,
+            action: RuntimeActionSchemas.addsession.shape.permissions.element.shape.action,
+            code_hash: ChainIdSchema,
+          }),
+        )
+        .min(1)
+        .max(4),
+      grantExpires: z.int().positive().max(4294967295),
+    }),
+    helpTopic: 'agents',
+  },
+  mcpApprove: {
+    method: 'POST',
+    path: '/v1/mcp/pairings/approve',
+    input: McpPairingApprovalSchema,
+    response: z.strictObject({ approved: z.literal(true) }),
+    helpTopic: 'agents',
+  },
+  mcpRedeem: {
+    method: 'POST',
+    path: '/v1/mcp/pairings/:id/redeem',
+    input: z.strictObject({ codeVerifier: z.string().regex(/^[A-Za-z0-9._~-]{43,128}$/) }),
+    response: z.strictObject({ grant: McpGrantSchema, token: Token }),
+    helpTopic: 'agents',
+  },
+  mcpLocalStatus: {
+    method: 'GET',
+    path: '/v1/mcp/local/status',
+    response: McpGrantSchema,
+    helpTopic: 'agents',
+  },
+  mcpLocalRead: {
+    method: 'POST',
+    path: '/v1/mcp/local/read',
+    input: McpReadInputSchema,
+    response: McpReadResultSchema,
+    helpTopic: 'agents',
+  },
+  mcpLocalPrepare: {
+    method: 'POST',
+    path: '/v1/mcp/local/prepare',
+    input: McpPrepareInputSchema,
+    response: PreparedInstructionSchema,
+    helpTopic: 'agents',
+  },
+  mcpLocalSubmit: {
+    method: 'POST',
+    path: '/v1/mcp/local/submit',
+    input: SignedMcpInstructionSchema,
+    response: SubmissionResultSchema,
+    helpTopic: 'agents',
+  },
+  mcpLocalRevoke: {
+    method: 'POST',
+    path: '/v1/mcp/local/revoke',
+    input: z.strictObject({}),
+    response: z.strictObject({ revoked: z.literal(true) }),
+    helpTopic: 'agents',
+  },
+  mcpLocalValidate: {
+    method: 'POST',
+    path: '/v1/mcp/local/validate',
+    input: PreparedInstructionSchema,
+    response: RuntimeActionSchemas.submitsess.shape.request,
+    helpTopic: 'agents',
+  },
+} satisfies Record<
+  string,
+  {
+    method: 'GET' | 'POST';
+    path: string;
+    input?: z.ZodType;
+    response: z.ZodType;
+    helpTopic: string;
+  }
+>;

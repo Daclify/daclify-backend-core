@@ -1,6 +1,6 @@
 {
   "producer": "core",
-  "packageVersion": "0.15.0-alpha.11",
+  "packageVersion": "0.15.0-alpha.12",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -588,6 +588,17 @@
       "paragraphs": [
         "Account exit separates leaving DAOs, explicitly offering sole-member closure and deleting hosted identity. Fresh account-control proof is required. A downloaded 30-day status capability is read-only; each later native step needs its own member signature. Outstanding claims/stake remain in the native member identity; keep the recovery kit or linked wallet until settlement is complete. Deletion revokes hosted authentication immediately and removes disposable records across canonical and retired owners in bounded batches. The report separates current native profile rows, controlled key envelopes/provider pins, independent app acknowledgments, backup expiry and required shared history. Unavailable chains, providers or apps remain unresolved. Public history and recipient copies cannot be retracted. Controlled restore exclusions apply before authentication/key access; actual production retention and independent recovery require qualification.",
         "For private administrators, prepare the selected successor and their permitted recorded epoch grants while normal access is still available. Verify local decryption separately, confirm recovery on another device, then obtain the selected successor's own context-bound native acceptance. A recorded grant alone does not prove that its ciphertext decrypts. Ordinary departure never cancels a shared subscription or disposes of remaining funds."
+      ]
+    },
+    {
+      "id": "community-mcp",
+      "title": "Connect a community AI harness",
+      "paragraphs": [
+        "A community member pairs a new delegate public key through the trusted Daclify browser screen. The request expires in five minutes, binds PKCE to the selected DAO/member/scopes and is redeemed once. Native grant creation and fresh account-control approval are separate signed ceremonies; the browser never exports the root key or another recovery kit.",
+        "Routine proposals, votes and independent Works reviews use action-scoped sessions. Community Activity uses a separate approved app-bound session and configuration revision. A human assistant acts as its existing member; a registered agent retains guardian, epoch and governance limits. Every action rechecks current membership, nonce, expiry, role, policy and module pins.",
+        "The local MCP package stores its replaceable delegate and service token in a password-encrypted 0600 file under a 0700 directory. Harness configuration contains only a command, arguments and credential reference. Unlock and per-signature confirmation use a trusted controlling terminal. Background/IDE hosts need a qualified secret-store adapter before they can sign.",
+        "The bounded inventory reads public community state, prepares supported intents and submits signed instructions. A protected local signer can submit a validated preparation. Private profiles, evidence decryption, root administration and treasury operations stay outside this inventory. The backend persists the exact native packet before delivery and reconciles unknown responses before another event.",
+        "Availability is advertised by the connected deployment capability community-mcp-local-v1. Source/native checks do not qualify every harness or hosted OAuth; consult the explicit capability matrix. Revoke the service grant and retire the native session to disable independent delegate copies. Leaving/deleting an account and reconnecting invalidate service consent."
       ]
     }
   ],
@@ -8839,6 +8850,2026 @@
         "additionalProperties": false
       },
       "helpTopic": "connected-apps"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/mcp/pairings",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "memberId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "scopes": {
+            "minItems": 1,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "proposal",
+                "activity",
+                "vote",
+                "review"
+              ]
+            }
+          },
+          "delegatePublicKey": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "codeChallenge": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$"
+          },
+          "app": {
+            "type": "object",
+            "properties": {
+              "appId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "revision": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "configHash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            },
+            "required": [
+              "appId",
+              "revision",
+              "configHash"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "dao",
+          "memberId",
+          "scopes",
+          "delegatePublicKey",
+          "codeChallenge"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "memberId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "scopes": {
+            "minItems": 1,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "proposal",
+                "activity",
+                "vote",
+                "review"
+              ]
+            }
+          },
+          "delegatePublicKey": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "codeChallenge": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$"
+          },
+          "app": {
+            "type": "object",
+            "properties": {
+              "appId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "revision": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "configHash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            },
+            "required": [
+              "appId",
+              "revision",
+              "configHash"
+            ],
+            "additionalProperties": false
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "expires": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "consentUrl": {
+            "type": "string",
+            "maxLength": 2048,
+            "format": "uri"
+          }
+        },
+        "required": [
+          "dao",
+          "memberId",
+          "scopes",
+          "delegatePublicKey",
+          "codeChallenge",
+          "id",
+          "expires",
+          "consentUrl"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "agents"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/mcp/pairings/:id/consent",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "pairing": {
+            "type": "object",
+            "properties": {
+              "dao": {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "contract": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "daoId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "interfaceVersion": {
+                    "type": "number",
+                    "const": 1
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "contract",
+                  "daoId",
+                  "interfaceVersion"
+                ],
+                "additionalProperties": false
+              },
+              "memberId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "scopes": {
+                "minItems": 1,
+                "maxItems": 4,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "proposal",
+                    "activity",
+                    "vote",
+                    "review"
+                  ]
+                }
+              },
+              "delegatePublicKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "codeChallenge": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              },
+              "app": {
+                "type": "object",
+                "properties": {
+                  "appId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "configHash": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                },
+                "required": [
+                  "appId",
+                  "revision",
+                  "configHash"
+                ],
+                "additionalProperties": false
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "expires": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              }
+            },
+            "required": [
+              "dao",
+              "memberId",
+              "scopes",
+              "delegatePublicKey",
+              "codeChallenge",
+              "id",
+              "expires"
+            ],
+            "additionalProperties": false
+          },
+          "permissions": {
+            "minItems": 1,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "target": {
+                  "type": "string",
+                  "maxLength": 13
+                },
+                "action": {
+                  "type": "string",
+                  "maxLength": 13
+                },
+                "code_hash": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "target",
+                "action",
+                "code_hash"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "grantExpires": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 4294967295
+          }
+        },
+        "required": [
+          "pairing",
+          "permissions",
+          "grantExpires"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "agents"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/mcp/pairings/approve",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "memberId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "scopes": {
+            "minItems": 1,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "proposal",
+                "activity",
+                "vote",
+                "review"
+              ]
+            }
+          },
+          "sessionId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "autonomous",
+              "confirm"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "dao",
+          "memberId",
+          "scopes",
+          "sessionId",
+          "mode"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "approved": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "approved"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "agents"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/mcp/pairings/:id/redeem",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "codeVerifier": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._~-]{43,128}$"
+          }
+        },
+        "required": [
+          "codeVerifier"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "grant": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "dao": {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "contract": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "daoId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "interfaceVersion": {
+                    "type": "number",
+                    "const": 1
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "contract",
+                  "daoId",
+                  "interfaceVersion"
+                ],
+                "additionalProperties": false
+              },
+              "memberId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "scopes": {
+                "minItems": 1,
+                "maxItems": 4,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "proposal",
+                    "activity",
+                    "vote",
+                    "review"
+                  ]
+                }
+              },
+              "delegatePublicKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "sessionId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "sessionExpires": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 4294967295
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "autonomous",
+                  "confirm"
+                ]
+              },
+              "app": {
+                "type": "object",
+                "properties": {
+                  "appId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "configHash": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                },
+                "required": [
+                  "appId",
+                  "revision",
+                  "configHash"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "dao",
+              "memberId",
+              "scopes",
+              "delegatePublicKey",
+              "sessionId",
+              "sessionExpires",
+              "mode"
+            ],
+            "additionalProperties": false
+          },
+          "token": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$"
+          }
+        },
+        "required": [
+          "grant",
+          "token"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "agents"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/mcp/local/status",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "memberId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "scopes": {
+            "minItems": 1,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "proposal",
+                "activity",
+                "vote",
+                "review"
+              ]
+            }
+          },
+          "delegatePublicKey": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "sessionId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "sessionExpires": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 4294967295
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "autonomous",
+              "confirm"
+            ]
+          },
+          "app": {
+            "type": "object",
+            "properties": {
+              "appId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "revision": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "configHash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            },
+            "required": [
+              "appId",
+              "revision",
+              "configHash"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "dao",
+          "memberId",
+          "scopes",
+          "delegatePublicKey",
+          "sessionId",
+          "sessionExpires",
+          "mode"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "agents"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/mcp/local/read",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "tool": {
+                "type": "string",
+                "const": "list_daos"
+              },
+              "input": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "tool",
+              "input"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "tool": {
+                "type": "string",
+                "const": "get_membership"
+              },
+              "input": {
+                "type": "object",
+                "properties": {},
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "tool",
+              "input"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "tool": {
+                "type": "string",
+                "const": "list_activity"
+              },
+              "input": {
+                "type": "object",
+                "properties": {
+                  "after": {
+                    "type": "string",
+                    "maxLength": 20
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "tool",
+              "input"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$ref": "#/$defs/__schema0",
+        "$defs": {
+          "__schema0": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/__schema0"
+                }
+              },
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "$ref": "#/$defs/__schema0"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "helpTopic": "agents"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/mcp/local/prepare",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "tool": {
+                "type": "string",
+                "const": "prepare_proposal"
+              },
+              "input": {
+                "type": "object",
+                "properties": {
+                  "ballotId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 2000
+                  },
+                  "options": {
+                    "minItems": 2,
+                    "maxItems": 8,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80
+                    }
+                  }
+                },
+                "required": [
+                  "ballotId",
+                  "title",
+                  "description",
+                  "options"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "tool",
+              "input"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "tool": {
+                "type": "string",
+                "const": "prepare_vote"
+              },
+              "input": {
+                "type": "object",
+                "properties": {
+                  "pollId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "optionId": {
+                    "type": "string",
+                    "pattern": "^[0-7]$"
+                  }
+                },
+                "required": [
+                  "pollId",
+                  "optionId"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "tool",
+              "input"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "tool": {
+                "type": "string",
+                "const": "prepare_review"
+              },
+              "input": {
+                "type": "object",
+                "properties": {
+                  "milestoneId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "approve": {
+                    "type": "boolean"
+                  },
+                  "documentId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "documentVersion": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 4294967295
+                  }
+                },
+                "required": [
+                  "milestoneId",
+                  "approve",
+                  "documentId",
+                  "documentVersion"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "tool",
+              "input"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "tool": {
+                "type": "string",
+                "const": "prepare_activity"
+              },
+              "input": {
+                "type": "object",
+                "properties": {
+                  "appId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "sourceId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "sourceRevision": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "eventId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                },
+                "required": [
+                  "appId",
+                  "sourceId",
+                  "sourceRevision",
+                  "eventId"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "tool",
+              "input"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "intent": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "tool": {
+                    "type": "string",
+                    "const": "prepare_proposal"
+                  },
+                  "input": {
+                    "type": "object",
+                    "properties": {
+                      "ballotId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                      },
+                      "description": {
+                        "type": "string",
+                        "maxLength": 2000
+                      },
+                      "options": {
+                        "minItems": 2,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 80
+                        }
+                      }
+                    },
+                    "required": [
+                      "ballotId",
+                      "title",
+                      "description",
+                      "options"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "tool",
+                  "input"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "tool": {
+                    "type": "string",
+                    "const": "prepare_vote"
+                  },
+                  "input": {
+                    "type": "object",
+                    "properties": {
+                      "pollId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "optionId": {
+                        "type": "string",
+                        "pattern": "^[0-7]$"
+                      }
+                    },
+                    "required": [
+                      "pollId",
+                      "optionId"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "tool",
+                  "input"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "tool": {
+                    "type": "string",
+                    "const": "prepare_review"
+                  },
+                  "input": {
+                    "type": "object",
+                    "properties": {
+                      "milestoneId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "approve": {
+                        "type": "boolean"
+                      },
+                      "documentId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "documentVersion": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 4294967295
+                      }
+                    },
+                    "required": [
+                      "milestoneId",
+                      "approve",
+                      "documentId",
+                      "documentVersion"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "tool",
+                  "input"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "tool": {
+                    "type": "string",
+                    "const": "prepare_activity"
+                  },
+                  "input": {
+                    "type": "object",
+                    "properties": {
+                      "appId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "sourceId": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "sourceRevision": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "eventId": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      }
+                    },
+                    "required": [
+                      "appId",
+                      "sourceId",
+                      "sourceRevision",
+                      "eventId"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "tool",
+                  "input"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "request": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 65535
+              },
+              "chain_id": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "deployment": {
+                "type": "string",
+                "maxLength": 13
+              },
+              "dao_id": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "member_id": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "nonce": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "expires": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              "target": {
+                "type": "string",
+                "maxLength": 13
+              },
+              "action": {
+                "type": "string",
+                "maxLength": 13
+              },
+              "data": {
+                "type": "string",
+                "maxLength": 32768,
+                "pattern": "^(?:[0-9a-f]{2})*$"
+              }
+            },
+            "required": [
+              "version",
+              "chain_id",
+              "deployment",
+              "dao_id",
+              "member_id",
+              "nonce",
+              "expires",
+              "target",
+              "action",
+              "data"
+            ],
+            "additionalProperties": false
+          },
+          "digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "proposal",
+              "activity",
+              "vote",
+              "review"
+            ]
+          },
+          "sessionId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "signingPublicKey": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "codeHash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "policyRevision": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "expires": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          }
+        },
+        "required": [
+          "id",
+          "intent",
+          "request",
+          "digest",
+          "scope",
+          "sessionId",
+          "signingPublicKey",
+          "codeHash",
+          "policyRevision",
+          "expires"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "agents"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/mcp/local/submit",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "prepared": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "intent": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tool": {
+                        "type": "string",
+                        "const": "prepare_proposal"
+                      },
+                      "input": {
+                        "type": "object",
+                        "properties": {
+                          "ballotId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "description": {
+                            "type": "string",
+                            "maxLength": 2000
+                          },
+                          "options": {
+                            "minItems": 2,
+                            "maxItems": 8,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 80
+                            }
+                          }
+                        },
+                        "required": [
+                          "ballotId",
+                          "title",
+                          "description",
+                          "options"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "tool",
+                      "input"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tool": {
+                        "type": "string",
+                        "const": "prepare_vote"
+                      },
+                      "input": {
+                        "type": "object",
+                        "properties": {
+                          "pollId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "optionId": {
+                            "type": "string",
+                            "pattern": "^[0-7]$"
+                          }
+                        },
+                        "required": [
+                          "pollId",
+                          "optionId"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "tool",
+                      "input"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tool": {
+                        "type": "string",
+                        "const": "prepare_review"
+                      },
+                      "input": {
+                        "type": "object",
+                        "properties": {
+                          "milestoneId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "approve": {
+                            "type": "boolean"
+                          },
+                          "documentId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "documentVersion": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 4294967295
+                          }
+                        },
+                        "required": [
+                          "milestoneId",
+                          "approve",
+                          "documentId",
+                          "documentVersion"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "tool",
+                      "input"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "tool": {
+                        "type": "string",
+                        "const": "prepare_activity"
+                      },
+                      "input": {
+                        "type": "object",
+                        "properties": {
+                          "appId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "sourceId": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "sourceRevision": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "eventId": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          }
+                        },
+                        "required": [
+                          "appId",
+                          "sourceId",
+                          "sourceRevision",
+                          "eventId"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "tool",
+                      "input"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "request": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65535
+                  },
+                  "chain_id": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "deployment": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "dao_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "member_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "nonce": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "expires": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4294967295
+                  },
+                  "target": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "action": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "data": {
+                    "type": "string",
+                    "maxLength": 32768,
+                    "pattern": "^(?:[0-9a-f]{2})*$"
+                  }
+                },
+                "required": [
+                  "version",
+                  "chain_id",
+                  "deployment",
+                  "dao_id",
+                  "member_id",
+                  "nonce",
+                  "expires",
+                  "target",
+                  "action",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              "digest": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "scope": {
+                "type": "string",
+                "enum": [
+                  "proposal",
+                  "activity",
+                  "vote",
+                  "review"
+                ]
+              },
+              "sessionId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "signingPublicKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "codeHash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "policyRevision": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "expires": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4294967295
+              }
+            },
+            "required": [
+              "id",
+              "intent",
+              "request",
+              "digest",
+              "scope",
+              "sessionId",
+              "signingPublicKey",
+              "codeHash",
+              "policyRevision",
+              "expires"
+            ],
+            "additionalProperties": false
+          },
+          "signature": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          }
+        },
+        "required": [
+          "prepared",
+          "signature"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "const": "submitted"
+              },
+              "transactionId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            },
+            "required": [
+              "state",
+              "transactionId"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "const": "reconcile-required"
+              },
+              "preparedId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "digest": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            },
+            "required": [
+              "state",
+              "preparedId",
+              "digest"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "helpTopic": "agents"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/mcp/local/revoke",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "revoked": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "revoked"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "agents"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/mcp/local/validate",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "intent": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "tool": {
+                    "type": "string",
+                    "const": "prepare_proposal"
+                  },
+                  "input": {
+                    "type": "object",
+                    "properties": {
+                      "ballotId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                      },
+                      "description": {
+                        "type": "string",
+                        "maxLength": 2000
+                      },
+                      "options": {
+                        "minItems": 2,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 80
+                        }
+                      }
+                    },
+                    "required": [
+                      "ballotId",
+                      "title",
+                      "description",
+                      "options"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "tool",
+                  "input"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "tool": {
+                    "type": "string",
+                    "const": "prepare_vote"
+                  },
+                  "input": {
+                    "type": "object",
+                    "properties": {
+                      "pollId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "optionId": {
+                        "type": "string",
+                        "pattern": "^[0-7]$"
+                      }
+                    },
+                    "required": [
+                      "pollId",
+                      "optionId"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "tool",
+                  "input"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "tool": {
+                    "type": "string",
+                    "const": "prepare_review"
+                  },
+                  "input": {
+                    "type": "object",
+                    "properties": {
+                      "milestoneId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "approve": {
+                        "type": "boolean"
+                      },
+                      "documentId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "documentVersion": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 4294967295
+                      }
+                    },
+                    "required": [
+                      "milestoneId",
+                      "approve",
+                      "documentId",
+                      "documentVersion"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "tool",
+                  "input"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "tool": {
+                    "type": "string",
+                    "const": "prepare_activity"
+                  },
+                  "input": {
+                    "type": "object",
+                    "properties": {
+                      "appId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "sourceId": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "sourceRevision": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "eventId": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      }
+                    },
+                    "required": [
+                      "appId",
+                      "sourceId",
+                      "sourceRevision",
+                      "eventId"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "tool",
+                  "input"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "request": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 65535
+              },
+              "chain_id": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "deployment": {
+                "type": "string",
+                "maxLength": 13
+              },
+              "dao_id": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "member_id": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "nonce": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "expires": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              "target": {
+                "type": "string",
+                "maxLength": 13
+              },
+              "action": {
+                "type": "string",
+                "maxLength": 13
+              },
+              "data": {
+                "type": "string",
+                "maxLength": 32768,
+                "pattern": "^(?:[0-9a-f]{2})*$"
+              }
+            },
+            "required": [
+              "version",
+              "chain_id",
+              "deployment",
+              "dao_id",
+              "member_id",
+              "nonce",
+              "expires",
+              "target",
+              "action",
+              "data"
+            ],
+            "additionalProperties": false
+          },
+          "digest": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "proposal",
+              "activity",
+              "vote",
+              "review"
+            ]
+          },
+          "sessionId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "signingPublicKey": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "codeHash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "policyRevision": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "expires": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          }
+        },
+        "required": [
+          "id",
+          "intent",
+          "request",
+          "digest",
+          "scope",
+          "sessionId",
+          "signingPublicKey",
+          "codeHash",
+          "policyRevision",
+          "expires"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 65535
+          },
+          "chain_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "deployment": {
+            "type": "string",
+            "maxLength": 13
+          },
+          "dao_id": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "member_id": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "nonce": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "expires": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295
+          },
+          "target": {
+            "type": "string",
+            "maxLength": 13
+          },
+          "action": {
+            "type": "string",
+            "maxLength": 13
+          },
+          "data": {
+            "type": "string",
+            "maxLength": 32768,
+            "pattern": "^(?:[0-9a-f]{2})*$"
+          }
+        },
+        "required": [
+          "version",
+          "chain_id",
+          "deployment",
+          "dao_id",
+          "member_id",
+          "nonce",
+          "expires",
+          "target",
+          "action",
+          "data"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "agents"
     },
     {
       "method": "POST",
@@ -35420,6 +37451,7 @@
             "type": "string",
             "enum": [
               "/v1/me/exit",
+              "/v1/mcp/pairings/approve",
               "/v1/profiles/keys/share",
               "/v1/profiles/keys/remove",
               "/v1/resources/ram/card/checkout",

@@ -1,6 +1,9 @@
 import type { Pool, PoolClient } from 'pg';
 import { z } from 'zod';
 const personal = [
+  'public.mcp_preparations:account_id',
+  'public.mcp_pairings:account_id',
+  'public.mcp_local_grants:account_id',
   'custody.managed_keys:account_id',
   'public.account_control_intents:account_id',
   'public.connected_app_codes:account_id',

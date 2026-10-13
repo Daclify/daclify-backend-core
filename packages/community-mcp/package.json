@@ -1,6 +1,6 @@
 {
   "name": "@daclify/community-mcp",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "type": "module",
   "license": "AGPL-3.0-only",
   "private": true,
@@ -24,8 +24,6 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@daclify/core-protocol": "file:../../.artifacts/daclify-core-protocol-0.15.0-alpha.11.tgz",
-    "@daclify/modules": "file:../../../daclify-backend-modules/.artifacts/daclify-modules-0.10.0-alpha.18.tgz",
     "@modelcontextprotocol/server": "2.3.1",
     "@wharfkit/antelope": "4.0.2",
     "zod": "4.6.5"
@@ -34,6 +32,15 @@
     "@modelcontextprotocol/client": "2.3.1",
     "@types/node": "24.19.1",
     "typescript": "5.9.3",
-    "vitest": "5.0.3"
+    "vitest": "5.0.3",
+    "@daclify/core-protocol": "file:../../.artifacts/daclify-core-protocol-0.15.0-alpha.12.tgz",
+    "@daclify/modules": "file:../../../daclify-backend-modules/.artifacts/daclify-modules-0.10.0-alpha.19.tgz"
+  },
+  "bin": {
+    "daclify-community-mcp": "dist/src/cli.js"
+  },
+  "peerDependencies": {
+    "@daclify/core-protocol": "0.15.0-alpha.12",
+    "@daclify/modules": "0.10.0-alpha.19"
   }
 }

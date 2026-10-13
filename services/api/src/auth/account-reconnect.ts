@@ -278,6 +278,9 @@ export async function reconnectAccounts(
           [ids],
         );
       await db.query('DELETE FROM vault_recovery_devices WHERE account_id=ANY($1::uuid[])', [ids]);
+      await db.query('DELETE FROM mcp_preparations WHERE account_id=ANY($1::uuid[])', [ids]);
+      await db.query('DELETE FROM mcp_pairings WHERE account_id=ANY($1::uuid[])', [ids]);
+      await db.query('DELETE FROM mcp_local_grants WHERE account_id=ANY($1::uuid[])', [ids]);
       await db.query('DELETE FROM vault_recovery_handoffs WHERE account_id=ANY($1::uuid[])', [ids]);
       await db.query('DELETE FROM vault_recovery_grants WHERE account_id=ANY($1::uuid[])', [ids]);
       await db.query(

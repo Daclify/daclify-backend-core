@@ -1,4 +1,5 @@
 import {AccountExit} from '../../services/api/src/account-exit/service.js';
+import {McpPairings} from '../../services/api/src/mcp/pairing.js';
 import {AccountErasureExclusions} from '../../services/api/src/account-exit/exclusions.js';
 import {startAccountExitWorker} from '../../services/api/src/account-exit/jobs.js';
 // Owned disposable native/SQL fixture; never part of the API server or public package.
@@ -157,6 +158,7 @@ try {
   const accountExit=new AccountExit(pool,gateway,{backupRetentionSeconds:86400,profileExclusions,exclusions:new AccountErasureExclusions(join(profileDirectory,'accounts'))});
   server = await createServer(pool, gateway, origin, {
     accountExit,
+    mcpPairings:new McpPairings(pool,gateway,origin,origin,apps),
     connectedApps: apps,
     miniApps: new MiniAppConnections(apps, artifacts),
     profileKeys,

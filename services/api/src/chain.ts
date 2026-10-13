@@ -145,4 +145,7 @@ export interface ChainGateway {
     signature: string,
     sessionId?: string,
   ): Promise<{ transactionId: string }>;
+  prepareScopedSubmission?(account:Account,request:instruction,signature:string,sessionId:string):Promise<import('../../../protocol/account-exit.js').ExitSubmission>;
+  submitPreparedScoped?(packet:import('../../../protocol/account-exit.js').ExitSubmission):Promise<{transactionId:string}>;
+  reconcileScopedSubmission?(packet:import('../../../protocol/account-exit.js').ExitSubmission):Promise<{state:'confirmed'|'pending'|'unavailable';cursor:number}>;
 }

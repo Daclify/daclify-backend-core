@@ -13,7 +13,13 @@ import { NativeChallengeSchema } from '../../protocol/native-wallet.js';
 import { EvmSignInChallengeSchema } from '../../protocol/evm-wallet.js';
 import { EncryptionPublicKeySchema } from '../../protocol/crypto.js';
 import { SessionSchema } from '../../protocol/api.js';
-import { encodeAction, runtimeAbi } from '../../sdk/index.js';
+import { encodeAction, runtimeAbi, makeInstruction, instructionDigest } from '../../sdk/index.js';
+import {
+  McpGrantSchema,
+  McpPairingInputSchema,
+  PreparedInstructionSchema,
+} from '../../protocol/mcp.js';
+import { ModuleCodeHashes, encodeDecide } from '@daclify/modules/sdk';
 import { ConnectedApps } from '../../services/api/src/connected-apps/service.js';
 import { AppIssuerKeySchema } from '../../services/api/src/connected-apps/config.js';
 import { ConnectedAppConfigSchema } from '../../protocol/connected-apps.js';
@@ -1283,12 +1289,80 @@ it.each(['wallet', 'restored'] as const)(
           "INSERT INTO connected_app_refresh_families(id,client_id,account_id,revision,nonce,expires_at) VALUES($1,$2,$3,1,'fixture-reconnect',now()+interval '1 hour')",
           [randomUUID(), staged.clientId, account.id],
         );
+        const grantId = randomUUID(),
+          pairingId = randomUUID(),
+          delegatePublicKey = PrivateKey.generate('K1').toPublic().toString(),
+          expires = Math.floor(Date.now() / 1000) + 300;
+        const grant = McpGrantSchema.parse({
+          id: grantId,
+          dao: staged.config.dao,
+          memberId: '1',
+          scopes: ['vote'],
+          delegatePublicKey,
+          sessionId: '1',
+          sessionExpires: expires,
+          mode: 'confirm',
+        });
+        const pairing = McpPairingInputSchema.parse({
+          dao: grant.dao,
+          memberId: grant.memberId,
+          scopes: grant.scopes,
+          delegatePublicKey,
+          codeChallenge: randomBytes(32).toString('base64url'),
+        });
+        const nativeRequest = makeInstruction(
+          grant.dao,
+          grant.memberId,
+          '0',
+          expires,
+          'decide',
+          'vote',
+          encodeDecide('vote', {
+            runtime: grant.dao.contract,
+            dao_id: grant.dao.daoId,
+            member_id: '1',
+            ballot_id: '1',
+            choice: 1,
+          }),
+        );
+        const prepared = PreparedInstructionSchema.parse({
+          id: randomUUID(),
+          intent: { tool: 'prepare_vote', input: { pollId: '1', optionId: '1' } },
+          request: nativeRequest,
+          digest: instructionDigest(nativeRequest).toString(),
+          scope: 'vote',
+          sessionId: '1',
+          signingPublicKey: delegatePublicKey,
+          codeHash: ModuleCodeHashes.decide,
+          policyRevision: '1',
+          expires,
+        });
+        await pool.query(
+          "INSERT INTO mcp_local_grants(id,account_id,token_hash,context,credential_epoch,expires_at) VALUES($1,$2,$3,$4,1,now()+interval '1 hour')",
+          [grantId, account.id, randomBytes(32), grant],
+        );
+        await pool.query(
+          "INSERT INTO mcp_pairings(id,account_id,request,approved_grant,expires_at) VALUES($1,$2,$3,$4,now()+interval '5 minutes')",
+          [pairingId, account.id, pairing, grantId],
+        );
+        await pool.query(
+          "INSERT INTO mcp_preparations(id,account_id,grant_id,prepared,expires_at) VALUES($1,$2,$3,$4,now()+interval '5 minutes')",
+          [prepared.id, account.id, grantId, prepared],
+        );
       }
       const request =
         direction === 'wallet' ? await f.request() : await restoredReconnectRequest(f, name);
       const response = await app.inject(request);
       expect(response.statusCode, response.body).toBe(200);
       expect(SessionSchema.parse(response.json()).account.id).toBe(f.original.account.id);
+      for (const table of ['mcp_pairings', 'mcp_local_grants', 'mcp_preparations'])
+        expect(
+          (
+            await pool.query(`SELECT id FROM ${table} WHERE account_id=ANY($1::uuid[])`, [
+              [f.current.account.id, f.original.account.id],
+            ])
+          ).rows,
+        ).toHaveLength(0);
       for (const token of [access.accessToken, targetToken])
         await expect(service.access(token)).rejects.toMatchObject({ code: 'APP_TOKEN_REQUIRED' });
       expect(
@@ -1354,29 +1428,85 @@ it.each(['wallet', 'restored'] as const)(
       expect((await service.access(token.accessToken)).claims.memberId).toBe('1');
   },
 );
-it.each(['wallet','restored'] as const)('refuses %s reconnect after erasure even for a proof issued beforehand',async direction=>{
- const name=direction==='wallet'?'erasewallet':'eraserestore',f=await reconnectionFixture(name);
- const request=direction==='wallet'?await f.request():await restoredReconnectRequest(f,name);
- for(const id of [f.current.account.id,f.original.account.id])await pool.query("UPDATE accounts SET erasure_state='pending' WHERE id=$1",[id]);
- const result=await app.inject(request);expect([401,409]).toContain(result.statusCode);
- expect((await pool.query('SELECT id,merged_into FROM accounts WHERE id=ANY($1::uuid[])',[[f.current.account.id,f.original.account.id]])).rows.every(row=>row.merged_into===null)).toBe(true);
-});
-it.each(['wallet','restored'] as const)('rechecks both %s reconnect owners under the shared locks when erasure wins a race',async direction=>{
- const name=direction==='wallet'?'raceerasewal':'raceeraserst',f=await reconnectionFixture(name);
- const request=direction==='wallet'?await f.request():await restoredReconnectRequest(f,name);
- beforeMembershipRead=async()=>{await pool.query("UPDATE accounts SET erasure_state='pending' WHERE id=$1",[f.current.account.id]);};
- const result=await app.inject(request);expect(result.statusCode,result.body).toBe(409);expect(result.json()).toMatchObject({code:'ACCOUNT_RECONNECT_CHANGED'});
- expect((await pool.query('SELECT merged_into FROM accounts WHERE id=$1',[f.current.account.id])).rows[0]).toEqual({merged_into:null});
- expect((await pool.query('SELECT account_id FROM native_links WHERE native_account=$1',[name])).rows[0]?.account_id).toBe(f.current.account.id);
-});
-it.each([{direction:'wallet',side:'source',name:'erwsource'},{direction:'wallet',side:'target',name:'erwtarget'},{direction:'restored',side:'source',name:'errsource'},{direction:'restored',side:'target',name:'errtarget'}] as const)('rejects $direction reconnect when its $side UUID was erased after proof issuance',async({direction,side,name})=>{
- const {AccountExit}=await import('../../services/api/src/account-exit/service.js');
- const f=await reconnectionFixture(name),request=direction==='wallet'?await f.request():await restoredReconnectRequest(f,name);
- const ownerId=side==='source'?f.current.account.id:f.original.account.id;
- const service=new AccountExit(pool,{...(await import('../helpers/auth-chain.js')).authChain,memberships:async()=>[]},{backupRetentionSeconds:86400});
- const operation=await service.begin(ownerId,{version:1,mode:'delete-account',memberships:[]},{reauthenticated:true});
- for(let attempts=0;attempts<20;attempts++)if(await service.eraseHosted(operation.id)==='completed')break;
- expect((await pool.query('SELECT erasure_state,signing_key FROM accounts WHERE id=$1',[ownerId])).rows[0]).toEqual({erasure_state:'erased',signing_key:null});
- const result=await app.inject(request);expect([401,409]).toContain(result.statusCode);
- expect((await pool.query('SELECT merged_into FROM accounts WHERE id=$1',[f.current.account.id])).rows[0]?.merged_into).toBeNull();
-});
+it.each(['wallet', 'restored'] as const)(
+  'refuses %s reconnect after erasure even for a proof issued beforehand',
+  async (direction) => {
+    const name = direction === 'wallet' ? 'erasewallet' : 'eraserestore',
+      f = await reconnectionFixture(name);
+    const request =
+      direction === 'wallet' ? await f.request() : await restoredReconnectRequest(f, name);
+    for (const id of [f.current.account.id, f.original.account.id])
+      await pool.query("UPDATE accounts SET erasure_state='pending' WHERE id=$1", [id]);
+    const result = await app.inject(request);
+    expect([401, 409]).toContain(result.statusCode);
+    expect(
+      (
+        await pool.query('SELECT id,merged_into FROM accounts WHERE id=ANY($1::uuid[])', [
+          [f.current.account.id, f.original.account.id],
+        ])
+      ).rows.every((row) => row.merged_into === null),
+    ).toBe(true);
+  },
+);
+it.each(['wallet', 'restored'] as const)(
+  'rechecks both %s reconnect owners under the shared locks when erasure wins a race',
+  async (direction) => {
+    const name = direction === 'wallet' ? 'raceerasewal' : 'raceeraserst',
+      f = await reconnectionFixture(name);
+    const request =
+      direction === 'wallet' ? await f.request() : await restoredReconnectRequest(f, name);
+    beforeMembershipRead = async () => {
+      await pool.query("UPDATE accounts SET erasure_state='pending' WHERE id=$1", [
+        f.current.account.id,
+      ]);
+    };
+    const result = await app.inject(request);
+    expect(result.statusCode, result.body).toBe(409);
+    expect(result.json()).toMatchObject({ code: 'ACCOUNT_RECONNECT_CHANGED' });
+    expect(
+      (await pool.query('SELECT merged_into FROM accounts WHERE id=$1', [f.current.account.id]))
+        .rows[0],
+    ).toEqual({ merged_into: null });
+    expect(
+      (await pool.query('SELECT account_id FROM native_links WHERE native_account=$1', [name]))
+        .rows[0]?.account_id,
+    ).toBe(f.current.account.id);
+  },
+);
+it.each([
+  { direction: 'wallet', side: 'source', name: 'erwsource' },
+  { direction: 'wallet', side: 'target', name: 'erwtarget' },
+  { direction: 'restored', side: 'source', name: 'errsource' },
+  { direction: 'restored', side: 'target', name: 'errtarget' },
+] as const)(
+  'rejects $direction reconnect when its $side UUID was erased after proof issuance',
+  async ({ direction, side, name }) => {
+    const { AccountExit } = await import('../../services/api/src/account-exit/service.js');
+    const f = await reconnectionFixture(name),
+      request =
+        direction === 'wallet' ? await f.request() : await restoredReconnectRequest(f, name);
+    const ownerId = side === 'source' ? f.current.account.id : f.original.account.id;
+    const service = new AccountExit(
+      pool,
+      { ...(await import('../helpers/auth-chain.js')).authChain, memberships: async () => [] },
+      { backupRetentionSeconds: 86400 },
+    );
+    const operation = await service.begin(
+      ownerId,
+      { version: 1, mode: 'delete-account', memberships: [] },
+      { reauthenticated: true },
+    );
+    for (let attempts = 0; attempts < 20; attempts++)
+      if ((await service.eraseHosted(operation.id)) === 'completed') break;
+    expect(
+      (await pool.query('SELECT erasure_state,signing_key FROM accounts WHERE id=$1', [ownerId]))
+        .rows[0],
+    ).toEqual({ erasure_state: 'erased', signing_key: null });
+    const result = await app.inject(request);
+    expect([401, 409]).toContain(result.statusCode);
+    expect(
+      (await pool.query('SELECT merged_into FROM accounts WHERE id=$1', [f.current.account.id]))
+        .rows[0]?.merged_into,
+    ).toBeNull();
+  },
+);
