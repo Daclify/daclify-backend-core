@@ -137,13 +137,21 @@ afterAll(async () => {
   await pool.end();
 });
 it('uses a real current native executive and rejects missing approval and CSRF', async () => {
-  const eligibility = await server.inject({
-    method: 'GET',
-    url: DaoClaimRoutes.daoClaimEligibility.path,
-    headers: executive.headers,
-  });
-  expect(eligibility.statusCode, eligibility.body).toBe(200);
-  expect(eligibility.json().eligible).toBe(true);
+  // A freshly installed office is visible in pending state before its block becomes the chain head.
+  await expect
+    .poll(
+      async () => {
+        const eligibility = await server.inject({
+          method: 'GET',
+          url: DaoClaimRoutes.daoClaimEligibility.path,
+          headers: executive.headers,
+        });
+        expect(eligibility.statusCode, eligibility.body).toBe(200);
+        return DaoClaimRoutes.daoClaimEligibility.response.parse(eligibility.json()).eligible;
+      },
+      { timeout: 5000 },
+    )
+    .toBe(true);
   const missing = await server.inject({
     method: 'POST',
     url: DaoClaimRoutes.daoClaimIssue.path,

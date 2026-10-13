@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-13",
+  "status": "implementation-verified-delivery-in-progress",
+  "versions": {
+    "core": "0.15.0-alpha.20",
+    "modules": "0.10.0-alpha.28",
+    "frontend": "0.15.0-alpha.27",
+    "mcp": "0.1.0-alpha.11"
+  },
+  "runtime": {
+    "wasmBytes": 992572,
+    "wasmGrowth": 1374,
+    "codeHash": "2b2755e64462a1e43a4b530e2f602f06479d8c3f85214feb8443d663a80fe3c3",
+    "abiBytes": 184083,
+    "abiGrowth": 592,
+    "rawAbiHash": "e34b3bc13bdf4a08a1a12feb06fb317b36847b3f057c62a5fed788fb4e8b4306",
+    "persistentFieldsAdded": 0,
+    "nativeClaimTablesAdded": 0,
+    "nativeSampleCpuUs": 4998,
+    "nativeSampleRamBytes": 3091
+  },
+  "releases": {
+    "miniApp": "d4b6dd2eb5e3248ab7e58f13e970a98aa97d265d082b7bb58078923e477ae034",
+    "mcp": "fd764b36d4c6e13bc187e0a6e83f1805621eff15799e29d3a1094c7702f70e80"
+  },
+  "testResults": {
+    "modules": {
+      "passed": 215,
+      "files": 33
+    },
+    "frontend": {
+      "passed": 348,
+      "files": 61
+    },
+    "browser": {
+      "firstRunPassed": 9,
+      "firstRunFailed": 1,
+      "isolatedRetryPassed": 1
+    },
+    "native": {
+      "portablePassed": 86,
+      "portableFiles": 8,
+      "workflowPassed": 41,
+      "workflowFiles": 1
+    },
+    "nativeHttp": {
+      "passed": 4,
+      "files": 1
+    },
+    "core": {
+      "fullRunPassed": 1013,
+      "fullRunFailed": 2,
+      "isolatedRetryPassed": 20,
+      "isolatedRetryFiles": 2,
+      "freshFullRun": "pending"
+    },
+    "integration": {
+      "configuredRunPassed": 434,
+      "configuredRunFailed": 1,
+      "nativeHeadRetryPassed": 4,
+      "freshFullRun": "pending"
+    },
+    "mcp": {
+      "passed": 12,
+      "files": 7
+    },
+    "archiveIntegrity": {
+      "passed": 2,
+      "files": 1
+    }
+  },
+  "migrations": [
+    "050_dao_claim_links.sql"
+  ],
+  "recovery": {
+    "status": "passed",
+    "kind": "configured-testnet-tls-roundtrip",
+    "coreVersion": "0.15.0-alpha.20",
+    "origin": "https://testnet.app.daclify.com",
+    "storeScope": "daclify-testnet",
+    "keyServiceOrigin": "https://127.0.0.1:18200",
+    "developmentOnly": true,
+    "independentHost": false,
+    "previousVersionReportRejected": true,
+    "expiresAt": "2026-10-17T14:46:09.233Z",
+    "checkedAt": "2026-10-13T19:11:30.320Z",
+    "liveServiceNeverStopped": true,
+    "syntheticKeyOnly": true
+  },
+  "limits": [
+    "testnet only",
+    "human/mixed shared invitations",
+    "physical passkeys and live social/wallet providers not requalified",
+    "legacy fixed-container native presets harness unavailable",
+    "live platform executive claim acceptance belongs to account owner"
+  ],
+  "deployment": {
+    "status": "pending"
+  },
+  "sourceCommits": {
+    "native": "9e13246",
+    "api": "8e3f76d5e7b7379b8777cb86e119cca48c475a36",
+    "modules": "58664d5",
+    "frontend": "8641253"
+  },
+  "logHashes": {
+    "task-5-modules28-final-verify.log": "e5a2eab0dd45ef09109bbb640edf950358c120a1861a15899ee5685647a691f1",
+    "task-5-native-upgrade.log": "6d8974ff2600e599abcac6cc7848cfd6a4f3dc3207cd9e1dffabfce9cb1aa616",
+    "task-5-historical-reproduce.log": "d9cb58abbf83b0a841953877ae433c10373894bc687b8376a4af3b1c0231a620",
+    "task-5-native-workflows-retry.log": "ff81bde4f4c2594e8455bfb98a6f78f02d01c946b2d60df85c274cc70e720acb",
+    "task-5-native-http-head-retry.log": "d44407ac1bb450b4bd2a738e4ae12af163cd835fb995ae220d30bb8cc964449c",
+    "task-5-core-timeout-retry.log": "9de74c4c3bbf943a079a1b793002ebd433426d15d8aa9829b03cc2b4f607cd31",
+    "task-5-mcp-archives-red.log": "e5aa8e985cd339f1a7c32c0ef6bb33e47dad93d4d6e6a135a24604ae648dca25",
+    "task-5-mcp-archives-green.log": "6ef30349459868c6ed0c256778c8d8cfc0e46fde86f450004a900ebf5f8c0571",
+    "task-5-recovery-qualification.log": "9b46155879a7fafe9a7e44872dfb588d3de5d379bfc48c64440ea2495feb4427",
+    "task-5-recovery-live.log": "1e30f10549a4a30067f539c476a6ef034585c66707c91b71582222bbce1fac44"
+  }
+}

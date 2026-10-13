@@ -37,6 +37,7 @@ function view(row: Row) {
     request: row.request,
     chainId: row.chain_id,
     runtime: row.runtime,
+    method: row.method,
     expiresAt: row.expires_at.toISOString(),
     state: row.completed_at
       ? 'created'
@@ -67,10 +68,15 @@ export class DaoClaimLinks {
       return { eligible: false, governingDao: dao };
     const state = await this.chain.governance(dao.daoId);
     const memberships = await this.chain.memberships(account, db);
-    const now = Math.floor(Date.now() / 1000);
+    const now = Math.floor(
+      Date.parse(platform.headTime.endsWith('Z') ? platform.headTime : platform.headTime + 'Z') /
+        1000,
+    );
+    if (!Number.isFinite(now)) throw new ApiError('CHAIN_UNAVAILABLE', 503);
     const eligible = memberships.some(
       (m) =>
         m.active &&
+        !state.actors.some((actor) => actor.id === m.memberId && actor.revoked) &&
         m.dao.chainId === dao.chainId &&
         m.dao.contract === dao.contract &&
         m.dao.daoId === dao.daoId &&

@@ -323,7 +323,10 @@ const mcpOAuth =
     : undefined;
 if (mcpOAuth && !mcpOAuth.clients.length) throw Error('MCP_REGISTERED_CLIENT_REQUIRED');
 const mcpArtifacts = process.env.COMMUNITY_MCP_RELEASE_DIRECTORY
-  ? await McpArtifacts.load(process.env.COMMUNITY_MCP_RELEASE_DIRECTORY)
+  ? await McpArtifacts.load(
+      process.env.COMMUNITY_MCP_RELEASE_DIRECTORY,
+      JSON.parse(process.env.COMMUNITY_MCP_ARCHIVE_DIRECTORIES ?? '[]'),
+    )
   : undefined;
 const miniAppDirectory =
   env.MINI_APP_DIRECTORY_ENABLED === '1'

@@ -1,3 +1,4 @@
+import { DaoClaimLinks } from '../../services/api/src/dao-claims.js';
 import { CreationService } from '../../services/api/src/creation.js';
 import { DirectoryService } from '../../services/api/src/mini-apps/directory.js';
 import { governedDirectoryModeration } from '../../services/api/src/mini-apps/directory-moderation.js';
@@ -174,6 +175,7 @@ try {
   });
   const mcpPairings = new McpPairings(pool, gateway, 'http://127.0.0.1:' + apiPort, origin, apps);
   const deliveredEmailCodes = new Map<string, string>();
+  const creation = new CreationService(pool, gateway);
   server = await createServer(pool, gateway, origin, {
     signIn: {
       environment: 'local',
@@ -182,7 +184,8 @@ try {
       },
     },
     accountExit,
-    creation: new CreationService(pool, gateway),
+    creation,
+    daoClaims: new DaoClaimLinks(pool, gateway, creation),
     mcpPairings,
     miniAppDirectory,
     ...(process.env.MCP_TEST_RELEASE_DIRECTORY
@@ -263,14 +266,16 @@ try {
       encryptionKey: input.encryptionKey,
       custody: 'user-controlled',
     });
-    await gateway.orderCreation(reference, signingKey, 'card');
+    const free = process.env.DACLIFY_TEST_FREE_CREATION === '1';
+    await gateway.orderCreation(reference, signingKey, free ? 'free' : 'card');
     // Synthetic card attestation is explicit; only native payment/creation, not a live provider, is qualified.
-    await gateway.attestCreation(
-      reference,
-      randomBytes(32).toString('hex'),
-      2000,
-      Math.floor(Date.now() / 1000),
-    );
+    if (!free)
+      await gateway.attestCreation(
+        reference,
+        randomBytes(32).toString('hex'),
+        2000,
+        Math.floor(Date.now() / 1000),
+      );
     const result = await gateway.createDao(
       account,
       CreateDaoSchema.parse({
@@ -285,7 +290,15 @@ try {
       }),
       { reference, daoId },
     );
-    if (input.platform) await f.call('daclifycore', 'setgov', { dao_id: daoId });
+    if (input.platform) {
+      await f.call('daclifycore', 'setgov', { dao_id: daoId });
+      await f.call(
+        'daclifycore',
+        'appoint',
+        { dao_id: daoId, member_ids: ['1'], inactivity_seconds: 0, quorum_bps: 10000 },
+        'alice',
+      );
+    }
     if (!input.admin)
       await f.call(
         'daclifycore',

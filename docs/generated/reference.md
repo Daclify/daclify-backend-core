@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.15.0-alpha.18 · interface 1.
+Package 0.15.0-alpha.20 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -3775,6 +3775,21 @@ Response:
       "runtime": {
         "type": "string"
       },
+      "method": {
+        "anyOf": [
+          {
+            "type": "string",
+            "enum": [
+              "card",
+              "tlos",
+              "free"
+            ]
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
       "expiresAt": {
         "type": "string",
         "format": "date-time",
@@ -3796,6 +3811,7 @@ Response:
       "request",
       "chainId",
       "runtime",
+      "method",
       "expiresAt",
       "state"
     ],
@@ -4987,6 +5003,21 @@ Response:
         "runtime": {
           "type": "string"
         },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "card",
+                "tlos",
+                "free"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "expiresAt": {
           "type": "string",
           "format": "date-time",
@@ -5008,6 +5039,7 @@ Response:
         "request",
         "chainId",
         "runtime",
+        "method",
         "expiresAt",
         "state"
       ],
@@ -5642,6 +5674,21 @@ Response:
     "runtime": {
       "type": "string"
     },
+    "method": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "card",
+            "tlos",
+            "free"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "expiresAt": {
       "type": "string",
       "format": "date-time",
@@ -5663,6 +5710,7 @@ Response:
     "request",
     "chainId",
     "runtime",
+    "method",
     "expiresAt",
     "state"
   ],
@@ -6285,6 +6333,21 @@ Response:
     "runtime": {
       "type": "string"
     },
+    "method": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "card",
+            "tlos",
+            "free"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "expiresAt": {
       "type": "string",
       "format": "date-time",
@@ -6306,6 +6369,7 @@ Response:
     "request",
     "chainId",
     "runtime",
+    "method",
     "expiresAt",
     "state"
   ],
@@ -33066,6 +33130,21 @@ Response:
       "runtime": {
         "type": "string"
       },
+      "method": {
+        "anyOf": [
+          {
+            "type": "string",
+            "enum": [
+              "card",
+              "tlos",
+              "free"
+            ]
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
       "expiresAt": {
         "type": "string",
         "format": "date-time",
@@ -33087,6 +33166,7 @@ Response:
       "request",
       "chainId",
       "runtime",
+      "method",
       "expiresAt",
       "state"
     ],
@@ -34278,6 +34358,21 @@ Response:
         "runtime": {
           "type": "string"
         },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "card",
+                "tlos",
+                "free"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "expiresAt": {
           "type": "string",
           "format": "date-time",
@@ -34299,6 +34394,7 @@ Response:
         "request",
         "chainId",
         "runtime",
+        "method",
         "expiresAt",
         "state"
       ],
@@ -34933,6 +35029,21 @@ Response:
     "runtime": {
       "type": "string"
     },
+    "method": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "card",
+            "tlos",
+            "free"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "expiresAt": {
       "type": "string",
       "format": "date-time",
@@ -34954,6 +35065,7 @@ Response:
     "request",
     "chainId",
     "runtime",
+    "method",
     "expiresAt",
     "state"
   ],
@@ -35576,6 +35688,21 @@ Response:
     "runtime": {
       "type": "string"
     },
+    "method": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "card",
+            "tlos",
+            "free"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "expiresAt": {
       "type": "string",
       "format": "date-time",
@@ -35597,6 +35724,7 @@ Response:
     "request",
     "chainId",
     "runtime",
+    "method",
     "expiresAt",
     "state"
   ],

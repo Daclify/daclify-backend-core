@@ -1,6 +1,6 @@
 # Draft DAO creation through claim links
 
-13 October 2026. Product design for discussion; no claim-link API, database migration, contract action or UI has been implemented. The ordinary paired-sign-in creation fix is delivered separately in [frontend alpha.26](../../evidence/2026-10-13-dao-creation-paired-sign-in.md).
+13 October 2026. Approved design implemented in core20/modules28/frontend27. Execution and qualification are recorded in [the implementation plan](../plans/2026-10-13-dao-claim-links.md) and [claim-link evidence](../../evidence/2026-10-13-dao-claim-links.md). The ordinary paired-sign-in creation fix is delivered separately in [frontend alpha.26](../../evidence/2026-10-13-dao-creation-paired-sign-in.md).
 
 ## Purpose and selected behavior
 

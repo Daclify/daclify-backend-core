@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.15.0-alpha.20 development
+
+Add executive-authorized shared DAO claim links with seven-day expiry and explicit first-claim reservation. The sole recipient becomes member, administrator and native executive atomically through an optional createpaid extension. Preserve legacy action bytes, existing authorities, pending receipts and once-only ownership through retries and database restore. Add migration 050, bounded cleanup/erasure rules, exact paired-sign-in issuance/revocation approval, generated SDK/help and native/browser regressions. Consume the verified modules28 and MCP11 cohort; earlier downloads remain immutable and verified MCP archive directories retain their URLs.
+
 ## 0.15.0-alpha.18 development
 
 Add an optional GET to the existing sign-in session endpoint for browser startup. Signed-out sessions return an empty 204; valid sessions use the existing canonical account response. Reading does not rotate CSRF, renew sign-in freshness or return recovery grants. Protected account/MCP routes and POST session resumption keep their existing guards. No protocol SDK, contract or storage layout changes.

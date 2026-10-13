@@ -19,3 +19,11 @@ Before exposing a restored database, stop the API/workers, apply current migrati
 The native `createpaid` action appends an optional binary extension. Existing action bytes retain their original prefix and omission semantics. The extension atomically initializes governance, enrolls member 1 and gives that member its sole executive office. It applies only to the new paid DAO, preserves ordinary creation behavior and uses the existing restricted service links. It adds no persistent contract field, secondary index or claim-link table.
 
 Agent-only invitations and independently hosted commissioning are outside this first version. Existing ordinary agent-only creation keeps its nominated agent behavior. Private document key initialization remains a separate authorized account journey.
+
+## Deploying this cohort
+
+The tested development cohort is core20, modules28, frontend27 and MCP11. Apply migration 050 before starting the claim service and deploy the matching runtime code/ABI before enabling its advertised capability. Recovery qualification is bound to the core version and must be checked against the configured service. Native owner/active authorities, module bytecode and balances do not change.
+
+Select the new mini-app/MCP artifact directories and retain verified previous releases through `MINI_APP_ARCHIVE_DIRECTORIES` and `COMMUNITY_MCP_ARCHIVE_DIRECTORIES` (at most eight each). Those archives keep existing download URLs working; existing core-target native delegate permissions pin the prior runtime hash and require explicit reapproval before submitting to the upgraded code. Hosted read access keeps its existing membership and consent checks.
+
+A frontend-only rollback may keep the claim-aware API/runtime. Before reverting the API/runtime, stop fulfillment and retain SQL reservations; an older creation service must never fulfill a claim order as an ordinary administrator-only DAO. Never roll the database back to drop migration 050 or discard reserved work.

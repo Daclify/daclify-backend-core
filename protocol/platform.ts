@@ -152,6 +152,7 @@ export const PlatformRoutes = {
     helpTopic: string;
   }
 >;
+export type CreationMethod = z.infer<typeof CreationMethodSchema>;
 export type CreationRequest = z.infer<typeof CreationRequestSchema>;
 export type CreationOrderView = z.infer<typeof CreationOrderViewSchema>;
 export type ChainPlatform = z.infer<typeof ChainPlatformSchema>;

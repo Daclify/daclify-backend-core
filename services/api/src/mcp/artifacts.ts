@@ -8,7 +8,7 @@ import {
   McpArtifactNameSchema,
   type McpReleaseManifestSchema as Manifest,
 } from '../../../../protocol/mcp.js';
-import type { z } from 'zod';
+import { z } from 'zod';
 const invalid = () => Error('MCP_ARTIFACT_INTEGRITY');
 export function mcpReleaseId(input: unknown) {
   const value = McpReleaseIdentitySchema.parse(input);
@@ -20,8 +20,14 @@ export class McpArtifacts {
     readonly manifest: z.infer<typeof Manifest>,
     readonly manifestBytes: Buffer,
     readonly manifestHash: string,
+    private readonly archives: readonly McpArtifacts[] = [],
   ) {}
-  static async load(directory: string) {
+  static async load(directory: string, archiveDirectories: unknown = []): Promise<McpArtifacts> {
+    const directories = z
+      .array(z.string().startsWith('/').max(4096))
+      .max(8)
+      .safeParse(archiveDirectories);
+    if (!directories.success) throw invalid();
     const path = resolve(directory, 'manifest.json'),
       info = await lstat(path);
     if (!info.isFile() || info.size < 1 || info.size > 65536) throw invalid();
@@ -41,12 +47,20 @@ export class McpArtifacts {
       manifest,
       bytes,
       createHash('sha256').update(bytes).digest('hex'),
+      await Promise.all(directories.data.map((archive) => McpArtifacts.load(archive))),
     );
+    const ids = [releaseId, ...result.archives.map((archive) => archive.manifest.releaseId)];
+    if (new Set(ids).size !== ids.length) throw invalid();
     for (const file of manifest.files) {
       const opened = await result.openFile(file.name);
       await opened.close();
     }
     return result;
+  }
+  findRelease(releaseId: string): McpArtifacts | undefined {
+    return this.manifest.releaseId === releaseId
+      ? this
+      : this.archives.find((archive) => archive.manifest.releaseId === releaseId);
   }
   async openFile(input: unknown) {
     const name = McpArtifactNameSchema.parse(input),

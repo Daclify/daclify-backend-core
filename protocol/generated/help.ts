@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle:HelpBundle={
   "producer": "core",
-  "packageVersion": "0.15.0-alpha.18",
+  "packageVersion": "0.15.0-alpha.20",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -7221,6 +7221,21 @@ export const CoreHelpBundle:HelpBundle={
             "runtime": {
               "type": "string"
             },
+            "method": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "card",
+                    "tlos",
+                    "free"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "expiresAt": {
               "type": "string",
               "format": "date-time",
@@ -7242,6 +7257,7 @@ export const CoreHelpBundle:HelpBundle={
             "request",
             "chainId",
             "runtime",
+            "method",
             "expiresAt",
             "state"
           ],
@@ -8424,6 +8440,21 @@ export const CoreHelpBundle:HelpBundle={
               "runtime": {
                 "type": "string"
               },
+              "method": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "card",
+                      "tlos",
+                      "free"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "expiresAt": {
                 "type": "string",
                 "format": "date-time",
@@ -8445,6 +8476,7 @@ export const CoreHelpBundle:HelpBundle={
               "request",
               "chainId",
               "runtime",
+              "method",
               "expiresAt",
               "state"
             ],
@@ -9070,6 +9102,21 @@ export const CoreHelpBundle:HelpBundle={
           "runtime": {
             "type": "string"
           },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "card",
+                  "tlos",
+                  "free"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "expiresAt": {
             "type": "string",
             "format": "date-time",
@@ -9091,6 +9138,7 @@ export const CoreHelpBundle:HelpBundle={
           "request",
           "chainId",
           "runtime",
+          "method",
           "expiresAt",
           "state"
         ],
@@ -9704,6 +9752,21 @@ export const CoreHelpBundle:HelpBundle={
           "runtime": {
             "type": "string"
           },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "card",
+                  "tlos",
+                  "free"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "expiresAt": {
             "type": "string",
             "format": "date-time",
@@ -9725,6 +9788,7 @@ export const CoreHelpBundle:HelpBundle={
           "request",
           "chainId",
           "runtime",
+          "method",
           "expiresAt",
           "state"
         ],
@@ -35443,6 +35507,21 @@ export const CoreHelpBundle:HelpBundle={
             "runtime": {
               "type": "string"
             },
+            "method": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "card",
+                    "tlos",
+                    "free"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "expiresAt": {
               "type": "string",
               "format": "date-time",
@@ -35464,6 +35543,7 @@ export const CoreHelpBundle:HelpBundle={
             "request",
             "chainId",
             "runtime",
+            "method",
             "expiresAt",
             "state"
           ],
@@ -36646,6 +36726,21 @@ export const CoreHelpBundle:HelpBundle={
               "runtime": {
                 "type": "string"
               },
+              "method": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "card",
+                      "tlos",
+                      "free"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "expiresAt": {
                 "type": "string",
                 "format": "date-time",
@@ -36667,6 +36762,7 @@ export const CoreHelpBundle:HelpBundle={
               "request",
               "chainId",
               "runtime",
+              "method",
               "expiresAt",
               "state"
             ],
@@ -37292,6 +37388,21 @@ export const CoreHelpBundle:HelpBundle={
           "runtime": {
             "type": "string"
           },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "card",
+                  "tlos",
+                  "free"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "expiresAt": {
             "type": "string",
             "format": "date-time",
@@ -37313,6 +37424,7 @@ export const CoreHelpBundle:HelpBundle={
           "request",
           "chainId",
           "runtime",
+          "method",
           "expiresAt",
           "state"
         ],
@@ -37926,6 +38038,21 @@ export const CoreHelpBundle:HelpBundle={
           "runtime": {
             "type": "string"
           },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "card",
+                  "tlos",
+                  "free"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "expiresAt": {
             "type": "string",
             "format": "date-time",
@@ -37947,6 +38074,7 @@ export const CoreHelpBundle:HelpBundle={
           "request",
           "chainId",
           "runtime",
+          "method",
           "expiresAt",
           "state"
         ],

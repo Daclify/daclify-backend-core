@@ -318,3 +318,14 @@ it('keeps default-column MCP owner guards effective with an empty restore search
   await expect(db.query("INSERT INTO public.mcp_local_grants(id,account_id,token_hash,context,credential_epoch,expires_at) VALUES($1,$2,$3,'{}',1,clock_timestamp()+interval '1 hour')",[randomUUID(),erased,randomBytes(32)])).rejects.toMatchObject({constraint:'retired_account_credential'});
  }finally{await db.query('RESET search_path');db.release();}
 });
+it('removes disposable DAO invitations and completed descriptions while retaining another claimant’s pending rights',async()=>{
+ await fixture();
+ const recipient=randomUUID(),unused=randomUUID(),completed=randomUUID(),pending=randomUUID();
+ await pool.query("INSERT INTO accounts(id,signing_key,custody,encryption_key)VALUES($1,$2,'user-controlled',$3)",[recipient,PrivateKey.generate('K1').toPublic().toString(),generateKeyPairSync('ec',{namedCurve:'prime256v1'}).publicKey.export({format:'jwk'})]);
+ for(const [id,claimant,method,finished]of[[unused,null,null,false],[completed,canonical,'free',true],[pending,recipient,'free',false]])await pool.query("INSERT INTO dao_claim_links(id,issuer_account_id,claimant_account_id,method,request,chain_id,runtime,token_hash,completed_at)VALUES($1,$2,$3,$4,$5,$6,'daclifycore',$7,CASE WHEN $8 THEN now() ELSE NULL END)",[id,canonical,claimant,method,{metadata:{schemaVersion:1,title:'Disposable invitation'}},'ab'.repeat(32),randomBytes(32).toString('hex'),finished]);
+ const service=new AccountExit(pool,{...authChain,memberships:async()=>[]},{backupRetentionSeconds:86400}),operation=await service.begin(canonical,{version:1,mode:'delete-account',memberships:[]},{reauthenticated:true});
+ await service.eraseHosted(operation.id);
+ expect((await pool.query('SELECT 1 FROM dao_claim_links WHERE id=$1',[unused])).rowCount).toBe(0);
+ expect((await pool.query('SELECT request,token_hash FROM dao_claim_links WHERE id=$1',[completed])).rows).toEqual([{request:null,token_hash:null}]);
+ expect((await pool.query('SELECT claimant_account_id,request FROM dao_claim_links WHERE id=$1',[pending])).rows).toMatchObject([{claimant_account_id:recipient,request:{metadata:{title:'Disposable invitation'}}}]);
+});

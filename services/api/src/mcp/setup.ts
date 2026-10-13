@@ -26,11 +26,11 @@ export function registerMcpSetupRoutes(
     const params = z
       .strictObject({ releaseId: z.string().regex(/^[a-f0-9]{64}$/), file: McpArtifactNameSchema })
       .parse(request.params);
-    if (!artifacts || params.releaseId !== artifacts.manifest.releaseId)
-      throw new ApiError('MCP_RELEASE_UNKNOWN', 404);
-    const file = artifacts.manifest.files.find((value) => value.name === params.file);
+    const release = artifacts?.findRelease(params.releaseId);
+    if (!release) throw new ApiError('MCP_RELEASE_UNKNOWN', 404);
+    const file = release.manifest.files.find((value) => value.name === params.file);
     if (!file) throw new ApiError('MCP_RELEASE_UNKNOWN', 404);
-    const handle = await artifacts.openFile(params.file);
+    const handle = await release.openFile(params.file);
     return reply
       .header('cache-control', 'public,max-age=31536000,immutable')
       .header('etag', '"' + file.sha256 + '"')

@@ -134,7 +134,7 @@ const governance = () =>
     executives: [
       {
         member_id: '1',
-        last_active: Math.floor(Date.now() / 1000),
+        last_active: Math.floor(Date.parse(platform.headTime) / 1000),
         office_epoch: '1',
         election_id: '0',
       },
@@ -146,7 +146,10 @@ let authorized = true,
   creations = 0;
 const orders = new Map<string, ReturnType<typeof RuntimeTableSchemas.createords.parse>>();
 const chain = {
-  platform: async () => platform,
+  platform: async () => {
+    platform.headTime = new Date().toISOString();
+    return platform;
+  },
   governance: async (id: string) =>
     id === '1'
       ? governance()
@@ -301,6 +304,36 @@ it('rejects non-executives, stale issuers and substituted networks', async () =>
     }),
   ).rejects.toMatchObject({ code: 'DAO_REFERENCE' });
 });
+it('refuses an executive in another DAO and an expired actual executive office', async () => {
+  const memberships = await chain.memberships(issuer);
+  const other = memberships.map((m) => ({ ...m, dao: { ...m.dao, daoId: '2' } }));
+  const wrongDao = vi.spyOn(chain, 'memberships').mockResolvedValue(other);
+  await expect(issue()).rejects.toMatchObject({ code: 'DAO_CLAIM_EXECUTIVE_REQUIRED' });
+  wrongDao.mockRestore();
+  const expired = governance();
+  if (!expired.executivePolicy || !expired.executives[0]) throw Error('Owned office missing');
+  expired.executivePolicy.inactivity_seconds = 10;
+  expired.executives[0].last_active = Math.floor(Date.now() / 1000) - 20;
+  const office = vi.spyOn(chain, 'governance').mockResolvedValue(expired);
+  await expect(issue()).rejects.toMatchObject({ code: 'DAO_CLAIM_EXECUTIVE_REQUIRED' });
+  office.mockRestore();
+});
+it('evaluates executive activity using authoritative chain time rather than the API host clock', async () => {
+  const future = Math.floor(Date.now() / 1000) + 3600,
+    state = governance();
+  if (!state.executives[0]) throw Error('Owned office absent');
+  state.executives[0].last_active = future - 1;
+  const clock = vi
+    .spyOn(chain, 'platform')
+    .mockResolvedValue({ ...platform, headTime: new Date(future * 1000).toISOString() });
+  const office = vi.spyOn(chain, 'governance').mockResolvedValue(state);
+  try {
+    expect((await links.eligibility(issuer)).eligible).toBe(true);
+  } finally {
+    clock.mockRestore();
+    office.mockRestore();
+  }
+});
 it('expires after seven days and permits revocation only before reservation', async () => {
   const link = await issue();
   expect(new Date(link.claim.expiresAt).getTime() - Date.now()).toBeGreaterThan(604790000);
@@ -372,6 +405,33 @@ it('preserves native ownership across restoring a pre-reservation SQL snapshot',
   const recovered = await links.claim(first, { token: link.token, method: 'free' });
   expect(recovered.dao).toEqual(original.dao);
   expect(creations - before).toBe(1);
+});
+it('reconciles restored revoked drafts in bounded cleanup while preserving the native claimant', async () => {
+  const link = await issue();
+  const original = await links.claim(first, { token: link.token, method: 'free' });
+  await pool.query('DELETE FROM creation_orders WHERE id=$1', [link.claim.id]);
+  await pool.query(
+    'UPDATE dao_claim_links SET claimant_account_id=NULL,method=NULL,completed_at=NULL,revoked_at=now() WHERE id=$1',
+    [link.claim.id],
+  );
+  for (let index = 0; index < 10; index++) {
+    expect(await links.cleanup()).toBeLessThanOrEqual(5);
+    if (
+      (
+        await pool.query('SELECT claimant_account_id FROM dao_claim_links WHERE id=$1', [
+          link.claim.id,
+        ])
+      ).rows[0]?.claimant_account_id
+    )
+      break;
+  }
+  expect((await links.preview(link.token)).method).toBe('free');
+  await expect(links.claim(second, { token: link.token, method: 'free' })).rejects.toMatchObject({
+    code: 'DAO_CLAIM_RESERVED',
+  });
+  expect((await links.claim(first, { token: link.token, method: 'free' })).dao).toEqual(
+    original.dao,
+  );
 });
 it('keeps a reserved paid order usable after link expiry and issuer loses office', async () => {
   if (platform.creation) platform.creation.shared_usd = 2000;

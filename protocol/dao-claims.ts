@@ -17,6 +17,7 @@ export const DaoClaimViewSchema = z.strictObject({
   request: DaoClaimSetupSchema.nullable(),
   chainId: z.string().regex(/^[0-9a-f]{64}$/),
   runtime: z.string(),
+  method: CreationMethodSchema.nullable(),
   expiresAt: z.iso.datetime(),
   state: z.enum(['ready', 'claiming', 'created', 'revoked', 'expired']),
 });

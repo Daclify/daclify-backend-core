@@ -533,6 +533,50 @@
       "id": "MINI-APPS-ACTUAL-MCP-HARNESS",
       "suite": "integration",
       "tests": ["tests/integration/community-mcp-journey.test.ts"]
+    },
+    {
+      "id": "DAO-CLAIM-FOUNDER",
+      "suite": "vert",
+      "tests": [
+        "tests/dao-claim-founder.test.ts"
+      ]
+    },
+    {
+      "id": "DAO-CLAIM-NATIVE-FOUNDER",
+      "suite": "native",
+      "tests": [
+        "tests/native/dao-claim-founder-portable.test.ts",
+        "tests/native/dao-claim-upgrade-portable.test.ts"
+      ]
+    },
+    {
+      "id": "DAO-CLAIM-PROTOCOL",
+      "suite": "unit",
+      "tests": [
+        "tests/dao-claims-protocol.test.ts"
+      ]
+    },
+    {
+      "id": "DAO-CLAIM-RESERVATION",
+      "suite": "integration",
+      "tests": [
+        "tests/integration/dao-claims.test.ts",
+        "tests/integration/dao-claims-native.test.ts"
+      ]
+    },
+    {
+      "id": "DAO-CLAIM-BROWSER",
+      "suite": "browser",
+      "tests": [
+        "../daclify-frontend/tests/e2e/dao-claims.spec.ts"
+      ]
+    },
+    {
+      "id": "DAO-CLAIM-ENTRY",
+      "suite": "unit",
+      "tests": [
+        "../daclify-frontend/tests/unit/dao-claim-entry.test.ts"
+      ]
     }
   ]
 }
