@@ -283,6 +283,24 @@ it('never accepts a paired login proof for credential changes, native delegation
       'ACCOUNT_CONTROL_REQUIRED',
     );
 });
+it.each(['/v1/dao-claims/issue', '/v1/dao-claims/revoke'])(
+  'allows fresh paired approval for %s and binds it to that operation',
+  async (path) => {
+    const current = await login();
+    await expect(consume(current, await intent(current, path), path)).resolves.toBeUndefined();
+    const proof = await intent(current, path);
+    await expect(consume(current, proof, '/v1/mcp/oauth/approve')).rejects.toThrow(
+      'ACCOUNT_CONTROL_REQUIRED',
+    );
+    await pool.query(
+      "UPDATE sessions SET step_up_at=now()-interval '6 minutes' WHERE account_id=$1",
+      [current.account.id],
+    );
+    await expect(consume(current, await intent(current, path), path)).rejects.toThrow(
+      'ACCOUNT_SIGN_IN_REQUIRED',
+    );
+  },
+);
 it('reports fresh approval availability only to the authenticated session', async () => {
   const current = await login();
   const fresh = await server.inject({

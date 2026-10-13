@@ -781,6 +781,33 @@ export class AccountExit {
         )
           return 'retry';
       }
+      // Keep unresolved claimant rights; erase disposable invitations and completed claim descriptions.
+      await db.query(
+        'DELETE FROM dao_claim_links WHERE id IN(SELECT id FROM dao_claim_links WHERE issuer_account_id=ANY($1::uuid[]) AND claimant_account_id IS NULL LIMIT 25)',
+        [owners],
+      );
+      if (
+        (
+          await db.query(
+            'SELECT 1 FROM dao_claim_links WHERE issuer_account_id=ANY($1::uuid[]) AND claimant_account_id IS NULL LIMIT 1',
+            [owners],
+          )
+        ).rowCount
+      )
+        return 'retry';
+      await db.query(
+        'UPDATE dao_claim_links SET request=NULL,token_hash=NULL,revoked_at=COALESCE(revoked_at,now()) WHERE id IN(SELECT id FROM dao_claim_links WHERE (claimant_account_id=ANY($1::uuid[]) OR (issuer_account_id=ANY($1::uuid[]) AND completed_at IS NOT NULL)) AND (request IS NOT NULL OR token_hash IS NOT NULL) LIMIT 25)',
+        [owners],
+      );
+      if (
+        (
+          await db.query(
+            'SELECT 1 FROM dao_claim_links WHERE (claimant_account_id=ANY($1::uuid[]) OR (issuer_account_id=ANY($1::uuid[]) AND completed_at IS NOT NULL)) AND (request IS NOT NULL OR token_hash IS NOT NULL) LIMIT 1',
+            [owners],
+          )
+        ).rowCount
+      )
+        return 'retry';
       // Remove indirect personal identifiers before their owning credentials and keys disappear.
       if (
         await purge(

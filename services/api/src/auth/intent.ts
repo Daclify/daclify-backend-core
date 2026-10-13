@@ -12,6 +12,7 @@ import type { Account, Network } from '../../../../protocol/api.js';
 import { NativeIdentitySchema } from '../../../../protocol/native-wallet.js';
 import { verifyNativeProof } from './native-proof.js';
 import { recoverEvmAddress } from './evm-proof.js';
+import { PairedApprovalPaths } from '../../../../protocol/sign-in.js';
 import { ApiError } from '../errors.js';
 
 export async function pairedSignInApprovalExpires(
@@ -101,7 +102,7 @@ export async function consumeAccountControl(
   const checked = AccountControlProofSchema.safeParse(input);
   if (!AccountControlChallengeSchema.shape.id.safeParse(id).success || !checked.success)
     throw new ApiError('ACCOUNT_CONTROL_REQUIRED', 403);
-  if (checked.data.kind === 'sign-in' && path !== '/v1/mcp/oauth/approve')
+  if (checked.data.kind === 'sign-in' && !PairedApprovalPaths.some((allowed) => allowed === path))
     throw new ApiError('ACCOUNT_CONTROL_REQUIRED', 403);
   if (
     [
@@ -186,7 +187,14 @@ export async function consumeAccountControl(
     }
   }
   if (!valid)
-    throw new ApiError(signInRequired ? 'MCP_SIGN_IN_REQUIRED' : 'ACCOUNT_CONTROL_REQUIRED', 403);
+    throw new ApiError(
+      signInRequired
+        ? path === '/v1/mcp/oauth/approve'
+          ? 'MCP_SIGN_IN_REQUIRED'
+          : 'ACCOUNT_SIGN_IN_REQUIRED'
+        : 'ACCOUNT_CONTROL_REQUIRED',
+      403,
+    );
 }
 
 export async function revokeCredentialSessions(

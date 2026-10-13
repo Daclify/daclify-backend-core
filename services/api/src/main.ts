@@ -9,6 +9,7 @@ import { ApiOriginSchema } from '../../../protocol/base.js';
 import { AccountExit } from './account-exit/service.js';
 import { readAccountExitConfiguration } from './account-exit/config.js';
 import { startAccountExitWorker } from './account-exit/jobs.js';
+import { DaoClaimLinks } from './dao-claims.js';
 import { CreationService } from './creation.js';
 import { readProfileKeysConfiguration } from './profiles/config.js';
 import { ProfileKeys } from './profiles/keys.js';
@@ -243,6 +244,7 @@ if (
 const docs = readDocsAgent(process.env);
 const telegramDocs = readTelegramDocs(process.env);
 const creation = new CreationService(pool, chain);
+const daoClaims = new DaoClaimLinks(pool, chain, creation);
 const deliverEmail = readMailDelivery(process.env);
 const noticeMail = readMailSender(process.env);
 const alertEmail = readStorageAlertEmail(
@@ -340,6 +342,7 @@ const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
   ...(recovery ? { recovery } : {}),
   origins,
   creation,
+  daoClaims,
   ...(storageAlerts ? { storageAlerts: true } : {}),
   ...(process.env.API_PUBLIC_ORIGIN ? { apiOrigin: process.env.API_PUBLIC_ORIGIN } : {}),
   ...(hosting ? { hosting } : {}),
@@ -364,6 +367,10 @@ const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
 });
 await app.listen({ host: env.API_HOST, port: env.API_PORT });
 const authWorker = startAuthMaintenance(pool);
+const daoClaimsWorker = startPollingWorker(
+  async () => ((await daoClaims.cleanup()) ? 'progress' : 'idle'),
+  'DAO_CLAIM_MAINTENANCE_UNAVAILABLE',
+);
 const mcpWorker = mcpPairings
   ? startPollingWorker(
       async () =>
@@ -402,6 +409,7 @@ const retentionWorker = content?.retention.cleanupEnabled
 async function shutdown() {
   await app.close();
   await authWorker.stop();
+  await daoClaimsWorker.stop();
   await mcpWorker?.stop();
   await directoryWorker?.stop();
   await exitWorker?.stop();

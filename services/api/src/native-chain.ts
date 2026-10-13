@@ -730,6 +730,8 @@ export class NativeChainGateway implements ChainGateway {
       return fields.every((field) => shape?.fields.some((row) => row.name === field));
     });
     const presets = await this.supportsPresets(actions);
+    const createType = abi?.actions.find((action) => action.name.toString() === 'createpaid')?.type;
+    const claimFounder = abi?.structs.find((row) => row.name === createType)?.fields.some((field) => field.name === 'founder' && field.type === 'claim_founder$');
     return NetworkSchema.parse({
       chainId: this.config.chainId,
       rpcUrl: this.config.rpcUrl,
@@ -756,6 +758,7 @@ export class NativeChainGateway implements ChainGateway {
           ? ['evm-eoa-governance']
           : []),
         ...(this.config.bootstrap ? ['shared-dao-create'] : []),
+        ...(this.config.bootstrap && claimFounder && presets ? ['dao-claim-links'] : []),
         ...(presets ? ['dao-presets', 'guarded-agents', 'governance-policy'] : []),
       ],
     });

@@ -278,6 +278,10 @@ export async function reconnectAccounts(
           [ids],
         );
       await db.query('DELETE FROM vault_recovery_devices WHERE account_id=ANY($1::uuid[])', [ids]);
+      await db.query(
+        'UPDATE dao_claim_links SET revoked_at=COALESCE(revoked_at,now()) WHERE issuer_account_id=ANY($1::uuid[]) AND claimant_account_id IS NULL',
+        [ids],
+      );
       await db.query('DELETE FROM mcp_oauth_tokens WHERE account_id=ANY($1::uuid[])', [ids]);
       await db.query('DELETE FROM mcp_oauth_families WHERE account_id=ANY($1::uuid[])', [ids]);
       await db.query('DELETE FROM mcp_oauth_requests WHERE account_id=ANY($1::uuid[])', [ids]);

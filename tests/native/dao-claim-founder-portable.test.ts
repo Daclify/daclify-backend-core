@@ -103,6 +103,7 @@ it('creates the sole admin and executive using only the unchanged narrow bootstr
       founderExecutive: true,
     })
     .finally(() => observation.mockRestore());
+  expect(summary.members).toBe(1);
   const state = await gateway.governance(summary.reference.daoId);
   expect(state.executiveMembers).toHaveLength(1);
   expect(state.executiveMembers[0]).toMatchObject({

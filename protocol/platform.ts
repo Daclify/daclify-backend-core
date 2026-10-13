@@ -28,6 +28,7 @@ export const CreationOrderViewSchema = z.strictObject({
   state: z.enum(['awaiting-payment', 'expired', 'paid', 'created']),
   dao: DaoRefSchema.nullable(),
   checkoutUrl: z.url().nullable(),
+  founderExecutive: z.boolean().optional(),
 });
 export const ContractStatusSchema = z.strictObject({
   account: z.string(),

@@ -39,6 +39,8 @@ const personal = [
   'public.vault_recovery_state:account_id',
 ];
 const shared = [
+  'public.dao_claim_links:issuer_account_id',
+  'public.dao_claim_links:claimant_account_id',
   'public.accounts:merged_into',
   'public.archive_exports:requested_by',
   'public.archive_storage_holds:requested_by',

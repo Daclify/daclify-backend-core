@@ -46,6 +46,8 @@ export const AccountControlProofSchema = z.discriminatedUnion('kind', [
 export type AccountControlProof = z.infer<typeof AccountControlProofSchema>;
 
 export const AccountControlPaths = Object.freeze([
+  '/v1/dao-claims/issue',
+  '/v1/dao-claims/revoke',
   '/v1/me/exit',
   '/v1/mcp/oauth/revoke-family',
   '/v1/mini-apps/directory/transfer',
@@ -85,6 +87,11 @@ export const AccountControlPaths = Object.freeze([
   '/v1/account/evm/sign-in/link',
 ] as const);
 export const AccountControlPathSchema = z.enum(AccountControlPaths);
+export const PairedApprovalPaths = Object.freeze([
+  '/v1/mcp/oauth/approve',
+  '/v1/dao-claims/issue',
+  '/v1/dao-claims/revoke',
+] as const);
 export const AccountControlRequestSchema = z.strictObject({
   path: AccountControlPathSchema,
   bodyHash: z.string().regex(/^[0-9a-f]{64}$/),

@@ -4,6 +4,8 @@ import { registerMcpSetupRoutes } from './mcp/setup.js';
 import type { McpArtifacts } from './mcp/artifacts.js';
 import type { AccountExit } from './account-exit/service.js';
 import { registerSettlementRoutes, registerAccountExitRoutes } from './account-exit/routes.js';
+import { registerDaoClaimRoutes } from './dao-claim-routes.js';
+import type { DaoClaimLinks } from './dao-claims.js';
 import type { CreationService } from './creation.js';
 import { ProfileKeys, type ProfileKeysConfiguration } from './profiles/keys.js';
 import { registerProfileRoutes } from './profiles/routes.js';
@@ -142,6 +144,7 @@ export async function createServer(
     docs?: DocsAgentConfiguration;
     telegramDocs?: TelegramDocsConfiguration;
     creation?: CreationService;
+    daoClaims?: DaoClaimLinks;
     payments?: ConnectedPayments;
     apiOrigin?: string;
     operatorPayments?: OperatorPayments;
@@ -319,6 +322,17 @@ export async function createServer(
       throw new ApiError('CSRF_REQUIRED', 403);
     return account;
   }
+  if (options.daoClaims)
+    registerDaoClaimRoutes(
+      app,
+      options.daoClaims,
+      pool,
+      cookieName,
+      session,
+      spend,
+      !!options.billing,
+      sharedProxyIps,
+    );
   registerRecoveryRoutes(app, recovery, cookieName, session, origin);
   if (options.mcpPairings)
     registerMcpSetupRoutes(app, options.mcpPairings, options.mcpArtifacts, cookieName, session);

@@ -613,6 +613,16 @@ export const CoreHelpBundle:HelpBundle={
         "Listings expire after ninety days unless renewed. Owners can offer transfer to another active account; that successor must verify a fresh origin-bound challenge within ten minutes. Community reports are bounded and expire after thirty days. Account deletion removes owned listings and unnecessary proof/report data; a completed verified transfer retains the successor-owned listing.",
         "The directory loads no remote scripts, HTML or images. Verify an app’s own database/privacy policy before connecting; a listing does not promise hosted database storage or remote deletion of independently controlled data."
       ]
+    },
+    {
+      "id": "dao-claim-links",
+      "title": "Prepare a DAO for someone to claim",
+      "paragraphs": [
+        "A current executive of the configured Daclify governing DAO can prepare a shared human or mixed DAO and choose Create claim link. Approve that exact invitation with Daclify keys, a paired wallet or a recent paired sign-in. Only the claimant joins, as the sole initial administrator and executive. The issuer receives no office in the new DAO.",
+        "Links expire after seven days. Copy the complete link privately. Its fragment contains a bearer secret; the first eligible signed-in person to explicitly confirm reserves it. Opening, previewing and signing in create no DAO and do not reserve the invitation. Unclaimed invitations may be revoked; reserved invitations cannot be reassigned.",
+        "The recipient reviews the fixed setup and current costs, signs in or creates one Daclify account, and finishes public identity setup if needed. Existing paired sign-in works with the vault locked. Claim and create DAO explicitly confirms the setup. Existing quota, custody, module and payment rules still apply; the recipient owns any required payment order.",
+        "If a response is lost, retry the same link or resume the saved creation order. Pending work stays assigned to the same canonical account after expiry. Success requires actual native administrator and executive state. SQL backup restoration must revoke all unclaimed invitations before the API is re-exposed; stable native receipts prevent another claimant creating a second DAO."
+      ]
     }
   ],
   "schemaVersion": 1,
@@ -620,7 +630,7 @@ export const CoreHelpBundle:HelpBundle={
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "ed0a44c9bfd898bc05c6fc474ab3eb55d9cad90e98187d8c04ef222f39befcf9",
+      "sourceAbiHash": "05453044395d37ad1552d232fc89d8e4fed64e232a7e806e5a24597b5499cc19",
       "actions": [
         {
           "name": "accepthand",
@@ -1301,6 +1311,10 @@ export const CoreHelpBundle:HelpBundle={
             {
               "name": "creator",
               "type": "public_key"
+            },
+            {
+              "name": "founder",
+              "type": "claim_founder$"
             }
           ]
         },
@@ -6531,6 +6545,4018 @@ export const CoreHelpBundle:HelpBundle={
     }
   ],
   "api": [
+    {
+      "method": "GET",
+      "path": "/v1/dao-claims/sign-in-approval",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "expires": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "expires"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "dao-claim-links"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/dao-claims/eligibility",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "eligible": {
+            "type": "boolean"
+          },
+          "governingDao": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "contract": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "daoId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "interfaceVersion": {
+                    "type": "number",
+                    "const": 1
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "contract",
+                  "daoId",
+                  "interfaceVersion"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "eligible",
+          "governingDao"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "dao-claim-links"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/dao-claims",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "maxItems": 50,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "request": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "metadata": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "schemaVersion": {
+                              "type": "number",
+                              "const": 1
+                            },
+                            "title": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 160
+                            },
+                            "description": {
+                              "default": "",
+                              "type": "string",
+                              "maxLength": 4000
+                            }
+                          },
+                          "required": [
+                            "schemaVersion",
+                            "title",
+                            "description"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "schemaVersion": {
+                              "type": "number",
+                              "const": 2
+                            },
+                            "title": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 160
+                            },
+                            "description": {
+                              "default": "",
+                              "type": "string",
+                              "maxLength": 4000
+                            },
+                            "purpose": {
+                              "type": "string",
+                              "enum": [
+                                "community",
+                                "ngo-grants",
+                                "gaming-guild",
+                                "team",
+                                "custom"
+                              ]
+                            },
+                            "setup": {
+                              "type": "object",
+                              "properties": {
+                                "presetId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "community",
+                                    "ngo-grants",
+                                    "gaming-guild",
+                                    "team",
+                                    "custom"
+                                  ]
+                                },
+                                "presetVersion": {
+                                  "type": "number",
+                                  "const": 1
+                                },
+                                "participantMode": {
+                                  "type": "string",
+                                  "enum": [
+                                    "humans",
+                                    "mixed",
+                                    "agents-guarded"
+                                  ]
+                                },
+                                "governance": {
+                                  "type": "object",
+                                  "properties": {
+                                    "weight": {
+                                      "type": "string",
+                                      "enum": [
+                                        "member",
+                                        "credit",
+                                        "native-stake"
+                                      ]
+                                    },
+                                    "duration": {
+                                      "type": "integer",
+                                      "minimum": 60,
+                                      "maximum": 2592000
+                                    },
+                                    "quorumBasisPoints": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 10000
+                                    },
+                                    "approvalBasisPoints": {
+                                      "type": "integer",
+                                      "minimum": 5001,
+                                      "maximum": 10000
+                                    },
+                                    "governedWorks": {
+                                      "type": "boolean"
+                                    },
+                                    "maxCommitment": {
+                                      "type": "string"
+                                    },
+                                    "dailyCommitment": {
+                                      "type": "string"
+                                    },
+                                    "guardian": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                          "const": ""
+                                        },
+                                        {
+                                          "type": "string",
+                                          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "weight",
+                                    "duration",
+                                    "quorumBasisPoints",
+                                    "approvalBasisPoints",
+                                    "governedWorks",
+                                    "maxCommitment",
+                                    "dailyCommitment",
+                                    "guardian"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "presetId",
+                                "presetVersion",
+                                "participantMode",
+                                "governance"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "schemaVersion",
+                            "title",
+                            "description",
+                            "purpose",
+                            "setup"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "schemaVersion": {
+                              "type": "number",
+                              "const": 3
+                            },
+                            "title": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 160
+                            },
+                            "description": {
+                              "default": "",
+                              "type": "string",
+                              "maxLength": 4000
+                            },
+                            "purpose": {
+                              "type": "string",
+                              "enum": [
+                                "community",
+                                "ngo-grants",
+                                "gaming-guild",
+                                "team",
+                                "custom"
+                              ]
+                            },
+                            "setup": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "presetId": {
+                                      "type": "string",
+                                      "enum": [
+                                        "community",
+                                        "ngo-grants",
+                                        "gaming-guild",
+                                        "team",
+                                        "custom"
+                                      ]
+                                    },
+                                    "presetVersion": {
+                                      "type": "number",
+                                      "const": 1
+                                    },
+                                    "participantMode": {
+                                      "type": "string",
+                                      "enum": [
+                                        "humans",
+                                        "mixed",
+                                        "agents-guarded"
+                                      ]
+                                    },
+                                    "governance": {
+                                      "type": "object",
+                                      "properties": {
+                                        "weight": {
+                                          "type": "string",
+                                          "enum": [
+                                            "member",
+                                            "credit",
+                                            "native-stake"
+                                          ]
+                                        },
+                                        "duration": {
+                                          "type": "integer",
+                                          "minimum": 60,
+                                          "maximum": 2592000
+                                        },
+                                        "quorumBasisPoints": {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 10000
+                                        },
+                                        "approvalBasisPoints": {
+                                          "type": "integer",
+                                          "minimum": 5001,
+                                          "maximum": 10000
+                                        },
+                                        "governedWorks": {
+                                          "type": "boolean"
+                                        },
+                                        "maxCommitment": {
+                                          "type": "string"
+                                        },
+                                        "dailyCommitment": {
+                                          "type": "string"
+                                        },
+                                        "guardian": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string",
+                                              "const": ""
+                                            },
+                                            {
+                                              "type": "string",
+                                              "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "weight",
+                                        "duration",
+                                        "quorumBasisPoints",
+                                        "approvalBasisPoints",
+                                        "governedWorks",
+                                        "maxCommitment",
+                                        "dailyCommitment",
+                                        "guardian"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "required": [
+                                    "presetId",
+                                    "presetVersion",
+                                    "participantMode",
+                                    "governance"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "branding": {
+                              "type": "object",
+                              "properties": {
+                                "summary": {
+                                  "type": "string",
+                                  "maxLength": 280
+                                },
+                                "logo": {
+                                  "type": "object",
+                                  "properties": {
+                                    "cid": {
+                                      "type": "string",
+                                      "maxLength": 128
+                                    },
+                                    "bytes": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 2097152
+                                    },
+                                    "mediaType": {
+                                      "type": "string",
+                                      "enum": [
+                                        "image/png",
+                                        "image/jpeg",
+                                        "image/webp"
+                                      ]
+                                    },
+                                    "commitment": {
+                                      "type": "string",
+                                      "pattern": "^[0-9a-f]{64}$"
+                                    }
+                                  },
+                                  "required": [
+                                    "cid",
+                                    "bytes",
+                                    "mediaType",
+                                    "commitment"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "cover": {
+                                  "type": "object",
+                                  "properties": {
+                                    "cid": {
+                                      "type": "string",
+                                      "maxLength": 128
+                                    },
+                                    "bytes": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 2097152
+                                    },
+                                    "mediaType": {
+                                      "type": "string",
+                                      "enum": [
+                                        "image/png",
+                                        "image/jpeg",
+                                        "image/webp"
+                                      ]
+                                    },
+                                    "commitment": {
+                                      "type": "string",
+                                      "pattern": "^[0-9a-f]{64}$"
+                                    }
+                                  },
+                                  "required": [
+                                    "cid",
+                                    "bytes",
+                                    "mediaType",
+                                    "commitment"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "schemaVersion",
+                            "title",
+                            "description",
+                            "purpose",
+                            "setup",
+                            "branding"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    "privacy": {
+                      "type": "string",
+                      "enum": [
+                        "public",
+                        "encrypted-managed-allowed",
+                        "encrypted-user-controlled"
+                      ]
+                    },
+                    "token": {
+                      "type": "object",
+                      "properties": {
+                        "chainId": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{64}$"
+                        },
+                        "contract": {
+                          "type": "string",
+                          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                        },
+                        "symbol": {
+                          "type": "string",
+                          "pattern": "^[A-Z]{1,7}$"
+                        },
+                        "precision": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 18
+                        }
+                      },
+                      "required": [
+                        "chainId",
+                        "contract",
+                        "symbol",
+                        "precision"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "setup": {
+                      "type": "object",
+                      "properties": {
+                        "presetId": {
+                          "type": "string",
+                          "enum": [
+                            "community",
+                            "ngo-grants",
+                            "gaming-guild",
+                            "team",
+                            "custom"
+                          ]
+                        },
+                        "presetVersion": {
+                          "type": "number",
+                          "const": 1
+                        },
+                        "participantMode": {
+                          "type": "string",
+                          "enum": [
+                            "humans",
+                            "mixed",
+                            "agents-guarded"
+                          ]
+                        },
+                        "governance": {
+                          "type": "object",
+                          "properties": {
+                            "weight": {
+                              "type": "string",
+                              "enum": [
+                                "member",
+                                "credit",
+                                "native-stake"
+                              ]
+                            },
+                            "duration": {
+                              "type": "integer",
+                              "minimum": 60,
+                              "maximum": 2592000
+                            },
+                            "quorumBasisPoints": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 10000
+                            },
+                            "approvalBasisPoints": {
+                              "type": "integer",
+                              "minimum": 5001,
+                              "maximum": 10000
+                            },
+                            "governedWorks": {
+                              "type": "boolean"
+                            },
+                            "maxCommitment": {
+                              "type": "string"
+                            },
+                            "dailyCommitment": {
+                              "type": "string"
+                            },
+                            "guardian": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "const": ""
+                                },
+                                {
+                                  "type": "string",
+                                  "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "weight",
+                            "duration",
+                            "quorumBasisPoints",
+                            "approvalBasisPoints",
+                            "governedWorks",
+                            "maxCommitment",
+                            "dailyCommitment",
+                            "guardian"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "presetId",
+                        "presetVersion",
+                        "participantMode",
+                        "governance"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "foundingAgent": {
+                      "type": "object",
+                      "properties": {
+                        "signingKey": {
+                          "type": "string",
+                          "maxLength": 128
+                        },
+                        "encryptionKey": {
+                          "type": "object",
+                          "properties": {
+                            "kty": {
+                              "type": "string",
+                              "const": "EC"
+                            },
+                            "crv": {
+                              "type": "string",
+                              "const": "P-256"
+                            },
+                            "x": {
+                              "type": "string",
+                              "pattern": "^[A-Za-z0-9_-]{43}$"
+                            },
+                            "y": {
+                              "type": "string",
+                              "pattern": "^[A-Za-z0-9_-]{43}$"
+                            }
+                          },
+                          "required": [
+                            "kty",
+                            "crv",
+                            "x",
+                            "y"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "operator": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64,
+                          "pattern": "^[\\x20-\\x7e]+$"
+                        }
+                      },
+                      "required": [
+                        "signingKey",
+                        "encryptionKey",
+                        "operator"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "metadata",
+                    "privacy",
+                    "token"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "chainId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "runtime": {
+              "type": "string"
+            },
+            "expiresAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "ready",
+                "claiming",
+                "created",
+                "revoked",
+                "expired"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "request",
+            "chainId",
+            "runtime",
+            "expiresAt",
+            "state"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "helpTopic": "dao-claim-links"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/dao-claims/issue",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "request": {
+            "type": "object",
+            "properties": {
+              "metadata": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                      },
+                      "description": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 4000
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 2
+                      },
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                      },
+                      "description": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "purpose": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "setup": {
+                        "type": "object",
+                        "properties": {
+                          "presetId": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "presetVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "participantMode": {
+                            "type": "string",
+                            "enum": [
+                              "humans",
+                              "mixed",
+                              "agents-guarded"
+                            ]
+                          },
+                          "governance": {
+                            "type": "object",
+                            "properties": {
+                              "weight": {
+                                "type": "string",
+                                "enum": [
+                                  "member",
+                                  "credit",
+                                  "native-stake"
+                                ]
+                              },
+                              "duration": {
+                                "type": "integer",
+                                "minimum": 60,
+                                "maximum": 2592000
+                              },
+                              "quorumBasisPoints": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 10000
+                              },
+                              "approvalBasisPoints": {
+                                "type": "integer",
+                                "minimum": 5001,
+                                "maximum": 10000
+                              },
+                              "governedWorks": {
+                                "type": "boolean"
+                              },
+                              "maxCommitment": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "dailyCommitment": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "guardian": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "const": ""
+                                  },
+                                  {
+                                    "type": "string",
+                                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "weight",
+                              "duration",
+                              "quorumBasisPoints",
+                              "approvalBasisPoints",
+                              "governedWorks",
+                              "maxCommitment",
+                              "dailyCommitment",
+                              "guardian"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "presetId",
+                          "presetVersion",
+                          "participantMode",
+                          "governance"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "purpose",
+                      "setup"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 3
+                      },
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                      },
+                      "description": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "purpose": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "setup": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "presetId": {
+                                "type": "string",
+                                "enum": [
+                                  "community",
+                                  "ngo-grants",
+                                  "gaming-guild",
+                                  "team",
+                                  "custom"
+                                ]
+                              },
+                              "presetVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "participantMode": {
+                                "type": "string",
+                                "enum": [
+                                  "humans",
+                                  "mixed",
+                                  "agents-guarded"
+                                ]
+                              },
+                              "governance": {
+                                "type": "object",
+                                "properties": {
+                                  "weight": {
+                                    "type": "string",
+                                    "enum": [
+                                      "member",
+                                      "credit",
+                                      "native-stake"
+                                    ]
+                                  },
+                                  "duration": {
+                                    "type": "integer",
+                                    "minimum": 60,
+                                    "maximum": 2592000
+                                  },
+                                  "quorumBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 10000
+                                  },
+                                  "approvalBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 5001,
+                                    "maximum": 10000
+                                  },
+                                  "governedWorks": {
+                                    "type": "boolean"
+                                  },
+                                  "maxCommitment": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  },
+                                  "dailyCommitment": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  },
+                                  "guardian": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "const": ""
+                                      },
+                                      {
+                                        "type": "string",
+                                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "weight",
+                                  "duration",
+                                  "quorumBasisPoints",
+                                  "approvalBasisPoints",
+                                  "governedWorks",
+                                  "maxCommitment",
+                                  "dailyCommitment",
+                                  "guardian"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "presetId",
+                              "presetVersion",
+                              "participantMode",
+                              "governance"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "branding": {
+                        "type": "object",
+                        "properties": {
+                          "summary": {
+                            "type": "string",
+                            "maxLength": 280
+                          },
+                          "logo": {
+                            "type": "object",
+                            "properties": {
+                              "cid": {
+                                "type": "string",
+                                "maxLength": 128
+                              },
+                              "bytes": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 2097152
+                              },
+                              "mediaType": {
+                                "type": "string",
+                                "enum": [
+                                  "image/png",
+                                  "image/jpeg",
+                                  "image/webp"
+                                ]
+                              },
+                              "commitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              }
+                            },
+                            "required": [
+                              "cid",
+                              "bytes",
+                              "mediaType",
+                              "commitment"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "cover": {
+                            "type": "object",
+                            "properties": {
+                              "cid": {
+                                "type": "string",
+                                "maxLength": 128
+                              },
+                              "bytes": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 2097152
+                              },
+                              "mediaType": {
+                                "type": "string",
+                                "enum": [
+                                  "image/png",
+                                  "image/jpeg",
+                                  "image/webp"
+                                ]
+                              },
+                              "commitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              }
+                            },
+                            "required": [
+                              "cid",
+                              "bytes",
+                              "mediaType",
+                              "commitment"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "purpose",
+                      "setup",
+                      "branding"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "privacy": {
+                "type": "string",
+                "enum": [
+                  "public",
+                  "encrypted-managed-allowed",
+                  "encrypted-user-controlled"
+                ]
+              },
+              "token": {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "contract": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "symbol": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{1,7}$"
+                  },
+                  "precision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 18
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "contract",
+                  "symbol",
+                  "precision"
+                ],
+                "additionalProperties": false
+              },
+              "setup": {
+                "type": "object",
+                "properties": {
+                  "presetId": {
+                    "type": "string",
+                    "enum": [
+                      "community",
+                      "ngo-grants",
+                      "gaming-guild",
+                      "team",
+                      "custom"
+                    ]
+                  },
+                  "presetVersion": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "participantMode": {
+                    "type": "string",
+                    "enum": [
+                      "humans",
+                      "mixed",
+                      "agents-guarded"
+                    ]
+                  },
+                  "governance": {
+                    "type": "object",
+                    "properties": {
+                      "weight": {
+                        "type": "string",
+                        "enum": [
+                          "member",
+                          "credit",
+                          "native-stake"
+                        ]
+                      },
+                      "duration": {
+                        "type": "integer",
+                        "minimum": 60,
+                        "maximum": 2592000
+                      },
+                      "quorumBasisPoints": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10000
+                      },
+                      "approvalBasisPoints": {
+                        "type": "integer",
+                        "minimum": 5001,
+                        "maximum": 10000
+                      },
+                      "governedWorks": {
+                        "type": "boolean"
+                      },
+                      "maxCommitment": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "dailyCommitment": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "guardian": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "const": ""
+                          },
+                          {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "weight",
+                      "duration",
+                      "quorumBasisPoints",
+                      "approvalBasisPoints",
+                      "governedWorks",
+                      "maxCommitment",
+                      "dailyCommitment",
+                      "guardian"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "presetId",
+                  "presetVersion",
+                  "participantMode",
+                  "governance"
+                ],
+                "additionalProperties": false
+              },
+              "foundingAgent": {
+                "type": "object",
+                "properties": {
+                  "signingKey": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  "encryptionKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "operator": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "pattern": "^[\\x20-\\x7e]+$"
+                  }
+                },
+                "required": [
+                  "signingKey",
+                  "encryptionKey",
+                  "operator"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "metadata",
+              "privacy",
+              "token"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "request"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "claim": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "request": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "metadata": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "schemaVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "title": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 160
+                              },
+                              "description": {
+                                "default": "",
+                                "type": "string",
+                                "maxLength": 4000
+                              }
+                            },
+                            "required": [
+                              "schemaVersion",
+                              "title",
+                              "description"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "schemaVersion": {
+                                "type": "number",
+                                "const": 2
+                              },
+                              "title": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 160
+                              },
+                              "description": {
+                                "default": "",
+                                "type": "string",
+                                "maxLength": 4000
+                              },
+                              "purpose": {
+                                "type": "string",
+                                "enum": [
+                                  "community",
+                                  "ngo-grants",
+                                  "gaming-guild",
+                                  "team",
+                                  "custom"
+                                ]
+                              },
+                              "setup": {
+                                "type": "object",
+                                "properties": {
+                                  "presetId": {
+                                    "type": "string",
+                                    "enum": [
+                                      "community",
+                                      "ngo-grants",
+                                      "gaming-guild",
+                                      "team",
+                                      "custom"
+                                    ]
+                                  },
+                                  "presetVersion": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "participantMode": {
+                                    "type": "string",
+                                    "enum": [
+                                      "humans",
+                                      "mixed",
+                                      "agents-guarded"
+                                    ]
+                                  },
+                                  "governance": {
+                                    "type": "object",
+                                    "properties": {
+                                      "weight": {
+                                        "type": "string",
+                                        "enum": [
+                                          "member",
+                                          "credit",
+                                          "native-stake"
+                                        ]
+                                      },
+                                      "duration": {
+                                        "type": "integer",
+                                        "minimum": 60,
+                                        "maximum": 2592000
+                                      },
+                                      "quorumBasisPoints": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 10000
+                                      },
+                                      "approvalBasisPoints": {
+                                        "type": "integer",
+                                        "minimum": 5001,
+                                        "maximum": 10000
+                                      },
+                                      "governedWorks": {
+                                        "type": "boolean"
+                                      },
+                                      "maxCommitment": {
+                                        "type": "string"
+                                      },
+                                      "dailyCommitment": {
+                                        "type": "string"
+                                      },
+                                      "guardian": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string",
+                                            "const": ""
+                                          },
+                                          {
+                                            "type": "string",
+                                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "weight",
+                                      "duration",
+                                      "quorumBasisPoints",
+                                      "approvalBasisPoints",
+                                      "governedWorks",
+                                      "maxCommitment",
+                                      "dailyCommitment",
+                                      "guardian"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "presetId",
+                                  "presetVersion",
+                                  "participantMode",
+                                  "governance"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "schemaVersion",
+                              "title",
+                              "description",
+                              "purpose",
+                              "setup"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "schemaVersion": {
+                                "type": "number",
+                                "const": 3
+                              },
+                              "title": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 160
+                              },
+                              "description": {
+                                "default": "",
+                                "type": "string",
+                                "maxLength": 4000
+                              },
+                              "purpose": {
+                                "type": "string",
+                                "enum": [
+                                  "community",
+                                  "ngo-grants",
+                                  "gaming-guild",
+                                  "team",
+                                  "custom"
+                                ]
+                              },
+                              "setup": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "presetId": {
+                                        "type": "string",
+                                        "enum": [
+                                          "community",
+                                          "ngo-grants",
+                                          "gaming-guild",
+                                          "team",
+                                          "custom"
+                                        ]
+                                      },
+                                      "presetVersion": {
+                                        "type": "number",
+                                        "const": 1
+                                      },
+                                      "participantMode": {
+                                        "type": "string",
+                                        "enum": [
+                                          "humans",
+                                          "mixed",
+                                          "agents-guarded"
+                                        ]
+                                      },
+                                      "governance": {
+                                        "type": "object",
+                                        "properties": {
+                                          "weight": {
+                                            "type": "string",
+                                            "enum": [
+                                              "member",
+                                              "credit",
+                                              "native-stake"
+                                            ]
+                                          },
+                                          "duration": {
+                                            "type": "integer",
+                                            "minimum": 60,
+                                            "maximum": 2592000
+                                          },
+                                          "quorumBasisPoints": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 10000
+                                          },
+                                          "approvalBasisPoints": {
+                                            "type": "integer",
+                                            "minimum": 5001,
+                                            "maximum": 10000
+                                          },
+                                          "governedWorks": {
+                                            "type": "boolean"
+                                          },
+                                          "maxCommitment": {
+                                            "type": "string"
+                                          },
+                                          "dailyCommitment": {
+                                            "type": "string"
+                                          },
+                                          "guardian": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string",
+                                                "const": ""
+                                              },
+                                              {
+                                                "type": "string",
+                                                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "weight",
+                                          "duration",
+                                          "quorumBasisPoints",
+                                          "approvalBasisPoints",
+                                          "governedWorks",
+                                          "maxCommitment",
+                                          "dailyCommitment",
+                                          "guardian"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    },
+                                    "required": [
+                                      "presetId",
+                                      "presetVersion",
+                                      "participantMode",
+                                      "governance"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "branding": {
+                                "type": "object",
+                                "properties": {
+                                  "summary": {
+                                    "type": "string",
+                                    "maxLength": 280
+                                  },
+                                  "logo": {
+                                    "type": "object",
+                                    "properties": {
+                                      "cid": {
+                                        "type": "string",
+                                        "maxLength": 128
+                                      },
+                                      "bytes": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 2097152
+                                      },
+                                      "mediaType": {
+                                        "type": "string",
+                                        "enum": [
+                                          "image/png",
+                                          "image/jpeg",
+                                          "image/webp"
+                                        ]
+                                      },
+                                      "commitment": {
+                                        "type": "string",
+                                        "pattern": "^[0-9a-f]{64}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "cid",
+                                      "bytes",
+                                      "mediaType",
+                                      "commitment"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "cover": {
+                                    "type": "object",
+                                    "properties": {
+                                      "cid": {
+                                        "type": "string",
+                                        "maxLength": 128
+                                      },
+                                      "bytes": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 2097152
+                                      },
+                                      "mediaType": {
+                                        "type": "string",
+                                        "enum": [
+                                          "image/png",
+                                          "image/jpeg",
+                                          "image/webp"
+                                        ]
+                                      },
+                                      "commitment": {
+                                        "type": "string",
+                                        "pattern": "^[0-9a-f]{64}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "cid",
+                                      "bytes",
+                                      "mediaType",
+                                      "commitment"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "schemaVersion",
+                              "title",
+                              "description",
+                              "purpose",
+                              "setup",
+                              "branding"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "privacy": {
+                        "type": "string",
+                        "enum": [
+                          "public",
+                          "encrypted-managed-allowed",
+                          "encrypted-user-controlled"
+                        ]
+                      },
+                      "token": {
+                        "type": "object",
+                        "properties": {
+                          "chainId": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "contract": {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          },
+                          "symbol": {
+                            "type": "string",
+                            "pattern": "^[A-Z]{1,7}$"
+                          },
+                          "precision": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 18
+                          }
+                        },
+                        "required": [
+                          "chainId",
+                          "contract",
+                          "symbol",
+                          "precision"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "setup": {
+                        "type": "object",
+                        "properties": {
+                          "presetId": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "presetVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "participantMode": {
+                            "type": "string",
+                            "enum": [
+                              "humans",
+                              "mixed",
+                              "agents-guarded"
+                            ]
+                          },
+                          "governance": {
+                            "type": "object",
+                            "properties": {
+                              "weight": {
+                                "type": "string",
+                                "enum": [
+                                  "member",
+                                  "credit",
+                                  "native-stake"
+                                ]
+                              },
+                              "duration": {
+                                "type": "integer",
+                                "minimum": 60,
+                                "maximum": 2592000
+                              },
+                              "quorumBasisPoints": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 10000
+                              },
+                              "approvalBasisPoints": {
+                                "type": "integer",
+                                "minimum": 5001,
+                                "maximum": 10000
+                              },
+                              "governedWorks": {
+                                "type": "boolean"
+                              },
+                              "maxCommitment": {
+                                "type": "string"
+                              },
+                              "dailyCommitment": {
+                                "type": "string"
+                              },
+                              "guardian": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "const": ""
+                                  },
+                                  {
+                                    "type": "string",
+                                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "weight",
+                              "duration",
+                              "quorumBasisPoints",
+                              "approvalBasisPoints",
+                              "governedWorks",
+                              "maxCommitment",
+                              "dailyCommitment",
+                              "guardian"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "presetId",
+                          "presetVersion",
+                          "participantMode",
+                          "governance"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "foundingAgent": {
+                        "type": "object",
+                        "properties": {
+                          "signingKey": {
+                            "type": "string",
+                            "maxLength": 128
+                          },
+                          "encryptionKey": {
+                            "type": "object",
+                            "properties": {
+                              "kty": {
+                                "type": "string",
+                                "const": "EC"
+                              },
+                              "crv": {
+                                "type": "string",
+                                "const": "P-256"
+                              },
+                              "x": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9_-]{43}$"
+                              },
+                              "y": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9_-]{43}$"
+                              }
+                            },
+                            "required": [
+                              "kty",
+                              "crv",
+                              "x",
+                              "y"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "operator": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64,
+                            "pattern": "^[\\x20-\\x7e]+$"
+                          }
+                        },
+                        "required": [
+                          "signingKey",
+                          "encryptionKey",
+                          "operator"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "metadata",
+                      "privacy",
+                      "token"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "runtime": {
+                "type": "string"
+              },
+              "expiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "ready",
+                  "claiming",
+                  "created",
+                  "revoked",
+                  "expired"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "request",
+              "chainId",
+              "runtime",
+              "expiresAt",
+              "state"
+            ],
+            "additionalProperties": false
+          },
+          "token": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$"
+          }
+        },
+        "required": [
+          "claim",
+          "token"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "dao-claim-links"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/dao-claims/revoke",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "request": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "metadata": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "description": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 4000
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "title",
+                          "description"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 2
+                          },
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "description": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 4000
+                          },
+                          "purpose": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "setup": {
+                            "type": "object",
+                            "properties": {
+                              "presetId": {
+                                "type": "string",
+                                "enum": [
+                                  "community",
+                                  "ngo-grants",
+                                  "gaming-guild",
+                                  "team",
+                                  "custom"
+                                ]
+                              },
+                              "presetVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "participantMode": {
+                                "type": "string",
+                                "enum": [
+                                  "humans",
+                                  "mixed",
+                                  "agents-guarded"
+                                ]
+                              },
+                              "governance": {
+                                "type": "object",
+                                "properties": {
+                                  "weight": {
+                                    "type": "string",
+                                    "enum": [
+                                      "member",
+                                      "credit",
+                                      "native-stake"
+                                    ]
+                                  },
+                                  "duration": {
+                                    "type": "integer",
+                                    "minimum": 60,
+                                    "maximum": 2592000
+                                  },
+                                  "quorumBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 10000
+                                  },
+                                  "approvalBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 5001,
+                                    "maximum": 10000
+                                  },
+                                  "governedWorks": {
+                                    "type": "boolean"
+                                  },
+                                  "maxCommitment": {
+                                    "type": "string"
+                                  },
+                                  "dailyCommitment": {
+                                    "type": "string"
+                                  },
+                                  "guardian": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "const": ""
+                                      },
+                                      {
+                                        "type": "string",
+                                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "weight",
+                                  "duration",
+                                  "quorumBasisPoints",
+                                  "approvalBasisPoints",
+                                  "governedWorks",
+                                  "maxCommitment",
+                                  "dailyCommitment",
+                                  "guardian"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "presetId",
+                              "presetVersion",
+                              "participantMode",
+                              "governance"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "title",
+                          "description",
+                          "purpose",
+                          "setup"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 3
+                          },
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "description": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 4000
+                          },
+                          "purpose": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "setup": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "presetId": {
+                                    "type": "string",
+                                    "enum": [
+                                      "community",
+                                      "ngo-grants",
+                                      "gaming-guild",
+                                      "team",
+                                      "custom"
+                                    ]
+                                  },
+                                  "presetVersion": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "participantMode": {
+                                    "type": "string",
+                                    "enum": [
+                                      "humans",
+                                      "mixed",
+                                      "agents-guarded"
+                                    ]
+                                  },
+                                  "governance": {
+                                    "type": "object",
+                                    "properties": {
+                                      "weight": {
+                                        "type": "string",
+                                        "enum": [
+                                          "member",
+                                          "credit",
+                                          "native-stake"
+                                        ]
+                                      },
+                                      "duration": {
+                                        "type": "integer",
+                                        "minimum": 60,
+                                        "maximum": 2592000
+                                      },
+                                      "quorumBasisPoints": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 10000
+                                      },
+                                      "approvalBasisPoints": {
+                                        "type": "integer",
+                                        "minimum": 5001,
+                                        "maximum": 10000
+                                      },
+                                      "governedWorks": {
+                                        "type": "boolean"
+                                      },
+                                      "maxCommitment": {
+                                        "type": "string"
+                                      },
+                                      "dailyCommitment": {
+                                        "type": "string"
+                                      },
+                                      "guardian": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string",
+                                            "const": ""
+                                          },
+                                          {
+                                            "type": "string",
+                                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "weight",
+                                      "duration",
+                                      "quorumBasisPoints",
+                                      "approvalBasisPoints",
+                                      "governedWorks",
+                                      "maxCommitment",
+                                      "dailyCommitment",
+                                      "guardian"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "presetId",
+                                  "presetVersion",
+                                  "participantMode",
+                                  "governance"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "branding": {
+                            "type": "object",
+                            "properties": {
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 280
+                              },
+                              "logo": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "cover": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "title",
+                          "description",
+                          "purpose",
+                          "setup",
+                          "branding"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "privacy": {
+                    "type": "string",
+                    "enum": [
+                      "public",
+                      "encrypted-managed-allowed",
+                      "encrypted-user-controlled"
+                    ]
+                  },
+                  "token": {
+                    "type": "object",
+                    "properties": {
+                      "chainId": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "contract": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "symbol": {
+                        "type": "string",
+                        "pattern": "^[A-Z]{1,7}$"
+                      },
+                      "precision": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 18
+                      }
+                    },
+                    "required": [
+                      "chainId",
+                      "contract",
+                      "symbol",
+                      "precision"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "setup": {
+                    "type": "object",
+                    "properties": {
+                      "presetId": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "presetVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "participantMode": {
+                        "type": "string",
+                        "enum": [
+                          "humans",
+                          "mixed",
+                          "agents-guarded"
+                        ]
+                      },
+                      "governance": {
+                        "type": "object",
+                        "properties": {
+                          "weight": {
+                            "type": "string",
+                            "enum": [
+                              "member",
+                              "credit",
+                              "native-stake"
+                            ]
+                          },
+                          "duration": {
+                            "type": "integer",
+                            "minimum": 60,
+                            "maximum": 2592000
+                          },
+                          "quorumBasisPoints": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 10000
+                          },
+                          "approvalBasisPoints": {
+                            "type": "integer",
+                            "minimum": 5001,
+                            "maximum": 10000
+                          },
+                          "governedWorks": {
+                            "type": "boolean"
+                          },
+                          "maxCommitment": {
+                            "type": "string"
+                          },
+                          "dailyCommitment": {
+                            "type": "string"
+                          },
+                          "guardian": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "const": ""
+                              },
+                              {
+                                "type": "string",
+                                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "weight",
+                          "duration",
+                          "quorumBasisPoints",
+                          "approvalBasisPoints",
+                          "governedWorks",
+                          "maxCommitment",
+                          "dailyCommitment",
+                          "guardian"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "presetId",
+                      "presetVersion",
+                      "participantMode",
+                      "governance"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "foundingAgent": {
+                    "type": "object",
+                    "properties": {
+                      "signingKey": {
+                        "type": "string",
+                        "maxLength": 128
+                      },
+                      "encryptionKey": {
+                        "type": "object",
+                        "properties": {
+                          "kty": {
+                            "type": "string",
+                            "const": "EC"
+                          },
+                          "crv": {
+                            "type": "string",
+                            "const": "P-256"
+                          },
+                          "x": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{43}$"
+                          },
+                          "y": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{43}$"
+                          }
+                        },
+                        "required": [
+                          "kty",
+                          "crv",
+                          "x",
+                          "y"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "operator": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64,
+                        "pattern": "^[\\x20-\\x7e]+$"
+                      }
+                    },
+                    "required": [
+                      "signingKey",
+                      "encryptionKey",
+                      "operator"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "metadata",
+                  "privacy",
+                  "token"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "chainId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "runtime": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "claiming",
+              "created",
+              "revoked",
+              "expired"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "request",
+          "chainId",
+          "runtime",
+          "expiresAt",
+          "state"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "dao-claim-links"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/dao-claims/preview",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "request": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "metadata": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "description": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 4000
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "title",
+                          "description"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 2
+                          },
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "description": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 4000
+                          },
+                          "purpose": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "setup": {
+                            "type": "object",
+                            "properties": {
+                              "presetId": {
+                                "type": "string",
+                                "enum": [
+                                  "community",
+                                  "ngo-grants",
+                                  "gaming-guild",
+                                  "team",
+                                  "custom"
+                                ]
+                              },
+                              "presetVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "participantMode": {
+                                "type": "string",
+                                "enum": [
+                                  "humans",
+                                  "mixed",
+                                  "agents-guarded"
+                                ]
+                              },
+                              "governance": {
+                                "type": "object",
+                                "properties": {
+                                  "weight": {
+                                    "type": "string",
+                                    "enum": [
+                                      "member",
+                                      "credit",
+                                      "native-stake"
+                                    ]
+                                  },
+                                  "duration": {
+                                    "type": "integer",
+                                    "minimum": 60,
+                                    "maximum": 2592000
+                                  },
+                                  "quorumBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 10000
+                                  },
+                                  "approvalBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 5001,
+                                    "maximum": 10000
+                                  },
+                                  "governedWorks": {
+                                    "type": "boolean"
+                                  },
+                                  "maxCommitment": {
+                                    "type": "string"
+                                  },
+                                  "dailyCommitment": {
+                                    "type": "string"
+                                  },
+                                  "guardian": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "const": ""
+                                      },
+                                      {
+                                        "type": "string",
+                                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "weight",
+                                  "duration",
+                                  "quorumBasisPoints",
+                                  "approvalBasisPoints",
+                                  "governedWorks",
+                                  "maxCommitment",
+                                  "dailyCommitment",
+                                  "guardian"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "presetId",
+                              "presetVersion",
+                              "participantMode",
+                              "governance"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "title",
+                          "description",
+                          "purpose",
+                          "setup"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 3
+                          },
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "description": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 4000
+                          },
+                          "purpose": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "setup": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "presetId": {
+                                    "type": "string",
+                                    "enum": [
+                                      "community",
+                                      "ngo-grants",
+                                      "gaming-guild",
+                                      "team",
+                                      "custom"
+                                    ]
+                                  },
+                                  "presetVersion": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "participantMode": {
+                                    "type": "string",
+                                    "enum": [
+                                      "humans",
+                                      "mixed",
+                                      "agents-guarded"
+                                    ]
+                                  },
+                                  "governance": {
+                                    "type": "object",
+                                    "properties": {
+                                      "weight": {
+                                        "type": "string",
+                                        "enum": [
+                                          "member",
+                                          "credit",
+                                          "native-stake"
+                                        ]
+                                      },
+                                      "duration": {
+                                        "type": "integer",
+                                        "minimum": 60,
+                                        "maximum": 2592000
+                                      },
+                                      "quorumBasisPoints": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 10000
+                                      },
+                                      "approvalBasisPoints": {
+                                        "type": "integer",
+                                        "minimum": 5001,
+                                        "maximum": 10000
+                                      },
+                                      "governedWorks": {
+                                        "type": "boolean"
+                                      },
+                                      "maxCommitment": {
+                                        "type": "string"
+                                      },
+                                      "dailyCommitment": {
+                                        "type": "string"
+                                      },
+                                      "guardian": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string",
+                                            "const": ""
+                                          },
+                                          {
+                                            "type": "string",
+                                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "weight",
+                                      "duration",
+                                      "quorumBasisPoints",
+                                      "approvalBasisPoints",
+                                      "governedWorks",
+                                      "maxCommitment",
+                                      "dailyCommitment",
+                                      "guardian"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "presetId",
+                                  "presetVersion",
+                                  "participantMode",
+                                  "governance"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "branding": {
+                            "type": "object",
+                            "properties": {
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 280
+                              },
+                              "logo": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "cover": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "title",
+                          "description",
+                          "purpose",
+                          "setup",
+                          "branding"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "privacy": {
+                    "type": "string",
+                    "enum": [
+                      "public",
+                      "encrypted-managed-allowed",
+                      "encrypted-user-controlled"
+                    ]
+                  },
+                  "token": {
+                    "type": "object",
+                    "properties": {
+                      "chainId": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "contract": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "symbol": {
+                        "type": "string",
+                        "pattern": "^[A-Z]{1,7}$"
+                      },
+                      "precision": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 18
+                      }
+                    },
+                    "required": [
+                      "chainId",
+                      "contract",
+                      "symbol",
+                      "precision"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "setup": {
+                    "type": "object",
+                    "properties": {
+                      "presetId": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "presetVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "participantMode": {
+                        "type": "string",
+                        "enum": [
+                          "humans",
+                          "mixed",
+                          "agents-guarded"
+                        ]
+                      },
+                      "governance": {
+                        "type": "object",
+                        "properties": {
+                          "weight": {
+                            "type": "string",
+                            "enum": [
+                              "member",
+                              "credit",
+                              "native-stake"
+                            ]
+                          },
+                          "duration": {
+                            "type": "integer",
+                            "minimum": 60,
+                            "maximum": 2592000
+                          },
+                          "quorumBasisPoints": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 10000
+                          },
+                          "approvalBasisPoints": {
+                            "type": "integer",
+                            "minimum": 5001,
+                            "maximum": 10000
+                          },
+                          "governedWorks": {
+                            "type": "boolean"
+                          },
+                          "maxCommitment": {
+                            "type": "string"
+                          },
+                          "dailyCommitment": {
+                            "type": "string"
+                          },
+                          "guardian": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "const": ""
+                              },
+                              {
+                                "type": "string",
+                                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "weight",
+                          "duration",
+                          "quorumBasisPoints",
+                          "approvalBasisPoints",
+                          "governedWorks",
+                          "maxCommitment",
+                          "dailyCommitment",
+                          "guardian"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "presetId",
+                      "presetVersion",
+                      "participantMode",
+                      "governance"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "foundingAgent": {
+                    "type": "object",
+                    "properties": {
+                      "signingKey": {
+                        "type": "string",
+                        "maxLength": 128
+                      },
+                      "encryptionKey": {
+                        "type": "object",
+                        "properties": {
+                          "kty": {
+                            "type": "string",
+                            "const": "EC"
+                          },
+                          "crv": {
+                            "type": "string",
+                            "const": "P-256"
+                          },
+                          "x": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{43}$"
+                          },
+                          "y": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{43}$"
+                          }
+                        },
+                        "required": [
+                          "kty",
+                          "crv",
+                          "x",
+                          "y"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "operator": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64,
+                        "pattern": "^[\\x20-\\x7e]+$"
+                      }
+                    },
+                    "required": [
+                      "signingKey",
+                      "encryptionKey",
+                      "operator"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "metadata",
+                  "privacy",
+                  "token"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "chainId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "runtime": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "claiming",
+              "created",
+              "revoked",
+              "expired"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "request",
+          "chainId",
+          "runtime",
+          "expiresAt",
+          "state"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "dao-claim-links"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/dao-claims/claim",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "card",
+              "tlos",
+              "free"
+            ]
+          }
+        },
+        "required": [
+          "token",
+          "method"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "network": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "rpcUrl": {
+                "type": "string",
+                "format": "uri"
+              },
+              "runtime": {
+                "type": "string"
+              },
+              "hub": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "environment": {
+                "type": "string",
+                "enum": [
+                  "local",
+                  "testnet",
+                  "mainnet"
+                ]
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              },
+              "coreVersion": {
+                "type": "string"
+              },
+              "capabilities": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "chainId",
+              "rpcUrl",
+              "runtime",
+              "hub",
+              "environment",
+              "interfaceVersion",
+              "coreVersion",
+              "capabilities"
+            ],
+            "additionalProperties": false
+          },
+          "setup": {
+            "type": "object",
+            "properties": {
+              "metadata": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                      },
+                      "description": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 4000
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "description"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 2
+                      },
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                      },
+                      "description": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "purpose": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "setup": {
+                        "type": "object",
+                        "properties": {
+                          "presetId": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "presetVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "participantMode": {
+                            "type": "string",
+                            "enum": [
+                              "humans",
+                              "mixed",
+                              "agents-guarded"
+                            ]
+                          },
+                          "governance": {
+                            "type": "object",
+                            "properties": {
+                              "weight": {
+                                "type": "string",
+                                "enum": [
+                                  "member",
+                                  "credit",
+                                  "native-stake"
+                                ]
+                              },
+                              "duration": {
+                                "type": "integer",
+                                "minimum": 60,
+                                "maximum": 2592000
+                              },
+                              "quorumBasisPoints": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 10000
+                              },
+                              "approvalBasisPoints": {
+                                "type": "integer",
+                                "minimum": 5001,
+                                "maximum": 10000
+                              },
+                              "governedWorks": {
+                                "type": "boolean"
+                              },
+                              "maxCommitment": {
+                                "type": "string"
+                              },
+                              "dailyCommitment": {
+                                "type": "string"
+                              },
+                              "guardian": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "const": ""
+                                  },
+                                  {
+                                    "type": "string",
+                                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "weight",
+                              "duration",
+                              "quorumBasisPoints",
+                              "approvalBasisPoints",
+                              "governedWorks",
+                              "maxCommitment",
+                              "dailyCommitment",
+                              "guardian"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "presetId",
+                          "presetVersion",
+                          "participantMode",
+                          "governance"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "description",
+                      "purpose",
+                      "setup"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 3
+                      },
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                      },
+                      "description": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "purpose": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "setup": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "presetId": {
+                                "type": "string",
+                                "enum": [
+                                  "community",
+                                  "ngo-grants",
+                                  "gaming-guild",
+                                  "team",
+                                  "custom"
+                                ]
+                              },
+                              "presetVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "participantMode": {
+                                "type": "string",
+                                "enum": [
+                                  "humans",
+                                  "mixed",
+                                  "agents-guarded"
+                                ]
+                              },
+                              "governance": {
+                                "type": "object",
+                                "properties": {
+                                  "weight": {
+                                    "type": "string",
+                                    "enum": [
+                                      "member",
+                                      "credit",
+                                      "native-stake"
+                                    ]
+                                  },
+                                  "duration": {
+                                    "type": "integer",
+                                    "minimum": 60,
+                                    "maximum": 2592000
+                                  },
+                                  "quorumBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 10000
+                                  },
+                                  "approvalBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 5001,
+                                    "maximum": 10000
+                                  },
+                                  "governedWorks": {
+                                    "type": "boolean"
+                                  },
+                                  "maxCommitment": {
+                                    "type": "string"
+                                  },
+                                  "dailyCommitment": {
+                                    "type": "string"
+                                  },
+                                  "guardian": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "const": ""
+                                      },
+                                      {
+                                        "type": "string",
+                                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "weight",
+                                  "duration",
+                                  "quorumBasisPoints",
+                                  "approvalBasisPoints",
+                                  "governedWorks",
+                                  "maxCommitment",
+                                  "dailyCommitment",
+                                  "guardian"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "presetId",
+                              "presetVersion",
+                              "participantMode",
+                              "governance"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "branding": {
+                        "type": "object",
+                        "properties": {
+                          "summary": {
+                            "type": "string",
+                            "maxLength": 280
+                          },
+                          "logo": {
+                            "type": "object",
+                            "properties": {
+                              "cid": {
+                                "type": "string",
+                                "maxLength": 128
+                              },
+                              "bytes": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 2097152
+                              },
+                              "mediaType": {
+                                "type": "string",
+                                "enum": [
+                                  "image/png",
+                                  "image/jpeg",
+                                  "image/webp"
+                                ]
+                              },
+                              "commitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              }
+                            },
+                            "required": [
+                              "cid",
+                              "bytes",
+                              "mediaType",
+                              "commitment"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "cover": {
+                            "type": "object",
+                            "properties": {
+                              "cid": {
+                                "type": "string",
+                                "maxLength": 128
+                              },
+                              "bytes": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 2097152
+                              },
+                              "mediaType": {
+                                "type": "string",
+                                "enum": [
+                                  "image/png",
+                                  "image/jpeg",
+                                  "image/webp"
+                                ]
+                              },
+                              "commitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              }
+                            },
+                            "required": [
+                              "cid",
+                              "bytes",
+                              "mediaType",
+                              "commitment"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "description",
+                      "purpose",
+                      "setup",
+                      "branding"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "privacy": {
+                "type": "string",
+                "enum": [
+                  "public",
+                  "encrypted-managed-allowed",
+                  "encrypted-user-controlled"
+                ]
+              },
+              "token": {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "contract": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "symbol": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{1,7}$"
+                  },
+                  "precision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 18
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "contract",
+                  "symbol",
+                  "precision"
+                ],
+                "additionalProperties": false
+              },
+              "setup": {
+                "type": "object",
+                "properties": {
+                  "presetId": {
+                    "type": "string",
+                    "enum": [
+                      "community",
+                      "ngo-grants",
+                      "gaming-guild",
+                      "team",
+                      "custom"
+                    ]
+                  },
+                  "presetVersion": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "participantMode": {
+                    "type": "string",
+                    "enum": [
+                      "humans",
+                      "mixed",
+                      "agents-guarded"
+                    ]
+                  },
+                  "governance": {
+                    "type": "object",
+                    "properties": {
+                      "weight": {
+                        "type": "string",
+                        "enum": [
+                          "member",
+                          "credit",
+                          "native-stake"
+                        ]
+                      },
+                      "duration": {
+                        "type": "integer",
+                        "minimum": 60,
+                        "maximum": 2592000
+                      },
+                      "quorumBasisPoints": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10000
+                      },
+                      "approvalBasisPoints": {
+                        "type": "integer",
+                        "minimum": 5001,
+                        "maximum": 10000
+                      },
+                      "governedWorks": {
+                        "type": "boolean"
+                      },
+                      "maxCommitment": {
+                        "type": "string"
+                      },
+                      "dailyCommitment": {
+                        "type": "string"
+                      },
+                      "guardian": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "const": ""
+                          },
+                          {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "weight",
+                      "duration",
+                      "quorumBasisPoints",
+                      "approvalBasisPoints",
+                      "governedWorks",
+                      "maxCommitment",
+                      "dailyCommitment",
+                      "guardian"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "presetId",
+                  "presetVersion",
+                  "participantMode",
+                  "governance"
+                ],
+                "additionalProperties": false
+              },
+              "foundingAgent": {
+                "type": "object",
+                "properties": {
+                  "signingKey": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  "encryptionKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "operator": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "pattern": "^[\\x20-\\x7e]+$"
+                  }
+                },
+                "required": [
+                  "signingKey",
+                  "encryptionKey",
+                  "operator"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "metadata",
+              "privacy",
+              "token"
+            ],
+            "additionalProperties": false
+          },
+          "creator": {
+            "type": "object",
+            "properties": {
+              "signingKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "encryptionKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "custody": {
+                "type": "string",
+                "enum": [
+                  "user-controlled",
+                  "managed"
+                ]
+              }
+            },
+            "required": [
+              "signingKey",
+              "encryptionKey",
+              "custody"
+            ],
+            "additionalProperties": false
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "deployment": {
+            "type": "string",
+            "enum": [
+              "shared",
+              "independent"
+            ]
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "card",
+              "tlos",
+              "free"
+            ]
+          },
+          "usdCents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "tlosAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recipient": {
+            "type": "string"
+          },
+          "tokenContract": {
+            "type": "string"
+          },
+          "memo": {
+            "type": "string"
+          },
+          "expires": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "awaiting-payment",
+              "expired",
+              "paid",
+              "created"
+            ]
+          },
+          "dao": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "contract": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "daoId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "interfaceVersion": {
+                    "type": "number",
+                    "const": 1
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "contract",
+                  "daoId",
+                  "interfaceVersion"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "checkoutUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "founderExecutive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "network",
+          "setup",
+          "creator",
+          "requestId",
+          "deployment",
+          "method",
+          "usdCents",
+          "tlosAmount",
+          "recipient",
+          "tokenContract",
+          "memo",
+          "expires",
+          "state",
+          "dao",
+          "checkoutUrl"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "dao-claim-links"
+    },
     {
       "method": "GET",
       "path": "/v1/profiles/:daoId/recipients",
@@ -23932,6 +27958,9 @@ export const CoreHelpBundle:HelpBundle={
                 "type": "null"
               }
             ]
+          },
+          "founderExecutive": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -24731,6 +28760,9 @@ export const CoreHelpBundle:HelpBundle={
                 "type": "null"
               }
             ]
+          },
+          "founderExecutive": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -25561,6 +29593,9 @@ export const CoreHelpBundle:HelpBundle={
                 "type": "null"
               }
             ]
+          },
+          "founderExecutive": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -30727,6 +34762,4018 @@ export const CoreHelpBundle:HelpBundle={
         },
         "required": [
           "clientId"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/dao-claims/sign-in-approval",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "expires": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "expires"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/dao-claims/eligibility",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "eligible": {
+            "type": "boolean"
+          },
+          "governingDao": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "contract": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "daoId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "interfaceVersion": {
+                    "type": "number",
+                    "const": 1
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "contract",
+                  "daoId",
+                  "interfaceVersion"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "eligible",
+          "governingDao"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/dao-claims",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "maxItems": 50,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "request": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "metadata": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "schemaVersion": {
+                              "type": "number",
+                              "const": 1
+                            },
+                            "title": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 160
+                            },
+                            "description": {
+                              "default": "",
+                              "type": "string",
+                              "maxLength": 4000
+                            }
+                          },
+                          "required": [
+                            "schemaVersion",
+                            "title",
+                            "description"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "schemaVersion": {
+                              "type": "number",
+                              "const": 2
+                            },
+                            "title": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 160
+                            },
+                            "description": {
+                              "default": "",
+                              "type": "string",
+                              "maxLength": 4000
+                            },
+                            "purpose": {
+                              "type": "string",
+                              "enum": [
+                                "community",
+                                "ngo-grants",
+                                "gaming-guild",
+                                "team",
+                                "custom"
+                              ]
+                            },
+                            "setup": {
+                              "type": "object",
+                              "properties": {
+                                "presetId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "community",
+                                    "ngo-grants",
+                                    "gaming-guild",
+                                    "team",
+                                    "custom"
+                                  ]
+                                },
+                                "presetVersion": {
+                                  "type": "number",
+                                  "const": 1
+                                },
+                                "participantMode": {
+                                  "type": "string",
+                                  "enum": [
+                                    "humans",
+                                    "mixed",
+                                    "agents-guarded"
+                                  ]
+                                },
+                                "governance": {
+                                  "type": "object",
+                                  "properties": {
+                                    "weight": {
+                                      "type": "string",
+                                      "enum": [
+                                        "member",
+                                        "credit",
+                                        "native-stake"
+                                      ]
+                                    },
+                                    "duration": {
+                                      "type": "integer",
+                                      "minimum": 60,
+                                      "maximum": 2592000
+                                    },
+                                    "quorumBasisPoints": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 10000
+                                    },
+                                    "approvalBasisPoints": {
+                                      "type": "integer",
+                                      "minimum": 5001,
+                                      "maximum": 10000
+                                    },
+                                    "governedWorks": {
+                                      "type": "boolean"
+                                    },
+                                    "maxCommitment": {
+                                      "type": "string"
+                                    },
+                                    "dailyCommitment": {
+                                      "type": "string"
+                                    },
+                                    "guardian": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string",
+                                          "const": ""
+                                        },
+                                        {
+                                          "type": "string",
+                                          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "weight",
+                                    "duration",
+                                    "quorumBasisPoints",
+                                    "approvalBasisPoints",
+                                    "governedWorks",
+                                    "maxCommitment",
+                                    "dailyCommitment",
+                                    "guardian"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "presetId",
+                                "presetVersion",
+                                "participantMode",
+                                "governance"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "schemaVersion",
+                            "title",
+                            "description",
+                            "purpose",
+                            "setup"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "schemaVersion": {
+                              "type": "number",
+                              "const": 3
+                            },
+                            "title": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 160
+                            },
+                            "description": {
+                              "default": "",
+                              "type": "string",
+                              "maxLength": 4000
+                            },
+                            "purpose": {
+                              "type": "string",
+                              "enum": [
+                                "community",
+                                "ngo-grants",
+                                "gaming-guild",
+                                "team",
+                                "custom"
+                              ]
+                            },
+                            "setup": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "presetId": {
+                                      "type": "string",
+                                      "enum": [
+                                        "community",
+                                        "ngo-grants",
+                                        "gaming-guild",
+                                        "team",
+                                        "custom"
+                                      ]
+                                    },
+                                    "presetVersion": {
+                                      "type": "number",
+                                      "const": 1
+                                    },
+                                    "participantMode": {
+                                      "type": "string",
+                                      "enum": [
+                                        "humans",
+                                        "mixed",
+                                        "agents-guarded"
+                                      ]
+                                    },
+                                    "governance": {
+                                      "type": "object",
+                                      "properties": {
+                                        "weight": {
+                                          "type": "string",
+                                          "enum": [
+                                            "member",
+                                            "credit",
+                                            "native-stake"
+                                          ]
+                                        },
+                                        "duration": {
+                                          "type": "integer",
+                                          "minimum": 60,
+                                          "maximum": 2592000
+                                        },
+                                        "quorumBasisPoints": {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 10000
+                                        },
+                                        "approvalBasisPoints": {
+                                          "type": "integer",
+                                          "minimum": 5001,
+                                          "maximum": 10000
+                                        },
+                                        "governedWorks": {
+                                          "type": "boolean"
+                                        },
+                                        "maxCommitment": {
+                                          "type": "string"
+                                        },
+                                        "dailyCommitment": {
+                                          "type": "string"
+                                        },
+                                        "guardian": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string",
+                                              "const": ""
+                                            },
+                                            {
+                                              "type": "string",
+                                              "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "weight",
+                                        "duration",
+                                        "quorumBasisPoints",
+                                        "approvalBasisPoints",
+                                        "governedWorks",
+                                        "maxCommitment",
+                                        "dailyCommitment",
+                                        "guardian"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "required": [
+                                    "presetId",
+                                    "presetVersion",
+                                    "participantMode",
+                                    "governance"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "branding": {
+                              "type": "object",
+                              "properties": {
+                                "summary": {
+                                  "type": "string",
+                                  "maxLength": 280
+                                },
+                                "logo": {
+                                  "type": "object",
+                                  "properties": {
+                                    "cid": {
+                                      "type": "string",
+                                      "maxLength": 128
+                                    },
+                                    "bytes": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 2097152
+                                    },
+                                    "mediaType": {
+                                      "type": "string",
+                                      "enum": [
+                                        "image/png",
+                                        "image/jpeg",
+                                        "image/webp"
+                                      ]
+                                    },
+                                    "commitment": {
+                                      "type": "string",
+                                      "pattern": "^[0-9a-f]{64}$"
+                                    }
+                                  },
+                                  "required": [
+                                    "cid",
+                                    "bytes",
+                                    "mediaType",
+                                    "commitment"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "cover": {
+                                  "type": "object",
+                                  "properties": {
+                                    "cid": {
+                                      "type": "string",
+                                      "maxLength": 128
+                                    },
+                                    "bytes": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 2097152
+                                    },
+                                    "mediaType": {
+                                      "type": "string",
+                                      "enum": [
+                                        "image/png",
+                                        "image/jpeg",
+                                        "image/webp"
+                                      ]
+                                    },
+                                    "commitment": {
+                                      "type": "string",
+                                      "pattern": "^[0-9a-f]{64}$"
+                                    }
+                                  },
+                                  "required": [
+                                    "cid",
+                                    "bytes",
+                                    "mediaType",
+                                    "commitment"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "schemaVersion",
+                            "title",
+                            "description",
+                            "purpose",
+                            "setup",
+                            "branding"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    "privacy": {
+                      "type": "string",
+                      "enum": [
+                        "public",
+                        "encrypted-managed-allowed",
+                        "encrypted-user-controlled"
+                      ]
+                    },
+                    "token": {
+                      "type": "object",
+                      "properties": {
+                        "chainId": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{64}$"
+                        },
+                        "contract": {
+                          "type": "string",
+                          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                        },
+                        "symbol": {
+                          "type": "string",
+                          "pattern": "^[A-Z]{1,7}$"
+                        },
+                        "precision": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 18
+                        }
+                      },
+                      "required": [
+                        "chainId",
+                        "contract",
+                        "symbol",
+                        "precision"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "setup": {
+                      "type": "object",
+                      "properties": {
+                        "presetId": {
+                          "type": "string",
+                          "enum": [
+                            "community",
+                            "ngo-grants",
+                            "gaming-guild",
+                            "team",
+                            "custom"
+                          ]
+                        },
+                        "presetVersion": {
+                          "type": "number",
+                          "const": 1
+                        },
+                        "participantMode": {
+                          "type": "string",
+                          "enum": [
+                            "humans",
+                            "mixed",
+                            "agents-guarded"
+                          ]
+                        },
+                        "governance": {
+                          "type": "object",
+                          "properties": {
+                            "weight": {
+                              "type": "string",
+                              "enum": [
+                                "member",
+                                "credit",
+                                "native-stake"
+                              ]
+                            },
+                            "duration": {
+                              "type": "integer",
+                              "minimum": 60,
+                              "maximum": 2592000
+                            },
+                            "quorumBasisPoints": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 10000
+                            },
+                            "approvalBasisPoints": {
+                              "type": "integer",
+                              "minimum": 5001,
+                              "maximum": 10000
+                            },
+                            "governedWorks": {
+                              "type": "boolean"
+                            },
+                            "maxCommitment": {
+                              "type": "string"
+                            },
+                            "dailyCommitment": {
+                              "type": "string"
+                            },
+                            "guardian": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "const": ""
+                                },
+                                {
+                                  "type": "string",
+                                  "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "weight",
+                            "duration",
+                            "quorumBasisPoints",
+                            "approvalBasisPoints",
+                            "governedWorks",
+                            "maxCommitment",
+                            "dailyCommitment",
+                            "guardian"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "presetId",
+                        "presetVersion",
+                        "participantMode",
+                        "governance"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "foundingAgent": {
+                      "type": "object",
+                      "properties": {
+                        "signingKey": {
+                          "type": "string",
+                          "maxLength": 128
+                        },
+                        "encryptionKey": {
+                          "type": "object",
+                          "properties": {
+                            "kty": {
+                              "type": "string",
+                              "const": "EC"
+                            },
+                            "crv": {
+                              "type": "string",
+                              "const": "P-256"
+                            },
+                            "x": {
+                              "type": "string",
+                              "pattern": "^[A-Za-z0-9_-]{43}$"
+                            },
+                            "y": {
+                              "type": "string",
+                              "pattern": "^[A-Za-z0-9_-]{43}$"
+                            }
+                          },
+                          "required": [
+                            "kty",
+                            "crv",
+                            "x",
+                            "y"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "operator": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64,
+                          "pattern": "^[\\x20-\\x7e]+$"
+                        }
+                      },
+                      "required": [
+                        "signingKey",
+                        "encryptionKey",
+                        "operator"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "metadata",
+                    "privacy",
+                    "token"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "chainId": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "runtime": {
+              "type": "string"
+            },
+            "expiresAt": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "ready",
+                "claiming",
+                "created",
+                "revoked",
+                "expired"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "request",
+            "chainId",
+            "runtime",
+            "expiresAt",
+            "state"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/dao-claims/issue",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "request": {
+            "type": "object",
+            "properties": {
+              "metadata": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                      },
+                      "description": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 4000
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 2
+                      },
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                      },
+                      "description": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "purpose": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "setup": {
+                        "type": "object",
+                        "properties": {
+                          "presetId": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "presetVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "participantMode": {
+                            "type": "string",
+                            "enum": [
+                              "humans",
+                              "mixed",
+                              "agents-guarded"
+                            ]
+                          },
+                          "governance": {
+                            "type": "object",
+                            "properties": {
+                              "weight": {
+                                "type": "string",
+                                "enum": [
+                                  "member",
+                                  "credit",
+                                  "native-stake"
+                                ]
+                              },
+                              "duration": {
+                                "type": "integer",
+                                "minimum": 60,
+                                "maximum": 2592000
+                              },
+                              "quorumBasisPoints": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 10000
+                              },
+                              "approvalBasisPoints": {
+                                "type": "integer",
+                                "minimum": 5001,
+                                "maximum": 10000
+                              },
+                              "governedWorks": {
+                                "type": "boolean"
+                              },
+                              "maxCommitment": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "dailyCommitment": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "guardian": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "const": ""
+                                  },
+                                  {
+                                    "type": "string",
+                                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "weight",
+                              "duration",
+                              "quorumBasisPoints",
+                              "approvalBasisPoints",
+                              "governedWorks",
+                              "maxCommitment",
+                              "dailyCommitment",
+                              "guardian"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "presetId",
+                          "presetVersion",
+                          "participantMode",
+                          "governance"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "purpose",
+                      "setup"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 3
+                      },
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                      },
+                      "description": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "purpose": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "setup": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "presetId": {
+                                "type": "string",
+                                "enum": [
+                                  "community",
+                                  "ngo-grants",
+                                  "gaming-guild",
+                                  "team",
+                                  "custom"
+                                ]
+                              },
+                              "presetVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "participantMode": {
+                                "type": "string",
+                                "enum": [
+                                  "humans",
+                                  "mixed",
+                                  "agents-guarded"
+                                ]
+                              },
+                              "governance": {
+                                "type": "object",
+                                "properties": {
+                                  "weight": {
+                                    "type": "string",
+                                    "enum": [
+                                      "member",
+                                      "credit",
+                                      "native-stake"
+                                    ]
+                                  },
+                                  "duration": {
+                                    "type": "integer",
+                                    "minimum": 60,
+                                    "maximum": 2592000
+                                  },
+                                  "quorumBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 10000
+                                  },
+                                  "approvalBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 5001,
+                                    "maximum": 10000
+                                  },
+                                  "governedWorks": {
+                                    "type": "boolean"
+                                  },
+                                  "maxCommitment": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  },
+                                  "dailyCommitment": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  },
+                                  "guardian": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "const": ""
+                                      },
+                                      {
+                                        "type": "string",
+                                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "weight",
+                                  "duration",
+                                  "quorumBasisPoints",
+                                  "approvalBasisPoints",
+                                  "governedWorks",
+                                  "maxCommitment",
+                                  "dailyCommitment",
+                                  "guardian"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "presetId",
+                              "presetVersion",
+                              "participantMode",
+                              "governance"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "branding": {
+                        "type": "object",
+                        "properties": {
+                          "summary": {
+                            "type": "string",
+                            "maxLength": 280
+                          },
+                          "logo": {
+                            "type": "object",
+                            "properties": {
+                              "cid": {
+                                "type": "string",
+                                "maxLength": 128
+                              },
+                              "bytes": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 2097152
+                              },
+                              "mediaType": {
+                                "type": "string",
+                                "enum": [
+                                  "image/png",
+                                  "image/jpeg",
+                                  "image/webp"
+                                ]
+                              },
+                              "commitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              }
+                            },
+                            "required": [
+                              "cid",
+                              "bytes",
+                              "mediaType",
+                              "commitment"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "cover": {
+                            "type": "object",
+                            "properties": {
+                              "cid": {
+                                "type": "string",
+                                "maxLength": 128
+                              },
+                              "bytes": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 2097152
+                              },
+                              "mediaType": {
+                                "type": "string",
+                                "enum": [
+                                  "image/png",
+                                  "image/jpeg",
+                                  "image/webp"
+                                ]
+                              },
+                              "commitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              }
+                            },
+                            "required": [
+                              "cid",
+                              "bytes",
+                              "mediaType",
+                              "commitment"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "purpose",
+                      "setup",
+                      "branding"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "privacy": {
+                "type": "string",
+                "enum": [
+                  "public",
+                  "encrypted-managed-allowed",
+                  "encrypted-user-controlled"
+                ]
+              },
+              "token": {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "contract": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "symbol": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{1,7}$"
+                  },
+                  "precision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 18
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "contract",
+                  "symbol",
+                  "precision"
+                ],
+                "additionalProperties": false
+              },
+              "setup": {
+                "type": "object",
+                "properties": {
+                  "presetId": {
+                    "type": "string",
+                    "enum": [
+                      "community",
+                      "ngo-grants",
+                      "gaming-guild",
+                      "team",
+                      "custom"
+                    ]
+                  },
+                  "presetVersion": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "participantMode": {
+                    "type": "string",
+                    "enum": [
+                      "humans",
+                      "mixed",
+                      "agents-guarded"
+                    ]
+                  },
+                  "governance": {
+                    "type": "object",
+                    "properties": {
+                      "weight": {
+                        "type": "string",
+                        "enum": [
+                          "member",
+                          "credit",
+                          "native-stake"
+                        ]
+                      },
+                      "duration": {
+                        "type": "integer",
+                        "minimum": 60,
+                        "maximum": 2592000
+                      },
+                      "quorumBasisPoints": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10000
+                      },
+                      "approvalBasisPoints": {
+                        "type": "integer",
+                        "minimum": 5001,
+                        "maximum": 10000
+                      },
+                      "governedWorks": {
+                        "type": "boolean"
+                      },
+                      "maxCommitment": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "dailyCommitment": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "guardian": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "const": ""
+                          },
+                          {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "weight",
+                      "duration",
+                      "quorumBasisPoints",
+                      "approvalBasisPoints",
+                      "governedWorks",
+                      "maxCommitment",
+                      "dailyCommitment",
+                      "guardian"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "presetId",
+                  "presetVersion",
+                  "participantMode",
+                  "governance"
+                ],
+                "additionalProperties": false
+              },
+              "foundingAgent": {
+                "type": "object",
+                "properties": {
+                  "signingKey": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  "encryptionKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "operator": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "pattern": "^[\\x20-\\x7e]+$"
+                  }
+                },
+                "required": [
+                  "signingKey",
+                  "encryptionKey",
+                  "operator"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "metadata",
+              "privacy",
+              "token"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "request"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "claim": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "request": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "metadata": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "schemaVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "title": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 160
+                              },
+                              "description": {
+                                "default": "",
+                                "type": "string",
+                                "maxLength": 4000
+                              }
+                            },
+                            "required": [
+                              "schemaVersion",
+                              "title",
+                              "description"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "schemaVersion": {
+                                "type": "number",
+                                "const": 2
+                              },
+                              "title": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 160
+                              },
+                              "description": {
+                                "default": "",
+                                "type": "string",
+                                "maxLength": 4000
+                              },
+                              "purpose": {
+                                "type": "string",
+                                "enum": [
+                                  "community",
+                                  "ngo-grants",
+                                  "gaming-guild",
+                                  "team",
+                                  "custom"
+                                ]
+                              },
+                              "setup": {
+                                "type": "object",
+                                "properties": {
+                                  "presetId": {
+                                    "type": "string",
+                                    "enum": [
+                                      "community",
+                                      "ngo-grants",
+                                      "gaming-guild",
+                                      "team",
+                                      "custom"
+                                    ]
+                                  },
+                                  "presetVersion": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "participantMode": {
+                                    "type": "string",
+                                    "enum": [
+                                      "humans",
+                                      "mixed",
+                                      "agents-guarded"
+                                    ]
+                                  },
+                                  "governance": {
+                                    "type": "object",
+                                    "properties": {
+                                      "weight": {
+                                        "type": "string",
+                                        "enum": [
+                                          "member",
+                                          "credit",
+                                          "native-stake"
+                                        ]
+                                      },
+                                      "duration": {
+                                        "type": "integer",
+                                        "minimum": 60,
+                                        "maximum": 2592000
+                                      },
+                                      "quorumBasisPoints": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 10000
+                                      },
+                                      "approvalBasisPoints": {
+                                        "type": "integer",
+                                        "minimum": 5001,
+                                        "maximum": 10000
+                                      },
+                                      "governedWorks": {
+                                        "type": "boolean"
+                                      },
+                                      "maxCommitment": {
+                                        "type": "string"
+                                      },
+                                      "dailyCommitment": {
+                                        "type": "string"
+                                      },
+                                      "guardian": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string",
+                                            "const": ""
+                                          },
+                                          {
+                                            "type": "string",
+                                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "weight",
+                                      "duration",
+                                      "quorumBasisPoints",
+                                      "approvalBasisPoints",
+                                      "governedWorks",
+                                      "maxCommitment",
+                                      "dailyCommitment",
+                                      "guardian"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "presetId",
+                                  "presetVersion",
+                                  "participantMode",
+                                  "governance"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "schemaVersion",
+                              "title",
+                              "description",
+                              "purpose",
+                              "setup"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "schemaVersion": {
+                                "type": "number",
+                                "const": 3
+                              },
+                              "title": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 160
+                              },
+                              "description": {
+                                "default": "",
+                                "type": "string",
+                                "maxLength": 4000
+                              },
+                              "purpose": {
+                                "type": "string",
+                                "enum": [
+                                  "community",
+                                  "ngo-grants",
+                                  "gaming-guild",
+                                  "team",
+                                  "custom"
+                                ]
+                              },
+                              "setup": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "presetId": {
+                                        "type": "string",
+                                        "enum": [
+                                          "community",
+                                          "ngo-grants",
+                                          "gaming-guild",
+                                          "team",
+                                          "custom"
+                                        ]
+                                      },
+                                      "presetVersion": {
+                                        "type": "number",
+                                        "const": 1
+                                      },
+                                      "participantMode": {
+                                        "type": "string",
+                                        "enum": [
+                                          "humans",
+                                          "mixed",
+                                          "agents-guarded"
+                                        ]
+                                      },
+                                      "governance": {
+                                        "type": "object",
+                                        "properties": {
+                                          "weight": {
+                                            "type": "string",
+                                            "enum": [
+                                              "member",
+                                              "credit",
+                                              "native-stake"
+                                            ]
+                                          },
+                                          "duration": {
+                                            "type": "integer",
+                                            "minimum": 60,
+                                            "maximum": 2592000
+                                          },
+                                          "quorumBasisPoints": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 10000
+                                          },
+                                          "approvalBasisPoints": {
+                                            "type": "integer",
+                                            "minimum": 5001,
+                                            "maximum": 10000
+                                          },
+                                          "governedWorks": {
+                                            "type": "boolean"
+                                          },
+                                          "maxCommitment": {
+                                            "type": "string"
+                                          },
+                                          "dailyCommitment": {
+                                            "type": "string"
+                                          },
+                                          "guardian": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string",
+                                                "const": ""
+                                              },
+                                              {
+                                                "type": "string",
+                                                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "weight",
+                                          "duration",
+                                          "quorumBasisPoints",
+                                          "approvalBasisPoints",
+                                          "governedWorks",
+                                          "maxCommitment",
+                                          "dailyCommitment",
+                                          "guardian"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    },
+                                    "required": [
+                                      "presetId",
+                                      "presetVersion",
+                                      "participantMode",
+                                      "governance"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "branding": {
+                                "type": "object",
+                                "properties": {
+                                  "summary": {
+                                    "type": "string",
+                                    "maxLength": 280
+                                  },
+                                  "logo": {
+                                    "type": "object",
+                                    "properties": {
+                                      "cid": {
+                                        "type": "string",
+                                        "maxLength": 128
+                                      },
+                                      "bytes": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 2097152
+                                      },
+                                      "mediaType": {
+                                        "type": "string",
+                                        "enum": [
+                                          "image/png",
+                                          "image/jpeg",
+                                          "image/webp"
+                                        ]
+                                      },
+                                      "commitment": {
+                                        "type": "string",
+                                        "pattern": "^[0-9a-f]{64}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "cid",
+                                      "bytes",
+                                      "mediaType",
+                                      "commitment"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "cover": {
+                                    "type": "object",
+                                    "properties": {
+                                      "cid": {
+                                        "type": "string",
+                                        "maxLength": 128
+                                      },
+                                      "bytes": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 2097152
+                                      },
+                                      "mediaType": {
+                                        "type": "string",
+                                        "enum": [
+                                          "image/png",
+                                          "image/jpeg",
+                                          "image/webp"
+                                        ]
+                                      },
+                                      "commitment": {
+                                        "type": "string",
+                                        "pattern": "^[0-9a-f]{64}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "cid",
+                                      "bytes",
+                                      "mediaType",
+                                      "commitment"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "schemaVersion",
+                              "title",
+                              "description",
+                              "purpose",
+                              "setup",
+                              "branding"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "privacy": {
+                        "type": "string",
+                        "enum": [
+                          "public",
+                          "encrypted-managed-allowed",
+                          "encrypted-user-controlled"
+                        ]
+                      },
+                      "token": {
+                        "type": "object",
+                        "properties": {
+                          "chainId": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "contract": {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          },
+                          "symbol": {
+                            "type": "string",
+                            "pattern": "^[A-Z]{1,7}$"
+                          },
+                          "precision": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 18
+                          }
+                        },
+                        "required": [
+                          "chainId",
+                          "contract",
+                          "symbol",
+                          "precision"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "setup": {
+                        "type": "object",
+                        "properties": {
+                          "presetId": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "presetVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "participantMode": {
+                            "type": "string",
+                            "enum": [
+                              "humans",
+                              "mixed",
+                              "agents-guarded"
+                            ]
+                          },
+                          "governance": {
+                            "type": "object",
+                            "properties": {
+                              "weight": {
+                                "type": "string",
+                                "enum": [
+                                  "member",
+                                  "credit",
+                                  "native-stake"
+                                ]
+                              },
+                              "duration": {
+                                "type": "integer",
+                                "minimum": 60,
+                                "maximum": 2592000
+                              },
+                              "quorumBasisPoints": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 10000
+                              },
+                              "approvalBasisPoints": {
+                                "type": "integer",
+                                "minimum": 5001,
+                                "maximum": 10000
+                              },
+                              "governedWorks": {
+                                "type": "boolean"
+                              },
+                              "maxCommitment": {
+                                "type": "string"
+                              },
+                              "dailyCommitment": {
+                                "type": "string"
+                              },
+                              "guardian": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "const": ""
+                                  },
+                                  {
+                                    "type": "string",
+                                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "weight",
+                              "duration",
+                              "quorumBasisPoints",
+                              "approvalBasisPoints",
+                              "governedWorks",
+                              "maxCommitment",
+                              "dailyCommitment",
+                              "guardian"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "presetId",
+                          "presetVersion",
+                          "participantMode",
+                          "governance"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "foundingAgent": {
+                        "type": "object",
+                        "properties": {
+                          "signingKey": {
+                            "type": "string",
+                            "maxLength": 128
+                          },
+                          "encryptionKey": {
+                            "type": "object",
+                            "properties": {
+                              "kty": {
+                                "type": "string",
+                                "const": "EC"
+                              },
+                              "crv": {
+                                "type": "string",
+                                "const": "P-256"
+                              },
+                              "x": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9_-]{43}$"
+                              },
+                              "y": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9_-]{43}$"
+                              }
+                            },
+                            "required": [
+                              "kty",
+                              "crv",
+                              "x",
+                              "y"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "operator": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64,
+                            "pattern": "^[\\x20-\\x7e]+$"
+                          }
+                        },
+                        "required": [
+                          "signingKey",
+                          "encryptionKey",
+                          "operator"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "metadata",
+                      "privacy",
+                      "token"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "runtime": {
+                "type": "string"
+              },
+              "expiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "ready",
+                  "claiming",
+                  "created",
+                  "revoked",
+                  "expired"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "request",
+              "chainId",
+              "runtime",
+              "expiresAt",
+              "state"
+            ],
+            "additionalProperties": false
+          },
+          "token": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$"
+          }
+        },
+        "required": [
+          "claim",
+          "token"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/dao-claims/revoke",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "request": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "metadata": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "description": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 4000
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "title",
+                          "description"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 2
+                          },
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "description": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 4000
+                          },
+                          "purpose": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "setup": {
+                            "type": "object",
+                            "properties": {
+                              "presetId": {
+                                "type": "string",
+                                "enum": [
+                                  "community",
+                                  "ngo-grants",
+                                  "gaming-guild",
+                                  "team",
+                                  "custom"
+                                ]
+                              },
+                              "presetVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "participantMode": {
+                                "type": "string",
+                                "enum": [
+                                  "humans",
+                                  "mixed",
+                                  "agents-guarded"
+                                ]
+                              },
+                              "governance": {
+                                "type": "object",
+                                "properties": {
+                                  "weight": {
+                                    "type": "string",
+                                    "enum": [
+                                      "member",
+                                      "credit",
+                                      "native-stake"
+                                    ]
+                                  },
+                                  "duration": {
+                                    "type": "integer",
+                                    "minimum": 60,
+                                    "maximum": 2592000
+                                  },
+                                  "quorumBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 10000
+                                  },
+                                  "approvalBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 5001,
+                                    "maximum": 10000
+                                  },
+                                  "governedWorks": {
+                                    "type": "boolean"
+                                  },
+                                  "maxCommitment": {
+                                    "type": "string"
+                                  },
+                                  "dailyCommitment": {
+                                    "type": "string"
+                                  },
+                                  "guardian": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "const": ""
+                                      },
+                                      {
+                                        "type": "string",
+                                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "weight",
+                                  "duration",
+                                  "quorumBasisPoints",
+                                  "approvalBasisPoints",
+                                  "governedWorks",
+                                  "maxCommitment",
+                                  "dailyCommitment",
+                                  "guardian"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "presetId",
+                              "presetVersion",
+                              "participantMode",
+                              "governance"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "title",
+                          "description",
+                          "purpose",
+                          "setup"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 3
+                          },
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "description": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 4000
+                          },
+                          "purpose": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "setup": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "presetId": {
+                                    "type": "string",
+                                    "enum": [
+                                      "community",
+                                      "ngo-grants",
+                                      "gaming-guild",
+                                      "team",
+                                      "custom"
+                                    ]
+                                  },
+                                  "presetVersion": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "participantMode": {
+                                    "type": "string",
+                                    "enum": [
+                                      "humans",
+                                      "mixed",
+                                      "agents-guarded"
+                                    ]
+                                  },
+                                  "governance": {
+                                    "type": "object",
+                                    "properties": {
+                                      "weight": {
+                                        "type": "string",
+                                        "enum": [
+                                          "member",
+                                          "credit",
+                                          "native-stake"
+                                        ]
+                                      },
+                                      "duration": {
+                                        "type": "integer",
+                                        "minimum": 60,
+                                        "maximum": 2592000
+                                      },
+                                      "quorumBasisPoints": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 10000
+                                      },
+                                      "approvalBasisPoints": {
+                                        "type": "integer",
+                                        "minimum": 5001,
+                                        "maximum": 10000
+                                      },
+                                      "governedWorks": {
+                                        "type": "boolean"
+                                      },
+                                      "maxCommitment": {
+                                        "type": "string"
+                                      },
+                                      "dailyCommitment": {
+                                        "type": "string"
+                                      },
+                                      "guardian": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string",
+                                            "const": ""
+                                          },
+                                          {
+                                            "type": "string",
+                                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "weight",
+                                      "duration",
+                                      "quorumBasisPoints",
+                                      "approvalBasisPoints",
+                                      "governedWorks",
+                                      "maxCommitment",
+                                      "dailyCommitment",
+                                      "guardian"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "presetId",
+                                  "presetVersion",
+                                  "participantMode",
+                                  "governance"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "branding": {
+                            "type": "object",
+                            "properties": {
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 280
+                              },
+                              "logo": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "cover": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "title",
+                          "description",
+                          "purpose",
+                          "setup",
+                          "branding"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "privacy": {
+                    "type": "string",
+                    "enum": [
+                      "public",
+                      "encrypted-managed-allowed",
+                      "encrypted-user-controlled"
+                    ]
+                  },
+                  "token": {
+                    "type": "object",
+                    "properties": {
+                      "chainId": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "contract": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "symbol": {
+                        "type": "string",
+                        "pattern": "^[A-Z]{1,7}$"
+                      },
+                      "precision": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 18
+                      }
+                    },
+                    "required": [
+                      "chainId",
+                      "contract",
+                      "symbol",
+                      "precision"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "setup": {
+                    "type": "object",
+                    "properties": {
+                      "presetId": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "presetVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "participantMode": {
+                        "type": "string",
+                        "enum": [
+                          "humans",
+                          "mixed",
+                          "agents-guarded"
+                        ]
+                      },
+                      "governance": {
+                        "type": "object",
+                        "properties": {
+                          "weight": {
+                            "type": "string",
+                            "enum": [
+                              "member",
+                              "credit",
+                              "native-stake"
+                            ]
+                          },
+                          "duration": {
+                            "type": "integer",
+                            "minimum": 60,
+                            "maximum": 2592000
+                          },
+                          "quorumBasisPoints": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 10000
+                          },
+                          "approvalBasisPoints": {
+                            "type": "integer",
+                            "minimum": 5001,
+                            "maximum": 10000
+                          },
+                          "governedWorks": {
+                            "type": "boolean"
+                          },
+                          "maxCommitment": {
+                            "type": "string"
+                          },
+                          "dailyCommitment": {
+                            "type": "string"
+                          },
+                          "guardian": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "const": ""
+                              },
+                              {
+                                "type": "string",
+                                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "weight",
+                          "duration",
+                          "quorumBasisPoints",
+                          "approvalBasisPoints",
+                          "governedWorks",
+                          "maxCommitment",
+                          "dailyCommitment",
+                          "guardian"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "presetId",
+                      "presetVersion",
+                      "participantMode",
+                      "governance"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "foundingAgent": {
+                    "type": "object",
+                    "properties": {
+                      "signingKey": {
+                        "type": "string",
+                        "maxLength": 128
+                      },
+                      "encryptionKey": {
+                        "type": "object",
+                        "properties": {
+                          "kty": {
+                            "type": "string",
+                            "const": "EC"
+                          },
+                          "crv": {
+                            "type": "string",
+                            "const": "P-256"
+                          },
+                          "x": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{43}$"
+                          },
+                          "y": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{43}$"
+                          }
+                        },
+                        "required": [
+                          "kty",
+                          "crv",
+                          "x",
+                          "y"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "operator": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64,
+                        "pattern": "^[\\x20-\\x7e]+$"
+                      }
+                    },
+                    "required": [
+                      "signingKey",
+                      "encryptionKey",
+                      "operator"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "metadata",
+                  "privacy",
+                  "token"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "chainId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "runtime": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "claiming",
+              "created",
+              "revoked",
+              "expired"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "request",
+          "chainId",
+          "runtime",
+          "expiresAt",
+          "state"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/dao-claims/preview",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "request": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "metadata": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "description": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 4000
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "title",
+                          "description"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 2
+                          },
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "description": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 4000
+                          },
+                          "purpose": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "setup": {
+                            "type": "object",
+                            "properties": {
+                              "presetId": {
+                                "type": "string",
+                                "enum": [
+                                  "community",
+                                  "ngo-grants",
+                                  "gaming-guild",
+                                  "team",
+                                  "custom"
+                                ]
+                              },
+                              "presetVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "participantMode": {
+                                "type": "string",
+                                "enum": [
+                                  "humans",
+                                  "mixed",
+                                  "agents-guarded"
+                                ]
+                              },
+                              "governance": {
+                                "type": "object",
+                                "properties": {
+                                  "weight": {
+                                    "type": "string",
+                                    "enum": [
+                                      "member",
+                                      "credit",
+                                      "native-stake"
+                                    ]
+                                  },
+                                  "duration": {
+                                    "type": "integer",
+                                    "minimum": 60,
+                                    "maximum": 2592000
+                                  },
+                                  "quorumBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 10000
+                                  },
+                                  "approvalBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 5001,
+                                    "maximum": 10000
+                                  },
+                                  "governedWorks": {
+                                    "type": "boolean"
+                                  },
+                                  "maxCommitment": {
+                                    "type": "string"
+                                  },
+                                  "dailyCommitment": {
+                                    "type": "string"
+                                  },
+                                  "guardian": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "const": ""
+                                      },
+                                      {
+                                        "type": "string",
+                                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "weight",
+                                  "duration",
+                                  "quorumBasisPoints",
+                                  "approvalBasisPoints",
+                                  "governedWorks",
+                                  "maxCommitment",
+                                  "dailyCommitment",
+                                  "guardian"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "presetId",
+                              "presetVersion",
+                              "participantMode",
+                              "governance"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "title",
+                          "description",
+                          "purpose",
+                          "setup"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 3
+                          },
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "description": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 4000
+                          },
+                          "purpose": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "setup": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "presetId": {
+                                    "type": "string",
+                                    "enum": [
+                                      "community",
+                                      "ngo-grants",
+                                      "gaming-guild",
+                                      "team",
+                                      "custom"
+                                    ]
+                                  },
+                                  "presetVersion": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "participantMode": {
+                                    "type": "string",
+                                    "enum": [
+                                      "humans",
+                                      "mixed",
+                                      "agents-guarded"
+                                    ]
+                                  },
+                                  "governance": {
+                                    "type": "object",
+                                    "properties": {
+                                      "weight": {
+                                        "type": "string",
+                                        "enum": [
+                                          "member",
+                                          "credit",
+                                          "native-stake"
+                                        ]
+                                      },
+                                      "duration": {
+                                        "type": "integer",
+                                        "minimum": 60,
+                                        "maximum": 2592000
+                                      },
+                                      "quorumBasisPoints": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 10000
+                                      },
+                                      "approvalBasisPoints": {
+                                        "type": "integer",
+                                        "minimum": 5001,
+                                        "maximum": 10000
+                                      },
+                                      "governedWorks": {
+                                        "type": "boolean"
+                                      },
+                                      "maxCommitment": {
+                                        "type": "string"
+                                      },
+                                      "dailyCommitment": {
+                                        "type": "string"
+                                      },
+                                      "guardian": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string",
+                                            "const": ""
+                                          },
+                                          {
+                                            "type": "string",
+                                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "weight",
+                                      "duration",
+                                      "quorumBasisPoints",
+                                      "approvalBasisPoints",
+                                      "governedWorks",
+                                      "maxCommitment",
+                                      "dailyCommitment",
+                                      "guardian"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "presetId",
+                                  "presetVersion",
+                                  "participantMode",
+                                  "governance"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "branding": {
+                            "type": "object",
+                            "properties": {
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 280
+                              },
+                              "logo": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "cover": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "title",
+                          "description",
+                          "purpose",
+                          "setup",
+                          "branding"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "privacy": {
+                    "type": "string",
+                    "enum": [
+                      "public",
+                      "encrypted-managed-allowed",
+                      "encrypted-user-controlled"
+                    ]
+                  },
+                  "token": {
+                    "type": "object",
+                    "properties": {
+                      "chainId": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "contract": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "symbol": {
+                        "type": "string",
+                        "pattern": "^[A-Z]{1,7}$"
+                      },
+                      "precision": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 18
+                      }
+                    },
+                    "required": [
+                      "chainId",
+                      "contract",
+                      "symbol",
+                      "precision"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "setup": {
+                    "type": "object",
+                    "properties": {
+                      "presetId": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "presetVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "participantMode": {
+                        "type": "string",
+                        "enum": [
+                          "humans",
+                          "mixed",
+                          "agents-guarded"
+                        ]
+                      },
+                      "governance": {
+                        "type": "object",
+                        "properties": {
+                          "weight": {
+                            "type": "string",
+                            "enum": [
+                              "member",
+                              "credit",
+                              "native-stake"
+                            ]
+                          },
+                          "duration": {
+                            "type": "integer",
+                            "minimum": 60,
+                            "maximum": 2592000
+                          },
+                          "quorumBasisPoints": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 10000
+                          },
+                          "approvalBasisPoints": {
+                            "type": "integer",
+                            "minimum": 5001,
+                            "maximum": 10000
+                          },
+                          "governedWorks": {
+                            "type": "boolean"
+                          },
+                          "maxCommitment": {
+                            "type": "string"
+                          },
+                          "dailyCommitment": {
+                            "type": "string"
+                          },
+                          "guardian": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "const": ""
+                              },
+                              {
+                                "type": "string",
+                                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "weight",
+                          "duration",
+                          "quorumBasisPoints",
+                          "approvalBasisPoints",
+                          "governedWorks",
+                          "maxCommitment",
+                          "dailyCommitment",
+                          "guardian"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "presetId",
+                      "presetVersion",
+                      "participantMode",
+                      "governance"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "foundingAgent": {
+                    "type": "object",
+                    "properties": {
+                      "signingKey": {
+                        "type": "string",
+                        "maxLength": 128
+                      },
+                      "encryptionKey": {
+                        "type": "object",
+                        "properties": {
+                          "kty": {
+                            "type": "string",
+                            "const": "EC"
+                          },
+                          "crv": {
+                            "type": "string",
+                            "const": "P-256"
+                          },
+                          "x": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{43}$"
+                          },
+                          "y": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{43}$"
+                          }
+                        },
+                        "required": [
+                          "kty",
+                          "crv",
+                          "x",
+                          "y"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "operator": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64,
+                        "pattern": "^[\\x20-\\x7e]+$"
+                      }
+                    },
+                    "required": [
+                      "signingKey",
+                      "encryptionKey",
+                      "operator"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "metadata",
+                  "privacy",
+                  "token"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "chainId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "runtime": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "claiming",
+              "created",
+              "revoked",
+              "expired"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "request",
+          "chainId",
+          "runtime",
+          "expiresAt",
+          "state"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "providers"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/dao-claims/claim",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "card",
+              "tlos",
+              "free"
+            ]
+          }
+        },
+        "required": [
+          "token",
+          "method"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "network": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "rpcUrl": {
+                "type": "string",
+                "format": "uri"
+              },
+              "runtime": {
+                "type": "string"
+              },
+              "hub": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "environment": {
+                "type": "string",
+                "enum": [
+                  "local",
+                  "testnet",
+                  "mainnet"
+                ]
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              },
+              "coreVersion": {
+                "type": "string"
+              },
+              "capabilities": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "chainId",
+              "rpcUrl",
+              "runtime",
+              "hub",
+              "environment",
+              "interfaceVersion",
+              "coreVersion",
+              "capabilities"
+            ],
+            "additionalProperties": false
+          },
+          "setup": {
+            "type": "object",
+            "properties": {
+              "metadata": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                      },
+                      "description": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 4000
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "description"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 2
+                      },
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                      },
+                      "description": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "purpose": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "setup": {
+                        "type": "object",
+                        "properties": {
+                          "presetId": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "presetVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "participantMode": {
+                            "type": "string",
+                            "enum": [
+                              "humans",
+                              "mixed",
+                              "agents-guarded"
+                            ]
+                          },
+                          "governance": {
+                            "type": "object",
+                            "properties": {
+                              "weight": {
+                                "type": "string",
+                                "enum": [
+                                  "member",
+                                  "credit",
+                                  "native-stake"
+                                ]
+                              },
+                              "duration": {
+                                "type": "integer",
+                                "minimum": 60,
+                                "maximum": 2592000
+                              },
+                              "quorumBasisPoints": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 10000
+                              },
+                              "approvalBasisPoints": {
+                                "type": "integer",
+                                "minimum": 5001,
+                                "maximum": 10000
+                              },
+                              "governedWorks": {
+                                "type": "boolean"
+                              },
+                              "maxCommitment": {
+                                "type": "string"
+                              },
+                              "dailyCommitment": {
+                                "type": "string"
+                              },
+                              "guardian": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "const": ""
+                                  },
+                                  {
+                                    "type": "string",
+                                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "weight",
+                              "duration",
+                              "quorumBasisPoints",
+                              "approvalBasisPoints",
+                              "governedWorks",
+                              "maxCommitment",
+                              "dailyCommitment",
+                              "guardian"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "presetId",
+                          "presetVersion",
+                          "participantMode",
+                          "governance"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "description",
+                      "purpose",
+                      "setup"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 3
+                      },
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                      },
+                      "description": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "purpose": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "setup": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "presetId": {
+                                "type": "string",
+                                "enum": [
+                                  "community",
+                                  "ngo-grants",
+                                  "gaming-guild",
+                                  "team",
+                                  "custom"
+                                ]
+                              },
+                              "presetVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "participantMode": {
+                                "type": "string",
+                                "enum": [
+                                  "humans",
+                                  "mixed",
+                                  "agents-guarded"
+                                ]
+                              },
+                              "governance": {
+                                "type": "object",
+                                "properties": {
+                                  "weight": {
+                                    "type": "string",
+                                    "enum": [
+                                      "member",
+                                      "credit",
+                                      "native-stake"
+                                    ]
+                                  },
+                                  "duration": {
+                                    "type": "integer",
+                                    "minimum": 60,
+                                    "maximum": 2592000
+                                  },
+                                  "quorumBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 10000
+                                  },
+                                  "approvalBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 5001,
+                                    "maximum": 10000
+                                  },
+                                  "governedWorks": {
+                                    "type": "boolean"
+                                  },
+                                  "maxCommitment": {
+                                    "type": "string"
+                                  },
+                                  "dailyCommitment": {
+                                    "type": "string"
+                                  },
+                                  "guardian": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "const": ""
+                                      },
+                                      {
+                                        "type": "string",
+                                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "weight",
+                                  "duration",
+                                  "quorumBasisPoints",
+                                  "approvalBasisPoints",
+                                  "governedWorks",
+                                  "maxCommitment",
+                                  "dailyCommitment",
+                                  "guardian"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "presetId",
+                              "presetVersion",
+                              "participantMode",
+                              "governance"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "branding": {
+                        "type": "object",
+                        "properties": {
+                          "summary": {
+                            "type": "string",
+                            "maxLength": 280
+                          },
+                          "logo": {
+                            "type": "object",
+                            "properties": {
+                              "cid": {
+                                "type": "string",
+                                "maxLength": 128
+                              },
+                              "bytes": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 2097152
+                              },
+                              "mediaType": {
+                                "type": "string",
+                                "enum": [
+                                  "image/png",
+                                  "image/jpeg",
+                                  "image/webp"
+                                ]
+                              },
+                              "commitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              }
+                            },
+                            "required": [
+                              "cid",
+                              "bytes",
+                              "mediaType",
+                              "commitment"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "cover": {
+                            "type": "object",
+                            "properties": {
+                              "cid": {
+                                "type": "string",
+                                "maxLength": 128
+                              },
+                              "bytes": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 2097152
+                              },
+                              "mediaType": {
+                                "type": "string",
+                                "enum": [
+                                  "image/png",
+                                  "image/jpeg",
+                                  "image/webp"
+                                ]
+                              },
+                              "commitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              }
+                            },
+                            "required": [
+                              "cid",
+                              "bytes",
+                              "mediaType",
+                              "commitment"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "description",
+                      "purpose",
+                      "setup",
+                      "branding"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "privacy": {
+                "type": "string",
+                "enum": [
+                  "public",
+                  "encrypted-managed-allowed",
+                  "encrypted-user-controlled"
+                ]
+              },
+              "token": {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "contract": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "symbol": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{1,7}$"
+                  },
+                  "precision": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 18
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "contract",
+                  "symbol",
+                  "precision"
+                ],
+                "additionalProperties": false
+              },
+              "setup": {
+                "type": "object",
+                "properties": {
+                  "presetId": {
+                    "type": "string",
+                    "enum": [
+                      "community",
+                      "ngo-grants",
+                      "gaming-guild",
+                      "team",
+                      "custom"
+                    ]
+                  },
+                  "presetVersion": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "participantMode": {
+                    "type": "string",
+                    "enum": [
+                      "humans",
+                      "mixed",
+                      "agents-guarded"
+                    ]
+                  },
+                  "governance": {
+                    "type": "object",
+                    "properties": {
+                      "weight": {
+                        "type": "string",
+                        "enum": [
+                          "member",
+                          "credit",
+                          "native-stake"
+                        ]
+                      },
+                      "duration": {
+                        "type": "integer",
+                        "minimum": 60,
+                        "maximum": 2592000
+                      },
+                      "quorumBasisPoints": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10000
+                      },
+                      "approvalBasisPoints": {
+                        "type": "integer",
+                        "minimum": 5001,
+                        "maximum": 10000
+                      },
+                      "governedWorks": {
+                        "type": "boolean"
+                      },
+                      "maxCommitment": {
+                        "type": "string"
+                      },
+                      "dailyCommitment": {
+                        "type": "string"
+                      },
+                      "guardian": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "const": ""
+                          },
+                          {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "weight",
+                      "duration",
+                      "quorumBasisPoints",
+                      "approvalBasisPoints",
+                      "governedWorks",
+                      "maxCommitment",
+                      "dailyCommitment",
+                      "guardian"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "presetId",
+                  "presetVersion",
+                  "participantMode",
+                  "governance"
+                ],
+                "additionalProperties": false
+              },
+              "foundingAgent": {
+                "type": "object",
+                "properties": {
+                  "signingKey": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  "encryptionKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "operator": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "pattern": "^[\\x20-\\x7e]+$"
+                  }
+                },
+                "required": [
+                  "signingKey",
+                  "encryptionKey",
+                  "operator"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "metadata",
+              "privacy",
+              "token"
+            ],
+            "additionalProperties": false
+          },
+          "creator": {
+            "type": "object",
+            "properties": {
+              "signingKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "encryptionKey": {
+                "type": "object",
+                "properties": {
+                  "kty": {
+                    "type": "string",
+                    "const": "EC"
+                  },
+                  "crv": {
+                    "type": "string",
+                    "const": "P-256"
+                  },
+                  "x": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  },
+                  "y": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                  }
+                },
+                "required": [
+                  "kty",
+                  "crv",
+                  "x",
+                  "y"
+                ],
+                "additionalProperties": false
+              },
+              "custody": {
+                "type": "string",
+                "enum": [
+                  "user-controlled",
+                  "managed"
+                ]
+              }
+            },
+            "required": [
+              "signingKey",
+              "encryptionKey",
+              "custody"
+            ],
+            "additionalProperties": false
+          },
+          "requestId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "deployment": {
+            "type": "string",
+            "enum": [
+              "shared",
+              "independent"
+            ]
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "card",
+              "tlos",
+              "free"
+            ]
+          },
+          "usdCents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "tlosAmount": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recipient": {
+            "type": "string"
+          },
+          "tokenContract": {
+            "type": "string"
+          },
+          "memo": {
+            "type": "string"
+          },
+          "expires": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "awaiting-payment",
+              "expired",
+              "paid",
+              "created"
+            ]
+          },
+          "dao": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "contract": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "daoId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "interfaceVersion": {
+                    "type": "number",
+                    "const": 1
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "contract",
+                  "daoId",
+                  "interfaceVersion"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "checkoutUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "founderExecutive": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "network",
+          "setup",
+          "creator",
+          "requestId",
+          "deployment",
+          "method",
+          "usdCents",
+          "tlosAmount",
+          "recipient",
+          "tokenContract",
+          "memo",
+          "expires",
+          "state",
+          "dao",
+          "checkoutUrl"
         ],
         "additionalProperties": false
       },
@@ -38997,6 +47044,8 @@ export const CoreHelpBundle:HelpBundle={
           "path": {
             "type": "string",
             "enum": [
+              "/v1/dao-claims/issue",
+              "/v1/dao-claims/revoke",
               "/v1/me/exit",
               "/v1/mcp/oauth/revoke-family",
               "/v1/mini-apps/directory/transfer",

@@ -1,6 +1,8 @@
 -- Run on an isolated restored database after applying all migrations and with API/workers stopped.
 -- Retain account/provider records and replay markers; invalidate every restored live ceremony.
 BEGIN;
+UPDATE dao_claim_links SET revoked_at=COALESCE(revoked_at,now())
+ WHERE claimant_account_id IS NULL;
 UPDATE sessions SET revoked_at=COALESCE(revoked_at,now());
 DELETE FROM vault_recovery_grants;
 DELETE FROM vault_recovery_handoffs;

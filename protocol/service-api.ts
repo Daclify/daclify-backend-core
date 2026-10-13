@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { StoredProfileJsonSchema } from './profiles.js';
 import { Uint64Schema } from './base.js';
+import { DaoClaimRoutes } from './dao-claims.js';
 import { RecoveryRoutes } from './recovery.js';
 import { PeopleRoutes } from './people.js';
 import { PaymentRoutes, BrokerRoutes } from './payments.js';
@@ -228,6 +229,7 @@ export const DocsAnswerSchema = z.strictObject({
 
 export const ServiceResponseRoutes = [
   { method: 'GET', path: '/v1/sign-in/google', response: GoogleSignInConfigurationSchema },
+  ...Object.values(DaoClaimRoutes),
   ...Object.values(ModuleFeeRoutes),
   ...Object.values(RecoveryRoutes),
   PeopleRoutes.members,
@@ -443,6 +445,17 @@ export const ServiceResponseRoutes = [
 }[];
 
 export const ContractFailureMessages = {
+  DAO_CLAIM_UNKNOWN: 'This claim link is unavailable. Ask its issuer for a new link.',
+  DAO_CLAIM_EXECUTIVE_REQUIRED:
+    'A current executive of the Daclify governing DAO must authorize this invitation.',
+  DAO_CLAIM_RESERVED: 'This invitation is already reserved. Its claimant can resume creation.',
+  DAO_CLAIM_REVOKED: 'The issuer revoked this invitation. Ask for a new link.',
+  DAO_CLAIM_EXPIRED: 'This invitation has expired. Ask for a new link.',
+  DAO_CLAIM_PENDING: 'Creation is being reconciled. Retry to check the same DAO.',
+  DAO_CLAIM_LIMIT: 'Finish or revoke existing invitations before creating another.',
+  CLAIM_PARTICIPANT_MODE: 'Claim links require a human or mixed community.',
+  ACCOUNT_SIGN_IN_REQUIRED: 'Sign in again with a paired method to approve this operation.',
+
   DOCUMENT_REGISTERED: 'This document is already registered. Open its existing registration.',
   CONSTITUTION_REGISTERED:
     'This DAO already has a constitution. Publish an amendment to that document.',
