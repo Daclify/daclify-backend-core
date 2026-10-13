@@ -1,6 +1,6 @@
 # Hosted MCP: Codex CLI, Claude Code and ChatGPT
 
-13 October 2026. This follow-up implements the user's selected three clients on testnet. It extends the completed mini-app programme; production/privacy/independent-recovery gates remain held. The first ChatGPT account-side attempt had no tools or sign-in; successful linking and model tool use remain unqualified.
+13 October 2026. This follow-up implements the user's selected three clients on testnet. It extends the completed mini-app programme; production/privacy/independent-recovery gates remain held. The user has now reported working ChatGPT tool use and successful reinstallation after the [first connection cleanup](2026-10-13-mcp-first-connection-cleanup.md). The dated delivery results below preserve earlier attempts and their limits.
 
 ## Result and permission boundary
 
@@ -30,7 +30,7 @@ Initial MCP7 manifest SHA-256: `d31425c600b2ea17440148a263aeb4286be7f6d15064ab41
 
 ## Remaining account and operational checks
 
-Actual ChatGPT linking, discovered tools and a model-selected membership/preparation call must be checked inside the user's real ChatGPT account. The connected plugin tools in this session cannot create a custom MCP connection; plugin discovery did not establish that capability. Server tests or another SDK cannot substitute for that client. [Official OpenAI instructions](https://developers.openai.com/plugins/deploy/connect-chatgpt) show Plugins → plus → Add custom MCP server and account/workspace policy requirements. No plugin is published to the directory by this work.
+The user has confirmed working ChatGPT tool use and a successful connection after reinstallation. Exact model/tool transcripts, signed submission and a separate final user-console transcript were not supplied. The connected plugin tools in this session cannot create a custom MCP connection; plugin discovery did not establish that capability. Server tests or another SDK cannot substitute for that client. [Official OpenAI instructions](https://developers.openai.com/plugins/deploy/connect-chatgpt) show Plugins → plus → Add custom MCP server and account/workspace policy requirements. No plugin is published to the directory by this work.
 
 Actual Claude model-selected tool use is also separate from CLI login/initialization; no Anthropic account authentication or inference key has been supplied. The shared tool layer and actual native Codex journey establish server behavior, not a Claude inference result.
 
