@@ -1,0 +1,458 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-13T16:29:34.161089+00:00",
+  "status": "testnet-frontend-delivered",
+  "sources": {
+    "frontendVersion": "0.15.0-alpha.26",
+    "frontend": "e2c7e2949fa73bff3d63bb5ffd00b4d15242c19a",
+    "coreFixtureAndGuide": "2517995cc54e7e286c3549c509408a9072929249",
+    "apiRuntimeSource": "b5c466ab03ed7812eddfc846f4a5dff0fbfebf09",
+    "moduleSource": "e69b1b927505959c57eb0f3c165ac80489864109",
+    "coreProtocol": "0.15.0-alpha.18",
+    "moduleSdk": "0.10.0-alpha.25"
+  },
+  "verification": {
+    "frontendUnit": {
+      "passed": 345,
+      "files": 60,
+      "command": "npm test"
+    },
+    "browser": {
+      "passed": 16,
+      "projects": [
+        "chromium",
+        "mobile-chromium"
+      ],
+      "command": "LD_LIBRARY_PATH=/data/daclify-runtime/browser-libs/usr/lib/x86_64-linux-gnu npx playwright test --config .superpowers/creation-session.config.ts tests/e2e/creation-session.spec.ts tests/e2e/creation-resume.spec.ts tests/e2e/dao-presets.spec.ts",
+      "passkeyHardware": "Chromium CDP virtual authenticator",
+      "realBoundaries": [
+        "WebAuthn API signature verification",
+        "PostgreSQL sessions and order ownership",
+        "native Spring order fulfillment and member enrollment"
+      ],
+      "fixtureChoices": {
+        "uiHost": "localhost",
+        "freeCreation": true
+      }
+    },
+    "passed": [
+      "frontend strict types and Vue templates",
+      "focused lint and formatting",
+      "core fixture typecheck",
+      "generated core documentation check",
+      "clean locked frontend install and configured testnet build",
+      "candidate and public desktop/mobile form checks",
+      "owned session cleanup",
+      "final public artifact/API readback"
+    ],
+    "unrun": [
+      "full core suite for this frontend fix",
+      "modules suite for this frontend fix",
+      "all other browser suites",
+      "physical user passkey retry",
+      "production rollout",
+      "claim-link implementation tests"
+    ],
+    "buildWarning": "existing chunk size warning"
+  },
+  "failedAndCorrected": [
+    {
+      "report": "creation-session-browser-red.log",
+      "kind": "harness timing",
+      "description": "Session JSON read before successful passkey-login response; corrected ceremony wait."
+    },
+    {
+      "report": "creation-session-browser-red-final.log",
+      "kind": "genuine product regression",
+      "description": "Successful passkey login and locked vault, but no DAO setup form."
+    },
+    {
+      "report": "creation-session-browser-green.log",
+      "kind": "configuration and interrupted run",
+      "description": "Numeric-loopback project used against localhost fixture."
+    },
+    {
+      "report": "creation-session-browser-final.log",
+      "kind": "fixture and interrupted run",
+      "description": "Paid native fixture used with current free portal creation choice."
+    },
+    {
+      "report": "creation-session-browser-free-final.log",
+      "kind": "genuine additional product regression",
+      "passed": 14,
+      "failed": 2,
+      "description": "Saved creation order did not load after reload."
+    },
+    {
+      "report": "public-create-red.log",
+      "kind": "genuine public product reproduction",
+      "description": "Preceding frontend25 signed-in creation had no DAO form with locked keys."
+    }
+  ],
+  "candidatePreflight": {
+    "status": "passed",
+    "at": "2026-10-13T16:17:18.581Z",
+    "source": "clean candidate static files; real public API",
+    "frontendEntrySha256": "e71a2bce213771a1ae34f667c18ceb3cccfd90a693a929dd4dd119491349553d",
+    "checks": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "networkLocked": "testnet",
+        "creationFormVisible": true,
+        "reviewEnabled": true,
+        "vaultLocked": true,
+        "privateKeysInBrowser": false,
+        "accessibilityViolations": 0,
+        "overflow": false,
+        "console": [],
+        "pageErrors": [],
+        "httpFailures": [],
+        "misplacedApiReads": [],
+        "creationClicked": false
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "networkLocked": "testnet",
+        "creationFormVisible": true,
+        "reviewEnabled": true,
+        "vaultLocked": true,
+        "privateKeysInBrowser": false,
+        "accessibilityViolations": 0,
+        "overflow": false,
+        "console": [],
+        "pageErrors": [],
+        "httpFailures": [],
+        "misplacedApiReads": [],
+        "creationClicked": false
+      }
+    ],
+    "ownedSyntheticIdentityOnly": true,
+    "publicDaoCreated": false
+  },
+  "deployment": {
+    "status": "passed",
+    "at": "2026-10-13T16:17:57.630Z",
+    "frontendVersion": "0.15.0-alpha.26",
+    "frontendSourceCommit": "e2c7e2949fa73bff3d63bb5ffd00b4d15242c19a",
+    "frontendEntrySha256": "e71a2bce213771a1ae34f667c18ceb3cccfd90a693a929dd4dd119491349553d",
+    "apiSourceDirectory": "/data/daclify-runtime/releases/20261013-first-mcp/daclify-backend-core",
+    "apiRestarted": false,
+    "nativeOrDatabaseChanges": false,
+    "rollbackPrepared": true
+  },
+  "publicVerification": {
+    "status": "passed",
+    "at": "2026-10-13T16:18:08.589Z",
+    "source": "public HTTPS static files and API",
+    "frontendEntrySha256": "e71a2bce213771a1ae34f667c18ceb3cccfd90a693a929dd4dd119491349553d",
+    "checks": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "networkLocked": "testnet",
+        "creationFormVisible": true,
+        "reviewEnabled": true,
+        "vaultLocked": true,
+        "privateKeysInBrowser": false,
+        "accessibilityViolations": 0,
+        "overflow": false,
+        "console": [],
+        "pageErrors": [],
+        "httpFailures": [],
+        "misplacedApiReads": [],
+        "creationClicked": false
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "networkLocked": "testnet",
+        "creationFormVisible": true,
+        "reviewEnabled": true,
+        "vaultLocked": true,
+        "privateKeysInBrowser": false,
+        "accessibilityViolations": 0,
+        "overflow": false,
+        "console": [],
+        "pageErrors": [],
+        "httpFailures": [],
+        "misplacedApiReads": [],
+        "creationClicked": false
+      }
+    ],
+    "ownedSyntheticIdentityOnly": true,
+    "publicDaoCreated": false
+  },
+  "cleanup": {
+    "status": "passed",
+    "at": "2026-10-13T16:19:46.609Z",
+    "ownedTemporarySessionLoggedOut": true,
+    "oldSessionStatus": 401,
+    "optionalRevokedSessionStatus": 204,
+    "cookieFileRemoved": true,
+    "noNewFamiliesCreatedByPublicProbes": true
+  },
+  "finalReadback": {
+    "status": "passed",
+    "at": "2026-10-13T16:28:48.461685+00:00",
+    "frontendEntrySha256": "e71a2bce213771a1ae34f667c18ceb3cccfd90a693a929dd4dd119491349553d",
+    "apiActive": true,
+    "apiSourceDirectory": "/data/daclify-runtime/releases/20261013-first-mcp/daclify-backend-core",
+    "chainMatches": true,
+    "sharedAvailable": true,
+    "sharedUsdCents": 0,
+    "freeMembers": 10,
+    "ownedCookieFileAbsent": true,
+    "platformReadbackSha256": "d98c3f7a1a18537f702224988a4bf7b0c3dd9e9f62824174389c6165feabd4ee"
+  },
+  "localFixtureStopped": true,
+  "boundaries": {
+    "apiRestarted": false,
+    "productionChanged": false,
+    "environmentChanged": false,
+    "sqlMigrationApplied": false,
+    "nativeCodeChanged": false,
+    "nativeAuthoritiesChanged": false,
+    "publicDaoCreated": false,
+    "assetMovement": false,
+    "realAccountErasure": false,
+    "rollback": "prepared; not executed for this frontend release"
+  },
+  "claimLinks": {
+    "status": "draft design; not implemented",
+    "userSelected": [
+      "first person with the link",
+      "only claimant joins initially",
+      "create on-chain when claimed"
+    ],
+    "proposedDefaults": [
+      "shared contracts and hosting first",
+      "seven-day expiry",
+      "revocable before reservation",
+      "existing accounts may sign in"
+    ],
+    "design": "../superpowers/specs/2026-10-13-dao-claim-links-design.md"
+  },
+  "review": "inline author review; delegation unauthorized; no independent review claimed",
+  "privateEvidence": [
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/creation-session-docs-check.log",
+      "bytes": 133,
+      "sha256": "521ecbb91a098a00903777fdd937c99891b9bb3f701a7cb614708d722c7c5db7"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/creation-session-fixture-format.log",
+      "bytes": 66,
+      "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/creation-session-fixture-free.log",
+      "bytes": 62,
+      "sha256": "47b7c75607325b16aafbb8e507bf8491849e586fca2b4107655801ef19909838"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/creation-session-fixture-types-final.log",
+      "bytes": 67,
+      "sha256": "387bc60f59818af1e63b50b3cc10cc3e78bd014680c58b8a4598943977285859"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/creation-session-fixture-types.log",
+      "bytes": 67,
+      "sha256": "387bc60f59818af1e63b50b3cc10cc3e78bd014680c58b8a4598943977285859"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/creation-session-fixture.log",
+      "bytes": 62,
+      "sha256": "47b7c75607325b16aafbb8e507bf8491849e586fca2b4107655801ef19909838"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/creation-session-browser-final.log",
+      "bytes": 7551,
+      "sha256": "4d03411f31fcc6a6ce6999e5f3f08ae9704a8027a2c49e8d0fd78f8653fa812a"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/creation-session-browser-free-final.log",
+      "bytes": 6691,
+      "sha256": "1d48d61851e2076bea20e35a2cedcf096bd87d7e5747b5472d65ff481d7cb236"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/creation-session-browser-green.log",
+      "bytes": 3466,
+      "sha256": "489e6d8e53bebd57992de9c5a13d0890e714a7b64bdefc35b506c5f91df98f2d"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/creation-session-browser-red-final.log",
+      "bytes": 1932,
+      "sha256": "231e68d9582590397a04206ffb10029431e495c078e519a453dabd3644e31d74"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/creation-session-browser-red.log",
+      "bytes": 1508,
+      "sha256": "f8ff62c27c47bd833497cb5db7a057beddffde543f0aac840f30972feaed9b31"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/creation-session-browser-verified.log",
+      "bytes": 3018,
+      "sha256": "26d8854bfebe33740be3584c8317c69124fe1eded3e8e62cb904de450dd8ee57"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/creation-session-format-check.log",
+      "bytes": 66,
+      "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/creation-session-format-final.log",
+      "bytes": 123,
+      "sha256": "1bba5869cf42efc086e700a9fabee9e5b1cbeedace9e8acd2329336df0366d41"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/creation-session-format-verified.log",
+      "bytes": 66,
+      "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/creation-session-format.log",
+      "bytes": 187,
+      "sha256": "5f7ffab7b174f8f00bc07d4f9ab2b2a4254d60426d956f6c9d7851aba398df55"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/creation-session-full-unit-final.log",
+      "bytes": 480,
+      "sha256": "dc20902d80fbe4c88a7853d75aabeb2b45bb692edceca13a823a1921ac41ba68"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/creation-session-full-unit.log",
+      "bytes": 480,
+      "sha256": "ef50324dccd7f91a0d9e20b573f34323ceaee06bdece23941a9d3112903bd1e3"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/creation-session-lint-final.log",
+      "bytes": 303,
+      "sha256": "d7265f86e2eeb6cdf027cd07273f48f20da148a8618e25fe45ec5e33ceef0a48"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/creation-session-lint.log",
+      "bytes": 303,
+      "sha256": "3f4004cdd6cab0f1c7f7917d5d5de836c7dadba1a406fc4dc0c13544b285b02a"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/creation-session-test-format.log",
+      "bytes": 41,
+      "sha256": "5cc01c3c3ad294b28d51bd80740ea68b732b659503cbd1a5b84f0daa15e55a68"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/creation-session-types-final.log",
+      "bytes": 67,
+      "sha256": "b68040a934a75ed309ec5ec0d5a0b81dea97c2850348179e9e1ddae791d939c9"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/creation-session-types.log",
+      "bytes": 67,
+      "sha256": "b68040a934a75ed309ec5ec0d5a0b81dea97c2850348179e9e1ddae791d939c9"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/candidate-preflight.log",
+      "bytes": 145,
+      "sha256": "68fc2054365d9803ead814735b5a9ea0b8f9c4e6077c3c4fa851952249dc7dbb"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/cleanup.log",
+      "bytes": 215,
+      "sha256": "6a8cbd664ea468d67a909c07bf2cf3ad7bbea42ff54354178d78f759ddba0e20"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/deploy.log",
+      "bytes": 414,
+      "sha256": "48515bfe3ef4b81826ee9bdbafac740d44dec4a6460b1a08a5d63f4756d0e2bd"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/frontend-build.log",
+      "bytes": 11759,
+      "sha256": "482a348a7c38bc651306756adcfea2525acad6f21d06eb8445126237e695cbf8"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/frontend-ci.log",
+      "bytes": 143,
+      "sha256": "4956b34d8a2205c974030b126f94456f6a0fb8e697120e0d4e712790b560b18c"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/public-create-red.log",
+      "bytes": 7808,
+      "sha256": "b3d17689cf2e76f845110a4da45c31bdc70f744f5e4a6278d988d7c665713f27"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/public-create.log",
+      "bytes": 145,
+      "sha256": "68fc2054365d9803ead814735b5a9ea0b8f9c4e6077c3c4fa851952249dc7dbb"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/public-login.log",
+      "bytes": 227,
+      "sha256": "e07b266eb084ee9687ada76a8473f297c00df01b5cda6cba05c3deb43fdd9f42"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/pins.json",
+      "bytes": 218,
+      "sha256": "49d2b198804b07ac2985e4bb3ad3b95cf0d95ef0c192ad6c57c0bae2814a44a8"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/candidate-preflight.json",
+      "bytes": 1186,
+      "sha256": "2d2c94580939b9dd5ddf2421df75db844b1dac9b230b29921dd0bd6580464012"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/deployment.json",
+      "bytes": 451,
+      "sha256": "a8a24e1d65dc821dde202fe73a2c47cd5f1c6e7c66c96e300f540774e3308fd1"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/public-create.json",
+      "bytes": 1174,
+      "sha256": "e9e827d1e2aa951156fd9c701b7db9d1e94785545e926158428b545a7d210ee3"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/cleanup.json",
+      "bytes": 244,
+      "sha256": "f3e81cf2e93bdedcec6d771fea99c5bc2357c4c1b06df70dd7cca372bc0a273e"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/final-readback.json",
+      "bytes": 505,
+      "sha256": "4d0061f4f57adf0d8074ce091b9a527672c94fda71c26f6caceba1a6535e24ed"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/platform-readback.json",
+      "bytes": 19098,
+      "sha256": "d98c3f7a1a18537f702224988a4bf7b0c3dd9e9f62824174389c6165feabd4ee"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/deploy.mjs",
+      "bytes": 2210,
+      "sha256": "47e2893d747b7919db2144eb6863c8984621257b7eda02f7cc07d34a0c21c82d"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/rollback.sh",
+      "bytes": 354,
+      "sha256": "6dc8dc8c2d6ddeeb51c1428c9a4933b0061e6c77935a7d9148214432d5ca9bc6"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/public-create.mjs",
+      "bytes": 4778,
+      "sha256": "0beddb667251c54a206e1e5c9ecf080eaf39c1f6eb046fac60065b79f145bb4c"
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/creation-session.config.ts",
+      "bytes": 405,
+      "sha256": "35eea22037f89b79f103bb0d11c986792bffbe0471907174d2e3bdbac8f1dd5f"
+    }
+  ]
+}
