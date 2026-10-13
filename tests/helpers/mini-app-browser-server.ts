@@ -1,5 +1,7 @@
 import { DaoClaimLinks } from '../../services/api/src/dao-claims.js';
 import { CreationService } from '../../services/api/src/creation.js';
+import { ContentService } from '../../services/api/src/content/service.js';
+import { LocalContentFixture } from '../../tools/native/content-fixture.js';
 import { DirectoryService } from '../../services/api/src/mini-apps/directory.js';
 import { governedDirectoryModeration } from '../../services/api/src/mini-apps/directory-moderation.js';
 import { MiniAppOriginProofSchema } from '../../protocol/mini-apps.js';
@@ -48,6 +50,7 @@ const owner = new Pool({ connectionString: source }),
 const f = await nativeContracts();
 let server: Awaited<ReturnType<typeof createServer>> | undefined;
 const profileDirectory = await mkdtemp(join(tmpdir(), 'daclify-browser-profile-exclusions-'));
+const contentDirectory = await mkdtemp(join(tmpdir(), 'daclify-browser-documents-'));
 const profileExclusions = new FileProfileExclusions(profileDirectory);
 let exitWorker: ReturnType<typeof startAccountExitWorker> | undefined;
 let profileWorker: ReturnType<typeof startProfileWorker> | undefined;
@@ -177,6 +180,13 @@ try {
   const deliveredEmailCodes = new Map<string, string>();
   const creation = new CreationService(pool, gateway);
   server = await createServer(pool, gateway, origin, {
+    content: new ContentService(
+      pool,
+      gateway,
+      new LocalContentFixture(contentDirectory),
+      100_000_000n,
+      'local-fixture',
+    ),
     signIn: {
       environment: 'local',
       deliverEmail: async (to, code) => {
@@ -399,6 +409,7 @@ try {
   await server?.close();
   await profileExclusions.close();
   await rm(profileDirectory, { recursive: true, force: true });
+  await rm(contentDirectory, { recursive: true, force: true });
   await f.stop();
   await pool.end();
   await owner.query(`DROP DATABASE ${name}`);
