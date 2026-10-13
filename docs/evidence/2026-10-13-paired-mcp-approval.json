@@ -1,0 +1,611 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-13T12:41:07.350642+00:00",
+  "environment": "Telos testnet",
+  "status": "deployed; actual ChatGPT approval and model tool call pending; production held",
+  "sources": {
+    "core": "f898bfea161b5a4b54cb023e612d93d91b772f96",
+    "modules": "e69b1b927505959c57eb0f3c165ac80489864109",
+    "frontend": "5e019404399de055c4e3b7157bd62e7a389d1c0a"
+  },
+  "pairedApprovalSource": "9d7a7af63c375332a5281979c7ed9d03f57ce9b1",
+  "versions": {
+    "core": "0.15.0-alpha.18",
+    "modulesSdk": "0.10.0-alpha.25",
+    "frontend": "0.15.0-alpha.23",
+    "nativeModules": "0.10.0-alpha.3",
+    "serverMcpMetadata": "0.1.0-alpha.9",
+    "servedCompanion": "0.1.0-alpha.8"
+  },
+  "approval": {
+    "recentPairedSignIn": true,
+    "pairedNativeWalletWithoutDaoBinding": true,
+    "pairedEvmWalletWithoutDaoBinding": true,
+    "vaultOptionPreserved": true,
+    "freshAuthenticationSeconds": 300,
+    "existingCredentialProvenanceRequired": true,
+    "freshSingleUseBodyAccountSessionOriginAudienceIntent": true,
+    "signInProofOnlyPath": "/v1/mcp/oauth/approve",
+    "unrelatedAuthorizationUnchanged": true,
+    "nativeSubmitNeedsApprovedMatchingLocalCompanion": true,
+    "privateVaultUnlockRequiredForPairedSignInConsent": false
+  },
+  "providersConfigured": {
+    "googleConfigured": false,
+    "telegramConfigured": true,
+    "emailDelivery": "mail",
+    "passkeyRpConfigured": true
+  },
+  "activeStarter": "a89bd803187f8a6ba547b60e7880fc9efeceeed61401414b6dbdab0694757672",
+  "archivedStarter": "1cbdc7613cbc06ddf1909d3fcc538ffd1e9d2a94cf8db65eec0196a9f01dd4a6",
+  "servedCompanionRelease": "1491f2d2f79466503c8cbb91682fe1ac807c18db87039831000873ab0d17a306",
+  "newDevelopmentCompanion": {
+    "manifest": {
+      "version": 1,
+      "coreVersion": "0.15.0-alpha.18",
+      "modulesVersion": "0.10.0-alpha.25",
+      "mcpVersion": "0.1.0-alpha.9",
+      "files": [
+        {
+          "name": "core.tgz",
+          "sha256": "9f65bdf66bc522a64194bbfa9d6ad8b265ae88ffd265314b3ff254d180023db4",
+          "bytes": 506666
+        },
+        {
+          "name": "modules.tgz",
+          "sha256": "77af01a5436b4c7ac182839896932fbc9ba92e9798d2466ff84292c08fdcc319",
+          "bytes": 209960
+        },
+        {
+          "name": "mcp.tgz",
+          "sha256": "bf5474cf079fecbc03e569e8e69f49c5a5c37272831c48b8a8d97508064bb1f3",
+          "bytes": 12582
+        }
+      ],
+      "releaseId": "12fc168955297eb90a2b00b84ce7111d8a933dbf8d7014285ecab2f17cabdbd8"
+    },
+    "manifestSha256": "34136c0bc7b17b1bf80ea5b390893cce6dc1ed46ff3b9e2616df81f9cda438b9",
+    "publicDownloadPromoted": false,
+    "realCodexAndClaudeLocalFixtureChecks": 15
+  },
+  "newStarterManifest": {
+    "version": 1,
+    "releaseId": "a89bd803187f8a6ba547b60e7880fc9efeceeed61401414b6dbdab0694757672",
+    "coreVersion": "0.15.0-alpha.18",
+    "modulesVersion": "0.10.0-alpha.25",
+    "packageLockHash": "6d66798590cec7b1b3c0e18aea0ea3a0d63b3b02ea5de27be11ec6eb4d874b07",
+    "files": [
+      {
+        "name": "core.tgz",
+        "sha256": "9f65bdf66bc522a64194bbfa9d6ad8b265ae88ffd265314b3ff254d180023db4",
+        "bytes": 506666
+      },
+      {
+        "name": "modules.tgz",
+        "sha256": "77af01a5436b4c7ac182839896932fbc9ba92e9798d2466ff84292c08fdcc319",
+        "bytes": 209960
+      },
+      {
+        "name": "starter.tgz",
+        "sha256": "1c289ceb52b26362def5bbde63b268660deff0c5b3531d7eb01bc84d90b261fe",
+        "bytes": 747520
+      }
+    ]
+  },
+  "archiveConfiguration": {
+    "maxPreviousReleases": 8,
+    "explicitAbsoluteDirectories": true,
+    "startupManifestAndFileIntegrityChecks": true,
+    "duplicateIdsRejected": true,
+    "unknownIdsRefused": true,
+    "tamperedDownloadsRefused": true,
+    "newConnectionsUseExactCurrentCohort": true,
+    "oldUrlsAndBytesPreserved": true
+  },
+  "verified": {
+    "unitCore": {
+      "files": 166,
+      "tests": 1002,
+      "repeatAfterStarterCorrection": true
+    },
+    "unitModules": {
+      "files": 33,
+      "tests": 215
+    },
+    "unitFrontend": {
+      "files": 59,
+      "tests": 343
+    },
+    "unitCommunityMcp": {
+      "files": 7,
+      "tests": 12
+    },
+    "integrationOldServedCompanion": {
+      "files": 6,
+      "tests": 84
+    },
+    "integrationNewCompanion": {
+      "files": 3,
+      "tests": 15
+    },
+    "integrationStarterAndPairedProofFinal": {
+      "files": 2,
+      "tests": 16
+    },
+    "browserDesktopMobile": {
+      "tests": 12,
+      "vaultLockedEmailProofAndInlineRenewal": true,
+      "scopeNarrowingAndCodeReplayRefusal": true,
+      "axeViolations": 0
+    },
+    "strictTypesLintBuildDocsFormat": true,
+    "cleanLockedCandidates": true,
+    "all140FrozenSdkFilesMatchFinalCleanCandidate": true,
+    "publicDownloadsWithExactHashBytesEtag": 9,
+    "publicMcpTools": 8,
+    "publicUnauthenticatedMembership": 401,
+    "publicUnauthenticatedSignInFreshness": 401,
+    "publicRouteVisits": 14,
+    "publicCardLayout": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "cardWidth": 544,
+        "cardHeight": 783.390625,
+        "permissionControlsCompact": true,
+        "allConnectionDetailsReadable": true,
+        "horizontalOverflow": false,
+        "accessibilityViolations": 0,
+        "pageErrors": [],
+        "serverFailures": [],
+        "approvalClicked": false
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "cardWidth": 346,
+        "cardHeight": 909.390625,
+        "permissionControlsCompact": true,
+        "allConnectionDetailsReadable": true,
+        "horizontalOverflow": false,
+        "accessibilityViolations": 0,
+        "pageErrors": [],
+        "serverFailures": [],
+        "approvalClicked": false
+      }
+    ],
+    "publicClients": [
+      {
+        "client": "codex-cli",
+        "version": "codex-cli 0.162.0-alpha.17.2",
+        "memberId": "1",
+        "previewState": "signer-required",
+        "scope": "proposal",
+        "inferenceRun": false,
+        "signed": false
+      },
+      {
+        "client": "claude-code",
+        "version": "2.1.296 (Claude Code)",
+        "connected": true,
+        "callback": "http://localhost:35839/callback",
+        "inferenceRun": false
+      }
+    ],
+    "newOwnedFamiliesRevoked": 2,
+    "ownedRetainedFamiliesCheckedRevoked": 10,
+    "ownedCookieRemovedAnd401": true,
+    "ownedUnconsumedLayoutRequestRemoved": true,
+    "disposableNativeBrowserFixtureStopped": true,
+    "publicClientApiSource": "9d7a7af63c375332a5281979c7ed9d03f57ce9b1",
+    "publicBrowserApiSource": "9d7a7af63c375332a5281979c7ed9d03f57ce9b1",
+    "finalArtifactAndCatalogApiSource": "f898bfea161b5a4b54cb023e612d93d91b772f96"
+  },
+  "recovery": {
+    "exactVersion": "0.15.0-alpha.18",
+    "freshDisposableTlsRaftRestorePassed": true,
+    "sourceRemovedAndOriginalSyntheticKeyRecovered": true,
+    "leastPrivilegeDenials": 4,
+    "auditPlaintextExcluded": true,
+    "configuredTlsRoundtripPassed": true,
+    "previousVersionReportRejected": true,
+    "liveKeyServiceNeverStopped": true,
+    "independentHost": false,
+    "expiresAt": "2026-10-17T14:46:09.233Z",
+    "expiryExtended": false,
+    "olderReportsPreserved": true
+  },
+  "initialFailuresAndCorrections": [
+    "Initial SQL approval fixture lacked registered account-control keys; exact owned audit FK cleanup and random Telegram fixture identities were corrected. SQL verification then passed 11 cases.",
+    "Initial complete core/frontend/modules and broader browser runs correctly refused incomplete or mismatched 18/25/MCP/starter cohorts. New immutable artifacts and exact peer/range tests were prepared; none of the consumed archives or historical fixtures was overwritten.",
+    "An email browser waiter matched the wrong proxy URL. It now matches the canonical pathname and proves actual email-code login and in-card renewal.",
+    "The first expanded client integration passed 83/84; a post-OAuth Codex thread refused the membership token. Unique server names and a fresh ephemeral read-only thread after reload resolved the harness state issue. No inference or product transport change was introduced.",
+    "The first clean frontend command used the wrong API environment flag; overlapping builds were discarded and a final serial VITE_NETWORK=testnet/VITE_API_TESTNET build supplies the published entry.",
+    "The first API18 startup was refused by the exact-version recovery gate. API17/frontend22 were restored successfully before fresh synthetic TLS restore and configured live roundtrip. A new report retains the original expiry; the gate was not weakened.",
+    "After the SDK bump, inspection found that preserving the old active starter would fail MINI_APP_RELEASE_VERSION. The corrected deployment selects starter18/25 and explicitly retains old17/24 downloads. RED archived download returned 404; final integration covers current configuration, version refusal, old bytes/ETags, unknown IDs, duplicate/bounded archives and tamper refusal.",
+    "The first ad hoc public catalog probe attempted JSON parsing on a valid SSE response. Its parser now handles both JSON and SSE; final nine downloads/catalog/authentication checks passed. Actual Codex and Claude public clients had already succeeded.",
+    "Existing frontend chunk-size warnings remain. No unrelated bundling or dependency change was added."
+  ],
+  "boundaries": {
+    "accountExitEnabled": false,
+    "realUserErasureOrDaoClosureRun": false,
+    "newDatabaseFieldsIndexesMigrations": 0,
+    "nativeContractChanges": 0,
+    "newNativeRam": 0,
+    "nativeCodeHash": "e6aaeeccb949710444e0fe4ca32331ffeeb5a6eeae688a417ae3d22cd3469d95",
+    "nativePackedAbiHash": "a4b835b6a0b09aa0bb9aeee98dea54d8bd78a742dd51d67c60177ebf2f0f4dfc",
+    "publicNativeTransactionsAdded": 0,
+    "ownerOrActiveChanges": false,
+    "assetMovement": false,
+    "profileExclusionsAndRecoveryKeysPreserved": true,
+    "environmentChangedOnly": [
+      "RECOVERY_QUALIFICATION_FILE",
+      "MINI_APP_RELEASE_DIRECTORY",
+      "MINI_APP_ARCHIVE_DIRECTORIES"
+    ],
+    "rollbackExecutedDuringFailedStartup": true,
+    "rollbackPreparedForCurrentDelivery": true,
+    "priorFrontendAssetsPreserved": true,
+    "mainnetOrProductionDeployment": false,
+    "googleLiveSignIn": "unrun; provider unconfigured",
+    "telegramEmailPasskeyWalletLivePrompts": "unrun; fixtures and configuration do not qualify external providers/devices",
+    "realChatGPTAccountGrantAndModelToolCall": "pending user test",
+    "claudeInference": "unrun",
+    "independentRecoveryPrivacyLegalProviderAndProductionGates": "held; unchanged programme requirements",
+    "review": "inline author review; delegation explicitly unauthorized"
+  },
+  "ponytail": {
+    "installedStableVersion": "5.2.0",
+    "mode": "Full",
+    "workspacePathsAlreadyUpdated": true,
+    "hookTrustUnchanged": "normal Codex review remains required"
+  },
+  "privateReports": [
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/deployment.json",
+      "sha256": "7f4c859183adff29a5006fd40479da8f1f15298970f92d8ad1b3a7aad3575278",
+      "bytes": 719
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/deployment-starter.json",
+      "sha256": "05288b7785dd029a2c61bedf3e4cc0d4eb0065efb8a76a76b7d131a129486fbd",
+      "bytes": 669
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/public-final-artifacts-catalog.json",
+      "sha256": "0a42021757de4af5fd2ae467178e5830e0d8528f2495f0284e4d39caf3038c97",
+      "bytes": 4167
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/operations-final.json",
+      "sha256": "ac24eff3ca7223d627d7332f3f410c4de1462d577f7329338506b15caafcf68b",
+      "bytes": 1592
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/paired-consent-public.json",
+      "sha256": "0b0b0bab05cb5f3e255d66b0f0c32d8ab0e307df21837f56836c99eed2171053",
+      "bytes": 1121
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/paired-consent-public-routes.json",
+      "sha256": "2c1cdeaa941b3192e65bffea0af4cb3ab32de41d64e4e2340480247324c989fd",
+      "bytes": 734
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/oauth-public-clients.json",
+      "sha256": "d5a4613a8d875bdbfb5cffae9bc02a517b17232a4e7811edbcdd4018e5f46a3a",
+      "bytes": 916
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/paired-consent-cleanup.json",
+      "sha256": "c2294aa3dea7752e8e2fecf67955a08da3eb2511f26043a78a165b0d5cc38871",
+      "bytes": 262
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/recovery-live18.json",
+      "sha256": "bf3148923f6dc4a9b8247fdd25c7cd78d25fdc4b3e600e87a1e8f2bc4e95ace5",
+      "bytes": 483
+    },
+    {
+      "path": "/data/daclify-runtime/recovery-testnet/evidence/local-restore-paired-mcp18.json",
+      "sha256": "f9b03019b950990505315a267bfc83da16d1f73c49f2b7603c6742c7fd111b69",
+      "bytes": 672
+    },
+    {
+      "path": "/data/daclify-runtime/recovery-testnet/evidence/qualification-paired-mcp18.json",
+      "sha256": "94987d560a0cdb11b2099ca26cfd2d011a230764a1e5eaf4a8cb939733b4dbcc",
+      "bytes": 645
+    }
+  ],
+  "verificationLogs": [
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-mcp-red.log",
+      "sha256": "8b4f6e7398afb8d0db4a818b4ba2be69a98e786e4dfb79fbfd2ae197ce2b8bea",
+      "bytes": 5135
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-mcp-wallet-red.log",
+      "sha256": "ff9626602c9fde5f19ea2dbbd8c1eabe28ddb936e696b955bafbf4dda65048c7",
+      "bytes": 2179
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-mcp-wallet-green.log",
+      "sha256": "b92532cc8c4e3bb1b9bebd3d5f862c5653f62e31332aa27e93a389e1d8ed160b",
+      "bytes": 635
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-mcp-full-test.log",
+      "sha256": "925d8d7cf96a5e6b611bc46f33d05f8a0d953f7ea086eb5d4754468c9e1febc1",
+      "bytes": 15679
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-mcp-full-test-2.log",
+      "sha256": "92bb5f90487eb3173784a6e988609cf38e35abd3c74bde1e60965ff0af6b05f4",
+      "bytes": 589
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-mcp-integration-final.log",
+      "sha256": "d43755be6cc3d5336d191810600a2347eb426b7e935ffd7769596e4ce8abaac1",
+      "bytes": 3444
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-mcp-integration-final-2.log",
+      "sha256": "fcc804395a129cba2fad2f4c60529e426bb01435c3269f3117f7c881e08e141b",
+      "bytes": 585
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-mcp9-native-clients.log",
+      "sha256": "073263b1f8e16faf6b627084689b535304bcbf03b516a360cfc9bc9e4557bbcb",
+      "bytes": 454
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-mcp-client-full-test.log",
+      "sha256": "5f83f79a89d7ebd18c14f1d97b56d7bd6ddbc60e47d9b68cb3d44e54b54992b1",
+      "bytes": 514
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-mcp-cohort-green.log",
+      "sha256": "9cfef28ab21bcfde3fba969667184cd34c0ec97b00f40bf7eed400f77e4c9541",
+      "bytes": 223
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-mcp-typecheck-2.log",
+      "sha256": "387bc60f59818af1e63b50b3cc10cc3e78bd014680c58b8a4598943977285859",
+      "bytes": 67
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-mcp-lint-2.log",
+      "sha256": "2b42e5fa4221f7ddb86c19ff66cf1b165922bbfa3d8631fba744ad7b43c87f0b",
+      "bytes": 75
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-mcp-docs-check.log",
+      "sha256": "521ecbb91a098a00903777fdd937c99891b9bb3f701a7cb614708d722c7c5db7",
+      "bytes": 133
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-mcp-build-2.log",
+      "sha256": "153f35e3081b0ebc391a211004887884ffe8b3b0915769c62d7238175c68c428",
+      "bytes": 54
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-starter-archive-red.log",
+      "sha256": "c7bc55ff6a1208792b687f7b80add9d21216304ef6e71c6c84d43f2fac1bb3b5",
+      "bytes": 1486
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-starter-bound-red.log",
+      "sha256": "bd279c5bede6a14fb177f5258109c95b941d64d65d796183978f8a551f7e7dde",
+      "bytes": 9697
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-starter-integration-final.log",
+      "sha256": "e9f972719627ea8bd41fb111e45fc6d72160dc1366e78695ac7ade97db9a5fb5",
+      "bytes": 682
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-starter-full-test.log",
+      "sha256": "355a6abe9b55b570c18a6f695788e179f43448a7a88d16349b4159b51ded1b6b",
+      "bytes": 589
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-starter-typecheck.log",
+      "sha256": "387bc60f59818af1e63b50b3cc10cc3e78bd014680c58b8a4598943977285859",
+      "bytes": 67
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-starter-lint.log",
+      "sha256": "2b42e5fa4221f7ddb86c19ff66cf1b165922bbfa3d8631fba744ad7b43c87f0b",
+      "bytes": 75
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-starter-docs.log",
+      "sha256": "521ecbb91a098a00903777fdd937c99891b9bb3f701a7cb614708d722c7c5db7",
+      "bytes": 133
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-starter-build.log",
+      "sha256": "153f35e3081b0ebc391a211004887884ffe8b3b0915769c62d7238175c68c428",
+      "bytes": 54
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/paired-starter-final-format.log",
+      "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "bytes": 66
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/paired-mcp-browser-red.log",
+      "sha256": "d1186138e482c2e893bdca0ecf28f2781a33adf386ae1fd98867392efc505c4c",
+      "bytes": 4307
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/paired-mcp-browser-final.log",
+      "sha256": "3f10ae8e7369c9b0ace911b7919b1300f225bec6edb7265438c5ac02844e26f1",
+      "bytes": 5279
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/paired-mcp-browser-final-2.log",
+      "sha256": "f21fd5e50f9c808be856c9c20babdb1a97a805436d2b394762b376fb3851999a",
+      "bytes": 2435
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/paired-mcp-full-test.log",
+      "sha256": "ec66bab464cd26319941f27ea2098c9164b3260a3dbd0dab59587dc2749d5fb5",
+      "bytes": 1390
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/paired-mcp-full-test-2.log",
+      "sha256": "f7fca4cee9f8d8e12508a2f70ed60e5b4fffd9044e67e0db8b15e99407c2cbc8",
+      "bytes": 480
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/paired-mcp-google-red.log",
+      "sha256": "5fce67e788820b67244a7129515f3d8217ff6c0d360ddf39cd209bc4308a59cd",
+      "bytes": 1308
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/paired-mcp-google-green.log",
+      "sha256": "20f24f367bc65f51dc05ce4b436634dc6d2528edbfcc65d001cdf12e664ceaf9",
+      "bytes": 228
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/paired-mcp-typecheck-2.log",
+      "sha256": "b5dcc345eb99cd81cebc4a74e40df7f3d0a4d1c3b47c0c7e229d185f71b6d43c",
+      "bytes": 67
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/paired-mcp-lint.log",
+      "sha256": "8245fd65961b34e56e9d2b5df1355ef93aa26d417834f8864300bfe010de9bc0",
+      "bytes": 303
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/paired-mcp-build.log",
+      "sha256": "ec27cbd57b56aab099bb6e2aebb0efc91157c78eb29c6e3d9dca0edd3c052cde",
+      "bytes": 11747
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/paired-mcp-format.log",
+      "sha256": "84acef6173a14d3baa39b3012b5673f804b6cfec6bf693150efee38bf086875c",
+      "bytes": 149
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-modules/.superpowers/paired-mcp-full-test.log",
+      "sha256": "c96f77e4680938a9cdedf565ca217622112e91874771f6867faa6e2d6c7d140a",
+      "bytes": 1236
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-modules/.superpowers/paired-mcp-full-test-2.log",
+      "sha256": "1083245ad25c9312ea623fcf4ad914af06e1e07808db92bffce58cd21ce2923d",
+      "bytes": 271
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-modules/.superpowers/paired-mcp-typecheck.log",
+      "sha256": "24414638816bb021b14577d8af262cff3a37b84ce6a3230118ea3dc096124bb9",
+      "bytes": 62
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-modules/.superpowers/paired-mcp-lint.log",
+      "sha256": "9a569d2d72e8ced4828b74a410162a73d2bb5ba63cf9634df144e37beb202dc3",
+      "bytes": 62
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-modules/.superpowers/paired-mcp-docs-check.log",
+      "sha256": "5a64a09866b0a182b1c19928d125e94a3aa28baaee3750b5894a62d4e0e541fd",
+      "bytes": 130
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-modules/.superpowers/paired-mcp-build.log",
+      "sha256": "a1e6acc8aee42b75b9f811d78ce5e51a453ea9c5ded7146838cf3b1151e45d7e",
+      "bytes": 49
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/core-clean-ci.log",
+      "sha256": "affe4fe55220d6e4f54980e233f5a5eb6ac2026d73cb7a82ea6e0c895e6772d9",
+      "bytes": 259
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/core-clean-build.log",
+      "sha256": "153f35e3081b0ebc391a211004887884ffe8b3b0915769c62d7238175c68c428",
+      "bytes": 54
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/modules-clean-ci.log",
+      "sha256": "61cd3932913ef971ea1c7f190781e77de2655b88d32115ac970ad4d90533aeaf",
+      "bytes": 258
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/modules-clean-build.log",
+      "sha256": "a1e6acc8aee42b75b9f811d78ce5e51a453ea9c5ded7146838cf3b1151e45d7e",
+      "bytes": 49
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/mcp-clean-ci.log",
+      "sha256": "78938f52daab19a841601ed0440a7e7cb9894bb88b6fc26d4b564dbe373ef555",
+      "bytes": 141
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/mcp-clean-build.log",
+      "sha256": "cb66d510fd5cae6ca546ebe741ad49fb308e0b147693c6962cb218a75bbb8dfa",
+      "bytes": 53
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/frontend-clean-ci.log",
+      "sha256": "4b359673ad57eb2b23393cf96bf10f483b2a340eefd110c53a33791e12b52662",
+      "bytes": 143
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/frontend-final-build-testnet.log",
+      "sha256": "6775ca453aba96726ffe06afa16c385d263bef88f004e511e4ad8515aecde44e",
+      "bytes": 11759
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/starter-core-ci.log",
+      "sha256": "da302368b2d8bcb65f844c30a66ae4cd2674adf4653284d127ed47f7de118eba",
+      "bytes": 27
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/starter-core-build.log",
+      "sha256": "153f35e3081b0ebc391a211004887884ffe8b3b0915769c62d7238175c68c428",
+      "bytes": 54
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/starter-mcp-ci.log",
+      "sha256": "8ee6826f7cb1410003b7ac9775ca13f00f13139015e7cab73a1fe69ecf64a35a",
+      "bytes": 25
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/starter-mcp-build.log",
+      "sha256": "cb66d510fd5cae6ca546ebe741ad49fb308e0b147693c6962cb218a75bbb8dfa",
+      "bytes": 53
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/recovery-disposable18.log",
+      "sha256": "f7b5e7da787eeae72cceb8a83210d2fed620a55a98b06d8951c9b562fd93c344",
+      "bytes": 170
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/deploy18.log",
+      "sha256": "09b7d096761264dbe0876d3cd038178d1d2af04d3cfd9fe2282d377fbbb57bb6",
+      "bytes": 645
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/deploy-starter.log",
+      "sha256": "9ca464812ea9b49c26a98c6abf339175c439a1aa96a4a1c9631a3b91dc25d97d",
+      "bytes": 608
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/public-final-before-sse.log",
+      "sha256": "edb60b9afa4692a9660f1f988e1cca84cc3c6f57c32b6b8945071dc3334abf16",
+      "bytes": 436
+    },
+    {
+      "path": "/data/daclify-runtime/paired-mcp-20261013/public-final.log",
+      "sha256": "54a686efdc0a53f78ea4db987cd3198c1b398815289f9984ddcbc2b0388220e5",
+      "bytes": 217
+    }
+  ]
+}
