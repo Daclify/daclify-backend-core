@@ -573,3 +573,66 @@ it('issues resource-bound OAuth under real account proof, rotates refresh tokens
   ).rejects.toThrow();
   await expect(oauth.authorizeToken(rotated.access_token)).rejects.toThrow();
 });
+
+it('refuses unearned review preparation explicitly and still allows vote preparation', async () => {
+  const current = await approved();
+  const member = (await gateway.memberships(current.account.account)).find(
+    (value) => value.dao.daoId === current.dao.daoId && value.memberId === '1',
+  );
+  expect(member?.reviewer).toBe(false);
+  const pending = await oauth.begin({
+    response_type: 'code',
+    client_id: 'official-sdk',
+    redirect_uri: 'https://client.example/callback',
+    resource: issuer + '/mcp',
+    scope: 'daclify:read daclify:prepare',
+    state: 'owned-non-reviewer',
+    code_challenge: createHash('sha256').update(randomBytes(32)).digest('base64url'),
+    code_challenge_method: 'S256',
+  });
+  const body = {
+    id: pending.id,
+    dao: current.dao.reference,
+    memberId: '1',
+    nativeScopes: ['vote', 'review'],
+    localGrantId: null,
+  };
+  async function approve(input: typeof body) {
+    const controlResponse = await server.inject({
+      method: 'POST',
+      url: '/v1/account/control',
+      headers: current.browserHeaders,
+      payload: {
+        path: McpOAuthRoutes.mcpOAuthApprove.path,
+        bodyHash: createHash('sha256').update(JSON.stringify(input)).digest('hex'),
+      },
+    });
+    expect(controlResponse.statusCode).toBe(200);
+    const control = AccountControlChallengeSchema.parse(controlResponse.json());
+    return server.inject({
+      method: 'POST',
+      url: McpOAuthRoutes.mcpOAuthApprove.path,
+      headers: {
+        ...current.browserHeaders,
+        'x-account-intent-id': control.id,
+        'x-account-signature': current.root
+          .signMessage(new TextEncoder().encode(control.message))
+          .toString(),
+      },
+      payload: input,
+    });
+  }
+  const denied = await approve(body);
+  expect(denied.statusCode, denied.body).toBe(403);
+  expect(denied.json()).toEqual({
+    code: 'MCP_REVIEWER_REQUIRED',
+    message: 'MCP_REVIEWER_REQUIRED',
+  });
+  const allowed = await approve({ ...body, nativeScopes: ['vote'] });
+  expect(allowed.statusCode, allowed.body).toBe(200);
+  expect(
+    new URL(
+      McpOAuthRoutes.mcpOAuthApprove.response.parse(allowed.json()).redirectUrl,
+    ).searchParams.has('code'),
+  ).toBe(true);
+});

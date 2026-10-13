@@ -217,10 +217,11 @@ export class McpOAuth {
       !isDeepStrictEqual(governance.dao, approval.dao) ||
       !governance.policy ||
       actor?.revoked ||
-      (governance.guardian && governance.guardian.paused_until > Date.now() / 1000) ||
-      (approval.nativeScopes.includes('review') && !member.reviewer)
+      (governance.guardian && governance.guardian.paused_until > Date.now() / 1000)
     )
       throw invalid();
+    if (approval.nativeScopes.includes('review') && !member.reviewer)
+      throw new ApiError('MCP_REVIEWER_REQUIRED', 403);
     // Activity always needs its distinct app-bound native companion.
     if (approval.nativeScopes.includes('activity') && !local?.grant.app)
       throw new ApiError('MCP_APP_CREDENTIAL_REQUIRED', 403);

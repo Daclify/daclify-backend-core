@@ -2,6 +2,8 @@
 
 ## 0.15.0-alpha.18 development
 
+Hosted MCP consent reports unearned review preparation as a reviewer-permission refusal instead of a token failure. Proposal and vote consent remain available to other active members.
+
 Hosted MCP connections can be approved with a recent paired sign-in or an account-paired wallet without a DAO wallet binding. Fresh login provenance, a five-minute window and one-use body/session/origin-bound intents apply only to hosted OAuth approval; existing native delegation, key and recovery authorization remain enforced. Adds public Google client configuration for the consent sign-in button, with no provider secrets or new database/native fields.
 
 Preserve immutable mini-app download URLs when selecting a new starter cohort. Explicit bounded archive directories are verified at startup; connection setup retains exact active core/module version checks.
