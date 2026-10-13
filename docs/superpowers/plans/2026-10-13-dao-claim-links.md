@@ -83,7 +83,7 @@
 - [x] Publish core20/module28/frontend27/MCP11 as new immutable artifacts after strict/generated/full core/modules/frontend checks. Preserve older SDK/companion/starter archives and qualify their supported paths; release new active starter if the exact cohort requires it.
 - [x] Review the complete change inline for authorization, isolation, retry/erasure/cleanup, legacy ABI compatibility and user journey; fix material findings with regression evidence.
 - [x] Prepare clean source-bound testnet candidate and rollback. Requalify version-bound recovery before enabling a new API version; measure native deployment RAM correctly and preserve existing rows, balances, authorities, pins and paused operations. Deploy only within existing testnet authorization; no production/real erasure/asset movement.
-- [ ] Verify final public API/artifacts/form at desktop/mobile widths with owned identities, clean temporary sessions and disposable fixtures. Commit/push `dev`, synchronize clean IDE checkouts, record exact passed/failed/unrun checks and final feature limits.
+- [x] Verify final public API/artifacts/form at desktop/mobile widths with owned identities, clean temporary sessions and disposable fixtures. Commit/push `dev`, synchronize clean IDE checkouts, record exact passed/failed/unrun checks and final feature limits.
 
 ## Inline plan review
 
