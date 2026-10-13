@@ -108,7 +108,8 @@ try {
   });
   await f.call('daclifycore', 'sethosted', { free_members: 3, settler: 'relay' });
   await f.call('daclifycore', 'setcreate', {
-    shared_usd: 2000,
+    shared_usd:
+      z.enum(['0', '1']).parse(process.env.DACLIFY_TEST_FREE_CREATION ?? '0') === '1' ? 0 : 2000,
     independent_usd: 5000,
     premium_bps: 2000,
     settler: 'relay',
@@ -144,7 +145,7 @@ try {
       .min(1024)
       .max(65535)
       .parse(process.env.DACLIFY_TEST_API_PORT ?? 3008),
-    origin = `http://127.0.0.1:${uiPort}`,
+    origin = `http://${z.enum(['127.0.0.1', 'localhost']).parse(process.env.DACLIFY_TEST_UI_HOST ?? '127.0.0.1')}:${uiPort}`,
     issuer = 'https://mini-app-api.example';
   const apps = await ConnectedApps.create(pool, gateway.connectedApps, {
     issuer,
