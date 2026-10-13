@@ -1,6 +1,6 @@
 {
   "name": "@daclify/community-mcp",
-  "version": "0.1.0-alpha.4",
+  "version": "0.1.0-alpha.6",
   "type": "module",
   "license": "AGPL-3.0-only",
   "private": true,
@@ -37,14 +37,14 @@
     "@types/node": "24.19.1",
     "typescript": "5.9.3",
     "vitest": "5.0.3",
-    "@daclify/core-protocol": "file:../../.artifacts/daclify-core-protocol-0.15.0-alpha.14.tgz",
-    "@daclify/modules": "file:../../../daclify-backend-modules/.artifacts/daclify-modules-0.10.0-alpha.21.tgz"
+    "@daclify/core-protocol": "file:../../.artifacts/daclify-core-protocol-0.15.0-alpha.17.tgz",
+    "@daclify/modules": "file:../../../daclify-backend-modules/.artifacts/daclify-modules-0.10.0-alpha.24.tgz"
   },
   "bin": {
     "daclify-community-mcp": "dist/src/cli.js"
   },
   "peerDependencies": {
-    "@daclify/core-protocol": "0.15.0-alpha.14",
-    "@daclify/modules": "0.10.0-alpha.21"
+    "@daclify/core-protocol": "0.15.0-alpha.17",
+    "@daclify/modules": "0.10.0-alpha.24"
   }
 }

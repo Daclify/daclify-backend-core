@@ -132,7 +132,7 @@ import {
 } from '../../../sdk/index.js';
 import type { ChainGateway } from './chain.js';
 import type { EvmRelay } from '../../../protocol/evm-wallet.js';
-import type { Pool } from 'pg';
+import type { Pool, PoolClient } from 'pg';
 import { canonicalEvmSignature, evmTypedDigest, governanceTypedData, exitGovernanceTypedData } from '../../../sdk/evm.js';
 import { recoverEvmDigest } from './auth/evm-proof.js';
 import {
@@ -2135,6 +2135,30 @@ export class NativeChainGateway implements ChainGateway {
     );
     return bindings.some(Boolean);
   }
+  async pruneExpiredSessions(dao: DaoRef, sessionIds: readonly string[]): Promise<void> {
+    if (
+      dao.chainId !== this.config.chainId ||
+      dao.contract !== this.config.runtime ||
+      dao.interfaceVersion !== 1 ||
+      sessionIds.length > 16
+    )
+      throw new ApiError('DAO_REFERENCE');
+    const ids = z
+      .array(z.string().regex(/^[1-9][0-9]{0,19}$/))
+      .max(16)
+      .parse(sessionIds);
+    await this.reviewedRuntime(dao.contract);
+    for (const id of new Set(ids)) {
+      if (BigInt(id) > 18446744073709551615n) throw new ApiError('DAO_REFERENCE');
+      // The native action checks expiry. The relay can neither remove live sessions nor grant authority.
+      await this.push(
+        'pruneappses',
+        { dao_id: dao.daoId, after: String(BigInt(id) - 1n), limit: 1 },
+        this.config.relayActor,
+        this.config.relayKey,
+      );
+    }
+  }
   async governance(daoId: string): Promise<GovernanceState> {
     const dao = await this.dao(daoId);
     const abi = await this.api.v1.chain.get_abi(this.config.runtime);
@@ -2310,16 +2334,16 @@ export class NativeChainGateway implements ChainGateway {
       throw cause;
     }
   }
-  async memberships(account: Account): Promise<UserMembership[]> {
+  async memberships(account: Account, db: Pick<PoolClient, 'query'> | undefined = this.pool): Promise<UserMembership[]> {
     // ponytail: scans DAOs and their paged members; add a verified membership index when measured scale requires it.
     const daos = await this.listDaos();
     const matches: UserMembership[] = [];
-    const wallets = await this.linkedWallets(account.id);
+    const wallets = await this.linkedWallets(account.id, db);
     if (wallets.length) await this.checkWalletChain();
     // This read model is intentionally bounded; an indexed projection replaces scans before large deployments.
     for (const dao of daos) {
       const rows = await this.table('members', dao.reference.daoId, '0', 5000);
-      const id = await this.memberIdentity(account, dao.reference.daoId, rows, wallets);
+      const id = await this.memberIdentity(account, dao.reference.daoId, rows, wallets, db);
       const member = rows.find((row) => row.id === id);
       if (member) matches.push(this.membershipView(dao, member));
     }
@@ -2383,14 +2407,14 @@ export class NativeChainGateway implements ChainGateway {
       signingKey: member.signing_key,
     });
   }
-  private async linkedWallets(accountId: string): Promise<WalletIdentity[]> {
-    if (!this.pool) return [];
+  private async linkedWallets(accountId: string, db: Pick<PoolClient, 'query'> | undefined = this.pool): Promise<WalletIdentity[]> {
+    if (!db) return [];
     const [native, evm] = await Promise.all([
-      this.pool.query<{ native_account: string }>(
+      db.query<{ native_account: string }>(
         "SELECT native_account FROM native_links WHERE account_id=$1 AND chain_id=$2 AND permission='active'",
         [accountId, this.config.chainId],
       ),
-      this.pool.query<{ chain_id: 40 | 41; address: string }>(
+      db.query<{ chain_id: 40 | 41; address: string }>(
         'SELECT chain_id,address FROM evm_links WHERE account_id=$1 AND control_verified_at IS NOT NULL',
         [accountId],
       ),
@@ -2451,6 +2475,7 @@ export class NativeChainGateway implements ChainGateway {
     daoId: string,
     rows: z.infer<typeof RuntimeTableSchemas.members>[],
     wallets: WalletIdentity[],
+    db: Pick<PoolClient, 'query'> | undefined = this.pool,
   ): Promise<string | undefined> {
     const ids = new Set(
       (await Promise.all(wallets.map((wallet) => this.walletMemberId(daoId, rows, wallet)))).filter(
@@ -2462,14 +2487,14 @@ export class NativeChainGateway implements ChainGateway {
       return ids.values().next().value;
     }
     const root = rows.find((row) => row.signing_key === account.signingKey);
-    if (!this.pool) return root?.id;
+    if (!db) return root?.id;
     // A recorded root-key identity survives rotation; a newly paired wallet never creates this association.
     if (root)
-      await this.pool.query(
+      await db.query(
         'INSERT INTO memberships(account_id,chain_id,contract,dao_id,member_id) VALUES($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING',
         [account.id, this.config.chainId, this.config.runtime, daoId, root.id],
       );
-    const saved = await this.pool.query<{ member_id: string }>(
+    const saved = await db.query<{ member_id: string }>(
       'SELECT member_id::text FROM memberships WHERE account_id=$1 AND chain_id=$2 AND contract=$3 AND dao_id=$4',
       [account.id, this.config.chainId, this.config.runtime, daoId],
     );

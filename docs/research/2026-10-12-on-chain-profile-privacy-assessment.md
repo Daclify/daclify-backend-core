@@ -1,0 +1,36 @@
+# Encrypted on-chain profiles: release assessment
+
+Reviewed 13 October 2026 against implemented core15/module22/frontend17, with later qualification commits binding evidence. This is an engineering assessment and a draft operator decision record, not a legal certification. The user selected on-chain profile payloads readable by the user and authorized people, self-service account removal, and an explicit sole-member DAO closure offer.
+
+The final EDPB Guidelines02/2025 v2 were published on 7 July 2026. They require assessment of processing roles and blockchain necessity, data protection by design and a DPIA. They discourage on-chain plaintext, explain that encrypted personal data remains personal data, and identify limits of key deletion: leaked keys, future cryptanalysis and indefinite ledger retention. Removing a current contract row does not remove historical transactions. These findings require an explicit assessment of whether this particular public-chain design can satisfy rights; cryptographic tests cannot answer that legal question. [Final EDPB guidance](https://www.edpb.europa.eu/documents/guideline/guidelines-022025-on-processing-of-personal-data-through-blockchain_en)
+
+The Commission describes purpose limitation, collecting only necessary data and keeping it for the shortest justified period, with erase/review deadlines and documented legal exceptions. The operator must select and document actual purposes, legal basis, accountable parties and retention, rather than treating default engineering timeouts as approved legal policy. [Commission GDPR principles](https://commission.europa.eu/law/law-topic/data-protection/information-business-and-organisations/principles-gdpr_en)
+
+## What this implementation processes
+
+| Data / boundary | Implemented behavior | Required operator assessment |
+| --- | --- | --- |
+| Profile body | Client encrypts before native publication; ciphertext context binds chain/runtime/DAO/member/revision. Personal fields do not enter public profile projections. | Necessity of public-chain storage; category restrictions, disclosure and alternatives in the DPIA. |
+| Public native identity | Alias, DAO/member identifiers, public keys, role/activity/transaction metadata may remain visible and linkable. Legacy historical plaintext cannot be retracted. | Identify linkability and historical disclosures; do not call these anonymous. |
+| Profile key service | Stores recipient-wrapped purpose-bound keys and finite staged/revision state; routine service does not receive the plaintext DEK. Controlled exclusions apply before restored access. | Custody contracts, access controls, backup horizons and independent restore evidence. |
+| Browser / recipients | User and explicit recipients can decrypt. An authorized recipient can retain plaintext or keys; a compromised client can capture them. Revocation affects future versions, not already copied content. | Recipient notices and responsibilities, reviewed clients, device/recovery protection. |
+| Hosted account | Auth/provider links, canonical/retired UUID anchors and operational records are revoked/erased in dependency order; required financial/shared anchors remain restricted. | Exact controller, legal basis, retention exceptions, access requests and complaint contact. |
+| Mini-app database | Independent operator controls text/photos/logs/outbox/backups. Versioned identity binding and signed cleanup notices are implemented; unavailable apps remain unresolved. | App-specific controller and retention notices; contractual cleanup/restore obligations and actual delivery evidence. |
+| Directory | Public app advertisement; private account/origin challenge and bounded reports/offers. Orphaned owned listings are removed; verified successor entries survive transfer. | Public maintainer disclosure, report purpose, governing moderation accountability and finite evidence policy. |
+| MCP / AI | Tool inventory excludes profile decryption, Root/private keys and unrestricted signing. Public activities/identifiers may still identify people. Actual inference providers are unqualified. | Provider disclosure and processing/transfers before adding a private-data tool or sending real personal data to an inference provider. |
+
+Native administrator authority determines who may perform an action; it does not determine the legal controller. The platform service operator, each DAO's decision-makers, independent app operators, recipients and infrastructure/provider parties need a factual processing-role assessment and appropriate agreements. Do not assign every actor the same role by label or assume decentralization removes responsibility. These are project-specific decisions still awaiting the operator's input.
+
+## Erasure and storage response
+
+The exit report separates hosted authentication/identity, native departure/current profile row, controlled wrapped-key removal, provider acknowledgment, independent-app response and backup expiry. Fresh account control starts erasure; a read-only saved capability cannot sign native actions. Native departure/closure requires a separate actual authorized signature. Sole-member closure is offered explicitly. Shared subscriptions, outstanding claims, liabilities and required receipts are not silently disposed of.
+
+Deleting a key-service row and applying restore exclusions limits future controlled retrieval. It cannot prove destruction of recipient copies, a compromised key or every independent ledger node. Ciphertext/history remain subject to the assessment above. Report “unavailable” or “backup expiry pending” when applicable; never infer confirmation from an unpin request, unlinking identity or a failed source call. A restored service applies revocation/deletion exclusions before opening authentication or key access and cannot revive an erased account UUID.
+
+Current native row removal can release RAM. The ledger's block history remains. SQL DELETE removes eligible logical records; vacuum/page reuse and physical file shrinkage are separate engine operations. Resource evidence reports both. Public Activity receipts/retained financial rows have their own purpose and funded limits; no blanket reclamation claim is made.
+
+Engineering limits include five-minute pairing/access, one-minute OAuth code, bounded seven-day grant/refresh families, fifteen-minute staged profile rows, thirty-day exit/report/cleanup status, ninety-day directory renewal and configured finite controlled backups. Their precise purpose and legal retention remain approval items. These defaults bound development storage; they do not authorize keeping personal data for every maximum period.
+
+## Release decision still required
+
+Before public availability, identify the legal service operator/controller(s), approve the actual processing inventory/legal bases/notices and DPIA, document justified retention and backups, provide independent recovery-host/key-erasure/restore qualification, assess transfers/providers and support data-subject rights. The existing OpenBao testnet evidence is single-host and time-limited. It does not qualify an independent or production profile-key service. The implementation stays behind its deployment gates until the specific requirements pass. Development/testnet work and honest website previews can proceed while those requirements remain unresolved.

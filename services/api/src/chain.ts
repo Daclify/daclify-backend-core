@@ -98,6 +98,7 @@ export interface ChainGateway {
   relayEvm?(account: Account, input: EvmRelay): Promise<{ transactionId: string }>;
   nativeGovernanceWalletInUse?(chainId: string, account: string): Promise<boolean>;
   governance(daoId: string): Promise<GovernanceState>;
+  pruneExpiredSessions?(dao: DaoRef, sessionIds: readonly string[]): Promise<void>;
   execute(input: ExecutionRequest): Promise<ExecutionResult>;
   treasury(daoId: string): Promise<Treasury>;
   settle(input: SettlementRequest): Promise<SettlementResult>;
@@ -117,7 +118,7 @@ export interface ChainGateway {
   ): Promise<{ transactionId: string }>;
   listDaosPage?(after?: string): Promise<{ daos: DaoSummary[]; next: string | null }>;
   listDaos(): Promise<DaoSummary[]>;
-  memberships(account: Account): Promise<UserMembership[]>;
+  memberships(account: Account, db?: Pick<import('pg').PoolClient, 'query'>): Promise<UserMembership[]>;
   profileKeyMember?(
     daoId: string,
     memberId: string,

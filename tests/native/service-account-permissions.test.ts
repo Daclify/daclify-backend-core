@@ -70,6 +70,23 @@ beforeAll(async () => {
   );
 }, 90000);
 afterAll(async () => owned?.stop());
+it('allows bounded expired-session housekeeping with the linked operator key while leaving Root nonce intact', async () => {
+  const f = fixture();
+  if (!governing) throw Error('GOVERNING_FIXTURE_REQUIRED');
+  const gateway = new NativeChainGateway({
+    rpcUrl: f.url,
+    chainId: f.chainId,
+    runtime: 'daclifycore',
+    hub: null,
+    environment: 'local',
+    relayActor: 'relay',
+    relayKey: f.key('relay'),
+    relayPermission: 'operator',
+  });
+  const nonce = (await governing.member()).nonce;
+  await gateway.pruneExpiredSessions(governing.reference, ['1']);
+  expect((await governing.member()).nonce).toBe(nonce);
+});
 
 it('uses code-only governance and scoped Relay operator links for monthly module settlement', async () => {
   const f = fixture();

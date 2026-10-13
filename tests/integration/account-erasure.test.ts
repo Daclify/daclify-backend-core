@@ -310,3 +310,11 @@ it('removes directory dependents owned by other accounts and preserves a verifie
  for(const table of ['mini_app_directory_reports','mini_app_directory_proofs','mini_app_directory_transfers'])expect((await pool.query('SELECT 1 FROM '+table+' WHERE listing_id=$1',[orphan.id])).rowCount).toBe(0);
  expect((await pool.query('SELECT account_id,status FROM mini_app_listings WHERE id=$1',[transferred.id])).rows).toEqual([{account_id:successor,status:'published'}]);
 });
+it('keeps default-column MCP owner guards effective with an empty restore search path',async()=>{
+ await fixture();const erased=canonical,service=new AccountExit(pool,{...authChain,memberships:async()=>[]},{backupRetentionSeconds:86400}),operation=await service.begin(erased,{version:1,mode:'delete-account',memberships:[]},{reauthenticated:true});await service.eraseHosted(operation.id);
+ const db=await pool.connect();
+ try{
+  await db.query("SET search_path=''");
+  await expect(db.query("INSERT INTO public.mcp_local_grants(id,account_id,token_hash,context,credential_epoch,expires_at) VALUES($1,$2,$3,'{}',1,clock_timestamp()+interval '1 hour')",[randomUUID(),erased,randomBytes(32)])).rejects.toMatchObject({constraint:'retired_account_credential'});
+ }finally{await db.query('RESET search_path');db.release();}
+});

@@ -588,8 +588,18 @@ public:
   }
   ACTION pruneappses(uint64_t dao_id,uint64_t after,uint32_t limit){
     check(limit>0&&limit<=25,"APP_CLEANUP_BOUND");dao_rows.get(dao_id,"DAO_UNKNOWN");
-    scoped_sessions sessions(get_self(),dao_id);app_scopes scopes(get_self(),dao_id);auto it=scopes.upper_bound(after);uint32_t count=0;
-    while(it!=scopes.end()&&count++<limit){auto session=sessions.find(it->id);if(session==sessions.end()||session->expires<=current_time_point().sec_since_epoch()){if(session!=sessions.end())sessions.erase(session);it=scopes.erase(it);}else ++it;}
+    scoped_sessions sessions(get_self(),dao_id);app_scopes scopes(get_self(),dao_id);
+    auto session=sessions.upper_bound(after);auto scope=scopes.upper_bound(after);uint32_t count=0;
+    const auto now=current_time_point().sec_since_epoch();
+    // Merge the primary cursors so expired routine sessions also release their bounded slots/RAM.
+    while((session!=sessions.end()||scope!=scopes.end())&&count++<limit){
+      const uint64_t id=session==sessions.end()?scope->id:scope==scopes.end()?session->id:std::min(session->id,scope->id);
+      const bool has_session=session!=sessions.end()&&session->id==id;
+      const bool has_scope=scope!=scopes.end()&&scope->id==id;
+      const bool expired=!has_session||session->expires<=now;
+      if(has_scope){if(expired)scope=scopes.erase(scope);else ++scope;}
+      if(has_session){if(expired)session=sessions.erase(session);else ++session;}
+    }
   }
   ACTION guardpause(uint64_t dao_id,uint32_t until,checksum256 reason) {
     require_guardian(dao_id);auto now=current_time_point().sec_since_epoch();check(until>now&&uint64_t(until)<=uint64_t(now)+86400,"PAUSE_DURATION");check(reason!=checksum256(),"PAUSE_REASON");

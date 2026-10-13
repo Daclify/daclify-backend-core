@@ -772,6 +772,12 @@ it('binds linked EVM departure to the reviewed operation and step without a host
  await expect(f().call('daclifycore','exitevm',{...input,step_digest:'ee'.repeat(32)},'relay')).rejects.toThrow();
  const packet=await f().gateway.prepareExitSubmission(input);expect((await dao.member('2')).active).toBe(true);const result=await f().gateway.submitPreparedExit(packet);expect(result.transactionId).toBe(packet.transactionId);expect((await f().gateway.reconcileExitSubmission(packet)).state).toBe('confirmed');expect((await dao.member('2')).active).toBe(false);
  await expect(f().call('daclifycore','exitevm',input,'relay')).rejects.toThrow();
+ const measured=await f().dummyDao(),initial=await measured.member('2');
+ await measured.act('daclifycore','linkevm',encodeAction('linkevm',{...measured.actor('2'),evm_chain_id:'41',address:binding.address.slice(2),epoch:'1',nonce:initial.nonce,expires,proof:sign(bindingTypedData(measured.reference,'2',binding,initial.nonce,expires))}),'2');
+ const measuredRequest=await measured.request('daclifycore','leave',encodeAction('leave',measured.actor('2')),'2');
+ const sample=await f().call('daclifycore','exitevm',{operation,step_digest,request:measuredRequest,evm_chain_id:'41',address:binding.address.slice(2),binding_epoch:'1',proof:sign(exitGovernanceTypedData(operation,step_digest,measuredRequest,binding))},'relay');
+ measurements.push({scenario:'linked-EVM-operation-exit',cpuUs:cpu(sample)});
+ expect((await measured.member('2')).active).toBe(false);
 });
 
 it('verifies and tracks a prepared native wallet exit without hosted credentials',async()=>{

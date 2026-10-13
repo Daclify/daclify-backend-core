@@ -28,6 +28,8 @@ Hosted access is separately gated by `COMMUNITY_MCP_HTTP_ENABLED=1` and a nonemp
 
 ## Connection downloads and revocation
 
+Renewal clears this member's expired native delegates automatically before new consent is approved. The restricted relay calls the existing permissionless `pruneappses` action; the contract checks expiry and removes at most 25 IDs per action. It cannot remove a live delegate or consume the member's Root nonce. Deployed relays need the reviewed `pruneappses` operator action link. Service revocation remains separate from explicit retirement of a still-live native delegate.
+
 The Mini apps page offers an AI connection setup section when local MCP is enabled. Choose a current membership and routine proposal/vote/review scopes. Download public configuration and the three matching core/modules/MCP archives, verify their displayed SHA-256 values, and install them together. Configuration contains public context only. Activity follows its separately approved app configuration/revision.
 
 The page lists local delegates and hosted OAuth families for the current account, including revoked service entries until expiry. Service revocation needs fresh account control. Native session retirement separately signs `delsession`, which also removes an app scope if present; only that native action disables independent copies of the delegate. A lost native response requires checking the original session before issuing another instruction. Renewal uses fresh pairing/consent; it never widens a paused or revoked grant automatically.

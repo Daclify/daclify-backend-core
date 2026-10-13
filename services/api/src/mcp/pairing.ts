@@ -139,6 +139,13 @@ export class McpPairings {
       if (!permission || permission.target !== current.native.target) throw invalid();
       permissions.push({ ...permission, action: 'askreview' });
     }
+    const expiredSessions = governance.sessions
+      .filter(
+        (session) => session.member_id === member.memberId && session.expires <= Date.now() / 1000,
+      )
+      .map((session) => session.id);
+    if (expiredSessions.length && this.chain.pruneExpiredSessions)
+      await this.chain.pruneExpiredSessions(pairing.dao, expiredSessions);
     // Binding is only claimed by an authenticated matching member; approval still needs fresh control proof.
     const claimed = await this.pool.query(
       'UPDATE mcp_pairings SET account_id=$2 WHERE id=$1 AND (account_id IS NULL OR account_id=$2) AND consumed_at IS NULL AND expires_at>now()',

@@ -91,9 +91,14 @@ it('measures finite personal-row cleanup separately from engine disk reclamation
     const postgresVersion = z
       .object({ server_version: z.string() })
       .parse((await pool.query('SHOW server_version')).rows[0]).server_version;
-    if (process.env.RECORD_MINI_APP_STORAGE === '1')
+    if (['1', 'q2'].includes(process.env.RECORD_MINI_APP_STORAGE ?? ''))
       writeFileSync(
-        new URL('../../docs/evidence/2026-10-12-mini-app-database-storage.json', import.meta.url),
+        new URL(
+          process.env.RECORD_MINI_APP_STORAGE === 'q2'
+            ? '../../.artifacts/mini-app-database-storage-q2.json'
+            : '../../docs/evidence/2026-10-12-mini-app-database-storage.json',
+          import.meta.url,
+        ),
         JSON.stringify(
           {
             schemaVersion: 1,

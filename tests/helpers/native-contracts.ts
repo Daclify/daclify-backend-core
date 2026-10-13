@@ -172,9 +172,12 @@ export async function nativeContracts(legacyRuntime = false) {
       owner: 'alice' | 'bob' = 'alice',
       governedWorks = false,
       participantMode: 0 | 1 | 2 = 0,
+      encryptionKeys: readonly string[] = [],
     ) {
       const daoId = String(++daoSequence),
-        keys = Array.from({ length: 3 }, () => PrivateKey.generate('K1'));
+        keys = Array.from({ length: Math.max(3, encryptionKeys.length) }, () =>
+          PrivateKey.generate('K1'),
+        );
       await call(
         'daclifycore',
         'createdao',
@@ -218,7 +221,7 @@ export async function nativeContracts(legacyRuntime = false) {
             member_id: index + 1,
             native_account: '',
             signing_key: key.toPublic(),
-            encryption_key: 'disposable',
+            encryption_key: encryptionKeys[index] ?? 'disposable',
             custody: 0,
             ...(agent ? { operator_label: 'Owned MCP qualification operator' } : {}),
           },

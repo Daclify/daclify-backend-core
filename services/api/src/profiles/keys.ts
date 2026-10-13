@@ -99,11 +99,12 @@ export class ProfileKeys {
       throw new ApiError('PROFILE_FORMAT_UNSUPPORTED', 409);
   }
   private async owner(db: PoolClient, id: string, context: ProfileContext, active: boolean) {
-    await db.query('SELECT id FROM accounts WHERE id=$1 FOR NO KEY UPDATE', [z.uuid().parse(id)]);
+    // Reuse this connection for membership projection; SHARE also fences concurrent account retirement.
+    await db.query('SELECT id FROM accounts WHERE id=$1 FOR SHARE', [z.uuid().parse(id)]);
     const account = await readAccount(db, id);
     if (!account || account.signingKey === null) throw new ApiError('PROFILE_OWNER', 403);
     await this.domain(context);
-    const membership = (await this.chain.memberships(account)).find(
+    const membership = (await this.chain.memberships(account, db)).find(
       (member) =>
         member.dao.chainId === context.chainId &&
         member.dao.contract === context.runtime &&

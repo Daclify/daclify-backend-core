@@ -1,0 +1,191 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-13T02:47:14.545Z",
+  "coreVersion": "0.15.0-alpha.17",
+  "modulesVersion": "0.10.0-alpha.24",
+  "frontendVersion": "0.15.0-alpha.19",
+  "mcpVersion": "0.1.0-alpha.6",
+  "environment": "Owned disposable Spring 1.2.2 and PostgreSQL 17.11 on loopback; concurrent test load",
+  "compiler": "Antelope CDT 4.1.1 -O=s",
+  "artifacts": {
+    "runtimeSha256": "e6aaeeccb949710444e0fe4ca32331ffeeb5a6eeae688a417ae3d22cd3469d95",
+    "runtimeBytes": 991198,
+    "corePackageSha256": "095f49a4a537dc310ceb79241e29a02319009f04780f1e2925b5ae39398342f7",
+    "modulesPackageSha256": "c2633a129d4bb0e545b21688c96b93839698763f9e6d00d8ad46605332c05264",
+    "mcpPackageSha256": "59b55845eb30dbf64ae5e71706fdd23d54e5e518dd609b3b98c3cde6047b69e2",
+    "migration049Sha256": "d68e59c7e5e80ab94fa5d4357a889254d01a4693913b09be06dc4c5ad56f9aa1"
+  },
+  "profiles": {
+    "plaintextBytes": 1024,
+    "maximumPlaintextBytes": 4096,
+    "first": {
+      "envelopeBytes": 1680,
+      "cpuUs": 10985,
+      "ramBytes": 2322
+    },
+    "subsequent": {
+      "envelopeBytes": 1680,
+      "cpuUs": 8704,
+      "ramBytes": 2098
+    },
+    "maximum": {
+      "envelopeBytes": 5776,
+      "cpuUs": 26401,
+      "additionalRamBytes": 4096
+    },
+    "removedBytes": 8516,
+    "removalCpuUs": [
+      2478,
+      1325
+    ],
+    "scope": "Actual runtime total RAM deltas include row and index allocation; CPU samples reflect local concurrent load."
+  },
+  "smallProfile": {
+    "wasmBytes": 991198,
+    "profileInsertRam": 1030,
+    "profileDeleteRam": 1030,
+    "cpuMicroseconds": {
+      "write": 3846,
+      "remove": 1238
+    }
+  },
+  "audience": {
+    "recipients": 64,
+    "wrappedGrantsJsonBytes": 53889,
+    "storedGrantsBytes": 22963,
+    "nativeCiphertextBytes": 364,
+    "nativeProfileRows": 1
+  },
+  "expiredDelegates": {
+    "compiler": "CDT 4.1.1 -O=s",
+    "runtime": "Spring 1.2.2",
+    "wasmBytes": 991198,
+    "wasmSha256": "e6aaeeccb949710444e0fe4ca32331ffeeb5a6eeae688a417ae3d22cd3469d95",
+    "expiredRoutineSessions": 16,
+    "liveSessionsPreserved": 1,
+    "ramBefore": 9967439,
+    "ramAfter": 9959263,
+    "reclaimedBytes": 8176,
+    "cleanupCpuMicroseconds": 1342,
+    "batchLimit": 25
+  },
+  "nativeExit": {
+    "coreVersion": "0.15.0-alpha.17",
+    "runtimeCodeHash": "e6aaeeccb949710444e0fe4ca32331ffeeb5a6eeae688a417ae3d22cd3469d95",
+    "environment": "owned local Spring; concurrent test load",
+    "measurements": [
+      {
+        "scenario": "departure",
+        "releasedRam": 735,
+        "cpuUs": 1709
+      },
+      {
+        "scenario": "handover acceptance",
+        "cpuUs": 1693
+      },
+      {
+        "scenario": "handover departure",
+        "releasedRam": 335,
+        "cpuUs": 1961
+      },
+      {
+        "scenario": "module closure scan",
+        "module": "decide",
+        "insertedRam": 278,
+        "cpuUs": 615
+      },
+      {
+        "scenario": "module closure scan",
+        "module": "works",
+        "insertedRam": 278,
+        "cpuUs": 329
+      },
+      {
+        "scenario": "module closure scan",
+        "module": "payroll",
+        "insertedRam": 278,
+        "cpuUs": 333
+      },
+      {
+        "scenario": "module closure scan",
+        "module": "grants-rounds",
+        "insertedRam": 278,
+        "cpuUs": 597
+      },
+      {
+        "scenario": "module closure scan",
+        "module": "endorsement-admission",
+        "insertedRam": 278,
+        "cpuUs": 376
+      },
+      {
+        "scenario": "module closure scan",
+        "module": "activity",
+        "insertedRam": 278,
+        "cpuUs": 424
+      },
+      {
+        "scenario": "funded native retirement after exhausted quota",
+        "insertedRam": 125,
+        "cpuUs": 1240
+      },
+      {
+        "scenario": "operation-bound-exit",
+        "cpuUs": 1326
+      },
+      {
+        "scenario": "linked-wallet-operation-exit",
+        "cpuUs": 1354
+      },
+      {
+        "scenario": "linked-EVM-operation-exit",
+        "cpuUs": 1820
+      }
+    ]
+  },
+  "databases": {
+    "schemaVersion": 1,
+    "recordedAt": "2026-10-13T02:25:09.592Z",
+    "node": "24.21.0",
+    "sqlite": "3.53.4",
+    "postgres": "17.11 (Ubuntu 17.11-1.pgdg24.04+2)",
+    "appBindingFormat": 1,
+    "rows": 256,
+    "payloadBytes": 16384,
+    "before": {
+      "sqlite": 49152,
+      "postgres": 16384
+    },
+    "filled": {
+      "sqlite": 4374528,
+      "postgres": 4497408
+    },
+    "deleted": {
+      "sqlite": 4374528,
+      "postgres": 4497408
+    },
+    "vacuumed": {
+      "sqlite": 49152,
+      "postgres": 122880
+    },
+    "remainingPersonalRows": 0,
+    "scope": "Disposable synthetic personal payload table. Logical deletion and disk reuse/reclamation only; no historical, backup or universal GDPR erasure claim.",
+    "command": "RECORD_MINI_APP_STORAGE=1 DATABASE_URL=<owned-loopback-_test-db> npm run test:integration -- tests/integration/mini-app-database-maintenance.test.ts"
+  },
+  "limits": {
+    "profilePlaintextBytes": 4096,
+    "profileEnvelopeBytes": 8192,
+    "profileRecipients": 64,
+    "grantJsonBytes": 65536,
+    "nativeSessionsPerMember": 16,
+    "nativeCleanupIdsPerAction": 25
+  },
+  "interpretation": [
+    "First/subsequent native row deltas include table and secondary-index allocation; they are not serialized payload sizes.",
+    "pg_column_size of compressed grants is not the complete database, indexes, WAL, backups or RAM footprint.",
+    "Native RAM removal and SQL deletion do not remove public history, recipient copies, provider copies or old backups.",
+    "SQLite checkpoint/vacuum and PostgreSQL vacuum results apply to the exact disposable payload table; PostgreSQL page reuse/truncation varies with remaining rows and workload.",
+    "Activity authorization/event receipts remain while needed for once-only effects and accounting; no reclaimable receipt RAM promise is made.",
+    "Independent recovery-host, provider retention and controller/legal policy qualification remain unrun."
+  ]
+}

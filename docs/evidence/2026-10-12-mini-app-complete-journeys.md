@@ -1,0 +1,34 @@
+# Self-service mini-app and account lifecycle qualification
+
+Verified on 13 October 2026 against core **0.15.0-alpha.17**, modules SDK **0.10.0-alpha.24**, frontend **0.15.0-alpha.19**, and standalone MCP **0.1.0-alpha.6**. These are development/testnet candidates; external public-release checks remain held.
+
+| Boundary | Actual evidence and result |
+| --- | --- |
+| Complete native/SQL lifecycle and actual harness | Six integration files, **93 passed**: `community-mcp-journey`, `mini-app-self-service-journey`, `profile-keys`, `account-erasure`, `mini-app-cleanup`, and `wallet-recovery`. Actual compiled native actions, fresh signatures, PostgreSQL, pg_dump/pg_restore, crypto, and the installed Codex app-server MCP client are exercised. No inference turn or delegated coding agent is started. |
+| Native lifecycle, profiles and exit | **24 passed in three files**, followed by **13/13 account-exit tests** including an additional actual EVM CPU sample. Covers current/old profile formats, retained claims/stake, operation-bound Root/native/EVM departure, replay and DAO closure duties. |
+| Native permissions and compatibility | **139 passed in nine files** using Spring 1.2.2 and pinned CDT 4.1.1 `-O=s` binaries. Restricted relay cleanup passes without changing owner/active authority or Root nonce. |
+| Database restore guards | **40 passed in profile-key/account-erasure files**. Migration 049 fixes guard resolution when pg_restore clears search_path and restores default account-owner checks on MCP records. Published migrations 041–048 were preserved. |
+| SQLite/PostgreSQL recipes | Actual finite cleanup/checkpoint/vacuum journey passed. The resource report records logical rows and physical sizes separately. |
+| Browser complete lifecycle | `mini-app-account-lifecycle.spec.ts`: **2/2 desktop/mobile passed** on the owned paid native/SQL fixture. Native profile absence is checked directly after hosted authentication is erased. |
+| Newer frontend integration | The four newer Grants/Treasury/Documents/Members commits are preserved. The final combined desktop/mobile suite passed **38/38**. The private-handover merge retains successor verification/acceptance and uses the newer named member dialog. |
+| Ordinary source suites | Core **994/165 files**, modules **215/33 files**, frontend **342/58 files** passed. Type/template checks, lint, docs and builds passed; the existing large Docs chunk warning remains. |
+| Frozen public install | Exact core/modules/MCP archives install and import outside every checkout. The actual Codex local/HTTP journey consumes the frozen companion CLI. All **140 public package files** match the rebuilt core source byte-for-byte. |
+| Recovery provider | Fresh synthetic TLS/OpenBao source-removal/raft restore and restricted-key denials passed for core alpha.17. Single-host testnet evidence preserves the existing 17 October expiry and does not establish an independent failure domain. |
+
+Commands are the repository scripts with owned loopback database/native paths: `npm run test:integration -- <the six files above>`, `npm run test:native -- tests/native/mini-app-lifecycle-journey.test.ts tests/native/encrypted-profiles.test.ts tests/native/account-exit.test.ts`, `npm run test:native:permissions`, and frontend `npm run test:e2e:paid -- tests/e2e/mini-app-account-lifecycle.spec.ts`. Actual commands/results and deviations are retained in the execution ledger and private run logs.
+
+The complete journey exercises owner-only encryption, actual recipient wrapping, 64 eligible native recipients, native publication and exact key activation, consent/expiry/guardian boundaries, service and native revocation, erasure exclusions, saved read-only reporting and idempotent native steps. Wallet-only recovery and restored-account reconnect tests preserve canonical ownership and refuse retired/erasing identities. Existing Activity/app tests establish retry/source-edit receipt binding and unavailable-app reporting; an independent operator acknowledgment remains an operator assertion. No signed receipt is rewritten to make cleanup pass.
+
+## Failures that changed the implementation
+
+1. A profile transaction held an account `NO KEY UPDATE` lock while native membership refresh needed a separate connection's `SHARE` lock. The real database deadlocked. A compatible `SHARE` lock still fences erasure and allows refresh; per-profile advisory locking preserves write serialization.
+2. Restoring profile rows failed because old guard functions depended on connection search_path. Two published MCP triggers also omitted their owner-column argument. Additive migration 049 qualifies guard names and pins the reviewed project functions' search_path, leaving extensions and unrelated functions untouched.
+3. Sixteen expired routine delegates still occupied native session slots because cleanup inspected app-scoped records only. The same native action now merges both primary cursors, checks expiry itself, and handles at most 25 IDs. Pairing automatically prunes the member's expired sessions using narrowly linked relay authority. Live delegates, nonce, accounting and stored layouts stay intact.
+4. Delegate creation advanced the Root nonce while browser membership state remained stale. The next profile publication failed on desktop/mobile. Consent now refreshes membership after its native write; the complete journey passes with an actual fresh nonce.
+5. A one-connection pool reproduced connection starvation while profile ownership checks borrowed another connection. Native membership projection now accepts the caller's private transaction executor; wallet reads and member indexing reuse that connection without weakening account locks. Actual native key write/read/removal passes with a one-connection PostgreSQL pool.
+
+Early fixture failures are also recorded: an absent pg_dump path, a shared public alias, an unsupported CLI `--help` command, outdated navigation labels, a transient embedded-editor success message, and parsing an authenticated profile response after deleting its authentication. These were corrected using actual producer contracts/UI behavior. The earlier failed runs are not counted as passes.
+
+## Practical limits
+
+[Measured resources](2026-10-12-mini-app-resource-measurements.json) and the [privacy assessment](../research/2026-10-12-on-chain-profile-privacy-assessment.md) describe their scope. Ciphertext and public identifiers remain personal data where linkable. Current-row/key removal does not remove chain history or recipient copies. The legal operator, approved retention/legal basis/DPIA, independent-host restore, independent app deployment and other required external-provider/client qualification are unresolved public-release requirements. Optional Garden Care staging/live changes were not performed. No real user was erased, no live DAO was closed, and no production authority or assets were changed by these tests.

@@ -9,6 +9,7 @@ export const RelayCoreActions = [
   'exitnative',
   'exitevm',
   'submitsess',
+  'pruneappses',
   'submitevm',
   'orderfree',
   'ordercreate',

@@ -1,3 +1,4 @@
+import { EncryptionPrivateKeySchema, EncryptionPublicKeySchema } from '../../protocol/crypto.js';
 import { createHash, randomBytes, generateKeyPairSync } from 'node:crypto';
 import { PrivateKey } from '@wharfkit/antelope';
 import { Pool } from 'pg';
@@ -49,14 +50,19 @@ export async function mcpFixture() {
     mcpOAuth: oauth,
   });
   await server.listen({ host: '127.0.0.1', port: 35819 });
-  async function paired(mode: 0 | 1 | 2 = 0) {
-    const dao = await native.dummyDao('alice', false, mode),
+  async function paired(mode: 0 | 1 | 2 = 0, recipientKeys: readonly string[] = []) {
+    const pair = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }),
+      encryptionKey = EncryptionPublicKeySchema.parse(pair.publicKey.export({ format: 'jwk' })),
+      encryptionPrivateKey = EncryptionPrivateKeySchema.parse(
+        pair.privateKey.export({ format: 'jwk' }),
+      ),
+      dao = await native.dummyDao('alice', false, mode, [
+        JSON.stringify(encryptionKey),
+        ...recipientKeys,
+      ]),
       firstKey = dao.keys[0];
     if (!firstKey) throw Error('Root fixture absent');
     const root = firstKey;
-    const encryptionKey = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.export({
-      format: 'jwk',
-    });
     const challengeResponse = await server.inject({
         method: 'POST',
         url: ApiRoutes.challenge.path,
@@ -140,7 +146,7 @@ export async function mcpFixture() {
       mode: 'autonomous',
     });
     const grant = await pairings.redeem(request.id, verifier);
-    return { dao, root, delegate, account, headers, grant, approve };
+    return { dao, root, delegate, account, headers, grant, approve, encryptionPrivateKey };
   }
   return {
     api,
