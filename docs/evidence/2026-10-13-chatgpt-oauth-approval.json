@@ -1,0 +1,288 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-13T10:50:39.046076+00:00",
+  "environment": "Telos testnet",
+  "status": "deployed; real ChatGPT grant and model tool call pending",
+  "sources": {
+    "coreApi": "a3cee81d530426df64def32601cd5e5a4b225ca8",
+    "modules": "455e2f311632fb546325a6b4ff240f23be069148",
+    "frontend": "4212ba6fde8f9981dd0d1cd7d0a31ddbf560c279"
+  },
+  "cleanCandidates": {
+    "coreApi": "/data/daclify-runtime/releases/20261013-hosted-mcp/daclify-backend-core-oauth",
+    "frontend": "/data/daclify-runtime/releases/20261013-hosted-mcp/daclify-frontend-consent"
+  },
+  "immutableCompanion": {
+    "version": 1,
+    "coreVersion": "0.15.0-alpha.17",
+    "modulesVersion": "0.10.0-alpha.24",
+    "mcpVersion": "0.1.0-alpha.8",
+    "files": [
+      {
+        "name": "core.tgz",
+        "sha256": "095f49a4a537dc310ceb79241e29a02319009f04780f1e2925b5ae39398342f7",
+        "bytes": 506220
+      },
+      {
+        "name": "modules.tgz",
+        "sha256": "c2633a129d4bb0e545b21688c96b93839698763f9e6d00d8ad46605332c05264",
+        "bytes": 209944
+      },
+      {
+        "name": "mcp.tgz",
+        "sha256": "74663328aeee96aa463b8f67dff1b81a41f3970504ded43a4206b58cb87855c7",
+        "bytes": 12579
+      }
+    ],
+    "releaseId": "1491f2d2f79466503c8cbb91682fe1ac807c18db87039831000873ab0d17a306"
+  },
+  "frontend": {
+    "version": "0.15.0-alpha.22",
+    "entrySha256": "0a4aa4103f261dd32168a2ce2b01ba0cff7c12d0d3a3d37553fb8ed8be9a0ce3",
+    "publicLayoutChecks": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "cardWidth": 544,
+        "cardHeight": 760.390625,
+        "permissionControlsCompact": true,
+        "allConnectionDetailsReadable": true,
+        "horizontalOverflow": false,
+        "accessibilityViolations": 0,
+        "pageErrors": [],
+        "serverFailures": [],
+        "approvalClicked": false
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "cardWidth": 346,
+        "cardHeight": 886.390625,
+        "permissionControlsCompact": true,
+        "allConnectionDetailsReadable": true,
+        "horizontalOverflow": false,
+        "accessibilityViolations": 0,
+        "pageErrors": [],
+        "serverFailures": [],
+        "approvalClicked": false
+      }
+    ]
+  },
+  "verified": {
+    "unitCore": {
+      "files": 166,
+      "tests": 1002
+    },
+    "integrationCore": {
+      "files": 3,
+      "tests": 15
+    },
+    "unitFrontend": {
+      "files": 58,
+      "tests": 342
+    },
+    "browserFrontend": {
+      "tests": 2,
+      "desktopAndMobile": true,
+      "actualAccountProofApproval": true,
+      "tokenScopeNarrowingAndReplay": true,
+      "axeViolations": 0
+    },
+    "publicRouteVisits": 14,
+    "all140FrozenSdkFilesMatch": true,
+    "strictTypesLintBuildDocsAndFormat": true,
+    "cleanLockedInstallsAndBuilds": true,
+    "publicSameRequestShapeRedirect": 302,
+    "publicGuardRequestsRefused": true,
+    "publicCatalogTools": 8,
+    "publicUnauthenticatedMembership": 401,
+    "publicCodexReadAndProposalPreview": true,
+    "publicClaudeOAuthAndInitialization": true,
+    "ownedOAuthFamiliesCheckedRevoked": 8,
+    "ownedSessionsLoggedOutAndFilesRemoved": true,
+    "ownedProbeRequestsCleaned": true,
+    "disposableNativeBrowserFixtureStopped": true,
+    "productionDependencyAuditVulnerabilities": 0
+  },
+  "initialFailuresAndLimits": [
+    "RED reproduction rejected ui_locales; removing that hint still rejected additional openid scope. Only fresh synthetic OAuth values appear in probe records.",
+    "First expanded native suite: 13/15 passed; one Codex submission hit CHAIN_UNAVAILABLE, and an old catalog assertion expected 401 for now-public tools/list. The assertion now protects tools/call/get_membership. Both following full 15-test runs passed; the earlier RPC failure root cause remains unproven.",
+    "The first deployment preparation guard used an abbreviated environment flag name; it stopped before any source change. The corrected guard checks COMMUNITY_MCP_HTTP_ENABLED and unchanged ACCOUNT_EXIT_ENABLED=0.",
+    "First public card harness applied __Host cookies to a parent domain; the browser rejected them and its cleanup assertion masked that failure. The corrected harness scopes cookies to the exact API URL and cleans unbound or owned-bound synthetic requests. Its single failed unbound request was removed through exact client/resource/state-prefix/expiry-window checks.",
+    "An initial cleanup eval contained TypeScript syntax in a JavaScript module and did not run; corrected JavaScript validated each selected row before cleanup.",
+    "Frontend chunk-size warning is unchanged; no unrelated splitting was added."
+  ],
+  "boundaries": {
+    "publicSdkProtocolChanged": false,
+    "contractsMigrationsOrIndexesChanged": false,
+    "profileKeysExclusionsAndBackupTimersPreserved": true,
+    "releaseEnvironmentByteUnchanged": true,
+    "accountExitEnabled": false,
+    "realUserErasureOrDaoClosureRun": false,
+    "publicNativeTransactionsAdded": 0,
+    "ownerOrActiveChanges": false,
+    "assetMovement": false,
+    "mainnetOrProductionDeployment": false,
+    "rollbackScriptsPrepared": [
+      "rollback-oauth.sh",
+      "rollback-consent.sh"
+    ],
+    "rollbackExecuted": false,
+    "priorHashedFrontendAssetsRetained": true,
+    "realChatGPTApprovalPageObservedByUser": true,
+    "realChatGPTGrantAndModelToolCall": "pending",
+    "providerInference": "unrun",
+    "privacyProviderLegalAndIndependentRecoveryGates": "held; prior programme gates unchanged"
+  },
+  "ponytail": {
+    "latestStableVersion": "5.2.0",
+    "refreshAndInstall": "native Codex plugin manager",
+    "enabled": true,
+    "defaultMode": "full",
+    "workspacePathsUpdated": true,
+    "releaseFilesVerified": true,
+    "sixSkillsDiscovered": true,
+    "versionAndRuleChecks": "7 metadata files, 10 invariants passed",
+    "hooksAndCommands": "6 checks passed",
+    "automaticHookTrust": "modified; normal Codex hook review still required",
+    "optionalBenchmark": "22/23 passed; CSV benchmark requires pandas, absent on this host"
+  },
+  "privateReports": [
+    {
+      "path": "/data/daclify-runtime/hosted-mcp-20261013/chatgpt-authorize-before.json",
+      "sha256": "f57e2bb201bc512d515c6b07d07adba29a63a7f93d1dd2e3f156e2fd82f351a6",
+      "bytes": 563
+    },
+    {
+      "path": "/data/daclify-runtime/hosted-mcp-20261013/chatgpt-authorize-after.json",
+      "sha256": "e3462886b5fc2e3550b34074f4bb735e5f51aa57303db0718f158ba1e4daf941",
+      "bytes": 1227
+    },
+    {
+      "path": "/data/daclify-runtime/hosted-mcp-20261013/oauth-public-artifacts-catalog.json",
+      "sha256": "4970deeaf03a56f0fcd6745aa18c9777a4ac62141125a9103c7ad796be31dedb",
+      "bytes": 2007
+    },
+    {
+      "path": "/data/daclify-runtime/hosted-mcp-20261013/oauth-public-clients.json",
+      "sha256": "f8ba3b935dc7b0f4957191f6ee171bebef548fdd6ef45e123148e88470415a1d",
+      "bytes": 873
+    },
+    {
+      "path": "/data/daclify-runtime/hosted-mcp-20261013/oauth-cleanup.json",
+      "sha256": "91446283dbd35973962719a659050528127d0015a8c46e2638b620076c0e3c83",
+      "bytes": 261
+    },
+    {
+      "path": "/data/daclify-runtime/hosted-mcp-20261013/oauth-operations.json",
+      "sha256": "fd348b35f7204a9e5138920bdb297d5179fddead275d8467c8b0f2bd150e992a",
+      "bytes": 1014
+    },
+    {
+      "path": "/data/daclify-runtime/hosted-mcp-20261013/compact-consent-public.json",
+      "sha256": "a210b4044230b68d6d55899c130b6b65f6ab9d20d8505d2b7a376f1a285e9996",
+      "bytes": 1121
+    },
+    {
+      "path": "/data/daclify-runtime/hosted-mcp-20261013/compact-consent-public-routes.json",
+      "sha256": "d381fb449878128f57898cf6502efc3b0596440e81c84cd6b963c67d7498cf91",
+      "bytes": 734
+    },
+    {
+      "path": "/data/daclify-runtime/hosted-mcp-20261013/compact-consent-cleanup.json",
+      "sha256": "fa609222125446854d2538d027edf15b03ebfda16669769831f1c710c61b60d3",
+      "bytes": 261
+    },
+    {
+      "path": "/data/daclify-runtime/hosted-mcp-20261013/compact-consent-probe-cleanup.json",
+      "sha256": "caed6410a25290572c1bee321da16bd41aa6b4d0d0bd9eb2654e9d7ebf11a95c",
+      "bytes": 267
+    }
+  ],
+  "verificationLogs": [
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/chatgpt-authorize-red.log",
+      "sha256": "e60fa4937e0804c385e0d9ff22dc1aed5048b6e4bc5bd96759cd4e18f3a3a9b3",
+      "bytes": 1546
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/chatgpt-authorize-green.log",
+      "sha256": "70acab9203c8d92e4a9fb4c08619781f1f237719663c4bc1586ef19037f358a9",
+      "bytes": 366
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/chatgpt-authorize-unit.log",
+      "sha256": "c7f647a140b62fb888e0736797d9a84603e44385649143e2a030558a5542bbd9",
+      "bytes": 589
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/chatgpt-authorize-integration.log",
+      "sha256": "38243bafea09f3dcacc973dbf22f6cd08175e252a1c8247d0b50c3cb142bb1ee",
+      "bytes": 3774
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/chatgpt-authorize-integration-final.log",
+      "sha256": "094778ef1b61791e62de5561b8420bbd0c48d7f9835c4ce57c0c677d517e8a4e",
+      "bytes": 454
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/chatgpt-authorize-final-typecheck.log",
+      "sha256": "fda7c08b0b97cb450e5b4def44b143cdf498ceab83fc6b044bde4913da079e46",
+      "bytes": 67
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/chatgpt-authorize-final-lint.log",
+      "sha256": "d9046da6d0da2a996b63a19ca9b97ea5510a5c091ce59ae7a0439affaaa43980",
+      "bytes": 75
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/chatgpt-authorize-final-build.log",
+      "sha256": "e8a9eb5d14a7023362284abc1723f2acb8091b9fcf7245eaea53d393af50fdbe",
+      "bytes": 54
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/chatgpt-authorize-final-docs.log",
+      "sha256": "764a2f71b2470cf841516acfe5933520d74907d8e22c768742afcefa56f106e1",
+      "bytes": 133
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/chatgpt-authorize-final-format.log",
+      "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "bytes": 66
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/compact-consent-red.log",
+      "sha256": "f7d18f916bfa93febfe88a18055075a6a78e026d4da97e229d9b82b5083d842b",
+      "bytes": 1634
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/compact-consent-green.log",
+      "sha256": "68de33ec4dbedfeb3449500d4cc91fb080abfa0ff564eba6bc20857314574763",
+      "bytes": 903
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/compact-consent-lint.log",
+      "sha256": "aeed45b9f9971d5011e54cd523d8992cb9923fa5350798f7b8b812258236fa5f",
+      "bytes": 303
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/compact-consent-typecheck.log",
+      "sha256": "83676615756e367bc1a2665130329ac8467bb620b5ed2cd1a5a17ab26d093c01",
+      "bytes": 67
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/compact-consent-unit.log",
+      "sha256": "522d9935e6f0214dc12ed41805c84cf2c92ba3d71dfe9cfdc9722aca9c065e06",
+      "bytes": 480
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/compact-consent-build.log",
+      "sha256": "00cf7e02108afa8aad9df11759511a8b59a5359225a808d9eed631a41e15946c",
+      "bytes": 11569
+    }
+  ]
+}
