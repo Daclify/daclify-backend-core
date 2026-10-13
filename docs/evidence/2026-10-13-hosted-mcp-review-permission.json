@@ -1,0 +1,295 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-13T13:59:58.307113+00:00",
+  "environment": "Telos testnet",
+  "status": "deployed; actual ChatGPT user retry and model tool call pending",
+  "sources": {
+    "daclify-backend-core": "8ab8fbf94bd52b8045f030d159dacd3cb21a9835",
+    "daclify-backend-modules": "e69b1b927505959c57eb0f3c165ac80489864109",
+    "daclify-frontend": "f0581f046722b4bcc02d6b89517b9f28b2c76ce9"
+  },
+  "versions": {
+    "coreProtocol": "0.15.0-alpha.18",
+    "modulesSdk": "0.10.0-alpha.25",
+    "frontend": "0.15.0-alpha.24",
+    "servedCompanion": "0.1.0-alpha.8"
+  },
+  "observedFailure": {
+    "httpStatus": 401,
+    "code": "MCP_TOKEN_REQUIRED",
+    "userSelectedReview": true,
+    "daoId": "1",
+    "memberId": "1",
+    "publicNativeReviewerFlag": false,
+    "governancePolicyPresent": true,
+    "guardianPaused": false,
+    "actorRevoked": false,
+    "rootCause": "The card allowed unearned review preparation and the hosted API misclassified that permission refusal as a token failure."
+  },
+  "changes": {
+    "reviewDisabledWithoutReviewerRole": true,
+    "staleReviewerSelectionBlocksApproval": true,
+    "freshNativeReviewerCheckAuthoritative": true,
+    "unearnedReviewHttpStatus": 403,
+    "unearnedReviewErrorCode": "MCP_REVIEWER_REQUIRED",
+    "clearExpiredConnectionMessage": true,
+    "existingProposalVoteAndPairedApprovalPreserved": true
+  },
+  "verified": {
+    "coreUnit": {
+      "tests": 1002,
+      "files": 166
+    },
+    "frontendUnit": {
+      "tests": 343,
+      "files": 59
+    },
+    "integration": {
+      "tests": 22,
+      "files": 3,
+      "realNativePermissionDenialAndVoteApproval": true
+    },
+    "browser": {
+      "tests": 12,
+      "desktopAndMobile": true,
+      "pairedEmailApprovalAndRenewalWithLockedVault": true,
+      "reviewDisabledAndUnchecked": true,
+      "axeViolations": 0
+    },
+    "typesLintDocsBuildFormat": true,
+    "cleanLockedCoreMcpFrontendCandidates": true,
+    "all140FrozenSdkFilesMatch": true,
+    "publicCard": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "cardWidth": 544,
+        "cardHeight": 820.390625,
+        "reviewDisabledAndUnchecked": true,
+        "permissionControlsCompact": true,
+        "allConnectionDetailsReadable": true,
+        "horizontalOverflow": false,
+        "accessibilityViolations": 0,
+        "pageErrors": [],
+        "serverFailures": [],
+        "approvalClicked": false
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "cardWidth": 346,
+        "cardHeight": 946.390625,
+        "reviewDisabledAndUnchecked": true,
+        "permissionControlsCompact": true,
+        "allConnectionDetailsReadable": true,
+        "horizontalOverflow": false,
+        "accessibilityViolations": 0,
+        "pageErrors": [],
+        "serverFailures": [],
+        "approvalClicked": false
+      }
+    ],
+    "publicPermissionDenial": {
+      "status": "passed",
+      "at": "2026-10-13T13:55:18.690Z",
+      "ownedSyntheticMemberOnly": true,
+      "requestedReviewWithoutRole": true,
+      "httpStatus": 403,
+      "code": "MCP_REVIEWER_REQUIRED",
+      "requestUnconsumed": true,
+      "noAuthorizationCodeOrGrantIssued": true,
+      "realChatGPTUserFlow": "pending"
+    },
+    "publicTools": 8,
+    "publicDownloadsVerified": 9,
+    "ownedSessionLoggedOutAndCookieRemoved": true,
+    "ownedSyntheticRequestsRemoved": true,
+    "disposableNativeBrowserFixtureStopped": true
+  },
+  "initialFailures": [
+    "Native RED reproduced 401 MCP_TOKEN_REQUIRED for review without reviewer status; final HTTP/native regression returns403 MCP_REVIEWER_REQUIRED and then permits vote with a fresh intent.",
+    "The first browser command used an npm alias whose forwarding dropped the requested project/filter. Two actual disabled-control regressions failed, two other cases passed, one was interrupted and three did not run. The final direct Playwright invocation passed all12 cases.",
+    "Existing frontend chunk-size warnings remain."
+  ],
+  "boundaries": {
+    "membershipRolesOrAuthoritiesChanged": false,
+    "nativeContractChanges": false,
+    "databaseSchemaChanges": false,
+    "releaseEnvironmentByteUnchanged": true,
+    "existingSdkCompanionStarterBytesAndUrlsPreserved": true,
+    "accountExitEnabled": false,
+    "realUserErasureOrDaoClosure": false,
+    "publicNativeTransactionsAdded": 0,
+    "assetMovement": false,
+    "ownerOrActiveChanges": false,
+    "productionDeployment": false,
+    "rollbackPrepared": true,
+    "rollbackExecutedThisFollowup": false,
+    "realChatGPTAccountApprovalAndModelUse": "pending user retry; fixtures/public synthetic probes do not establish it",
+    "independentRecoveryPrivacyLegalAndProviderGates": "held; unchanged",
+    "review": "inline author review; no delegated or independent review"
+  },
+  "privateReports": [
+    {
+      "path": "/data/daclify-runtime/mcp-review-20261013/deployment.json",
+      "sha256": "0f4ca54a852668f598fb859fffc33c38a68f15e9cb03f72db476412b76957fc8",
+      "bytes": 606
+    },
+    {
+      "path": "/data/daclify-runtime/mcp-review-20261013/public-final-artifacts-catalog.json",
+      "sha256": "90f7e617dfeac573e8c81a11884554e700b8e443d405ad16ae1c7ef82b062246",
+      "bytes": 4167
+    },
+    {
+      "path": "/data/daclify-runtime/mcp-review-20261013/paired-consent-public.json",
+      "sha256": "d8dc0d96f465871f5d942a35eb6d41e87b114be29c4e22aec19df9484ef4a34a",
+      "bytes": 1205
+    },
+    {
+      "path": "/data/daclify-runtime/mcp-review-20261013/public-review-denial.json",
+      "sha256": "f2e3f0f9f2e245152eb0fcd9cfc2704550ae4a12ba81e210bcd0decfe1550378",
+      "bytes": 300
+    },
+    {
+      "path": "/data/daclify-runtime/mcp-review-20261013/cleanup.json",
+      "sha256": "2810b27e8b35e98783da97892f8b5f6149c82158c20a9d67d0e8bf81ecb031d6",
+      "bytes": 205
+    }
+  ],
+  "verificationLogs": [
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/mcp-review-red.log",
+      "sha256": "3b493babbd5cca91ba2f5f1cc90e85acaf5ae330a28dab041e967fcea1858206",
+      "bytes": 1396
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/mcp-review-integration-green.log",
+      "sha256": "1dbf965b2dcca3d16702a1deb0ffd324a1a3df0095fa8bfca3aecc8a11e87d63",
+      "bytes": 454
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/mcp-review-full-test.log",
+      "sha256": "e770011830387b19cf570a1cee021d4cad8235eeab0587cce573cb5ea12b23fd",
+      "bytes": 589
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/mcp-review-typecheck.log",
+      "sha256": "387bc60f59818af1e63b50b3cc10cc3e78bd014680c58b8a4598943977285859",
+      "bytes": 67
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/mcp-review-lint.log",
+      "sha256": "2b42e5fa4221f7ddb86c19ff66cf1b165922bbfa3d8631fba744ad7b43c87f0b",
+      "bytes": 75
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/mcp-review-docs.log",
+      "sha256": "521ecbb91a098a00903777fdd937c99891b9bb3f701a7cb614708d722c7c5db7",
+      "bytes": 133
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/mcp-review-build.log",
+      "sha256": "153f35e3081b0ebc391a211004887884ffe8b3b0915769c62d7238175c68c428",
+      "bytes": 54
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-backend-core/.superpowers/mcp-review-final-format.log",
+      "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "bytes": 66
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/mcp-review-browser-red.log",
+      "sha256": "93654862e52fe62469a59fb126af86869904a0f7c27b9cd37d50ee627d91d78d",
+      "bytes": 6977
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/mcp-review-browser-green.log",
+      "sha256": "c99411d19ee9cf9836b0452e09e85609850ef084a2c3e97ea3a4eec0e3ae7077",
+      "bytes": 2432
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/mcp-review-full-test.log",
+      "sha256": "8626e305ca6e159673715aecb5d1bbeae585103951e718999cf5344c4e12b4e7",
+      "bytes": 481
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/mcp-review-typecheck.log",
+      "sha256": "d668524e21678dd0fc5b7469fc3108528f7ea9e855bc30134bff62ea9fc597ae",
+      "bytes": 67
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/mcp-review-lint.log",
+      "sha256": "ec90bc0d0c6f77e916f299e024a693c5048f56cf079bb30dda642ebd7c84851d",
+      "bytes": 303
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/mcp-review-build.log",
+      "sha256": "a8f22cae3203aca71b208290c3924da251f9e08812439367b9455b68a53e1d50",
+      "bytes": 11759
+    },
+    {
+      "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/mcp-review-final-format.log",
+      "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "bytes": 66
+    },
+    {
+      "path": "/data/daclify-runtime/mcp-review-20261013/core-ci.log",
+      "sha256": "92205c48e0e0510eb6d157be743cb507c4ce2d497ea6bada12c61a351a88a734",
+      "bytes": 27
+    },
+    {
+      "path": "/data/daclify-runtime/mcp-review-20261013/core-build.log",
+      "sha256": "153f35e3081b0ebc391a211004887884ffe8b3b0915769c62d7238175c68c428",
+      "bytes": 54
+    },
+    {
+      "path": "/data/daclify-runtime/mcp-review-20261013/mcp-ci.log",
+      "sha256": "e4e3907cbaf1349e7b09741bc31688971f24b693b805a33fb0cac02f4480f39b",
+      "bytes": 25
+    },
+    {
+      "path": "/data/daclify-runtime/mcp-review-20261013/mcp-build.log",
+      "sha256": "cb66d510fd5cae6ca546ebe741ad49fb308e0b147693c6962cb218a75bbb8dfa",
+      "bytes": 53
+    },
+    {
+      "path": "/data/daclify-runtime/mcp-review-20261013/frontend-ci.log",
+      "sha256": "66fd426e9dae3728a4462335f2f51c7df9111f3e82e4a173f94e8372e1b50fe6",
+      "bytes": 26
+    },
+    {
+      "path": "/data/daclify-runtime/mcp-review-20261013/frontend-build.log",
+      "sha256": "dade91190102f7218dc25194a4a8a02a7b7527186f71edbf03001daa8f7dee0e",
+      "bytes": 11759
+    },
+    {
+      "path": "/data/daclify-runtime/mcp-review-20261013/deploy.log",
+      "sha256": "21c275b5b0f04919009e3565bcc42cb6b9bc5733d8e50814a22628b36a453b8d",
+      "bytes": 544
+    },
+    {
+      "path": "/data/daclify-runtime/mcp-review-20261013/public-final.log",
+      "sha256": "fc75ff40136513a90da0d8436fae49930005139d639b952e4a2567690abc94e7",
+      "bytes": 217
+    },
+    {
+      "path": "/data/daclify-runtime/mcp-review-20261013/public-denial.log",
+      "sha256": "6fa4faed7de7b04c2866871f49cc07a88f969a06f85f2a3e6194d48e2108c352",
+      "bytes": 68
+    },
+    {
+      "path": "/data/daclify-runtime/mcp-review-20261013/public-card.log",
+      "sha256": "1c3ef4b8e413c46f49aed9317140edc6c6b609146a464f286a6a7b1d3a71735e",
+      "bytes": 919
+    },
+    {
+      "path": "/data/daclify-runtime/mcp-review-20261013/cleanup.log",
+      "sha256": "27624cdcd53afeb2936a2128096bb288a877f9d8589260ed67a9066bf45e9daa",
+      "bytes": 180
+    }
+  ]
+}
