@@ -453,6 +453,70 @@
       "path": "/data/daclify-runtime/worktrees/mini-apps-20261012/daclify-frontend/.superpowers/creation-session.config.ts",
       "bytes": 405,
       "sha256": "35eea22037f89b79f103bb0d11c986792bffbe0471907174d2e3bdbac8f1dd5f"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/ide-artifact-refresh.json",
+      "bytes": 2689,
+      "sha256": "723555e72b8e864d8a3d13993e9209e75adeadacd45fcc8deb675f961cc074a6"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/ide-checkout-final.json",
+      "bytes": 913,
+      "sha256": "d5bd2ac768d74d768f353ae586c9d7db9e742b74d1d65cc80dd95deb540b0c08"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/ide-mcp-ci.log",
+      "bytes": 141,
+      "sha256": "53c1ec854fd8a1dc9ee93dc66ab269c777f9ad8c1dcf05cec70743c23e7fcecf"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/ide-core-ci.log",
+      "bytes": 259,
+      "sha256": "0c56e5564d747e3d2b85ce558102d3a3b69a900a77d203cd95fac582b3eec3db"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/ide-frontend-ci.log",
+      "bytes": 143,
+      "sha256": "4956b34d8a2205c974030b126f94456f6a0fb8e697120e0d4e712790b560b18c"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/ide-docs-final.log",
+      "bytes": 133,
+      "sha256": "521ecbb91a098a00903777fdd937c99891b9bb3f701a7cb614708d722c7c5db7"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/ide-core-types-final.log",
+      "bytes": 67,
+      "sha256": "387bc60f59818af1e63b50b3cc10cc3e78bd014680c58b8a4598943977285859"
+    },
+    {
+      "path": "/data/daclify-runtime/dao-creation-20261013/ide-frontend-types-final.log",
+      "bytes": 67,
+      "sha256": "b68040a934a75ed309ec5ec0d5a0b81dea97c2850348179e9e1ddae791d939c9"
     }
-  ]
+  ],
+  "ideCheckoutVerification": {
+    "status": "passed",
+    "at": "2026-10-13T16:37:33.742710+00:00",
+    "installedVersions": {
+      "daclify-backend-core": {
+        "@daclify/core-protocol": "0.15.0-alpha.18",
+        "@daclify/modules": "0.10.0-alpha.25"
+      },
+      "daclify-frontend": {
+        "@daclify/core-protocol": "0.15.0-alpha.18",
+        "@daclify/modules": "0.10.0-alpha.25"
+      }
+    },
+    "checks": [
+      "core generated documentation",
+      "core strict TypeScript",
+      "frontend Vue/TypeScript",
+      "clean source checkouts"
+    ],
+    "initialFailure": "IDE core docs:check refused stale local runtime ABI; original core SDK was alpha.5 and modules SDK was alpha.5",
+    "correction": "Seed lock-integrity-verified immutable SDK archives; preserve and refresh stale local compiled inputs; npm ci in MCP/core/frontend",
+    "oldArtifactBackup": "/data/daclify-runtime/dao-creation-20261013/backups/ide-artifacts",
+    "liveDeploymentChanged": false
+  }
 }

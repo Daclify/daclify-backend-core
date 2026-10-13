@@ -26,6 +26,8 @@ The public platform read reported reachable matching chain, available shared cre
 
 Review was inline by the author, as delegation is unauthorized. Physical user passkey retry remains unobserved. No production publication, live member/DAO mutation, asset movement, contract upgrade, authority change or real erasure was performed.
 
+The original IDE `dev` checkouts were fast-forwarded to the pushed source. A final documentation check there initially failed because its ignored local runtime ABI predated mini-app/profile/exit actions, and installed core/module SDKs were still alpha.5. The release worktree check continued to pass. The old local compiled inputs were backed up; matching verified WASM/ABI inputs and lock-integrity-checked immutable SDK archives were copied locally. Locked MCP/core/frontend installs then passed, followed by core generated documentation, core strict TypeScript and frontend Vue/TypeScript checks. Both source checkouts remain clean. This refreshed local development inputs only; it did not rebuild or replace a published archive or change the live API/contracts.
+
 ## DAO claim links
 
 The user separately selected **first person with the link**, **only the claimant joins initially**, and **create on-chain when claimed**. These choices are recorded in the [draft claim-link design](../superpowers/specs/2026-10-13-dao-claim-links-design.md). The feature is not implemented in this release. Normal shared creation currently enrolls the founder as administrator; the proposed claim feature must also initialize an authoritative executive office without changing platform runtime ownership or its executive roster.
