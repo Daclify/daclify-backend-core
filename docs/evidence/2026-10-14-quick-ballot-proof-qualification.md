@@ -125,6 +125,14 @@ release artifacts/dependencies and real sibling Git worktrees recovered those
 checks; the final complete run passed. Historical fixtures were not rebuilt
 with new flags. Parallel mini-app admission work was preserved.
 
+After merging into `dev` at `e3d4c96`, compatibility was checked again against
+the newer core `0.15.0-alpha.27` / modules `0.10.0-alpha.36` dependencies and
+mini-app admission changes (`6936b16`). The complete unit suite passed
+**174 files / 1,048 tests**; all **19 native proof tests**, standard
+`tsc --noEmit` and focused ESLint also passed. Rebuilding with pinned CDT
+produced the same proof WASM and both ABI hashes. These checks do not expand
+the prototype into a product privacy or live integration qualification.
+
 ## Remaining product gates
 
 1. Core-owned account-wide authorization: public voters without DAO membership,

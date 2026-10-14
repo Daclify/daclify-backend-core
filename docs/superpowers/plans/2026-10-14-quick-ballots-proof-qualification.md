@@ -109,5 +109,6 @@ Task 3's qualified interfaces become the inputs to a detailed product execution 
 - Product design accepted; execution authorized by the user's “ok lets do it.”
 - Implementation method is inline. No delegation is authorized or required.
 - Current checkpoint: stateless native qualification passes 19 tests; the complete core unit suite passes 1,036 tests in 172 files. See [measured evidence](../../evidence/2026-10-14-quick-ballot-proof-qualification.md).
+- Merged compatibility: newer core alpha27/modules36 and mini-app admission work pass 1,048 unit tests in 174 files, 19 native proof tests, standard typecheck and focused lint. The proof WASM/ABI hashes reproduce unchanged.
 - Task 2's production key-grant and response-root interfaces remain open; Task 4 is not implemented. No new product endpoints, published crypto SDK or live deployment are included.
 - A policy question is pending about verified archive/cleanup of closed ballots whose final proof remains unavailable. Preserve the existing verified-result-before-pruning rule until answered.
