@@ -2,7 +2,8 @@
 
 Date: 14 October 2026. Status: product design draft for review. Implementation
 has not started. Confirmed requirements and proposed defaults are separated
-below. The user prefers on-chain voting; the cleanup policy below is proposed.
+below. On-chain voting and the 30-day vote-row retention period are confirmed;
+the remaining implementation defaults are proposed.
 
 ## Confirmed requirements
 
@@ -13,8 +14,8 @@ below. The user prefers on-chain voting; the cleanup policy below is proposed.
   membership.
 - A closing time is optional.
 - Show easy statistics. The ordinary results view does not need a voter list.
-- Record votes on-chain. Support reclaiming their live RAM after some time;
-  the user has asked whether historical records can supply older detail.
+- Record votes on-chain. Individual vote rows become eligible for verified
+  archival cleanup **30 days after closure**; final totals remain on-chain.
 
 ## Proposed first-version behavior
 
@@ -97,7 +98,7 @@ vote commitments. Relabelling its buttons does not establish account-wide or
 open-ended voting. Reuse suitable presentation and producer schemas; choose
 the new authorization/persistence path explicitly in the implementation plan.
 
-## On-chain votes and proposed cleanup
+## On-chain votes and cleanup
 
 The user's storage preference is on-chain voting. Database projections may
 serve discovery and history but cannot authorize responses or determine the
@@ -105,7 +106,7 @@ canonical result. The implementation still needs a reviewed account-wide
 signing path that works for users without DAO membership. Existing member-only
 Decide authorization does not provide that path.
 
-Proposed lifecycle:
+Lifecycle implementing the confirmed retention policy:
 
 1. Keep one live response per account while the ballot is open, with atomic
    totals. These rows prevent duplicate responses and support changes/removal.
@@ -120,10 +121,14 @@ Proposed lifecycle:
    domain. Verify its counts against the final result, uploaded bytes,
    retrievability and an independent backup before approving pruning. A hash
    authenticates available bytes; it does not keep those bytes available.
-4. After a proposed **30 days from finalized closure**, remove individual vote
-   rows in bounded, retry-safe batches, verifying archive proofs. This duration
-   is a recommendation, not an approved requirement. A cleanup worker submits
-   transactions; the contract does not run itself when a timer expires.
+4. At **30 days after closure** (2,592,000 seconds), individual vote rows become
+   eligible for removal in bounded, retry-safe batches, verifying archive
+   proofs. Measure from the voting deadline for timed ballots, or the recorded
+   manual closure time for open-ended ballots. A delayed finalization job does
+   not restart this clock. Pruning still requires an irreversible finalized
+   result and a verified archive with its backup; keep the rows longer if those
+   checks fail. A cleanup worker submits transactions; the contract does not
+   run itself when a timer expires.
 
 Reclaiming table RAM makes it reusable by its payer. It does not erase past
 transactions or reduce existing block-history storage. Historical detail can
@@ -162,8 +167,9 @@ selected-DAO, list and request bounds, with pagination and abuse controls.
 Integrate with existing account-exit/retention behavior rather than inventing
 new erasure guarantees or silently changing closed results.
 
-Also cover cleanup before/after the retention boundary, missing/corrupt archives,
-wrong-domain proofs, interrupted batches, unchanged final totals, ID reuse,
+Also cover cleanup before/at/after the 30-day boundary, delayed finalization,
+missing/corrupt archives, wrong-domain proofs, interrupted batches, unchanged
+final totals, ID reuse,
 irreversibility and history outages. Failed archive verification must prevent
 pruning. Preserve live replay/identity protections through account deletion and
 upgrades.
