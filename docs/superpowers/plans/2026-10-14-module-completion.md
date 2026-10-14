@@ -84,5 +84,5 @@ Interfaces: existing arbitration plan, narrowed to the selected member-vote prim
 ## Task 6 — Review and dev/testnet delivery
 
 - [x] Inline whole-change review, full affected release checks, version/documentation/test registers and old-release upgrade fixtures.
-- [ ] Commit/push dev, prepare and verify testnet snapshot/contract upgrade transactions, update only tested compatible artifacts, then publish API/frontend and verify public journeys.
-- [ ] Record actual passes/failures/unrun provider or wallet qualification and refresh the capability report without treating unrelated roadmap limits as fixed.
+- [x] Commit/push dev, prepare and verify testnet snapshot/contract upgrade transactions, update only tested compatible artifacts, then publish API/frontend and verify public journeys.
+- [x] Record actual passes/failures/unrun provider or wallet qualification and refresh the capability report without treating unrelated roadmap limits as fixed.

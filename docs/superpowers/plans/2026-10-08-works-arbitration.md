@@ -8,6 +8,8 @@
 
 **Tech stack:** Antelope C++, producer-owned TypeScript/Zod schemas and generated SDKs, VERT/native Spring, Vue and existing encrypted documents.
 
+Coverage update (October 14): the selected module follow-up implements opt-in protected Works/Grants terms, permanent future-work adoption, provisional review, conflict-free member voting, bounded preparation/fallback, backup decisions and matching settlement. The newer design supersedes this plan's automatic-default and additional primary-mode proposals. See [live evidence](../../evidence/2026-10-14-module-completion.md) and [the selected plan](2026-10-14-module-completion.md); do not infer completion of those broader proposals or production qualification.
+
 ## Task 1 Frozen agreement and DAO policy
 
 **Existing files:** C `contracts/common/records.hpp`, `contracts/common/governance.hpp`, `protocol/dao.ts`; M `contracts/common/works_records.hpp`, `contracts/works/works.cpp`, `contracts/common/grants_records.hpp`, `contracts/grants/grants.cpp`, `protocol/agreements.ts`.
