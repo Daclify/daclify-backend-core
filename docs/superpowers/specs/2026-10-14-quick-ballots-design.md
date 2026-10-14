@@ -2,7 +2,7 @@
 
 Date: 14 October 2026. Status: product design draft for review. Implementation
 has not started. Confirmed requirements and proposed defaults are separated
-below; the vote storage decision is pending.
+below. The user prefers on-chain voting; the cleanup policy below is proposed.
 
 ## Confirmed requirements
 
@@ -13,22 +13,28 @@ below; the vote storage decision is pending.
   membership.
 - A closing time is optional.
 - Show easy statistics. The ordinary results view does not need a voter list.
+- Record votes on-chain. Support reclaiming their live RAM after some time;
+  the user has asked whether historical records can supply older detail.
 
 ## Proposed first-version behavior
 
 Each ballot has one originating DAO. Its creator must be an active member with
-the current executive role in that DAO. Read canonical executive membership and
-applicable policy on the server; an administrator flag or browser claim alone
-does not establish executive office. The existing
+the current executive role in that DAO. Enforce canonical executive membership
+and applicable policy in the contract, with server checks for useful feedback;
+an administrator flag or browser claim alone does not establish executive
+office. The existing
 [executive records and policy](../../../contracts/common/executives.hpp) remain
 authoritative. Another DAO's members being invited to vote does not make that
 DAO an author, owner or endorser.
 
-As a proposed visibility default, selected-DAO ballots are readable by their
+As a proposed discovery default, the portal lists selected-DAO ballots for their
 eligible audience and the originating DAO's executives. Public ballots have a
-shareable public read view; sign-in is required to vote. Existing private DAO
-documents or profile data must not become public through automatic attachment
-or copying. Keep voter eligibility distinct from visibility and DAO authority.
+shareable public read view; sign-in and authorized signing are required to vote.
+Audience restrictions control voting eligibility, not confidentiality: cleartext
+on-chain questions and responses can be read outside the portal. Existing
+private DAO documents or profile data must not become public through automatic
+attachment or copying. Keep voter eligibility distinct from discovery and DAO
+authority.
 
 For a selected-DAO ballot, a user qualifies through current eligible membership
 in at least one selected DAO. For a public ballot, a valid Daclify user account
@@ -46,7 +52,7 @@ fixed after the first vote. Corrections then require a new, clearly identified
 ballot rather than changing what existing votes mean.
 
 With a deadline, voting closes at that instant according to authoritative
-server/chain time. Express stored times in UTC and show them in the viewer's
+chain time. Express stored times in UTC and show them in the viewer's
 timezone. An overdue scheduled job must not extend voting. Without a deadline,
 the originating DAO's current executives can close the ballot manually. Other
 current executives can manage it if its creator leaves. Closed ballots reject
@@ -75,7 +81,8 @@ Example: `32 up · 8 down · 40 votes · 80% voting up · Closes in 2 days`.
 
 Aggregate display does not establish anonymous or secret voting. Do not claim
 that voter choices are confidential merely because the normal view omits them.
-The storage choice below determines the underlying visibility and trust model.
+On-chain responses are publicly inspectable, including after live rows are
+pruned when transaction history remains available.
 
 ## Relationship to DAO decisions
 
@@ -90,28 +97,76 @@ vote commitments. Relabelling its buttons does not establish account-wide or
 open-ended voting. Reuse suitable presentation and producer schemas; choose
 the new authorization/persistence path explicitly in the implementation plan.
 
-## Storage decision to resolve
+## On-chain votes and proposed cleanup
 
-Two approaches have different consequences:
+The user's storage preference is on-chain voting. Database projections may
+serve discovery and history but cannot authorize responses or determine the
+canonical result. The implementation still needs a reviewed account-wide
+signing path that works for users without DAO membership. Existing member-only
+Decide authorization does not provide that path.
 
-| Approach         | Consequence                                                                                                                                                                                                                                                                         |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Daclify database | Recommended starting point for simple account voting after sign-in. PostgreSQL enforces unique responses and atomic updates. Integrity and availability depend on the Daclify service and its backups; these are not native on-chain vote records.                                  |
-| On-chain         | Requires a reviewed way for all Daclify accounts to authorize votes without borrowing DAO-member authority. It adds signing, native storage accounting, retention/cleanup and upgrade work. Underlying vote records may be publicly readable even when the UI displays only totals. |
+Proposed lifecycle:
 
-The user has been asked to choose. Do not implement either approach, promise
-secret voting, or silently change the trust model before that choice is made.
-Do not copy personal profile details into ballot or voter records.
+1. Keep one live response per account while the ballot is open, with atomic
+   totals. These rows prevent duplicate responses and support changes/removal.
+   Never prune them while voting is open. An open-ended ballot retains this
+   cost until it is closed.
+2. Finalize the closed result and wait for irreversibility. Retain the bounded
+   question, originating DAO, audience, final up/down totals, closure metadata
+   and an archive commitment on-chain. Old results should remain readable
+   without replaying transaction history. A closed ballot cannot reopen, and
+   deleting response rows must not permit reuse of its identity.
+3. Export a complete final-response snapshot with its source/schema/block
+   domain. Verify its counts against the final result, uploaded bytes,
+   retrievability and an independent backup before approving pruning. A hash
+   authenticates available bytes; it does not keep those bytes available.
+4. After a proposed **30 days from finalized closure**, remove individual vote
+   rows in bounded, retry-safe batches, verifying archive proofs. This duration
+   is a recommendation, not an approved requirement. A cleanup worker submits
+   transactions; the contract does not run itself when a timer expires.
+
+Reclaiming table RAM makes it reusable by its payer. It does not erase past
+transactions or reduce existing block-history storage. Historical detail can
+come from a qualified history indexer or the verified archive. Do not depend
+on arbitrary public RPCs retaining every action; history services index and
+filter data separately from current contract state. Report incomplete or
+unavailable history explicitly. A final-response archive is not a full audit
+trail of every changed or removed response; that requires retained action
+history or a separately qualified event archive.
+
+The existing
+[ordinary-poll pruning action](../../../../daclify-backend-modules/contracts/decide/decide.cpp)
+already checks terminal status, retention, archive domain, row proofs and bounded
+progress while preserving the ballot result and vote-ID high-water mark. Its
+[archive format and recovery guidance](../../../../daclify-backend-modules/docs/archive-format.md)
+provide a pattern to extend. Those checks currently protect ordinary Decide
+polls; they do not implement Quick ballots or qualify their new source schema.
+Do not extend pruning to elections, executable decisions, key grants or payment
+and recovery records as part of this feature.
+
+Keep identifiers minimal; do not copy personal profiles into ballot or voter
+records or describe pruning as erasure of public chain history. Measure actual
+RAM and CPU before estimating costs. The retained per-ballot summary still uses
+RAM; the main saving is removing the much larger collection of voter rows.
+
+Primary references: [Telos state and history](https://docs.telos.net/overview/why-telos/scalability/)
+and [Hyperion history architecture](https://github.com/eosrio/hyperion-history-api#2-core-concepts).
 
 ## Implementation and verification boundaries
 
-The eventual plan must cover executive-role checks, audience validation,
+The eventual plan must cover contract executive-role checks, audience validation,
 one-account response identity, account merge/deletion behavior, DAO closure,
 expired sessions, membership revocation, deadline races, simultaneous changes,
 retries and restoration after service/database failure. Define finite content,
 selected-DAO, list and request bounds, with pagination and abuse controls.
 Integrate with existing account-exit/retention behavior rather than inventing
 new erasure guarantees or silently changing closed results.
+
+Also cover cleanup before/after the retention boundary, missing/corrupt archives,
+wrong-domain proofs, interrupted batches, unchanged final totals, ID reuse,
+irreversibility and history outages. Failed archive verification must prevent
+pruning. Preserve live replay/identity protections through account deletion and
+upgrades.
 
 Use released producer-owned interfaces across core, modules and frontend. A
 native implementation additionally needs pinned CDT `-O=s`, measured WASM/RAM
