@@ -35,8 +35,15 @@ The new proof-cleanup and setup-flow regressions failed before their fixes. Two 
 
 The configured Caleos endpoint timed out. Telos documents `https://testnet.telos.net` for its Zero testnet in its [official FAQ](https://docs.telos.net/users/knowledge-base/faqs/). Actual reads confirmed chain `1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f`, current runtime/raw ABI and Names pins, plus unchanged system/token code and raw ABI pins. Only testnet configuration and current testnet tools were changed.
 
-The development API was restarted with the validated endpoint. A separate updater snapshot passed its unsigned plan; the existing oracle service then completed its ordinary observation irreversibly (transaction `f911bf6563a1f09f9f27fe9f4647e9e28a752d32a9616b9bbd4a4013e4fd67a9`, block 450132415). Public network discovery and a synthetic Names quote now return 200. The API had 61 expired proof intents before cleanup deployment.
+The development API was restarted with the validated endpoint. A separate updater snapshot passed its unsigned plan; the existing oracle service then completed its ordinary observation irreversibly (transaction `f911bf6563a1f09f9f27fe9f4647e9e28a752d32a9616b9bbd4a4013e4fd67a9`, block 450132415). Public network discovery and a synthetic Names quote now return 200. The API had 61 expired proof intents before cleanup deployment; the deployed maintenance worker removed all 61 and migration 051 is recorded.
 
 ## Limits
 
 Docker execution, hosted GitHub CI, full native/provider qualification and new production deployment were not performed. Browser setup regressions use API fixtures; PostgreSQL/cryptographic proof checks and live RPC/Names reads are separate evidence. This development fix does not qualify a mainnet release. Deployment receipts and final commit IDs are recorded in the runtime delivery ledger.
+
+
+## Completed dev delivery
+
+Core `cf4900a`, modules `a34137a` and frontend `a1ae501` were merged and pushed to `dev`. API21, frontend32 and MCP12 are live from `/data/daclify-runtime/releases/20261014-review-fixes`; the Names updater uses its separately verified RPC snapshot. Public health/network/Names, active mini-app and MCP manifests and the previous mini-app20 manifest return 200. Desktop and mobile live Mini Apps checks have no page errors or overflow. Public HTML and the new setup asset match the published hashes.
+
+The first API rollout correctly rejected the old version-bound recovery report. The previous API was restored while core21 passed fresh destroyed-source TLS/raft recovery, four least-privilege refusals, audit redaction and a configured live TLS roundtrip with a synthetic key. The new report preserves existing policies/keys, wallet/passkey qualification limits and the original 17 October expiry. The corrected rollout is active and healthy. Runtime delivery logs retain the initial refusal and corrective checks.

@@ -54,7 +54,7 @@
 - [x] Format the files identified by the audit, without semantic edits.
 - [x] Diagnose the RPC timeout; validate a documented alternative using chain identity, deployed hashes and real API reads before any testnet configuration change.
 - [x] Run core/modules/frontend verify, builds, formatting, MCP tests, affected integration/browser checks and website checks as applicable.
-- [ ] Review the complete diffs inline, record evidence and integrate the authorized development work.
+- [x] Review the complete diffs inline, record evidence and integrate the authorized development work.
 
 ## Execution record
 
@@ -65,3 +65,5 @@ Ruling: Use feature branches in the existing checkouts, honoring the workspace's
 Progress: core proof cleanup passed 12 focused PostgreSQL checks, plus 41 related authentication/store checks and 27 actual account-erasure/schema-upgrade checks. Upgrade tests used a separate temporary CREATEDB test role after the restricted API role correctly refused database creation. Frontend verify passed all 364 unit tests; formatting/build and 24 connection browser checks passed. The original Mini Apps design journey is being rerun. Formatting-only sources were checked byte-for-byte against baseline Prettier output. Live network discovery and Names quotes return 200 after verified RPC replacement and successful routine oracle observation. Clean-source bootstrap exposed and now addresses MCP dependencies needed before core compilation.
 
 Final pre-delivery verification: workspace core verify1,016/169 files, modules verify215/33 files, all three formatting/build checks passed. Source-only core/module verify also passed; all current/historical WASM and core/MCP tar archives plus companion manifests match byte-for-byte. New development artifacts are local/vendored only; full release publication remains refused. Inline final review completed; no C++ binaries, native authority or action encodings changed. Dev integration/deployment remains the last task.
+
+Delivered: core cf4900a, modules a34137a, frontend a1ae501 merged/pushed to dev. New API21/frontend32/MCP12 served from separate dated snapshots; old mini-app download20 remains accessible. An initially stale recovery20 qualification correctly refused API startup; the old API was restored while fresh isolated TLS/raft and configured live synthetic wrap/unwrap checks qualified core21. Recovery policies/keys and the original 17 October expiry are preserved. Migration051 is live and the worker removed all61 expired intents; live network/Names/downloads return200. Desktop/mobile live browser has no page errors or overflow; public index/setup asset hashes match the delivered build.
