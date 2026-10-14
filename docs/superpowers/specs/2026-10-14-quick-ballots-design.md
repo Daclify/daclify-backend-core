@@ -98,6 +98,36 @@ vote commitments. Relabelling its buttons does not establish account-wide or
 open-ended voting. Reuse suitable presentation and producer schemas; choose
 the new authorization/persistence path explicitly in the implementation plan.
 
+## Proposed contract boundary
+
+Recommend a dedicated first-party Quick ballots contract in the modules
+repository, with its own tables, ABI and release pins. The user has suggested a
+separate contract; this section records the recommended boundary for review.
+Use one shared instance for the hosted runtime/network, with explicit ballot,
+originating-DAO and audience domains. Each DAO does not need its own deployment.
+Independent operators can deploy a matching instance for their own runtime.
+
+The contract owns ballot creation, response changes/removal, canonical totals,
+closure and guarded vote-row pruning. Reuse core's authoritative identities,
+executive roles, membership, approved signing methods, funded RAM accounting and
+archive verification through qualified public interfaces. Keep one account and
+approval flow in the frontend. Do not introduce a separate identity registry or
+grant the contract treasury, role-assignment or arbitrary execution powers.
+
+This boundary separates account-wide and cross-DAO participation from Decide's
+formal governance and executable decisions. It permits a distinct upgrade and
+cleanup lifecycle without migrating existing Decide ballots. It does not make
+the feature independent of core: account-wide vote authorization, module/source
+registration, archive schemas and quota integration still require coordinated
+implementation and qualification. In particular, the existing member-only
+`module_actor` helper cannot authorize a public voter without DAO membership.
+
+As an implementation default to review, charge ballot and response storage to
+the originating DAO's funded allowance with bounded usage; selecting another
+DAO as an audience must not debit its resources. A separate contract alone does
+not reduce per-vote RAM or establish a security boundary: verify permissions,
+isolation and measured WASM/RAM/CPU, including deployment overhead.
+
 ## On-chain votes and cleanup
 
 The user's storage preference is on-chain voting. Database projections may
