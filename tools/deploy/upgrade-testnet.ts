@@ -466,7 +466,8 @@ async function execute() {
   }
   // Spring bounds decompressed transactions too: publish runtime first, then modules/pins.
   const batches = [
-    ...runtimeActions.map((action) => [action]),
+    runtimeActions.filter((action) => action.name.toString() !== 'setabi'),
+    runtimeActions.filter((action) => action.name.toString() === 'setabi'),
     ...targets
       .filter((target) => target !== runtime)
       .map((target) =>
