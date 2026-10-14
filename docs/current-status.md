@@ -6,7 +6,7 @@ Audience: community members, DAO administrators, mini-app builders and operators
 
 The shared dev app is [testnet.app.daclify.com](https://testnet.app.daclify.com/); its [handbook](https://testnet.app.daclify.com/docs) displays the installed SDK/help versions. The public [network response](https://testnet.api.daclify.com/v1/network) identifies the API, chain, runtime and advertised capabilities. A capability name or package version alone does not verify a provider, client wallet or deployed contract hash.
 
-The documentation cohort uses core/SDK `0.15.0-alpha.22`, modules `0.10.0-alpha.30`, frontend `0.15.0-alpha.33`, and MCP `0.1.0-alpha.13`. Contract interface remains 1; module contract versions and bytecode are unchanged. Earlier download cohorts remain immutable. Exact code/artifact identities and completed delivery checks belong in the dated evidence record; consult the live API rather than assuming this checkpoint will remain current.
+The documentation cohort uses core/SDK `0.15.0-alpha.22`, modules `0.10.0-alpha.30`, frontend `0.15.0-alpha.33`, and MCP `0.1.0-alpha.13`. Contract interface remains 1; module contract versions and bytecode are unchanged. Earlier download cohorts remain immutable. Exact code/artifact identities and completed delivery checks are in the [documentation delivery record](evidence/2026-10-14-documentation-audit.md); consult the live API rather than assuming this checkpoint will remain current.
 
 ## Availability
 

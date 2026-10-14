@@ -24,10 +24,12 @@ Core owns `docs/guides/topics.json`, generated references/help, `docs/current-st
 - [x] Produce a new immutable development documentation/SDK cohort; refresh consumer archives, locks and exact compatibility tests. C++ and schema migrations are unchanged.
 - [x] Validate guide/example fields and commands against source; local/heading/navigation links, generated consistency, meaningful handbook/search tests, formatting/build and manual source review.
 - [x] Verify version-bound development recovery configuration before any dev API restart; retain prior downloads and qualification expiry.
-- [ ] Integrate/push authorized development changes, verify the live dev handbook and record results/limits. Website source notes may be committed; no public website or mainnet deployment is authorized.
+- [x] Integrate/push authorized development changes, verify the live dev handbook and record results/limits. Website source notes may be committed; no public website or mainnet deployment is authorized.
 
 ## Evidence and scope
 
 Audit artifacts: `/data/daclify-runtime/docs-review-20261014`. Existing release evidence records remain historical. The prior14October code fixes pass core1016/modules215/frontend364/MCP12/integration68/browser40; this documentation task will record its own checks separately. User priority confirmed in chat. Preserve the six legacy repositories and Garden Care.
 
 Ruling: author Start here only in the existing producer guide source, expose it in the existing Getting started collection, and link to it from indexes. A second Markdown copy would recreate drift. No new documentation framework or application authority behavior is needed.
+
+Completed 14 October 2026: full repository checks, final locked bootstrap,833 local references, selected heading/public URLs, SDK example types,64 browser checks plus4 final-package checks, fresh version-bound TLS recovery preflight, pushed authorized branches and actual public desktop/mobile handbook/download verification. See [delivery evidence](../../evidence/2026-10-14-documentation-audit.md). Production/provider/native/CI/translation qualifications are not claimed.
