@@ -1,10 +1,15 @@
-import {checkNativeAuthority} from './auth/native-proof.js';
+import { checkNativeAuthority } from './auth/native-proof.js';
 import { NamesActionSchemas, NamesTableSchemas } from '../../../sdk/generated/names-schemas.js';
 import { EncryptionPublicKeySchema } from '../../../protocol/crypto.js';
 import { ProfileRecipientPageSchema } from '../../../protocol/profiles.js';
 import { decodeRawNativeProfile } from '../../../sdk/profiles.js';
-import { privateHandoverCommitment,exitInstructionDigest } from '../../../sdk/account-exit.js';
-import { DaoHandoverSchema,SignedExitInstructionSchema,ExitSubmissionSchema,type ExitSubmission } from '../../../protocol/account-exit.js';
+import { privateHandoverCommitment, exitInstructionDigest } from '../../../sdk/account-exit.js';
+import {
+  DaoHandoverSchema,
+  SignedExitInstructionSchema,
+  ExitSubmissionSchema,
+  type ExitSubmission,
+} from '../../../protocol/account-exit.js';
 import { namesAbi, NamesCodeHash } from '../../../sdk/names.js';
 import {
   ContentPageQuerySchema,
@@ -133,7 +138,12 @@ import {
 import type { ChainGateway } from './chain.js';
 import type { EvmRelay } from '../../../protocol/evm-wallet.js';
 import type { Pool, PoolClient } from 'pg';
-import { canonicalEvmSignature, evmTypedDigest, governanceTypedData, exitGovernanceTypedData } from '../../../sdk/evm.js';
+import {
+  canonicalEvmSignature,
+  evmTypedDigest,
+  governanceTypedData,
+  exitGovernanceTypedData,
+} from '../../../sdk/evm.js';
 import { recoverEvmDigest } from './auth/evm-proof.js';
 import {
   resourcePolicyFromRow,
@@ -622,11 +632,18 @@ export class NativeChainGateway implements ChainGateway {
       exempt,
     });
   }
-  async attestHostedClosure(dao:DaoRef,receipt:string):Promise<void>{
-    await this.hosting(dao);ChainIdSchema.parse(receipt);
-    const life=(await this.table('daolife',this.config.runtime,dao.daoId,1))[0];
-    if(!life||life.dao_id!==dao.daoId||life.state!==1)throw new ApiError('HOSTED_CLOSURE_CONTEXT',409);
-    await this.push('closehost',{dao_id:dao.daoId,closing_at:life.transitioned_at,receipt},this.config.relayActor,this.config.relayKey);
+  async attestHostedClosure(dao: DaoRef, receipt: string): Promise<void> {
+    await this.hosting(dao);
+    ChainIdSchema.parse(receipt);
+    const life = (await this.table('daolife', this.config.runtime, dao.daoId, 1))[0];
+    if (!life || life.dao_id !== dao.daoId || life.state !== 1)
+      throw new ApiError('HOSTED_CLOSURE_CONTEXT', 409);
+    await this.push(
+      'closehost',
+      { dao_id: dao.daoId, closing_at: life.transitioned_at, receipt },
+      this.config.relayActor,
+      this.config.relayKey,
+    );
   }
   async attestCapacity(dao: DaoRef, members: number, expires: number, receipt: string) {
     await this.hosting(dao);
@@ -731,7 +748,9 @@ export class NativeChainGateway implements ChainGateway {
     });
     const presets = await this.supportsPresets(actions);
     const createType = abi?.actions.find((action) => action.name.toString() === 'createpaid')?.type;
-    const claimFounder = abi?.structs.find((row) => row.name === createType)?.fields.some((field) => field.name === 'founder' && field.type === 'claim_founder$');
+    const claimFounder = abi?.structs
+      .find((row) => row.name === createType)
+      ?.fields.some((field) => field.name === 'founder' && field.type === 'claim_founder$');
     return NetworkSchema.parse({
       chainId: this.config.chainId,
       rpcUrl: this.config.rpcUrl,
@@ -2337,7 +2356,10 @@ export class NativeChainGateway implements ChainGateway {
       throw cause;
     }
   }
-  async memberships(account: Account, db: Pick<PoolClient, 'query'> | undefined = this.pool): Promise<UserMembership[]> {
+  async memberships(
+    account: Account,
+    db: Pick<PoolClient, 'query'> | undefined = this.pool,
+  ): Promise<UserMembership[]> {
     // ponytail: scans DAOs and their paged members; add a verified membership index when measured scale requires it.
     const daos = await this.listDaos();
     const matches: UserMembership[] = [];
@@ -2410,7 +2432,10 @@ export class NativeChainGateway implements ChainGateway {
       signingKey: member.signing_key,
     });
   }
-  private async linkedWallets(accountId: string, db: Pick<PoolClient, 'query'> | undefined = this.pool): Promise<WalletIdentity[]> {
+  private async linkedWallets(
+    accountId: string,
+    db: Pick<PoolClient, 'query'> | undefined = this.pool,
+  ): Promise<WalletIdentity[]> {
     if (!db) return [];
     const [native, evm] = await Promise.all([
       db.query<{ native_account: string }>(
@@ -3802,86 +3827,279 @@ export class NativeChainGateway implements ChainGateway {
     )
       throw new ApiError('RELAY_RESOURCES', 503);
   }
-  async prepareSettlement(input:unknown):Promise<ExitSubmission>{
-    const signed=SignedExitInstructionSchema.parse(input);if(!['withdraw','unstake'].includes(signed.request.action))throw new ApiError('EXIT_SETTLEMENT_SCOPE',403);
+  async prepareSettlement(input: unknown): Promise<ExitSubmission> {
+    const signed = SignedExitInstructionSchema.parse(input);
+    if (!['withdraw', 'unstake'].includes(signed.request.action))
+      throw new ApiError('EXIT_SETTLEMENT_SCOPE', 403);
     return this.prepareExitSubmission(signed);
   }
-  async submitSettlement(input:ExitSubmission):Promise<{transactionId:string}>{
-    const {transaction}=await this.exitPacket(input),action=transaction.actions[0];if(!action)throw new ApiError('EXIT_PACKET',403);
-    const decoded=z.object({request:z.object({action:z.string()})}).parse(Serializer.objectify(Serializer.decode({abi:runtimeAbi,type:action.name.toString(),data:action.data})));
-    if(!['withdraw','unstake'].includes(decoded.request.action))throw new ApiError('EXIT_SETTLEMENT_SCOPE',403);
+  async submitSettlement(input: ExitSubmission): Promise<{ transactionId: string }> {
+    const { transaction } = await this.exitPacket(input),
+      action = transaction.actions[0];
+    if (!action) throw new ApiError('EXIT_PACKET', 403);
+    const decoded = z
+      .object({ request: z.object({ action: z.string() }) })
+      .parse(
+        Serializer.objectify(
+          Serializer.decode({ abi: runtimeAbi, type: action.name.toString(), data: action.data }),
+        ),
+      );
+    if (!['withdraw', 'unstake'].includes(decoded.request.action))
+      throw new ApiError('EXIT_SETTLEMENT_SCOPE', 403);
     return this.submitPreparedExit(input);
   }
-  async prepareExitSubmission(input:unknown):Promise<ExitSubmission>{
-    const signed=SignedExitInstructionSchema.parse(input),request=signed.request;
+  async prepareExitSubmission(input: unknown): Promise<ExitSubmission> {
+    const signed = SignedExitInstructionSchema.parse(input),
+      request = signed.request;
     await this.reviewedRuntime(this.config.runtime);
-    if(request.chain_id!==this.config.chainId||request.deployment!==this.config.runtime)throw new ApiError('INSTRUCTION_DOMAIN',403);
-    const member=(await this.table('members',request.dao_id,request.member_id,1))[0];
-    if(!member||member.id!==request.member_id||member.nonce!==request.nonce)throw new ApiError('EXIT_MEMBER_CHANGED',409);
-    let name:'submitexit'|'exitevm'='submitexit';
-    if('sig' in signed){
-      let valid=false;try{valid=Signature.from(signed.sig).verifyDigest(exitInstructionDigest(signed.operation,signed.step_digest,request),PublicKey.from(member.signing_key));}catch{}
-      if(!valid)throw new ApiError('SIGNATURE_INVALID',403);
-    }else if('proof' in signed){
-      name='exitevm';const binding=await this.evmBinding(request.dao_id,request.member_id),chainId=Number(signed.evm_chain_id);
-      if(!binding?.active||binding.chain_id!==signed.evm_chain_id||binding.address!==signed.address||binding.epoch!==signed.binding_epoch||(chainId!==40&&chainId!==41))throw new ApiError('EVM_BINDING',409);
-      try{const typed=exitGovernanceTypedData(signed.operation,signed.step_digest,request,{chainId,address:'0x'+signed.address,epoch:signed.binding_epoch});if(recoverEvmDigest(evmTypedDigest(typed),canonicalEvmSignature('0x'+signed.proof))!=='0x'+signed.address)throw Error('Signature');}catch{throw new ApiError('EVM_SIGNATURE_INVALID',401);}
-    }else{
-      exitInstructionDigest(signed.operation,signed.step_digest,request);
-      if(member.native_account!==signed.account)throw new ApiError('EXIT_SIGNER_REQUIRED',403);
-      const transaction=Serializer.decode({type:Transaction,data:signed.packedTransaction}),expected=Action.from({account:this.config.runtime,name:'exitnative',authorization:[{actor:signed.account,permission:signed.permission}],data:encodeAction('exitnative',{operation:signed.operation,step_digest:signed.step_digest,request})});
-      if(Serializer.encode({object:transaction}).hexString!==signed.packedTransaction||!transaction.actions[0]?.equals(expected)||transaction.actions.length!==1||transaction.expiration.toMilliseconds()<=Date.now()||transaction.expiration.toMilliseconds()>Date.now()+61000)throw new ApiError('EXIT_PACKET',403);
-      const info=await this.api.v1.chain.get_info();if(info.chain_id.toString()!==this.config.chainId)throw new ApiError('CHAIN_ID_MISMATCH',503);
-      const packet=ExitSubmissionSchema.parse({transactionId:transaction.id.toString(),packet:Serializer.encode({object:SignedTransaction.from({...transaction,signatures:signed.signatures})}).hexString,firstBlock:Number(info.head_block_num),cursor:Number(info.head_block_num),expiresAt:transaction.expiration.toDate().toISOString()});
-      await this.exitPacket(packet);return packet;
+    if (request.chain_id !== this.config.chainId || request.deployment !== this.config.runtime)
+      throw new ApiError('INSTRUCTION_DOMAIN', 403);
+    const member = (await this.table('members', request.dao_id, request.member_id, 1))[0];
+    if (!member || member.id !== request.member_id || member.nonce !== request.nonce)
+      throw new ApiError('EXIT_MEMBER_CHANGED', 409);
+    let name: 'submitexit' | 'exitevm' = 'submitexit';
+    if ('sig' in signed) {
+      let valid = false;
+      try {
+        valid = Signature.from(signed.sig).verifyDigest(
+          exitInstructionDigest(signed.operation, signed.step_digest, request),
+          PublicKey.from(member.signing_key),
+        );
+      } catch {}
+      if (!valid) throw new ApiError('SIGNATURE_INVALID', 403);
+    } else if ('proof' in signed) {
+      name = 'exitevm';
+      const binding = await this.evmBinding(request.dao_id, request.member_id),
+        chainId = Number(signed.evm_chain_id);
+      if (
+        !binding?.active ||
+        binding.chain_id !== signed.evm_chain_id ||
+        binding.address !== signed.address ||
+        binding.epoch !== signed.binding_epoch ||
+        (chainId !== 40 && chainId !== 41)
+      )
+        throw new ApiError('EVM_BINDING', 409);
+      try {
+        const typed = exitGovernanceTypedData(signed.operation, signed.step_digest, request, {
+          chainId,
+          address: '0x' + signed.address,
+          epoch: signed.binding_epoch,
+        });
+        if (
+          recoverEvmDigest(evmTypedDigest(typed), canonicalEvmSignature('0x' + signed.proof)) !==
+          '0x' + signed.address
+        )
+          throw Error('Signature');
+      } catch {
+        throw new ApiError('EVM_SIGNATURE_INVALID', 401);
+      }
+    } else {
+      exitInstructionDigest(signed.operation, signed.step_digest, request);
+      if (member.native_account !== signed.account) throw new ApiError('EXIT_SIGNER_REQUIRED', 403);
+      const transaction = Serializer.decode({ type: Transaction, data: signed.packedTransaction }),
+        expected = Action.from({
+          account: this.config.runtime,
+          name: 'exitnative',
+          authorization: [{ actor: signed.account, permission: signed.permission }],
+          data: encodeAction('exitnative', {
+            operation: signed.operation,
+            step_digest: signed.step_digest,
+            request,
+          }),
+        });
+      if (
+        Serializer.encode({ object: transaction }).hexString !== signed.packedTransaction ||
+        !transaction.actions[0]?.equals(expected) ||
+        transaction.actions.length !== 1 ||
+        transaction.expiration.toMilliseconds() <= Date.now() ||
+        transaction.expiration.toMilliseconds() > Date.now() + 61000
+      )
+        throw new ApiError('EXIT_PACKET', 403);
+      const info = await this.api.v1.chain.get_info();
+      if (info.chain_id.toString() !== this.config.chainId)
+        throw new ApiError('CHAIN_ID_MISMATCH', 503);
+      const packet = ExitSubmissionSchema.parse({
+        transactionId: transaction.id.toString(),
+        packet: Serializer.encode({
+          object: SignedTransaction.from({ ...transaction, signatures: signed.signatures }),
+        }).hexString,
+        firstBlock: Number(info.head_block_num),
+        cursor: Number(info.head_block_num),
+        expiresAt: transaction.expiration.toDate().toISOString(),
+      });
+      await this.exitPacket(packet);
+      return packet;
     }
     await this.assertResources(this.config.relayActor);
-    const info=await this.api.v1.chain.get_info();if(info.chain_id.toString()!==this.config.chainId)throw new ApiError('CHAIN_ID_MISMATCH',503);
-    const transaction=Transaction.from({...info.getTransactionHeader(60),actions:[Action.from({account:this.config.runtime,name,authorization:[{actor:this.config.relayActor,permission:this.config.relayPermission??'active'}],data:encodeAction(name,signed)})]});
-    const packet=SignedTransaction.from({...transaction,signatures:[this.config.relayKey.signDigest(transaction.signingDigest(info.chain_id))]});
-    return ExitSubmissionSchema.parse({transactionId:transaction.id.toString(),packet:Serializer.encode({object:packet}).hexString,firstBlock:Number(info.head_block_num),cursor:Number(info.head_block_num),expiresAt:transaction.expiration.toDate().toISOString()});
+    const info = await this.api.v1.chain.get_info();
+    if (info.chain_id.toString() !== this.config.chainId)
+      throw new ApiError('CHAIN_ID_MISMATCH', 503);
+    const transaction = Transaction.from({
+      ...info.getTransactionHeader(60),
+      actions: [
+        Action.from({
+          account: this.config.runtime,
+          name,
+          authorization: [
+            { actor: this.config.relayActor, permission: this.config.relayPermission ?? 'active' },
+          ],
+          data: encodeAction(name, signed),
+        }),
+      ],
+    });
+    const packet = SignedTransaction.from({
+      ...transaction,
+      signatures: [this.config.relayKey.signDigest(transaction.signingDigest(info.chain_id))],
+    });
+    return ExitSubmissionSchema.parse({
+      transactionId: transaction.id.toString(),
+      packet: Serializer.encode({ object: packet }).hexString,
+      firstBlock: Number(info.head_block_num),
+      cursor: Number(info.head_block_num),
+      expiresAt: transaction.expiration.toDate().toISOString(),
+    });
   }
-  private async exitPacket(input:ExitSubmission,scoped=false){
-    const packet=ExitSubmissionSchema.parse(input),transaction=Serializer.decode({type:SignedTransaction,data:packet.packet});
-    if(Serializer.encode({object:transaction}).hexString!==packet.packet||transaction.id.toString()!==packet.transactionId||transaction.actions.length!==1||transaction.signatures.length<1||transaction.signatures.length>32||transaction.context_free_actions.length||transaction.context_free_data.length||transaction.transaction_extensions.length||Number(transaction.delay_sec)!==0||transaction.expiration.toDate().toISOString()!==packet.expiresAt)throw new ApiError('EXIT_PACKET',403);
-    const action=transaction.actions[0];if(!action||action.account.toString()!==this.config.runtime||action.authorization.length!==1)throw new ApiError('EXIT_PACKET',403);
-    const authorization=action.authorization[0];if(!authorization)throw new ApiError('EXIT_PACKET',403);
-    if(!scoped&&action.name.toString()==='exitnative'){
-      const account=await this.api.v1.chain.get_account(authorization.actor),permission=account.permissions.find(value=>value.perm_name.toString()===authorization.permission.toString());
-      if(authorization.permission.toString()!=='active'||!permission)throw new ApiError('EXIT_PACKET',403);
-      checkNativeAuthority(transaction.transaction,transaction.signatures.map(value=>value.toString()),this.config.chainId,permission.required_auth);
-    }else{
-      if(!(scoped?['submitsess']:['submitexit','exitevm']).includes(action.name.toString())||transaction.signatures.length!==1||authorization.actor.toString()!==this.config.relayActor||authorization.permission.toString()!==(this.config.relayPermission??'active'))throw new ApiError('EXIT_PACKET',403);
-      const signature=transaction.signatures[0];if(!signature||!signature.verifyDigest(transaction.transaction.signingDigest(this.config.chainId),this.config.relayKey.toPublic()))throw new ApiError('EXIT_PACKET',403);
+  private async exitPacket(input: ExitSubmission, scoped = false) {
+    const packet = ExitSubmissionSchema.parse(input),
+      transaction = Serializer.decode({ type: SignedTransaction, data: packet.packet });
+    if (
+      Serializer.encode({ object: transaction }).hexString !== packet.packet ||
+      transaction.id.toString() !== packet.transactionId ||
+      transaction.actions.length !== 1 ||
+      transaction.signatures.length < 1 ||
+      transaction.signatures.length > 32 ||
+      transaction.context_free_actions.length ||
+      transaction.context_free_data.length ||
+      transaction.transaction_extensions.length ||
+      Number(transaction.delay_sec) !== 0 ||
+      transaction.expiration.toDate().toISOString() !== packet.expiresAt
+    )
+      throw new ApiError('EXIT_PACKET', 403);
+    const action = transaction.actions[0];
+    if (
+      !action ||
+      action.account.toString() !== this.config.runtime ||
+      action.authorization.length !== 1
+    )
+      throw new ApiError('EXIT_PACKET', 403);
+    const authorization = action.authorization[0];
+    if (!authorization) throw new ApiError('EXIT_PACKET', 403);
+    if (!scoped && action.name.toString() === 'exitnative') {
+      const account = await this.api.v1.chain.get_account(authorization.actor),
+        permission = account.permissions.find(
+          (value) => value.perm_name.toString() === authorization.permission.toString(),
+        );
+      if (authorization.permission.toString() !== 'active' || !permission)
+        throw new ApiError('EXIT_PACKET', 403);
+      checkNativeAuthority(
+        transaction.transaction,
+        transaction.signatures.map((value) => value.toString()),
+        this.config.chainId,
+        permission.required_auth,
+      );
+    } else {
+      if (
+        !(scoped ? ['submitsess'] : ['submitexit', 'exitevm']).includes(action.name.toString()) ||
+        transaction.signatures.length !== 1 ||
+        authorization.actor.toString() !== this.config.relayActor ||
+        authorization.permission.toString() !== (this.config.relayPermission ?? 'active')
+      )
+        throw new ApiError('EXIT_PACKET', 403);
+      const signature = transaction.signatures[0];
+      if (
+        !signature ||
+        !signature.verifyDigest(
+          transaction.transaction.signingDigest(this.config.chainId),
+          this.config.relayKey.toPublic(),
+        )
+      )
+        throw new ApiError('EXIT_PACKET', 403);
     }
-    return {packet,transaction};
+    return { packet, transaction };
   }
-  async submitPreparedExit(input:ExitSubmission):Promise<{transactionId:string}>{
-    const {packet,transaction}=await this.exitPacket(input);await this.reviewedRuntime(this.config.runtime);
-    const result=executedChainResult(await this.api.v1.chain.push_transaction(transaction),packet.transactionId);
-    await this.confirmBlock(result.blockNum);return {transactionId:result.transactionId};
+  async submitPreparedExit(input: ExitSubmission): Promise<{ transactionId: string }> {
+    const { packet, transaction } = await this.exitPacket(input);
+    await this.reviewedRuntime(this.config.runtime);
+    const result = executedChainResult(
+      await this.api.v1.chain.push_transaction(transaction),
+      packet.transactionId,
+    );
+    await this.confirmBlock(result.blockNum);
+    return { transactionId: result.transactionId };
   }
-  async reconcileExitSubmission(input:ExitSubmission):Promise<{state:'confirmed'|'pending'|'unavailable';cursor:number}>{
-    return this.reconcilePacket(input,false);
+  async reconcileExitSubmission(
+    input: ExitSubmission,
+  ): Promise<{ state: 'confirmed' | 'pending' | 'unavailable'; cursor: number }> {
+    return this.reconcilePacket(input, false);
   }
-  async reconcileScopedSubmission(input:ExitSubmission):Promise<{state:'confirmed'|'pending'|'unavailable';cursor:number}>{
-    return this.reconcilePacket(input,true);
+  async reconcileScopedSubmission(
+    input: ExitSubmission,
+  ): Promise<{ state: 'confirmed' | 'pending' | 'unavailable'; cursor: number }> {
+    return this.reconcilePacket(input, true);
   }
-  private async reconcilePacket(input:ExitSubmission,scoped:boolean):Promise<{state:'confirmed'|'pending'|'unavailable';cursor:number}>{
-    const {packet}=await this.exitPacket(input,scoped);await this.reviewedRuntime(this.config.runtime);
-    try{const result=await this.api.v1.chain.get_transaction_status(packet.transactionId);if(result.state==='IRREVERSIBLE')return {state:'confirmed',cursor:packet.cursor};}catch{/* Nodes may not enable finality tracking; reconcile the exact ID in irreversible blocks. */}
-    const info=await this.api.v1.chain.get_info();if(info.chain_id.toString()!==this.config.chainId)throw new ApiError('CHAIN_ID_MISMATCH',503);
-    const end=Math.min(Number(info.last_irreversible_block_num),packet.firstBlock+128,packet.cursor+24);
-    for(let cursor=packet.cursor;cursor<=end;cursor++){
-      const value=await this.api.call({path:'/v1/chain/get_block',params:{block_num_or_id:cursor}});
-      const block=z.object({block_num:z.int(),timestamp:z.string(),transactions:z.array(z.object({status:z.string(),trx:z.union([z.string(),z.object({id:ChainIdSchema})])}))}).parse(value);
-      if(block.block_num!==cursor)throw new ApiError('EXIT_RECEIPT',503);
-      if(block.transactions.some(item=>(typeof item.trx==='string'?item.trx:item.trx.id)===packet.transactionId&&item.status==='executed'))return {state:'confirmed',cursor};
-      if(Date.parse(block.timestamp+(block.timestamp.endsWith('Z')?'':'Z'))>Date.parse(packet.expiresAt))return {state:'unavailable',cursor};
+  private async reconcilePacket(
+    input: ExitSubmission,
+    scoped: boolean,
+  ): Promise<{ state: 'confirmed' | 'pending' | 'unavailable'; cursor: number }> {
+    const { packet } = await this.exitPacket(input, scoped);
+    await this.reviewedRuntime(this.config.runtime);
+    try {
+      const result = await this.api.v1.chain.get_transaction_status(packet.transactionId);
+      if (result.state === 'IRREVERSIBLE') return { state: 'confirmed', cursor: packet.cursor };
+    } catch {
+      /* Nodes may not enable finality tracking; reconcile the exact ID in irreversible blocks. */
     }
-    return {state:packet.cursor>=packet.firstBlock+128?'unavailable':'pending',cursor:end>=packet.cursor?end+1:packet.cursor};
+    const info = await this.api.v1.chain.get_info();
+    if (info.chain_id.toString() !== this.config.chainId)
+      throw new ApiError('CHAIN_ID_MISMATCH', 503);
+    const end = Math.min(
+      Number(info.last_irreversible_block_num),
+      packet.firstBlock + 128,
+      packet.cursor + 24,
+    );
+    for (let cursor = packet.cursor; cursor <= end; cursor++) {
+      const value = await this.api.call({
+        path: '/v1/chain/get_block',
+        params: { block_num_or_id: cursor },
+      });
+      const block = z
+        .object({
+          block_num: z.int(),
+          timestamp: z.string(),
+          transactions: z.array(
+            z.object({
+              status: z.string(),
+              trx: z.union([z.string(), z.object({ id: ChainIdSchema })]),
+            }),
+          ),
+        })
+        .parse(value);
+      if (block.block_num !== cursor) throw new ApiError('EXIT_RECEIPT', 503);
+      if (
+        block.transactions.some(
+          (item) =>
+            (typeof item.trx === 'string' ? item.trx : item.trx.id) === packet.transactionId &&
+            item.status === 'executed',
+        )
+      )
+        return { state: 'confirmed', cursor };
+      if (
+        Date.parse(block.timestamp + (block.timestamp.endsWith('Z') ? '' : 'Z')) >
+        Date.parse(packet.expiresAt)
+      )
+        return { state: 'unavailable', cursor };
+    }
+    return {
+      state: packet.cursor >= packet.firstBlock + 128 ? 'unavailable' : 'pending',
+      cursor: end >= packet.cursor ? end + 1 : packet.cursor,
+    };
   }
-  private async checkRelayAuthority(account:Account,request:instruction,signature:string,sessionId?:string):Promise<void>{
+  private async checkRelayAuthority(
+    account: Account,
+    request: instruction,
+    signature: string,
+    sessionId?: string,
+  ): Promise<void> {
     const member = (await this.table('members', request.dao_id, request.member_id, 1))[0];
     if (
       !member ||
@@ -3913,21 +4131,63 @@ export class NativeChainGateway implements ChainGateway {
     }
     if (!valid) throw new ApiError('SIGNATURE_INVALID', 403);
   }
-  async prepareScopedSubmission(account:Account,request:instruction,signature:string,sessionId:string):Promise<ExitSubmission>{
+  async prepareScopedSubmission(
+    account: Account,
+    request: instruction,
+    signature: string,
+    sessionId: string,
+  ): Promise<ExitSubmission> {
     await this.reviewedRuntime(this.config.runtime);
-    if(request.chain_id!==this.config.chainId||request.deployment!==this.config.runtime||request.version!==1)throw new ApiError('INSTRUCTION_DOMAIN',403);
-    if(!['open','vote','review','recordact'].includes(request.action)||request.target===this.config.runtime)throw new ApiError('MCP_SCOPE_REQUIRED',403);
-    await this.checkRelayAuthority(account,request,signature,sessionId);
+    if (
+      request.chain_id !== this.config.chainId ||
+      request.deployment !== this.config.runtime ||
+      request.version !== 1
+    )
+      throw new ApiError('INSTRUCTION_DOMAIN', 403);
+    if (
+      !['open', 'vote', 'review', 'recordact'].includes(request.action) ||
+      request.target === this.config.runtime
+    )
+      throw new ApiError('MCP_SCOPE_REQUIRED', 403);
+    await this.checkRelayAuthority(account, request, signature, sessionId);
     await this.assertResources(this.config.relayActor);
-    const info=await this.api.v1.chain.get_info();if(info.chain_id.toString()!==this.config.chainId)throw new ApiError('CHAIN_ID_MISMATCH',503);
-    const transaction=Transaction.from({...info.getTransactionHeader(60),actions:[Action.from({account:this.config.runtime,name:'submitsess',authorization:[{actor:this.config.relayActor,permission:this.config.relayPermission??'active'}],data:encodeAction('submitsess',{request,session_id:sessionId,sig:signature})})]});
-    const signed=SignedTransaction.from({...transaction,signatures:[this.config.relayKey.signDigest(transaction.signingDigest(info.chain_id))]});
-    return ExitSubmissionSchema.parse({transactionId:transaction.id.toString(),packet:Serializer.encode({object:signed}).hexString,firstBlock:Number(info.head_block_num),cursor:Number(info.head_block_num),expiresAt:transaction.expiration.toDate().toISOString()});
+    const info = await this.api.v1.chain.get_info();
+    if (info.chain_id.toString() !== this.config.chainId)
+      throw new ApiError('CHAIN_ID_MISMATCH', 503);
+    const transaction = Transaction.from({
+      ...info.getTransactionHeader(60),
+      actions: [
+        Action.from({
+          account: this.config.runtime,
+          name: 'submitsess',
+          authorization: [
+            { actor: this.config.relayActor, permission: this.config.relayPermission ?? 'active' },
+          ],
+          data: encodeAction('submitsess', { request, session_id: sessionId, sig: signature }),
+        }),
+      ],
+    });
+    const signed = SignedTransaction.from({
+      ...transaction,
+      signatures: [this.config.relayKey.signDigest(transaction.signingDigest(info.chain_id))],
+    });
+    return ExitSubmissionSchema.parse({
+      transactionId: transaction.id.toString(),
+      packet: Serializer.encode({ object: signed }).hexString,
+      firstBlock: Number(info.head_block_num),
+      cursor: Number(info.head_block_num),
+      expiresAt: transaction.expiration.toDate().toISOString(),
+    });
   }
-  async submitPreparedScoped(input:ExitSubmission):Promise<{transactionId:string}>{
-    const {packet,transaction}=await this.exitPacket(input,true);await this.reviewedRuntime(this.config.runtime);
-    const result=executedChainResult(await this.api.v1.chain.push_transaction(transaction),packet.transactionId);
-    await this.confirmBlock(result.blockNum);return {transactionId:result.transactionId};
+  async submitPreparedScoped(input: ExitSubmission): Promise<{ transactionId: string }> {
+    const { packet, transaction } = await this.exitPacket(input, true);
+    await this.reviewedRuntime(this.config.runtime);
+    const result = executedChainResult(
+      await this.api.v1.chain.push_transaction(transaction),
+      packet.transactionId,
+    );
+    await this.confirmBlock(result.blockNum);
+    return { transactionId: result.transactionId };
   }
   async relay(
     account: Account,
@@ -3944,7 +4204,7 @@ export class NativeChainGateway implements ChainGateway {
       (await this.network()).capabilities.includes('encrypted-profiles-v2')
     )
       throw new ApiError('PROFILE_ENCRYPTION_REQUIRED', 409);
-    await this.checkRelayAuthority(account,request,signature,sessionId);
+    await this.checkRelayAuthority(account, request, signature, sessionId);
     if (sessionId !== undefined) {
       return this.push(
         'submitsess',

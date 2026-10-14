@@ -118,7 +118,10 @@ export interface ChainGateway {
   ): Promise<{ transactionId: string }>;
   listDaosPage?(after?: string): Promise<{ daos: DaoSummary[]; next: string | null }>;
   listDaos(): Promise<DaoSummary[]>;
-  memberships(account: Account, db?: Pick<import('pg').PoolClient, 'query'>): Promise<UserMembership[]>;
+  memberships(
+    account: Account,
+    db?: Pick<import('pg').PoolClient, 'query'>,
+  ): Promise<UserMembership[]>;
   profileKeyMember?(
     daoId: string,
     memberId: string,
@@ -134,19 +137,38 @@ export interface ChainGateway {
     memberId: string,
   ): Promise<{ accountName: string | null; profile: string | null }>;
   createDao(account: Account, input: z.infer<typeof CreateDaoSchema>): Promise<DaoSummary>;
-  attestHostedClosure?(dao:DaoRef,receipt:string):Promise<void>;
-  prepareSettlement?(input:unknown):Promise<import('../../../protocol/account-exit.js').ExitSubmission>;
-  submitSettlement?(packet:import('../../../protocol/account-exit.js').ExitSubmission):Promise<{transactionId:string}>;
-  prepareExitSubmission?(input:unknown):Promise<import('../../../protocol/account-exit.js').ExitSubmission>;
-  submitPreparedExit?(packet:import('../../../protocol/account-exit.js').ExitSubmission):Promise<{transactionId:string}>;
-  reconcileExitSubmission?(packet:import('../../../protocol/account-exit.js').ExitSubmission):Promise<{state:'confirmed'|'pending'|'unavailable';cursor:number}>;
+  attestHostedClosure?(dao: DaoRef, receipt: string): Promise<void>;
+  prepareSettlement?(
+    input: unknown,
+  ): Promise<import('../../../protocol/account-exit.js').ExitSubmission>;
+  submitSettlement?(
+    packet: import('../../../protocol/account-exit.js').ExitSubmission,
+  ): Promise<{ transactionId: string }>;
+  prepareExitSubmission?(
+    input: unknown,
+  ): Promise<import('../../../protocol/account-exit.js').ExitSubmission>;
+  submitPreparedExit?(
+    packet: import('../../../protocol/account-exit.js').ExitSubmission,
+  ): Promise<{ transactionId: string }>;
+  reconcileExitSubmission?(
+    packet: import('../../../protocol/account-exit.js').ExitSubmission,
+  ): Promise<{ state: 'confirmed' | 'pending' | 'unavailable'; cursor: number }>;
   relay(
     account: Account,
     request: instruction,
     signature: string,
     sessionId?: string,
   ): Promise<{ transactionId: string }>;
-  prepareScopedSubmission?(account:Account,request:instruction,signature:string,sessionId:string):Promise<import('../../../protocol/account-exit.js').ExitSubmission>;
-  submitPreparedScoped?(packet:import('../../../protocol/account-exit.js').ExitSubmission):Promise<{transactionId:string}>;
-  reconcileScopedSubmission?(packet:import('../../../protocol/account-exit.js').ExitSubmission):Promise<{state:'confirmed'|'pending'|'unavailable';cursor:number}>;
+  prepareScopedSubmission?(
+    account: Account,
+    request: instruction,
+    signature: string,
+    sessionId: string,
+  ): Promise<import('../../../protocol/account-exit.js').ExitSubmission>;
+  submitPreparedScoped?(
+    packet: import('../../../protocol/account-exit.js').ExitSubmission,
+  ): Promise<{ transactionId: string }>;
+  reconcileScopedSubmission?(
+    packet: import('../../../protocol/account-exit.js').ExitSubmission,
+  ): Promise<{ state: 'confirmed' | 'pending' | 'unavailable'; cursor: number }>;
 }

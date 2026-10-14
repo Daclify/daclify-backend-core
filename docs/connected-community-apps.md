@@ -19,6 +19,8 @@ The SQLite and PostgreSQL starter candidates now run shared local conformance an
 
 Start with a DAO, admitted members and enabled Community Activity. Its administrator registers the app in the DAO's **Connected apps** tab, using its own HTTPS origin, exact callback and approved source API. The builder configures the registered client/app plus verified chain/runtime/DAO; a member signs in and separately approves recording. Confirm one synthetic completion against its exact native receipt before using real records. Daclify's owner is not a registration approver. A public package distribution path remains an implementation gate; the current private source/vendor archives alone do not complete a clean-machine self-service installation.
 
+For the current Mini Apps setup, open **Mini Apps → Connect an app** and choose your DAO. An administrator sees **Enable Community Activity** when the module is missing, or **Review Community Activity** when its deployment needs verification. After the module is ready, **Register an app** opens automatically if there are no apps. Use **Set up approvals** to configure or unlock your signer, then enter the app name, HTTPS origin, exact callback and approved source API and register it. Existing apps expose their connection configuration after these setup controls. A failed setup read offers **Retry app setup**.
+
 Use the [database and identity contract](guides/mini-app-database-contract.md) when designing any mini app. This applies to SQLite, PostgreSQL and another database engine; changing engines does not change the identity or privacy rules.
 
 ## Identity and recovery

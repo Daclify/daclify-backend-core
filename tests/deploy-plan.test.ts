@@ -57,7 +57,8 @@ describe('deployment environments', () => {
     expect(testnet.chainId).toBe(
       '1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f',
     );
-    expect(testnet.rpcUrl).toBe('https://testnet.telos.caleos.io');
+    expect(testnet.rpcUrl).toBe('https://testnet.telos.net');
+    expect(testnet.oracle.rpcUrl).toBe(testnet.rpcUrl);
     expect(testnet.accounts.map((account) => account.name)).toEqual([
       'daclifycore1',
       'daclifyhubv1',

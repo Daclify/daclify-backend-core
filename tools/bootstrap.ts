@@ -157,6 +157,24 @@ async function installFrontendPackages() {
   );
   npm(['ci', '--ignore-scripts', '--no-audit', '--no-fund'], frontend);
 }
+const companion = join(core, 'packages/community-mcp');
+async function installCompanionPackages() {
+  await mkdir(join(artifacts, 'community-mcp'), { recursive: true });
+  npm(
+    [
+      'install',
+      '--package-lock-only',
+      '--save-dev',
+      '--ignore-scripts',
+      '--no-audit',
+      '--no-fund',
+      `../../.artifacts/daclify-core-protocol-${publicManifest.version}.tgz`,
+      `../../../daclify-backend-modules/.artifacts/daclify-modules-${moduleManifest.version}.tgz`,
+    ],
+    companion,
+  );
+  npm(['ci', '--ignore-scripts', '--no-audit', '--no-fund'], companion);
+}
 // Development artifacts have not been published. Refresh their lock integrities explicitly;
 // --save-dev preserves the module's exact released-core peer range.
 await mkdir(join(modules, '.artifacts'), { recursive: true });
@@ -191,8 +209,9 @@ npm(
 );
 npm(['ci', '--ignore-scripts', '--no-audit', '--no-fund'], core);
 if (!backendOnly) await installFrontendPackages();
+await installCompanionPackages();
 if (flags.includes('--contracts')) {
-  // Requires the documented checksum-verified local toolchain image. No chain deployment.
+  // Requires the documented pinned compiler or toolchain image. No chain deployment.
   npm(['run', 'build:contracts'], core);
   npm(['run', 'codegen'], core);
   npm(['run', 'docs:generate'], core);
@@ -216,7 +235,18 @@ if (flags.includes('--contracts')) {
   await refreshCoreFixtures();
   npm(['install', '--save-prod', '--ignore-scripts', moduleTar], core);
   if (!backendOnly) await installFrontendPackages();
+  npm(['run', 'build:profile-legacy'], core);
+  npm(['exec', '--', 'tsx', 'tools/build/upgrade.ts'], core);
+  npm(['exec', '--', 'tsx', 'tools/build/upgrade.ts', '--observer'], core);
+  npm(['exec', '--', 'tsx', 'tools/build/reference-token.ts'], core);
+  npm(['exec', '--', 'tsx', 'tools/build-upgrade.ts'], modules);
+  npm(['exec', '--', 'tsx', 'tools/build-document-upgrade.ts'], modules);
 }
+if (flags.includes('--contracts')) await installCompanionPackages();
+npm(['run', 'build'], companion);
+npm(['pack', '--pack-destination', join(artifacts, 'community-mcp')], companion);
+npm(['run', 'package:mini-app-starter'], core);
+npm(['run', 'package:community-mcp'], core);
 console.log(
   'Development checkouts bootstrapped from locked dependencies. No package was published and no chain was deployed.',
 );

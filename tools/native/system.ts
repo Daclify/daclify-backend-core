@@ -14,7 +14,7 @@ import { activateFixtureFeatures } from './features.js';
 const network = fixtureNetwork();
 if (network.container !== 'daclify-resources-native' || network.url !== 'http://127.0.0.1:20588')
   throw new Error('OWNED_RESOURCE_FIXTURE_REQUIRED');
-const source = 'https://testnet.telos.caleos.io';
+const source = 'https://testnet.telos.net';
 const expectedCode = '48d74c3df9f5c9952c0f87ab6c01e1c6dfe621429f59932ecf609b5d81e668e4';
 const expectedAbi = 'fccb1a515b98d2232a1227279666d9a3fcd41f67fafa0d75212cc0a282564361';
 const response = await fetch(source + '/v1/chain/get_raw_code_and_abi', {

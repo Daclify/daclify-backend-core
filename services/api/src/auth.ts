@@ -30,11 +30,21 @@ export async function cleanupSignupAttempts(pool: Pool): Promise<number> {
   return result.rowCount ?? 0;
 }
 
+export async function cleanupExpiredAccountControls(pool: Pool, limit = 500): Promise<number> {
+  if (!Number.isInteger(limit) || limit < 1 || limit > 500) throw new Error('AUTH_CLEANUP_LIMIT');
+  const result = await pool.query(
+    'WITH expired AS (SELECT id FROM account_control_intents WHERE expires_at<=now() ORDER BY expires_at,id LIMIT $1 FOR UPDATE SKIP LOCKED) DELETE FROM account_control_intents c USING expired e WHERE c.id=e.id',
+    [limit],
+  );
+  return result.rowCount ?? 0;
+}
+
 export function startAuthMaintenance(pool: Pool): { stop: () => Promise<void> } {
   return startPollingWorker(async () => {
     const challenges = await cleanupExpiredChallenges(pool),
-      signup = await cleanupSignupAttempts(pool);
-    return challenges + signup === 0 ? 'idle' : 'progress';
+      signup = await cleanupSignupAttempts(pool),
+      controls = await cleanupExpiredAccountControls(pool);
+    return challenges + signup + controls === 0 ? 'idle' : 'progress';
   }, 'AUTH_MAINTENANCE_UNAVAILABLE');
 }
 
@@ -184,7 +194,7 @@ export async function readSession(pool: Pool, token: string): Promise<Account | 
   if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return undefined;
   const row = (
     await pool.query<AccountRow>(
-      'SELECT a.id,a.signing_key,a.custody,a.encryption_key,a.wallet_origin FROM sessions s JOIN accounts a ON a.id=s.account_id WHERE a.merged_into IS NULL AND a.erasure_state=\'none\' AND s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now() AND NOT EXISTS(SELECT 1 FROM quick_signup_pending_accounts p WHERE p.account_id=a.id)',
+      "SELECT a.id,a.signing_key,a.custody,a.encryption_key,a.wallet_origin FROM sessions s JOIN accounts a ON a.id=s.account_id WHERE a.merged_into IS NULL AND a.erasure_state='none' AND s.token_hash=$1 AND s.revoked_at IS NULL AND s.expires_at>now() AND NOT EXISTS(SELECT 1 FROM quick_signup_pending_accounts p WHERE p.account_id=a.id)",
       [hash(token)],
     )
   ).rows[0];

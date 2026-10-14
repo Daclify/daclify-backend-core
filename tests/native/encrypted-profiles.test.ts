@@ -276,8 +276,8 @@ it('refuses plaintext in the API gateway before broadcasting a transaction', asy
         root.signDigest((await import('../../sdk/index.js')).instructionDigest(request)).toString(),
       ),
     ).rejects.toMatchObject({ code: 'PROFILE_ENCRYPTION_REQUIRED' });
-    const paths = observed.mock.calls.map(([input]) =>
-      new URL(input instanceof Request ? input.url : String(input)).pathname,
+    const paths = observed.mock.calls.map(
+      ([input]) => new URL(input instanceof Request ? input.url : String(input)).pathname,
     );
     expect(paths).toContain('/v1/chain/get_abi');
     expect(paths).not.toContain('/v1/chain/push_transaction');

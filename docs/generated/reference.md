@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.15.0-alpha.20 · interface 1.
+Package 0.15.0-alpha.21 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -87,6 +87,8 @@ This release supports one configured native treasury asset per DAO. Governance s
 Connected app registration, Daclify-issued sign-in, app-bound completion/submission grants, private evidence and Community Activity are implemented on testnet. The connected-app installation/native/browser evidence is dated 11 October 2026; restored-account evidence dated 12 October verifies core 0.14.0-alpha.4, modules 0.10.0-alpha.4 and frontend 0.14.0-alpha.7. These are development releases; mainnet is not qualified. MCP, encrypted personal profiles and self-service leave/closure/account erasure remain planned.
 
 A community first creates its DAO and admits members. It can then connect several independently hosted apps, such as gardening, equipment booking and volunteer planning. Members join once; another app creates no new membership or voting weight. Each app has separate registration, callbacks, record references, access settings and signing permissions.
+
+To register an app, open Mini Apps, expand Connect an app and choose a DAO you administer. Enable or review Community Activity using the setup link. When the module is ready, registration opens automatically for an empty app list. Use Set up approvals to configure or unlock your signer, then register the app with its HTTPS origin, exact callback and source API. Connection configuration appears after registration; Retry app setup recovers failed reads.
 
 The Sign in with Daclify flow authenticates at Daclify through a previously paired, configured method such as email or Telegram. The app receives a verified app-specific identity and checks active membership in its configured DAO. It receives no private login pairings, root signing keys or decryption keys. A public DAO visitor does not become a member by viewing an app.
 

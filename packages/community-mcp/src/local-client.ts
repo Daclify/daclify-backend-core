@@ -11,7 +11,12 @@ import type { CommunityAccess } from '@daclify/core-protocol/community-agent';
 import { readAppResponse } from '@daclify/core-protocol/connected-apps';
 import type { LocalCredentialsSchema } from './credentials.js';
 import { z } from 'zod';
-export async function mcpRequest(api: string, path: string, body?: unknown, token?: string):Promise<unknown> {
+export async function mcpRequest(
+  api: string,
+  path: string,
+  body?: unknown,
+  token?: string,
+): Promise<unknown> {
   const response = await fetch(new URL(path, api), {
     method: body === undefined ? 'GET' : 'POST',
     headers: {
@@ -24,7 +29,27 @@ export async function mcpRequest(api: string, path: string, body?: unknown, toke
     signal: AbortSignal.timeout(15000),
   });
   // Reuse the bounded byte reader for an error body; this branch always rejects the request.
-  if(!response.ok){let code:string|undefined;try{const value=z.object({code:McpDiagnosticCodeSchema}).safeParse(JSON.parse(new TextDecoder().decode(await readAppResponse(new Response(response.body,{headers:response.headers}),4096))));if(value.success)code=value.data.code;}catch{/* Never expose provider diagnostics. */}throw Error(code??(response.status===403?'MCP_APPROVAL_PENDING':'MCP_API_REJECTED'));}
+  if (!response.ok) {
+    let code: string | undefined;
+    try {
+      const value = z
+        .object({ code: McpDiagnosticCodeSchema })
+        .safeParse(
+          JSON.parse(
+            new TextDecoder().decode(
+              await readAppResponse(
+                new Response(response.body, { headers: response.headers }),
+                4096,
+              ),
+            ),
+          ),
+        );
+      if (value.success) code = value.data.code;
+    } catch {
+      /* Never expose provider diagnostics. */
+    }
+    throw Error(code ?? (response.status === 403 ? 'MCP_APPROVAL_PENDING' : 'MCP_API_REJECTED'));
+  }
   return JSON.parse(new TextDecoder().decode(await readAppResponse(response, 32768)));
 }
 export class LocalCommunityClient implements CommunityAccess {

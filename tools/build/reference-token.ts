@@ -5,6 +5,16 @@ import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { resolve } from 'node:path';
 import { readBoundedResponse } from '../../services/api/src/http.js';
+const compiler = process.env.DACLIFY_CDT_BINARY;
+const environment = compiler
+  ? { ...process.env, LD_LIBRARY_PATH: process.env.DACLIFY_NATIVE_LIBS ?? '' }
+  : process.env;
+if (
+  compiler &&
+  execFileSync(compiler, ['--version'], { env: environment, encoding: 'utf8' }).trim() !==
+    'cdt-cpp version 4.1.1'
+)
+  throw new Error('PINNED_CDT_REQUIRED');
 const commit = 'c526479a48370981a1e9f0ac6b3bb0e4f737afa2';
 const files = [
   {
@@ -33,16 +43,20 @@ for (const file of files) {
   writeFileSync(output, bytes);
 }
 execFileSync(
-  'docker',
+  compiler ?? 'docker',
   [
-    'run',
-    '--rm',
-    '--platform',
-    'linux/amd64',
-    '-v',
-    `${resolve(process.cwd())}:/work`,
-    'daclify-v2-toolchain:4.1.1-spring1.2.2',
-    'cdt-cpp',
+    ...(compiler
+      ? []
+      : [
+          'run',
+          '--rm',
+          '--platform',
+          'linux/amd64',
+          '-v',
+          `${resolve(process.cwd())}:/work`,
+          'daclify-v2-toolchain:4.1.1-spring1.2.2',
+          'cdt-cpp',
+        ]),
     '.artifacts/reference-token/src/eosio.token.cpp',
     '-I',
     '.artifacts/reference-token/include',
@@ -52,7 +66,7 @@ execFileSync(
     '-contract',
     'eosio.token',
   ],
-  { stdio: 'inherit' },
+  { stdio: 'inherit', env: environment },
 );
 writeFileSync(
   '.artifacts/reference-token/source-pins.json',

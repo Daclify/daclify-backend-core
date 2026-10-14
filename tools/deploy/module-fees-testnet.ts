@@ -42,7 +42,7 @@ const chainId = '1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9
   runtime = 'daclifycore1',
   governor = '3boidanimus3';
 const priorCode = '4235158cdd149a4bebf1006a69b5f3943a842a9b437db14abf823acbd6cc277b';
-const api = new APIClient({ url: 'https://testnet.telos.caleos.io' }),
+const api = new APIClient({ url: 'https://testnet.telos.net' }),
   candidate = ABI.from(readFileSync('.artifacts/contracts/runtime.abi', 'utf8'));
 const hash = (bytes: Uint8Array | string) => createHash('sha256').update(bytes).digest('hex');
 const wasm = readFileSync('.artifacts/contracts/runtime.wasm'),
@@ -320,7 +320,7 @@ if (mode === '--prepare') {
       SignedTransaction.from({ ...transaction, signatures: [] }),
       CompressionType.zlib,
     );
-    const response = await fetch('https://testnet.telos.caleos.io/v1/chain/compute_transaction', {
+    const response = await fetch('https://testnet.telos.net/v1/chain/compute_transaction', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ transaction: unsigned }),
@@ -345,14 +345,12 @@ if (mode === '--prepare') {
       ...head.getTransactionHeader(300),
       actions: actions.map((a) => Action.from({ ...a, data: new Uint8Array() })),
     });
-    const required = z
-      .object({ required_keys: z.array(z.string()).length(1) })
-      .parse(
-        await api.call({
-          path: '/v1/chain/get_required_keys',
-          params: { transaction: authorityOnly, available_keys: [key.toPublic().toString()] },
-        }),
-      );
+    const required = z.object({ required_keys: z.array(z.string()).length(1) }).parse(
+      await api.call({
+        path: '/v1/chain/get_required_keys',
+        params: { transaction: authorityOnly, available_keys: [key.toPublic().toString()] },
+      }),
+    );
     assert.ok(
       required.required_keys.every((k) => PublicKey.from(k).equals(key.toPublic())),
       'SIGNING_AUTHORITY_CHANGED',

@@ -344,9 +344,22 @@ it('reports the same built-in member prices used by hosted capacity when no over
     revision: '0',
   });
   expect(current.paymentPolicy).toBeNull();
-  await f.push(['govseatfee', 'govpayfees'].map(action => f.system('linkauth', {
-    account: 'daclifycore', code: 'daclifycore', type: action, requirement: 'execctx',
-  }, 'daclifycore', 'owner')), [f.key('daclifycore')]);
+  await f.push(
+    ['govseatfee', 'govpayfees'].map((action) =>
+      f.system(
+        'linkauth',
+        {
+          account: 'daclifycore',
+          code: 'daclifycore',
+          type: action,
+          requirement: 'execctx',
+        },
+        'daclifycore',
+        'owner',
+      ),
+    ),
+    [f.key('daclifycore')],
+  );
   await f.call('daclifycore', 'setgov', { dao_id: '90001' }, 'daclifycore', 'owner');
   expect((await gateway.platform()).paymentPolicy).toEqual({ bps: 500, revision: '0' });
   expect((await gateway.paymentPolicy()).basisPoints).toBe(500);
@@ -729,9 +742,37 @@ it('controls the additive module through runtime authority while its code can me
   ).toBe(true);
   await delegated('recordact', encodeActivity('recordact', item('2', 'ad')), 1);
 });
-it('relays an actual member app signature through the native-backed API gateway',async()=>{
- const rootKey=keys[2],delegate=delegates[1],encryption=encryptionKeys[2];if(!rootKey||!delegate||!encryption)throw new Error('FIXTURE_KEY');
- const account=AccountSchema.parse({id:randomUUID(),custody:'user-controlled',signingKey:rootKey.toPublic().toString(),encryptionKey:encryption}),data=encodeActivity('recordact',item('2','af')),request=makeInstruction(reference(),'3',(await person('3')).nonce,Math.floor(Date.now()/1000)+120,'activity','recordact',data);
- const receipt=await gateway.connectedApps.relay(account,request,delegate.signDigest(instructionDigest(request)).toString(),'102','2');expect(receipt.transactionId).toMatch(/^[a-f0-9]{64}$/);
- expect((await gateway.connectedApps.activity(configFor('2'),{eventId:'af'.repeat(32)})).receipts[0]?.memberId).toBe('3');
+it('relays an actual member app signature through the native-backed API gateway', async () => {
+  const rootKey = keys[2],
+    delegate = delegates[1],
+    encryption = encryptionKeys[2];
+  if (!rootKey || !delegate || !encryption) throw new Error('FIXTURE_KEY');
+  const account = AccountSchema.parse({
+      id: randomUUID(),
+      custody: 'user-controlled',
+      signingKey: rootKey.toPublic().toString(),
+      encryptionKey: encryption,
+    }),
+    data = encodeActivity('recordact', item('2', 'af')),
+    request = makeInstruction(
+      reference(),
+      '3',
+      (await person('3')).nonce,
+      Math.floor(Date.now() / 1000) + 120,
+      'activity',
+      'recordact',
+      data,
+    );
+  const receipt = await gateway.connectedApps.relay(
+    account,
+    request,
+    delegate.signDigest(instructionDigest(request)).toString(),
+    '102',
+    '2',
+  );
+  expect(receipt.transactionId).toMatch(/^[a-f0-9]{64}$/);
+  expect(
+    (await gateway.connectedApps.activity(configFor('2'), { eventId: 'af'.repeat(32) })).receipts[0]
+      ?.memberId,
+  ).toBe('3');
 });

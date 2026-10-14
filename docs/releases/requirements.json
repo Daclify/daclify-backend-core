@@ -537,9 +537,7 @@
     {
       "id": "DAO-CLAIM-FOUNDER",
       "suite": "vert",
-      "tests": [
-        "tests/dao-claim-founder.test.ts"
-      ]
+      "tests": ["tests/dao-claim-founder.test.ts"]
     },
     {
       "id": "DAO-CLAIM-NATIVE-FOUNDER",
@@ -552,9 +550,7 @@
     {
       "id": "DAO-CLAIM-PROTOCOL",
       "suite": "unit",
-      "tests": [
-        "tests/dao-claims-protocol.test.ts"
-      ]
+      "tests": ["tests/dao-claims-protocol.test.ts"]
     },
     {
       "id": "DAO-CLAIM-RESERVATION",
@@ -567,16 +563,17 @@
     {
       "id": "DAO-CLAIM-BROWSER",
       "suite": "browser",
-      "tests": [
-        "../daclify-frontend/tests/e2e/dao-claims.spec.ts"
-      ]
+      "tests": ["../daclify-frontend/tests/e2e/dao-claims.spec.ts"]
     },
     {
       "id": "DAO-CLAIM-ENTRY",
       "suite": "unit",
-      "tests": [
-        "../daclify-frontend/tests/unit/dao-claim-entry.test.ts"
-      ]
+      "tests": ["../daclify-frontend/tests/unit/dao-claim-entry.test.ts"]
+    },
+    {
+      "id": "AUTH-ACCOUNT-CONTROL-EXPIRY",
+      "suite": "integration",
+      "tests": ["tests/integration/account-control-cleanup.test.ts"]
     }
   ]
 }

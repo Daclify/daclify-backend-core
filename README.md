@@ -52,7 +52,7 @@ Google, Telegram, email and passkey associations are PostgreSQL records, not pub
 
 ## Requirements
 
-Node 24.21 or later in the Node 24 line, and npm 11.19 or later in the npm 11 line. From a source-only checkout, run `node tools/bootstrap.ts` before the first `npm ci`. Add `--contracts` to rebuild the C++ artifacts with the toolchain image in `tools/build/Dockerfile`. Bootstrap does not publish a package and does not start a chain.
+Node 24.21 or later in the Node 24 line, and npm 11.19 or later in the npm 11 line. From a source-only checkout, run `node tools/bootstrap.ts` before the first `npm ci`. From a fresh checkout, `node tools/bootstrap.ts --contracts` also prepares the current and historical contract fixtures required by verification. Use full backend Git history and the toolchain image in `tools/build/Dockerfile`, or the documented pinned local CDT compiler. Both bootstrap paths prepare the MCP and mini-app release bundles. Bootstrap does not publish a package and does not start a chain.
 
 Ordinary checks from this directory:
 
@@ -61,6 +61,7 @@ npm run lint
 npm run typecheck
 npm run docs:check
 npm test
+npm --prefix ../daclify-frontend run build
 npm run verify
 ```
 

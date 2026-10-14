@@ -10,7 +10,7 @@ export const TelosTokenSources = [
   },
   {
     environment: 'testnet',
-    source: 'https://testnet.telos.caleos.io',
+    source: 'https://testnet.telos.net',
     chainId: '1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f',
     codeHash: 'e7aa90a489446616f9bf0f1d0368f849722c7d36054d910e8f378ce9d2b618f1',
     rawAbiHash: 'fb8452c70aa203505592aef25b696acaa1aee58805888cc9aae024b4c03af91e',

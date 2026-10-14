@@ -1,6 +1,6 @@
 {
   "name": "@daclify/backend-core",
-  "version": "0.15.0-alpha.20",
+  "version": "0.15.0-alpha.21",
   "license": "AGPL-3.0-only",
   "type": "module",
   "description": "Daclify core services and Antelope runtime",
@@ -60,8 +60,8 @@
     "build:claim-upgrade": "tsx tools/build/claim-upgrade.ts"
   },
   "dependencies": {
-    "@daclify/core-protocol": "file:.artifacts/daclify-core-protocol-0.15.0-alpha.20.tgz",
-    "@daclify/modules": "file:../daclify-backend-modules/.artifacts/daclify-modules-0.10.0-alpha.28.tgz",
+    "@daclify/core-protocol": "file:.artifacts/daclify-core-protocol-0.15.0-alpha.21.tgz",
+    "@daclify/modules": "file:../daclify-backend-modules/.artifacts/daclify-modules-0.10.0-alpha.29.tgz",
     "@fastify/cookie": "11.1.2",
     "@fastify/cors": "11.3.0",
     "@noble/curves": "2.4.0",

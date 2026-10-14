@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.15.0-alpha.21 development
+
+Prepare mandatory MCP/mini-app bundles and historical verification fixtures during bootstrap, with pinned local CDT and Docker support. Clean expired account-control proof intents in bounded concurrent batches using migration 051. Restore formatting checks and point the testnet profile at the verified Telos Zero endpoint. Publish a new development SDK/MCP cohort with unchanged contract binaries and signing policy.
+
 ## 0.15.0-alpha.20 development
 
 Add executive-authorized shared DAO claim links with seven-day expiry and explicit first-claim reservation. The sole recipient becomes member, administrator and native executive atomically through an optional createpaid extension. Preserve legacy action bytes, existing authorities, pending receipts and once-only ownership through retries and database restore. Add migration 050, bounded cleanup/erasure rules, exact paired-sign-in issuance/revocation approval, generated SDK/help and native/browser regressions. Consume the verified modules28 and MCP11 cohort; earlier downloads remain immutable and verified MCP archive directories retain their URLs.

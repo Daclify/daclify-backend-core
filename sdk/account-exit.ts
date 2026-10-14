@@ -37,18 +37,75 @@ export function privateHandoverCommitment(input: DaoRef, value: Handover | DaoHa
   return Checksum256.hash(bytes).toString();
 }
 
-export const ExitCoreActions = Object.freeze(['leave','startclose','closedao','delprofile','beginhand','scanhand','accepthand','withdraw','unstake'] as const);
-export function exitInstructionDigest(operation:string,stepDigest:string,request:import('./generated/runtime.js').instruction):Checksum256 {
- if(request.target!==request.deployment||!ExitCoreActions.some(action=>action===request.action))throw Error('EXIT_ACTION');
- const nonzero=z.string().regex(/^[a-f0-9]{64}$/).refine(value=>value!=='0'.repeat(64));
- const parts=[Serializer.encode({type:'string',object:'daclify.account-exit.v1'}).array,Serializer.encode({type:'checksum256',object:nonzero.parse(operation)}).array,Serializer.encode({type:'checksum256',object:nonzero.parse(stepDigest)}).array,Serializer.encode({abi:runtimeAbi,type:'instruction',object:request}).array];
- const bytes=new Uint8Array(parts.reduce((size,part)=>size+part.length,0));let offset=0;for(const part of parts){bytes.set(part,offset);offset+=part.length;}return Checksum256.hash(bytes);
+export const ExitCoreActions = Object.freeze([
+  'leave',
+  'startclose',
+  'closedao',
+  'delprofile',
+  'beginhand',
+  'scanhand',
+  'accepthand',
+  'withdraw',
+  'unstake',
+] as const);
+export function exitInstructionDigest(
+  operation: string,
+  stepDigest: string,
+  request: import('./generated/runtime.js').instruction,
+): Checksum256 {
+  if (
+    request.target !== request.deployment ||
+    !ExitCoreActions.some((action) => action === request.action)
+  )
+    throw Error('EXIT_ACTION');
+  const nonzero = z
+    .string()
+    .regex(/^[a-f0-9]{64}$/)
+    .refine((value) => value !== '0'.repeat(64));
+  const parts = [
+    Serializer.encode({ type: 'string', object: 'daclify.account-exit.v1' }).array,
+    Serializer.encode({ type: 'checksum256', object: nonzero.parse(operation) }).array,
+    Serializer.encode({ type: 'checksum256', object: nonzero.parse(stepDigest) }).array,
+    Serializer.encode({ abi: runtimeAbi, type: 'instruction', object: request }).array,
+  ];
+  const bytes = new Uint8Array(parts.reduce((size, part) => size + part.length, 0));
+  let offset = 0;
+  for (const part of parts) {
+    bytes.set(part, offset);
+    offset += part.length;
+  }
+  return Checksum256.hash(bytes);
 }
 
-export function exitOperationCommitment(operationId:string):string {
- z.uuid().parse(operationId);const encoded=Serializer.encode({type:'string',object:'daclify.account-exit.operation.v1:'+operationId});return Checksum256.hash(encoded).toString();
+export function exitOperationCommitment(operationId: string): string {
+  z.uuid().parse(operationId);
+  const encoded = Serializer.encode({
+    type: 'string',
+    object: 'daclify.account-exit.operation.v1:' + operationId,
+  });
+  return Checksum256.hash(encoded).toString();
 }
-export function exitStepCommitment(operationId:string,stepId:string,request:import('./generated/runtime.js').instruction):string {
- z.uuid().parse(operationId);z.string().min(1).max(64).regex(/^[A-Za-z0-9_-]+$/).parse(stepId);
- const encoded=Serializer.encode({type:'string',object:JSON.stringify(['daclify.account-exit.step.v1',operationId,stepId,Checksum256.hash(Serializer.encode({abi:runtimeAbi,type:'instruction',object:request})).toString()])});return Checksum256.hash(encoded).toString();
+export function exitStepCommitment(
+  operationId: string,
+  stepId: string,
+  request: import('./generated/runtime.js').instruction,
+): string {
+  z.uuid().parse(operationId);
+  z.string()
+    .min(1)
+    .max(64)
+    .regex(/^[A-Za-z0-9_-]+$/)
+    .parse(stepId);
+  const encoded = Serializer.encode({
+    type: 'string',
+    object: JSON.stringify([
+      'daclify.account-exit.step.v1',
+      operationId,
+      stepId,
+      Checksum256.hash(
+        Serializer.encode({ abi: runtimeAbi, type: 'instruction', object: request }),
+      ).toString(),
+    ]),
+  });
+  return Checksum256.hash(encoded).toString();
 }

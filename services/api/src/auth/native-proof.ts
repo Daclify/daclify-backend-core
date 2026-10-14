@@ -77,10 +77,28 @@ export async function verifyNativeProof(
   checkNativeProof(input, identity, runtime, message, expires, authority);
 }
 
-export function checkNativeAuthority(transaction:Transaction,signatures:readonly string[],chainId:string,authority:Authority):void {
- // Delegated accounts and waits require chain evaluation and are never guessed locally.
- if(authority.accounts.length||authority.waits.length||Number(authority.threshold)<1||authority.keys.length>32)throw new ApiError('NATIVE_AUTHORITY_UNSUPPORTED',409);
- const unique=new Set<string>();let weight=0;
- for(const text of signatures){const key=Signature.from(text).recoverDigest(transaction.signingDigest(chainId)),canonical=key.toString();if(unique.has(canonical))throw new ApiError('NATIVE_PROOF_INVALID',401);unique.add(canonical);weight+=authority.keyWeight(key);}
- if(weight<Number(authority.threshold))throw new ApiError('NATIVE_PROOF_INVALID',401);
+export function checkNativeAuthority(
+  transaction: Transaction,
+  signatures: readonly string[],
+  chainId: string,
+  authority: Authority,
+): void {
+  // Delegated accounts and waits require chain evaluation and are never guessed locally.
+  if (
+    authority.accounts.length ||
+    authority.waits.length ||
+    Number(authority.threshold) < 1 ||
+    authority.keys.length > 32
+  )
+    throw new ApiError('NATIVE_AUTHORITY_UNSUPPORTED', 409);
+  const unique = new Set<string>();
+  let weight = 0;
+  for (const text of signatures) {
+    const key = Signature.from(text).recoverDigest(transaction.signingDigest(chainId)),
+      canonical = key.toString();
+    if (unique.has(canonical)) throw new ApiError('NATIVE_PROOF_INVALID', 401);
+    unique.add(canonical);
+    weight += authority.keyWeight(key);
+  }
+  if (weight < Number(authority.threshold)) throw new ApiError('NATIVE_PROOF_INVALID', 401);
 }

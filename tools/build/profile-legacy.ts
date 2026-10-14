@@ -7,11 +7,13 @@ const sourceRef = '50fb975e09a86b6d2e4f7b3890b6cb3eb180e6e0',
   expectedWasm = 'b0c1826a210d273b3250915b7db0a4c1a4cc70be465153195b52febfb3272fb4',
   expectedAbi = 'd31f9e6c7d2a3608956cbab683d5212c905b21ab9fe3ec751b6ea7e5e5f2652d';
 const compiler = process.env.DACLIFY_CDT_BINARY;
-if (!compiler) throw new Error('PINNED_CDT_REQUIRED');
-const environment = { ...process.env, LD_LIBRARY_PATH: process.env.DACLIFY_NATIVE_LIBS ?? '' };
+const environment = compiler
+  ? { ...process.env, LD_LIBRARY_PATH: process.env.DACLIFY_NATIVE_LIBS ?? '' }
+  : process.env;
 if (
+  compiler &&
   execFileSync(compiler, ['--version'], { env: environment, encoding: 'utf8' }).trim() !==
-  'cdt-cpp version 4.1.1'
+    'cdt-cpp version 4.1.1'
 )
   throw new Error('PINNED_CDT_REQUIRED');
 const root = process.cwd(),
@@ -24,8 +26,20 @@ try {
   execFileSync('tar', ['-xf', archive, '-C', directory]);
   await mkdir(join(directory, '.artifacts/contracts'), { recursive: true });
   execFileSync(
-    compiler,
+    compiler ?? 'docker',
     [
+      ...(compiler
+        ? []
+        : [
+            'run',
+            '--rm',
+            '--platform',
+            'linux/amd64',
+            '-v',
+            `${directory}:/work`,
+            'daclify-v2-toolchain:4.1.1-spring1.2.2',
+            'cdt-cpp',
+          ]),
       'contracts/runtime/runtime.cpp',
       '-O=s',
       '-I',

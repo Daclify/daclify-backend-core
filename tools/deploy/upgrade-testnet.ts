@@ -33,7 +33,7 @@ import { encodeContractAbi, encodeSystem } from './actions.js';
 
 const root = '/data/daclify-upgrades/testnet';
 const chainId = '1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f';
-const api = new APIClient({ url: 'https://testnet.telos.caleos.io' });
+const api = new APIClient({ url: 'https://testnet.telos.net' });
 const snapshot = readFileSync(path.join(root, 'current-snapshot.txt'), 'utf8').trim();
 assert.ok(snapshot.startsWith(root + '/snapshot-'), 'TESTNET_SNAPSHOT_PATH');
 assert.equal(statSync(snapshot).mode & 0o077, 0, 'PRIVATE_SNAPSHOT_REQUIRED');
