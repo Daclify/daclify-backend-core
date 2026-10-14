@@ -1,7 +1,8 @@
 # Quick ballots
 
-Date: 14 October 2026. Status: product design draft for review. Implementation
-has not started. Confirmed requirements and proposed defaults are separated
+Date: 14 October 2026. Status: product design accepted for implementation;
+the user authorized execution after choosing the privacy/proof requirements.
+The first implementation step is proof qualification. Requirements and defaults are separated
 below. On-chain voting, 30-day vote-row retention, executive access to individual
 choices and public cryptographic verification of totals are confirmed. Remaining
 implementation defaults and the cryptographic protocol are proposed/unselected.
