@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.15.0-alpha.22 development
+
+Correct current documentation and feature availability, add the task-first Start here handbook guide, and update mini-app downloads/registration and recovery instructions. Preserve existing guide IDs, historical evidence, action/schema/contract behavior and immutable earlier bundles.
+
 ## 0.15.0-alpha.21 development
 
 Prepare mandatory MCP/mini-app bundles and historical verification fixtures during bootstrap, with pinned local CDT and Docker support. Clean expired account-control proof intents in bounded concurrent batches using migration 051. Restore formatting checks and point the testnet profile at the verified Telos Zero endpoint. Publish a new development SDK/MCP cohort with unchanged contract binaries and signing policy.

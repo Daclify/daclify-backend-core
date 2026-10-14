@@ -1,6 +1,6 @@
 # Recovering Daclify after service or device loss
 
-This guide describes current0.7 user recovery, retaining0.6 key behavior. Read [upgrade 0.7](operations/upgrade-0.7.md) for runtime/payment changes. Use the [upgrade guide](operations/upgrade-0.6.md) when moving an existing 0.5 service to this account model. The [verification record](evidence/2026-10-07-wallet-recovery.md) separates tested behavior from remaining deployment work.
+This runbook separates recovering your own keys and DAO access from restoring the operator’s database, key service and files. Read [current availability](current-status.md) for the shared testnet limits. Historical [0.6](operations/upgrade-0.6.md) and [0.7](operations/upgrade-0.7.md) upgrade instructions retain their version-specific prerequisites; later evidence and current configuration determine what is enabled.
 
 ## A ten-member DAO loses its server
 

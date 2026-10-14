@@ -1,33 +1,43 @@
 # Daclify documentation
 
-Current development version: **0.13.0-alpha.7**, contract interface 1. This is a development checkpoint; immutable publication, live provider/client qualification and hosted operations remain separate gates.
+Start with what you want to do. The [shared testnet handbook](https://testnet.app.daclify.com/docs) contains the member/admin guides; [current status](current-status.md) separates implemented features, enabled deployment capabilities and unfinished production qualification. Source versions live in producer package manifests and generated help, while `/v1/network` identifies the connected API.
 
-See [vault login v3 rollout](operations/login-v3.md) for the coordinated API/frontend update and preserved account/recovery state.
+## Community members and DAO administrators
 
-See [creator recovery and executive active ownership](operations/creator-owner-executive-active.md) for deployed native governance, and [Names observation permissions](operations/names-oracle.md) for the separate price updater.
+| Task | Guide |
+| --- | --- |
+| First visit, account, joining and approvals | [Start here](https://testnet.app.daclify.com/docs/start-here), [Accounts](https://testnet.app.daclify.com/docs/accounts), [Approval setup](../../daclify-frontend/docs/approval-setup.md) |
+| Admit members and understand permissions | [Members](https://testnet.app.daclify.com/docs/members), [Governance](https://testnet.app.daclify.com/docs/dao-governance) |
+| Vote, arrange work or manage money | [Decide](../../daclify-frontend/docs/users/decide.md), [Works](../../daclify-frontend/docs/users/works.md), [Treasury](https://testnet.app.daclify.com/docs/treasury) |
+| Publish or recover private documents | [Documents](https://testnet.app.daclify.com/docs/documents), [Recovery](disaster-recovery.md) |
+| Connect or register a mini app | [Connected apps](connected-community-apps.md), [Mini-app handbook](https://testnet.app.daclify.com/docs/connected-apps) |
+| Understand costs and storage | [Pricing](https://testnet.app.daclify.com/pricing), [DAO pricing](operations/dao-pricing.md), [Resources](https://testnet.app.daclify.com/docs/resources-and-retention) |
 
-## Start with the task
+The handbook groups guides into Getting started, Members & governance, Modules & treasury, Costs & storage, Privacy & recovery, Mini apps & builders, and Operators & reference. Topics have stable `/docs/:topic` links. Use the matching deployment's guides and review version/code warnings before signing.
 
-Hosted operators must also configure a [shared gateway allowance](operations/gateway-allowance.md); its application counters do not prove provider funding.
+## Mini-app builders and integrators
 
-The shared testnet's [IPFS setup and renewal guide](operations/testnet-ipfs.md) covers its confirmed free provider plan, DAO quotas, document/image uploads and current gateway period.
+1. [Register and connect an app](connected-community-apps.md): administrator/module/signer prerequisites, exact callbacks, trusted matching downloads and receipt confirmation.
+2. [Design the app database](guides/mini-app-database-contract.md): pairwise subjects, full DAO bindings, transactions, outbox retries, privacy and restore.
+3. [Use the runnable recipe](../examples/community-mini-app/README.md) and [mini-app design example](examples/community-mini-app-design.md).
+4. [Connect a community MCP harness](guides/community-mcp.md): scoped delegates, supported tools, explicit consent and harness qualification limits.
 
-| Task                                                        | Guide                                                                                                                                                                                                     |
-| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Understand the repository split and capabilities            | [Core README](../README.md), [modules README](https://github.com/Daclify/daclify-backend-modules/blob/dev/README.md), [frontend README](https://github.com/Daclify/daclify-frontend/blob/dev/README.md) |
-| Install, build and test sibling checkouts                   | [Development](development.md)                                                                                                                                                                             |
-| Configure networks, providers, payments and hosted services | [Operations](operations.md)                                                                                                                                                                               |
-| Pair login credentials or activate wallet governance        | [Paired login](operations/paired-login.md)                                                                                                                                                                |
-| Recover a member, vault or service after loss               | [Disaster recovery](disaster-recovery.md)                                                                                                                                                                 |
-| Configure DAO payments or shared subscriptions              | [Connected payments](operations/connected-payments.md), [Upgrade0.7](operations/upgrade-0.7.md)                                                                                                           |
-| Upgrade an existing 0.5 service                             | [Upgrade to 0.6](operations/upgrade-0.6.md)                                                                                                                                                               |
-| Review the earlier contract/module upgrade                  | [Upgrade to 0.5](operations/upgrade-0.5.md)                                                                                                                                                               |
-| Resolve paid creation incidents                             | [Paid creation incidents](operations/paid-creation-incidents.md)                                                                                                                                          |
-| Understand purpose presets, agents and authority            | [DAO presets](dao-presets.md)                                                                                                                                                                             |
-| Design a community mini app with Daclify                    | [Connected-app guide](connected-community-apps.md), [reusable mini-app example](examples/community-mini-app-design.md) — proposed integration                                                               |
-| Inspect exact API/action/table/configuration shapes         | [Generated core reference](generated/reference.md), [module reference](https://github.com/Daclify/daclify-backend-modules/blob/dev/docs/generated/reference.md)                                          |
+A directory listing is separate from native app registration. Each app owns its hosting/database; registration grants neither treasury authority nor automatic payment.
 
-The app exposes these product guides at `/docs/:topic`, including `/docs/accounts`, `/docs/providers`, `/docs/recovery`, `/docs/documents`, `/docs/deployments` and `/docs/platform`. The `/docs/connected-apps` guide explains the proposed mini-app integration and links to its reusable design example. Its intended hosted destination is [app.daclify.com/docs](https://app.daclify.com/docs); this link does not certify a deployed app. `/status` reports safe configuration and chain details; configured providers are not qualified integrations.
+## Contributors and operators
+
+| Task | Source |
+| --- | --- |
+| Install/build/test sibling repositories | [Development](development.md) |
+| Configure services or publish the dev app | [Operations](operations.md), [workspace publication](../../daclify-frontend/docs/workspace-testnet.md), [historical Hetzner checkpoints](../ops/hetzner/README.md) |
+| Configure payments or hosting | [Connected payments](operations/connected-payments.md) |
+| Diagnose paid creation or Names | [Paid creation incidents](operations/paid-creation-incidents.md), [Names updater](operations/names-oracle.md) |
+| Restore service/key data | [Disaster recovery](disaster-recovery.md), [recovery setup](../ops/recovery/README.md) |
+| Fund gateway access or renew IPFS services | [Gateway allowance](operations/gateway-allowance.md), [testnet IPFS](operations/testnet-ipfs.md) |
+| Inspect exact schemas/actions | [Generated core reference](generated/reference.md), [module reference](../../daclify-backend-modules/docs/generated/reference.md) |
+| Qualify an immutable release | [Release qualification](operations/release-qualification.md) |
+
+Historical upgrades remain version-specific: [0.5](operations/upgrade-0.5.md), [0.6](operations/upgrade-0.6.md), [0.7](operations/upgrade-0.7.md), [0.8](operations/upgrade-0.8.md), [0.9](operations/upgrade-0.9.md). Use their recorded prerequisites when upgrading those releases, rather than treating their versions as today's deployment.
 
 ## Documentation ownership and generation
 
@@ -35,11 +45,11 @@ Core owns shared guides, architecture, operational runbooks and cross-repository
 
 Edit `docs/guides/topics.json` for product explanations. `npm run docs:generate` produces `docs/generated/reference.md`, `docs/generated/reference.json` and `protocol/generated/help.ts` from those guides, canonical API schemas and compiled ABIs. `npm run docs:check` rejects drift; never hand-edit generated files. Reference schemas describe structure; authorization and runtime refinements still depend on source and tests.
 
-After changing a guide, regenerate it, rebuild the public development packages and reinstall the consumers through core's sibling bootstrap. Otherwise the API assistant and frontend can continue showing the old packed help. See [development](development.md). Published package bytes must never be replaced under an existing version; current development tarballs are explicitly unpublished.
+After changing a guide, regenerate it, rebuild the public development packages and reinstall the consumers through core's sibling bootstrap. Otherwise the API assistant and frontend can continue showing the old packed help. See [development](development.md). Published package bytes must never be replaced under an existing version; development bundles already in use remain immutable even when they are not published to a package registry. Advance the producer version when their bytes change.
 
 Stable topic IDs are UI routes and contextual links. `release-0.5` is retained as a compatible topic ID even though its text now explains the current release. The bundles display package and interface versions. Contract module hashes are checked separately; a displayed service version is not proof of deployed runtime provenance.
 
-Use [audit remediation](operations/project-audit-remediation.md) for the current candidate; [upgrade 0.8](operations/upgrade-0.8.md) remains the historical resource migration, [release qualification](operations/release-qualification.md) for immutable packaging, and the [acceptance record](evidence/2026-10-09-resource-completion.md) for actual checks and remaining external dependencies.
+Use [current status](current-status.md) for the latest dated checkpoint; [audit remediation](operations/project-audit-remediation.md) records its reviewed coordinated update; [upgrade 0.8](operations/upgrade-0.8.md) remains the historical resource migration, [release qualification](operations/release-qualification.md) for immutable packaging, and the [acceptance record](evidence/2026-10-09-resource-completion.md) for actual checks and remaining external dependencies.
 
 ## Evidence and unresolved qualification
 
@@ -49,7 +59,7 @@ Use [audit remediation](operations/project-audit-remediation.md) for the current
 - [Wallet recovery evidence](evidence/2026-10-07-wallet-recovery.md): actual empty-database access, original-key decryption, archive restore, local native behavior and read-only Telos testnet proof.
 - [Research implementation evidence](evidence/2026-10-07-research-execution.md): paired login, governance, grants, endorsements, elections and reporting.
 - [Engineering audit](evidence/2026-10-07-engineering-audit.md), [access fixes](evidence/2026-10-07-access-fixes.md), [testnet deployment](evidence/2026-10-07-telos-testnet.md) and [provider smoke checks](evidence/2026-10-07-support-telegram.md).
-- [Custody decision](decisions/custody.md): OpenBao candidate and unresolved durable signing/decryption recovery. Managed accounts remain unavailable.
+- [Custody decision](decisions/custody.md): OpenBao candidate and unresolved durable signing/decryption recovery. Production independent recovery remains unqualified; shared testnet assisted recovery is an explicitly disclosed development mode.
 - [Compatibility register](releases/compatibility.json) and dated development manifests in `releases/`: pinned revisions/hashes, with publication refused and qualification false.
 - [Historical implementation limits](evidence/implementation-limits.md): retain dated findings; use subsequent evidence and current runbooks to determine what remains open.
 
@@ -62,7 +72,7 @@ These record design decisions and acceptance criteria. They are not a substitute
 - [Master plan](superpowers/plans/2026-10-05-daclify-v2-master-plan.md)
 - [Governance hardening plan](superpowers/plans/2026-10-08-governance-hardening.md): qualification, ballot integrity, DAO module selection, arbitration and election methods.
 - [Architecture](superpowers/specs/2026-10-05-daclify-v2-architecture.md)
-- [Connected community apps proposal](superpowers/specs/2026-10-11-connected-community-apps-design.md): several apps per public or private DAO, member authorised completions, compact native records and protected IPFS evidence; external app access remains unimplemented.
+- [Connected community apps design](superpowers/specs/2026-10-11-connected-community-apps-design.md): several apps per public or private DAO, member authorised completions, compact native records and protected IPFS evidence; see the current app guide and live capability response for availability.
 - [Work packages](superpowers/plans/2026-10-05-daclify-v2-work-packages.md)
 - [Foundation plan](superpowers/plans/2026-10-05-daclify-v2-foundation-plan.md)
 - [Evidence and risks](superpowers/plans/2026-10-05-daclify-v2-evidence-and-risks.md)

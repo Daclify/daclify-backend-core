@@ -1,8 +1,27 @@
 # Daclify core reference
 
-Package 0.15.0-alpha.21 · interface 1.
+Package 0.15.0-alpha.22 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
+
+## Start here: members, administrators and app builders
+
+Explore a community in Hub before signing in. A public page lets you read what is available; it does not make you a member, administrator or voter. Check the displayed network and use the community’s actual admission instructions.
+
+Open Your account or Sign in. Choose a configured paired method, quick signup with its explicit assisted-recovery consent, or your own encrypted vault. Keep a matching encrypted recovery kit and its password or recovery code separately. A sign-in session, approval method and private-document keys do different jobs.
+
+To join an existing DAO, follow its admission policy and provide the public join identity requested by its administrator. Never send a private key, vault password or recovery kit. After admission, open Account → Access & recovery → Approval setup when an action offers Set up approvals. Pairing a wallet for sign-in does not by itself authorize DAO actions; approve the selected DAO bindings separately.
+
+Members can use the DAO tools for which they hold the required roles, credits and signing permissions. Open Decide to review and vote on available ballots, Documents to read or publish permitted content, and Works to follow agreed deliverables. Private content additionally needs your original encryption keys and the DAO’s permitted grant. A missing role or unverified module cannot be fixed by clicking a disabled action.
+
+Administrators use Members for admission and explicit roles, DAO modules for enabled tools, and Settings for identity, governance and services. Administration, executive native authority and financial exit rights are separate. Review every signed change, preserve outstanding work and liabilities, and prepare permitted private access rather than assuming new members can decrypt existing files.
+
+For an independently hosted app, open Mini Apps → Connect an app and choose a DAO you administer. Enable or review Community Activity, use Set up approvals when needed, and register the app’s numeric ID, HTTPS origin and exact callback. Download its matching connection configuration and starter. App hosting/database setup, member login consent and a confirmed synthetic native receipt are separate steps. A public directory listing is optional and grants no DAO permissions.
+
+If setup fails, use the page’s retry and read its permission, module or service explanation. Check Status and the relevant guide before creating replacement keys or resending an uncertain signed action. Some features are optional or disabled by the operator; development/testnet evidence does not qualify a mainnet service.
+
+Sources:
+- Daclify task guide and availability: <https://github.com/Daclify/daclify-backend-core/blob/dev/docs/current-status.md> (reviewed 2026-10-14)
 
 ## What encryption protects
 
@@ -22,7 +41,7 @@ A previously paired email or Telegram identity opens its existing account with i
 
 Daclify-key login signs both your public signing key and public encryption key in a short-lived v3 challenge. The app checks the keys and issuing API before asking the vault to sign. An API/frontend update may require refreshing the app and restarting an in-progress login; your existing account, recovery kit and private keys are preserved.
 
-Sign in with your Daclify keys or a previously paired supported email, Telegram, passkey, Telos Zero account or Telos EVM wallet. A currently activated on-chain wallet can also reconstruct wallet-only access after the service database is lost. Signing in and recovering service access do not create membership or grant new permissions in a DAO. Provider availability depends on server configuration; complete Google browser login remains unfinished.
+Sign in with your Daclify keys or a previously paired supported email, Google, Telegram, passkey, Telos Zero account or Telos EVM wallet. A currently activated on-chain wallet can also reconstruct wallet-only access after the service database is lost. Signing in and recovering service access do not create membership or grant new permissions in a DAO. Provider availability depends on server configuration and verified client support. A configured Google browser button requires an already paired Google account; an implemented provider does not establish live sign-in qualification.
 
 The Telos network voting page offers explicit native-wallet signup. A fresh verified Telos Zero proof creates a wallet-only Daclify account and pairing before the external vote. Returning native login reuses that signup account without DAO membership. Existing pairings and vault keys are preserved; recovered wallet-only accounts still need their current on-chain membership. Signup grants no Daclify membership or private-document keys. Use Account and key setup before joining a new Daclify DAO.
 
@@ -44,7 +63,7 @@ The directory automatically loads up to 20 pages per batch, each containing at m
 
 Last active means the latest successful authenticated member instruction in any connected DAO, including installed module actions. Failed actions and replays do not advance it. Sign-ins, enrollment and direct administration do not count. Older members need bounded governance-authorized activity-row initialization; absent or zero timestamps show DAO activity not recorded. Initialization never invents historical dates, changes permissions or spends tokens. Legacy profile contacts and avatar CIDs remain public in chain history. The new encrypted-profile runtime refuses plaintext updates; public member and alias metadata remains visible.
 
-Open your own user card, choose Edit profile & account, then Profile. Unlock the original account vault. The encrypted editor shares only with you by default; select verified active recipients explicitly for each new version. A fresh revision/key removes future access from omitted recipients; earlier readers may retain copies. Image references are excluded unless you acknowledge the separate asset policy: encrypting a publicly uploaded image CID does not hide its original. Publish stages sealed keys before signing only ciphertext. Current removal first excludes service-held keys, then removes the native row, and displays unavailable or backup-expiry-pending status. The existing account kit recovers a profile only while its authorized envelope survives. Old ciphertext alone cannot reconstruct a removed random key. Public aliases, membership metadata and prior plaintext history remain public. This candidate requires matching encrypted-profile and key-service capabilities and final provider/privacy qualification before deployment.
+Open your own user card, choose Edit profile & account, then Profile. Unlock the original account vault. The encrypted editor shares only with you by default; select verified active recipients explicitly for each new version. A fresh revision/key removes future access from omitted recipients; earlier readers may retain copies. Image references are excluded unless you acknowledge the separate asset policy: encrypting a publicly uploaded image CID does not hide its original. Publish stages sealed keys before signing only ciphertext. Current removal first excludes service-held keys, then removes the native row, and displays unavailable or backup-expiry-pending status. The existing account kit recovers a profile only while its authorized envelope survives. Old ciphertext alone cannot reconstruct a removed random key. Public aliases, membership metadata and prior plaintext history remain public. Use a deployment advertising matching encrypted-profile and key-service capabilities. The shared testnet implementation does not qualify every provider, privacy lifecycle or production deployment.
 
 ## Choose how to operate your DAO
 
@@ -84,7 +103,7 @@ This release supports one configured native treasury asset per DAO. Governance s
 
 ## Community mini apps with Daclify
 
-Connected app registration, Daclify-issued sign-in, app-bound completion/submission grants, private evidence and Community Activity are implemented on testnet. The connected-app installation/native/browser evidence is dated 11 October 2026; restored-account evidence dated 12 October verifies core 0.14.0-alpha.4, modules 0.10.0-alpha.4 and frontend 0.14.0-alpha.7. These are development releases; mainnet is not qualified. MCP, encrypted personal profiles and self-service leave/closure/account erasure remain planned.
+Connected-app registration, Daclify sign-in, selected Community Activity, matching connection bundles and immutable downloads are implemented on the shared testnet. Mini Apps discovery and local/HTTP MCP depend on the deployment’s enabled capabilities. Each app keeps its own hosting/database; mainnet and arbitrary provider/harness combinations are not qualified by these development records.
 
 A community first creates its DAO and admits members. It can then connect several independently hosted apps, such as gardening, equipment booking and volunteer planning. Members join once; another app creates no new membership or voting weight. Each app has separate registration, callbacks, record references, access settings and signing permissions.
 
@@ -108,12 +127,12 @@ The Community Activity module supplies nonfinancial reviews reusable across app 
 
 Compact receipts still consume RAM. Apps need explicit capacity, bounded references, measured native costs and safe expired-grant cleanup. Registration alone uses no signing-session slot; active delegated credentials initially retain the current sixteen-session and seven-day limits. Concurrent apps share a member nonce and require SDK coordination. Exhaustion leaves local work visibly pending; completed receipts are not automatically deleted.
 
-Builders register their own apps in the DAO Connected apps tab; Daclify owner intervention is not an approval step. The current exact development archives are in the authorized frontend repository vendor directory; public self-service download distribution remains pending, so do not invent an npm install path. The current starter candidate persists its full SQLite binding and verifies the API-returned client context. This candidate is not yet installed on testnet; an older API without verified client context fails closed. PostgreSQL conformance is pending. Follow the database contract for issuer/client/subject mapping, full membership namespace, transactional outbox, restore and finite per-purpose cleanup.
+Builders register apps as active DAO administrators through Mini Apps → Connect an app, with enabled verified Community Activity and an authorized signer. Daclify owner intervention is not an approval step. Get the exact connection configuration and verify its release manifest/hash and matching starter files before installing. The SQLite/PostgreSQL recipes persist the complete binding and verify API-returned actor context; they do not create a managed Daclify database service. Follow the database contract for issuer/client/subject, full membership namespace, durable outbox, restore and finite cleanup.
 
 One Daclify account can have several paired sign-in methods. A registered app gets a pairwise subject and complete native membership, not a copy of email/Telegram pairings. Both supported account reconnection paths preserve a sole client subject and member anchor, revoke old app tokens and require new consent. If both account profiles already have a subject for the same client, reconnection rejects; matching personal fields never authorizes a history merge.
 
 Sources:
-- Connected-app project guide: <https://github.com/Daclify/daclify-backend-core/blob/dev/docs/connected-community-apps.md> (reviewed 2026-10-12)
+- Connected-app project guide: <https://github.com/Daclify/daclify-backend-core/blob/dev/docs/connected-community-apps.md> (reviewed 2026-10-14)
 - Reusable mini-app design: Community Garden: <https://github.com/Daclify/daclify-backend-core/blob/dev/docs/examples/community-mini-app-design.md> (reviewed 2026-10-12)
 - Connected community apps platform design: <https://github.com/Daclify/daclify-backend-core/blob/dev/docs/superpowers/specs/2026-10-11-connected-community-apps-design.md> (reviewed 2026-10-12)
 - Connected-app testnet installation and qualification: <https://github.com/Daclify/daclify-backend-core/blob/dev/docs/evidence/2026-10-11-connected-community-apps.md> (reviewed 2026-10-12)
@@ -172,9 +191,9 @@ An old kit may still decrypt old documents after its signing key was rotated on 
 
 Wallet-only profiles must retain a blockchain control credential. Removing the last one is rejected transactionally. Unlinking or revoking a governance binding on chain removes the corresponding access; an old service pairing does not restore it. Inactive memberships do not gain new governance rights; existing exit rights remain governed by the contract.
 
-After recovering current administrator access, Resources can rebuild hosted document, public-card and Archive references in bounded batches from surviving chain references and Daclify-owned provider inventory. Every imported object needs verified size and committed bytes. Repeated CIDs count once per DAO; released hosting is not silently resumed. This restores neither Stripe payments nor social pairings and never uploads or deletes a file. Missing original file pins still need your independent copies. Production assisted recovery requires actual independent-host and off-site restore qualification. Development testnet availability does not establish this qualification. Restore a current database, retained encrypted backup and original key-service material on a replacement host; revoke restored sessions and quarantine full-access methods until current pairing/revocation history is reconciled. A stale snapshot must not revive a revoked pairing. If every wallet key, vault recovery path and independent backup is lost, Daclify cannot manufacture the missing secrets.
-
 After recovering current administrator access, Resources can rebuild hosted document, public-card and Archive references in bounded batches from surviving chain references and Daclify-owned provider inventory. Every imported object needs verified size and committed bytes. Repeated CIDs count once per DAO; released hosting is not silently resumed. This restores neither Stripe payments nor social pairings and never uploads or deletes a file. Missing original file pins still need your independent copies.
+
+Production assisted recovery requires actual independent-host and off-site restore qualification. Development testnet availability does not establish this qualification. Restore a current database, retained encrypted backup and original key-service material on a replacement host; revoke restored sessions and quarantine full-access methods until current pairing/revocation history is reconciled. A stale snapshot must not revive a revoked pairing. If every wallet key, vault recovery path and independent backup is lost, Daclify cannot manufacture the missing secrets.
 
 ## Documents that survive transaction history gaps
 
@@ -354,9 +373,9 @@ Basic complete JSON/CSV exports are free and do not require an Operations subscr
 
 ## Use the matching release and enabled modules
 
-The current development candidate is core/frontend 0.13.0-alpha.4 with modules SDK 0.9.0-alpha.20 and unchanged module contracts 0.9.0-alpha.5. Contract interface remains 1; vault login uses its separate version-3 challenge binding both signing and encryption keys. Documentation displays its package version and warns when the selected deployment differs. Module actions require the exact compatible installed version and verified code hash.
+Read the installed guide’s package/interface versions and the connected API in Status. Core, modules, frontend and MCP have independent development versions; current exact packages and immutable bundles are recorded by their manifests. Contract interface remains 1 and vault login uses its separate version-3 challenge binding both signing and encryption keys. Module actions require compatible installed interfaces, grants and verified code hashes; a displayed SDK version alone is not a native contract upgrade.
 
-The candidate adds physically backed per-DAO RAM, native and card acquisition, prepaid pinned storage, bounded Archive export/backup/approval/pruning and original-key recovery. Follow upgrade-0.8, RAM migration and release-qualification runbooks. Preserve old approved executable hashes, member IDs, claims, obligations, key grants and document ciphertext. A package version alone does not prove a deployed contract upgrade. The current audit candidate also fixes seller-paid Names listings, paginated inventory, challenge admission/expiry and rotating Google signing keys. It prepares scoped Relay/Fees authorities and rejects creator/executive delegation back through core owner/active. Follow the current audit remediation guide for coordinated deployment; the earlier upgrade guides retain their version-specific migration procedures.
+Current development implements connected apps, matched downloads, scoped MCP, encrypted profiles, physically backed per-DAO RAM, acquisition, prepaid storage and bounded Archive recovery. Optional features and operators have their own enablement/qualification requirements. Use the current status, release-qualification and relevant version-specific upgrade runbooks. Preserve earlier immutable artifacts, member identities, approved work, claims, obligations, key grants and ciphertext; service/SDK changes do not authorize native authority changes or a production cutover.
 
 Release packaging requires twelve complete source/artifact-bound qualification reports and clean reviewed checkouts. Missing, stale or changed evidence rejects; qualifying packaging writes immutable local bytes and performs no registry publication or deployment. Live provider/client and selected public-chain checks remain separate from local tests. Cleanup is opt-in and stays disabled during unverified recovery; production spending, authority changes and cutover require operator review and separate authorization.
 
@@ -422,7 +441,7 @@ Commercial hosting, subscriptions and paid services are allowed. Independently d
 
 Blockchain RAM holds live contract records; IPFS holds pinned files and archive bundles. They are separate resources. Resources shows exact DAO RAM counters and permanent purchased bytes by contract payer. Whole-account figures include other DAOs, code and permissions. An unavailable DAO total is not a zero-byte total.
 
-A visible payer allocation separates identity, activity and completion budgets. Issued grants are backed by the exact native payer account and replay safely. Allocations do not yet enforce growth limits or guarantee completion of outstanding work; those protections require the remaining reserve and migration qualification. Purchased bytes are shown separately from granted capacity.
+Payer allocations distinguish identity, activity and completion budgets. Issued grants are backed by the exact native payer account and replay safely. With the deployment’s quota guard/adoption configured, development code enforces bounded DAO growth and the documented completion reserves. Inspect the actual Resources/guard state: legacy adoption, missing credentials or unverified module reserves can prevent activation. These protections do not provide unlimited room for new content or every future action. Purchased bytes remain distinct from granted capacity.
 
 To buy RAM with TLOS, select a qualified contract payer and minimum byte increase, review native acquisition cost plus one operational fee (5% at launch), then approve the one-time wallet payment. Order and token payment share one transaction. Every actual quota increase is checked; an expired quote, changed policy or unmet minimum rolls the whole purchase back. Sponsoring RAM grants no membership or administration.
 
@@ -636,6 +655,8 @@ Sources:
 - Normative mini-app database contract: <https://github.com/Daclify/daclify-backend-core/blob/dev/docs/guides/mini-app-database-contract.md> (reviewed 2026-10-12)
 
 ## Leave DAOs and delete your hosted account
+
+Account exit is an optional implemented service feature, currently disabled on the shared testnet. The operator must configure backup-retention and controlled-restore exclusions before enabling it. If the service does not offer this journey, retain your keys/wallet and use its available DAO/treasury procedures; deleting local browser storage does not delete hosted identity or public history.
 
 Account exit separates leaving DAOs, explicitly offering sole-member closure and deleting hosted identity. Fresh account-control proof is required. A downloaded 30-day status capability is read-only; each later native step needs its own member signature. Outstanding claims/stake remain in the native member identity; keep the recovery kit or linked wallet until settlement is complete. Deletion revokes hosted authentication immediately and removes disposable records across canonical and retired owners in bounded batches. The report separates current native profile rows, controlled key envelopes/provider pins, independent app acknowledgments, backup expiry and required shared history. Unavailable chains, providers or apps remain unresolved. Public history and recipient copies cannot be retracted. Controlled restore exclusions apply before authentication/key access; actual production retention and independent recovery require qualification.
 

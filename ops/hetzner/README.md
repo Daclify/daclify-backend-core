@@ -1,6 +1,6 @@
 # Daclify APIs on Hetzner
 
-This runbook retains the dated Hetzner checkpoints below. The continuing workspace now uses the separately documented [testnet development server](../../docs/evidence/2026-10-10-workspace-testnet-server.md) and [frontend publication path](../../../daclify-frontend/docs/workspace-testnet.md). Current remediation source is 0.13.0-alpha.3; its chain and service cutover is pending approval in [the exact rollout guide](../../docs/operations/project-audit-remediation.md). Do not read older checkpoint versions or addresses as the current `/data` deployment.
+This runbook retains the dated Hetzner checkpoints below. The continuing workspace now uses the separately documented [testnet development server](../../docs/evidence/2026-10-10-workspace-testnet-server.md) and [frontend publication path](../../../daclify-frontend/docs/workspace-testnet.md). Use [current status](../../docs/current-status.md) and the dated delivery evidence for the actual development deployment. Do not read older checkpoint versions or addresses as the current `/data` deployment.
 
 The VM is `167.233.206.242`. HAProxy runs on the host and routes exact hostnames to separate host API services:
 

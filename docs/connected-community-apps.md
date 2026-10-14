@@ -1,6 +1,6 @@
 # Connected community apps
 
-Status: connected-app integration is implemented on testnet. The current tested development package set is core `0.14.0-alpha.4`, modules `0.10.0-alpha.4` and frontend `0.14.0-alpha.7`, reviewed 12 October 2026. Projects register their own DAO/apps and operate their own backend. Mainnet is not qualified.
+Status: registration, app sign-in, selected activity, matching connection bundles and Mini Apps discovery are implemented on the shared testnet. See [current status](current-status.md) for the dated package/capability checkpoint and qualification limits. Projects host their own apps and databases; mainnet is not qualified.
 
 A community can build its own small application and use Daclify for account verification, DAO membership and selected governance records. The app keeps its interface, hosting and database. Daclify supplies the shared community relationship and records member-authorised submissions without copying the application's complete task database onto the blockchain.
 
@@ -8,18 +8,24 @@ For a concrete project specification, use the [example mini-app design](examples
 
 ## Availability and first connection
 
-| Capability                                                                                                     | Current availability                                                                                  | Evidence or remaining work                                                                                                                               |
-| -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| App registration, exact-callback sign-in, app-bound completion/review-submission grants and Community Activity | Implemented on testnet                                                                                | [Connected-app installation and native/browser checks](evidence/2026-10-11-connected-community-apps.md)                                                  |
-| One account/kit, paired sign-ins and explicit reconnection from either a wallet-only or restored account       | Implemented on testnet                                                                                | [Account continuity](evidence/2026-10-12-account-access-continuity.md), [restored-account reconnection](evidence/2026-10-12-restored-account-pairing.md) |
-| Persisted SQLite binding and verified actor context                                                            | Implemented in the local core alpha.9/modules alpha.7 starter candidate; not yet installed on testnet | [Foundation/connection plan](superpowers/plans/2026-10-12-self-service-mini-apps-and-account-exit.md)                                                    |
-| MCP server, encrypted personal profiles, self-departure/closure and hosted-account erasure                     | Planned                                                                                               | [Approved workstreams and acceptance gates](superpowers/plans/2026-10-12-self-service-mini-apps-and-account-exit.md)                                     |
+| Capability | Availability | Boundary |
+| --- | --- | --- |
+| Registration, exact-callback login and app-bound Community Activity | Implemented on testnet | Current membership, app revision, signing grants and module pins remain authoritative |
+| Connection configuration, immutable starter/SDK downloads and server readiness | Available on testnet | Persistent app hosting/database setup belongs to the builder; readiness is not a login/event test |
+| SQLite and PostgreSQL recipes | Shared local conformance/restore checks pass | Other engines and every hosting/provider deployment are not thereby qualified |
+| Mini Apps directory and local/HTTP MCP | Advertised by enabled deployment capabilities | A listing is not native registration; MCP needs separate supported scopes/harness consent |
+| Encrypted profiles and optional account-exit orchestration | Implemented | Profiles need matching capabilities; account exit is currently disabled on the shared testnet |
 
-The SQLite and PostgreSQL starter candidates now run shared local conformance and restore checks; see the [recipe and engine evidence](../examples/community-mini-app/README.md#postgresql-and-database-qualification). The [agent publishing example](examples/agent-publishing.md) separates protected root login from scoped native publication. The candidate API is not yet installed on testnet. Release-bound connection bundles, immutable downloads and bounded readiness diagnostics are implemented in the local candidate. Deployment/public availability and the global Mini apps/discovery destination remain pending.
+## Register and connect your app
 
-Start with a DAO, admitted members and enabled Community Activity. Its administrator registers the app in the DAO's **Connected apps** tab, using its own HTTPS origin, exact callback and approved source API. The builder configures the registered client/app plus verified chain/runtime/DAO; a member signs in and separately approves recording. Confirm one synthetic completion against its exact native receipt before using real records. Daclify's owner is not a registration approver. A public package distribution path remains an implementation gate; the current private source/vendor archives alone do not complete a clean-machine self-service installation.
+1. Create or choose a DAO with admitted members. Sign in as an active DAO administrator and open **Mini Apps → Connect an app**.
+2. Choose the DAO. Use **Enable Community Activity**, or **Review Community Activity** if the deployment needs verification. A failed read offers **Retry app setup**.
+3. When the module is ready, **Register or update an app** opens automatically if there are no apps. Use **Set up approvals** to configure or unlock an authorized signer.
+4. Choose a numeric app ID, app name, approved HTTPS origin and exact HTTPS callback. The source API and cleanup endpoint are optional. Saving an existing ID updates its native revision; existing app sign-ins and recording grants must be renewed. Review the signed action before confirming **Register app**.
+5. Select the registered app, choose **Get connection configuration**, and save the downloaded configuration. Use the exact callback and full issuer/client/chain/runtime/DAO/app binding.
+6. Follow the matching starter/database instructions below. **Check app server** tests its persistent binding. Separately sign in as a DAO member, review consent, complete one synthetic item, and confirm its exact native receipt before using real records.
 
-For the current Mini Apps setup, open **Mini Apps → Connect an app** and choose your DAO. An administrator sees **Enable Community Activity** when the module is missing, or **Review Community Activity** when its deployment needs verification. After the module is ready, **Register an app** opens automatically if there are no apps. Use **Set up approvals** to configure or unlock your signer, then enter the app name, HTTPS origin, exact callback and approved source API and register it. Existing apps expose their connection configuration after these setup controls. A failed setup read offers **Retry app setup**.
+Daclify's owner is not a registration approver. Publishing a directory advertisement is optional and separate from registration and member consent. The [recipe](../examples/community-mini-app/README.md) includes SQLite/PostgreSQL conformance and restore evidence; the [agent example](examples/agent-publishing.md) distinguishes protected account login from scoped publication.
 
 Use the [database and identity contract](guides/mini-app-database-contract.md) when designing any mini app. This applies to SQLite, PostgreSQL and another database engine; changing engines does not change the identity or privacy rules.
 
@@ -108,7 +114,11 @@ Works remains a separate funded contribution workflow with positive milestone am
 
 ## Developer integration
 
-Use one matched development set: `daclify-core-protocol-0.14.0-alpha.4.tgz` (SHA-256 `0ba84f4f10ad4e5bffaecc759a8d11a28989743579780c548366cc10ea204121`) and `daclify-modules-0.10.0-alpha.4.tgz` (SHA-256 `c4da68084454a709e3d8246c824eca42942240a5d04d9494d552c6fe62b4ce5a`). Both are currently in the frontend repository's `vendor/` directory, accessible to authorized repository users; do not assume public npm/GitHub registry publication. The [restored-account delivery](evidence/2026-10-12-restored-account-pairing.md) verifies this set with frontend `0.14.0-alpha.7`. Preserve earlier archives rather than replacing their bytes. Contract code pins remain distinct from SDK versions; check the actual installed module/code through canonical interfaces.
+Use the connection returned by the trusted Daclify issuer, rather than copying version numbers or archive hashes from an old guide. Its `releaseId`, `coreVersion`, `modulesVersion`, `manifestHash` and `starterUrl` identify the exact bundle. Read `GET /v1/mini-apps/releases/:releaseId`, verify the manifest's SHA-256 against `manifestHash`, and verify each downloaded file's SHA-256 and byte length before extracting or running code. The manifest contains `core.tgz`, `modules.tgz` and `starter.tgz`; the starter includes its own locked vendor copies. Earlier URLs remain immutable.
+
+Extract the verified starter into a new app directory, then follow its README: `npm ci --ignore-scripts`, `node configure.mjs connection.json`, and the recipe's build/hosting instructions. There is no general `npm start` script or managed Daclify database service. Persist the database and actual assets across app restarts. Never silently reuse a database under another issuer/client or DAO binding.
+
+The SDK sample below illustrates a browser integration. `registeredClientId`, `callbackUrl` and `savedIntent` come from your registered client, exact login return and durable outbox. The `.example` domain is illustrative and must be replaced with your approved origin.
 
 ```ts
 import { ConnectedAppClient } from '@daclify/core-protocol/connected-apps';
@@ -140,7 +150,7 @@ See the [runnable SQLite/outbox example](../examples/community-mini-app/README.m
 
 If configuration fails, check the exact issuer/client, callback/origin, full membership reference and matched package pins. If recording fails, distinguish inactive membership, suspended app, expired/revoked grant, changed nonce, incompatible code, unavailable evidence and exhausted capacity. A restart preserves a durable outbox but loses the browser-held delegate; renew consent before signing, and reconcile an uncertain previous submission first. Removing an identity link alone does not anonymize surviving tasks, photos, receipts or backups. Each app defines its own record audiences, finite retention and cleanup; native receipts are retained under the limits above.
 
-## Candidate connection bundles and starter downloads
+## Connection bundles and starter downloads
 
 An administrator retrieves `GET /v1/mini-apps/connections/:daoId/:appId` through the existing account session. The service derives the full binding, primary registered callback, frontend origin and native Activity account from the verified current registration. It checks current full DAO membership/admin authority and the exact selected public package versions. No root/signing key, app bearer or database/provider credential is included. A nonadmin or another DAO's administrator cannot export it.
 
@@ -150,6 +160,6 @@ Before executing downloaded code, verify the manifest against the bundle's `mani
 
 `POST /v1/mini-apps/connections/:daoId/:appId/check` requires the existing session, CSRF and current administrator authority. It probes only the declared source base's fixed readiness endpoint, using a validated pinned public IP, normal TLS verification, no ambient credentials/headers and no redirects. Loopback/private/link-local/reserved/mapped addresses, mixed private DNS answers and unsafe URLs are refused. Remote probes support standard HTTPS port 443, stop after five seconds and bound successful/error bodies to 64 KiB. DNS/source availability failures are separate from authorization. Node's [documented address filtering](https://github.com/nodejs/node/blob/main/doc/api/net.md#class-netblocklist) and [HTTPS request behavior](https://nodejs.org/api/https.html#httpsrequesturl-options-callback) underpin the standard-library transport; tests exercise the pinned Node 24 build.
 
-Diagnostics show configuration, readiness, verified app identity and confirmed native event as separate stages. Successful readiness does not establish a login, a recording grant or a native receipt. The latter stages remain explicitly unrun until their real flows are performed. The deployed testnet checkpoint supports its frozen core 7/module SDK 14 starter. This newer cleanup candidate requires its matching public core 10/module SDK 17 artifacts and has not been rolled out; production/provider qualification remains separate.
+Diagnostics show configuration, readiness, verified app identity and confirmed native event as separate stages. Successful readiness does not establish a login, a recording grant or a native receipt. The latter stages remain explicitly unrun until their real flows are performed. Use the exact immutable cohort selected by the returned connection configuration. The shared testnet serves its matched bundles and preserves earlier URLs; source conformance does not qualify every independently hosted app or production provider.
 
 For cleanup registration, notice verification, app retention and restore exclusions, follow the [database cleanup contract](guides/mini-app-database-contract.md#cleanup-notices-and-restored-databases).

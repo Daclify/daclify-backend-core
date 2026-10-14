@@ -2,7 +2,7 @@
 
 Independent recovery is **disabled by default**. Mainnet enablement requires the separate-host qualification below. The explicit single-host testnet option is described separately; it does not qualify independent recovery. Local verification used OpenBao 2.7.1 with its official checksum, a real disposable Raft snapshot restore and restricted API tokens. That test does not qualify an independent host or a real wallet/passkey.
 
-Users choose each paired method in Account → Sign-in → Full access on another device. Pairing alone signs into the same service account; it does not enable key recovery. Full access restores the **original signing and P-256 document keys** into browser memory, without a vault password. An idle lock requires a new sign-in or device approval. The existing encrypted JSON kit remains an independent fallback.
+Users choose paired methods in Account → Sign-in methods → Fast sign-in with full access. Pairing alone signs into the same service account; it does not enable key recovery. Full access restores the **original signing and P-256 document keys** into browser memory, without a vault password. An idle lock requires a new sign-in or device approval. The existing encrypted JSON kit remains an independent fallback.
 
 | Method | Unlocking authority | Requirements |
 | --- | --- | --- |
@@ -11,7 +11,7 @@ Users choose each paired method in Account → Sign-in → Full access on anothe
 | Any paired method, Daclify-assisted | Paired account **and Daclify recovery operator** | Explicit consent, independent key service and verified off-site recovery. The operator can recover signing and private-document keys. |
 | Another unlocked device | Existing device and approved recipient | Five-minute, single-use encrypted transfer; compare the code on both devices. No hosted recovery configuration required. |
 
-Google's complete browser sign-in remains unavailable; this feature does not make an unfinished provider usable. Unsupported wallet authority models and PRF clients remain sign-in-only unless another permitted mode is selected.
+Paired providers must be configured and verified for the connected operator; a recovery option cannot make an unavailable sign-in provider usable. Unsupported wallet authority models and PRF clients remain sign-in-only unless another permitted mode is selected.
 
 Assisted consent is committed before the browser can deliver a spare unlocking key. `assisted_ever` is permanent and appears in the account, public join identity and DAO-creation policy. Disabling methods cannot recall a key already obtained. Accounts that authorized assisted recovery cannot found or enroll as user-controlled identities in strict private DAOs. Existing strict-private memberships, including retained historical mappings and inactive membership, block assisted setup; unresolved policy reads fail closed.
 
@@ -24,6 +24,8 @@ The local drill must recover an original key from a Raft snapshot with the sourc
 The installed testnet services are `daclify-testnet-recovery.service` and `daclify-testnet-recovery-agent.service`. State, TLS, audit logs, operator material, agent credentials and evidence live under `/data/daclify-runtime/recovery-testnet`, with private directories/files. `ops/recovery/testnet-unseal.mjs` provides an explicitly testnet-only restart helper with readiness checks. Its five shares/three-share threshold are retained on this VM for development convenience; these are **not independent custodians**. The seven-day AppRole bootstrap secret is retained in a protected local file for agent restarts and yields only the reviewed API policy. Requalify and renew bootstrap material before expiry. Do not put tokens or unseal shares in chat, Git or the API environment.
 
 For mainnet, use two separately administered service hosts: API/database and OpenBao. Keep encrypted backups outside both hosts, for example in a Storage Box, and keep unseal shares and the backup decryption key with offline holders. A third server is not required merely to store backup files. Provision fresh mainnet keys/credentials and qualify actual source-loss restoration using the instructions below; copying the testnet development report or retained local shares is not qualification.
+
+Before a dev API upgrade, verify the version-bound report with the candidate core. Generate fresh actual restore/TLS evidence for the new version and verify the configured synthetic wrap/unwrap path before restarting the service. Do not relabel an older report, extend its expiry without new qualification, or disable the guard to make startup pass. Keep the working source/report available for rollback.
 
 ## Required topology for independent recovery
 
