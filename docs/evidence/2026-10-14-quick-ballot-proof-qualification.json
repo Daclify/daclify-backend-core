@@ -1,0 +1,384 @@
+{
+  "schema": "daclify.quick-ballot.experimental-qualification.v1",
+  "status": "experimental-math-qualified; product-integration-and-independent-review-outstanding",
+  "sourceBaseCommit": "db84cf0ed3e27e3d2a575333fa679f975576cf9c",
+  "coreSourceVersion": "0.15.0-alpha.23",
+  "dependencies": {
+    "@noble/curves": "2.4.0",
+    "@noble/hashes": "2.4.0",
+    "vitest": "5.0.3",
+    "typescript": "5.9.3"
+  },
+  "host": {
+    "platform": "Linux",
+    "architecture": "x86_64"
+  },
+  "sourceSha256": {
+    "contracts/ballotprobe/ballotprobe.cpp": "7e49acde21a9e53c8896704cac1a0fb08c2e9e211bc7ee1e9c84d32475356a8b",
+    "contracts/boot/boot.cpp": "c42141932a778f64a082c63534f0b756c127e17c626f07797d700c369fa42691",
+    "tools/build/ballot-proof.ts": "bc2fca1b2519703ac77d6e0897d35f7cff4a891bc1fcdd1ab34c5333668192c1",
+    "tools/research/ballot-proof-vectors.py": "247c7f7d1ae25b286cbf003a27f0ad69a49a5a2e55cb5ee2c440fc995c1553b5",
+    "tools/research/ballot-proof-benchmark.ts": "58acc4cb384a437360bdc77bb1549f75ac4750e62e187d899171fd15d0991bdb",
+    "tests/helpers/ballot-proof.ts": "503b85c0b613b2c3e1a6c58967b7bc9f918fb3a82bfb54ee309fc79d072165b1",
+    "tests/helpers/native-process.ts": "00c360523e2653fb9cde652a0b4cc4708571f8f4967f408ea82e1f509300187d",
+    "tests/ballot-proof.test.ts": "4c449f0a391d68e40405f8690c86dfddf0562c6e1105eccd54c63325310fe995",
+    "tests/native/ballot-proof.qualification.ts": "c64229ce0091f3e684ff882deb60f888a8769f85d84d4798faf65a4fc821b090",
+    "tests/fixtures/ballot-proof-vectors.json": "fe522651fcfe896fcd573ac05a1c0ba13fec28b5e764f27e9c870441961aa844",
+    "vitest.ballot-proof.config.ts": "637d698d5661f832e3994d78f719e701619600fc8c8692ee56ac62e8b9634bb0",
+    "package-lock.json": "e81d2616107f8e5abe53052f976daaed7077772fd18b2c9d8502f5f589105369",
+    "docs/superpowers/specs/2026-10-14-quick-ballot-proof-protocol.md": "f1118522652c9d109ac1c6d9bad47062a0cbc7cfad5a4749aa5a21279a9f7b9b"
+  },
+  "checks": {
+    "native": {
+      "filesPassed": 1,
+      "testsPassed": 19,
+      "testsSkipped": 0,
+      "durationSeconds": 6.26,
+      "configuration": "vitest.ballot-proof.config.ts"
+    },
+    "unit": {
+      "filesPassed": 172,
+      "testsPassed": 1036,
+      "testsSkipped": 0,
+      "durationSeconds": 296.58
+    },
+    "typecheck": {
+      "command": "tsc --noEmit --preserveSymlinks",
+      "passed": true
+    },
+    "build": {
+      "command": "tsc --preserveSymlinks",
+      "passed": true
+    }
+  },
+  "liveReadOnly": {
+    "capturedAt": "2026-10-14T23:18:31.980394+00:00",
+    "endpoint": "https://telostestnet.greymass.com",
+    "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+    "serverVersion": "v1.2.2",
+    "irreversibleBlock": 450232849,
+    "irreversibleBlockId": "1ad60211c51bfcbb86f6a8d3b0f36cf9b804b086bbce46c08a85275ac6a9ae3a",
+    "features": [
+      {
+        "name": "CRYPTO_PRIMITIVES",
+        "digest": "6bcb40a24e49c26d0a60513b6aeb8551d264e4717f306b81a37a5afb3b47cedc",
+        "activationBlock": 197904785
+      },
+      {
+        "name": "BLS_PRIMITIVES2",
+        "digest": "63320dd4a58212e4d32d1f58926b73ca33a247326c2a5e9fd39268d2384e011a",
+        "activationBlock": 392178938
+      }
+    ],
+    "scope": "Read-only feature metadata; no live contract invocation"
+  },
+  "native": {
+    "scope": "Stateless BLS12-381 primitives and key/response/tally proof relations; not product ballot authorization, key-grant, state or archive qualification",
+    "chainId": "de575673572d3d6ff0a9b4b512ddde084fbfb3b7b1b945b4b859e91856632328",
+    "compiler": "cdt-cpp version 4.1.1",
+    "runtime": "v1.2.2",
+    "optimization": "-O=s",
+    "codeHash": "d8e5ae2934b4542b8180fdf7a0b06392da736d6c979630d8d06944141f98f8f0",
+    "rawAbiHash": "8a0a61a5ffc03b792c46a9d9f46b5aa17694c0d11df54c94919ce57d7ad6efad",
+    "abiJsonHash": "1576cceaa0a2e77ed4bb0c99eb12b3e72dcf41bd2776b2679a513575ed9183b6",
+    "wasmBytes": 18513,
+    "ramBefore": "188313",
+    "ramAfter": "188313",
+    "measurements": [
+      {
+        "action": "g1add",
+        "cpuUs": 490,
+        "elapsedUs": 2165
+      },
+      {
+        "action": "g1add",
+        "cpuUs": 443,
+        "elapsedUs": 443
+      },
+      {
+        "action": "g1add",
+        "cpuUs": 440,
+        "elapsedUs": 440
+      },
+      {
+        "action": "g1mul",
+        "cpuUs": 436,
+        "elapsedUs": 436
+      },
+      {
+        "action": "g1mul",
+        "cpuUs": 421,
+        "elapsedUs": 421
+      },
+      {
+        "action": "g1mul",
+        "cpuUs": 409,
+        "elapsedUs": 409
+      },
+      {
+        "action": "g1mul",
+        "cpuUs": 760,
+        "elapsedUs": 760
+      },
+      {
+        "action": "g1check",
+        "cpuUs": 379,
+        "elapsedUs": 379
+      },
+      {
+        "action": "g1check",
+        "cpuUs": 657,
+        "elapsedUs": 657
+      },
+      {
+        "action": "validkey",
+        "cpuUs": 2408,
+        "elapsedUs": 2408
+      },
+      {
+        "action": "validvote",
+        "cpuUs": 5153,
+        "elapsedUs": 5153
+      },
+      {
+        "action": "validvote",
+        "cpuUs": 5094,
+        "elapsedUs": 5094
+      },
+      {
+        "action": "validvote",
+        "cpuUs": 5043,
+        "elapsedUs": 5043
+      },
+      {
+        "action": "validvote",
+        "cpuUs": 5190,
+        "elapsedUs": 5190
+      },
+      {
+        "action": "validtally",
+        "cpuUs": 3698,
+        "elapsedUs": 3698
+      },
+      {
+        "action": "validtally",
+        "cpuUs": 3651,
+        "elapsedUs": 3651
+      },
+      {
+        "action": "validtally",
+        "cpuUs": 3606,
+        "elapsedUs": 3606
+      },
+      {
+        "action": "validtally",
+        "cpuUs": 1879,
+        "elapsedUs": 1879
+      },
+      {
+        "action": "validtally",
+        "cpuUs": 2640,
+        "elapsedUs": 2640
+      },
+      {
+        "action": "validkey",
+        "cpuUs": 1518,
+        "elapsedUs": 1518
+      },
+      {
+        "action": "validvote",
+        "cpuUs": 4939,
+        "elapsedUs": 4939
+      },
+      {
+        "action": "validvote",
+        "cpuUs": 5575,
+        "elapsedUs": 5575
+      },
+      {
+        "action": "validtally",
+        "cpuUs": 3537,
+        "elapsedUs": 3537
+      }
+    ],
+    "rejectedRpcLatency": [
+      {
+        "action": "g1check",
+        "wallMs": 9.09040399999958
+      },
+      {
+        "action": "g1check",
+        "wallMs": 11.443347000000358
+      },
+      {
+        "action": "g1check",
+        "wallMs": 13.27892299999985
+      },
+      {
+        "action": "g1check",
+        "wallMs": 17.61811899999975
+      },
+      {
+        "action": "g1check",
+        "wallMs": 7.100109999999404
+      },
+      {
+        "action": "g1check",
+        "wallMs": 6.073515000000043
+      },
+      {
+        "action": "g1mul",
+        "wallMs": 6.901117999999769
+      },
+      {
+        "action": "g1mul",
+        "wallMs": 12.10405499999979
+      },
+      {
+        "action": "g1mul",
+        "wallMs": 12.942560999999841
+      },
+      {
+        "action": "g1mul",
+        "wallMs": 9.300694999999905
+      },
+      {
+        "action": "g1add",
+        "wallMs": 8.803941999999552
+      },
+      {
+        "action": "g1mul",
+        "wallMs": 10.821152999999867
+      },
+      {
+        "action": "validkey",
+        "wallMs": 11.14572599999974
+      },
+      {
+        "action": "validvote",
+        "wallMs": 13.267461000000367
+      },
+      {
+        "action": "validvote",
+        "wallMs": 14.947877999999946
+      },
+      {
+        "action": "validvote",
+        "wallMs": 14.802582999999686
+      },
+      {
+        "action": "validvote",
+        "wallMs": 9.47674300000017
+      },
+      {
+        "action": "validvote",
+        "wallMs": 11.545701000000008
+      },
+      {
+        "action": "validvote",
+        "wallMs": 8.621382999999696
+      },
+      {
+        "action": "validtally",
+        "wallMs": 10.192786999999953
+      },
+      {
+        "action": "validtally",
+        "wallMs": 12.631062999999813
+      },
+      {
+        "action": "validtally",
+        "wallMs": 8.397179999999935
+      },
+      {
+        "action": "validtally",
+        "wallMs": 10.502403000000413
+      },
+      {
+        "action": "validtally",
+        "wallMs": 11.141172000000552
+      },
+      {
+        "action": "validkey",
+        "wallMs": 10.273898999999801
+      },
+      {
+        "action": "validvote",
+        "wallMs": 17.14148699999987
+      },
+      {
+        "action": "validvote",
+        "wallMs": 13.02853899999991
+      },
+      {
+        "action": "validtally",
+        "wallMs": 13.553867999999966
+      }
+    ]
+  },
+  "nativeCpuSummary": {
+    "validkey": {
+      "samples": 2,
+      "minCpuUs": 1518,
+      "medianCpuUs": 1963.0,
+      "maxCpuUs": 2408
+    },
+    "validvote": {
+      "samples": 6,
+      "minCpuUs": 4939,
+      "medianCpuUs": 5123.5,
+      "maxCpuUs": 5575
+    },
+    "validtally": {
+      "samples": 6,
+      "minCpuUs": 1879,
+      "medianCpuUs": 3571.5,
+      "maxCpuUs": 3698
+    }
+  },
+  "clientBenchmark": {
+    "scope": "Synthetic Node client/prover measurements; not browser, production server or blockchain table-RAM capacity",
+    "nodeVersion": "v24.21.0",
+    "results": [
+      {
+        "syntheticResponses": 1,
+        "encryptionMs": 44.05733900000001,
+        "verificationMs": 47.66597899999999,
+        "tallyMs": 37.24378999999999,
+        "ciphertextBytesPerResponse": 192,
+        "validityProofBytesPerResponse": 128,
+        "finalProofBytes": 64,
+        "observedRssBytes": 97083392
+      },
+      {
+        "syntheticResponses": 32,
+        "encryptionMs": 1077.072326,
+        "verificationMs": 1288.8475290000001,
+        "tallyMs": 523.7917010000001,
+        "ciphertextBytesPerResponse": 192,
+        "validityProofBytesPerResponse": 128,
+        "finalProofBytes": 64,
+        "observedRssBytes": 98009088
+      },
+      {
+        "syntheticResponses": 128,
+        "encryptionMs": 4254.601798,
+        "verificationMs": 5316.377587999999,
+        "tallyMs": 2278.606395999999,
+        "ciphertextBytesPerResponse": 192,
+        "validityProofBytesPerResponse": 128,
+        "finalProofBytes": 64,
+        "observedRssBytes": 106659840
+      }
+    ]
+  },
+  "unqualified": [
+    "Independent cryptographic security review of this BLS12-381/domain port",
+    "Live proof-contract execution and production CPU or capacity",
+    "Authoritative Daclify account uniqueness, eligibility, replay and state concurrency",
+    "Executive key grants, turnover, recovery and browser secret handling",
+    "Product ballot storage RAM, resource accounting and source-root maintenance",
+    "Canonical archive coverage, backup, pruning and historical upgrades",
+    "Product API, public SDK, browser and complete user flows"
+  ]
+}

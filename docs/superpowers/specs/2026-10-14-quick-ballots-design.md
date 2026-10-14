@@ -5,7 +5,9 @@ the user authorized execution after choosing the privacy/proof requirements.
 The first implementation step is proof qualification. Requirements and defaults are separated
 below. On-chain voting, 30-day vote-row retention, executive access to individual
 choices and public cryptographic verification of totals are confirmed. Remaining
-implementation defaults and the cryptographic protocol are proposed/unselected.
+implementation defaults remain proposed. An experimental proof candidate now
+passes local native verification; product integration and security review remain
+outstanding.
 
 ## Confirmed requirements
 
@@ -137,17 +139,24 @@ preserve those semantics and retained historical verification artifacts.
 
 Do not update public up/down counters alongside individually identifiable vote
 transactions: their deltas would reveal each choice despite encrypted rows.
-The final summary retains the totals and the proof/verifier/input commitments
-needed for independently checking the accepted result after row pruning.
-Preserve the proof and its exact public inputs in the verified archive/backup;
+The final summary retains the totals, final proof, encryption public key, frozen
+aggregate/count/root and protocol/context commitments needed for independently
+checking the accepted decryption result after row pruning. These bounded fields
+keep that check independent of archive availability; measure their actual RAM
+in the product contract. Preserve the same proof and public inputs in the verified archive/backup;
 full recount or re-proving additionally needs the complete qualified source
 data. A proof authenticates the stated tally, not perpetual data availability.
 
-No private-voting protocol or native verifier is selected or qualified yet.
-Before the execution plan promises a production implementation, qualify a
-reviewed protocol and a bounded verifier using the pinned Telos toolchain and
-native runtime. Measure proof-generation practicality, proof size, WASM/RAM and
-action CPU; test invalid proofs as well as valid ones. An Ethereum protocol such
+The selected experimental candidate is exponential ElGamal in BLS12-381 G1,
+with disjunctive Chaum–Pedersen response proofs and a final decryption proof.
+Its [exact protocol](2026-10-14-quick-ballot-proof-protocol.md) and
+[qualification evidence](../../evidence/2026-10-14-quick-ballot-proof-qualification.md)
+record independent synthetic vectors, client/native agreement, measured costs
+and limitations. The stateless probe qualifies mathematical relations on a
+local Spring chain; it does not qualify live voting, account uniqueness,
+executive key delivery, complete source coverage or production privacy.
+Independent cryptographic review and product qualification remain necessary.
+An Ethereum protocol such
 as [MACI](https://maci.pse.dev/docs/introduction/) demonstrates this trust model
 but is not a ready-made Telos Zero integration. Do not silently substitute an
 operator attestation, external-chain trust bridge or public plaintext votes if

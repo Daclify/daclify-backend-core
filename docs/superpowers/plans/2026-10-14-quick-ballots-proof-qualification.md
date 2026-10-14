@@ -33,24 +33,25 @@
 **Files:**
 
 - Create `contracts/ballotprobe/ballotprobe.cpp`: stateless BLS12-381 primitive probe, never a product ballot contract.
-- Create `tools/build/ballot-proof.ts`: compile only this probe with the exact pinned toolchain and `-O=s`.
-- Modify `tests/helpers/native-process.ts`: expose a bounded named-feature activation helper for the caller's disposable node.
-- Create `tests/native/ballot-proof.test.ts`: real compiled-WASM capability and adversarial checks.
+- Create `tools/build/ballot-proof.ts`: compile this probe and its current boot prerequisite with the exact pinned toolchain and `-O=s`.
+- Create `vitest.ballot-proof.config.ts`: require the standalone experimental qualification file; do not make the default native suite depend on an unbuilt research artifact.
+- Reuse `tests/helpers/native-process.ts`: activate the named feature through its existing feature-digest map and the owned boot action; no shared fixture change.
+- Create `tests/native/ballot-proof.qualification.ts`: real compiled-WASM capability and adversarial checks.
 - Create `tests/fixtures/ballot-proof-vectors.json`: deterministic independently checked public vectors and provenance; no real voter data.
 - Create `docs/evidence/2026-10-14-quick-ballot-proof-qualification.md` and companion JSON: exact environment, feature activation, artifact hashes, CPU, RAM and limitations.
 
 **Interfaces:**
 
-- Fixture produces `activateFeature(codename: string): Promise<void>` for its own node only; unknown names reject.
+- Fixture already exposes `featureDigests` and signed `action`/`push` operations; the qualification test activates only the supported `BLS_PRIMITIVES2` feature on its own node.
 - Probe actions: `g1add(left: bytes, right: bytes, expected: bytes)`, `g1mul(point: bytes, scalar: bytes, expected: bytes)` and `g1check(point: bytes, subgroup: bool)`. Actions require the probe account's authority and bounded exact byte widths; no tables or public vote API.
 - Later tasks consume the qualified curve encoding, scalar rules and measured native limits, not a mock verifier.
 
-- [ ] Read the target's `get_info` and complete activated-feature list, binding chain ID and irreversible block. Record inaccessible endpoints honestly. Live feature metadata is not a successful contract invocation.
-- [ ] Write failing native tests for generator addition/multiplication, identity, malformed sizes/coordinates, scalar boundaries, subgroup behavior and denied authority.
-- [ ] Run the focused native test and record the expected missing-artifact/implementation failure.
-- [ ] Implement the minimal probe/build entry point and isolated fixture feature activation.
-- [ ] Run `vitest run --config vitest.native.config.ts tests/native/ballot-proof.test.ts`; require actual valid/invalid action results. Measure successful action CPU, artifact size and before/after RAM for this stateless probe.
-- [ ] Commit only this task's files and report the tested scope. Passing this task does not qualify ballot encryption, final counting or a production cryptographic protocol.
+- [x] Read the target's `get_info` and complete activated-feature list, binding chain ID and irreversible block. Record inaccessible endpoints honestly. Live feature metadata is not a successful contract invocation.
+- [x] Write failing native tests for generator addition/multiplication, identity, malformed sizes/coordinates, scalar boundaries, subgroup behavior and denied authority.
+- [x] Run the focused native test and record the expected missing-artifact/implementation failure.
+- [x] Implement the minimal probe/build entry point and isolated fixture feature activation.
+- [x] Run `vitest run --config vitest.ballot-proof.config.ts`; require actual valid/invalid action results. Measure successful action CPU, artifact size and before/after RAM for this stateless probe.
+- [x] Commit only this phase's files and report the tested scope in the qualification evidence. Passing the stateless probe does not qualify product voting or production cryptographic security.
 
 ## Task 2: Select and specify the smallest complete proof construction
 
@@ -65,8 +66,8 @@
 - Binary ElGamal candidate: `(R = rG, S = rY + bG)`, `b ∈ {0,1}`. A disjunctive equality-of-discrete-log proof establishes valid encryption; a final equality-of-discrete-log proof establishes the aggregate count. Treat the port/domain binding as new code requiring review, not as an audited ElectionGuard deployment.
 - Every proof binds the exact canonical chain/runtime/ballot/key/account/revision or final-aggregate context. A proof must not rely on a user-supplied verifier/key or reveal per-voter plaintext.
 
-- [ ] Compare primary published specifications, implemented native operations and security assumptions. Do not port all of MACI when the requested binary tally does not need its other features.
-- [ ] Pin one construction with complete equations/encoding and synthetic valid/invalid vectors. Define subgroup/identity rejection and zero-response/zero-aggregate behavior.
+- [x] Compare primary published specifications, implemented native operations and security assumptions. Do not port all of MACI when the requested binary tally does not need its other features.
+- [x] Pin one experimental construction with complete equations/encoding and synthetic valid/invalid vectors. Define subgroup/identity rejection and zero-response/zero-aggregate behavior.
 - [ ] Specify authenticated executive key grants, proof-of-key ownership, disclosure under managed custody, recipient turnover and recovery limitations. No new readers through audience selection.
 - [ ] Define aggregate update equations for replacement/removal, latest-response commitment, count bounds, finalization and post-pruning proof verification.
 - [ ] Review against all five focus cases. If required primitives or soundness properties do not qualify, document the exact failure and investigate the next candidate without weakening the accepted privacy/proof policy.
@@ -76,7 +77,8 @@
 **Files:**
 
 - Extend `contracts/ballotprobe/ballotprobe.cpp` with the selected verification relations only after Task 2 defines them.
-- Add a producer-owned experimental proof helper and focused tests in the modules repository; determine exact exports in the Task 2 protocol document, not by duplicating core identity models.
+- Keep the experimental proof helper and focused tests in core beside the probe. Publish modules-owned production exports only after integration qualification; do not duplicate core identity models.
+- Add `tools/research/ballot-proof-vectors.py` for independent synthetic vectors and `tools/research/ballot-proof-benchmark.ts` for assert-based client measurements.
 - Extend the native proof test and independent fixtures with complete encrypted-response and aggregate-tally vectors.
 - Update the qualification evidence with measured valid/invalid-path costs and exact source/artifact pins.
 
@@ -86,11 +88,11 @@
 - Produces client-generated synthetic ciphertext/proofs, actual native accepted/rejected results and an independent verifier/checker agreeing on those bytes.
 - No product endpoint, real voter data, treasury/role power or production verification claim is introduced by the experimental helper.
 
-- [ ] Start with failing tests for changed choice/total/key/domain, duplicate/removed revisions, invalid proof scalars/points, subgroup and identity attacks, zero-response and cancellation aggregates.
-- [ ] Implement the minimum client generation and native verification using existing curve/hash primitives and bounded input sizes. Keep private key/prover data local.
-- [ ] Verify independent vectors and both success/failure paths on actual WASM. Include separate accounts/ballots and concurrency/replay contexts in the fixtures.
-- [ ] Benchmark acceptance limits and record proof/ciphertext bytes, CPU, native RAM and prover memory/time with actual input sizes. Do not infer general capacity from primitive-only measurements.
-- [ ] Review security assumptions and archive/upgrade/recovery requirements before declaring the construction ready for integration. List external review or qualification still needed.
+- [x] Start with failing mathematical tests for changed choice/total/key/context, replaced/removed aggregates, invalid scalars/points, subgroup and identity attacks, empty and cancellation aggregates.
+- [x] Implement the minimum client generation and native verification using existing curve/hash primitives and bounded input sizes. Keep private key/prover data local.
+- [x] Verify independent vectors and fresh client proofs on actual WASM, including rejected contexts and forged totals. Real account/ballot concurrency and replay state remain Task 4 work.
+- [x] Record proof/ciphertext bytes, successful native CPU/RAM and synthetic Node prover memory/time. Rejected paths report RPC wall latency, not unavailable failure-receipt CPU. Product acceptance limits remain unqualified.
+- [x] Review the experimental code inline, fix degenerate nonce commitments with failing regression cases, and record remaining security/archive/recovery qualifications. This is not an independent cryptographic audit.
 
 ## Task 4: Continue into the product implementation
 
@@ -106,4 +108,6 @@ Task 3's qualified interfaces become the inputs to a detailed product execution 
 
 - Product design accepted; execution authorized by the user's “ok lets do it.”
 - Implementation method is inline. No delegation is authorized or required.
-- Current checkpoint: Task 1 target metadata read; native primitive tests not yet run.
+- Current checkpoint: stateless native qualification passes 19 tests; the complete core unit suite passes 1,036 tests in 172 files. See [measured evidence](../../evidence/2026-10-14-quick-ballot-proof-qualification.md).
+- Task 2's production key-grant and response-root interfaces remain open; Task 4 is not implemented. No new product endpoints, published crypto SDK or live deployment are included.
+- A policy question is pending about verified archive/cleanup of closed ballots whose final proof remains unavailable. Preserve the existing verified-result-before-pruning rule until answered.
