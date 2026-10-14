@@ -2,8 +2,9 @@
 
 Date: 14 October 2026. Status: product design draft for review. Implementation
 has not started. Confirmed requirements and proposed defaults are separated
-below. On-chain voting and the 30-day vote-row retention period are confirmed;
-the remaining implementation defaults are proposed.
+below. On-chain voting, 30-day vote-row retention, executive access to individual
+choices and public cryptographic verification of totals are confirmed. Remaining
+implementation defaults and the cryptographic protocol are proposed/unselected.
 
 ## Confirmed requirements
 
@@ -16,6 +17,9 @@ the remaining implementation defaults are proposed.
 - Show easy statistics. The ordinary results view does not need a voter list.
 - Record votes on-chain. Individual vote rows become eligible for verified
   archival cleanup **30 days after closure**; final totals remain on-chain.
+- DAO executives may read individual votes; individual choices are not public.
+- Final totals require a public cryptographic proof of correct counting.
+  Executive approval alone is insufficient.
 
 ## Proposed first-version behavior
 
@@ -31,11 +35,12 @@ DAO an author, owner or endorser.
 As a proposed discovery default, the portal lists selected-DAO ballots for their
 eligible audience and the originating DAO's executives. Public ballots have a
 shareable public read view; sign-in and authorized signing are required to vote.
-Audience restrictions control voting eligibility, not confidentiality: cleartext
-on-chain questions and responses can be read outside the portal. Existing
-private DAO documents or profile data must not become public through automatic
-attachment or copying. Keep voter eligibility distinct from discovery and DAO
-authority.
+Audience restrictions control voting eligibility, not confidentiality. The
+individual choices require encryption before publication, as described below.
+Question/explanation confidentiality is a separate policy: cleartext on-chain
+content can be read outside the portal. Do not infer permission to copy private
+DAO documents or profile data into a question. Keep voter eligibility distinct
+from discovery, content access and DAO authority.
 
 For a selected-DAO ballot, a user qualifies through current eligible membership
 in at least one selected DAO. For a public ballot, a valid Daclify user account
@@ -43,10 +48,12 @@ is sufficient. Count one response per Daclify account per ballot, even if the
 user belongs to several selected DAOs or uses multiple paired sign-in methods.
 This establishes account uniqueness, not verified uniqueness of real people.
 
-Users can change up to down, down to up, or remove their response while voting
-is open. A change preserves the number of participants; removal reduces it by
-one. Each write rechecks identity, eligibility and ballot state. A retry cannot
-create a second response or increment the totals twice.
+Users can change up to down, down to up, or remove their encrypted response while
+voting is open. A change preserves the number of participants; removal reduces
+it by one. Each write rechecks identity, eligibility, ballot state and the
+protocol's response-validity evidence. A retry cannot create a second response
+or increment participation twice. The final proof counts the latest accepted
+response for each account, excluding removed responses.
 
 The question, explanatory text, originating DAO, audience and closing rule are
 fixed after the first vote. Corrections then require a new, clearly identified
@@ -56,8 +63,10 @@ With a deadline, voting closes at that instant according to authoritative
 chain time. Express stored times in UTC and show them in the viewer's
 timezone. An overdue scheduled job must not extend voting. Without a deadline,
 the originating DAO's current executives can close the ballot manually. Other
-current executives can manage it if its creator leaves. Closed ballots reject
-further responses and retain their recorded result.
+current executives can manage it if its creator leaves. Closure freezes voting;
+show a separate "Closed — awaiting verified result" state until the contract
+accepts the final tally proof. A missing/failed tally cannot reopen voting,
+produce invented totals or permit pruning.
 
 The audience and vote domain include the operator, network, runtime and DAO
 references. The first version does not federate accounts or votes across
@@ -65,7 +74,7 @@ independent operators or mix production with testnet.
 
 ## Simple results
 
-Show:
+Once the final result has been verified, show:
 
 - Upvotes.
 - Downvotes.
@@ -74,16 +83,83 @@ Show:
 - Open/closed status and, where applicable, the closing time or time remaining.
 
 Use a whole-number percentage for the initial display. At zero votes, show
-"No votes yet" instead of implying a measured support percentage. Highlight
-the viewer's own choice. Do not add named voter lists, per-DAO breakdowns,
-charts, or eligible-population turnout statistics to the first version.
+"No votes yet" instead of implying a measured support percentage. The proposed
+privacy-preserving display shows participation and time remaining while open;
+publish the up/down split only after closure and proof verification. Highlight
+the viewer's own choice using their private receipt/decryption access. Do not
+add ordinary named voter lists, per-DAO breakdowns, charts or eligible-population
+turnout statistics to the first version.
 
-Example: `32 up · 8 down · 40 votes · 80% voting up · Closes in 2 days`.
+Open example: `40 responses · Closes in 2 days`.
+Verified result: `32 up · 8 down · 40 votes · 80% voting up · Closed`.
 
-Aggregate display does not establish anonymous or secret voting. Do not claim
-that voter choices are confidential merely because the normal view omits them.
-On-chain responses are publicly inspectable, including after live rows are
-pruned when transaction history remains available.
+Encrypted choices do not make participation anonymous. Account references,
+timestamps, ciphertext and transaction metadata can remain public. Small or
+unanimous totals can reveal choices by inference. The executive-only review is
+separate from the ordinary results display; its exact UI remains to be designed.
+
+## Individual-vote privacy and verifiable counting
+
+The confirmed policy permits executive access to individual choices and
+requires public cryptographic verification of the final totals. As a proposed
+scope default, the authorized readers are the originating DAO's executives;
+selecting another DAO as an audience does not grant its executives decryption
+rights. Voters retain access to their own responses. Define and show the reader
+policy before the first vote; do not add recipients silently afterward.
+
+Encrypt choices in the voter client before API submission, signing-request
+creation or publication. Private decryption keys and plaintext choices never go
+into action arguments, history, archives, analytics or service logs. Recipients
+need executive-specific key grants; the ordinary DAO member-content key would
+expose choices to other members. Reuse reviewed key-wrapping primitives with a
+new versioned ballot/response domain where compatible. Profile/document
+encryption alone is not a private-vote counting protocol.
+
+Authorization, response validity and tally correctness are distinct checks:
+
+- Core identity/role checks authorize creation and one account's response.
+- The chosen protocol must establish that an accepted encrypted response is a
+  valid up/down choice for this ballot, key epoch, account and revision, without
+  exposing that choice. Malformed ciphertext cannot count as a valid response.
+- At closure, freeze an authoritative commitment to the complete final response
+  set and count. A tally proof must bind the result to that exact set, ballot
+  definition, chain/runtime, encryption key and protocol version. It must prove
+  the up/down totals count every accepted current response exactly once.
+- The contract verifies the proof before accepting canonical final totals.
+  Wrong-domain, incomplete, forged or replayed proofs must fail. An executive
+  signature, archive hash or service-computed total is not a substitute.
+
+Pin the reviewed protocol/circuit, verification key and verifier release to the
+ballot definition before accepting responses. Do not accept a verification key
+or executable verifier supplied by an untrusted tally submitter. Upgrades must
+preserve those semantics and retained historical verification artifacts.
+
+Do not update public up/down counters alongside individually identifiable vote
+transactions: their deltas would reveal each choice despite encrypted rows.
+The final summary retains the totals and the proof/verifier/input commitments
+needed for independently checking the accepted result after row pruning.
+Preserve the proof and its exact public inputs in the verified archive/backup;
+full recount or re-proving additionally needs the complete qualified source
+data. A proof authenticates the stated tally, not perpetual data availability.
+
+No private-voting protocol or native verifier is selected or qualified yet.
+Before the execution plan promises a production implementation, qualify a
+reviewed protocol and a bounded verifier using the pinned Telos toolchain and
+native runtime. Measure proof-generation practicality, proof size, WASM/RAM and
+action CPU; test invalid proofs as well as valid ones. An Ethereum protocol such
+as [MACI](https://maci.pse.dev/docs/introduction/) demonstrates this trust model
+but is not a ready-made Telos Zero integration. Do not silently substitute an
+operator attestation, external-chain trust bridge or public plaintext votes if
+native verification proves impractical.
+
+The plan must specify executive-key turnover, recipient snapshots/grants,
+recovery, lost/unavailable tally keys, malformed response rejection and quorum
+or coordination requirements. Losing keys may prevent tallying; it must not
+permit fabricated results or early deletion. Former readers cannot be made to
+forget plaintext or keys already copied. Grant changes protect only what the
+qualified key-rotation protocol can actually protect. Managed recovery that
+gives an operator decryption capability must be disclosed; do not promise
+executive-only confidentiality when the custody model cannot provide it.
 
 ## Relationship to DAO decisions
 
@@ -107,11 +183,12 @@ Use one shared instance for the hosted runtime/network, with explicit ballot,
 originating-DAO and audience domains. Each DAO does not need its own deployment.
 Independent operators can deploy a matching instance for their own runtime.
 
-The contract owns ballot creation, response changes/removal, canonical totals,
-closure and guarded vote-row pruning. Reuse core's authoritative identities,
-executive roles, membership, approved signing methods, funded RAM accounting and
-archive verification through qualified public interfaces. Keep one account and
-approval flow in the frontend. Do not introduce a separate identity registry or
+The contract owns ballot creation, response changes/removal, proof verification,
+canonical final totals, closure and guarded vote-row pruning. Reuse core's
+authoritative identities, executive roles, membership, approved signing methods,
+funded RAM accounting and archive verification through qualified public
+interfaces. Keep one account and approval flow in the frontend. Do not introduce
+a separate identity registry or
 grant the contract treasury, role-assignment or arbitrary execution powers.
 
 This boundary separates account-wide and cross-DAO participation from Decide's
@@ -138,17 +215,19 @@ Decide authorization does not provide that path.
 
 Lifecycle implementing the confirmed retention policy:
 
-1. Keep one live response per account while the ballot is open, with atomic
-   totals. These rows prevent duplicate responses and support changes/removal.
+1. Keep one live encrypted response per account while the ballot is open, with
+   atomic participation and response-set commitments. These rows prevent
+   duplicate responses and support changes/removal.
    Never prune them while voting is open. An open-ended ballot retains this
    cost until it is closed.
-2. Finalize the closed result and wait for irreversibility. Retain the bounded
+2. Verify the final tally proof and wait for irreversibility. Retain the bounded
    question, originating DAO, audience, final up/down totals, closure metadata
-   and an archive commitment on-chain. Old results should remain readable
+   and proof/archive commitments on-chain. Old results should remain readable
    without replaying transaction history. A closed ballot cannot reopen, and
    deleting response rows must not permit reuse of its identity.
-3. Export a complete final-response snapshot with its source/schema/block
-   domain. Verify its counts against the final result, uploaded bytes,
+3. Export a complete encrypted final-response snapshot, tally proof and public
+   inputs with their source/schema/block domains. Verify response-set coverage,
+   the proof against the accepted final result, uploaded bytes,
    retrievability and an independent backup before approving pruning. A hash
    authenticates available bytes; it does not keep those bytes available.
 4. At **30 days after closure** (2,592,000 seconds), individual vote rows become
@@ -162,7 +241,9 @@ Lifecycle implementing the confirmed retention policy:
 
 Reclaiming table RAM makes it reusable by its payer. It does not erase past
 transactions or reduce existing block-history storage. Historical detail can
-come from a qualified history indexer or the verified archive. Do not depend
+come from a qualified history indexer or the verified archive; public readers
+obtain encrypted responses and proof data, not individual plaintext choices.
+Executive review requires the appropriate private keys/grants. Do not depend
 on arbitrary public RPCs retaining every action; history services index and
 filter data separately from current contract state. Report incomplete or
 unavailable history explicitly. A final-response archive is not a full audit
@@ -199,10 +280,17 @@ new erasure guarantees or silently changing closed results.
 
 Also cover cleanup before/at/after the 30-day boundary, delayed finalization,
 missing/corrupt archives, wrong-domain proofs, interrupted batches, unchanged
-final totals, ID reuse,
-irreversibility and history outages. Failed archive verification must prevent
-pruning. Preserve live replay/identity protections through account deletion and
-upgrades.
+final totals, ID reuse, irreversibility and history outages. Failed archive
+verification must prevent pruning. Preserve live replay/identity protections
+through account deletion and upgrades.
+
+Privacy acceptance must inspect actual client/API/action/archive bytes for
+plaintext leaks, deny decryption to nonrecipients and test recipient changes,
+key loss and managed-custody disclosure. Native proof qualification must reject
+tampered choices/totals, wrong keys/circuits/domains, stale response roots,
+omitted or duplicated responses, replay and invalid response-validity proofs.
+Exercise change/removal races, delayed proofs, zero responses and unavailable
+provers without showing unverified totals or pruning needed source data.
 
 Use released producer-owned interfaces across core, modules and frontend. A
 native implementation additionally needs pinned CDT `-O=s`, measured WASM/RAM
