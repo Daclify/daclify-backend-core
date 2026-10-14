@@ -454,7 +454,7 @@ async function execute() {
             {
               account: runtime.account,
               name: 'setmodule',
-              authorization: [{ actor: runtime.account, permission: 'owner' }],
+              authorization: [{ actor: runtime.account, permission: 'active' }],
               data: { ...next, dao_id: daoId },
             },
             runtime.abi,
