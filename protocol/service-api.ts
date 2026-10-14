@@ -445,6 +445,22 @@ export const ServiceResponseRoutes = [
 }[];
 
 export const ContractFailureMessages = {
+  APP_JOIN_DISABLED: 'This app has not enabled the requested DAO admission. Ask its administrator.',
+  APP_JOIN_UNAVAILABLE: 'This deployment does not provide compatible app admission.',
+  APP_JOIN_GATEWAY: 'Review the approved admission gateway account and permission.',
+  APP_JOIN_PENDING: 'DAO admission is being reconciled. Retry with the same account.',
+  APP_INVITE_UNKNOWN: 'This invitation is unavailable. Ask for a new link.',
+  APP_INVITE_DOMAIN: 'This invitation does not match the app, revision or verified token.',
+  APP_INVITE_USED: 'Another member already accepted this invitation.',
+  APP_INVITE_REVOKED: 'The administrator revoked this invitation.',
+  APP_INVITE_EXPIRED: 'The invitation has expired. Ask for a new link.',
+  APP_INVITE_ISSUER: 'The inviting administrator is no longer eligible. Ask for a new invitation.',
+  APP_INVITE_CONFLICT: 'The invitation role or owner changed. Create a new invitation.',
+  APP_INVITE_CAPACITY: 'This DAO has reached its retained invitation capacity. Remove expired records before issuing more.',
+  APP_INVITE_ID: 'Choose a nonzero invitation identifier.',
+  APP_INVITE_PROOF: 'A signature from the private invitation link must authorize this exact recipient.',
+  APP_INVITE_EXPIRY: 'An invitation must have a valid token hash and expire within seven days.',
+  APP_INVITE_EXISTS: 'This invitation already exists. Check its native state rather than issuing it again.',
   DAO_CLAIM_UNKNOWN: 'This claim link is unavailable. Ask its issuer for a new link.',
   DAO_CLAIM_EXECUTIVE_REQUIRED:
     'A current executive of the Daclify governing DAO must authorize this invitation.',

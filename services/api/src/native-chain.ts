@@ -174,6 +174,8 @@ import {
 } from './market/read.js';
 import { readMarketplace, readNameService } from './market/routes.js';
 import { PeopleRoutes, PublicProfileSchema } from '../../../protocol/people.js';
+import { makeAppJoinProof } from '../../../sdk/connected-apps.js';
+import {AppJoinTableSchemas,AppJoinCodeHash,AppJoinRawAbiHash,encodeAppJoin} from '../../../sdk/app-admission.js';
 export interface NativeChainConfig {
   rpcUrl: string;
   chainId: string;
@@ -183,6 +185,7 @@ export interface NativeChainConfig {
   relayActor: string;
   relayKey: PrivateKey;
   relayPermission?: 'active' | 'operator';
+  appAdmission?: string;
   bootstrap?: { owner: string; key: PrivateKey };
   modules?: ReadonlyArray<{ id: ModuleDeployment['id']; account: string }>;
 }
@@ -203,6 +206,47 @@ const defaultSeatPricing = RuntimeTableSchemas.seatcfg.parse({
 const defaultPaymentPolicy = RuntimeTableSchemas.paycfg.parse({ bps: 500, revision: '0' });
 export class NativeChainGateway implements ChainGateway {
   readonly connectedApps: import('./connected-apps/chain.js').ConnectedAppsChain = {
+    admission: {
+      source: () => this.config.appAdmission ?? null,
+      gateway: () => ({ account: this.config.relayActor, permission: this.config.relayPermission ?? 'active' }),
+      policy: async (daoId, appId) => {
+        await this.reviewedRuntime(this.config.runtime);
+        const source=this.config.appAdmission;if(!source)return null;
+        await this.reviewedAdmissionSource(source);
+        const governing=(await this.table('nativegov',this.config.runtime,'0',1))[0];
+        if(governing?.dao_id===daoId)return null;
+        const installed=(await this.table('modules',daoId,'0',100)).find(row=>row.account===source);
+        if(!installed||installed.code_hash!==AppJoinCodeHash||!installed.grants.includes('admitapp'))return null;
+        const domain=((BigInt(daoId)<<64n)|BigInt(appId)).toString();
+        const page=await this.moduleRows(source,'appjoins',AppJoinTableSchemas.appjoins,domain,domain,2,'i128',1);
+        if(page.more)throw new ApiError('CHAIN_RESPONSE_INVALID',503);
+        return page.rows.find(row=>row.dao_id===daoId&&row.app_id===appId)??null;
+      },
+      invitation: async (daoId, id) => {
+        await this.reviewedRuntime(this.config.runtime);
+        const source=this.config.appAdmission;if(!source)return null;
+        await this.reviewedAdmissionSource(source);
+        const page=await this.moduleRows(source,'appinvites',AppJoinTableSchemas.appinvites,id,id,1,'i64',1);
+        return page.rows.find(row=>row.id===id&&row.dao_id===daoId)??null;
+      },
+      member: async (account, daoId) => {
+        const member = await this.connectedApps.membership(account, daoId);
+        if (!member) return null;
+        const [executive, restriction] = await Promise.all([
+          this.table('executives', daoId, member.memberId, 1),
+          this.table('nonvoters', daoId, member.memberId, 1),
+        ]);
+        return { memberId: member.memberId, admin: member.admin,
+          executive: executive[0]?.member_id === member.memberId,
+          canVote: restriction[0]?.member_id !== member.memberId };
+      },
+      admit: async (account, app, invitationId, tokenHash, signature) => {
+        await this.reviewedRuntime(this.config.runtime);
+        if (!account.signingKey || !account.encryptionKey) throw new ApiError('ACCOUNT_SETUP_REQUIRED', 409);
+        const source=this.config.appAdmission;if(!source)throw new ApiError('APP_JOIN_UNAVAILABLE',503);
+        await this.pushEncoded(source,'appadmit',encodeAppJoin('appadmit',{proof:makeAppJoinProof(app,account,source,invitationId,tokenHash,signature?.expires),...(signature?{invitation_signature:signature.signature}:{})}),this.config.relayActor,this.config.relayKey);
+      },
+    },
     keys: async (app, memberId) => {
       await this.reviewedRuntime(this.config.runtime);
       const code = await this.api.v1.chain.get_raw_abi(app.activityAccount);
@@ -3317,6 +3361,13 @@ export class NativeChainGateway implements ChainGateway {
         return { state: 'already-executed' };
       throw cause;
     }
+  }
+  private async reviewedAdmissionSource(source:string){
+    const deployed=await this.api.v1.chain.get_raw_abi(source);
+    if(String(deployed.code_hash)!==AppJoinCodeHash||String(deployed.abi_hash)!==AppJoinRawAbiHash)throw new ApiError('APP_JOIN_UNAVAILABLE',503);
+    const page=await this.moduleRows(source,'settings',AppJoinTableSchemas.settings,'0','18446744073709551615',1,'i64',1,source);
+    const settings=page.rows[0];
+    if(page.more||!settings||settings.runtime!==this.config.runtime||settings.chain_id!==this.config.chainId)throw new ApiError('APP_JOIN_UNAVAILABLE',503);
   }
   private async moduleRows<T>(
     account: string,

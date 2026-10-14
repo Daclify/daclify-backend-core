@@ -1,0 +1,26 @@
+{
+  "runtimeWasmBytes": 1047608,
+  "appJoinWasmBytes": 112677,
+  "metrics": {
+    "policy": {
+      "ramBytes": 426,
+      "cpuUs": 1703
+    },
+    "ordinaryJoin": {
+      "ramBytes": 992,
+      "cpuUs": 1642
+    },
+    "adminInvitation": {
+      "ramBytes": 480,
+      "cpuUs": 1704
+    },
+    "adminJoin": {
+      "ramBytes": 900,
+      "cpuUs": 3052
+    }
+  },
+  "runtimeCodeHash": "53a25162f0984a19a9b52e692d196fed9fabd7362d34543c7069d0801e0996de",
+  "sourceCodeHash": "c50586c23a1299928c0f75430f35553bb43453ae2dae5c64a5c0cd635a3d6b92",
+  "compiler": "CDT4.1.1 -O=s",
+  "environment": "Owned disposable Spring chain; synthetic data; no production deployment."
+}

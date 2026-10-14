@@ -29,6 +29,8 @@ import { encodeActivity } from '@daclify/modules/sdk';
 import { ModuleApiRoutes } from '@daclify/modules';
 import { makeInstruction, instructionDigest } from '../../sdk/index.js';
 import { DaoRefSchema } from '../../protocol/base.js';
+import {AppJoinTableSchemas} from '../../sdk/app-admission.js';
+import { invitationCredential, makeAppJoinProof, signAppInvitation } from '../../sdk/connected-apps.js';
 const url = process.env.DATABASE_URL;
 if (
   !url ||
@@ -66,6 +68,7 @@ let service: ConnectedApps,
   sessions: Map<string, Awaited<ReturnType<ConnectedAppsChain['session']>>>,
   apps: Awaited<ReturnType<ConnectedApps['stage']>>[];
 let login: { token: string; csrfToken: string }, server: Awaited<ReturnType<typeof createServer>>;
+let admissionCalls: number;
 beforeAll(() => migrate(pool));
 afterAll(() => pool.end());
 beforeEach(async () => {
@@ -132,6 +135,7 @@ beforeEach(async () => {
     activity: async () => ({ receipts: [], next: null }),
     relay: async () => ({ transactionId: 'cc'.repeat(32) }),
   };
+  admissionCalls = 0;
   service = await ConnectedApps.create(pool, native, {
     issuer,
     frontendOrigin: frontend,
@@ -256,6 +260,29 @@ async function token(index = 0, member = 2) {
     }),
   );
 }
+function enableAdmission() {
+  const invitations = new Map<string, z.infer<typeof AppJoinTableSchemas.appinvites>>();
+  const flags = new Map<string, {canVote:boolean;executive:boolean}>();
+  const policy = AppJoinTableSchemas.appjoins.parse({id:'1',dao_id:'1',app_id:'1',app_revision:'1',revision:'1',gateway:'relay',gateway_permission:'active',public_join:true,enabled:true});
+  service.chain.admission = {
+    source:()=> 'appjoin',gateway:()=>({account:'relay',permission:'active'}), policy:async()=>policy,
+    invitation:async(_dao,id)=>invitations.get(id)??null,
+    member:async(account)=>{
+      const person=members.get(account.id);if(!person)return null;
+      return {memberId:person.memberId,admin:person.admin,...(flags.get(account.id)??{canVote:true,executive:false})};
+    },
+    admit:async(joiningAccount,_app,id,hash)=>{
+      admissionCalls++;
+      const invite=invitations.get(id);
+      if(id!=='0'&&(!invite||invite.token_hash!==hash))throw new Error('Native invitation proof rejected');
+      let person=members.get(joiningAccount.id);
+      if(invite?.member_id!=='0'&&invite?.member_id&&invite.member_id!==person?.memberId)throw new Error('Native invitation used');
+      if(!person){person=UserMembershipSchema.parse({...members.get(account(0).id),memberId:'20',admin:false,reviewer:false,signingKey:joiningAccount.signingKey});members.set(joiningAccount.id,person);flags.set(joiningAccount.id,{canVote:false,executive:false});}
+      if(invite){invitations.set(id,{...invite,member_id:person.memberId});if(invite.admin){members.set(joiningAccount.id,{...person,admin:true});flags.set(joiningAccount.id,{canVote:true,executive:true});}}
+    },
+  };
+  return {invitations,policy};
+}
 it('uses one membership for seven people and distinct app subjects across two apps', async () => {
   for (let index = 0; index < 7; index++) {
     const first = await token(0, index),
@@ -277,6 +304,68 @@ it('rejects nonmembers and nonadministrator registrations', async () => {
   const login = await request();
   await expect(service.consent(account(2), login.id)).rejects.toThrow('MEMBERSHIP_REQUIRED');
   await expect(service.approve(account(2), login.id)).rejects.toThrow('MEMBERSHIP_REQUIRED');
+});
+it('shows app admission configuration before membership without granting access', async () => {
+  members.delete(account(2).id);
+  const pending = await request();
+  const response = await server.inject({ method: 'GET', url: `/v1/connected-apps/requests/${pending.id}/admission`, headers: { cookie: `__Host-daclify_session=${login.token}` } });
+  expect(response.statusCode).toBe(200);
+  expect(response.json()).toMatchObject({ app: { clientId: app().clientId }, member: null, available: false });
+  await expect(service.approve(account(2), pending.id)).rejects.toThrow('MEMBERSHIP_REQUIRED');
+});
+it('joins the authenticated account only and rejects caller-selected administrator rights', async () => {
+  const pending = await request();
+  const headers = { origin: frontend, cookie: '__Host-daclify_session=' + login.token, 'x-csrf-token': login.csrfToken };
+  const forged = await server.inject({ method: 'POST', url: `/v1/connected-apps/requests/${pending.id}/join`, headers, payload: { role: 'admin', accountId: account(0).id } });
+  expect(forged.statusCode).toBe(400);
+  expect(admissionCalls).toBe(0);
+  const unavailable = await server.inject({ method: 'POST', url: `/v1/connected-apps/requests/${pending.id}/join`, headers, payload: {} });
+  expect(unavailable.statusCode).toBe(503);
+  expect(unavailable.json()).toMatchObject({ code: 'APP_JOIN_UNAVAILABLE' });
+});
+it('requires current administrator authority before staging a privileged app invitation', async () => {
+  const access = await token();
+  const response = await server.inject({ method: 'POST', url: '/v1/connected-apps/invitations', headers: { origin: app().config.origins[0], authorization: 'Bearer ' + access.access_token }, payload: {
+    invitationId: '10', tokenHash: 'cd'.repeat(32), invitationKey:PrivateKey.generate('K1').toPublic().toString(), name: 'New administrator', role: 'admin', expires: Math.floor(Date.now()/1000)+600, revoke: false,
+  } });
+  expect(response.statusCode).toBe(403);
+  expect(response.json()).toMatchObject({ code: 'ADMIN_REQUIRED' });
+});
+it('automatically admits a new app account as non-voting and returns to the existing consent', async () => {
+  enableAdmission();members.delete(account(2).id);
+  const pending=await request(),headers={origin:frontend,cookie:'__Host-daclify_session='+login.token,'x-csrf-token':login.csrfToken};
+  const result=await server.inject({method:'POST',url:`/v1/connected-apps/requests/${pending.id}/join`,headers,payload:{}});
+  expect(result.statusCode).toBe(200);expect(result.json()).toEqual({memberId:'20',admin:false,executive:false,canVote:false});
+  const consent=await service.consent(account(2),pending.id);expect(consent.member.memberId).toBe('20');
+  expect(account(0).id).not.toBe(account(2).id);
+});
+it('checks an administrator invitation token and authoritative executive readback before returning', async () => {
+  const fixture=enableAdmission(),secret='I'.repeat(43);members.delete(account(2).id);
+  const credential=invitationCredential(secret);
+  fixture.invitations.set('77',AppJoinTableSchemas.appinvites.parse({id:'77',dao_id:'1',app_id:'1',app_revision:'1',policy_revision:'1',inviter:'1',token_hash:credential.tokenHash,invitation_key:credential.invitationKey,admin:true,expires:Math.floor(Date.now()/1000)+600,revoked:false,member_id:'0'}));
+  const pending=await request(),headers={origin:frontend,cookie:'__Host-daclify_session='+login.token,'x-csrf-token':login.csrfToken};
+  const preview=await server.inject({method:'POST',url:`/v1/connected-apps/requests/${pending.id}/join-preview`,headers,payload:{invitationId:'77',tokenHash:credential.tokenHash}});
+  expect(preview.statusCode).toBe(200);expect(preview.json()).toMatchObject({invitation:{role:'admin'}});
+  const invalid=await server.inject({method:'POST',url:`/v1/connected-apps/requests/${pending.id}/join`,headers,payload:{invitationId:'77',tokenHash:'aa'.repeat(32)}});
+  expect(invalid.statusCode).toBe(403);expect(admissionCalls).toBe(0);
+  const proof=makeAppJoinProof(app().config,account(2),'appjoin','77',credential.tokenHash);
+  const acceptance={invitationId:'77',tokenHash:credential.tokenHash,proofExpires:proof.expires,signature:signAppInvitation(secret,proof)};
+  const joined=await server.inject({method:'POST',url:`/v1/connected-apps/requests/${pending.id}/join`,headers,payload:acceptance});
+  expect(joined.statusCode).toBe(200);expect(joined.json()).toMatchObject({admin:true,executive:true,canVote:true});
+  const replay=await server.inject({method:'POST',url:`/v1/connected-apps/requests/${pending.id}/join`,headers,payload:acceptance});
+  expect(replay.json()).toEqual(joined.json());
+});
+it('stages an immutable role choice, requires native approval, and refuses conflicting retries', async () => {
+  enableAdmission();const access=await token(0,0),headers={origin:app().config.origins[0],authorization:'Bearer '+access.access_token};
+  const payload={invitationId:'88',tokenHash:'cd'.repeat(32),invitationKey:PrivateKey.generate('K1').toPublic().toString(),name:'Invited administrator',role:'admin',expires:Math.floor(Date.now()/1000)+600,revoke:false};
+  const staged=await server.inject({method:'POST',url:'/v1/connected-apps/invitations',headers,payload});
+  expect(staged.statusCode).toBe(200);
+  const id=z.object({requestId:z.uuid()}).parse(staged.json()).requestId;
+  const pending=await server.inject({method:'POST',url:'/v1/connected-apps/invitation-status',headers,payload:{requestId:id}});
+  expect(pending.statusCode).toBe(200);expect(pending.json()).toMatchObject({confirmed:false,invitation:{role:'admin'}});
+  const conflict=await server.inject({method:'POST',url:'/v1/connected-apps/invitations',headers,payload:{...payload,role:'member'}});
+  expect(conflict.statusCode).toBe(409);
+  expect(conflict.json()).toMatchObject({code:'APP_INVITE_CONFLICT'});
 });
 it('accepts only exact callbacks committed to the current native registration', async () => {
   await expect(
@@ -716,4 +805,16 @@ it('checks the expected client before returning userinfo to a bound mini-app bac
     headers,
   });
   expect(malformed.statusCode).toBe(400);
+});
+
+it('requires the native invitation to be claimed by the current app member before linking its name',async()=>{
+ const {invitations}=enableAdmission(),access=await token(0,0),headers={origin:app().config.origins[0],authorization:'Bearer '+access.access_token};
+ const invitation=AppJoinTableSchemas.appinvites.parse({id:'99',dao_id:app().config.dao.daoId,app_id:app().config.appId,app_revision:'1',policy_revision:'1',inviter:(members.get(account(0).id)?.memberId ?? '1'),token_hash:'cd'.repeat(32),invitation_key:PrivateKey.generate('K1').toPublic().toString(),admin:false,expires:Math.floor(Date.now()/1000)+600,revoked:false,member_id:'0'});
+ invitations.set('99',invitation);
+ const path='/v1/connected-apps/member-access?invitationId=99&tokenHash='+invitation.token_hash;
+ expect((await server.inject({method:'GET',url:path,headers})).statusCode).toBe(403);
+ invitations.set('99',{...invitation,member_id:(members.get(account(0).id)?.memberId ?? '1')});
+ expect((await server.inject({method:'GET',url:path,headers})).statusCode).toBe(200);
+ invitations.set('99',{...invitation,member_id:(members.get(account(2).id)?.memberId ?? '3')});
+ expect((await server.inject({method:'GET',url:path,headers})).statusCode).toBe(403);
 });

@@ -5,6 +5,7 @@ import { DaoRefSchema, IdSchema, ChainIdSchema, NativeAccountSchema } from './ba
 import { SigningPublicKeySchema, ContentEnvelopeSchema } from './crypto.js';
 import { PrivateFilePayloadSchema } from './storage.js';
 import { RuntimeTableSchemas, RuntimeActionSchemas } from '../sdk/generated/schemas.js';
+import { AppjoinTableSchemas as AppJoinTableSchemas } from '../sdk/generated/appjoin-schemas.js';
 
 const httpsUrl = z
   .url()
@@ -14,6 +15,10 @@ const httpsUrl = z
     return u.protocol === 'https:' && !u.username && !u.password && !u.hash;
   });
 const httpsOrigin = httpsUrl.refine((value) => new URL(value).origin === value);
+const portalUrl = z.url().max(512).refine(value => {
+  const url = new URL(value);
+  return !url.username && !url.password && !url.hash && (url.protocol === 'https:' || (url.protocol === 'http:' && ['127.0.0.1','localhost','[::1]'].includes(url.hostname)));
+});
 export const ConnectedAppConfigV1Schema = z
   .strictObject({
     dao: DaoRefSchema,
@@ -105,6 +110,34 @@ export const AppConsentSchema = z.strictObject({
   signingKey: SigningPublicKeySchema.nullable(),
   grantExpires: z.number().int().nullable(),
   expires: z.iso.datetime(),
+});
+export const AppAdmissionMemberSchema = z.strictObject({
+  memberId: IdSchema, admin: z.boolean(), executive: z.boolean(), canVote: z.boolean(),
+});
+export const AppAdmissionSchema = z.strictObject({
+  app: ConnectedAppSchema, available: z.boolean(),
+  policy: AppJoinTableSchemas.appjoins.nullable(),
+  source: NativeAccountSchema.nullable(),
+  gateway: z.strictObject({ account: NativeAccountSchema, permission: NativeAccountSchema }).nullable(),
+  member: AppAdmissionMemberSchema.nullable(),
+});
+export const AppJoinPreviewSchema = AppAdmissionSchema.safeExtend({
+  invitation: z.strictObject({role:z.enum(['member','admin']),expires:z.number().int()}).nullable(),
+});
+export const AppMemberAccessSchema = AppAdmissionMemberSchema.safeExtend({membersUrl:portalUrl});
+export const AppInvitationTokenSchema = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
+export const AppJoinRequestSchema = z.union([
+  z.strictObject({}),
+  z.strictObject({ invitationId: IdSchema, tokenHash: ChainIdSchema, proofExpires: z.number().int().positive().max(4294967295).optional(), signature: z.string().min(1).max(256).optional() }),
+]);
+export const AppInvitationStageSchema = z.strictObject({
+  invitationId: IdSchema, tokenHash: ChainIdSchema, invitationKey: SigningPublicKeySchema,
+  name: z.string().trim().min(1).max(80).refine(value => !/[\u0000-\u001f\u007f]/.test(value)),
+  role: z.enum(['member', 'admin']), expires: z.number().int().positive().max(4294967295), revoke: z.boolean(),
+});
+export const AppInvitationRequestSchema = z.strictObject({
+  requestId: z.uuid(), app: ConnectedAppSchema, inviter: IdSchema,
+  invitation: AppInvitationStageSchema, confirmed: z.boolean(),
 });
 export const AppTokenSchema = z.strictObject({
   refresh_token: z
@@ -202,6 +235,14 @@ export function appKeyGrantDomain(
   });
 }
 export const ConnectedAppsRoutes = {
+  appAdmission: { method: 'GET', path: '/v1/connected-apps/requests/:id/admission', response: AppAdmissionSchema, helpTopic: 'connected-apps' },
+  joinApp: { method: 'POST', path: '/v1/connected-apps/requests/:id/join', input: AppJoinRequestSchema, response: AppAdmissionMemberSchema, helpTopic: 'connected-apps' },
+  appJoinPreview: { method: 'POST', path: '/v1/connected-apps/requests/:id/join-preview', input: AppJoinRequestSchema, response: AppJoinPreviewSchema, helpTopic: 'connected-apps' },
+  appJoinConfiguration: { method: 'GET', path: '/v1/connected-apps/:id/admission', response: AppAdmissionSchema, helpTopic: 'connected-apps' },
+  appMemberAccess: { method: 'GET', path: '/v1/connected-apps/member-access', query:z.strictObject({invitationId:IdSchema.optional(),tokenHash:ChainIdSchema.optional()}).refine(value=>!!value.invitationId===!!value.tokenHash), response: AppMemberAccessSchema, helpTopic: 'connected-apps' },
+  stageAppInvitation: { method: 'POST', path: '/v1/connected-apps/invitations', input: AppInvitationStageSchema, response: z.strictObject({ requestId: z.uuid(), approvalUrl: portalUrl }), helpTopic: 'connected-apps' },
+  appInvitation: { method: 'GET', path: '/v1/connected-apps/invitations/:id', response: AppInvitationRequestSchema, helpTopic: 'connected-apps' },
+  appInvitationStatus: { method: 'POST', path: '/v1/connected-apps/invitation-status', input: z.strictObject({ requestId: z.uuid() }), response: AppInvitationRequestSchema, helpTopic: 'connected-apps' },
   appSourceAccess: {
     method: 'POST',
     path: '/v1/connected-apps/:id/source-access',

@@ -12,12 +12,16 @@ import { z, ZodError } from 'zod';
 import { ApiError } from '../errors.js';
 import { createWindowLimiter } from '../limits.js';
 import type { ConnectedApps } from './service.js';
+import { AppAdmissions } from './admission.js';
 export const APP_BEARER_PATHS = [
   '/v1/connected-apps/token',
   '/v1/connected-apps/userinfo',
   '/v1/connected-apps/relay',
   '/v1/connected-apps/logout',
   '/v1/connected-apps/activities',
+  '/v1/connected-apps/invitations',
+  '/v1/connected-apps/invitation-status',
+  '/v1/connected-apps/member-access',
 ];
 export const APP_METADATA_PATHS = ['/.well-known/openid-configuration', '/v1/connected-apps/jwks'];
 export function registerConnectedAppsRoutes(
@@ -27,6 +31,48 @@ export function registerConnectedAppsRoutes(
   session: (token: string | undefined, csrf?: string) => Promise<Account>,
   spend: (accountId: string) => void,
 ) {
+  const admission = new AppAdmissions(service);
+  app.get(ConnectedAppsRoutes.appAdmission.path, async (request) => admission.status(
+    await session(request.cookies[cookieName]), z.object({ id: z.uuid() }).parse(request.params).id,
+  ));
+  app.post(ConnectedAppsRoutes.joinApp.path, async (request) => admission.join(
+    await session(request.cookies[cookieName], request.headers['x-csrf-token']?.toString() ?? ''),
+    z.object({id:z.uuid()}).parse(request.params).id, request.body,
+  ));
+  app.post(ConnectedAppsRoutes.appJoinPreview.path, async (request) => admission.preview(
+    await session(request.cookies[cookieName], request.headers['x-csrf-token']?.toString() ?? ''), z.object({id:z.uuid()}).parse(request.params).id, request.body,
+  ));
+  app.get(ConnectedAppsRoutes.appJoinConfiguration.path, async (request) => {
+    const account=await session(request.cookies[cookieName]),status=await admission.configuration(account,z.object({id:z.uuid()}).parse(request.params).id);
+    if(!status.member?.admin)throw new ApiError('ADMIN_REQUIRED',403);
+    return status;
+  });
+  app.get(ConnectedAppsRoutes.appMemberAccess.path, async (request) => {
+    if(!request.headers.authorization?.startsWith('Bearer '))throw new ApiError('APP_TOKEN_REQUIRED',401);
+    const access=await service.access(request.headers.authorization.slice(7),request.headers.origin);
+    const member=await service.chain.admission?.member(access.account,access.app.config.dao.daoId);
+    if(!member)throw new ApiError('APP_JOIN_UNAVAILABLE',503);
+    const query=ConnectedAppsRoutes.appMemberAccess.query.parse(request.query);
+    if(query.invitationId){
+      const invitation=await service.chain.admission?.invitation(access.app.config.dao.daoId,query.invitationId);
+      if(!invitation||invitation.token_hash!==query.tokenHash||invitation.app_id!==access.app.config.appId||invitation.app_revision!==access.app.config.revision||invitation.member_id!==member.memberId)throw new ApiError('APP_INVITE_PROOF',403);
+    }
+
+    return {...member,membersUrl:service.config.frontendOrigin+'/dao/'+access.app.config.dao.daoId+'/members'};
+  });
+  app.post(ConnectedAppsRoutes.stageAppInvitation.path, async (request) => {
+    if (!request.headers.authorization?.startsWith('Bearer ')) throw new ApiError('APP_TOKEN_REQUIRED', 401);
+    return admission.stage(request.headers.authorization.slice(7), request.headers.origin, request.body);
+  });
+  app.get(ConnectedAppsRoutes.appInvitation.path, async (request) => admission.details(
+    await session(request.cookies[cookieName]), z.object({id:z.uuid()}).parse(request.params).id,
+  ));
+  app.post(ConnectedAppsRoutes.appInvitationStatus.path, async (request) => {
+    if (!request.headers.authorization?.startsWith('Bearer ')) throw new ApiError('APP_TOKEN_REQUIRED', 401);
+    const access = await service.access(request.headers.authorization.slice(7), request.headers.origin);
+    const input = ConnectedAppsRoutes.appInvitationStatus.input.parse(request.body);
+    return admission.details(access.account, input.requestId, access.app.clientId);
+  });
   app.get(ModuleApiRoutes.appKeys.path, async (request) => {
     const params = z
         .object({

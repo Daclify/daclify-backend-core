@@ -1,3 +1,4 @@
+import {NativeAccountSchema} from '../../../protocol/base.js';
 import { governedDirectoryModeration } from './mini-apps/directory-moderation.js';
 import { DirectoryService } from './mini-apps/directory.js';
 import { McpArtifacts } from './mcp/artifacts.js';
@@ -87,6 +88,7 @@ const configuration = z
     CHAIN_ID: z.string().regex(/^[0-9a-f]{64}$/),
     RUNTIME_ACCOUNT: z.string(),
     RELAY_ACCOUNT: z.string(),
+    CORE_APP_ADMISSION_ACCOUNT: z.string().optional(),
     RELAY_PRIVATE_KEY: z.string(),
     RELAY_PERMISSION: z.enum(['active', 'operator']).default('active'),
     HUB_ACCOUNT: z.string().optional(),
@@ -150,6 +152,7 @@ const chain = new NativeChainGateway(
     hub: env.HUB_ACCOUNT ?? null,
     environment: env.NETWORK_ENVIRONMENT,
     relayActor: env.RELAY_ACCOUNT,
+    ...(env.CORE_APP_ADMISSION_ACCOUNT ? {appAdmission:NativeAccountSchema.parse(env.CORE_APP_ADMISSION_ACCOUNT)} : {}),
     relayKey: privateKey(env.RELAY_PRIVATE_KEY),
     relayPermission: env.RELAY_PERMISSION,
     ...(env.BOOTSTRAP_OWNER && env.BOOTSTRAP_PRIVATE_KEY

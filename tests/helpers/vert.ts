@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { Blockchain, type Account } from '@proton/vert';
-import { API, ABI, PermissionLevel } from '@greymass/eosio';
+import { API, ABI, Name, PermissionLevel, Serializer } from '@greymass/eosio';
 import { z } from 'zod';
 const AbiSchema = z.object({
   version: z.string(),
@@ -83,6 +83,20 @@ export function loadContract(chain: Blockchain, name: string, artifact: string):
           memory.setBigUint64(pointer + 8, result >> 64n, true);
         },
       );
+    const sendInline = Reflect.get(imports.env, 'send_inline');
+    if (typeof sendInline !== 'function') throw new Error('VERT_INLINE_REQUIRED');
+    Reflect.set(imports.env, 'send_inline', (pointer:number, size:number) => {
+      const current:unknown=Reflect.get(vm,'context');
+      if(typeof current!=='object'||!current||!('actionsQueue' in current)||!Array.isArray(current.actionsQueue))throw new Error('VERT_ACTION_QUEUE_REQUIRED');
+      const queue:unknown[]=current.actionsQueue,count=queue.length;
+      sendInline(pointer,size);
+      // VERT trace values borrow WASM memory; decode its already-copied action bytes before memory grows.
+      for(const queued of queue.slice(count)) {
+        const context=z.object({receiver:z.object({abi:z.instanceof(ABI)}),action:z.instanceof(Name),data:z.instanceof(Uint8Array)}).parse(queued);
+        if(typeof queued!=='object'||!queued)throw new Error('VERT_CONTEXT_REQUIRED');
+        Reflect.set(queued,'decodedData',Serializer.decode({abi:context.receiver.abi,type:context.action.toString(),data:context.data}));
+      }
+    });
     await pending;
     // VERT omits the parent transaction on inline contexts; inherit its real encoded bytes.
     const apply = vm.apply.bind(vm);
@@ -108,6 +122,15 @@ export async function send(
 ): Promise<void> {
   const method = account.actions[action];
   if (!method) throw new Error(`Missing ABI action ${action}`);
+  if (!Array.isArray(data)) {
+    const input: Record<string, unknown> = {...data};
+    // VERT requires property presence even for omitted trailing ABI binary extensions.
+    const fields=account.abi?.resolveType(action).fields;
+    if(!fields)throw new Error('VERT_ABI_FIELDS_REQUIRED');
+    for (const field of fields)
+      if (field.type.isExtension && !Object.hasOwn(input, field.name)) input[field.name] = undefined;
+    data = input;
+  }
   await method(data).send(
     Array.isArray(auth) ? auth.map((value) => PermissionLevel.from(value)) : auth,
   );

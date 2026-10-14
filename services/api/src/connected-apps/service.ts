@@ -396,6 +396,11 @@ export class ConnectedApps {
       expires: row.expires_at.toISOString(),
     });
   }
+  async admissionContext(id: string) {
+    const request = await this.request(id), app = await this.client(request.client_id);
+    if (request.revision !== app.config.revision) throw new ApiError('APP_REVISED', 409);
+    return app;
+  }
   async approve(account: Account, id: string, sessionId?: string) {
     const db = await this.pool.connect();
     let discard = false;
@@ -677,6 +682,7 @@ export class ConnectedApps {
   async cleanup(limit = 100) {
     if (!Number.isInteger(limit) || limit < 1 || limit > 500) throw new Error('APP_CLEANUP_LIMIT');
     let removed = 0;
+    removed += (await this.pool.query('DELETE FROM connected_app_invitations WHERE ctid IN(SELECT ctid FROM connected_app_invitations WHERE expires_at < now() - interval \'30 days\' ORDER BY expires_at LIMIT $1 FOR UPDATE SKIP LOCKED)', [limit])).rowCount ?? 0;
     for (const table of [
       'connected_app_requests',
       'connected_app_codes',

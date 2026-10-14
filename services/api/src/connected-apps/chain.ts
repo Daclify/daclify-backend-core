@@ -3,6 +3,14 @@ import type { Account, Network, UserMembership } from '../../../../protocol/api.
 import type { RuntimeTableSchemas } from '../../../../sdk/generated/schemas.js';
 import type { instruction } from '../../../../sdk/index.js';
 export interface ConnectedAppsChain {
+  admission?: {
+    source(): string | null;
+    gateway(): { account: string; permission: string };
+    policy(daoId: string, appId: string): Promise<z.infer<typeof import('../../../../sdk/app-admission.js').AppJoinTableSchemas.appjoins> | null>;
+    invitation(daoId: string, id: string): Promise<z.infer<typeof import('../../../../sdk/app-admission.js').AppJoinTableSchemas.appinvites> | null>;
+    member(account: Account, daoId: string): Promise<z.infer<typeof import('../../../../protocol/connected-apps.js').AppAdmissionMemberSchema> | null>;
+    admit(account: Account, app: import('../../../../protocol/connected-apps.js').ConnectedAppConfig, invitationId: string, tokenHash: string, proof?: {expires:number;signature:string}): Promise<void>;
+  };
   keys(
     app: import('../../../../protocol/connected-apps.js').ConnectedAppConfig,
     memberId: string,

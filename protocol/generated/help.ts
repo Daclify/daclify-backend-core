@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle:HelpBundle={
   "producer": "core",
-  "packageVersion": "0.15.0-alpha.23",
+  "packageVersion": "0.15.0-alpha.27",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -652,7 +652,7 @@ export const CoreHelpBundle:HelpBundle={
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "041022c92da2ed87195b424951805da692dce0fed5891920e3aa07c3a85b51b2",
+      "sourceAbiHash": "1f11f774c6a60d0a1fba84149216a85cb262288478ef10c75dbea54ed7e84ecd",
       "actions": [
         {
           "name": "accepthand",
@@ -1729,6 +1729,10 @@ export const CoreHelpBundle:HelpBundle={
             {
               "name": "custody",
               "type": "uint8"
+            },
+            {
+              "name": "app_nonvoter",
+              "type": "bool$"
             }
           ]
         },
@@ -17734,6 +17738,2172 @@ export const CoreHelpBundle:HelpBundle={
         "additionalProperties": false
       },
       "helpTopic": "shared-hosting"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/connected-apps/requests/:id/admission",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "app": {
+            "type": "object",
+            "properties": {
+              "clientId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "config": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "dao": {
+                        "type": "object",
+                        "properties": {
+                          "chainId": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "contract": {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          },
+                          "daoId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "interfaceVersion": {
+                            "type": "number",
+                            "const": 1
+                          }
+                        },
+                        "required": [
+                          "chainId",
+                          "contract",
+                          "daoId",
+                          "interfaceVersion"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "appId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "origins": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "redirectUris": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "sourceApiBase": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "format": "uri"
+                      },
+                      "activityAccount": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "dao",
+                      "appId",
+                      "revision",
+                      "name",
+                      "origins",
+                      "redirectUris",
+                      "activityAccount",
+                      "enabled"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "dao": {
+                        "type": "object",
+                        "properties": {
+                          "chainId": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "contract": {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          },
+                          "daoId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "interfaceVersion": {
+                            "type": "number",
+                            "const": 1
+                          }
+                        },
+                        "required": [
+                          "chainId",
+                          "contract",
+                          "daoId",
+                          "interfaceVersion"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "appId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "origins": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "redirectUris": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "sourceApiBase": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "format": "uri"
+                      },
+                      "activityAccount": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      },
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 2
+                      },
+                      "cleanupUrl": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "format": "uri"
+                      }
+                    },
+                    "required": [
+                      "dao",
+                      "appId",
+                      "revision",
+                      "name",
+                      "origins",
+                      "redirectUris",
+                      "activityAccount",
+                      "enabled",
+                      "schemaVersion"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "configHash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "native": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "target": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "config_hash": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      },
+                      "security_epoch": {
+                        "type": "string",
+                        "maxLength": 20
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "target",
+                      "revision",
+                      "config_hash",
+                      "enabled",
+                      "security_epoch"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "clientId",
+              "config",
+              "configHash",
+              "native"
+            ],
+            "additionalProperties": false
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "policy": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "dao_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "app_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "app_revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "gateway": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "gateway_permission": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "public_join": {
+                    "type": "boolean"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "dao_id",
+                  "app_id",
+                  "app_revision",
+                  "revision",
+                  "gateway",
+                  "gateway_permission",
+                  "public_join",
+                  "enabled"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "gateway": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "account": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "permission": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  }
+                },
+                "required": [
+                  "account",
+                  "permission"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "member": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "memberId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "admin": {
+                    "type": "boolean"
+                  },
+                  "executive": {
+                    "type": "boolean"
+                  },
+                  "canVote": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "memberId",
+                  "admin",
+                  "executive",
+                  "canVote"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "app",
+          "available",
+          "policy",
+          "source",
+          "gateway",
+          "member"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "connected-apps"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/connected-apps/requests/:id/join",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "invitationId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "tokenHash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "proofExpires": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 4294967295
+              },
+              "signature": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              }
+            },
+            "required": [
+              "invitationId",
+              "tokenHash"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "admin": {
+            "type": "boolean"
+          },
+          "executive": {
+            "type": "boolean"
+          },
+          "canVote": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "memberId",
+          "admin",
+          "executive",
+          "canVote"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "connected-apps"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/connected-apps/requests/:id/join-preview",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "invitationId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "tokenHash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "proofExpires": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 4294967295
+              },
+              "signature": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              }
+            },
+            "required": [
+              "invitationId",
+              "tokenHash"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "app": {
+            "type": "object",
+            "properties": {
+              "clientId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "config": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "dao": {
+                        "type": "object",
+                        "properties": {
+                          "chainId": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "contract": {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          },
+                          "daoId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "interfaceVersion": {
+                            "type": "number",
+                            "const": 1
+                          }
+                        },
+                        "required": [
+                          "chainId",
+                          "contract",
+                          "daoId",
+                          "interfaceVersion"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "appId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "origins": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "redirectUris": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "sourceApiBase": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "format": "uri"
+                      },
+                      "activityAccount": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "dao",
+                      "appId",
+                      "revision",
+                      "name",
+                      "origins",
+                      "redirectUris",
+                      "activityAccount",
+                      "enabled"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "dao": {
+                        "type": "object",
+                        "properties": {
+                          "chainId": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "contract": {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          },
+                          "daoId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "interfaceVersion": {
+                            "type": "number",
+                            "const": 1
+                          }
+                        },
+                        "required": [
+                          "chainId",
+                          "contract",
+                          "daoId",
+                          "interfaceVersion"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "appId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "origins": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "redirectUris": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "sourceApiBase": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "format": "uri"
+                      },
+                      "activityAccount": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      },
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 2
+                      },
+                      "cleanupUrl": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "format": "uri"
+                      }
+                    },
+                    "required": [
+                      "dao",
+                      "appId",
+                      "revision",
+                      "name",
+                      "origins",
+                      "redirectUris",
+                      "activityAccount",
+                      "enabled",
+                      "schemaVersion"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "configHash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "native": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "target": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "config_hash": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      },
+                      "security_epoch": {
+                        "type": "string",
+                        "maxLength": 20
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "target",
+                      "revision",
+                      "config_hash",
+                      "enabled",
+                      "security_epoch"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "clientId",
+              "config",
+              "configHash",
+              "native"
+            ],
+            "additionalProperties": false
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "policy": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "dao_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "app_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "app_revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "gateway": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "gateway_permission": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "public_join": {
+                    "type": "boolean"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "dao_id",
+                  "app_id",
+                  "app_revision",
+                  "revision",
+                  "gateway",
+                  "gateway_permission",
+                  "public_join",
+                  "enabled"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "gateway": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "account": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "permission": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  }
+                },
+                "required": [
+                  "account",
+                  "permission"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "member": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "memberId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "admin": {
+                    "type": "boolean"
+                  },
+                  "executive": {
+                    "type": "boolean"
+                  },
+                  "canVote": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "memberId",
+                  "admin",
+                  "executive",
+                  "canVote"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "invitation": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "member",
+                      "admin"
+                    ]
+                  },
+                  "expires": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "role",
+                  "expires"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "app",
+          "available",
+          "policy",
+          "source",
+          "gateway",
+          "member",
+          "invitation"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "connected-apps"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/connected-apps/:id/admission",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "app": {
+            "type": "object",
+            "properties": {
+              "clientId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "config": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "dao": {
+                        "type": "object",
+                        "properties": {
+                          "chainId": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "contract": {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          },
+                          "daoId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "interfaceVersion": {
+                            "type": "number",
+                            "const": 1
+                          }
+                        },
+                        "required": [
+                          "chainId",
+                          "contract",
+                          "daoId",
+                          "interfaceVersion"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "appId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "origins": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "redirectUris": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "sourceApiBase": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "format": "uri"
+                      },
+                      "activityAccount": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "dao",
+                      "appId",
+                      "revision",
+                      "name",
+                      "origins",
+                      "redirectUris",
+                      "activityAccount",
+                      "enabled"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "dao": {
+                        "type": "object",
+                        "properties": {
+                          "chainId": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "contract": {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          },
+                          "daoId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "interfaceVersion": {
+                            "type": "number",
+                            "const": 1
+                          }
+                        },
+                        "required": [
+                          "chainId",
+                          "contract",
+                          "daoId",
+                          "interfaceVersion"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "appId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "origins": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "redirectUris": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "sourceApiBase": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "format": "uri"
+                      },
+                      "activityAccount": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      },
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 2
+                      },
+                      "cleanupUrl": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "format": "uri"
+                      }
+                    },
+                    "required": [
+                      "dao",
+                      "appId",
+                      "revision",
+                      "name",
+                      "origins",
+                      "redirectUris",
+                      "activityAccount",
+                      "enabled",
+                      "schemaVersion"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "configHash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "native": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "target": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "config_hash": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      },
+                      "security_epoch": {
+                        "type": "string",
+                        "maxLength": 20
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "target",
+                      "revision",
+                      "config_hash",
+                      "enabled",
+                      "security_epoch"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "clientId",
+              "config",
+              "configHash",
+              "native"
+            ],
+            "additionalProperties": false
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "policy": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "dao_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "app_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "app_revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "gateway": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "gateway_permission": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "public_join": {
+                    "type": "boolean"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "dao_id",
+                  "app_id",
+                  "app_revision",
+                  "revision",
+                  "gateway",
+                  "gateway_permission",
+                  "public_join",
+                  "enabled"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "gateway": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "account": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "permission": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  }
+                },
+                "required": [
+                  "account",
+                  "permission"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "member": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "memberId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "admin": {
+                    "type": "boolean"
+                  },
+                  "executive": {
+                    "type": "boolean"
+                  },
+                  "canVote": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "memberId",
+                  "admin",
+                  "executive",
+                  "canVote"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "app",
+          "available",
+          "policy",
+          "source",
+          "gateway",
+          "member"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "connected-apps"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/connected-apps/member-access",
+      "query": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "invitationId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "tokenHash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "memberId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "admin": {
+            "type": "boolean"
+          },
+          "executive": {
+            "type": "boolean"
+          },
+          "canVote": {
+            "type": "boolean"
+          },
+          "membersUrl": {
+            "type": "string",
+            "maxLength": 512,
+            "format": "uri"
+          }
+        },
+        "required": [
+          "memberId",
+          "admin",
+          "executive",
+          "canVote",
+          "membersUrl"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "connected-apps"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/connected-apps/invitations",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "invitationId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "tokenHash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "invitationKey": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "member",
+              "admin"
+            ]
+          },
+          "expires": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 4294967295
+          },
+          "revoke": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "invitationId",
+          "tokenHash",
+          "invitationKey",
+          "name",
+          "role",
+          "expires",
+          "revoke"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "approvalUrl": {
+            "type": "string",
+            "maxLength": 512,
+            "format": "uri"
+          }
+        },
+        "required": [
+          "requestId",
+          "approvalUrl"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "connected-apps"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/connected-apps/invitations/:id",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "app": {
+            "type": "object",
+            "properties": {
+              "clientId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "config": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "dao": {
+                        "type": "object",
+                        "properties": {
+                          "chainId": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "contract": {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          },
+                          "daoId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "interfaceVersion": {
+                            "type": "number",
+                            "const": 1
+                          }
+                        },
+                        "required": [
+                          "chainId",
+                          "contract",
+                          "daoId",
+                          "interfaceVersion"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "appId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "origins": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "redirectUris": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "sourceApiBase": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "format": "uri"
+                      },
+                      "activityAccount": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "dao",
+                      "appId",
+                      "revision",
+                      "name",
+                      "origins",
+                      "redirectUris",
+                      "activityAccount",
+                      "enabled"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "dao": {
+                        "type": "object",
+                        "properties": {
+                          "chainId": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "contract": {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          },
+                          "daoId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "interfaceVersion": {
+                            "type": "number",
+                            "const": 1
+                          }
+                        },
+                        "required": [
+                          "chainId",
+                          "contract",
+                          "daoId",
+                          "interfaceVersion"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "appId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "origins": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "redirectUris": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "sourceApiBase": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "format": "uri"
+                      },
+                      "activityAccount": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      },
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 2
+                      },
+                      "cleanupUrl": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "format": "uri"
+                      }
+                    },
+                    "required": [
+                      "dao",
+                      "appId",
+                      "revision",
+                      "name",
+                      "origins",
+                      "redirectUris",
+                      "activityAccount",
+                      "enabled",
+                      "schemaVersion"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "configHash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "native": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "target": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "config_hash": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      },
+                      "security_epoch": {
+                        "type": "string",
+                        "maxLength": 20
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "target",
+                      "revision",
+                      "config_hash",
+                      "enabled",
+                      "security_epoch"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "clientId",
+              "config",
+              "configHash",
+              "native"
+            ],
+            "additionalProperties": false
+          },
+          "inviter": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "invitation": {
+            "type": "object",
+            "properties": {
+              "invitationId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "tokenHash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "invitationKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "member",
+                  "admin"
+                ]
+              },
+              "expires": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 4294967295
+              },
+              "revoke": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "invitationId",
+              "tokenHash",
+              "invitationKey",
+              "name",
+              "role",
+              "expires",
+              "revoke"
+            ],
+            "additionalProperties": false
+          },
+          "confirmed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "requestId",
+          "app",
+          "inviter",
+          "invitation",
+          "confirmed"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "connected-apps"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/connected-apps/invitation-status",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "requestId"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "app": {
+            "type": "object",
+            "properties": {
+              "clientId": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "config": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "dao": {
+                        "type": "object",
+                        "properties": {
+                          "chainId": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "contract": {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          },
+                          "daoId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "interfaceVersion": {
+                            "type": "number",
+                            "const": 1
+                          }
+                        },
+                        "required": [
+                          "chainId",
+                          "contract",
+                          "daoId",
+                          "interfaceVersion"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "appId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "origins": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "redirectUris": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "sourceApiBase": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "format": "uri"
+                      },
+                      "activityAccount": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "dao",
+                      "appId",
+                      "revision",
+                      "name",
+                      "origins",
+                      "redirectUris",
+                      "activityAccount",
+                      "enabled"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "dao": {
+                        "type": "object",
+                        "properties": {
+                          "chainId": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "contract": {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          },
+                          "daoId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "interfaceVersion": {
+                            "type": "number",
+                            "const": 1
+                          }
+                        },
+                        "required": [
+                          "chainId",
+                          "contract",
+                          "daoId",
+                          "interfaceVersion"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "appId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                      },
+                      "origins": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "redirectUris": {
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 512,
+                          "format": "uri"
+                        }
+                      },
+                      "sourceApiBase": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "format": "uri"
+                      },
+                      "activityAccount": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      },
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 2
+                      },
+                      "cleanupUrl": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "format": "uri"
+                      }
+                    },
+                    "required": [
+                      "dao",
+                      "appId",
+                      "revision",
+                      "name",
+                      "origins",
+                      "redirectUris",
+                      "activityAccount",
+                      "enabled",
+                      "schemaVersion"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "configHash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "native": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "target": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "config_hash": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      },
+                      "security_epoch": {
+                        "type": "string",
+                        "maxLength": 20
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "target",
+                      "revision",
+                      "config_hash",
+                      "enabled",
+                      "security_epoch"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "clientId",
+              "config",
+              "configHash",
+              "native"
+            ],
+            "additionalProperties": false
+          },
+          "inviter": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "invitation": {
+            "type": "object",
+            "properties": {
+              "invitationId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "tokenHash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "invitationKey": {
+                "type": "string",
+                "maxLength": 128
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "member",
+                  "admin"
+                ]
+              },
+              "expires": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 4294967295
+              },
+              "revoke": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "invitationId",
+              "tokenHash",
+              "invitationKey",
+              "name",
+              "role",
+              "expires",
+              "revoke"
+            ],
+            "additionalProperties": false
+          },
+          "confirmed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "requestId",
+          "app",
+          "inviter",
+          "invitation",
+          "confirmed"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "connected-apps"
     },
     {
       "method": "POST",

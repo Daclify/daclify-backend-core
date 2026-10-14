@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = '041022c92da2ed87195b424951805da692dce0fed5891920e3aa07c3a85b51b2';
+export const runtimeAbiHash = '1f11f774c6a60d0a1fba84149216a85cb262288478ef10c75dbea54ed7e84ecd';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -2174,6 +2174,10 @@ export const runtimeAbi = {
         {
           "name": "custody",
           "type": "uint8"
+        },
+        {
+          "name": "app_nonvoter",
+          "type": "bool$"
         }
       ]
     },
@@ -5181,6 +5185,20 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "runtime_settings",
+      "base": "",
+      "fields": [
+        {
+          "name": "chain_id",
+          "type": "checksum256"
+        },
+        {
+          "name": "interface_version",
+          "type": "uint16"
+        }
+      ]
+    },
+    {
       "name": "scanhand",
       "base": "",
       "fields": [
@@ -5959,20 +5977,6 @@ export const runtimeAbi = {
         {
           "name": "reviewer",
           "type": "bool"
-        }
-      ]
-    },
-    {
-      "name": "settings",
-      "base": "",
-      "fields": [
-        {
-          "name": "chain_id",
-          "type": "checksum256"
-        },
-        {
-          "name": "interface_version",
-          "type": "uint16"
         }
       ]
     },
@@ -7517,7 +7521,7 @@ export const runtimeAbi = {
     },
     {
       "name": "settings",
-      "type": "settings",
+      "type": "runtime_settings",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -8108,6 +8112,7 @@ export interface enroll {
   signing_key: string;
   encryption_key: string;
   custody: number;
+  app_nonvoter?: boolean | undefined;
 }
 export interface enrollagent {
   dao_id: string;
@@ -8919,6 +8924,10 @@ export interface rotatekey {
   member_id: string;
   signing_key: string;
 }
+export interface runtime_settings {
+  chain_id: string;
+  interface_version: number;
+}
 export interface scanhand {
   runtime: string;
   dao_id: string;
@@ -9131,10 +9140,6 @@ export interface setroles {
   target: string;
   admin: boolean;
   reviewer: boolean;
-}
-export interface settings {
-  chain_id: string;
-  interface_version: number;
 }
 export interface setvoter {
   runtime: string;

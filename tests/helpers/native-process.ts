@@ -1,6 +1,6 @@
 import { spawn, execFileSync } from 'node:child_process';
 import { once } from 'node:events';
-import { mkdtempSync, openSync, closeSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, openSync, closeSync, readFileSync, writeFileSync, statfsSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -31,6 +31,14 @@ export type NativePushResult = Awaited<ReturnType<APIClient['v1']['chain']['push
 
 // Each caller owns a fresh process, genesis, localhost port and disposable signers.
 export async function nativeProcess() {
+  const testSpaceThreshold = process.env.DACLIFY_NATIVE_TEST_SPACE_THRESHOLD;
+  const testNetLimit = process.env.DACLIFY_NATIVE_TEST_MAX_NET_USAGE;
+  if (testNetLimit !== undefined) z.literal('600000').parse(testNetLimit);
+  if (testSpaceThreshold !== undefined) {
+    z.literal('99').parse(testSpaceThreshold);
+    const space = statfsSync(tmpdir());
+    if (space.bavail * space.bsize < 1024 ** 3) throw new Error('NATIVE_FIXTURE_FREE_SPACE_REQUIRED');
+  }
   const binary = process.env.DACLIFY_NATIVE_NODEOS ?? 'nodeos';
   const libs = process.env.DACLIFY_NATIVE_LIBS ?? '';
   const environment = { PATH: process.env.PATH ?? '/usr/bin', LD_LIBRARY_PATH: libs };
@@ -56,6 +64,7 @@ export async function nativeProcess() {
     JSON.stringify({
       initial_timestamp: new Date().toISOString().replace(/Z$/, ''),
       initial_key: rootKey.toPublic().toString(),
+      ...(testNetLimit ? { initial_configuration: JSON.parse(readFileSync('tests/fixtures/telos-testnet-chain-config-2026-10-14.json','utf8')) } : {}),
     }),
     { mode: 0o600 },
   );
@@ -96,6 +105,7 @@ export async function nativeProcess() {
       '8',
       '--max-body-size',
       '8388608',
+      ...(testSpaceThreshold ? ['--resource-monitor-space-threshold', testSpaceThreshold] : []),
     ],
     { env: environment, stdio: ['ignore', log, log] },
   );
@@ -231,16 +241,15 @@ export async function nativeProcess() {
     async function deploy(account: string, path: string) {
       const abi = ABI.from(readFileSync(path + '.abi', 'utf8'));
       await push(
-        [
-          system(
+        [system(
             'setcode',
             { account, vmtype: 0, vmversion: 0, code: readFileSync(path + '.wasm') },
             account,
-          ),
-          system('setabi', { account, abi: Serializer.encode({ object: abi }) }, account),
-        ],
+          )],
         [key(account)],
       );
+      // Fresh owned accounts have no traffic; separate payloads stay below Spring's 1 MiB decoder limit.
+      await push([system('setabi', { account, abi: Serializer.encode({ object: abi }) }, account)], [key(account)]);
       return abi;
     }
     async function update(

@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, expect, it } from 'vitest';
-import { encodeDecide } from '@daclify/modules/sdk';
+import { encodeDecide, DecideTableSchemas } from '@daclify/modules/sdk';
 import { encodeAction, RuntimeTableSchemas } from '../../sdk/index.js';
 import { contextLinkRepairActions } from '../../tools/deploy/permissions.js';
 import {
@@ -104,11 +104,13 @@ it('retains an all-inactive roster until an elected successor pairs, then activa
     'startelect',
     encodeDecide('startelect', { ...governing.actor(), election_id: '1' }),
   );
+  const definitions=await f().api.v1.chain.get_table_rows({code:'decide',scope:'daclifycore',table:'ballotdefs',limit:1});
+  const expected=DecideTableSchemas.ballotdefs.parse(definitions.rows[0]).commitment;
   for (const member of ['1', '2'])
     await governing.act(
       'decide',
-      'vote',
-      encodeDecide('vote', { ...governing.actor(member), ballot_id: '1', choice: 1 }),
+      'votecommit',
+      encodeDecide('votecommit', { ...governing.actor(member), ballot_id: '1', expected, choice: 1 }),
       member,
     );
   while (Math.floor(Date.now() / 1000) <= now + 66) await wait(500);

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { PrivateKey } from '@wharfkit/antelope';
+import { PrivateKey, ABI, Serializer, Checksum256, Base58 } from '@wharfkit/antelope';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { ApiOriginSchema } from '../protocol/base.js';
 import {
@@ -8,8 +8,31 @@ import {
   AppTokenSchema,
   AppActivityPageSchema,
   ConnectedAppsRoutes,
+  AppInvitationTokenSchema, ConnectedAppConfigSchema,
 } from '../protocol/connected-apps.js';
+import type { ConnectedAppConfig } from '../protocol/connected-apps.js';
+import { AccountSchema, type Account } from '../protocol/api.js';
+import { appJoinAbi, AppJoinActionSchemas, type AppJoinProof } from './app-admission.js';
 import { instructionDigest, makeInstruction } from './index.js';
+function invitationKey(token:string) {
+  const seed=sha256(new TextEncoder().encode('daclify.app-invitation-key.v1:'+AppInvitationTokenSchema.parse(token)));
+  return PrivateKey.fromString('PVT_K1_'+Base58.encodeRipemd160Check(seed,'K1'));
+}
+export function invitationCredential(token:string) {
+  AppInvitationTokenSchema.parse(token);
+  return {tokenHash:Checksum256.hash(new TextEncoder().encode(token)).toString(),invitationKey:invitationKey(token).toPublic().toString()};
+}
+export function makeAppJoinProof(config:ConnectedAppConfig,account:Account,source:string,invitationId='0',tokenHash='0'.repeat(64),expires=Math.floor(Date.now()/1000)+120) {
+  config=ConnectedAppConfigSchema.parse(config);account=AccountSchema.parse(account);
+  if(!account.signingKey||!account.encryptionKey)throw new Error('ACCOUNT_SETUP_REQUIRED');
+  return AppJoinActionSchemas.appadmit.shape.proof.parse({version:1,action:'appadmit',source,chain_id:config.dao.chainId,runtime:config.dao.contract,dao_id:config.dao.daoId,app_id:config.appId,app_revision:config.revision,invitation_id:invitationId,token_hash:tokenHash,signing_key:account.signingKey,encryption_key:JSON.stringify(account.encryptionKey),custody:account.custody==='managed'?1:0,expires});
+}
+export function signAppInvitation(token:string,proof:AppJoinProof) {
+  proof=AppJoinActionSchemas.appadmit.shape.proof.parse(proof);
+  if(proof.token_hash!==invitationCredential(token).tokenHash||proof.invitation_id==='0')throw new Error('APP_INVITE_DOMAIN');
+  const bytes=Serializer.encode({abi:ABI.from(appJoinAbi),type:'app_join_proof',object:proof});
+  return invitationKey(token).signDigest(Checksum256.hash(bytes)).toString();
+}
 const base64 = (bytes: Uint8Array) =>
   btoa(Array.from(bytes, (byte) => String.fromCharCode(byte)).join(''))
     .replaceAll('+', '-')

@@ -35,6 +35,7 @@ inline std::vector<eosio::name> module_ram_families(uint8_t kind){
  case 4:return {"closechecks"_n,"rounds"_n,"applications"_n,"arbterms"_n};
  case 5:return {"closechecks"_n,"joinapps"_n};
  case 6:return {"closechecks"_n,"activities"_n,"actreviews"_n,"appcounts"_n,"appkeys"_n,"appgrants"_n,"actdecisions"_n};
+ case 7:return {"closechecks"_n,"appjoins"_n,"appinvites"_n};
  default:eosio::check(false,"RAM_MIGRATION_SOURCE_KIND");return {};
  }
 }

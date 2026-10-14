@@ -29,6 +29,37 @@ Daclify's owner is not a registration approver. Publishing a directory advertise
 
 Use the [database and identity contract](guides/mini-app-database-contract.md) when designing any mini app. This applies to SQLite, PostgreSQL and another database engine; changing engines does not change the identity or privacy rules.
 
+## App admission (development source)
+
+The next development cohort adds opt-in app admission through the separate
+core-owned `appjoin` contract. An administrator installs its exact reviewed
+code and `admitapp` grant, then signs whether this app accepts public signup.
+New public users and ordinary invitees become human, non-voting members.
+Administrator invitations grant administrator and executive office plus voting
+eligibility; the DAO's credit/stake rules still determine actual voting weight.
+Returning members keep their existing identity and rights.
+
+Invitations are signed by a current administrator in Daclify's trusted UI.
+They expire within seven days, have a finite capacity and can be revoked.
+The first eligible person holding the private link can accept its advertised
+role. A token-derived browser signature binds the recipient's public identity,
+chain, runtime, admission source, DAO, app revision and short expiry. Neither
+the API nor the blockchain receives the raw link secret. The admission gateway
+cannot mint privileged invitations or claim one without this signature.
+
+The contract keeps the invitation claim, enrollment, voting restriction and
+requested administrator/executive changes in one transaction. Active ballots
+and pending executive handovers block privileged joins without consuming the
+link. Issuer removal, app suspension/revision, inactive members and capacity
+limits remain authoritative. Private content keys are granted separately.
+
+Operators configure `CORE_APP_ADMISSION_ACCOUNT` only after deploying and
+initializing the matched appjoin artifact and its normal code permission.
+Native source permissions permit admission and the three role operations; they
+do not permit spending or native account ownership changes. The governing
+platform DAO cannot enable this shortcut. Root/module code pins must match.
+This is development implementation, not activation on the shared testnet.
+
 ## Identity and recovery
 
 The Daclify account is the canonical service identity. A client receives a pairwise app subject and the full native membership reference, not a global email-based app user. Keep issuer/client/subject separate from chain/runtime/DAO/member ID. Native IDs are validated decimal strings; the same member number in another DAO is another membership.

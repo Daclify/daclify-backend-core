@@ -15,6 +15,7 @@ if (
 mkdirSync('.artifacts/contracts', { recursive: true });
 for (const contract of [
   'runtime',
+  'appjoin',
   'hub',
   'permprobe',
   'authorityprobe',
