@@ -15,6 +15,7 @@ import {
   encodeGrants,
   encodeEndorse,
   ModuleCodeHashes,
+  prepareBallotVote,
 } from '@daclify/modules/sdk';
 import { ModulePermissions } from '@daclify/modules';
 import {
@@ -488,20 +489,41 @@ it('completes Grants → Decide → Works → Runtime and Payroll after handover
       metadata: '{}',
     }),
   );
-  for (const member of ['1', '2'])
-    await act(
-      'decide',
-      'vote',
-      encodeDecide('vote', { ...actor(member), ballot_id: '1', choice: 1 }),
-      member,
-    );
+  const state = await gateway.moduleState(daoId),
+    poll = state.ballots.find((row) => row.id === '1');
+  if (!poll) throw Error('Native award ballot');
+  for (const member of ['1', '2']) {
+    const vote = prepareBallotVote({
+      dao: first.reference,
+      decide: 'decide',
+      memberId: member,
+      ballot: poll,
+      definitions: state.ballotDefinitions,
+      choice: 1,
+      grantPlan: state.grantPlans.find((row) => row.ballot_id === '1'),
+      target: state.ballotTargets.find((row) => row.ballot_id === '1'),
+    });
+    await act('decide', vote.action, encodeDecide(vote.action, vote.fields), member);
+  }
+  const vote = prepareBallotVote({
+    dao: first.reference,
+    decide: 'decide',
+    memberId: '1',
+    ballot: poll,
+    definitions: state.ballotDefinitions,
+    choice: 1,
+    grantPlan: state.grantPlans.find((row) => row.ballot_id === '1'),
+    target: state.ballotTargets.find((row) => row.ballot_id === '1'),
+  });
+  if (vote.action !== 'votecommit') throw Error('Native bound award');
   await expect(
     second.act(
       'decide',
-      'vote',
-      encodeDecide('vote', {
+      'votecommit',
+      encodeDecide('votecommit', {
         ...second.actor(),
         ballot_id: '1',
+        expected: vote.fields.expected,
         choice: 1,
       }),
     ),

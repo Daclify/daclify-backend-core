@@ -837,6 +837,10 @@ export async function createServer(
       await chain.privateHandover(IdSchema.parse(request.params.id)),
     );
   });
+  app.get<{Params:{id:string;ballotId:string}}>(ModuleApiRoutes.ballotExport.path,async(request)=>{
+    if(!chain.ballotExport)throw new ApiError('MODULE_UNAVAILABLE',503);
+    return ModuleApiRoutes.ballotExport.response.parse(await chain.ballotExport(IdSchema.parse(request.params.id),IdSchema.parse(request.params.ballotId)));
+  });
   app.get<{ Params: { id: string } }>(ModuleApiRoutes.state.path, async (request) =>
     chain.moduleState(
       IdSchema.parse(request.params.id),
@@ -880,6 +884,9 @@ export async function createServer(
     );
     spend(account.id);
     return chain.finalize(ModuleApiRoutes.finalize.input.parse(request.body));
+  });
+  app.post(ModuleApiRoutes.arbitration.path,async(request)=>{
+    const account=await session(request.cookies[cookieName],typeof request.headers['x-csrf-token']==='string'?request.headers['x-csrf-token']:'');spend(account.id);if(!chain.arbitration)throw new ApiError('MODULE_UNAVAILABLE',503);return ModuleApiRoutes.arbitration.response.parse(await chain.arbitration(ModuleApiRoutes.arbitration.input.parse(request.body)));
   });
   app.post(ModuleApiRoutes.execute.path, async (request) => {
     const account = await session(

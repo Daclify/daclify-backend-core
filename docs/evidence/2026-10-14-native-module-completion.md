@@ -1,0 +1,11 @@
+# Local module qualification
+
+The completion tests use a real owned Spring 1.2.2 fixture with GET_SENDER, GET_CODE_HASH, CRYPTO_PRIMITIVES, RAM_RESTRICTIONS and RESTRICT_ACTION_TO_SELF. Current contracts use CDT 4.1.1 `-O=s`. This is separate from existing Docker fixtures and public testnet qualification.
+
+From the core checkout, set `DACLIFY_NODEOS_BINARY` to the verified pinned nodeos executable and, where needed, set `LD_LIBRARY_PATH` to its installed libraries. Run `node --import tsx tools/native/start-local.ts`, then `npm exec -- vitest run --config vitest.completion-native.config.ts`. The fresh fixture uses loopback port 21388, refuses an existing PID directory, keeps generated keys/configuration private under `.artifacts/module-completion-native`, and publishes no secrets. Stop only the owned PID after confirming its executable and archive its fixture directory before a fresh run.
+
+The first case qualifies genuine member proofs, protected funding, native owner bypass refusal, conflict exclusions, fixed voted payment, repeat payment refusal, separately funded unique payroll renewal, idempotent API execution and complete live-vote export. The second qualifies 5000 members through the real API's bounded preparation, measuring every native step and actual account RAM deltas. Tests require nonempty cases and fail on missing setup; they do not fabricate container/provider evidence.
+
+Candidate results and limits are recorded in [the execution ledger](2026-10-14-module-completion-progress.md). Final public deployment evidence remains a separate acceptance step. Synthetic fixture tokens, keys and identifiers establish behavior on the owned chain; they do not qualify an external wallet/provider or production recovery.
+
+The third case requires the exact previously deployed alpha22 runtime and alpha31 Decide binaries and ABIs in `.artifacts/module-completion-prior/{runtime,decide}.{wasm,abi}`. Copy these from the recorded release artifacts, without recompilation; the test asserts their hashes. It opens and votes on a schema-one `test1` ballot, upgrades both contracts, checks byte-identical stored rows and unchanged permissions, and submits another legacy vote. The owned result is saved as `legacy-upgrade.json`; the reviewed testnet upgrade requires this proof and refuses other pending module states.

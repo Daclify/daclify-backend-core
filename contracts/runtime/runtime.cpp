@@ -847,27 +847,79 @@ public:
     authorized_actor(runtime,dao_id,member_id,true);const auto& d=dao_rows.get(dao_id);check(d.active_ballots==0,"GOVERNANCE_LOCKED");members rows(get_self(),dao_id);const auto& m=rows.get(target,"MEMBER_UNKNOWN");
     dao_rows.modify(d,same_payer,[&](auto& r){if(quantity>=m.credits){r.credit_supply=add64(r.credit_supply,quantity-m.credits);if(m.active)r.eligible_credits=add64(r.eligible_credits,quantity-m.credits);}else{r.credit_supply-=m.credits-quantity;if(m.active)r.eligible_credits-=m.credits-quantity;}});rows.modify(m,same_payer,[&](auto& r){r.credits=quantity;});
   }
-  ACTION reserve(uint64_t dao_id,name source,uint64_t source_id,uint64_t recipient,asset quantity,uint32_t due) {
-    require_active_dao(get_self(),dao_id);
-    require_source(dao_id,source,"reserve"_n);const auto& d=dao_rows.get(dao_id,"DAO_UNKNOWN");
-    check(source_id>0,"OBLIGATION_ID");check(quantity.symbol==d.token_symbol&&quantity.amount>0,"ASSET_QUANTITY");
-    members people(get_self(),dao_id);check(people.get(recipient,"MEMBER_UNKNOWN").active,"MEMBER_INACTIVE");
-    check(quantity.amount<=d.available,"INSUFFICIENT_AVAILABLE");
-    check(!dao_paused(get_self(),dao_id),"DAO_PAUSED");charge_commitment(dao_id,quantity.amount);
-    obligations rows(get_self(),dao_id);auto index=rows.get_index<"bysource"_n>();check(index.find(source_hash(source,source_id))==index.end(),"OBLIGATION_EXISTS");
-    auto next=rows.available_primary_key();check(next<std::numeric_limits<uint64_t>::max(),"OBLIGATION_LIMIT");if(next==0)next=1;
-    rows.emplace(get_self(),[&](auto& r){r.id=next;r.source=source;r.source_id=source_id;r.recipient=recipient;r.quantity=quantity;r.due=due;r.status=0;});
-    hold_obligation_receipts(get_self(),dao_id,next,recipient);
-    dao_rows.modify(d,same_payer,[&](auto& r){r.available=add_amount(r.available,-quantity.amount);r.reserved=add_amount(r.reserved,quantity.amount);});
+  ACTION protectdao(name runtime,uint64_t dao_id,uint64_t member_id,name works){
+    authorized_actor(runtime,dao_id,member_id,true);modules installed(get_self(),dao_id);const auto& grant=installed.get(works.value,"MODULE_DISABLED");check_pinned(grant,works);check(std::find(grant.grants.begin(),grant.grants.end(),"reserve"_n)!=grant.grants.end(),"MODULE_GRANT");
+    arbitration_policies rows(get_self(),get_self().value);auto old=rows.find(dao_id);if(old!=rows.end()){check(old->works==works,"ARBITRATION_POLICY_IMMUTABLE");return;}rows.emplace(get_self(),[&](auto& r){r.dao_id=dao_id;r.works=works;});
   }
+  ACTION reserveprot(uint64_t dao_id,name source,uint64_t source_id,uint64_t project_id,uint64_t recipient,asset quantity,uint32_t due){
+    require_source(dao_id,source,"reserve"_n);protected_terms terms(source,get_self().value);const auto& term=terms.get(project_id,"ARBITRATION_REQUIRED");
+    check(term.version==1&&term.dao_id==dao_id&&term.contributor==recipient&&term.accepted,"ARBITRATION_CONSENT");check(term.commitment==arbitration_terms_hash(get_self(),source,term),"ARBITRATION_CHANGED");check(term.cutoff>current_time_point().sec_since_epoch()&&due<=term.cutoff,"ARBITRATION_CUTOFF");validate_arbitration_rules(get_self(),dao_id,recipient,term.rules);
+    reserve_obligation(dao_id,source,source_id,recipient,quantity,due);obligations debts(get_self(),dao_id);const auto id=obligation_id(debts,source,source_id);protected_obligations rows(get_self(),dao_id);
+    rows.emplace(get_self(),[&](auto& r){r.id=id;r.source=source;r.source_id=source_id;r.project_id=project_id;r.recipient=recipient;r.source_hash=get_code_hash(source);r.terms=term.commitment;r.rules=term.rules;r.cutoff=term.cutoff;r.deadline=term.cutoff;r.reviewers=std::vector<uint64_t>(16,0);});
+    for(uint8_t slot=0;slot<3;slot++)protect_document(dao_id,id,slot,0,0);
+  }
+  ACTION arbsubmit(uint64_t dao_id,name source,uint64_t source_id,uint64_t document_id,uint32_t document_version){
+    const auto id=protected_id(dao_id,source,source_id);protected_obligations rows(get_self(),dao_id);const auto p=rows.get(id);require_protected_source(p);const auto now=current_time_point().sec_since_epoch();check((p.state==0||p.state==3)&&now<p.cutoff,"ARBITRATION_STATE");
+    require_arbitration_document_access(get_self(),dao_id,p.rules,document_id,document_version);
+    const auto commitment=protect_document(dao_id,id,0,document_id,document_version);
+    rows.modify(rows.get(id),same_payer,[&](auto& r){r.state=1;r.deadline=arbitration_time(now,r.rules.review_seconds);r.submission_doc=document_id;r.submission_version=document_version;r.submission_commitment=commitment;});
+  }
+  ACTION arbreview(uint64_t dao_id,name source,uint64_t source_id,uint64_t reviewer,bool approve,uint64_t document_id,uint32_t document_version){
+    const auto id=protected_id(dao_id,source,source_id);protected_obligations rows(get_self(),dao_id);const auto p=rows.get(id);require_protected_source(p);const auto now=current_time_point().sec_since_epoch();check(p.state==1&&now<p.deadline,"ARBITRATION_STATE");
+    members people(get_self(),dao_id);const auto& actor=people.get(reviewer,"MEMBER_UNKNOWN");check(actor.active&&(actor.admin||actor.reviewer)&&reviewer!=p.recipient&&reviewer!=p.rules.backup,"ARBITRATION_CONFLICT");check_agent_authority(get_self(),dao_id,reviewer);
+    check(p.reviewers.size()==16,"ARBITRATION_REVIEWERS");auto reviewers=p.reviewers;if(std::find(reviewers.begin(),reviewers.end(),reviewer)==reviewers.end()){auto empty=std::find(reviewers.begin(),reviewers.end(),uint64_t(0));check(empty!=reviewers.end(),"ARBITRATION_REVIEWER_LIMIT");*empty=reviewer;}
+    require_arbitration_document_access(get_self(),dao_id,p.rules,document_id,document_version);
+    const auto commitment=protect_document(dao_id,id,1,document_id,document_version);
+    rows.modify(rows.get(id),same_payer,[&](auto& r){r.reviewer=reviewer;r.reviewers=reviewers;r.state=approve?2:3;r.deadline=approve?arbitration_time(now,r.rules.challenge_seconds):r.cutoff;r.review_doc=document_id;r.review_version=document_version;r.review_commitment=commitment;});
+  }
+  ACTION arbchallenge(name runtime,uint64_t dao_id,uint64_t member_id,uint64_t obligation_id,checksum256 expected_terms,uint64_t document_id,uint32_t document_version){
+    authorized_actor(runtime,dao_id,member_id);protected_obligations rows(get_self(),dao_id);const auto p=rows.get(obligation_id,"ARBITRATION_UNKNOWN");check(p.terms==expected_terms,"ARBITRATION_CHANGED");const auto now=current_time_point().sec_since_epoch();check(now<p.deadline&&((p.state==2&&member_id==p.rules.representative)||(p.state==3&&member_id==p.recipient)),"ARBITRATION_CHALLENGE");
+    require_arbitration_document_access(get_self(),dao_id,p.rules,document_id,document_version);
+    const auto commitment=protect_document(dao_id,obligation_id,2,document_id,document_version);
+    rows.modify(rows.get(obligation_id),same_payer,[&](auto& r){r.state=4;r.deadline=arbitration_time(now,r.rules.vote_seconds+60);r.challenge_doc=document_id;r.challenge_version=document_version;r.challenge_commitment=commitment;});
+  }
+  ACTION arbtimeout(uint64_t dao_id,uint64_t obligation_id){
+    protected_obligations rows(get_self(),dao_id);const auto p=rows.get(obligation_id,"ARBITRATION_UNKNOWN");const auto now=current_time_point().sec_since_epoch();if(p.state==6||p.state>=7)return;check(now>=p.deadline,"ARBITRATION_DEADLINE");
+    if(p.state==2){finish_protection(dao_id,obligation_id,true);return;}
+    rows.modify(rows.get(obligation_id),same_payer,[&](auto& r){if(r.state<=3){r.state=4;r.deadline=arbitration_time(now,r.rules.vote_seconds+60);}else if(r.state==4){r.state=5;r.deadline=arbitration_time(now,r.rules.backup_seconds);}else{r.state=6;}});
+  }
+  ACTION arbstart(uint64_t dao_id,uint64_t obligation_id,uint64_t ballot_id,checksum256 expected){
+    protected_obligations rows(get_self(),dao_id);auto p=rows.get(obligation_id,"ARBITRATION_UNKNOWN");require_protected_decide(p);
+    if(p.state<=3){check(p.state!=2,"ARBITRATION_CHALLENGE");arbtimeout(dao_id,obligation_id);p=rows.get(obligation_id);}
+    check(p.state==4&&current_time_point().sec_since_epoch()+60<p.deadline&&!p.ballot_id,"ARBITRATION_STATE");
+    if(!ballot_id){check(expected==checksum256{},"ARBITRATION_CHANGED");return;}
+    p.ballot_id=ballot_id;p.decision_hash=protection_decision_hash(get_self(),dao_id,p);check(expected==p.decision_hash,"ARBITRATION_CHANGED");
+    rows.modify(rows.get(obligation_id),same_payer,[&](auto& r){r.ballot_id=ballot_id;r.decision_hash=p.decision_hash;});
+  }
+  ACTION arbitrate(uint64_t dao_id,uint64_t obligation_id,uint64_t ballot_id,checksum256 expected,bool payout){
+    protected_obligations rows(get_self(),dao_id);const auto p=rows.get(obligation_id,"ARBITRATION_UNKNOWN");require_protected_decide(p);check(p.state==4&&current_time_point().sec_since_epoch()<p.deadline&&ballot_id&&p.ballot_id==ballot_id,"ARBITRATION_STATE");check(expected==p.decision_hash&&expected==protection_decision_hash(get_self(),dao_id,p),"ARBITRATION_CHANGED");finish_protection(dao_id,obligation_id,payout);
+  }
+  ACTION arbbackup(name runtime,uint64_t dao_id,uint64_t member_id,uint64_t obligation_id,checksum256 expected_terms,bool payout){
+    authorized_actor(runtime,dao_id,member_id);protected_obligations rows(get_self(),dao_id);const auto p=rows.get(obligation_id,"ARBITRATION_UNKNOWN");check(p.terms==expected_terms,"ARBITRATION_CHANGED");check(p.state==5&&current_time_point().sec_since_epoch()<p.deadline,"ARBITRATION_STATE");check(member_id==p.rules.backup&&member_id!=p.recipient&&member_id!=p.reviewer,"ARBITRATION_CONFLICT");finish_protection(dao_id,obligation_id,payout);
+  }
+  ACTION arbconsent(name runtime,uint64_t dao_id,uint64_t member_id,uint64_t obligation_id,checksum256 expected_terms,uint8_t outcome){
+    protected_obligations rows(get_self(),dao_id);const auto p=rows.get(obligation_id,"ARBITRATION_UNKNOWN");authorized_actor(runtime,dao_id,member_id,false,member_id==p.recipient);check(p.terms==expected_terms,"ARBITRATION_CHANGED");check(p.state==6&&outcome<=2,"ARBITRATION_STATE");
+    const bool contributor=member_id==p.recipient;members people(get_self(),dao_id);const auto& actor=people.get(member_id,"MEMBER_UNKNOWN");check(contributor||(member_id==p.rules.representative&&actor.active&&actor.admin),"ARBITRATION_CONSENT");const uint8_t bit=contributor?1:2;
+    if(outcome==2){rows.modify(rows.get(obligation_id),same_payer,[&](auto& r){r.consent_mask&=~bit;if(!r.consent_mask)r.consent_outcome=2;});return;}
+    check(!p.consent_mask||p.consent_outcome==outcome,"ARBITRATION_CONSENT_MISMATCH");rows.modify(rows.get(obligation_id),same_payer,[&](auto& r){r.consent_outcome=outcome;r.consent_mask|=bit;});if(rows.get(obligation_id).consent_mask==3)finish_protection(dao_id,obligation_id,outcome==1);
+  }
+  ACTION arbclear(uint64_t dao_id,uint64_t obligation_id){
+    protected_obligations rows(get_self(),dao_id);const auto p=rows.get(obligation_id,"ARBITRATION_UNKNOWN");const auto debt=obligations(get_self(),dao_id).get(obligation_id,"OBLIGATION_UNKNOWN");check((p.state==8&&debt.status==3)||(p.state==7&&debt.status==2),"ARBITRATION_UNSETTLED");
+    document_references refs(get_self(),dao_id);auto index=refs.get_index<"bysource"_n>();for(uint8_t slot=0;slot<3;slot++){document_reference key{};key.source=get_self();key.table="protected"_n;key.source_id=obligation_id;key.slot=slot;auto found=index.find(key.by_source());if(found!=index.end())index.erase(found);}
+  }
+  ACTION reserve(uint64_t dao_id,name source,uint64_t source_id,uint64_t recipient,asset quantity,uint32_t due) {
+    check(!protection_required(get_self(),dao_id,source),"ARBITRATION_REQUIRED");reserve_obligation(dao_id,source,source_id,recipient,quantity,due);
+  }
+
   ACTION approveob(uint64_t dao_id,name source,uint64_t source_id) {
     check(!dao_paused(get_self(),dao_id),"DAO_PAUSED");
     require_source(dao_id,source,"approve"_n);obligations rows(get_self(),dao_id);auto id=obligation_id(rows,source,source_id);const auto& o=rows.get(id);
+    protected_obligations protections(get_self(),dao_id);check(protections.find(id)==protections.end(),"OBLIGATION_PROTECTED");
     check(o.status==0,"NOT_APPROVABLE");rows.modify(o,same_payer,[](auto& r){r.status=1;});
   }
   ACTION cancelob(uint64_t dao_id,name source,uint64_t source_id) {
     const auto& d=dao_rows.get(dao_id,"DAO_UNKNOWN");if(!has_auth(d.owner))require_source(dao_id,source,"cancel"_n);else require_auth(d.owner);
-    obligations rows(get_self(),dao_id);const auto& o=rows.get(obligation_id(rows,source,source_id));check(o.status==0,"NOT_CANCELLABLE");
+    obligations rows(get_self(),dao_id);const auto& o=rows.get(obligation_id(rows,source,source_id));protected_obligations protections(get_self(),dao_id);check(protections.find(o.id)==protections.end(),"OBLIGATION_PROTECTED");check(o.status==0,"NOT_CANCELLABLE");
     dao_rows.modify(d,same_payer,[&](auto& r){r.reserved=add_amount(r.reserved,-o.quantity.amount);r.available=add_amount(r.available,o.quantity.amount);});
     rows.modify(o,same_payer,[](auto& r){r.status=3;});settle_receipt_hold(get_self(),dao_id,o.id,false);
   }
@@ -1403,6 +1455,33 @@ private:
     const auto& m=rows.get(member_id,"MEMBER_UNKNOWN");check(m.active||exit,"MEMBER_INACTIVE");check(!admin||m.admin,"ADMIN_REQUIRED");
     check(dao_lifecycle(get_self(),dao_id)!=2||exit,"DAO_CLOSED");
   }
+  uint32_t arbitration_time(uint32_t now,uint32_t duration){check(uint64_t(now)+duration<=std::numeric_limits<uint32_t>::max(),"TIME_RANGE");return now+duration;}
+  uint64_t protected_id(uint64_t dao_id,name source,uint64_t source_id){obligations rows(get_self(),dao_id);return obligation_id(rows,source,source_id);}
+  void require_protected_source(const protected_obligation& p){check(get_sender()==p.source,"SOURCE_SENDER");require_auth(p.source);check(get_code_hash(p.source)==p.source_hash,"MODULE_CODE");}
+  void require_protected_decide(const protected_obligation& p){check(get_sender()==p.rules.decide,"EXECUTOR_SENDER");require_auth(p.rules.decide);check(get_code_hash(p.rules.decide)==p.rules.decide_hash,"MODULE_CODE");}
+  checksum256 protect_document(uint64_t dao_id,uint64_t id,uint8_t slot,uint64_t document_id,uint32_t version){
+    checksum256 commitment{};if(document_id){documents docs(get_self(),dao_id);auto versions=docs.get_index<"byversion"_n>();commitment=versions.get((uint128_t(document_id)<<32)|version,"DOCUMENT_UNKNOWN").commitment;}
+    document_references refs(get_self(),dao_id);auto index=refs.get_index<"bysource"_n>();document_reference key{};key.source=get_self();key.table="protected"_n;key.source_id=id;key.slot=slot;auto found=index.find(key.by_source());
+    if(found!=index.end())index.modify(found,same_payer,[&](auto& r){r.document_id=document_id;r.version=version;});else{auto next=refs.available_primary_key();if(!next)next=1;check(next<std::numeric_limits<uint64_t>::max(),"DOCUMENT_REFERENCE_LIMIT");refs.emplace(get_self(),[&](auto& r){r=key;r.id=next;r.document_id=document_id;r.version=version;});}return commitment;
+  }
+  void finish_protection(uint64_t dao_id,uint64_t id,bool payout){
+    protected_obligations rows(get_self(),dao_id);const auto p=rows.get(id,"ARBITRATION_UNKNOWN");check(p.state<7,"ARBITRATION_RESOLVED");obligations debts(get_self(),dao_id);const auto debt=debts.get(id,"OBLIGATION_UNKNOWN");check(debt.source==p.source&&debt.source_id==p.source_id&&debt.recipient==p.recipient&&debt.status==0,"ARBITRATION_DOMAIN");
+    check(!dao_paused(get_self(),dao_id),"DAO_PAUSED");debts.modify(debts.get(id),same_payer,[&](auto& r){r.status=payout?1:3;});rows.modify(rows.get(id),same_payer,[&](auto& r){r.state=payout?7:8;r.consent_mask=0;r.consent_outcome=2;});
+    if(!payout){const auto& d=dao_rows.get(dao_id);dao_rows.modify(d,same_payer,[&](auto& r){r.reserved=add_amount(r.reserved,-debt.quantity.amount);r.available=add_amount(r.available,debt.quantity.amount);});settle_receipt_hold(get_self(),dao_id,id,false);}
+  }
+  void reserve_obligation(uint64_t dao_id,name source,uint64_t source_id,uint64_t recipient,asset quantity,uint32_t due){
+    require_active_dao(get_self(),dao_id);
+    require_source(dao_id,source,"reserve"_n);const auto& d=dao_rows.get(dao_id,"DAO_UNKNOWN");
+    check(source_id>0,"OBLIGATION_ID");check(quantity.symbol==d.token_symbol&&quantity.amount>0,"ASSET_QUANTITY");
+    members people(get_self(),dao_id);check(people.get(recipient,"MEMBER_UNKNOWN").active,"MEMBER_INACTIVE");
+    check(quantity.amount<=d.available,"INSUFFICIENT_AVAILABLE");
+    check(!dao_paused(get_self(),dao_id),"DAO_PAUSED");charge_commitment(dao_id,quantity.amount);
+    obligations rows(get_self(),dao_id);auto index=rows.get_index<"bysource"_n>();check(index.find(source_hash(source,source_id))==index.end(),"OBLIGATION_EXISTS");
+    auto next=rows.available_primary_key();check(next<std::numeric_limits<uint64_t>::max(),"OBLIGATION_LIMIT");if(next==0)next=1;
+    rows.emplace(get_self(),[&](auto& r){r.id=next;r.source=source;r.source_id=source_id;r.recipient=recipient;r.quantity=quantity;r.due=due;r.status=0;});
+    hold_obligation_receipts(get_self(),dao_id,next,recipient);
+    dao_rows.modify(d,same_payer,[&](auto& r){r.available=add_amount(r.available,-quantity.amount);r.reserved=add_amount(r.reserved,quantity.amount);});
+  }
   uint64_t parse_id(const std::string& value) {check(!value.empty()&&value.size()<=20&&value[0]!='0',"DEPOSIT_REFERENCE");uint64_t out=0;for(auto c:value){check(c>='0'&&c<='9',"DEPOSIT_REFERENCE");check(out<=(std::numeric_limits<uint64_t>::max()-(c-'0'))/10,"DEPOSIT_REFERENCE");out=out*10+(c-'0');}return out;}
   checksum256 source_hash(name source,uint64_t id){auto packed=pack(std::make_tuple(source,id));return sha256(packed.data(),packed.size());}
   uint64_t obligation_id(obligations& rows,name source,uint64_t id){auto index=rows.get_index<"bysource"_n>();const auto& o=index.get(source_hash(source,id),"OBLIGATION_UNKNOWN");check(o.source==source&&o.source_id==id,"OBLIGATION_DOMAIN");return o.id;}
@@ -1484,13 +1563,13 @@ private:
     auto c=configuration();check(r.version==c.interface_version&&r.chain_id==c.chain_id&&r.deployment==get_self(),"INSTRUCTION_DOMAIN");
     const auto& d=dao_rows.get(r.dao_id,"DAO_UNKNOWN");(void)d;
     require_retirement_action(get_self(),r.dao_id,r.action,r.target==get_self());
-    check_agent_authority(get_self(),r.dao_id,r.member_id,r.target==get_self()&&(r.action=="leave"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="delprofile"_n));
-    members rows(get_self(),r.dao_id);const auto& m=rows.get(r.member_id,"MEMBER_UNKNOWN");check(m.active||(r.target==get_self()&&(r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="delprofile"_n)),"MEMBER_INACTIVE");
+    check_agent_authority(get_self(),r.dao_id,r.member_id,r.target==get_self()&&(r.action=="leave"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="delprofile"_n||r.action=="arbconsent"_n));
+    members rows(get_self(),r.dao_id);const auto& m=rows.get(r.member_id,"MEMBER_UNKNOWN");check(m.active||(r.target==get_self()&&(r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="delprofile"_n||r.action=="arbconsent"_n)),"MEMBER_INACTIVE");
     check(r.nonce==m.nonce&&m.nonce<std::numeric_limits<uint64_t>::max(),"NONCE");
     auto now=current_time_point().sec_since_epoch();check(r.expires>now&&uint64_t(r.expires)<=uint64_t(now)+900,"EXPIRED_OR_TOO_LONG");
     check(r.data.size()>=24&&r.data.size()<=16384,"PAYLOAD_SIZE");auto context=unpack<actor_context>(r.data);
     check(context.runtime==get_self()&&context.dao_id==r.dao_id&&context.member_id==r.member_id,"PAYLOAD_DOMAIN");
-    if(r.target==get_self())check(r.action=="refreshgov"_n||r.action=="setexecs"_n||r.action=="heartbeat"_n||r.action=="setvoter"_n||r.action=="archapprove"_n||r.action=="archrevoke"_n||r.action=="govresources"_n||r.action=="govhosted"_n||r.action=="govseatfee"_n||r.action=="govmodfee"_n||r.action=="govpayfees"_n||r.action=="govcreate"_n||r.action=="govlist"_n||r.action=="govunlist"_n||r.action=="govmodcopy"_n||r.action=="addmember"_n||r.action=="setadmit"_n||r.action=="setdaogov"_n||r.action=="setapp"_n||r.action=="addappses"_n||r.action=="addsession"_n||r.action=="delsession"_n||r.action=="setmeta"_n||r.action=="setprofile"_n||r.action=="setencprof"_n||r.action=="delprofile"_n||r.action=="restoredoc"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="unlinknat"_n||r.action=="linkevm"_n||r.action=="unlinkevm"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="leave"_n||r.action=="startclose"_n||r.action=="closedao"_n||r.action=="beginhand"_n||r.action=="scanhand"_n||r.action=="accepthand"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n||r.action=="govfees"_n,"ACTION_UNSUPPORTED");
+    if(r.target==get_self())check(r.action=="protectdao"_n||r.action=="arbbackup"_n||r.action=="arbconsent"_n||r.action=="arbchallenge"_n||r.action=="refreshgov"_n||r.action=="setexecs"_n||r.action=="heartbeat"_n||r.action=="setvoter"_n||r.action=="archapprove"_n||r.action=="archrevoke"_n||r.action=="govresources"_n||r.action=="govhosted"_n||r.action=="govseatfee"_n||r.action=="govmodfee"_n||r.action=="govpayfees"_n||r.action=="govcreate"_n||r.action=="govlist"_n||r.action=="govunlist"_n||r.action=="govmodcopy"_n||r.action=="addmember"_n||r.action=="setadmit"_n||r.action=="setdaogov"_n||r.action=="setapp"_n||r.action=="addappses"_n||r.action=="addsession"_n||r.action=="delsession"_n||r.action=="setmeta"_n||r.action=="setprofile"_n||r.action=="setencprof"_n||r.action=="delprofile"_n||r.action=="restoredoc"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="unlinknat"_n||r.action=="linkevm"_n||r.action=="unlinkevm"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="leave"_n||r.action=="startclose"_n||r.action=="closedao"_n||r.action=="beginhand"_n||r.action=="scanhand"_n||r.action=="accepthand"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n||r.action=="govfees"_n,"ACTION_UNSUPPORTED");
     else { modules rows(get_self(),r.dao_id);const auto& installed=rows.get(r.target.value,"MODULE_DISABLED");check(std::find(installed.actions.begin(),installed.actions.end(),r.action)!=installed.actions.end(),"ACTION_UNSUPPORTED");check_pinned(installed,r.target);require_module_access(get_self(),r.dao_id,r.target,r.action,d.member_count); }
   }
   void dispatch(const instruction& r) {
@@ -1507,6 +1586,7 @@ private:
 extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
   if(code==receiver){switch(action_name){
     EOSIO_DISPATCH_HELPER(runtime,(appoint)(setexecs)(setnativegov)(handover)(heartbeat)(refreshgov)(syncexec)(electexec)(recallexec)(setvoter))
+    EOSIO_DISPATCH_HELPER(runtime,(protectdao)(reserveprot)(arbsubmit)(arbreview)(arbchallenge)(arbtimeout)(arbstart)(arbitrate)(arbbackup)(arbconsent)(arbclear))
     EOSIO_DISPATCH_HELPER(runtime,(authproof)(submitexit)(exitnative)(exitevm)(unlinknat)(linkevm)(unlinkevm)(submitevm)(setadmit)(admitfrom))
     EOSIO_DISPATCH_HELPER(runtime,(docsrc)(docref)(docscanstep)(backfilldocs)(prunedocs)(restoredoc))
     EOSIO_DISPATCH_HELPER(runtime,(beginram)(scanram)(adoptram)(sealram)(setarchcfg)(archattest)(archapprove)(archrevoke)(archstep)(clearholds)(initramobs)(rebindramobs)(setramauto)(setrampool)(grantdaoram)(inheritram)(setdaoquota)(checkdaoram)(checkrampool)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram)(fulfilram))

@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { z } from 'zod';
+import { pathToFileURL } from 'node:url';
 import { join } from 'node:path';
 import * as ts from 'typescript';
 import { generateContract } from '../sdk/compiler.js';
@@ -92,4 +94,24 @@ describe('public ABI compiler', () => {
       'Unsupported ABI type',
     );
   });
+});
+
+it('decodes bounded large table snapshots while keeping action arrays small',async()=>{
+ const directory=mkdtempSync(join(process.cwd(),'.artifacts','compiler-array-'));
+ try{
+  const abi=JSON.stringify({version:'eosio::abi/1.2',types:[],structs:[{name:'record',base:'',fields:[{name:'weights',type:'uint64[]'}]}],actions:[{name:'store',type:'record',ricardian_contract:''}],tables:[{name:'items',type:'record',index_type:'i64',key_names:[],key_types:[]}],ricardian_clauses:[],variants:[]});
+  const generated=generateContract(abi,'fixture','@daclify/core-protocol');const target=join(directory,'schemas.mjs');writeFileSync(target,ts.transpileModule(generated.schemas,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText);
+  const imported:unknown=await import(pathToFileURL(target).href);const module=z.object({FixtureTableSchemas:z.object({items:z.instanceof(z.ZodType)}),FixtureActionSchemas:z.object({store:z.instanceof(z.ZodType)})}).parse(imported);
+  const weights=Array<string>(5000).fill('1');expect(module.FixtureTableSchemas.items.parse({weights})).toEqual({weights});expect(()=>module.FixtureTableSchemas.items.parse({weights:[...weights,'1']})).toThrow();expect(()=>module.FixtureActionSchemas.store.parse({weights:weights.slice(0,65)})).toThrow();
+ }finally{rmSync(directory,{recursive:true});}
+});
+it('normalizes native optional-table nulls to omitted fields',async()=>{
+ const directory=mkdtempSync(join(process.cwd(),'.artifacts','compiler-optional-'));
+ try{
+  const abi=JSON.stringify({version:'eosio::abi/1.2',types:[],structs:[{name:'record',base:'',fields:[{name:'value',type:'uint64?'}]}],actions:[],tables:[{name:'items',type:'record',index_type:'i64',key_names:[],key_types:[]}],ricardian_clauses:[],variants:[]});
+  const target=join(directory,'schemas.mjs');writeFileSync(target,ts.transpileModule(generateContract(abi,'fixture','@daclify/core-protocol').schemas,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText);
+  const imported:unknown=await import(pathToFileURL(target).href);const module=z.object({FixtureTableSchemas:z.object({items:z.instanceof(z.ZodType)})}).parse(imported);
+  expect(module.FixtureTableSchemas.items.parse({value:null})).toEqual({value:undefined});expect(module.FixtureTableSchemas.items.parse({value:7})).toEqual({value:'7'});
+  expect(()=>module.FixtureTableSchemas.items.parse({value:'invalid'})).toThrow();
+ }finally{rmSync(directory,{recursive:true});}
 });

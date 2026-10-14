@@ -1,3 +1,5 @@
+import { makeBallotExport } from '@daclify/modules/sdk';
+import type { BallotExport } from '@daclify/modules';
 import { checkNativeAuthority } from './auth/native-proof.js';
 import { NamesActionSchemas, NamesTableSchemas } from '../../../sdk/generated/names-schemas.js';
 import { EncryptionPublicKeySchema } from '../../../protocol/crypto.js';
@@ -1048,6 +1050,66 @@ export class NativeChainGateway implements ChainGateway {
       this.config.relayActor,
       this.config.relayKey,
     );
+  }
+  async ballotExport(daoId: string, ballotId: string): Promise<BallotExport> {
+    const state = await this.moduleState(daoId, {
+      ballots: ballotId,
+      activities: 'done',
+      projects: 'done',
+      schedules: 'done',
+      terms: 'done',
+      joinApplications: 'done',
+      rounds: 'done',
+      applications: 'done',
+    });
+    const module = state.modules.find((row) => row.deployment.id === 'decide'),
+      ballot = state.ballots.find((row) => row.id === ballotId);
+    if (!module?.codeVerified || !module.compatible) throw new ApiError('MODULE_UNVERIFIED', 409);
+    if (!ballot) throw new ApiError('BALLOT_UNKNOWN', 404);
+    const definition = state.ballotDefinitions.find((row) => row.ballot_id === ballotId) ?? null;
+    const election =
+      definition?.purpose === 2
+        ? (
+            await this.moduleRows(
+              module.deployment.account,
+              'elections',
+              DecideTableSchemas.elections,
+              ballotId,
+              ballotId,
+              1,
+              'i64',
+              1,
+            )
+          ).rows[0]
+        : undefined;
+    const votes = await this.archiveLiveVotes({ dao: state.dao, parentId: ballotId });
+    const current = (
+      await this.moduleRows(
+        module.deployment.account,
+        'ballots',
+        DecideTableSchemas.ballots,
+        ballotId,
+        ballotId,
+        1,
+        'i64',
+        1,
+      )
+    ).rows[0];
+    if (JSON.stringify(current) !== JSON.stringify(ballot))
+      throw new ApiError('ARCHIVE_HISTORY_PENDING', 503);
+    return makeBallotExport({
+      dao: state.dao,
+      decide: module.deployment.account,
+      ballot,
+      definition,
+      election,
+      votes,
+      execution: state.executions.find((row) => row.ballot_id === ballotId),
+      grantPlan: state.grantPlans.find((row) => row.ballot_id === ballotId),
+      documentChange: state.documentChanges.find((row) => row.ballot_id === ballotId),
+      dispute: state.arbitrationPlans.find((row) => row.ballot_id === ballotId),
+      target: state.ballotTargets.find((row) => row.ballot_id === ballotId),
+    });
   }
   async archiveLiveVotes(value: z.infer<typeof ArchiveLiveVotesRequestSchema>) {
     const input = ArchiveLiveVotesRequestSchema.parse(value),
@@ -2267,6 +2329,23 @@ export class NativeChainGateway implements ChainGateway {
       evidence: evidenceForDao(await this.evidenceRows(), daoId),
       receipts: receiptsAvailable ? await this.table('receipts', daoId, '0', 5000) : [],
       receiptsAvailable,
+      protectedObligations: abi.abi?.tables.some((table) => table.name === 'protected')
+        ? await this.table('protected', daoId, '0', 5000)
+        : [],
+      arbitrationPolicy: abi.abi?.tables.some((table) => table.name === 'arbpolicies')
+        ? ((
+            await this.moduleRows(
+              this.config.runtime,
+              'arbpolicies',
+              RuntimeTableSchemas.arbpolicies,
+              daoId,
+              daoId,
+              1,
+              'i64',
+              1,
+            )
+          ).rows[0] ?? null)
+        : null,
     });
   }
   private async evidenceRows(): Promise<z.infer<typeof RuntimeTableSchemas.evidence>[]> {
@@ -2792,7 +2871,17 @@ export class NativeChainGateway implements ChainGateway {
       input.dao.interfaceVersion !== 1
     )
       throw new ApiError('DAO_REFERENCE');
-    const state = await this.moduleState(input.dao.daoId);
+    const state = await this.moduleState(input.dao.daoId, {
+      ballots: input.ballotId,
+      activities: 'done',
+      projects: 'done',
+      schedules: 'done',
+      elections: 'done',
+      terms: 'done',
+      joinApplications: 'done',
+      rounds: 'done',
+      applications: 'done',
+    });
     const deployment = state.modules.find((module) => module.deployment.id === 'decide');
     if (!deployment?.codeVerified || !deployment.compatible)
       throw new ApiError('MODULE_UNVERIFIED', 409);
@@ -3074,6 +3163,95 @@ export class NativeChainGateway implements ChainGateway {
     if (!row || row.id !== id) throw new ApiError('CHAIN_UNAVAILABLE', 503);
     return this.summary(row);
   }
+  async arbitration(value: z.infer<typeof ModuleApiRoutes.arbitration.input>) {
+    const input = ModuleApiRoutes.arbitration.input.parse(value);
+    if (
+      input.dao.chainId !== this.config.chainId ||
+      input.dao.contract !== this.config.runtime ||
+      input.dao.interfaceVersion !== 1
+    )
+      throw new ApiError('DAO_REFERENCE');
+    await this.reviewedRuntime(this.config.runtime);
+    const prior = (await this.table('protected', input.dao.daoId, input.obligationId, 1))[0];
+    if (!prior || prior.id !== input.obligationId) throw new ApiError('ARBITRATION_UNKNOWN', 404);
+    let transactionId: string;
+    if (input.operation === 'advance') {
+      transactionId = (
+        await this.push(
+          'arbtimeout',
+          { dao_id: input.dao.daoId, obligation_id: input.obligationId },
+          this.config.relayActor,
+          this.config.relayKey,
+        )
+      ).transactionId;
+      if (prior.ballot_id !== '0' && Date.now() / 1000 >= prior.deadline) {
+        const lock = (await this.table('govlocks', input.dao.daoId, '0', 100)).find(
+          (row) => row.source === prior.rules.decide && row.source_id === prior.ballot_id,
+        );
+        if (lock?.active && lock.expires <= Date.now() / 1000)
+          await this.push(
+            'govunlock',
+            { dao_id: input.dao.daoId, source: prior.rules.decide, source_id: prior.ballot_id },
+            this.config.relayActor,
+            this.config.relayKey,
+          );
+      }
+    } else {
+      const decide = this.config.modules?.find((row) => row.id === 'decide');
+      if (
+        !decide ||
+        decide.account !== prior.rules.decide ||
+        (await this.api.v1.chain.get_raw_abi(decide.account)).code_hash.toString() !==
+          prior.rules.decide_hash
+      )
+        throw new ApiError('MODULE_UNVERIFIED', 409);
+      const ballotId =
+        prior.ballot_id !== '0'
+          ? prior.ballot_id
+          : (BigInt(`0x${randomBytes(8).toString('hex')}`) || 1n).toString();
+      transactionId = '';
+      for (let step = 0; step < 20; step++) {
+        transactionId = (
+          await this.pushEncoded(
+            decide.account,
+            'openarb',
+            encodeDecide('openarb', {
+              runtime: input.dao.contract,
+              dao_id: input.dao.daoId,
+              obligation_id: input.obligationId,
+              ballot_id: ballotId,
+            }),
+            this.config.relayActor,
+            this.config.relayKey,
+          )
+        ).transactionId;
+        const ballot = (
+          await this.moduleRows(
+            decide.account,
+            'ballots',
+            DecideTableSchemas.ballots,
+            ballotId,
+            ballotId,
+            1,
+            'i64',
+            1,
+          )
+        ).rows[0];
+        if (!ballot || ballot.dao_id !== input.dao.daoId)
+          throw new ApiError('MODULE_RECORD_DOMAIN', 502);
+        if (ballot.status !== 3) break;
+        if (step === 19) throw new ApiError('ARBITRATION_PREPARATION_PENDING', 503);
+      }
+    }
+    const current = (await this.table('protected', input.dao.daoId, input.obligationId, 1))[0];
+    if (!current || current.id !== input.obligationId)
+      throw new ApiError('ARBITRATION_UNKNOWN', 404);
+    return ModuleApiRoutes.arbitration.response.parse({
+      transactionId,
+      ballotId: current.ballot_id === '0' ? null : current.ballot_id,
+      state: current.state,
+    });
+  }
   async execute(input: ExecutionRequest): Promise<ExecutionResult> {
     if (
       input.dao.chainId !== this.config.chainId ||
@@ -3081,13 +3259,27 @@ export class NativeChainGateway implements ChainGateway {
       input.dao.interfaceVersion !== 1
     )
       throw new ApiError('DAO_REFERENCE');
-    const state = await this.moduleState(input.dao.daoId);
+    const state = await this.moduleState(input.dao.daoId, {
+      ballots: input.ballotId,
+      activities: 'done',
+      projects: 'done',
+      schedules: 'done',
+      elections: 'done',
+      terms: 'done',
+      joinApplications: 'done',
+      rounds: 'done',
+      applications: 'done',
+    });
     const deployment = state.modules.find((module) => module.deployment.id === 'decide');
     if (!deployment?.compatible || !deployment.codeVerified)
       throw new ApiError('MODULE_UNVERIFIED', 409);
     input = ModuleApiRoutes.execute.input.parse(input);
     const awardPlan = state.grantPlans.find((plan) => plan.ballot_id === input.ballotId);
-    const plan = awardPlan ?? state.executions.find((plan) => plan.ballot_id === input.ballotId);
+    const disputePlan = state.arbitrationPlans.find((plan) => plan.ballot_id === input.ballotId);
+    const plan =
+      disputePlan ??
+      awardPlan ??
+      state.executions.find((plan) => plan.ballot_id === input.ballotId);
     if (!plan) throw new ApiError('EXECUTION_UNKNOWN', 404);
     if (plan.executed) return { state: 'already-executed' };
     const ballot = state.ballots.find((ballot) => ballot.id === input.ballotId);
@@ -3095,8 +3287,8 @@ export class NativeChainGateway implements ChainGateway {
     try {
       const result = await this.pushEncoded(
         deployment.deployment.account,
-        awardPlan ? 'executeaward' : 'execute',
-        encodeDecide(awardPlan ? 'executeaward' : 'execute', {
+        disputePlan ? 'execarb' : awardPlan ? 'executeaward' : 'execute',
+        encodeDecide(disputePlan ? 'execarb' : awardPlan ? 'executeaward' : 'execute', {
           runtime: input.dao.contract,
           dao_id: input.dao.daoId,
           ballot_id: input.ballotId,
@@ -3106,9 +3298,19 @@ export class NativeChainGateway implements ChainGateway {
       );
       return { state: 'executed', transactionId: result.transactionId };
     } catch (cause) {
-      const current = await this.moduleState(input.dao.daoId);
+      const current = await this.moduleState(input.dao.daoId, {
+        ballots: input.ballotId,
+        activities: 'done',
+        projects: 'done',
+        schedules: 'done',
+        elections: 'done',
+        terms: 'done',
+        joinApplications: 'done',
+        rounds: 'done',
+        applications: 'done',
+      });
       if (
-        [...current.executions, ...current.grantPlans].some(
+        [...current.executions, ...current.grantPlans, ...current.arbitrationPlans].some(
           (plan) => plan.ballot_id === input.ballotId && plan.executed,
         )
       )
@@ -3234,6 +3436,7 @@ export class NativeChainGateway implements ChainGateway {
       acceptances: [],
       acceptedAdoptionIds: [],
       ballots: [],
+      ballotDefinitions: [],
       votes: [],
       next: null,
     };
@@ -3356,6 +3559,23 @@ export class NativeChainGateway implements ChainGateway {
     page.ballots = await Promise.all(
       ballotIds.map((id) => one('ballots', DecideTableSchemas.ballots, id)),
     );
+    for (const id of ballotIds) {
+      const definitions = await this.moduleRows(
+        account,
+        'ballotdefs',
+        DecideTableSchemas.ballotdefs,
+        id,
+        id,
+        1,
+        'i64',
+        1,
+      );
+      for (const definition of definitions.rows) {
+        if (definition.dao_id !== daoId || definition.ballot_id !== id)
+          throw new ApiError('MODULE_RECORD_DOMAIN', 502);
+        page.ballotDefinitions.push(definition);
+      }
+    }
     if (query.memberId)
       for (const id of ballotIds) {
         const key = ((BigInt(id) << 64n) | BigInt(query.memberId)).toString();
@@ -3391,6 +3611,12 @@ export class NativeChainGateway implements ChainGateway {
           terms: all.next.terms ?? 'done',
         });
         all.ballots.push(...page.ballots);
+        all.ballotDefinitions.push(...page.ballotDefinitions);
+        all.ballotTargets.push(...page.ballotTargets);
+        all.documentChanges.push(...page.documentChanges);
+        all.arbitrationPlans.push(...page.arbitrationPlans);
+        all.protectedWorksTerms.push(...page.protectedWorksTerms);
+        all.protectedGrantTerms.push(...page.protectedGrantTerms);
         all.activities.push(...page.activities);
         all.activityReviews.push(...page.activityReviews);
         all.activityDecisions.push(...page.activityDecisions);
@@ -3403,6 +3629,7 @@ export class NativeChainGateway implements ChainGateway {
         all.schedules.push(...page.schedules);
         all.entries.push(...page.entries);
         all.controls.push(...page.controls);
+        all.payrollTerms.push(...page.payrollTerms);
         all.executions.push(...page.executions);
         all.grantPlans.push(...page.grantPlans);
         all.rounds.push(...page.rounds);
@@ -3437,13 +3664,20 @@ export class NativeChainGateway implements ChainGateway {
       appKeys: ModuleState['appKeys'] = [],
       appKeyGrants: ModuleState['appKeyGrants'] = [];
     let ballots: ModuleState['ballots'] = [];
+    let ballotDefinitions: ModuleState['ballotDefinitions'] = [];
+    const ballotTargets: ModuleState['ballotTargets'] = [];
+    let documentChanges: ModuleState['documentChanges'] = [];
     let votes: ModuleState['votes'] = [];
     let projects: ModuleState['projects'] = [];
     let milestones: ModuleState['milestones'] = [];
     let agreements: ModuleState['agreements'] = [];
+    const protectedWorksTerms: ModuleState['protectedWorksTerms'] = [],
+      protectedGrantTerms: ModuleState['protectedGrantTerms'] = [],
+      arbitrationPlans: ModuleState['arbitrationPlans'] = [];
     let schedules: ModuleState['schedules'] = [];
     let entries: ModuleState['entries'] = [];
     let controls: ModuleState['controls'] = [];
+    const payrollTerms: ModuleState['payrollTerms'] = [];
     let executions: ModuleState['executions'] = [];
     let elections: ModuleState['elections'] = [],
       nominations: ModuleState['nominations'] = [],
@@ -3619,6 +3853,89 @@ export class NativeChainGateway implements ChainGateway {
         ballots = page.rows;
         next.ballots = page.next;
         for (const ballot of ballots) {
+          if (ballot.status === 3) {
+            const plans = await this.moduleRows(
+              deployment.account,
+              'arbplans',
+              DecideTableSchemas.arbplans,
+              ballot.id,
+              ballot.id,
+              1,
+              'i64',
+              1,
+            );
+            if (
+              plans.rows.length !== 1 ||
+              plans.rows.some((row) => row.dao_id !== daoId || row.ballot_id !== ballot.id)
+            )
+              throw new ApiError('MODULE_RECORD_DOMAIN', 502);
+            arbitrationPlans.push(...plans.rows);
+          }
+          const definitions = await this.moduleRows(
+            deployment.account,
+            'ballotdefs',
+            DecideTableSchemas.ballotdefs,
+            ballot.id,
+            ballot.id,
+            1,
+            'i64',
+            1,
+          );
+          for (const definition of definitions.rows) {
+            if (definition.dao_id !== daoId || definition.ballot_id !== ballot.id)
+              throw new ApiError('MODULE_RECORD_DOMAIN', 502);
+            ballotDefinitions.push(definition);
+            if (definition.version === 2) {
+              const targets = await this.moduleRows(
+                deployment.account,
+                'votetargets',
+                DecideTableSchemas.votetargets,
+                ballot.id,
+                ballot.id,
+                1,
+                'i64',
+                1,
+              );
+              if (
+                targets.rows.length !== 1 ||
+                targets.rows.some((row) => row.dao_id !== daoId || row.ballot_id !== ballot.id)
+              )
+                throw new ApiError('MODULE_RECORD_DOMAIN', 502);
+              ballotTargets.push(...targets.rows);
+            }
+            if (definition.purpose === 6) {
+              const plans = await this.moduleRows(
+                deployment.account,
+                'arbplans',
+                DecideTableSchemas.arbplans,
+                ballot.id,
+                ballot.id,
+                1,
+                'i64',
+                1,
+              );
+              if (plans.rows.some((row) => row.dao_id !== daoId || row.ballot_id !== ballot.id))
+                throw new ApiError('MODULE_RECORD_DOMAIN', 502);
+              arbitrationPlans.push(...plans.rows);
+            }
+            if (definition.purpose === 5) {
+              const changes = await this.moduleRows(
+                deployment.account,
+                'docchanges',
+                DecideTableSchemas.docchanges,
+                ballot.id,
+                ballot.id,
+                3,
+                'i64',
+                1,
+              );
+              for (const change of changes.rows) {
+                if (change.dao_id !== daoId || change.ballot_id !== ballot.id)
+                  throw new ApiError('MODULE_RECORD_DOMAIN', 502);
+                documentChanges.push(change);
+              }
+            }
+          }
           const plan = await this.moduleRows(
             deployment.account,
             'executions',
@@ -3676,6 +3993,19 @@ export class NativeChainGateway implements ChainGateway {
         projects = page.rows;
         next.projects = page.next;
         for (const project of projects) {
+          const terms = await this.moduleRows(
+            deployment.account,
+            'arbterms',
+            WorksTableSchemas.arbterms,
+            project.id,
+            project.id,
+            1,
+            'i64',
+            1,
+          );
+          if (terms.rows.some((row) => row.dao_id !== daoId || row.id !== project.id))
+            throw new ApiError('MODULE_RECORD_DOMAIN', 502);
+          protectedWorksTerms.push(...terms.rows);
           const consent = await this.moduleRows(
             deployment.account,
             'agreements',
@@ -3733,6 +4063,21 @@ export class NativeChainGateway implements ChainGateway {
           query.applications,
         );
         applications = a.rows;
+        for (const application of applications) {
+          const terms = await this.moduleRows(
+            deployment.account,
+            'arbterms',
+            GrantsTableSchemas.arbterms,
+            application.id,
+            application.id,
+            1,
+            'i64',
+            1,
+          );
+          if (terms.rows.some((row) => row.dao_id !== daoId || row.id !== application.id))
+            throw new ApiError('MODULE_RECORD_DOMAIN', 502);
+          protectedGrantTerms.push(...terms.rows);
+        }
         next.applications = a.next;
       }
       if (deployment.id === 'payroll') {
@@ -3770,6 +4115,19 @@ export class NativeChainGateway implements ChainGateway {
             1,
           );
           controls.push(...flags.rows.filter((row) => row.schedule_id === schedule.id));
+          const details = await this.moduleRows(
+            deployment.account,
+            'payterms',
+            PayrollTableSchemas.payterms,
+            schedule.id,
+            schedule.id,
+            1,
+            'i64',
+            1,
+          );
+          if (details.rows.some((row) => row.schedule_id !== schedule.id || row.dao_id !== daoId))
+            throw new ApiError('MODULE_RECORD_DOMAIN', 502);
+          payrollTerms.push(...details.rows);
         }
       }
     }
@@ -3788,13 +4146,20 @@ export class NativeChainGateway implements ChainGateway {
       appKeyGrants,
       next,
       ballots,
+      ballotDefinitions,
+      ballotTargets,
+      documentChanges,
       votes,
       projects,
       milestones,
       agreements,
+      protectedWorksTerms,
+      protectedGrantTerms,
+      arbitrationPlans,
       schedules,
       entries,
       controls,
+      payrollTerms,
       executions,
       grantPlans,
       rounds,
@@ -4145,7 +4510,7 @@ export class NativeChainGateway implements ChainGateway {
     )
       throw new ApiError('INSTRUCTION_DOMAIN', 403);
     if (
-      !['open', 'vote', 'review', 'recordact'].includes(request.action) ||
+      !['open', 'openpoll', 'vote', 'votecommit', 'review', 'recordact'].includes(request.action) ||
       request.target === this.config.runtime
     )
       throw new ApiError('MCP_SCOPE_REQUIRED', 403);

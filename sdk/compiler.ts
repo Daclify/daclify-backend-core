@@ -62,9 +62,12 @@ export function generateContract(
     output += `export interface ${struct.name}${struct.base ? ` extends ${struct.base}` : ''} {\n${struct.fields.map((field) => `  ${field.name}${field.type.endsWith('$') ? '?' : ''}: ${typeOf(field.type)};`).join('\n')}\n}\n`;
   output += `export interface ${title}Actions {\n${abi.actions.map((action) => `  ${action.name}: ${action.type};`).join('\n')}\n}\n`;
   function schemaOf(type: string, table: boolean): string {
-    if (type.endsWith('[]')) return `z.array(${schemaOf(type.slice(0, -2), table)}).max(64)`;
+    if (type.endsWith('[]'))
+      return `z.array(${schemaOf(type.slice(0, -2), table)}).max(${table ? 5000 : 64})`;
     if (type.endsWith('?') || type.endsWith('$'))
-      return `${schemaOf(type.slice(0, -1), table)}.optional()`;
+      return table
+        ? `z.preprocess(value=>value===null?undefined:value,${schemaOf(type.slice(0, -1), table)}.optional())`
+        : `${schemaOf(type.slice(0, -1), table)}.optional()`;
     const struct = abi.structs.find((record) => record.name === type);
     if (struct) {
       if (struct.base) throw new Error('Base struct schemas require explicit support');

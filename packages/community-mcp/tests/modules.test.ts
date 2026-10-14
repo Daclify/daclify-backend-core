@@ -9,7 +9,7 @@ import {
   McpPrepareInputSchema,
 } from '@daclify/core-protocol';
 import { ModuleApiRoutes, Catalog } from '@daclify/modules';
-import { ModuleCodeHashes, decideAbi } from '@daclify/modules/sdk';
+import { ModuleCodeHashes, decideAbi, ballotCommitment } from '@daclify/modules/sdk';
 import { communityModuleAdapter } from '../src/modules.js';
 function fixture() {
   const dao = {
@@ -83,7 +83,7 @@ function fixture() {
         installed: true,
         compatible: true,
         codeVerified: true,
-        actions: ['open', 'vote'],
+        actions: ['open', 'openpoll', 'vote', 'votecommit'],
         grants: [],
       },
     ],
@@ -136,7 +136,8 @@ it('encodes a real zero-payment poll using current producer policy and pinned mo
     },
   });
   const result = await communityModuleAdapter().prepare(intent, context);
-  const decoded = Serializer.decode({ abi: ABI.from(decideAbi), type: 'open', data: result.data });
+  expect(result.action).toBe('openpoll');
+  const decoded = Serializer.decode({ abi: ABI.from(decideAbi), type: 'openpoll', data: result.data });
   expect(JSON.parse(JSON.stringify(decoded))).toMatchObject({
     runtime: 'daclifycore',
     dao_id: 1,
@@ -148,11 +149,24 @@ it('encodes a real zero-payment poll using current producer policy and pinned mo
     approval: 5001,
   });
   expect(result.codeHash).toBe(ModuleCodeHashes.decide);
-  expect(result.action).toBe('open');
+  expect(result.action).toBe('openpoll');
   const module = context.state.modules[0];
   if (!module) throw Error('missing fixture');
   module.deployment.codeHash = 'cd'.repeat(32);
   await expect(communityModuleAdapter().prepare(intent, context)).rejects.toThrow('MCP_MODULE_PIN');
+});
+it('prepares a bound vote and rejects falsified ballot text before producing a payload', async () => {
+  const context=fixture();
+  const poll={id:'2',dao_id:'1',creator:'1',kind:0,choices:2,closes:Math.floor(Date.now()/1000)+300,quorum:5000,approval:5001,denominator:'3',max_member:'3',cast:'0',tallies:['0','0'],status:0,winner:-1,metadata:JSON.stringify({schemaVersion:3,semantics:'poll',title:'Meeting',description:'Choose the venue.',options:['Garden','Hall']})};
+  const definition={ballot_id:'2',dao_id:'1',version:1,purpose:1,policy_revision:'0',policy_hash:'00'.repeat(32),commitment:'00'.repeat(32)};
+  definition.commitment=ballotCommitment({chainId:context.connection.dao.chainId,runtime:'daclifycore',decide:'decide',ballot:poll,definition});
+  context.state.ballots.push(poll);context.state.ballotDefinitions.push(definition);
+  const intent=McpPrepareInputSchema.parse({tool:'prepare_vote',input:{pollId:'2',optionId:'0'}});
+  const result=await communityModuleAdapter().prepare(intent,context);
+  expect(result.action).toBe('votecommit');
+  expect(JSON.parse(JSON.stringify(Serializer.decode({abi:ABI.from(decideAbi),type:'votecommit',data:result.data})))).toMatchObject({expected:definition.commitment,choice:0});
+  poll.metadata=poll.metadata.replace('Meeting','Changed');
+  await expect(communityModuleAdapter().prepare(intent,context)).rejects.toThrow('BALLOT_DEFINITION_CHANGED');
 });
 it('rejects private output, wrong DAO state and independent reviews without current project evidence', async () => {
   const context = fixture();

@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { ApiRoutes, ConnectedAppsRoutes, type McpConnection } from '@daclify/core-protocol';
 import type { CommunityModuleAdapter } from '@daclify/core-protocol/community-agent';
 import { ModuleApiRoutes } from '@daclify/modules';
-import { encodeDecide, encodeWorks, encodeActivity, ModuleCodeHashes } from '@daclify/modules/sdk';
+import { encodeDecide, encodeWorks, encodeActivity, ModuleCodeHashes, prepareBallotVote, encodeBallotMetadata } from '@daclify/modules/sdk';
 
 export interface ScopedModuleAdapter {
   readActivity(
@@ -70,7 +70,7 @@ export function communityModuleAdapter(app?: {
             ? 'activity'
             : 'decide';
       const module = state.modules.find((value) => value.deployment.id === id);
-      const action =
+      let action =
         input.tool === 'prepare_proposal'
           ? 'open'
           : input.tool === 'prepare_vote'
@@ -78,6 +78,8 @@ export function communityModuleAdapter(app?: {
             : input.tool === 'prepare_review'
               ? 'review'
               : 'recordact';
+      if (input.tool === 'prepare_proposal' && !(input.input.options.length===2 && input.input.options[0]==='Reject' && input.input.options[1]==='Approve')) action='openpoll';
+      if (input.tool === 'prepare_vote' && state.ballotDefinitions.some(value=>value.ballot_id===input.input.pollId)) action='votecommit';
       if (
         !module?.enabled ||
         !module.installed ||
@@ -101,7 +103,8 @@ export function communityModuleAdapter(app?: {
           state.ballots.some((value) => value.id === input.input.ballotId)
         )
           throw new Error('MCP_POLICY_CHANGED');
-        data = encodeDecide('open', {
+        const opening = action === 'openpoll' ? 'openpoll' : 'open';
+        data = encodeDecide(opening, {
           ...base,
           ballot_id: input.input.ballotId,
           kind: policy.config.kind,
@@ -109,8 +112,9 @@ export function communityModuleAdapter(app?: {
           duration: policy.config.duration,
           quorum: policy.config.quorum,
           approval: policy.config.approval,
-          metadata: JSON.stringify({
-            schemaVersion: 1,
+          metadata: encodeBallotMetadata({
+            schemaVersion: 3,
+            semantics: opening==='openpoll'?'poll':'proposal',
             title: input.input.title,
             description: input.input.description,
             options: input.input.options,
@@ -120,7 +124,7 @@ export function communityModuleAdapter(app?: {
         const poll = state.ballots.find(
           (value) => value.dao_id === connection.dao.daoId && value.id === input.input.pollId,
         );
-        const choice = z.coerce.number().int().min(0).max(7).parse(input.input.optionId);
+        const choice = z.coerce.number().int().min(0).max(15).parse(input.input.optionId);
         if (
           !poll ||
           poll.status !== 0 ||
@@ -132,7 +136,9 @@ export function communityModuleAdapter(app?: {
           governance.excludedVoters.some((value) => value.member_id === member.memberId)
         )
           throw new Error('MCP_VOTE_UNAVAILABLE');
-        data = encodeDecide('vote', { ...base, ballot_id: poll.id, choice });
+        const prepared=prepareBallotVote({dao:connection.dao,decide:module.deployment.account,memberId:member.memberId,ballot:poll,definitions:state.ballotDefinitions,choice,election:state.elections.find(value=>value.id===poll.id),execution:state.executions.find(value=>value.ballot_id===poll.id),grantPlan:state.grantPlans.find(value=>value.ballot_id===poll.id),documentChange:state.documentChanges.find(value=>value.ballot_id===poll.id),dispute:state.arbitrationPlans.find(value=>value.ballot_id===poll.id),target:state.ballotTargets.find(value=>value.ballot_id===poll.id)});
+        if (!module.actions.includes(prepared.action)) throw new Error('MCP_MODULE_PIN');
+        action=prepared.action;data=encodeDecide(prepared.action,prepared.fields);
       } else if (input.tool === 'prepare_review') {
         const milestone = state.milestones.find(
           (value) => value.dao_id === connection.dao.daoId && value.id === input.input.milestoneId,

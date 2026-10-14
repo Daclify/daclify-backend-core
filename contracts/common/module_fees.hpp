@@ -19,6 +19,8 @@ struct [[eosio::table("modterms"),eosio::contract("runtime")]] module_fee_term {
 };
 using module_fee_terms=ram_table<"modterms"_n,module_fee_term>;
 inline void require_module_access(name runtime,uint64_t dao_id,name account,name action,uint64_t members){
+ // Replacement creation paths inherit the existing subscription without rewriting paid terms.
+ if(action=="openpoll"_n)action="open"_n;else if(action=="commitdoc"_n)action="commit"_n;
  if(members<=module_free_members)return;
  module_fee_prices prices(runtime,runtime.value);auto fee=prices.find(account.value);
  if(fee==prices.end()||!fee->monthly_usd||std::find(fee->actions.begin(),fee->actions.end(),action)==fee->actions.end())return;

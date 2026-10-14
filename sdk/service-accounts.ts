@@ -26,6 +26,9 @@ export const RelayCoreActions = [
   'archattest',
   'prunedocs',
   'payob',
+  'govunlock',
+  'arbtimeout',
+  'arbclear',
 ] as const;
 export const ServiceAccountConfigurationSchema = z
   .strictObject({
@@ -52,7 +55,7 @@ export function relayActionLinks(
     ...RelayCoreActions.map((type) => ({ code: config.runtime, type })),
     ...(config.names ? [{ code: config.names, type: 'fulfillnet' }] : []),
     ...(decide
-      ? ['finalize', 'execute', 'executeaward', 'prunevotes'].map((type) => ({
+      ? ['finalize', 'execute', 'executeaward', 'execarb','openarb','prunevotes'].map((type) => ({
           code: decide,
           type,
         }))

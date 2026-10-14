@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.15.0-alpha.22 · interface 1.
+Package 0.15.0-alpha.23 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -698,7 +698,7 @@ If a response is lost, retry the same link or resume the saved creation order. P
 
 ## runtime contract
 
-Source ABI JSON SHA-256: `05453044395d37ad1552d232fc89d8e4fed64e232a7e806e5a24597b5499cc19`.
+Source ABI JSON SHA-256: `041022c92da2ed87195b424951805da692dce0fed5891920e3aa07c3a85b51b2`.
 
 ### Action: accepthand
 
@@ -780,6 +780,95 @@ Source ABI JSON SHA-256: `05453044395d37ad1552d232fc89d8e4fed64e232a7e806e5a2459
 | dao_id | uint64 |
 | source | name |
 | source_id | uint64 |
+
+### Action: arbbackup
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| obligation_id | uint64 |
+| expected_terms | checksum256 |
+| payout | bool |
+
+### Action: arbchallenge
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| obligation_id | uint64 |
+| expected_terms | checksum256 |
+| document_id | uint64 |
+| document_version | uint32 |
+
+### Action: arbclear
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| obligation_id | uint64 |
+
+### Action: arbconsent
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| obligation_id | uint64 |
+| expected_terms | checksum256 |
+| outcome | uint8 |
+
+### Action: arbitrate
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| obligation_id | uint64 |
+| ballot_id | uint64 |
+| expected | checksum256 |
+| payout | bool |
+
+### Action: arbreview
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| source | name |
+| source_id | uint64 |
+| reviewer | uint64 |
+| approve | bool |
+| document_id | uint64 |
+| document_version | uint32 |
+
+### Action: arbstart
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| obligation_id | uint64 |
+| ballot_id | uint64 |
+| expected | checksum256 |
+
+### Action: arbsubmit
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| source | name |
+| source_id | uint64 |
+| document_id | uint64 |
+| document_version | uint32 |
+
+### Action: arbtimeout
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| obligation_id | uint64 |
 
 ### Action: archapprove
 
@@ -1435,6 +1524,15 @@ Source ABI JSON SHA-256: `05453044395d37ad1552d232fc89d8e4fed64e232a7e806e5a2459
 | source | name |
 | source_id | uint64 |
 
+### Action: protectdao
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| works | name |
+
 ### Action: pruneappses
 
 | Field | ABI type |
@@ -1523,6 +1621,18 @@ Source ABI JSON SHA-256: `05453044395d37ad1552d232fc89d8e4fed64e232a7e806e5a2459
 | dao_id | uint64 |
 | source | name |
 | source_id | uint64 |
+| recipient | uint64 |
+| quantity | asset |
+| due | uint32 |
+
+### Action: reserveprot
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| source | name |
+| source_id | uint64 |
+| project_id | uint64 |
 | recipient | uint64 |
 | quantity | asset |
 | due | uint32 |
@@ -2019,6 +2129,14 @@ Source ABI JSON SHA-256: `05453044395d37ad1552d232fc89d8e4fed64e232a7e806e5a2459
 | id | uint64 |
 | app_id | uint64 |
 | revision | uint64 |
+
+### Table: arbpolicies
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| works | name |
+| version | uint16 |
 
 ### Table: archcfg
 
@@ -2527,6 +2645,38 @@ Source ABI JSON SHA-256: `05453044395d37ad1552d232fc89d8e4fed64e232a7e806e5a2459
 | member_id | uint64 |
 | account_name | name |
 | profile | string |
+
+### Table: protected
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| source | name |
+| source_id | uint64 |
+| project_id | uint64 |
+| recipient | uint64 |
+| version | uint16 |
+| source_hash | checksum256 |
+| terms | checksum256 |
+| rules | arbitration_rules |
+| cutoff | uint32 |
+| reviewer | uint64 |
+| state | uint8 |
+| deadline | uint32 |
+| ballot_id | uint64 |
+| decision_hash | checksum256 |
+| consent_outcome | uint8 |
+| consent_mask | uint8 |
+| reviewers | uint64[] |
+| submission_doc | uint64 |
+| review_doc | uint64 |
+| challenge_doc | uint64 |
+| submission_version | uint32 |
+| review_version | uint32 |
+| challenge_version | uint32 |
+| submission_commitment | checksum256 |
+| review_commitment | checksum256 |
+| challenge_commitment | checksum256 |
 
 ### Table: ramalloc
 
@@ -11514,7 +11664,7 @@ Request:
             },
             "options": {
               "minItems": 2,
-              "maxItems": 8,
+              "maxItems": 16,
               "type": "array",
               "items": {
                 "type": "string",
@@ -11554,7 +11704,7 @@ Request:
             },
             "optionId": {
               "type": "string",
-              "pattern": "^[0-7]$"
+              "pattern": "^(?:[0-9]|1[0-5])$"
             }
           },
           "required": [
@@ -11697,7 +11847,7 @@ Response:
                 },
                 "options": {
                   "minItems": 2,
-                  "maxItems": 8,
+                  "maxItems": 16,
                   "type": "array",
                   "items": {
                     "type": "string",
@@ -11737,7 +11887,7 @@ Response:
                 },
                 "optionId": {
                   "type": "string",
-                  "pattern": "^[0-7]$"
+                  "pattern": "^(?:[0-9]|1[0-5])$"
                 }
               },
               "required": [
@@ -11997,7 +12147,7 @@ Request:
                     },
                     "options": {
                       "minItems": 2,
-                      "maxItems": 8,
+                      "maxItems": 16,
                       "type": "array",
                       "items": {
                         "type": "string",
@@ -12037,7 +12187,7 @@ Request:
                     },
                     "optionId": {
                       "type": "string",
-                      "pattern": "^[0-7]$"
+                      "pattern": "^(?:[0-9]|1[0-5])$"
                     }
                   },
                   "required": [
@@ -12392,7 +12542,7 @@ Request:
                 },
                 "options": {
                   "minItems": 2,
-                  "maxItems": 8,
+                  "maxItems": 16,
                   "type": "array",
                   "items": {
                     "type": "string",
@@ -12432,7 +12582,7 @@ Request:
                 },
                 "optionId": {
                   "type": "string",
-                  "pattern": "^[0-7]$"
+                  "pattern": "^(?:[0-9]|1[0-5])$"
                 }
               },
               "required": [
@@ -28359,7 +28509,7 @@ Response:
             "maxLength": 20
           },
           "permissions": {
-            "maxItems": 64,
+            "maxItems": 5000,
             "type": "array",
             "items": {
               "type": "object",
@@ -28690,7 +28840,7 @@ Response:
               "maxLength": 20
             },
             "contracts": {
-              "maxItems": 64,
+              "maxItems": 5000,
               "type": "array",
               "items": {
                 "type": "string",
@@ -28705,7 +28855,7 @@ Response:
               "type": "boolean"
             },
             "signers": {
-              "maxItems": 64,
+              "maxItems": 5000,
               "type": "array",
               "items": {
                 "type": "string",
@@ -28718,7 +28868,7 @@ Response:
               "maximum": 4294967295
             },
             "admin_members": {
-              "maxItems": 64,
+              "maxItems": 5000,
               "type": "array",
               "items": {
                 "type": "string",
@@ -28738,7 +28888,7 @@ Response:
                   "maxLength": 13
                 },
                 "inline_code": {
-                  "maxItems": 64,
+                  "maxItems": 5000,
                   "type": "array",
                   "items": {
                     "type": "string",
@@ -28799,7 +28949,7 @@ Response:
               "maximum": 4294967295
             },
             "members": {
-              "maxItems": 64,
+              "maxItems": 5000,
               "type": "array",
               "items": {
                 "type": "string",
@@ -30201,6 +30351,265 @@ Response:
     "receiptsAvailable": {
       "default": false,
       "type": "boolean"
+    },
+    "protectedObligations": {
+      "default": [],
+      "maxItems": 5000,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "source": {
+            "type": "string",
+            "maxLength": 13
+          },
+          "source_id": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "project_id": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "recipient": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 65535
+          },
+          "source_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "terms": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "rules": {
+            "type": "object",
+            "properties": {
+              "decide": {
+                "type": "string",
+                "maxLength": 13
+              },
+              "decide_hash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "backup": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "representative": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "kind": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "quorum": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 65535
+              },
+              "approval": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 65535
+              },
+              "review_seconds": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              "challenge_seconds": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              "vote_seconds": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              "backup_seconds": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              }
+            },
+            "required": [
+              "decide",
+              "decide_hash",
+              "backup",
+              "representative",
+              "kind",
+              "quorum",
+              "approval",
+              "review_seconds",
+              "challenge_seconds",
+              "vote_seconds",
+              "backup_seconds"
+            ],
+            "additionalProperties": false
+          },
+          "cutoff": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295
+          },
+          "reviewer": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "state": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          },
+          "deadline": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295
+          },
+          "ballot_id": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "decision_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "consent_outcome": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          },
+          "consent_mask": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          },
+          "reviewers": {
+            "maxItems": 5000,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 20
+            }
+          },
+          "submission_doc": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "review_doc": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "challenge_doc": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "submission_version": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295
+          },
+          "review_version": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295
+          },
+          "challenge_version": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295
+          },
+          "submission_commitment": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "review_commitment": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "challenge_commitment": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "source_id",
+          "project_id",
+          "recipient",
+          "version",
+          "source_hash",
+          "terms",
+          "rules",
+          "cutoff",
+          "reviewer",
+          "state",
+          "deadline",
+          "ballot_id",
+          "decision_hash",
+          "consent_outcome",
+          "consent_mask",
+          "reviewers",
+          "submission_doc",
+          "review_doc",
+          "challenge_doc",
+          "submission_version",
+          "review_version",
+          "challenge_version",
+          "submission_commitment",
+          "review_commitment",
+          "challenge_commitment"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "arbitrationPolicy": {
+      "default": null,
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "dao_id": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "works": {
+              "type": "string",
+              "maxLength": 13
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            }
+          },
+          "required": [
+            "dao_id",
+            "works",
+            "version"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   },
   "required": [
@@ -30208,7 +30617,9 @@ Response:
     "obligations",
     "evidence",
     "receipts",
-    "receiptsAvailable"
+    "receiptsAvailable",
+    "protectedObligations",
+    "arbitrationPolicy"
   ],
   "additionalProperties": false
 }

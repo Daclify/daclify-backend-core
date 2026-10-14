@@ -6,11 +6,15 @@ import { readFileSync } from 'node:fs';
 import { z } from 'zod';
 import { loadContract, row, send } from './helpers/vert.js';
 import { wasmCodeHash } from './helpers/code-hash.js';
+import { ballotCommitment, DecideTableSchemas } from '@daclify/modules/sdk';
 import { RuntimeTableSchemas, makeInstruction, instructionDigest } from '../sdk/index.js';
 const runtimePath = '.artifacts/contracts/runtime';
 const decidePath = '../daclify-backend-modules/.artifacts/contracts/decide';
+const payrollPath = '../daclify-backend-modules/.artifacts/contracts/payroll';
 const runtimeName = 'daclifycore';
-let chain: Blockchain, runtime: ReturnType<typeof loadContract>;
+let chain: Blockchain,
+  runtime: ReturnType<typeof loadContract>,
+  decide: ReturnType<typeof loadContract>;
 const keys = new Map<string, PrivateKey>();
 const now = () => chain.timestamp.toMilliseconds() / 1000;
 const feeRow = z.object({
@@ -39,7 +43,11 @@ async function instruction(
     row(runtime, 'members', BigInt(dao), BigInt(member)),
   );
   const abi = ABI.from(
-    readFileSync((target === runtimeName ? runtimePath : decidePath) + '.abi', 'utf8'),
+    readFileSync(
+      (target === runtimeName ? runtimePath : target === 'payroll' ? payrollPath : decidePath) +
+        '.abi',
+      'utf8',
+    ),
   );
   const bytes = Serializer.encode({
     abi,
@@ -101,7 +109,7 @@ beforeEach(async () => {
   chain = new Blockchain();
   chain.createAccounts('alice', 'bob', 'relay', 'eosio.token');
   runtime = loadContract(chain, runtimeName, runtimePath);
-  loadContract(chain, 'decide', decidePath);
+  decide = loadContract(chain, 'decide', decidePath);
   await send(runtime, 'init', ['ab'.repeat(32)], runtimeName + '@active');
   await send(
     runtime,
@@ -128,9 +136,76 @@ beforeEach(async () => {
   await send(
     runtime,
     'setmodule',
-    [2, 'decide', 1, ['open', 'vote', 'newelect'], ['govlock'], wasmCodeHash(decidePath + '.wasm')],
+    [
+      2,
+      'decide',
+      1,
+      ['open', 'openpoll', 'vote', 'votecommit', 'newelect'],
+      ['govlock'],
+      wasmCodeHash(decidePath + '.wasm'),
+    ],
     'alice@active',
   );
+});
+it('keeps the new neutral poll path covered by an existing open subscription', async () => {
+  await fee();
+  await enroll(2, 11);
+  const nonce = RuntimeTableSchemas.members.parse(row(runtime, 'members', 2n, 1n)).nonce;
+  await expect(
+    instruction('decide', 'openpoll', {
+      ballot_id: '8',
+      kind: 0,
+      choices: 2,
+      duration: 300,
+      quorum: 5000,
+      approval: 5001,
+      metadata: JSON.stringify({
+        schemaVersion: 3,
+        semantics: 'poll',
+        title: 'Venue',
+        description: 'Choose a venue',
+        options: ['Garden', 'Hall'],
+      }),
+    }),
+  ).rejects.toThrow('MODULE_FEE_REQUIRED');
+  expect(RuntimeTableSchemas.members.parse(row(runtime, 'members', 2n, 1n)).nonce).toBe(nonce);
+  expect(row(decide, 'ballots', runtime.toBigInt(), 8n)).toBeUndefined();
+});
+it('keeps terms-based payroll covered by an existing commit subscription without consuming the signer nonce', async () => {
+  chain.createAccounts('payroll');
+  loadContract(chain, 'payroll', payrollPath);
+  const hash = wasmCodeHash(payrollPath + '.wasm');
+  await send(
+    runtime,
+    'listmod',
+    ['payroll', 'alice', 0, 1, '0.0000 TLOS', hash, 'Payroll'],
+    runtimeName + '@active',
+  );
+  await send(
+    runtime,
+    'setmodule',
+    [2, 'payroll', 1, ['commit', 'commitdoc'], ['reserve', 'approve'], hash],
+    'alice@active',
+  );
+  await fee({ account: 'payroll', actions: ['commit'] });
+  await enroll(2, 11);
+  const nonce = RuntimeTableSchemas.members.parse(row(runtime, 'members', 2n, 1n)).nonce;
+  await expect(
+    instruction('payroll', 'commitdoc', {
+      schedule_id: '1',
+      recipient: '2',
+      quantity: '1.0000 TLOS',
+      periods: 1,
+      interval: 86400,
+      starts: now() + 60,
+      label: 'Payroll terms',
+      document_id: '1',
+      document_version: 1,
+      expected: '00'.repeat(32),
+      successor_of: '0',
+    }),
+  ).rejects.toThrow('MODULE_FEE_REQUIRED');
+  expect(RuntimeTableSchemas.members.parse(row(runtime, 'members', 2n, 1n)).nonce).toBe(nonce);
 });
 it('governs first-party monthly prices without permitting direct, non-admin, stale or oversized updates', async () => {
   expect(runtime.actions.govmodfee, 'monthly governance action must be available').toBeDefined();
@@ -183,7 +258,18 @@ it('makes ten members free, gates the eleventh without consuming its nonce, and 
   await open(2);
   chain.setTime(TimePoint.fromMilliseconds((now() + 121) * 1000));
   await expect(open(3)).rejects.toThrow('MODULE_FEE_REQUIRED');
-  await instruction('decide', 'vote', { ballot_id: '1', choice: 0 }, 2, 2);
+  const ballot = DecideTableSchemas.ballots.parse(row(decide, 'ballots', runtime.toBigInt(), 1n)),
+    definition = DecideTableSchemas.ballotdefs.parse(
+      row(decide, 'ballotdefs', runtime.toBigInt(), 1n),
+    );
+  const expected = ballotCommitment({
+    chainId: 'ab'.repeat(32),
+    runtime: runtimeName,
+    decide: 'decide',
+    ballot,
+    definition,
+  });
+  await instruction('decide', 'votecommit', { ballot_id: '1', expected, choice: 0 }, 2, 2);
   await instruction(runtimeName, 'setactive', { target: '11', active: false });
   await open(3);
   expect(

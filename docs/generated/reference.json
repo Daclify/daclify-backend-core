@@ -1,6 +1,6 @@
 {
   "producer": "core",
-  "packageVersion": "0.15.0-alpha.22",
+  "packageVersion": "0.15.0-alpha.23",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -650,7 +650,7 @@
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "05453044395d37ad1552d232fc89d8e4fed64e232a7e806e5a24597b5499cc19",
+      "sourceAbiHash": "041022c92da2ed87195b424951805da692dce0fed5891920e3aa07c3a85b51b2",
       "actions": [
         {
           "name": "accepthand",
@@ -852,6 +852,227 @@
             },
             {
               "name": "source_id",
+              "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "arbbackup",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "obligation_id",
+              "type": "uint64"
+            },
+            {
+              "name": "expected_terms",
+              "type": "checksum256"
+            },
+            {
+              "name": "payout",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "name": "arbchallenge",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "obligation_id",
+              "type": "uint64"
+            },
+            {
+              "name": "expected_terms",
+              "type": "checksum256"
+            },
+            {
+              "name": "document_id",
+              "type": "uint64"
+            },
+            {
+              "name": "document_version",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
+          "name": "arbclear",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "obligation_id",
+              "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "arbconsent",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "obligation_id",
+              "type": "uint64"
+            },
+            {
+              "name": "expected_terms",
+              "type": "checksum256"
+            },
+            {
+              "name": "outcome",
+              "type": "uint8"
+            }
+          ]
+        },
+        {
+          "name": "arbitrate",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "obligation_id",
+              "type": "uint64"
+            },
+            {
+              "name": "ballot_id",
+              "type": "uint64"
+            },
+            {
+              "name": "expected",
+              "type": "checksum256"
+            },
+            {
+              "name": "payout",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "name": "arbreview",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "source",
+              "type": "name"
+            },
+            {
+              "name": "source_id",
+              "type": "uint64"
+            },
+            {
+              "name": "reviewer",
+              "type": "uint64"
+            },
+            {
+              "name": "approve",
+              "type": "bool"
+            },
+            {
+              "name": "document_id",
+              "type": "uint64"
+            },
+            {
+              "name": "document_version",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
+          "name": "arbstart",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "obligation_id",
+              "type": "uint64"
+            },
+            {
+              "name": "ballot_id",
+              "type": "uint64"
+            },
+            {
+              "name": "expected",
+              "type": "checksum256"
+            }
+          ]
+        },
+        {
+          "name": "arbsubmit",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "source",
+              "type": "name"
+            },
+            {
+              "name": "source_id",
+              "type": "uint64"
+            },
+            {
+              "name": "document_id",
+              "type": "uint64"
+            },
+            {
+              "name": "document_version",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
+          "name": "arbtimeout",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "obligation_id",
               "type": "uint64"
             }
           ]
@@ -2448,6 +2669,27 @@
           ]
         },
         {
+          "name": "protectdao",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "works",
+              "type": "name"
+            }
+          ]
+        },
+        {
           "name": "pruneappses",
           "fields": [
             {
@@ -2664,6 +2906,39 @@
             },
             {
               "name": "source_id",
+              "type": "uint64"
+            },
+            {
+              "name": "recipient",
+              "type": "uint64"
+            },
+            {
+              "name": "quantity",
+              "type": "asset"
+            },
+            {
+              "name": "due",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
+          "name": "reserveprot",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "source",
+              "type": "name"
+            },
+            {
+              "name": "source_id",
+              "type": "uint64"
+            },
+            {
+              "name": "project_id",
               "type": "uint64"
             },
             {
@@ -3811,6 +4086,23 @@
             {
               "name": "revision",
               "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "arbpolicies",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "works",
+              "type": "name"
+            },
+            {
+              "name": "version",
+              "type": "uint16"
             }
           ]
         },
@@ -5138,6 +5430,119 @@
             {
               "name": "profile",
               "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "protected",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uint64"
+            },
+            {
+              "name": "source",
+              "type": "name"
+            },
+            {
+              "name": "source_id",
+              "type": "uint64"
+            },
+            {
+              "name": "project_id",
+              "type": "uint64"
+            },
+            {
+              "name": "recipient",
+              "type": "uint64"
+            },
+            {
+              "name": "version",
+              "type": "uint16"
+            },
+            {
+              "name": "source_hash",
+              "type": "checksum256"
+            },
+            {
+              "name": "terms",
+              "type": "checksum256"
+            },
+            {
+              "name": "rules",
+              "type": "arbitration_rules"
+            },
+            {
+              "name": "cutoff",
+              "type": "uint32"
+            },
+            {
+              "name": "reviewer",
+              "type": "uint64"
+            },
+            {
+              "name": "state",
+              "type": "uint8"
+            },
+            {
+              "name": "deadline",
+              "type": "uint32"
+            },
+            {
+              "name": "ballot_id",
+              "type": "uint64"
+            },
+            {
+              "name": "decision_hash",
+              "type": "checksum256"
+            },
+            {
+              "name": "consent_outcome",
+              "type": "uint8"
+            },
+            {
+              "name": "consent_mask",
+              "type": "uint8"
+            },
+            {
+              "name": "reviewers",
+              "type": "uint64[]"
+            },
+            {
+              "name": "submission_doc",
+              "type": "uint64"
+            },
+            {
+              "name": "review_doc",
+              "type": "uint64"
+            },
+            {
+              "name": "challenge_doc",
+              "type": "uint64"
+            },
+            {
+              "name": "submission_version",
+              "type": "uint32"
+            },
+            {
+              "name": "review_version",
+              "type": "uint32"
+            },
+            {
+              "name": "challenge_version",
+              "type": "uint32"
+            },
+            {
+              "name": "submission_commitment",
+              "type": "checksum256"
+            },
+            {
+              "name": "review_commitment",
+              "type": "checksum256"
+            },
+            {
+              "name": "challenge_commitment",
+              "type": "checksum256"
             }
           ]
         },
@@ -14671,7 +15076,7 @@
                   },
                   "options": {
                     "minItems": 2,
-                    "maxItems": 8,
+                    "maxItems": 16,
                     "type": "array",
                     "items": {
                       "type": "string",
@@ -14711,7 +15116,7 @@
                   },
                   "optionId": {
                     "type": "string",
-                    "pattern": "^[0-7]$"
+                    "pattern": "^(?:[0-9]|1[0-5])$"
                   }
                 },
                 "required": [
@@ -14849,7 +15254,7 @@
                       },
                       "options": {
                         "minItems": 2,
-                        "maxItems": 8,
+                        "maxItems": 16,
                         "type": "array",
                         "items": {
                           "type": "string",
@@ -14889,7 +15294,7 @@
                       },
                       "optionId": {
                         "type": "string",
-                        "pattern": "^[0-7]$"
+                        "pattern": "^(?:[0-9]|1[0-5])$"
                       }
                     },
                     "required": [
@@ -15145,7 +15550,7 @@
                           },
                           "options": {
                             "minItems": 2,
-                            "maxItems": 8,
+                            "maxItems": 16,
                             "type": "array",
                             "items": {
                               "type": "string",
@@ -15185,7 +15590,7 @@
                           },
                           "optionId": {
                             "type": "string",
-                            "pattern": "^[0-7]$"
+                            "pattern": "^(?:[0-9]|1[0-5])$"
                           }
                         },
                         "required": [
@@ -15522,7 +15927,7 @@
                       },
                       "options": {
                         "minItems": 2,
-                        "maxItems": 8,
+                        "maxItems": 16,
                         "type": "array",
                         "items": {
                           "type": "string",
@@ -15562,7 +15967,7 @@
                       },
                       "optionId": {
                         "type": "string",
-                        "pattern": "^[0-7]$"
+                        "pattern": "^(?:[0-9]|1[0-5])$"
                       }
                     },
                     "required": [
@@ -30926,7 +31331,7 @@
                   "maxLength": 20
                 },
                 "permissions": {
-                  "maxItems": 64,
+                  "maxItems": 5000,
                   "type": "array",
                   "items": {
                     "type": "object",
@@ -31257,7 +31662,7 @@
                     "maxLength": 20
                   },
                   "contracts": {
-                    "maxItems": 64,
+                    "maxItems": 5000,
                     "type": "array",
                     "items": {
                       "type": "string",
@@ -31272,7 +31677,7 @@
                     "type": "boolean"
                   },
                   "signers": {
-                    "maxItems": 64,
+                    "maxItems": 5000,
                     "type": "array",
                     "items": {
                       "type": "string",
@@ -31285,7 +31690,7 @@
                     "maximum": 4294967295
                   },
                   "admin_members": {
-                    "maxItems": 64,
+                    "maxItems": 5000,
                     "type": "array",
                     "items": {
                       "type": "string",
@@ -31305,7 +31710,7 @@
                         "maxLength": 13
                       },
                       "inline_code": {
-                        "maxItems": 64,
+                        "maxItems": 5000,
                         "type": "array",
                         "items": {
                           "type": "string",
@@ -31366,7 +31771,7 @@
                     "maximum": 4294967295
                   },
                   "members": {
-                    "maxItems": 64,
+                    "maxItems": 5000,
                     "type": "array",
                     "items": {
                       "type": "string",
@@ -32728,6 +33133,265 @@
           "receiptsAvailable": {
             "default": false,
             "type": "boolean"
+          },
+          "protectedObligations": {
+            "default": [],
+            "maxItems": 5000,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "source": {
+                  "type": "string",
+                  "maxLength": 13
+                },
+                "source_id": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "project_id": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "recipient": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "version": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 65535
+                },
+                "source_hash": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "terms": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "rules": {
+                  "type": "object",
+                  "properties": {
+                    "decide": {
+                      "type": "string",
+                      "maxLength": 13
+                    },
+                    "decide_hash": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "backup": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "representative": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "kind": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 255
+                    },
+                    "quorum": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 65535
+                    },
+                    "approval": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 65535
+                    },
+                    "review_seconds": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 4294967295
+                    },
+                    "challenge_seconds": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 4294967295
+                    },
+                    "vote_seconds": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 4294967295
+                    },
+                    "backup_seconds": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 4294967295
+                    }
+                  },
+                  "required": [
+                    "decide",
+                    "decide_hash",
+                    "backup",
+                    "representative",
+                    "kind",
+                    "quorum",
+                    "approval",
+                    "review_seconds",
+                    "challenge_seconds",
+                    "vote_seconds",
+                    "backup_seconds"
+                  ],
+                  "additionalProperties": false
+                },
+                "cutoff": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                },
+                "reviewer": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "state": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "deadline": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                },
+                "ballot_id": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "decision_hash": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "consent_outcome": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "consent_mask": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "reviewers": {
+                  "maxItems": 5000,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 20
+                  }
+                },
+                "submission_doc": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "review_doc": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "challenge_doc": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "submission_version": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                },
+                "review_version": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                },
+                "challenge_version": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                },
+                "submission_commitment": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "review_commitment": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "challenge_commitment": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "id",
+                "source",
+                "source_id",
+                "project_id",
+                "recipient",
+                "version",
+                "source_hash",
+                "terms",
+                "rules",
+                "cutoff",
+                "reviewer",
+                "state",
+                "deadline",
+                "ballot_id",
+                "decision_hash",
+                "consent_outcome",
+                "consent_mask",
+                "reviewers",
+                "submission_doc",
+                "review_doc",
+                "challenge_doc",
+                "submission_version",
+                "review_version",
+                "challenge_version",
+                "submission_commitment",
+                "review_commitment",
+                "challenge_commitment"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "arbitrationPolicy": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "dao_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "works": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65535
+                  }
+                },
+                "required": [
+                  "dao_id",
+                  "works",
+                  "version"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -32735,7 +33399,9 @@
           "obligations",
           "evidence",
           "receipts",
-          "receiptsAvailable"
+          "receiptsAvailable",
+          "protectedObligations",
+          "arbitrationPolicy"
         ],
         "additionalProperties": false
       },

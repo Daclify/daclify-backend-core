@@ -75,7 +75,16 @@ it('gives Fees only executive account authority and puts Relay signing in an act
     auth: { threshold: 1, keys: [{ key, weight: 1 }], accounts: [], waits: [] },
   });
   const links = decoded.filter((value) => 'requirement' in value);
-  expect(links.filter((row) => row.requirement === 'operator')).toHaveLength(28);
+  expect(links.filter((row) => row.requirement === 'operator')).toHaveLength(33);
+  for (const type of ['arbtimeout', 'arbclear', 'govunlock'])
+    expect(links).toContainEqual({ account: 'relay', code: 'core', type, requirement: 'operator' });
+  for (const type of ['openarb', 'execarb'])
+    expect(links).toContainEqual({
+      account: 'relay',
+      code: 'decide',
+      type,
+      requirement: 'operator',
+    });
   expect(links).toContainEqual({
     account: 'relay',
     code: 'core',

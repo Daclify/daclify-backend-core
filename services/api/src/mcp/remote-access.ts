@@ -98,7 +98,7 @@ export class RemoteCommunityAccess implements CommunityAccess {
     if (
       !current.governance.policy ||
       action.target === dao.contract ||
-      action.action !== (scope === 'proposal' ? 'open' : scope === 'vote' ? 'vote' : 'review')
+      !(scope === 'proposal' ? ['open','openpoll'] : scope === 'vote' ? ['vote','votecommit'] : ['review']).includes(action.action)
     )
       throw new ApiError('MCP_SCOPE_REQUIRED', 403);
     const expires = Math.floor(Date.now() / 1000) + 300,

@@ -27,9 +27,9 @@ export const McpToolInputSchemas = {
     ballotId: IdSchema,
     title: z.string().min(1).max(160),
     description: z.string().max(2000),
-    options: z.array(z.string().min(1).max(80)).min(2).max(8),
+    options: z.array(z.string().min(1).max(80)).min(2).max(16),
   }),
-  prepare_vote: z.strictObject({ pollId: IdSchema, optionId: z.string().regex(/^[0-7]$/) }),
+  prepare_vote: z.strictObject({ pollId: IdSchema, optionId: z.string().regex(/^(?:[0-9]|1[0-5])$/) }),
   prepare_review: z.strictObject({
     milestoneId: IdSchema,
     approve: z.boolean(),

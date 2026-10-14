@@ -24,6 +24,7 @@ function rpc(
     rows: [],
     more: false,
   }),
+  definitions: (payload: Record<string, unknown>) => unknown[] = () => [],
 ) {
   vi.stubGlobal(
     'fetch',
@@ -98,6 +99,7 @@ function rpc(
           more: false,
         });
       if (payload.table === 'ballots') return Response.json(ballots(payload));
+      if (payload.table === 'ballotdefs') return Response.json({ rows: definitions(payload), more: false });
       // Shared, unbounded queries are the regression; bounded empty target queries are valid.
       if (!('lower_bound' in payload) || !('upper_bound' in payload))
         return Response.json({ rows: [], more: true, next_key: '1001' });
@@ -138,6 +140,18 @@ const ballot = (id: string, dao_id = '7') => ({
   status: 0,
   winner: -1,
   metadata: '{}',
+});
+const definition = (dao = '7') => ({ ballot_id:'10',dao_id:dao,version:1,purpose:0,policy_revision:'0',policy_hash:'00'.repeat(32),commitment:'cd'.repeat(32) });
+it('reads the exact commitment marker for each listed ballot within its runtime scope', async () => {
+  const reads: Record<string, unknown>[] = [];
+  rpc(reads, () => ({rows:[ballot('10')],more:false}), () => [definition()]);
+  const result = await gateway().moduleState('7', {projects:'done',schedules:'done'});
+  expect(result).toMatchObject({ballotDefinitions:[definition()]});
+  expect(reads.find(value=>value.table==='ballotdefs')).toMatchObject({scope:'daclifycore',index_position:1,lower_bound:'10',upper_bound:'10',limit:1});
+});
+it('rejects a returned commitment marker belonging to a different DAO', async () => {
+  rpc([], () => ({rows:[ballot('10')],more:false}), () => [definition('8')]);
+  await expect(gateway().moduleState('7', {projects:'done',schedules:'done'})).rejects.toThrow('MODULE_RECORD_DOMAIN');
 });
 it('continues shared primary pages while returning only the target DAO and scoped member votes', async () => {
   const reads: Record<string, unknown>[] = [];

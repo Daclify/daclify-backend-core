@@ -1,4 +1,8 @@
 export const CoreContextActions = [
+  'protectdao',
+  'arbchallenge',
+  'arbbackup',
+  'arbconsent',
   'setexecs',
   'heartbeat',
   'refreshgov',

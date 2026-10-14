@@ -30,8 +30,15 @@ import { parseEnvFile } from '../../services/api/src/env-file.js';
 import { executedChainResult } from '../../services/api/src/chain-result.js';
 import { waitForIrreversibleBlock } from '../../services/api/src/chain-confirmation.js';
 import { encodeContractAbi, encodeSystem } from './actions.js';
+import { deploymentContextPermissionPlan, contextLinkRepairActions } from './permissions.js';
+import { loadEnvironment } from './environment.js';
+import { relayActionLinks } from '../../sdk/service-accounts.js';
+import { DecideTableSchemas } from '@daclify/modules/sdk';
+import { reviewLegacyBallots, completionActions } from './module-completion-review.js';
+import { SYSTEM_ABI } from '../../sdk/system-abi.js';
 
 const root = '/data/daclify-upgrades/testnet';
+const moduleCompletion = process.argv.includes('--module-completion');
 const chainId = '1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f';
 const api = new APIClient({ url: 'https://testnet.telos.net' });
 const snapshot = readFileSync(path.join(root, 'current-snapshot.txt'), 'utf8').trim();
@@ -70,7 +77,9 @@ const definitions = [
     'daclifyhubv1',
     'hub',
     '.artifacts/contracts',
-    '5f05cac05cd0bc3ea057402df7aef3e0c3fb3f9373094d1ad47605b377ab6bee',
+    moduleCompletion
+      ? '81ffd1545d365d94068bacc2665915abb1c9c74e8880b4a5d5d410d194883bc6'
+      : '5f05cac05cd0bc3ea057402df7aef3e0c3fb3f9373094d1ad47605b377ab6bee',
   ],
   [
     'daclifydecid',
@@ -102,6 +111,16 @@ const definitions = [
     '../daclify-backend-modules/.artifacts/contracts',
     ModuleCodeHashes['endorsement-admission'],
   ],
+  ...(moduleCompletion
+    ? [
+        [
+          'daclifyactiv',
+          'activity',
+          '../daclify-backend-modules/.artifacts/contracts',
+          ModuleCodeHashes.activity,
+        ] as const,
+      ]
+    : []),
   ['daclifynames', 'names', '.artifacts/contracts', NamesCodeHash],
 ] as const;
 const targets = definitions.map(([account, contract, directory, codeHash]) => {
@@ -143,10 +162,52 @@ assert.ok(
 );
 assert.ok(
   targets
-    .filter((target) => !['runtime', 'hub', 'names'].includes(target.contract))
+    .filter(
+      (target) =>
+        !['runtime', 'hub', 'names', ...(moduleCompletion ? ['decide', 'activity'] : [])].includes(
+          target.contract,
+        ),
+    )
     .every((target) => target.tables.length === 0),
   'PENDING_MODULE_STATE_REQUIRES_REVIEW',
 );
+if (moduleCompletion) {
+  assert.equal(
+    runtime.prior.codeHash,
+    '2b2755e64462a1e43a4b530e2f602f06479d8c3f85214feb8443d663a80fe3c3',
+    'QUALIFIED_CORE_BASELINE',
+  );
+  const decide = targets.find((target) => target.contract === 'decide'),
+    activity = targets.find((target) => target.contract === 'activity');
+  assert.ok(decide && activity);
+  assert.equal(
+    decide.prior.codeHash,
+    'be206e53fb5580c238e48536dc4dd9ff74ce0de61d2a9ec089512667823c7fe5',
+    'QUALIFIED_DECIDE_BASELINE',
+  );
+  assert.equal(hash(activity.wasm), activity.prior.codeHash, 'ACTIVITY_STATE_REQUIRES_REVIEW');
+  assert.ok(
+    decide.tables.every((table) =>
+      ['ballots', 'votes', 'voteids', 'pollends'].includes(table.table),
+    ),
+    'PENDING_MODULE_STATE_REQUIRES_REVIEW',
+  );
+  const proof = z
+    .object({
+      coreHash: z.literal(runtime.prior.codeHash),
+      decideHash: z.literal(decide.prior.codeHash),
+      upgradedCore: z.literal(RuntimeCodeHash),
+      upgradedDecide: z.literal(ModuleCodeHashes.decide),
+      preservedTables: z.number().min(6),
+      preservedRows: z.number().positive(),
+      permissionsUnchanged: z.literal(true),
+      legacyVoteAfterUpgrade: z.literal(true),
+    })
+    .parse(
+      JSON.parse(readFileSync('.artifacts/module-completion-native/legacy-upgrade.json', 'utf8')),
+    );
+  assert.ok(proof);
+}
 for (const repository of ['.', '../daclify-backend-modules'])
   assert.equal(
     execFileSync('git', ['diff', 'HEAD', '--', 'contracts', 'sdk/generated'], {
@@ -229,8 +290,9 @@ function hasKey(account: Awaited<ReturnType<typeof api.v1.chain.get_account>>, p
   );
 }
 async function execute() {
-  const runtime = targets[0];
-  assert.ok(runtime, 'RUNTIME_REQUIRED');
+  const reviewedRuntime = targets[0];
+  assert.ok(reviewedRuntime, 'RUNTIME_REQUIRED');
+  const runtime = reviewedRuntime;
   const info = await api.v1.chain.get_info();
   assert.equal(info.chain_id.toString(), chainId, 'TESTNET_CHAIN_REQUIRED');
   const creator = await api.v1.chain.get_account('3boidanimus3');
@@ -246,7 +308,7 @@ async function execute() {
     assert.equal(live.abi_hash.toString(), target.prior.rawAbiHash, 'CHAIN_ABI_CHANGED');
     await verifyTables(target);
     const account = await api.v1.chain.get_account(target.account);
-    assert.ok(hasKey(account, 'owner'), 'CONTRACT_OWNER_KEY_REQUIRED');
+    if (!moduleCompletion) assert.ok(hasKey(account, 'owner'), 'CONTRACT_OWNER_KEY_REQUIRED');
     originalPermissions.set(target.account, Serializer.objectify(account.permissions));
     const required =
       Number(account.ram_usage) +
@@ -257,7 +319,7 @@ async function execute() {
       0,
       Math.ceil((required + 65536 - Number(account.ram_quota)) / 4096) * 4096,
     );
-    assert.ok(extra <= 1048576, 'RAM_PLAN_REQUIRES_REVIEW');
+    assert.ok(extra <= (moduleCompletion ? 1310720 : 1048576), 'RAM_PLAN_REQUIRES_REVIEW');
     if (extra) {
       ram.push({ account: target.account, bytes: extra });
       targetActions.push(
@@ -298,6 +360,33 @@ async function execute() {
       );
   }
   const expectedTables = runtime.tables.map((table) => ({ ...table, rows: [...table.rows] }));
+  const savedDaos = runtime.tables
+    .filter((table) => table.table === 'daos')
+    .flatMap((table) =>
+      table.rows.map((row) =>
+        RuntimeTableSchemas.daos.parse(
+          Serializer.objectify(
+            Serializer.decode({ abi: runtime.abi, type: 'dao_record', data: row }),
+          ),
+        ),
+      ),
+    );
+  if (moduleCompletion) {
+    const decide = targets.find((target) => target.contract === 'decide');
+    assert.ok(decide);
+    const ballots = decide.tables
+      .filter((table) => table.table === 'ballots')
+      .flatMap((table) =>
+        table.rows.map((row) =>
+          DecideTableSchemas.ballots.parse(
+            Serializer.objectify(
+              Serializer.decode({ abi: decide.abi, type: 'ballot_record', data: row }),
+            ),
+          ),
+        ),
+      );
+    reviewLegacyBallots(ballots, savedDaos);
+  }
   const daos = new Map(
     runtime.tables
       .filter((table) => table.table === 'daos')
@@ -309,7 +398,8 @@ async function execute() {
             ),
           );
           assert.equal(dao.owner, runtime.account, 'DAO_CONTROLLER_REQUIRES_REVIEW');
-          assert.equal(String(dao.active_ballots), '0', 'PENDING_VOTE_REQUIRES_REVIEW');
+          if (!moduleCompletion)
+            assert.equal(String(dao.active_ballots), '0', 'PENDING_VOTE_REQUIRES_REVIEW');
           return [String(dao.id), dao.owner] as const;
         }),
       ),
@@ -331,7 +421,17 @@ async function execute() {
       const target = targets.find((item) => item.account === saved.account);
       assert.ok(target, 'UNKNOWN_INSTALLED_MODULE');
       assert.equal(saved.code_hash, target.prior.codeHash, 'MODULE_PIN_CHANGED');
-      const next = { ...saved, code_hash: hash(target.wasm) };
+      const next =
+        table.table === 'modules' && moduleCompletion
+          ? {
+              ...RuntimeTableSchemas.modules.parse(saved),
+              actions: completionActions(
+                target.contract,
+                RuntimeTableSchemas.modules.parse(saved).actions,
+              ),
+              code_hash: hash(target.wasm),
+            }
+          : { ...saved, code_hash: hash(target.wasm) };
       if (table.table === 'catalogue') {
         const listing = RuntimeTableSchemas.catalogue.parse(next);
         assert.equal(listing.party, 0, 'THIRD_PARTY_MODULE_REQUIRES_REVIEW');
@@ -365,7 +465,120 @@ async function execute() {
     }
   }
   // Spring bounds decompressed transactions too: publish runtime first, then modules/pins.
-  const batches = [runtimeActions, actions];
+  const batches = [
+    ...runtimeActions.map((action) => [action]),
+    ...targets
+      .filter((target) => target !== runtime)
+      .map((target) =>
+        actions.filter((action) => {
+          if (action.account.toString() === 'eosio') {
+            const data = z
+              .object({ account: z.string().optional(), receiver: z.string().optional() })
+              .parse(
+                Serializer.objectify(
+                  Serializer.decode({
+                    abi: ABI.from(SYSTEM_ABI),
+                    type: action.name.toString(),
+                    data: action.data,
+                  }),
+                ),
+              );
+            return (data.account ?? data.receiver) === target.account;
+          }
+          return (
+            z.object({ account: z.string() }).parse(
+              Serializer.objectify(
+                Serializer.decode({
+                  abi: runtime.abi,
+                  type: action.name.toString(),
+                  data: action.data,
+                }),
+              ),
+            ).account === target.account
+          );
+        }),
+      ),
+  ].filter((batch) => batch.length);
+  const linkActions: Action[] = [];
+  let relay: string | undefined;
+  const originalLinks = new Map<string, unknown>();
+  if (moduleCompletion) {
+    const environment = await loadEnvironment('testnet');
+    const account = await api.v1.chain.get_account(runtime.account);
+    linkActions.push(
+      ...contextLinkRepairActions(deploymentContextPermissionPlan(environment), account),
+    );
+    const gov = RuntimeTableSchemas.nativegov.parse(
+      Serializer.objectify(
+        Serializer.decode({
+          abi: runtime.abi,
+          type: 'native_governance',
+          data: runtime.tables.find((table) => table.table === 'nativegov')?.rows[0] ?? '',
+        }),
+      ),
+    );
+    assert.ok(
+      gov.handed_over &&
+        gov.ownership?.policy_version === 2 &&
+        gov.ownership.creator === environment.creatorAccount,
+      'NATIVE_OWNERSHIP_REVIEW_REQUIRED',
+    );
+    relay = environment.accounts[5]?.name;
+    assert.ok(relay);
+    const relayAccount = await api.v1.chain.get_account(relay);
+    originalPermissions.set(relay, Serializer.objectify(relayAccount.permissions));
+    const operator = relayAccount.permissions.find((p) => p.perm_name.toString() === 'operator');
+    assert.ok(
+      operator &&
+        operator.required_auth.keys.length === 1 &&
+        operator.required_auth.accounts.length === 0 &&
+        operator.required_auth.waits.length === 0 &&
+        Number(operator.required_auth.threshold) === 1 &&
+        operator.required_auth.keys[0]?.key.equals(PublicKey.from(gov.service_key)),
+      'RELAY_KEY_REVIEW_REQUIRED',
+    );
+    const treasury = environment.accounts[6]?.name;
+    assert.ok(treasury);
+    for (const link of relayActionLinks({
+      runtime: runtime.account,
+      relay,
+      treasury,
+      names: 'daclifynames',
+      decide: 'daclifydecid',
+      payroll: 'daclifypayr1',
+      relayKey: gov.service_key,
+    })) {
+      assert.ok(
+        relayAccount.permissions.every((p) => p.linked_actions !== undefined),
+        'PERMISSION_LINKS_UNAVAILABLE',
+      );
+      const current = relayAccount.permissions.filter((p) =>
+        p.linked_actions?.some(
+          (row) => row.account.toString() === link.code && row.action?.toString() === link.type,
+        ),
+      );
+      assert.ok(
+        current.length === 0 ||
+          (current.length === 1 && current[0]?.perm_name.toString() === 'operator'),
+        'ACTION_LINK_REVIEW_REQUIRED',
+      );
+      if (!current.length)
+        linkActions.push(
+          Action.from({
+            account: 'eosio',
+            name: 'linkauth',
+            authorization: [{ actor: relay, permission: 'owner' }],
+            data: encodeSystem('linkauth', { account: relay, ...link, requirement: 'operator' }),
+          }),
+        );
+    }
+    for (const name of [runtime.account, relay])
+      originalLinks.set(
+        name,
+        Serializer.objectify((await api.v1.chain.get_account(name)).permissions),
+      );
+    if (linkActions.length) batches.push(linkActions);
+  }
   const planned = [];
   for (const batch of batches) planned.push(await simulate(batch));
   const costUnits = planned.reduce((total, item) => total + item.costUnits, 0n);
@@ -396,27 +609,41 @@ async function execute() {
   });
   console.log(JSON.stringify(plan));
   assert.deepEqual(
-    process.argv.slice(2).filter((arg) => arg !== '--send'),
+    process.argv.slice(2).filter((arg) => arg !== '--send' && arg !== '--module-completion'),
     [],
-    'USAGE: optional --send only',
+    'USAGE: optional --module-completion and --send only',
   );
   if (!process.argv.includes('--send')) return;
   const submitted = [];
+  const codePins = new Map(targets.map((target) => [target.account, target.prior.codeHash]));
+  const abiPins = new Map(targets.map((target) => [target.account, target.prior.rawAbiHash]));
+  const installedPins = new Set<string>();
+  function stagedTables() {
+    return runtime.tables.map((table) => {
+      if (!['catalogue', 'modules'].includes(table.table)) return table;
+      const type = runtime.abi.tables.find((entry) => entry.name.toString() === table.table)?.type;
+      assert.ok(type);
+      const next = expectedTables.find(
+        (entry) => entry.scope === table.scope && entry.table === table.table,
+      );
+      assert.ok(next);
+      return {
+        ...table,
+        rows: table.rows.map((row, index) => {
+          const saved = z
+            .object({ account: z.string() })
+            .parse(Serializer.objectify(Serializer.decode({ abi: runtime.abi, type, data: row })));
+          return installedPins.has(saved.account) ? (next.rows[index] ?? row) : row;
+        }),
+      };
+    });
+  }
   for (const [index, batch] of batches.entries()) {
     for (const target of targets) {
-      await verifyTables(target);
+      await verifyTables(target, target === runtime ? stagedTables() : target.tables);
       const live = await api.v1.chain.get_raw_abi(target.account);
-      const updated: boolean = index === 1 && target === runtime;
-      assert.equal(
-        live.code_hash.toString(),
-        updated ? hash(target.wasm) : target.prior.codeHash,
-        'CHAIN_CODE_CHANGED',
-      );
-      assert.equal(
-        live.abi_hash.toString(),
-        updated ? hash(target.rawAbi) : target.prior.rawAbiHash,
-        'CHAIN_ABI_CHANGED',
-      );
+      assert.equal(live.code_hash.toString(), codePins.get(target.account), 'CHAIN_CODE_CHANGED');
+      assert.equal(live.abi_hash.toString(), abiPins.get(target.account), 'CHAIN_ABI_CHANGED');
     }
     const candidate = await simulate(batch);
     assert.ok(
@@ -438,28 +665,118 @@ async function execute() {
       async () => Number((await api.v1.chain.get_info()).last_irreversible_block_num),
       receipt.blockNum,
     );
+    for (const action of batch) {
+      if (
+        action.account.toString() === 'eosio' &&
+        ['setcode', 'setabi'].includes(action.name.toString())
+      ) {
+        const data = z.object({ account: z.string() }).parse(
+          Serializer.objectify(
+            Serializer.decode({
+              abi: ABI.from(SYSTEM_ABI),
+              type: action.name.toString(),
+              data: action.data,
+            }),
+          ),
+        );
+        const target = targets.find((entry) => entry.account === data.account);
+        assert.ok(target);
+        (action.name.toString() === 'setcode' ? codePins : abiPins).set(
+          target.account,
+          hash(action.name.toString() === 'setcode' ? target.wasm : target.rawAbi),
+        );
+      } else if (
+        action.account.toString() === runtime.account &&
+        ['listmod', 'setmodule'].includes(action.name.toString())
+      ) {
+        const data = z.object({ account: z.string() }).parse(
+          Serializer.objectify(
+            Serializer.decode({
+              abi: runtime.abi,
+              type: action.name.toString(),
+              data: action.data,
+            }),
+          ),
+        );
+        installedPins.add(data.account);
+      }
+    }
     for (const target of targets) {
-      const updated: boolean = index === 1 || target === runtime;
       const live = await api.v1.chain.get_raw_abi(target.account);
       assert.equal(
         live.code_hash.toString(),
-        updated ? hash(target.wasm) : target.prior.codeHash,
+        codePins.get(target.account),
         'POST_UPGRADE_CODE_HASH',
       );
-      assert.equal(
-        live.abi_hash.toString(),
-        updated ? hash(target.rawAbi) : target.prior.rawAbiHash,
-        'POST_UPGRADE_ABI_HASH',
-      );
-      await verifyTables(
-        target,
-        index === 1 && target === runtime ? expectedTables : target.tables,
-      );
-      assert.deepEqual(
-        Serializer.objectify((await api.v1.chain.get_account(target.account)).permissions),
-        originalPermissions.get(target.account),
-        'AUTHORITY_CHANGED',
-      );
+      assert.equal(live.abi_hash.toString(), abiPins.get(target.account), 'POST_UPGRADE_ABI_HASH');
+      await verifyTables(target, target === runtime ? stagedTables() : target.tables);
+      const current = await api.v1.chain.get_account(target.account);
+      const expected = originalPermissions.get(target.account);
+      if (batch === linkActions && originalLinks.has(target.account)) {
+        const authority = z.array(
+          z.object({ perm_name: z.unknown(), parent: z.unknown(), required_auth: z.unknown() }),
+        );
+        assert.deepEqual(
+          authority.parse(Serializer.objectify(current.permissions)),
+          authority.parse(expected),
+          'AUTHORITY_CHANGED',
+        );
+      } else {
+        assert.deepEqual(Serializer.objectify(current.permissions), expected, 'AUTHORITY_CHANGED');
+      }
+    }
+    if (batch === linkActions && relay) {
+      for (const account of [runtime.account, relay]) {
+        const current = Serializer.objectify((await api.v1.chain.get_account(account)).permissions);
+        const authority = z.array(
+          z.object({ perm_name: z.unknown(), parent: z.unknown(), required_auth: z.unknown() }),
+        );
+        assert.deepEqual(
+          authority.parse(current),
+          authority.parse(originalPermissions.get(account)),
+          'AUTHORITY_CHANGED',
+        );
+        const permissions = z.array(
+          z.object({
+            perm_name: z.string(),
+            linked_actions: z.array(
+              z.object({ account: z.string(), action: z.string().nullable().optional() }),
+            ),
+          }),
+        );
+        const tuples = (value: unknown) =>
+          permissions
+            .parse(value)
+            .flatMap((p) =>
+              p.linked_actions.map(
+                (link) => `${p.perm_name}:${link.account}:${link.action ?? '*'}`,
+              ),
+            );
+        const additions = linkActions.flatMap((action) => {
+          const link = z
+            .object({
+              account: z.string(),
+              code: z.string(),
+              type: z.string(),
+              requirement: z.string(),
+            })
+            .parse(
+              Serializer.objectify(
+                Serializer.decode({
+                  abi: ABI.from(SYSTEM_ABI),
+                  type: 'linkauth',
+                  data: action.data,
+                }),
+              ),
+            );
+          return link.account === account ? [`${link.requirement}:${link.code}:${link.type}`] : [];
+        });
+        assert.deepEqual(
+          tuples(current).sort(),
+          [...tuples(originalPermissions.get(account)), ...additions].sort(),
+          'ACTION_LINKS_CHANGED',
+        );
+      }
     }
   }
   writeFileSync(
@@ -476,12 +793,32 @@ async function execute() {
     ) + '\n',
     { mode: 0o600 },
   );
-  console.log('Irreversible; all eight code/ABI pins, existing rows and authorities verified.');
+  console.log(
+    `Irreversible; all ${targets.length} code/ABI pins, existing rows and authorities verified.`,
+  );
 }
 async function simulate(actions: Action[]) {
   const info = await api.v1.chain.get_info();
   assert.equal(info.chain_id.toString(), chainId, 'TESTNET_CHAIN_REQUIRED');
   const transaction = Transaction.from({ ...info.getTransactionHeader(300), actions });
+  const authorityOnly = Transaction.from({
+    ...transaction,
+    actions: actions.map((action) => Action.from({ ...action, data: new Uint8Array() })),
+  });
+  const required = z.object({ required_keys: z.array(z.string()).length(1) }).parse(
+    await api.call({
+      path: '/v1/chain/get_required_keys',
+      params: { transaction: authorityOnly, available_keys: [key.toPublic().toString()] },
+    }),
+  );
+  assert.ok(
+    required.required_keys.every((candidate) => PublicKey.from(candidate).equals(key.toPublic())),
+    'SIGNING_AUTHORITY_CHANGED',
+  );
+  assert.ok(
+    Serializer.encode({ object: transaction }).array.length < 1048576,
+    'TESTNET_DECOMPRESSED_TRANSACTION_SIZE',
+  );
   const packed = PackedTransaction.fromSigned(
     SignedTransaction.from({
       ...transaction,
@@ -492,7 +829,7 @@ async function simulate(actions: Action[]) {
   assert.ok(packed.packed_trx.array.length < 590000, 'TESTNET_TRANSACTION_SIZE');
   const simulation = await api.v1.chain.compute_transaction(packed);
   writeFileSync(
-    path.join(snapshot, `simulation-${actions.length}-result.json`),
+    path.join(snapshot, `simulation-${transaction.id}-result.json`),
     JSON.stringify(simulation, null, 2),
     { mode: 0o600 },
   );

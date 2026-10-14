@@ -43,6 +43,8 @@ import type {
   ArchiveProgressSchema,
 } from '@daclify/modules/archive';
 export interface ChainGateway {
+  arbitration?(input:z.infer<typeof import('@daclify/modules').ModuleApiRoutes.arbitration.input>):Promise<z.infer<typeof import('@daclify/modules').ModuleApiRoutes.arbitration.response>>;
+  ballotExport?(daoId:string,ballotId:string):Promise<import('@daclify/modules').BallotExport>;
   moduleFeePricing?(): Promise<import('../../../protocol/module-fees.js').ModuleFeePricing>;
   moduleFeeState?(dao: DaoRef): Promise<import('../../../protocol/module-fees.js').ModuleFeeChain>;
   attestModuleTerm?(

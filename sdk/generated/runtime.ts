@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = '05453044395d37ad1552d232fc89d8e4fed64e232a7e806e5a24597b5499cc19';
+export const runtimeAbiHash = '041022c92da2ed87195b424951805da692dce0fed5891920e3aa07c3a85b51b2';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -283,6 +283,304 @@ export const runtimeAbi = {
         },
         {
           "name": "source_id",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "arbbackup",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "obligation_id",
+          "type": "uint64"
+        },
+        {
+          "name": "expected_terms",
+          "type": "checksum256"
+        },
+        {
+          "name": "payout",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "arbchallenge",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "obligation_id",
+          "type": "uint64"
+        },
+        {
+          "name": "expected_terms",
+          "type": "checksum256"
+        },
+        {
+          "name": "document_id",
+          "type": "uint64"
+        },
+        {
+          "name": "document_version",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "arbclear",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "obligation_id",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "arbconsent",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "obligation_id",
+          "type": "uint64"
+        },
+        {
+          "name": "expected_terms",
+          "type": "checksum256"
+        },
+        {
+          "name": "outcome",
+          "type": "uint8"
+        }
+      ]
+    },
+    {
+      "name": "arbitrate",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "obligation_id",
+          "type": "uint64"
+        },
+        {
+          "name": "ballot_id",
+          "type": "uint64"
+        },
+        {
+          "name": "expected",
+          "type": "checksum256"
+        },
+        {
+          "name": "payout",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "arbitration_policy",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "works",
+          "type": "name"
+        },
+        {
+          "name": "version",
+          "type": "uint16"
+        }
+      ]
+    },
+    {
+      "name": "arbitration_rules",
+      "base": "",
+      "fields": [
+        {
+          "name": "decide",
+          "type": "name"
+        },
+        {
+          "name": "decide_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "backup",
+          "type": "uint64"
+        },
+        {
+          "name": "representative",
+          "type": "uint64"
+        },
+        {
+          "name": "kind",
+          "type": "uint8"
+        },
+        {
+          "name": "quorum",
+          "type": "uint16"
+        },
+        {
+          "name": "approval",
+          "type": "uint16"
+        },
+        {
+          "name": "review_seconds",
+          "type": "uint32"
+        },
+        {
+          "name": "challenge_seconds",
+          "type": "uint32"
+        },
+        {
+          "name": "vote_seconds",
+          "type": "uint32"
+        },
+        {
+          "name": "backup_seconds",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "arbreview",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "source_id",
+          "type": "uint64"
+        },
+        {
+          "name": "reviewer",
+          "type": "uint64"
+        },
+        {
+          "name": "approve",
+          "type": "bool"
+        },
+        {
+          "name": "document_id",
+          "type": "uint64"
+        },
+        {
+          "name": "document_version",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "arbstart",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "obligation_id",
+          "type": "uint64"
+        },
+        {
+          "name": "ballot_id",
+          "type": "uint64"
+        },
+        {
+          "name": "expected",
+          "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "arbsubmit",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "source_id",
+          "type": "uint64"
+        },
+        {
+          "name": "document_id",
+          "type": "uint64"
+        },
+        {
+          "name": "document_version",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "arbtimeout",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "obligation_id",
           "type": "uint64"
         }
       ]
@@ -3771,6 +4069,142 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "protectdao",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "works",
+          "type": "name"
+        }
+      ]
+    },
+    {
+      "name": "protected_obligation",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "source_id",
+          "type": "uint64"
+        },
+        {
+          "name": "project_id",
+          "type": "uint64"
+        },
+        {
+          "name": "recipient",
+          "type": "uint64"
+        },
+        {
+          "name": "version",
+          "type": "uint16"
+        },
+        {
+          "name": "source_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "terms",
+          "type": "checksum256"
+        },
+        {
+          "name": "rules",
+          "type": "arbitration_rules"
+        },
+        {
+          "name": "cutoff",
+          "type": "uint32"
+        },
+        {
+          "name": "reviewer",
+          "type": "uint64"
+        },
+        {
+          "name": "state",
+          "type": "uint8"
+        },
+        {
+          "name": "deadline",
+          "type": "uint32"
+        },
+        {
+          "name": "ballot_id",
+          "type": "uint64"
+        },
+        {
+          "name": "decision_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "consent_outcome",
+          "type": "uint8"
+        },
+        {
+          "name": "consent_mask",
+          "type": "uint8"
+        },
+        {
+          "name": "reviewers",
+          "type": "uint64[]"
+        },
+        {
+          "name": "submission_doc",
+          "type": "uint64"
+        },
+        {
+          "name": "review_doc",
+          "type": "uint64"
+        },
+        {
+          "name": "challenge_doc",
+          "type": "uint64"
+        },
+        {
+          "name": "submission_version",
+          "type": "uint32"
+        },
+        {
+          "name": "review_version",
+          "type": "uint32"
+        },
+        {
+          "name": "challenge_version",
+          "type": "uint32"
+        },
+        {
+          "name": "submission_commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "review_commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "challenge_commitment",
+          "type": "checksum256"
+        }
+      ]
+    },
+    {
       "name": "pruneappses",
       "base": "",
       "fields": [
@@ -4520,6 +4954,40 @@ export const runtimeAbi = {
         },
         {
           "name": "source_id",
+          "type": "uint64"
+        },
+        {
+          "name": "recipient",
+          "type": "uint64"
+        },
+        {
+          "name": "quantity",
+          "type": "asset"
+        },
+        {
+          "name": "due",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "reserveprot",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "source",
+          "type": "name"
+        },
+        {
+          "name": "source_id",
+          "type": "uint64"
+        },
+        {
+          "name": "project_id",
           "type": "uint64"
         },
         {
@@ -5793,6 +6261,51 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "arbbackup",
+      "type": "arbbackup",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "arbchallenge",
+      "type": "arbchallenge",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "arbclear",
+      "type": "arbclear",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "arbconsent",
+      "type": "arbconsent",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "arbitrate",
+      "type": "arbitrate",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "arbreview",
+      "type": "arbreview",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "arbstart",
+      "type": "arbstart",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "arbsubmit",
+      "type": "arbsubmit",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "arbtimeout",
+      "type": "arbtimeout",
+      "ricardian_contract": ""
+    },
+    {
       "name": "archapprove",
       "type": "archapprove",
       "ricardian_contract": ""
@@ -6133,6 +6646,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "protectdao",
+      "type": "protectdao",
+      "ricardian_contract": ""
+    },
+    {
       "name": "pruneappses",
       "type": "pruneappses",
       "ricardian_contract": ""
@@ -6175,6 +6693,11 @@ export const runtimeAbi = {
     {
       "name": "reserve",
       "type": "reserve",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "reserveprot",
+      "type": "reserveprot",
       "ricardian_contract": ""
     },
     {
@@ -6463,6 +6986,13 @@ export const runtimeAbi = {
     {
       "name": "appscopes",
       "type": "app_scope_record",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "arbpolicies",
+      "type": "arbitration_policy",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -6797,6 +7327,13 @@ export const runtimeAbi = {
       "key_types": []
     },
     {
+      "name": "protected",
+      "type": "protected_obligation",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "ramalloc",
       "type": "ram_allocation",
       "index_type": "i64",
@@ -7065,6 +7602,86 @@ export interface approveob {
   dao_id: string;
   source: string;
   source_id: string;
+}
+export interface arbbackup {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  obligation_id: string;
+  expected_terms: string;
+  payout: boolean;
+}
+export interface arbchallenge {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  obligation_id: string;
+  expected_terms: string;
+  document_id: string;
+  document_version: number;
+}
+export interface arbclear {
+  dao_id: string;
+  obligation_id: string;
+}
+export interface arbconsent {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  obligation_id: string;
+  expected_terms: string;
+  outcome: number;
+}
+export interface arbitrate {
+  dao_id: string;
+  obligation_id: string;
+  ballot_id: string;
+  expected: string;
+  payout: boolean;
+}
+export interface arbitration_policy {
+  dao_id: string;
+  works: string;
+  version: number;
+}
+export interface arbitration_rules {
+  decide: string;
+  decide_hash: string;
+  backup: string;
+  representative: string;
+  kind: number;
+  quorum: number;
+  approval: number;
+  review_seconds: number;
+  challenge_seconds: number;
+  vote_seconds: number;
+  backup_seconds: number;
+}
+export interface arbreview {
+  dao_id: string;
+  source: string;
+  source_id: string;
+  reviewer: string;
+  approve: boolean;
+  document_id: string;
+  document_version: number;
+}
+export interface arbstart {
+  dao_id: string;
+  obligation_id: string;
+  ballot_id: string;
+  expected: string;
+}
+export interface arbsubmit {
+  dao_id: string;
+  source: string;
+  source_id: string;
+  document_id: string;
+  document_version: number;
+}
+export interface arbtimeout {
+  dao_id: string;
+  obligation_id: string;
 }
 export interface archapprove {
   runtime: string;
@@ -8002,6 +8619,41 @@ export interface profile_record {
   account_name: string;
   profile: string;
 }
+export interface protectdao {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  works: string;
+}
+export interface protected_obligation {
+  id: string;
+  source: string;
+  source_id: string;
+  project_id: string;
+  recipient: string;
+  version: number;
+  source_hash: string;
+  terms: string;
+  rules: arbitration_rules;
+  cutoff: number;
+  reviewer: string;
+  state: number;
+  deadline: number;
+  ballot_id: string;
+  decision_hash: string;
+  consent_outcome: number;
+  consent_mask: number;
+  reviewers: string[];
+  submission_doc: string;
+  review_doc: string;
+  challenge_doc: string;
+  submission_version: number;
+  review_version: number;
+  challenge_version: number;
+  submission_commitment: string;
+  review_commitment: string;
+  challenge_commitment: string;
+}
 export interface pruneappses {
   dao_id: string;
   after: string;
@@ -8206,6 +8858,15 @@ export interface reserve {
   dao_id: string;
   source: string;
   source_id: string;
+  recipient: string;
+  quantity: string;
+  due: number;
+}
+export interface reserveprot {
+  dao_id: string;
+  source: string;
+  source_id: string;
+  project_id: string;
   recipient: string;
   quantity: string;
   due: number;
@@ -8551,6 +9212,15 @@ export interface RuntimeActions {
   adoptram: adoptram;
   appoint: appoint;
   approveob: approveob;
+  arbbackup: arbbackup;
+  arbchallenge: arbchallenge;
+  arbclear: arbclear;
+  arbconsent: arbconsent;
+  arbitrate: arbitrate;
+  arbreview: arbreview;
+  arbstart: arbstart;
+  arbsubmit: arbsubmit;
+  arbtimeout: arbtimeout;
   archapprove: archapprove;
   archattest: archattest;
   archrevoke: archrevoke;
@@ -8619,6 +9289,7 @@ export interface RuntimeActions {
   orderfree: orderfree;
   orderram: orderram;
   payob: payob;
+  protectdao: protectdao;
   pruneappses: pruneappses;
   prunedocs: prunedocs;
   putdoc: putdoc;
@@ -8628,6 +9299,7 @@ export interface RuntimeActions {
   recallexec: recallexec;
   refreshgov: refreshgov;
   reserve: reserve;
+  reserveprot: reserveprot;
   resmodterm: resmodterm;
   restoredoc: restoredoc;
   resumecap: resumecap;
