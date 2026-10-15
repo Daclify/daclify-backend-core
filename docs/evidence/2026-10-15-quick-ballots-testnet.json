@@ -1,0 +1,866 @@
+{
+  "schemaVersion": 1,
+  "status": "live-testnet",
+  "checkedAt": "2026-10-15T16:20:49.003672Z",
+  "portal": "https://testnet.app.daclify.com/quick-ballots",
+  "api": "https://testnet.api.daclify.com",
+  "chainId": "1eaa0824707c8c16bd25145493bf062aecddfeb56c736f6ba6397f3195f33c9f",
+  "sourceCommits": {
+    "daclify-backend-core": "c5a9c773319ae5125c1d7840a814291e6832a18d",
+    "daclify-backend-modules": "d3465823972de39d52729ab5fda17d499e4ff2a8",
+    "daclify-frontend": "911153fff978ab885c8f6ca8017d47123c243115"
+  },
+  "versions": {
+    "core": "0.15.0-alpha.29",
+    "modules": "0.10.0-alpha.39",
+    "frontend": "0.15.0-alpha.40",
+    "communityMcp": "0.1.0-alpha.19"
+  },
+  "contracts": {
+    "runtime": {
+      "bytes": 1048475,
+      "sha256": "e40c7854b7354df2147097ccf2e63a4e8b6cd94f10d90427865a62458b484843"
+    },
+    "quickauth": {
+      "bytes": 83452,
+      "sha256": "d2c7102b79cccb2ca020a071cf46c53da825f4ac86dde8b8264fab3a767db953"
+    },
+    "quickvote": {
+      "bytes": 187960,
+      "sha256": "c54fb4ff71c159c60d6d0bc461d8f5a1185d564995f9cf07590fb48a27fb75dd"
+    }
+  },
+  "compiler": "CDT 4.1.1 -O=s",
+  "native": {
+    "runtime": "e40c7854b7354df2147097ccf2e63a4e8b6cd94f10d90427865a62458b484843",
+    "authority": "d2c7102b79cccb2ca020a071cf46c53da825f4ac86dde8b8264fab3a767db953",
+    "source": "c54fb4ff71c159c60d6d0bc461d8f5a1185d564995f9cf07590fb48a27fb75dd",
+    "observer": [
+      {
+        "meter_bytes": 7321,
+        "runtime_hash": "e40c7854b7354df2147097ccf2e63a4e8b6cd94f10d90427865a62458b484843"
+      }
+    ],
+    "migration": [
+      {
+        "active": 0,
+        "globals_complete": 1,
+        "advanced": 1,
+        "dao_cursor": "12027513584436739430"
+      }
+    ],
+    "quickConfiguration": [
+      {
+        "id": 0,
+        "source": "daclifyquick",
+        "code_hash": "c54fb4ff71c159c60d6d0bc461d8f5a1185d564995f9cf07590fb48a27fb75dd",
+        "gateway": {
+          "actor": "daclifyrelay",
+          "permission": "operator"
+        },
+        "maximum": 5000,
+        "records": 2,
+        "next_id": 3
+      }
+    ],
+    "sourceConfiguration": [
+      {
+        "id": 0,
+        "authority": "daclifyqauth",
+        "authority_hash": "d2c7102b79cccb2ca020a071cf46c53da825f4ac86dde8b8264fab3a767db953",
+        "next_response_id": 4
+      }
+    ],
+    "archivePolicy": [
+      {
+        "verifier": "daclifyrelay",
+        "minimum_retention_seconds": 7776000,
+        "pruning_enabled": 1
+      }
+    ]
+  },
+  "preservation": {
+    "status": "passed",
+    "checkedAt": "2026-10-15T16:09:47.803Z",
+    "checks": [
+      {
+        "account": "daclifycore1",
+        "ownerAndAuthoritiesPreserved": true,
+        "codeAndAbiPinned": true,
+        "originalProtectedPackedRowsPreserved": 46
+      },
+      {
+        "account": "daclifyhubv1",
+        "ownerAndAuthoritiesPreserved": true,
+        "codeAndAbiPinned": true,
+        "originalProtectedPackedRowsPreserved": 0
+      },
+      {
+        "account": "daclifydecid",
+        "ownerAndAuthoritiesPreserved": true,
+        "codeAndAbiPinned": true,
+        "originalProtectedPackedRowsPreserved": 5
+      },
+      {
+        "account": "daclifyworks",
+        "ownerAndAuthoritiesPreserved": true,
+        "codeAndAbiPinned": true,
+        "originalProtectedPackedRowsPreserved": 0
+      },
+      {
+        "account": "daclifypayr1",
+        "ownerAndAuthoritiesPreserved": true,
+        "codeAndAbiPinned": true,
+        "originalProtectedPackedRowsPreserved": 0
+      },
+      {
+        "account": "daclifygrant",
+        "ownerAndAuthoritiesPreserved": true,
+        "codeAndAbiPinned": true,
+        "originalProtectedPackedRowsPreserved": 0
+      },
+      {
+        "account": "daclifyendor",
+        "ownerAndAuthoritiesPreserved": true,
+        "codeAndAbiPinned": true,
+        "originalProtectedPackedRowsPreserved": 0
+      },
+      {
+        "account": "daclifyactiv",
+        "ownerAndAuthoritiesPreserved": true,
+        "codeAndAbiPinned": true,
+        "originalProtectedPackedRowsPreserved": 2
+      },
+      {
+        "account": "daclifynames",
+        "ownerAndAuthoritiesPreserved": true,
+        "codeAndAbiPinned": true,
+        "originalProtectedPackedRowsPreserved": 0
+      },
+      {
+        "account": "daclifyqauth",
+        "ownerDelegate": "daclifycore1@active",
+        "codeHash": "d2c7102b79cccb2ca020a071cf46c53da825f4ac86dde8b8264fab3a767db953",
+        "rawAbiHash": "d4c68ff4350f3f29445bb6dcd67199b596f34236587111885ef540f3abff854b"
+      },
+      {
+        "account": "daclifyquick",
+        "ownerDelegate": "daclifycore1@active",
+        "codeHash": "c54fb4ff71c159c60d6d0bc461d8f5a1185d564995f9cf07590fb48a27fb75dd",
+        "rawAbiHash": "f259cd6b5925a8467308fae2509457b45b8e77187360ea3d7a985edbd09f5ab5"
+      }
+    ],
+    "existingDaoQuotasChanged": false,
+    "existingModuleBinariesChanged": false
+  },
+  "publicChecks": {
+    "status": "passed",
+    "checkedAt": "2026-10-15T16:11:07.391Z",
+    "checks": [
+      {
+        "path": "/v1/network",
+        "status": 200,
+        "coreVersion": "0.15.0-alpha.29",
+        "quickCapability": true
+      },
+      {
+        "path": "/v1/daos/1",
+        "status": 200
+      },
+      {
+        "path": "/v1/daos/12027513584436739430/modules",
+        "status": 200
+      },
+      {
+        "path": "/v1/daos/1/content",
+        "status": 200
+      },
+      {
+        "path": "/v1/quick-ballots",
+        "status": 200
+      },
+      {
+        "path": "/v1/mcp/release",
+        "status": 200,
+        "releaseId": "e4b6045e132925d4097a74b250c6f2b8b242147b4a9d5bc8484e21603d8034a2",
+        "coreVersion": "0.15.0-alpha.29"
+      },
+      {
+        "path": "/v1/mini-apps/releases/62f490e49dc4cb4a27516867baf63ed8905fd333f0bafe120641ad19b50e6eff",
+        "status": 200,
+        "releaseId": "62f490e49dc4cb4a27516867baf63ed8905fd333f0bafe120641ad19b50e6eff",
+        "coreVersion": "0.15.0-alpha.29"
+      },
+      {
+        "path": "/v1/mini-apps/releases/83a6112fb4df7b1092eda7a34db07efe0701f0593caeccb0337d26175e211b4b",
+        "status": 200,
+        "releaseId": "83a6112fb4df7b1092eda7a34db07efe0701f0593caeccb0337d26175e211b4b",
+        "coreVersion": "0.15.0-alpha.23"
+      },
+      {
+        "path": "/mcp",
+        "method": "initialize",
+        "status": 200,
+        "challenge": false
+      },
+      {
+        "path": "/mcp",
+        "method": "tools/list",
+        "status": 200,
+        "challenge": false
+      },
+      {
+        "path": "/mcp",
+        "method": "tools/call",
+        "status": 401,
+        "challenge": true
+      }
+    ],
+    "unauthorizedDaoDataDenied": true,
+    "accountGuiOAuthRetested": false
+  },
+  "actualBrowser": {
+    "status": "passed",
+    "kind": "actual-public-testnet-browser",
+    "checkedAt": "2026-10-15T16:14:02.097Z",
+    "results": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "quickBallotsPage": true,
+        "actualNativeResultVerifiedInBrowser": true,
+        "pageErrors": [],
+        "horizontalOverflow": false
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "quickBallotsPage": true,
+        "actualNativeResultVerifiedInBrowser": true,
+        "pageErrors": [],
+        "horizontalOverflow": false
+      }
+    ]
+  },
+  "actualVoting": {
+    "status": "passed",
+    "kind": "actual-public-testnet-http-and-native",
+    "checkedAt": "2026-10-15T16:12:35.781Z",
+    "dao": "5281397675080092127",
+    "accounts": 2,
+    "publicNonmemberParticipation": true,
+    "selectedNonmemberDeniedBeforeSigning": true,
+    "changeAndRemoveAssertionsPassed": true,
+    "desktopAndMobilePagePassed": true,
+    "privateMaterialLogged": false,
+    "walletGuiQualified": false,
+    "archiveThirtyDayWaitPerformed": false,
+    "harnessCorrection": "Tally proof helper takes count before up; corrected qualification harness after public result succeeded. Product worker already used this order.",
+    "results": [
+      {
+        "id": "4006222471198913764",
+        "allAccounts": false,
+        "verified": true,
+        "result": {
+          "up": 0,
+          "down": 1,
+          "count": 1
+        },
+        "transactionId": "2ddd688acd69975e0a21727647a7c949762ed3907ddc561138038aa9a666fa7b",
+        "originalReaderGrantDecrypted": true,
+        "allFrozenRowsVerified": true
+      },
+      {
+        "id": "8253074044138851613",
+        "allAccounts": true,
+        "verified": true,
+        "result": {
+          "up": 1,
+          "down": 0,
+          "count": 1
+        },
+        "transactionId": null,
+        "originalReaderGrantDecrypted": true,
+        "allFrozenRowsVerified": true
+      }
+    ]
+  },
+  "actualTimedMaintenance": {
+    "status": "passed",
+    "kind": "actual-public-testnet-timed-maintenance",
+    "checkedAt": "2026-10-15T16:15:57.338Z",
+    "ballotId": "11019100144302026168",
+    "deadline": 1792080943,
+    "closedAt": 1792080943,
+    "automaticallyPrepared": true,
+    "emptyResultProofVerified": true,
+    "openTransactionId": "f9f84f9f4397a7cff5f973308dcec37ba76065d8556fb8efd9c87b33720b9e2d",
+    "finalizeTransactionId": "19980e7e94dbb55754d383464169962df668e1f868b5a862bdbc99a97e7cfafb"
+  },
+  "actualDatabaseRestore": {
+    "status": "passed",
+    "kind": "actual-postgres-restore-and-upgrade",
+    "coreVersion": "0.15.0-alpha.29",
+    "checkedAt": "2026-10-15T15:48:03.278Z",
+    "sourceDatabaseUntouched": true,
+    "cloneWorkersStarted": false,
+    "existingTableCount": 91,
+    "existingRecordsIdentical": true,
+    "newMigrations": [
+      "core:052_app_admission.sql",
+      "core:053_quick_account_anchors.sql",
+      "core:054_quick_account_preparations.sql",
+      "core:055_quick_ballot_archives.sql"
+    ],
+    "dumpBytes": 369669,
+    "dumpSha256": "ab23a533aaeb7293ea54df621ecca41c0b5629219fe5bbe4a697822fad70b931"
+  },
+  "actualKeyServiceRestore": {
+    "status": "passed",
+    "kind": "testnet-local-restore",
+    "origin": "https://testnet.app.daclify.com",
+    "coreVersion": "0.15.0-alpha.29",
+    "independentHost": false,
+    "sourceUnavailable": true,
+    "sourceRemoved": false,
+    "originalKeyRecovered": true,
+    "leastPrivilegeDenials": 4,
+    "auditPlaintextExcluded": true,
+    "tlsVerified": true,
+    "providerVersion": "2.7.1",
+    "snapshotSha256": "bfa9f586ab86eb7ed01172b614a961d0874c7a8f3fae6f03976c78402322105f",
+    "checkedAt": "2026-10-15T15:42:05.855Z"
+  },
+  "actualProviderAndBackup": {
+    "status": "passed",
+    "kind": "actual-primary-provider-and-encrypted-backup",
+    "checkedAt": "2026-10-15T15:50:37.331Z",
+    "coreVersion": "0.15.0-alpha.29",
+    "primary": "Pinata public IPFS",
+    "backup": "API-host protected ext4 disk",
+    "distinctFromPrimaryProvider": true,
+    "independentApiHost": false,
+    "simultaneousHostAndProviderLossProtected": false,
+    "originalSqlRequired": false,
+    "primaryRetrievalVerified": true,
+    "backupCiphertextVerified": true,
+    "backupRestoredWithoutPrimary": true,
+    "syntheticPublicEncryptedFixture": true,
+    "retentionCalendarFixture": true,
+    "nativeArchiveAttested": false,
+    "files": 2,
+    "manifestCommitment": "b488455e2ee26f46e9f0d6089274788984896f2aed1f03728f6960558e5ce155",
+    "encryptedBackupCommitment": "956fb66041bbe501f8b868aa170fa39832cdb389eff6067d7868512ea1222935"
+  },
+  "resources": {
+    "additionalPhysicalRamBytes": 18874368,
+    "actualTestnetTlos": "1096.1234",
+    "cpuAndNetworkStakeTestnetTlos": "14.0000",
+    "existingDaoQuotaPoliciesUnchanged": true
+  },
+  "focusedConfigurationRegression": {
+    "files": 3,
+    "testsPassed": 13,
+    "strictTypesPassed": true
+  },
+  "limits": {
+    "maxBallotIdentities": 5000,
+    "readerLimit": 8,
+    "selectedDaoLimit": 20,
+    "responseRetentionAfterClosureSeconds": 2592000,
+    "minimumArchiveRetentionSeconds": 7776000
+  },
+  "notQualified": [
+    "Independent cryptographic audit",
+    "New real wallet GUI approval",
+    "Elapsed 30-day public-chain archive/cleanup cycle",
+    "Independent-host production recovery",
+    "Mainnet launch"
+  ],
+  "deploymentTransactions": [
+    {
+      "step": "accounts",
+      "transactionId": "818235c5230eac88080397b2c498d44c874aef8b7cef4c6aa883b04300461214",
+      "blockNum": 450352404
+    },
+    {
+      "step": "adopt-0",
+      "transactionId": "d677bfdaf4f58ad83e1d5bc82db35d8150b1b2f5d3d97e7e4d24a0adade540d8",
+      "blockNum": 450353116
+    },
+    {
+      "step": "adopt-1",
+      "transactionId": "ebcf3cf97d7590faa06b69b80dd756e34ae2813361d20222cc7487ec595bdbfb",
+      "blockNum": 450353120
+    },
+    {
+      "step": "adopt-14",
+      "transactionId": "ef67c35e481670a3511c0690b1a3cf862f1c7162f678df0641dd23b64cab1f1d",
+      "blockNum": 450353220
+    },
+    {
+      "step": "adopt-15",
+      "transactionId": "dc40ff743ef01141d7711840b0f940fff9a7f9b504518e7860acf9bba853338b",
+      "blockNum": 450353225
+    },
+    {
+      "step": "adopt-21",
+      "transactionId": "6105e632db36ca84a0267011cfecb5fdc87be8caa8311315ad78d9dec69899a9",
+      "blockNum": 450353254
+    },
+    {
+      "step": "adopt-22",
+      "transactionId": "ad9c2a7cd15d49b542e214ac649f43e82f9525f2a9005b0a4d4127acf1139b6e",
+      "blockNum": 450353263
+    },
+    {
+      "step": "adopt-28",
+      "transactionId": "08e91a9235deea6e3e1840b4186c668c7e304f2badf34bfcd78bbc9a42a80588",
+      "blockNum": 450353306
+    },
+    {
+      "step": "adopt-29",
+      "transactionId": "d13f2d9649a996c996a096480a4f3a3a690add027852d5f48d3adc272015e860",
+      "blockNum": 450353311
+    },
+    {
+      "step": "adopt-35",
+      "transactionId": "76e9712491269dd8f6a6996ef5604daad8d368e496e3b83280841d053166131b",
+      "blockNum": 450353347
+    },
+    {
+      "step": "adopt-36",
+      "transactionId": "1d9ea297feab1f6fb49b9a75ce0fb183ffd17f451f2fb6152b5732eb960be655",
+      "blockNum": 450353352
+    },
+    {
+      "step": "adopt-42",
+      "transactionId": "5e3cceae31b7b9bdfc9920216254860c7dbd6ab5d8599bacb2b34031b0b3fcf3",
+      "blockNum": 450353395
+    },
+    {
+      "step": "adopt-43",
+      "transactionId": "42916317ebd709ffc3e091f7ff64a4a3a224d50f32f1cfdb2dd8244f501e6aec",
+      "blockNum": 450353406
+    },
+    {
+      "step": "adopt-49",
+      "transactionId": "c1370d9fe5495eece0a5b241312850bc485de8f003de0b1cc0e028f615be50ed",
+      "blockNum": 450353442
+    },
+    {
+      "step": "adopt-50",
+      "transactionId": "c52ef32d1fa994101f35680520f087dc21697f191602642fcb06508f2d9f10d3",
+      "blockNum": 450353448
+    },
+    {
+      "step": "adopt-7",
+      "transactionId": "17ba9e45f650583113a3e1a90d46c351b750009655f23b0a0afd7e78312b6452",
+      "blockNum": 450353169
+    },
+    {
+      "step": "adopt-8",
+      "transactionId": "b86638a88a188159e3485741acdac601627d4b21e218a63f1ab783b5f4bcb181",
+      "blockNum": 450353173
+    },
+    {
+      "step": "begin-observation",
+      "transactionId": "6b41cef0806a2f1aaa58c03a4b53f58b53697036b54947c90627003f9994885a",
+      "blockNum": 450353110
+    },
+    {
+      "step": "bind-daclifydecid",
+      "transactionId": "2a46110fc2e56a6e8539b95a2e2f19a708d4e825730209d90df0441643662bb3",
+      "blockNum": 450352536
+    },
+    {
+      "step": "bind-daclifyendor",
+      "transactionId": "84264957213dd2428c03259b6e97b49de85e735a1992e89c332902ec8c22e3e4",
+      "blockNum": 450352565
+    },
+    {
+      "step": "bind-daclifygrant",
+      "transactionId": "bf0864c3a24b8beaee74bc2f558098f928314cc830eef5c5f3a0e16a53e9687f",
+      "blockNum": 450352555
+    },
+    {
+      "step": "bind-daclifypayr1",
+      "transactionId": "e97f0c48e77e561a9fe73fb93cadaf8561e08880c86ef1e46bbde9264d555a36",
+      "blockNum": 450352545
+    },
+    {
+      "step": "bind-daclifyworks",
+      "transactionId": "0d9f9caf108183e63546a538115fa8de4ddca7483fd15133e08f1535778e6940",
+      "blockNum": 450352541
+    },
+    {
+      "step": "core-and-quick-cutover",
+      "transactionId": "2c475b9326bef8ed4cc8cb39997c0be8e633da4016d11a8e59308ded9eeeb179",
+      "blockNum": 450353011
+    },
+    {
+      "step": "deploy-authority",
+      "transactionId": "5cf0cf068df64dce380c961dae8768f0821d7ac8fa9930da99d52f49e149d148",
+      "blockNum": 450352408
+    },
+    {
+      "step": "deploy-source",
+      "transactionId": "7dcb6e078b09eb93d2487f8ca9b75522f85bf67cbf69c9760fa07bc03c718a44",
+      "blockNum": 450352415
+    },
+    {
+      "step": "quick-backed-pools",
+      "transactionId": "feccde788c76f89dc0b9816ca763c6d56506f6e442e81a838b03cab9bfc1a991",
+      "blockNum": 450353692
+    },
+    {
+      "step": "quick-configuration",
+      "transactionId": "3b470dd52cc154ef4a1cd766edd39a864b96f2a926648b5cb8fbb4664e72a239",
+      "blockNum": 450353682
+    },
+    {
+      "step": "quick-grant-1",
+      "transactionId": "04758a39da803b863413877401104f954e5b1c715184397bc7fd0e4f7550e92f",
+      "blockNum": 450353704
+    },
+    {
+      "step": "quick-grant-10462019581746745784",
+      "transactionId": "2a489ed69053b8a97dec6cb0e2e1e7c1d0632d5026798ea01dedbae309503710",
+      "blockNum": 450353728
+    },
+    {
+      "step": "quick-grant-11278252133202098176",
+      "transactionId": "16da4e48f0e433e3777c1008247bf95982c75154f8ac3347f73371aa3ff0bcbb",
+      "blockNum": 450353731
+    },
+    {
+      "step": "quick-grant-12027513584436739430",
+      "transactionId": "ee62e77790beca9656d1b04e47af193b1a57cfa75af5418896731935b332f7b1",
+      "blockNum": 450353736
+    },
+    {
+      "step": "quick-grant-4899240341166052780",
+      "transactionId": "bd329e935dc4117a242511910f848b6deb05a0218c1ad2eb340b3c378f10bce2",
+      "blockNum": 450353709
+    },
+    {
+      "step": "quick-grant-5096066148960770562",
+      "transactionId": "a3865d277b7063211593cd17fdd03c8edd90df4b65da129795cce1e99006c04d",
+      "blockNum": 450353714
+    },
+    {
+      "step": "quick-grant-7010534441818256360",
+      "transactionId": "fc291444746c69046200ec40fe57a35cd1f33f9a9e53c3ffd2f3c2c7065ba08c",
+      "blockNum": 450353719
+    },
+    {
+      "step": "quick-grant-8122199153663004859",
+      "transactionId": "0bcaf6548ce9383e7010aa4b83273f33aabacd781031c663c1ff013af4f93f67",
+      "blockNum": 450353724
+    },
+    {
+      "step": "quick-ram-sources",
+      "transactionId": "148fbb8f00c63e64d33275c00d795d23631e5e35ad6077ff5394ffa54b982dd8",
+      "blockNum": 450353672
+    },
+    {
+      "step": "restricted-links",
+      "transactionId": "3c1bc0481e1ddeae4128d5575f32fe477dd87d0ad0cd1db0c993c2267b9aaceb",
+      "blockNum": 450352419
+    },
+    {
+      "step": "runtime-code",
+      "transactionId": "7c9244a2df3dd1c96679aa8bd6b09d142636a2de494a1b7a85dc38ef85bddfbe",
+      "blockNum": 450353004
+    },
+    {
+      "step": "scan-dao-10",
+      "transactionId": "339c32dc424d70a4aede4bad001ec498f9d911cb91c7c605e1abe43b903e07e8",
+      "blockNum": 450353190
+    },
+    {
+      "step": "scan-dao-11",
+      "transactionId": "ff620af68db0d22c2b99c5a6e1df9a4d3e8858ecd3467315d9891e33ad02071f",
+      "blockNum": 450353197
+    },
+    {
+      "step": "scan-dao-12",
+      "transactionId": "8dc3c6c6e9041489651268372c2c25e2719d915d578b0a9bb4117fc11a81b3ee",
+      "blockNum": 450353203
+    },
+    {
+      "step": "scan-dao-13",
+      "transactionId": "13048906802fb89ea25e24480d123b704560ea8cb011964a7921155a9b7d0faa",
+      "blockNum": 450353210
+    },
+    {
+      "step": "scan-dao-16",
+      "transactionId": "bf56c5e773b1566804c39b99d7e15280dc9c5292dcafc7dce0d5ad49d94b8762",
+      "blockNum": 450353229
+    },
+    {
+      "step": "scan-dao-17",
+      "transactionId": "ce297f0c5e7d452eeba7f18dd5bf6824245204fc38025261c6d6a95775f4b60d",
+      "blockNum": 450353233
+    },
+    {
+      "step": "scan-dao-18",
+      "transactionId": "1850841dd7bdac891e01f3dbe9622a2bb63d7df93c964cf981291517a7538188",
+      "blockNum": 450353240
+    },
+    {
+      "step": "scan-dao-19",
+      "transactionId": "80512a69ba4fb1f4a0313853d54e7b3684983dc4b924222080b2e089cc007de3",
+      "blockNum": 450353245
+    },
+    {
+      "step": "scan-dao-2",
+      "transactionId": "9431cdff64817fb1460c125a53a0b986b29345c134b15f9c6eaf9e39852cb31d",
+      "blockNum": 450353131
+    },
+    {
+      "step": "scan-dao-20",
+      "transactionId": "5116dfd4887c362123a4a459720ec0fcca9856a5c9929feea4588aa31a8914a9",
+      "blockNum": 450353249
+    },
+    {
+      "step": "scan-dao-23",
+      "transactionId": "a538c063da27ecfbe8e1cff3d650b8cbed0faa41477d52e9486441bb853fe31f",
+      "blockNum": 450353273
+    },
+    {
+      "step": "scan-dao-24",
+      "transactionId": "371bc60f1d3b101cd4984b5eae9678867f7c5bf802e79fbc7519873078f2633f",
+      "blockNum": 450353278
+    },
+    {
+      "step": "scan-dao-25",
+      "transactionId": "165fd7ec745d3bd975ad691d8d288860f85be84a0310206ed1e70b48cea48d54",
+      "blockNum": 450353282
+    },
+    {
+      "step": "scan-dao-26",
+      "transactionId": "9b6c885a58515d133b1a5c5b79472ddd978fb30efcedfbf2b7ccd7b572022c3a",
+      "blockNum": 450353286
+    },
+    {
+      "step": "scan-dao-27",
+      "transactionId": "f3c5fd910b3f84fee8c18662291af5f300fe7965ee71d61ed66816585e7f1fc2",
+      "blockNum": 450353296
+    },
+    {
+      "step": "scan-dao-3",
+      "transactionId": "2c9766ac40981999b50f6c258cc74e4ccbb9547d2d8a2bb927272c352a4c3b27",
+      "blockNum": 450353137
+    },
+    {
+      "step": "scan-dao-30",
+      "transactionId": "1b6f4a7a4832acd0f0d9f324032f91615fdffa47ad09163633a886b45b311579",
+      "blockNum": 450353315
+    },
+    {
+      "step": "scan-dao-31",
+      "transactionId": "80bff384950de76c772a98239004fa7ce344e7c67e4ee9080a5d4736bc20529d",
+      "blockNum": 450353321
+    },
+    {
+      "step": "scan-dao-32",
+      "transactionId": "14d648192b8d8d9717f737da9ed72f04b6ad446329189a729f92f7316f6ef4e8",
+      "blockNum": 450353332
+    },
+    {
+      "step": "scan-dao-33",
+      "transactionId": "7cb8cf389471d7e6091b485a814b94c8bc8d59cce2a824162edf02f79ac3dcdc",
+      "blockNum": 450353338
+    },
+    {
+      "step": "scan-dao-34",
+      "transactionId": "8c6db37052b44b97aa8afbf3ab5ebed95ada3ac72632df041daa3af3d6422ec9",
+      "blockNum": 450353343
+    },
+    {
+      "step": "scan-dao-37",
+      "transactionId": "2ea1477d5aeb1daa5860ae61b686488b5520519b898706bf97879157ff15a520",
+      "blockNum": 450353358
+    },
+    {
+      "step": "scan-dao-38",
+      "transactionId": "2b899b36a6114d8fe9ef15cb41024749aedf11caf6880ad1a98d8eb7c9c3ffef",
+      "blockNum": 450353363
+    },
+    {
+      "step": "scan-dao-39",
+      "transactionId": "6fd2b78c699effe2ab3e79b9ba9d5928a11d8a2dd800220fde6b122ff55d930c",
+      "blockNum": 450353374
+    },
+    {
+      "step": "scan-dao-4",
+      "transactionId": "b51f6221267e55f794be138dfaf68f2cf8fc0e2e57036f16b5e22b361222d3e6",
+      "blockNum": 450353143
+    },
+    {
+      "step": "scan-dao-40",
+      "transactionId": "6843bece81fc11a633bb8df65aa86cda600b6635a1d942acde7c7df5c295c4b5",
+      "blockNum": 450353384
+    },
+    {
+      "step": "scan-dao-41",
+      "transactionId": "743115d4af87d42c1f27b96231def4f6b48d3eebdae5d535d129e64f8de707de",
+      "blockNum": 450353389
+    },
+    {
+      "step": "scan-dao-44",
+      "transactionId": "8bbc5f77b45b1104cd39a678c4b042442defeabae250f235f6434520ad55ad77",
+      "blockNum": 450353412
+    },
+    {
+      "step": "scan-dao-45",
+      "transactionId": "7cdb73e4d0b7808367a54c5f5ef2ee8f94763880b6a4755f0b58d11c34297f06",
+      "blockNum": 450353416
+    },
+    {
+      "step": "scan-dao-46",
+      "transactionId": "d8b990c705a7a9bee56f41a3c74e9fcbcf2075baef4afb844dcabebf3ed6bfc7",
+      "blockNum": 450353421
+    },
+    {
+      "step": "scan-dao-47",
+      "transactionId": "7531fb51860ce255ccab8162c0c726dbf6ff6dc351d94a8263b3f5d021bb5e30",
+      "blockNum": 450353426
+    },
+    {
+      "step": "scan-dao-48",
+      "transactionId": "cc877a7eeb8b51c79c4bf5fe2a33f28277d9fe4e22abc3362d4d30c83e99ef52",
+      "blockNum": 450353435
+    },
+    {
+      "step": "scan-dao-5",
+      "transactionId": "1c61ca6c843148004c202359bd08ec6794c0ae339c2f60bba6f084aa3e448c14",
+      "blockNum": 450353155
+    },
+    {
+      "step": "scan-dao-51",
+      "transactionId": "f560a247c6a0bb2408d5cf0357362096b6b2ac819c1a0f918e69d299b9bec17b",
+      "blockNum": 450353457
+    },
+    {
+      "step": "scan-dao-52",
+      "transactionId": "ad9d7a2343b63e40df0017903420d95baee1d5d9a19966ce27c23fb695759f26",
+      "blockNum": 450353467
+    },
+    {
+      "step": "scan-dao-53",
+      "transactionId": "623567cf0135046ae4ffdd5ce65e1c52d0e5046f6d2ec4b198b5f920a2365e35",
+      "blockNum": 450353472
+    },
+    {
+      "step": "scan-dao-54",
+      "transactionId": "ede5cd72ce2b96ba45d33e3e98282fd4bea141ae24f0057bff316042910b597d",
+      "blockNum": 450353476
+    },
+    {
+      "step": "scan-dao-55",
+      "transactionId": "ba5510134e3bd82d16c1ac44bee2dd7cbe69a3eea69325965b07ba716dbfd86d",
+      "blockNum": 450353479
+    },
+    {
+      "step": "scan-dao-6",
+      "transactionId": "730998b71cfde0e9b37f0bf8a2d35a628737dbb55f3dc4c9e7f9e971c4a332a0",
+      "blockNum": 450353164
+    },
+    {
+      "step": "scan-dao-9",
+      "transactionId": "f7277ef7e40618a91e8f963e504cd0eb7b786b7b593e054cf11e518761d02d87",
+      "blockNum": 450353180
+    },
+    {
+      "step": "scan-global-56",
+      "transactionId": "5285ff16df68523bd912df8d9a50129dec4071569ed0166a42e1808e1d2c4748",
+      "blockNum": 450353486
+    },
+    {
+      "step": "scan-global-57",
+      "transactionId": "0e2373e6e60e717eeb23258c20ab99bbc56c74de9a88067a15a34bb492f8c447",
+      "blockNum": 450353491
+    },
+    {
+      "step": "scan-global-58",
+      "transactionId": "a7d04eadaf30f6d17c1d2bccffd1bee71261ac4b0d8b75ae3a2d08fcf62fbf97",
+      "blockNum": 450353496
+    },
+    {
+      "step": "scan-global-59",
+      "transactionId": "5af364b06968e0701d470513f1d0315574b66b918ad2e6d1016bdf0f08507944",
+      "blockNum": 450353502
+    },
+    {
+      "step": "scan-global-60",
+      "transactionId": "a5f98e2d9b659e6a97636f88930613dca749ee4b926e6bc3788c8e410229468a",
+      "blockNum": 450353509
+    },
+    {
+      "step": "scan-source-61",
+      "transactionId": "920ab468566b9374b9c0fc702ec83943cda8a5993ac6c3b9be02806cf775cf48",
+      "blockNum": 450353515
+    },
+    {
+      "step": "scan-source-62",
+      "transactionId": "1b7ffb2cccb9cdd45c2b406a01e11ddd4d6475fd6e87590956df8086fb23ce9d",
+      "blockNum": 450353520
+    },
+    {
+      "step": "scan-source-63",
+      "transactionId": "c8458cde47daaf59cfce6e5ddac4d6c3412c78fb4c9c79d0b7a76546a33b9db3",
+      "blockNum": 450353526
+    },
+    {
+      "step": "scan-source-64",
+      "transactionId": "87926ab614abf1806740a303411d7552c4d9f1591d89dbe75ad8bf8bcecc197e",
+      "blockNum": 450353533
+    },
+    {
+      "step": "scan-source-65",
+      "transactionId": "f6288787291c3582133ac6f20f177b3e5de9b00c64a7806a79ebc2852acba165",
+      "blockNum": 450353539
+    },
+    {
+      "step": "scan-source-66",
+      "transactionId": "91f16eee63addd9fd01f9fd4296df5dd865394aadd0a878af00af4e29f63ba73",
+      "blockNum": 450353548
+    },
+    {
+      "step": "scan-source-67",
+      "transactionId": "becfb81033bff8e8b31389b1c8fef203be4221bafd1e51fdf1dd158488198cf7",
+      "blockNum": 450353553
+    },
+    {
+      "step": "scan-source-68",
+      "transactionId": "7c333a4cd3e664b04eafbde1ae0d4ed714ae34d140a72a5e20238c008901f1e1",
+      "blockNum": 450353560
+    },
+    {
+      "step": "seal-0",
+      "transactionId": "d3d12e0727f1b6998dfa27529c92846e58468eaddea798a690122fda6b030e5e",
+      "blockNum": 450353574
+    },
+    {
+      "step": "seal-1",
+      "transactionId": "0f00d73709a981f841e72c8805c875ea6acc73209ae5fa0cf4b64396f378a47c",
+      "blockNum": 450353583
+    },
+    {
+      "step": "verified-archive-policy",
+      "transactionId": "201dd64911bdfae923b61bf83b7de916da41ecde8c9f9561af8e1d53382419c2",
+      "blockNum": 450353700
+    }
+  ],
+  "candidateImportCheck": {
+    "candidateImportGraphPassed": true,
+    "workersStarted": false
+  },
+  "ownedPostgresStopped": true
+}

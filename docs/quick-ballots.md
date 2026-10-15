@@ -4,7 +4,7 @@ Quick ballots ask a public question with encrypted up/down responses. They are a
 
 ## Using a ballot
 
-1. An originating DAO executive enables Quick ballots through Modules, then opens Quick ballots and chooses **Create ballot**.
+1. An originating DAO executive enables Quick ballots through Modules, then opens Quick ballots and chooses **Create ballot**. If a new DAO has no appointed executive group, its administrator first configures Executives in DAO settings → Governance.
 2. Enter a question, optional explanation and optional closing time. Select all registered Daclify accounts, or active members of one to twenty DAOs. The question, audience and participation are public.
 3. Review the fixed vote readers. These are the originating DAO's active executives when the ballot opens, with a maximum of eight. Audience DAOs do not receive reader access. Each reader needs a usable account encryption key.
 4. Approve with the existing account approval method. The browser creates a fresh ballot key, verifies its possession proof and encrypts a separate key grant for every reader. The server receives no ballot secret.
@@ -17,13 +17,13 @@ Before a valid proof is accepted, the page reports **No verified result**. A los
 
 Use Account → Approval setup to choose the existing default wallet. Quick participation authenticates the canonical account through a narrowly scoped companion contract; executive creation still uses the originating DAO's member authorization. A public voter need not join any DAO. Selected-DAO eligibility uses the credential actually proved on-chain. Leaving an audience DAO prevents a new response but does not prevent removing a previous response while voting remains open.
 
-The chain stores encrypted choices and validity proofs. Participation, timing, public account links and changes remain observable. Readers can decrypt individual choices. Small populations and information voluntarily disclosed outside Daclify may reveal choices by inference. Public proofs establish the encrypted aggregate's totals; they do not establish reader honesty, erase downloaded data or provide real-person uniqueness.
+The chain stores encrypted choices and validity proofs. Participation, timing, public account links and changes remain observable. Readers can decrypt individual choices. An assisted-recovery operator able to recover a reader’s account keys can also open that reader’s grants; account custody remains part of the privacy boundary. Small populations and information voluntarily disclosed outside Daclify may reveal choices by inference. Public proofs establish the encrypted aggregate's totals; they do not establish reader honesty, erase downloaded data or provide real-person uniqueness.
 
-Own-response receipts are encrypted. Accounts with an available account encryption key can recover them using that key. Wallet-only accounts may use a nonextractable device key; the page labels those receipts as device-only. Clearing that browser's storage can lose its local receipt. Never send ballot keys, receipt plaintext or recovery kits to an AI harness or API.
+Own-response receipts are encrypted. Accounts with an available account encryption key can recover them using that key. Wallet-only accounts may use a nonextractable device key; the page labels those receipts as device-only. Clearing that browser's storage can lose its local receipt. Never send ballot keys, receipt plaintext or recovery kits to a remote AI harness or API.
 
 ## Storage and cleanup
 
-The originating DAO funds response, reader-grant and archive storage. Audience DAOs are not charged. The first release bounds a ballot to 5,000 retained identities, including removed-response tombstones. Question and explanation limits are 256 and 4,096 UTF-8 bytes. An exhausted allowance rejects the entire action without partially changing a vote or consuming its account nonce.
+The originating DAO owns response, reader-grant and archive usage. Audience DAOs are not charged. Physical source RAM and hosted archive reservations must be backed; DAO allowance enforcement follows the existing DAO quota policy. The first release bounds a ballot to 5,000 retained identities, including removed-response tombstones. Question and explanation limits are 256 and 4,096 UTF-8 bytes. With quota enforcement enabled, an exhausted allowance rejects the entire action without partially changing a vote or consuming its account nonce.
 
 Individual rows become eligible for cleanup 30 days after closure. The service first verifies complete encrypted exports against the frozen on-chain header, retrieves every primary file, creates and restores the authenticated encrypted backup, and obtains a native archive attestation. Every deletion batch rechecks primary and backup availability. Missing capacity, unavailable storage, corrupt files or changed source pins retain the native rows and retry later.
 
@@ -43,4 +43,4 @@ Do not enable the native archive pruning policy until actual provider retrieval 
 
 Before switching API source, retain private PostgreSQL/config/native rollback artifacts and run fresh recovery qualification for the exact core version. A testnet single-host key-service drill must remain explicitly labelled as such. Stage the API and frontend first; publish hashed assets before replacing the portal entry point. Verify exact irreversible native pins, public API/portal, old modules, MCP and a real testnet Quick lifecycle after cutover.
 
-Independent cryptographic review and mainnet qualification remain separate release gates. See the [implementation evidence](evidence/2026-10-15-quick-ballots-implementation.md), [proof protocol](superpowers/specs/2026-10-14-quick-ballot-proof-protocol.md) and [execution plan](superpowers/plans/2026-10-15-quick-ballots.md).
+Independent cryptographic review and mainnet qualification remain separate release gates. See the [live testnet delivery](evidence/2026-10-15-quick-ballots-testnet.md), [implementation evidence](evidence/2026-10-15-quick-ballots-implementation.md), [proof protocol](superpowers/specs/2026-10-14-quick-ballot-proof-protocol.md) and [execution plan](superpowers/plans/2026-10-15-quick-ballots.md).

@@ -105,14 +105,14 @@
 - [x] Run native end-to-end root/default-wallet registration → create → selected/public vote → change/remove → timed/manual close → snapshot → proof → archive/backup → cleanup, including public voters with no DAO and one user in multiple audience DAOs.
 - [x] Inspect actual browser/API/action/archive bytes for choice/secret leaks; deny nonreaders, test fixed historic readers and disclose inference/custody limits. Tests are not an independent cryptographic audit.
 - [x] Complete meaningful core/modules/frontend suites, strict types/Vue templates, generated docs, compatibility/migration/upgrade/source-loss recovery and pinned native resource checks. No absent/empty required suite may count as passed.
-- [ ] Publish matching prerelease public artifacts, first-party module metadata/help and current-status/release evidence; preserve immutable historical downloads. Review the whole change inline and merge/push only owned changes to `dev`.
+- [x] Publish matching prerelease public artifacts, first-party module metadata/help and current-status/release evidence; preserve immutable historical downloads. Review the whole change inline and merge/push only owned changes to `dev`.
 
 ## Task 7 — Testnet deployment and live acceptance
 
-- [ ] Prepare an immutable source/artifact release, private SQL/native/config rollback snapshot and freshly version-bound actual recovery drill before restarting the API. Preserve the working service while preparing.
-- [ ] Prepare and simulate only the required runtime/Quick source/module pins, restricted `execctx`/gateway links and measured testnet resources. Review current authorities, costs and rows. No treasury payout, owner takeover, unrelated feature cutover or mainnet action.
-- [ ] Deploy authorized testnet changes, confirm irreversibility and exact code/ABI/authority/resource pins, then publish API/frontend from the tested snapshot with atomic static publication and rollback on startup failure.
-- [ ] Verify real public desktop/mobile paths, existing DAO/Decide/documents/MCP and selected Quick ballot flows. Record genuine live writes separately from owned synthetic checks. Commit/push delivery evidence and state any unqualified wallet/provider/security limits.
+- [x] Prepare an immutable source/artifact release, private SQL/native/config rollback snapshot and freshly version-bound actual recovery drill before restarting the API. Preserve the working service while preparing.
+- [x] Prepare and simulate only the required runtime/Quick source/module pins, restricted `execctx`/gateway links and measured testnet resources. Review current authorities, costs and rows. No treasury payout, owner takeover, unrelated feature cutover or mainnet action.
+- [x] Deploy authorized testnet changes, confirm irreversibility and exact code/ABI/authority/resource pins, then publish API/frontend from the tested snapshot with atomic static publication, prepared rollback and verified startup.
+- [x] Verify real public desktop/mobile paths, existing DAO/Decide/documents/MCP and selected Quick ballot flows. Record genuine live writes separately from owned synthetic checks. Commit/push delivery evidence and state any unqualified wallet/provider/security limits.
 
 ## Execution ledger
 
@@ -123,3 +123,5 @@
 - Development disk was nearly full. Removed only owned Node/tsx compiler-cache files older than 24 hours (609,195,338 bytes); retained source, releases, database and backups. Continue measuring available space before native fixtures.
 
 - Source qualification: core1,077/modules286/frontend393/MCP13 tests passed; native25 including5,000 maximum-receipt votes; browser fixtures14 cases. See current implementation evidence for scope and limits. Fresh version29 key-service snapshot restore passed with the original key and source unavailable, then source service recovered; independentHost=false.
+
+- Testnet delivered 15 October: core c5a9c77/modules d346582/frontend911153f. Native observer migration completed with original authorities/protected rows and existing quota switches preserved. Actual public/selected voting, replacement/removal, fixed-reader grant decryption and both final proofs passed; an additional short deadline closed/prepared automatically and accepted the empty-result proof. Actual desktop/mobile browsers verified a native result. Live API/old DAO/modules/documents/MCP and historical downloads passed. See the dated testnet evidence for exact receipts and explicit wallet/30-day/audit/mainnet limitations.
