@@ -28,7 +28,7 @@ inline void require_active_dao(name runtime,uint64_t dao_id){
 }
 inline void require_retirement_action(name runtime,uint64_t dao_id,name action_name,bool core){
  const auto state=dao_lifecycle(runtime,dao_id);if(!state)return;
- const bool exit=core&&(action_name=="leave"_n||action_name=="withdraw"_n||action_name=="unstake"_n||action_name=="delprofile"_n);
+ const bool exit=core&&(action_name=="recovergrant"_n||action_name=="cancelrec"_n||action_name=="leave"_n||action_name=="withdraw"_n||action_name=="unstake"_n||action_name=="delprofile"_n);
  if(state==2){check(exit,"DAO_CLOSED");return;}
  check(state==1,"DAO_LIFECYCLE_UNSUPPORTED");
  const bool continuation=core?

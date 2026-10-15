@@ -445,6 +445,35 @@ export const ServiceResponseRoutes = [
 }[];
 
 export const ContractFailureMessages = {
+  RECOVERY_ROOT_PROOF_REQUIRED:
+    'Unlock the original Daclify keys to change recovery contacts. A paired wallet can still cancel a pending recovery.',
+  CONTACT_RECOVERY_CLAIM_REQUIRED:
+    'Open Trusted-contact recovery, resume the replacement backup and choose Sign in with recovered identity.',
+  RECOVERY_IDENTITY_CONFLICT:
+    'Use a fresh replacement vault or the current vault for this recovery identity.',
+  RECOVERY_USER_CONTROLLED_REQUIRED: 'Trusted-contact enrollment requires a user-controlled vault.',
+  ACCOUNT_KEY_RETIRED:
+    'This key was replaced through trusted-contact recovery. Use the replacement device.',
+  RECOVERY_KEY_RETIRED:
+    'Choose a fresh replacement key. This signing key has already been retired.',
+  RECOVERY_NATIVE_ROLE_CHANGED:
+    'Recovery would change your native governance role. Connect a replacement native account or refresh DAO governance before retrying.',
+  RECOVERY_WAIT: 'Recovery needs to wait 48 hours after the second contact approval.',
+  RECOVERY_PENDING: 'Recovery is waiting for two contact approvals or its waiting period.',
+  RECOVERY_DOCUMENT_POLICY: 'This DAO has not allowed recovery of these document keys.',
+  RECOVERY_POLICY_CHANGED: 'The recovery contacts or account key changed. Reload the membership.',
+  RECOVERY_CONTEXT: 'The recovery proof does not match this request.',
+  RECOVERY_EXPIRY: 'This recovery request has expired or has too little time remaining.',
+  RECOVERY_CONTACTS_PENDING: 'All three contacts must accept before recovery is ready.',
+  RECOVERY_ALREADY_PENDING: 'A recovery request is already pending for this membership.',
+  RECOVERY_SEQUENCE: 'The recovery request is out of date. Reload and prepare it again.',
+  RECOVERY_GRANT_EXISTS: 'This document key has already been restored for this device.',
+  RECOVERY_NATIVE_WALLET_REQUIRED: 'Connect the replacement native wallet to complete recovery.',
+  CONTACT_RECOVERY_CHANGED: 'The recovered account changed. Reload before continuing.',
+  CONTACT_RECOVERY_UNAVAILABLE: 'This deployment does not support trusted-contact recovery yet.',
+  CONTACT_RECOVERY_IDENTITY_CONFLICT:
+    'The old and replacement keys belong to different service profiles. Recovery cannot merge them.',
+
   APP_JOIN_DISABLED: 'This app has not enabled the requested DAO admission. Ask its administrator.',
   APP_JOIN_UNAVAILABLE: 'This deployment does not provide compatible app admission.',
   APP_JOIN_GATEWAY: 'Review the approved admission gateway account and permission.',
@@ -456,11 +485,14 @@ export const ContractFailureMessages = {
   APP_INVITE_EXPIRED: 'The invitation has expired. Ask for a new link.',
   APP_INVITE_ISSUER: 'The inviting administrator is no longer eligible. Ask for a new invitation.',
   APP_INVITE_CONFLICT: 'The invitation role or owner changed. Create a new invitation.',
-  APP_INVITE_CAPACITY: 'This DAO has reached its retained invitation capacity. Remove expired records before issuing more.',
+  APP_INVITE_CAPACITY:
+    'This DAO has reached its retained invitation capacity. Remove expired records before issuing more.',
   APP_INVITE_ID: 'Choose a nonzero invitation identifier.',
-  APP_INVITE_PROOF: 'A signature from the private invitation link must authorize this exact recipient.',
+  APP_INVITE_PROOF:
+    'A signature from the private invitation link must authorize this exact recipient.',
   APP_INVITE_EXPIRY: 'An invitation must have a valid token hash and expire within seven days.',
-  APP_INVITE_EXISTS: 'This invitation already exists. Check its native state rather than issuing it again.',
+  APP_INVITE_EXISTS:
+    'This invitation already exists. Check its native state rather than issuing it again.',
   DAO_CLAIM_UNKNOWN: 'This claim link is unavailable. Ask its issuer for a new link.',
   DAO_CLAIM_EXECUTIVE_REQUIRED:
     'A current executive of the Daclify governing DAO must authorize this invitation.',
@@ -694,28 +726,39 @@ export const ContractFailureMessages = {
   POLICY_CHANGED: 'The governance policy changed. Members must approve a new proposal.',
   DAO_PAUSED:
     'The DAO guardian has paused commitments and payments. Check the pause expiry in Settings.',
-  OBLIGATION_PROTECTED:'This obligation requires its agreed dispute or matching settlement process.',
-  ARBITRATION_REQUIRED:'Set up protected terms and obtain contributor consent before funding this work.',
-  ARBITRATION_CONSENT:'The contributor must accept the exact protected terms before funding.',
-  ARBITRATION_CHANGED:'The protected commitment changed. Refresh and review it before signing again.',
-  ARBITRATION_CONFLICT:'Choose eligible, distinct decision makers who are not the contributor or reviewers.',
-  ARBITRATION_RULES:'Check the frozen voting rules and supported thresholds.',
-  ARBITRATION_DURATION:'Each dispute window must be between one minute and 30 days.',
-  ARBITRATION_STATE:'This dispute has moved to another stage. Refresh before approving an outcome.',
-  ARBITRATION_DEADLINE:'The deadline has not arrived yet.',
-  ARBITRATION_EVIDENCE_ACCESS:'Grant access to the exact private evidence before this action.',
-  ARBITRATION_VOTER:'You are excluded from this dispute vote or were not in its frozen electorate.',
-  ARBITRATION_CONSENT_MISMATCH:'The other party selected a different settlement. Withdraw your own consent before changing it.',
-  ARBITRATION_POLICY_IMMUTABLE:'Protection is already required for this Works source and cannot be disabled.',
-  ARBITRATION_ELECTORATE_LIMIT:'This community exceeds the supported primary electorate scan. Its deadline and agreed backup remain available.',
-  ARBITRATION_REVIEWER_LIMIT:'The agreement already has 16 distinct reviewers. An existing reviewer can continue, or the dispute process can resolve it.',
-  ARBITRATION_UNKNOWN:'This protected obligation could not be found. Refresh the DAO.',
-  ARBITRATION_UNSETTLED:'Evidence remains protected until this obligation is paid or cancelled.',
-  PAYROLL_TERMS_CHANGED:'The selected payroll terms do not match their stored commitment. Review the exact version again.',
-  PAYROLL_ALREADY_RENEWED:'This schedule already has a funded successor.',
-  PAYROLL_TERM_OVERLAP:'Start the successor after the previous term ends.',
-  PAYROLL_UNSETTLED:'Payroll terms remain protected until all installments have been paid.',
-  DOCUMENT_REVIEW_REQUIRED:'Open and verify the supporting document version before voting.',
+  OBLIGATION_PROTECTED:
+    'This obligation requires its agreed dispute or matching settlement process.',
+  ARBITRATION_REQUIRED:
+    'Set up protected terms and obtain contributor consent before funding this work.',
+  ARBITRATION_CONSENT: 'The contributor must accept the exact protected terms before funding.',
+  ARBITRATION_CHANGED:
+    'The protected commitment changed. Refresh and review it before signing again.',
+  ARBITRATION_CONFLICT:
+    'Choose eligible, distinct decision makers who are not the contributor or reviewers.',
+  ARBITRATION_RULES: 'Check the frozen voting rules and supported thresholds.',
+  ARBITRATION_DURATION: 'Each dispute window must be between one minute and 30 days.',
+  ARBITRATION_STATE:
+    'This dispute has moved to another stage. Refresh before approving an outcome.',
+  ARBITRATION_DEADLINE: 'The deadline has not arrived yet.',
+  ARBITRATION_EVIDENCE_ACCESS: 'Grant access to the exact private evidence before this action.',
+  ARBITRATION_VOTER:
+    'You are excluded from this dispute vote or were not in its frozen electorate.',
+  ARBITRATION_CONSENT_MISMATCH:
+    'The other party selected a different settlement. Withdraw your own consent before changing it.',
+  ARBITRATION_POLICY_IMMUTABLE:
+    'Protection is already required for this Works source and cannot be disabled.',
+  ARBITRATION_ELECTORATE_LIMIT:
+    'This community exceeds the supported primary electorate scan. Its deadline and agreed backup remain available.',
+  ARBITRATION_REVIEWER_LIMIT:
+    'The agreement already has 16 distinct reviewers. An existing reviewer can continue, or the dispute process can resolve it.',
+  ARBITRATION_UNKNOWN: 'This protected obligation could not be found. Refresh the DAO.',
+  ARBITRATION_UNSETTLED: 'Evidence remains protected until this obligation is paid or cancelled.',
+  PAYROLL_TERMS_CHANGED:
+    'The selected payroll terms do not match their stored commitment. Review the exact version again.',
+  PAYROLL_ALREADY_RENEWED: 'This schedule already has a funded successor.',
+  PAYROLL_TERM_OVERLAP: 'Start the successor after the previous term ends.',
+  PAYROLL_UNSETTLED: 'Payroll terms remain protected until all installments have been paid.',
+  DOCUMENT_REVIEW_REQUIRED: 'Open and verify the supporting document version before voting.',
   SELF_REVIEW: 'Contributors cannot review their own work. Ask another reviewer or administrator.',
   MODULE_ACTION:
     'This action is absent from the installed module permissions. Ask an administrator to review the grant.',

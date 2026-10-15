@@ -4,10 +4,11 @@
 #include "module_fees.hpp"
 #include "private_handover.hpp"
 #include "arbitration.hpp"
+#include "contact_recovery.hpp"
 namespace daclify {
 // Canonical aliases retain their row/index recipes; these lists define required scan coverage.
 #define DACLIFY_RAM_GLOBALS(X) \
- X("settings",config) X("daos",daos) X("daolife",dao_lifecycles) X("handovers",private_handovers) X("lifehashes",lifecycle_sources) X("hostclose",hosted_closures) X("closechecks",closure_checks) X("profiles",profiles) X("evidence",evidence) \
+ X("recroots",contact_roots) X("recretired",retired_contact_keys) X("recdocpols",contact_document_policies) X("settings",config) X("daos",daos) X("daolife",dao_lifecycles) X("handovers",private_handovers) X("lifehashes",lifecycle_sources) X("hostclose",hosted_closures) X("closechecks",closure_checks) X("profiles",profiles) X("evidence",evidence) \
  X("feecfg",fee_settings) X("paycfg",payment_settings) X("catalogue",catalogue) \
  X("modpays",modpays) X("modcopy",modcopy) X("modfees",module_fee_prices) X("mktcfg",market_settings) \
  X("createcfg",creation_settings) X("createords",creation_orders) \
@@ -19,7 +20,7 @@ namespace daclify {
  X("ramreserve",ram_reserve_settings) X("ramcards",ram_cards) \
  X("execpols",executive_policies) X("nativegov",native_governance_settings) X("execpending",executive_handovers)
 #define DACLIFY_RAM_SCOPED(X) \
- X("executives",executives) X("nonvoters",nonvoters) X("members",members) X("memberacts",member_activities) X("actors",participants) X("sessions",scoped_sessions) \
+ X("recgrants",contact_epoch_grants) X("reccontacts",contact_policies) X("recrequests",contact_requests) X("recresults",contact_results) X("recdocpkts",contact_document_packets) X("executives",executives) X("nonvoters",nonvoters) X("members",members) X("memberacts",member_activities) X("actors",participants) X("sessions",scoped_sessions) \
  X("protected",protected_obligations) X("evmbindings",evm_bindings) X("modules",modules) X("obligations",obligations) \
  X("receipts",finance_receipts) X("documents",documents) X("epochs",epochs) \
  X("keygrants",key_grants) X("govlocks",governance_locks) X("appregs",connected_apps) X("appscopes",app_scopes) X("docrefs",document_references) \

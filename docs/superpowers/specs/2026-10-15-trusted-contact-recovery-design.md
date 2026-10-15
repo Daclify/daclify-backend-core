@@ -1,6 +1,6 @@
 # Trusted-contact account and document recovery
 
-Date: 2026-10-15. Status: account-recovery direction and the two document-recovery policy decisions below are approved in conversation. This combined design is prepared for review; no implementation or deployment is claimed.
+Date: 2026-10-15. Status: combined design approved for inline implementation by the user on 2026-10-15. Approval does not authorize production deployment or enrollment of existing users.
 
 ## What the user decided
 
@@ -35,7 +35,7 @@ Recovering Daclify control does not recover the private keys or funds of an exte
 
 The first version uses three distinct Daclify users with usable signing and encryption identities as contacts. Reuse existing K1 proofs and P-256 encrypted delivery rather than introduce on-chain WebAuthn verification or new wallet types. This is an engineering scope choice, not a claim that an email address can approve recovery.
 
-The holder enrolls contacts with fresh current account/member control. Each contact accepts with a fresh proof of their own control. Names, email addresses and social-provider identifiers do not authorize enrollment or approval. Contact selection must include identity/fingerprint confirmation and show the scope of recovery power.
+The holder enrolls and changes contacts with fresh proof of the original Daclify signing key. Native/EVM bindings may be supplied by a DAO at enrollment, so those bindings alone cannot authorize recovery of the global service profile. Surviving bound wallets can still cancel pending requests. Each contact accepts with a fresh proof of their own control. Names, email addresses and social-provider identifiers do not authorize enrollment or approval. Contact selection must include identity/fingerprint confirmation and show the scope of recovery power.
 
 Activate recovery only after enrollment and contact acceptance are complete and the relevant policy has been committed on-chain. Contacts are selected by the holder, not supplied by a DAO administrator. A contact's own credential changes require a verified update; a stale key must not silently become a different contact.
 

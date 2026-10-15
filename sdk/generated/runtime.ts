@@ -1,10 +1,24 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = '1f11f774c6a60d0a1fba84149216a85cb262288478ef10c75dbea54ed7e84ecd';
+export const runtimeAbiHash = '1e499cb028fdb27714243bfbe8020fe13fc14f777a7b385c31151aa59251bc53';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
   "structs": [
+    {
+      "name": "acceptcont",
+      "base": "",
+      "fields": [
+        {
+          "name": "proof",
+          "type": "contact_proof"
+        },
+        {
+          "name": "sig",
+          "type": "signature"
+        }
+      ]
+    },
     {
       "name": "accepthand",
       "base": "",
@@ -24,6 +38,42 @@ export const runtimeAbi = {
         {
           "name": "expected_commitment",
           "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "ackrecgrant",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "recipient",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "ackrecpack",
+      "base": "",
+      "fields": [
+        {
+          "name": "proof",
+          "type": "contact_proof"
+        },
+        {
+          "name": "sig",
+          "type": "signature"
         }
       ]
     },
@@ -284,6 +334,20 @@ export const runtimeAbi = {
         {
           "name": "source_id",
           "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "approverec",
+      "base": "",
+      "fields": [
+        {
+          "name": "proof",
+          "type": "contact_proof"
+        },
+        {
+          "name": "sig",
+          "type": "signature"
         }
       ]
     },
@@ -1160,6 +1224,24 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "cancelrec",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
       "name": "capacity_receipt",
       "base": "",
       "fields": [
@@ -1512,6 +1594,300 @@ export const runtimeAbi = {
         {
           "name": "security_epoch",
           "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "contact_document_packet",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "revision",
+          "type": "uint64"
+        },
+        {
+          "name": "packet",
+          "type": "string"
+        },
+        {
+          "name": "commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "acknowledged",
+          "type": "uint8"
+        }
+      ]
+    },
+    {
+      "name": "contact_document_policy",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "allowed",
+          "type": "bool"
+        },
+        {
+          "name": "revision",
+          "type": "uint64"
+        },
+        {
+          "name": "next_packet",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "contact_epoch_grant",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "request_id",
+          "type": "uint64"
+        },
+        {
+          "name": "epoch",
+          "type": "uint64"
+        },
+        {
+          "name": "envelope",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "contact_pending",
+      "base": "",
+      "fields": [
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "request",
+          "type": "contact_request"
+        },
+        {
+          "name": "old_signing_key",
+          "type": "public_key"
+        },
+        {
+          "name": "approvals",
+          "type": "uint8"
+        },
+        {
+          "name": "execute_after",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "contact_policy",
+      "base": "",
+      "fields": [
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "revision",
+          "type": "uint64"
+        },
+        {
+          "name": "next_request",
+          "type": "uint64"
+        },
+        {
+          "name": "owner_key",
+          "type": "public_key"
+        },
+        {
+          "name": "contacts",
+          "type": "recovery_contact[]"
+        },
+        {
+          "name": "accepted",
+          "type": "uint8"
+        },
+        {
+          "name": "documents",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "contact_proof",
+      "base": "",
+      "fields": [
+        {
+          "name": "action",
+          "type": "name"
+        },
+        {
+          "name": "chain_id",
+          "type": "checksum256"
+        },
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "revision",
+          "type": "uint64"
+        },
+        {
+          "name": "request_id",
+          "type": "uint64"
+        },
+        {
+          "name": "contact",
+          "type": "uint8"
+        },
+        {
+          "name": "data_hash",
+          "type": "checksum256"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "contact_request",
+      "base": "",
+      "fields": [
+        {
+          "name": "action",
+          "type": "name"
+        },
+        {
+          "name": "chain_id",
+          "type": "checksum256"
+        },
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "revision",
+          "type": "uint64"
+        },
+        {
+          "name": "request_id",
+          "type": "uint64"
+        },
+        {
+          "name": "signing_key",
+          "type": "public_key"
+        },
+        {
+          "name": "encryption_key",
+          "type": "string"
+        },
+        {
+          "name": "native_account",
+          "type": "name"
+        },
+        {
+          "name": "expires",
+          "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "contact_result",
+      "base": "",
+      "fields": [
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "request",
+          "type": "contact_request"
+        },
+        {
+          "name": "old_signing_key",
+          "type": "public_key"
+        },
+        {
+          "name": "completed",
+          "type": "uint32"
+        },
+        {
+          "name": "document_epoch",
+          "type": "uint64"
+        },
+        {
+          "name": "documents_approved",
+          "type": "bool"
+        },
+        {
+          "name": "future_grants",
+          "type": "bool"
+        },
+        {
+          "name": "identity_id",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "contact_root",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "signing_key",
+          "type": "public_key"
+        },
+        {
+          "name": "origin_key",
+          "type": "public_key"
         }
       ]
     },
@@ -2516,6 +2892,24 @@ export const runtimeAbi = {
         {
           "name": "reference",
           "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "finishrec",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "request_id",
+          "type": "uint64"
         }
       ]
     },
@@ -4253,6 +4647,20 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "prunerec",
+      "base": "",
+      "fields": [
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
       "name": "putdoc",
       "base": "",
       "fields": [
@@ -4337,6 +4745,32 @@ export const runtimeAbi = {
         {
           "name": "key_epoch",
           "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "putrecpack",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "packet_id",
+          "type": "uint64"
+        },
+        {
+          "name": "packet",
+          "type": "string"
         }
       ]
     },
@@ -4927,6 +5361,50 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "recovergrant",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "request_id",
+          "type": "uint64"
+        },
+        {
+          "name": "epoch",
+          "type": "uint64"
+        },
+        {
+          "name": "envelope",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "recovery_contact",
+      "base": "",
+      "fields": [
+        {
+          "name": "signing_key",
+          "type": "public_key"
+        },
+        {
+          "name": "encryption_key",
+          "type": "string"
+        }
+      ]
+    },
+    {
       "name": "refreshgov",
       "base": "",
       "fields": [
@@ -5109,6 +5587,28 @@ export const runtimeAbi = {
         {
           "name": "receipt",
           "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "retired_contact_key",
+      "base": "",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uint64"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "signing_key",
+          "type": "public_key"
+        },
+        {
+          "name": "identity_id",
+          "type": "uint64"
         }
       ]
     },
@@ -5457,6 +5957,32 @@ export const runtimeAbi = {
         {
           "name": "receipt",
           "type": "checksum256"
+        }
+      ]
+    },
+    {
+      "name": "setcontacts",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "contacts",
+          "type": "recovery_contact[]"
+        },
+        {
+          "name": "documents",
+          "type": "bool"
         }
       ]
     },
@@ -5913,6 +6439,28 @@ export const runtimeAbi = {
       ]
     },
     {
+      "name": "setrecpolicy",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "allowed",
+          "type": "bool"
+        }
+      ]
+    },
+    {
       "name": "setresources",
       "base": "",
       "fields": [
@@ -6021,6 +6569,28 @@ export const runtimeAbi = {
         {
           "name": "member_id",
           "type": "uint64"
+        }
+      ]
+    },
+    {
+      "name": "startrecover",
+      "base": "",
+      "fields": [
+        {
+          "name": "request",
+          "type": "contact_request"
+        },
+        {
+          "name": "new_sig",
+          "type": "signature"
+        },
+        {
+          "name": "proof",
+          "type": "contact_proof"
+        },
+        {
+          "name": "sig",
+          "type": "signature"
         }
       ]
     },
@@ -6225,8 +6795,23 @@ export const runtimeAbi = {
   ],
   "actions": [
     {
+      "name": "acceptcont",
+      "type": "acceptcont",
+      "ricardian_contract": ""
+    },
+    {
       "name": "accepthand",
       "type": "accepthand",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "ackrecgrant",
+      "type": "ackrecgrant",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "ackrecpack",
+      "type": "ackrecpack",
       "ricardian_contract": ""
     },
     {
@@ -6262,6 +6847,11 @@ export const runtimeAbi = {
     {
       "name": "approveob",
       "type": "approveob",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "approverec",
+      "type": "approverec",
       "ricardian_contract": ""
     },
     {
@@ -6352,6 +6942,11 @@ export const runtimeAbi = {
     {
       "name": "cancelob",
       "type": "cancelob",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "cancelrec",
+      "type": "cancelrec",
       "ricardian_contract": ""
     },
     {
@@ -6472,6 +7067,11 @@ export const runtimeAbi = {
     {
       "name": "finishram",
       "type": "finishram",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "finishrec",
+      "type": "finishrec",
       "ricardian_contract": ""
     },
     {
@@ -6665,6 +7265,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "prunerec",
+      "type": "prunerec",
+      "ricardian_contract": ""
+    },
+    {
       "name": "putdoc",
       "type": "putdoc",
       "ricardian_contract": ""
@@ -6672,6 +7277,11 @@ export const runtimeAbi = {
     {
       "name": "putjson",
       "type": "putjson",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "putrecpack",
+      "type": "putrecpack",
       "ricardian_contract": ""
     },
     {
@@ -6687,6 +7297,11 @@ export const runtimeAbi = {
     {
       "name": "recallexec",
       "type": "recallexec",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "recovergrant",
+      "type": "recovergrant",
       "ricardian_contract": ""
     },
     {
@@ -6777,6 +7392,11 @@ export const runtimeAbi = {
     {
       "name": "setcapacity",
       "type": "setcapacity",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "setcontacts",
+      "type": "setcontacts",
       "ricardian_contract": ""
     },
     {
@@ -6890,6 +7510,11 @@ export const runtimeAbi = {
       "ricardian_contract": ""
     },
     {
+      "name": "setrecpolicy",
+      "type": "setrecpolicy",
+      "ricardian_contract": ""
+    },
+    {
       "name": "setresources",
       "type": "setresources",
       "ricardian_contract": ""
@@ -6907,6 +7532,11 @@ export const runtimeAbi = {
     {
       "name": "startclose",
       "type": "startclose",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "startrecover",
+      "type": "startrecover",
       "ricardian_contract": ""
     },
     {
@@ -7492,8 +8122,64 @@ export const runtimeAbi = {
       "key_types": []
     },
     {
+      "name": "reccontacts",
+      "type": "contact_policy",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "recdocpkts",
+      "type": "contact_document_packet",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "recdocpols",
+      "type": "contact_document_policy",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
       "name": "receipts",
       "type": "finance_receipt",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "recgrants",
+      "type": "contact_epoch_grant",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "recrequests",
+      "type": "contact_pending",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "recresults",
+      "type": "contact_result",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "recretired",
+      "type": "retired_contact_key",
+      "index_type": "i64",
+      "key_names": [],
+      "key_types": []
+    },
+    {
+      "name": "recroots",
+      "type": "contact_root",
       "index_type": "i64",
       "key_names": [],
       "key_types": []
@@ -7531,11 +8217,25 @@ export const runtimeAbi = {
   "ricardian_clauses": [],
   "action_results": []
 } satisfies ABI.Def;
+export interface acceptcont {
+  proof: contact_proof;
+  sig: string;
+}
 export interface accepthand {
   runtime: string;
   dao_id: string;
   member_id: string;
   expected_commitment: string;
+}
+export interface ackrecgrant {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  recipient: string;
+}
+export interface ackrecpack {
+  proof: contact_proof;
+  sig: string;
 }
 export interface actor_context {
   runtime: string;
@@ -7606,6 +8306,10 @@ export interface approveob {
   dao_id: string;
   source: string;
   source_id: string;
+}
+export interface approverec {
+  proof: contact_proof;
+  sig: string;
 }
 export interface arbbackup {
   runtime: string;
@@ -7840,6 +8544,11 @@ export interface cancelob {
   source: string;
   source_id: string;
 }
+export interface cancelrec {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+}
 export interface capacity_receipt {
   id: string;
   receipt: string;
@@ -7936,6 +8645,84 @@ export interface connected_app_record {
   config_hash: string;
   enabled: boolean;
   security_epoch: string;
+}
+export interface contact_document_packet {
+  id: string;
+  member_id: string;
+  revision: string;
+  packet: string;
+  commitment: string;
+  acknowledged: number;
+}
+export interface contact_document_policy {
+  dao_id: string;
+  allowed: boolean;
+  revision: string;
+  next_packet: string;
+}
+export interface contact_epoch_grant {
+  id: string;
+  member_id: string;
+  request_id: string;
+  epoch: string;
+  envelope: string;
+}
+export interface contact_pending {
+  member_id: string;
+  request: contact_request;
+  old_signing_key: string;
+  approvals: number;
+  execute_after: number;
+}
+export interface contact_policy {
+  member_id: string;
+  revision: string;
+  next_request: string;
+  owner_key: string;
+  contacts: recovery_contact[];
+  accepted: number;
+  documents: boolean;
+}
+export interface contact_proof {
+  action: string;
+  chain_id: string;
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  revision: string;
+  request_id: string;
+  contact: number;
+  data_hash: string;
+  expires: number;
+}
+export interface contact_request {
+  action: string;
+  chain_id: string;
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  revision: string;
+  request_id: string;
+  signing_key: string;
+  encryption_key: string;
+  native_account: string;
+  expires: number;
+}
+export interface contact_result {
+  member_id: string;
+  request: contact_request;
+  old_signing_key: string;
+  completed: number;
+  document_epoch: string;
+  documents_approved: boolean;
+  future_grants: boolean;
+  identity_id: string;
+}
+export interface contact_root {
+  id: string;
+  dao_id: string;
+  signing_key: string;
+  origin_key: string;
 }
 export interface createdao {
   dao_id: string;
@@ -8204,6 +8991,11 @@ export interface finance_receipt {
 }
 export interface finishram {
   reference: string;
+}
+export interface finishrec {
+  dao_id: string;
+  member_id: string;
+  request_id: string;
 }
 export interface fulfilram {
   dao_id: string;
@@ -8671,6 +9463,10 @@ export interface prunedocs {
   start: number;
   proofs: archive_prune_proof[];
 }
+export interface prunerec {
+  dao_id: string;
+  member_id: string;
+}
 export interface putdoc {
   runtime: string;
   dao_id: string;
@@ -8693,6 +9489,13 @@ export interface putjson {
   value: string;
   envelope_version: number;
   key_epoch: string;
+}
+export interface putrecpack {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  packet_id: string;
+  packet: string;
 }
 export interface ram_acquisition {
   receiver: string;
@@ -8854,6 +9657,18 @@ export interface recallexec {
   election_id: string;
   member_id: string;
 }
+export interface recovergrant {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  request_id: string;
+  epoch: string;
+  envelope: string;
+}
+export interface recovery_contact {
+  signing_key: string;
+  encryption_key: string;
+}
 export interface refreshgov {
   runtime: string;
   dao_id: string;
@@ -8903,6 +9718,12 @@ export interface restoredoc {
 export interface resumecap {
   dao_id: string;
   receipt: string;
+}
+export interface retired_contact_key {
+  id: string;
+  dao_id: string;
+  signing_key: string;
+  identity_id: string;
 }
 export interface revmodterm {
   dao_id: string;
@@ -8998,6 +9819,13 @@ export interface setcapacity {
   member_limit: number;
   expires: number;
   receipt: string;
+}
+export interface setcontacts {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  contacts: recovery_contact[];
+  documents: boolean;
 }
 export interface setcreate {
   shared_usd: number;
@@ -9123,6 +9951,12 @@ export interface setrampool {
   baseline_bytes: string;
   platform_headroom: string;
 }
+export interface setrecpolicy {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  allowed: boolean;
+}
 export interface setresources {
   native_ram_bps: number;
   card_ram_bps: number;
@@ -9152,6 +9986,12 @@ export interface startclose {
   runtime: string;
   dao_id: string;
   member_id: string;
+}
+export interface startrecover {
+  request: contact_request;
+  new_sig: string;
+  proof: contact_proof;
+  sig: string;
 }
 export interface submit {
   request: instruction;
@@ -9209,7 +10049,10 @@ export interface withdraw {
   quantity: string;
 }
 export interface RuntimeActions {
+  acceptcont: acceptcont;
   accepthand: accepthand;
+  ackrecgrant: ackrecgrant;
+  ackrecpack: ackrecpack;
   addappses: addappses;
   addmember: addmember;
   addsession: addsession;
@@ -9217,6 +10060,7 @@ export interface RuntimeActions {
   adoptram: adoptram;
   appoint: appoint;
   approveob: approveob;
+  approverec: approverec;
   arbbackup: arbbackup;
   arbchallenge: arbchallenge;
   arbclear: arbclear;
@@ -9235,6 +10079,7 @@ export interface RuntimeActions {
   beginhand: beginhand;
   beginram: beginram;
   cancelob: cancelob;
+  cancelrec: cancelrec;
   cardcreate: cardcreate;
   checkdaoram: checkdaoram;
   checkrampool: checkrampool;
@@ -9259,6 +10104,7 @@ export interface RuntimeActions {
   exitevm: exitevm;
   exitnative: exitnative;
   finishram: finishram;
+  finishrec: finishrec;
   fulfilram: fulfilram;
   govcreate: govcreate;
   govfees: govfees;
@@ -9297,11 +10143,14 @@ export interface RuntimeActions {
   protectdao: protectdao;
   pruneappses: pruneappses;
   prunedocs: prunedocs;
+  prunerec: prunerec;
   putdoc: putdoc;
   putjson: putjson;
+  putrecpack: putrecpack;
   ramadjust: ramadjust;
   rebindramobs: rebindramobs;
   recallexec: recallexec;
+  recovergrant: recovergrant;
   refreshgov: refreshgov;
   reserve: reserve;
   reserveprot: reserveprot;
@@ -9320,6 +10169,7 @@ export interface RuntimeActions {
   setapp: setapp;
   setarchcfg: setarchcfg;
   setcapacity: setcapacity;
+  setcontacts: setcontacts;
   setcreate: setcreate;
   setcredits: setcredits;
   setcrrate: setcrrate;
@@ -9342,10 +10192,12 @@ export interface RuntimeActions {
   setramauto: setramauto;
   setramcode: setramcode;
   setrampool: setrampool;
+  setrecpolicy: setrecpolicy;
   setresources: setresources;
   setroles: setroles;
   setvoter: setvoter;
   startclose: startclose;
+  startrecover: startrecover;
   submit: submit;
   submitevm: submitevm;
   submitexit: submitexit;

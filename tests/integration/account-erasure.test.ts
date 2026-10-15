@@ -65,6 +65,28 @@ async function fixture() {
   ]);
   return key;
 }
+it('removes the service binding for a recovered chain identity during account erasure', async () => {
+  await fixture();
+  await pool.query(
+    "INSERT INTO contact_recovery_accounts(chain_id,runtime,identity_id,account_id)VALUES($1,'daclifycore',1,$2)",
+    ['ab'.repeat(32), canonical],
+  );
+  const service = new AccountExit(
+    pool,
+    { ...authChain, memberships: async () => [] },
+    { backupRetentionSeconds: 86400 },
+  );
+  const operation = await service.begin(
+    canonical,
+    { version: 1, mode: 'delete-account', memberships: [] },
+    { reauthenticated: true },
+  );
+  await service.eraseHosted(operation.id);
+  expect(
+    (await pool.query('SELECT 1 FROM contact_recovery_accounts WHERE account_id=$1', [canonical]))
+      .rowCount,
+  ).toBe(0);
+});
 it('narrows published 041 guards only for monotonic pending-to-erased transitions', async () => {
   await fixture();
   await expect(

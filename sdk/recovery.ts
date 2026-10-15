@@ -265,6 +265,40 @@ async function deliveryKey(
     shared.fill(0);
   }
 }
+export async function sealRecoveryBytes(
+  value: Uint8Array,
+  recipient: EncryptionPublicKey,
+  domain: string,
+): Promise<DeviceRecoveryPayload> {
+  if (value.length < 1 || value.length > 12272) throw new Error('RECOVERY_INVALID');
+  const ephemeral = await createRecoveryRecipient(),
+    salt = crypto.getRandomValues(new Uint8Array(32));
+  const key = await deliveryKey(ephemeral.privateKey, recipient, salt, domain);
+  try {
+    return DeviceRecoveryPayloadSchema.parse({
+      version: 1,
+      ephemeralKey: ephemeral.publicKey,
+      salt: base64(salt),
+      envelope: await encrypt(value, key, 'daclify.recovery.delivery.v1:' + domain),
+    });
+  } finally {
+    key.fill(0);
+  }
+}
+export async function openRecoveryBytes(
+  input: DeviceRecoveryPayload,
+  recipient: EncryptionPrivateKey,
+  domain: string,
+): Promise<Uint8Array> {
+  const payload = DeviceRecoveryPayloadSchema.parse(input);
+  const key = await deliveryKey(recipient, payload.ephemeralKey, decode(payload.salt), domain);
+  try {
+    return await decrypt(payload.envelope, key, 'daclify.recovery.delivery.v1:' + domain);
+  } finally {
+    key.fill(0);
+  }
+}
+export { encrypt as sealRecoveryData, decrypt as openRecoveryData };
 export async function sealRecoveryDelivery(
   key: Uint8Array,
   recipient: EncryptionPublicKey,

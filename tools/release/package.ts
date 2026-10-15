@@ -59,8 +59,14 @@ const manifest = z
 if (
   Object.entries(manifest.dependencies).some(
     ([name, version]) =>
-      !['@wharfkit/antelope', '@noble/hashes', 'zod', 'multiformats', 'semver'].includes(name) ||
-      !valid(version),
+      ![
+        '@wharfkit/antelope',
+        '@noble/hashes',
+        'zod',
+        'multiformats',
+        'semver',
+        'shamir-secret-sharing',
+      ].includes(name) || !valid(version),
   )
 )
   throw new Error(

@@ -1,3 +1,4 @@
+import type { ContactRecoveryState } from '../../../protocol/contact-recovery.js';
 import type {
   ContentPageQuery,
   DaoContent,
@@ -43,9 +44,26 @@ import type {
   ArchiveProgressSchema,
 } from '@daclify/modules/archive';
 export interface ChainGateway {
+  contactRecoveryGrant?(
+    input: import('../../../protocol/contact-recovery.js').ContactRecoveryGrantQuery,
+  ): Promise<{ grant: import('../../../protocol/crypto.js').EpochGrant | null }>;
+  accountRecoveryIdentity?(signingKey: string): Promise<{
+    network: Pick<Network, 'chainId' | 'runtime'>;
+    identity: NonNullable<ContactRecoveryState['identity']>;
+  } | null>;
+  accountKeyRetired?(signingKey: string): Promise<boolean>;
+  contactRecovery?(
+    target: import('../../../protocol/contact-recovery.js').ContactRecoveryTarget,
+    after?: string,
+  ): Promise<import('../../../protocol/contact-recovery.js').ContactRecoveryState>;
+  submitContactRecovery?(
+    input: import('../../../protocol/contact-recovery.js').ContactRecoverySubmit,
+  ): Promise<{ transactionId: string }>;
   quickBallots?: import('./quick-ballots/service.js').QuickGateway;
-  arbitration?(input:z.infer<typeof import('@daclify/modules').ModuleApiRoutes.arbitration.input>):Promise<z.infer<typeof import('@daclify/modules').ModuleApiRoutes.arbitration.response>>;
-  ballotExport?(daoId:string,ballotId:string):Promise<import('@daclify/modules').BallotExport>;
+  arbitration?(
+    input: z.infer<typeof import('@daclify/modules').ModuleApiRoutes.arbitration.input>,
+  ): Promise<z.infer<typeof import('@daclify/modules').ModuleApiRoutes.arbitration.response>>;
+  ballotExport?(daoId: string, ballotId: string): Promise<import('@daclify/modules').BallotExport>;
   moduleFeePricing?(): Promise<import('../../../protocol/module-fees.js').ModuleFeePricing>;
   moduleFeeState?(dao: DaoRef): Promise<import('../../../protocol/module-fees.js').ModuleFeeChain>;
   attestModuleTerm?(

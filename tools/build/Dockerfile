@@ -7,4 +7,10 @@ RUN curl -fsSL --retry 3 https://github.com/AntelopeIO/cdt/releases/download/v4.
  && echo '531ed1c965f94dd7732f5e900401f132170769c45b7589819a0ba1336627687a  /tmp/spring.deb' | sha256sum -c - \
  && apt-get update && apt-get install -y --no-install-recommends /tmp/cdt.deb /tmp/spring.deb \
  && rm -rf /tmp/*.deb /var/lib/apt/lists/*
+RUN curl -fsSL --retry 3 https://archive.ubuntu.com/ubuntu/pool/universe/b/binaryen/binaryen_108-1_amd64.deb -o /tmp/binaryen.deb \
+ && echo 'ef81caebd1cc28028cc5a3054cdebf500c3c1c6243438d224dd8c1614ff90644  /tmp/binaryen.deb' | sha256sum -c - \
+ && curl -fsSL --retry 3 https://archive.ubuntu.com/ubuntu/pool/universe/f/faketime/libfaketime_0.9.10-2.1_amd64.deb -o /tmp/faketime.deb \
+ && echo '25fc8987f1f700c58603f68edd93ac03a1b7dea35da1e84509f29f444d5b11e9  /tmp/faketime.deb' | sha256sum -c - \
+ && apt-get update && apt-get install -y --no-install-recommends /tmp/binaryen.deb /tmp/faketime.deb \
+ && rm -rf /tmp/*.deb /var/lib/apt/lists/*
 WORKDIR /work

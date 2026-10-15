@@ -1,4 +1,10 @@
 export const CoreContextActions = [
+  'recovergrant',
+  'ackrecgrant',
+  'setcontacts',
+  'cancelrec',
+  'setrecpolicy',
+  'putrecpack',
   'protectdao',
   'arbchallenge',
   'arbbackup',

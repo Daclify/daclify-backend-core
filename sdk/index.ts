@@ -28,6 +28,7 @@ export {
 } from './account-exit.js';
 export { governanceSettings } from './dao.js';
 export * from './recovery.js';
+export * from './contact-recovery.js';
 export * from './service-accounts.js';
 export {
   nameSellerAction,

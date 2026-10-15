@@ -1,6 +1,6 @@
 {
   "name": "@daclify/core-protocol",
-  "version": "0.15.0-alpha.29",
+  "version": "0.15.0-alpha.30",
   "license": "AGPL-3.0-only",
   "type": "module",
   "description": "Daclify public protocol and generated contract SDK",
@@ -64,6 +64,7 @@
     "LICENSING.md"
   ],
   "dependencies": {
+    "shamir-secret-sharing": "0.0.4",
     "@noble/hashes": "2.4.0",
     "@wharfkit/antelope": "4.0.2",
     "zod": "4.6.5",

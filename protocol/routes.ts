@@ -6,6 +6,7 @@ import { McpPairingRoutes, McpOAuthRoutes, McpInventoryRoutes, McpSetupRoutes } 
 import { ProfileRoutes } from './profiles.js';
 import { AccountExitRoutes, ExitNativeStepRoute, ExitSettlementRoutes } from './account-exit.js';
 import { RecoveryRoutes } from './recovery.js';
+import { ContactRecoveryRoutes } from './contact-recovery.js';
 import { SignupRoutes } from './signup.js';
 import {
   ChallengeRequestSchema,
@@ -55,6 +56,7 @@ import { StorageCurationRoutes } from './storage-retention.js';
 import { ModuleFeeRoutes } from './module-fees.js';
 import { QuickAccountRoutes } from './quick-accounts.js';
 export const ApiRoutes = {
+  ...ContactRecoveryRoutes,
   ...QuickAccountRoutes,
   ...DaoClaimRoutes,
   ...ProfileRoutes,

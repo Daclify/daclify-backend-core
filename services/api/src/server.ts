@@ -1,3 +1,7 @@
+import {
+  registerContactRecoveryRoutes,
+  contactRecoveryService,
+} from './auth/contact-recovery-routes.js';
 import { registerQuickBallotRoutes } from './quick-ballots/routes.js';
 import type { QuickBallots } from './quick-ballots/service.js';
 import type { QuickBallotArchives } from './quick-ballots/archives.js';
@@ -319,10 +323,28 @@ export async function createServer(
       return;
     if (!origins.includes(request.headers.origin ?? '')) throw new ApiError('ORIGIN_REJECTED', 403);
   });
+  async function currentAccountKey(key: string) {
+    if (await chain.accountKeyRetired?.(key)) throw new ApiError('ACCOUNT_KEY_RETIRED', 401);
+  }
+  async function loginAccountKey(key: string) {
+    await currentAccountKey(key);
+    const source = await chain.accountRecoveryIdentity?.(key);
+    if (
+      source &&
+      !(
+        await pool.query(
+          "SELECT 1 FROM contact_recovery_accounts r JOIN accounts a ON a.id=r.account_id WHERE r.chain_id=$1 AND r.runtime=$2 AND r.identity_id=$3 AND a.signing_key=$4 AND a.erasure_state='none' AND a.merged_into IS NULL",
+          [source.network.chainId, source.network.runtime, source.identity.id, key],
+        )
+      ).rowCount
+    )
+      throw new ApiError('CONTACT_RECOVERY_CLAIM_REQUIRED', 409);
+  }
   async function session(token: string | undefined, csrf?: string) {
     if (!token) throw new ApiError('AUTH_REQUIRED', 401);
     const account = await readSession(pool, token);
     if (!account) throw new ApiError('AUTH_REQUIRED', 401);
+    if (account.signingKey) await currentAccountKey(account.signingKey);
     if (csrf !== undefined && !(await checkCsrf(pool, token, csrf)))
       throw new ApiError('CSRF_REQUIRED', 403);
     return account;
@@ -1271,6 +1293,7 @@ export async function createServer(
       input.signature,
       input.encryptionKey,
       { origin: request.headers.origin ?? origin, audience },
+      loginAccountKey,
     );
     await sessionCookie(reply, result.token);
     return { account: result.account, csrfToken: result.csrfToken };
@@ -1428,6 +1451,11 @@ export async function createServer(
     cookieName,
     session,
     options.quickBallots?.walletChange.bind(options.quickBallots),
+  );
+  registerContactRecoveryRoutes(
+    app,
+    contactRecoveryService(pool, chain, origin, audience),
+    sessionCookie,
   );
   registerVaultAttachRoutes(app, pool, origin, cookieName, session, sessionCookie, audience);
   registerAccountReconnectRoutes(

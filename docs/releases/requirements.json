@@ -574,6 +574,33 @@
       "id": "AUTH-ACCOUNT-CONTROL-EXPIRY",
       "suite": "integration",
       "tests": ["tests/integration/account-control-cleanup.test.ts"]
+    },
+    {
+      "id": "TRUSTED-CONTACT-ACCOUNT-AND-PER-DAO-DOCUMENT-RECOVERY",
+      "suite": "vert",
+      "tests": [
+        "tests/contact-recovery-contract.test.ts",
+        "tests/contact-recovery-crypto.test.ts",
+        "tests/contact-recovery-routes.test.ts"
+      ]
+    },
+    {
+      "id": "TRUSTED-CONTACT-NATIVE-CONTROL-AND-KEY-RETIREMENT",
+      "suite": "native",
+      "tests": ["tests/native/contact-recovery.test.ts"]
+    },
+    {
+      "id": "TRUSTED-CONTACT-CLAIM-AND-STALE-DATABASE",
+      "suite": "integration",
+      "tests": ["tests/integration/contact-recovery.test.ts"]
+    },
+    {
+      "id": "TRUSTED-CONTACT-BROWSER-AND-REPLACEMENT-KIT",
+      "suite": "browser",
+      "tests": [
+        "../daclify-frontend/tests/e2e/contact-recovery.spec.ts",
+        "../daclify-frontend/tests/e2e/contact-recovery-approvals.spec.ts"
+      ]
     }
   ]
 }

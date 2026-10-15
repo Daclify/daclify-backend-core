@@ -14,6 +14,7 @@
 #include "document_refs.hpp"
 #include "ram_families.hpp"
 #include "token_payout.hpp"
+#include "contact_recovery.hpp"
 #include <eosio/transaction.hpp>
 #include <eosio/permission.hpp>
 #define JSON_NOEXCEPTION
@@ -26,6 +27,7 @@ public:
   // Off-chain login signs this inert action. Accidental broadcast grants no rights.
   ACTION authproof(name account,checksum256 intent) { require_auth(account);check(intent!=checksum256{},"AUTH_INTENT"); }
   using contract::contract;
+#include "contact_recovery.inc"
   using ram_orders=ram_table<"ramorders"_n,ram_order,indexed_by<"byreference"_n,const_mem_fun<ram_order,checksum256,&ram_order::by_reference>>>;
   using ram_allocations=ram_table<"ramalloc"_n,ram_allocation>;
   using ram_intent_settings=ram_singleton<"ramintent"_n,ram_payment_intent>;
@@ -704,6 +706,8 @@ public:
     dispatch(request);
   }
   ACTION submitnat(instruction request) {
+    // Enrollment authorizes global service recovery; a DAO-supplied wallet binding is insufficient.
+    check(request.target!=get_self()||request.action!="setcontacts"_n,"RECOVERY_ROOT_PROOF_REQUIRED");
     validate_instruction(request); members rows(get_self(),request.dao_id);
     const auto& m=rows.get(request.member_id,"MEMBER_UNKNOWN"); check(m.native_account.value,"NATIVE_UNLINKED");
     require_auth(m.native_account); dispatch(request);
@@ -717,6 +721,7 @@ public:
     check(recover_evm_address(evm_typed_digest(request.chain_id,get_self(),evm_chain_id,body),proof)==address,"EVM_ADDRESS");dispatch(request);
   }
   ACTION submitevm(instruction request,uint64_t evm_chain_id,checksum160 address,uint64_t binding_epoch,std::vector<char> proof) {
+    check(request.target!=get_self()||request.action!="setcontacts"_n,"RECOVERY_ROOT_PROOF_REQUIRED");
     validate_instruction(request);evm_bindings bindings(get_self(),request.dao_id);const auto& binding=bindings.get(request.member_id,"EVM_UNLINKED");
     check(binding.active&&binding.chain_id==evm_chain_id&&binding.address==address&&binding.epoch==binding_epoch,"EVM_BINDING");
     const auto data_hash=sha256(request.data.data(),request.data.size()).extract_as_byte_array();
@@ -1098,6 +1103,7 @@ public:
   ACTION grantkey(name runtime,uint64_t dao_id,uint64_t member_id,uint64_t recipient,uint64_t epoch,std::string envelope) {
     authorized_actor(runtime,dao_id,member_id,true);const auto& d=dao_rows.get(dao_id);check(d.privacy>0,"DAO_PUBLIC");
     members people(get_self(),dao_id);const auto& m=people.get(recipient,"MEMBER_UNKNOWN");check(m.active,"MEMBER_INACTIVE");check(!(d.privacy==2&&m.custody==1),"CUSTODY_POLICY");
+    check(contact_grant_allowed(get_self(),dao_id,recipient,epoch),"RECOVERY_DOCUMENT_POLICY");
     check(epoch>0&&epoch<=d.key_epoch&&(d.history_policy==0||epoch>=m.join_epoch),"KEY_EPOCH");require_epoch(dao_id,epoch);check(envelope.size()>0&&envelope.size()<=8192,"KEY_GRANT_SIZE");check(nlohmann::json::accept(envelope),"KEY_GRANT_JSON");
     key_grants rows(get_self(),dao_id);auto index=rows.get_index<"bymember"_n>();check(index.find((uint128_t(recipient)<<64)|epoch)==index.end(),"KEY_GRANT_EXISTS");auto id=rows.available_primary_key();if(!id)id=1;
     rows.emplace(get_self(),[&](auto& r){r.id=id;r.epoch=epoch;r.recipient=recipient;r.grantor=member_id;r.envelope=envelope;});
@@ -1312,6 +1318,7 @@ private:
     gov_policies rows(get_self(),get_self().value);const auto& policy=rows.get(dao_id,"POLICY_UNKNOWN");check(policy.config.guardian.value,"GUARDIAN_UNCONFIGURED");require_auth(policy.config.guardian);
   }
   void check_unique_key(uint64_t dao_id,const public_key& key){
+    check(!contact_key_retired(get_self(),key),"RECOVERY_KEY_RETIRED");
     auto bytes=pack(key);auto hash=sha256(bytes.data(),bytes.size());
     members people(get_self(),dao_id);auto roots=people.get_index<"bykey"_n>();check(roots.find(hash)==roots.end(),"CREDENTIAL_EXISTS");
     scoped_sessions sessions(get_self(),dao_id);auto delegated=sessions.get_index<"bykey"_n>();check(delegated.find(hash)==delegated.end(),"CREDENTIAL_EXISTS");
@@ -1582,13 +1589,13 @@ private:
     auto c=configuration();check(r.version==c.interface_version&&r.chain_id==c.chain_id&&r.deployment==get_self(),"INSTRUCTION_DOMAIN");
     const auto& d=dao_rows.get(r.dao_id,"DAO_UNKNOWN");(void)d;
     require_retirement_action(get_self(),r.dao_id,r.action,r.target==get_self());
-    check_agent_authority(get_self(),r.dao_id,r.member_id,r.target==get_self()&&(r.action=="leave"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="delprofile"_n||r.action=="arbconsent"_n));
-    members rows(get_self(),r.dao_id);const auto& m=rows.get(r.member_id,"MEMBER_UNKNOWN");check(m.active||(r.target==get_self()&&(r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="delprofile"_n||r.action=="arbconsent"_n)),"MEMBER_INACTIVE");
+    check_agent_authority(get_self(),r.dao_id,r.member_id,r.target==get_self()&&(r.action=="leave"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="delprofile"_n||r.action=="recovergrant"_n||r.action=="arbconsent"_n));
+    members rows(get_self(),r.dao_id);const auto& m=rows.get(r.member_id,"MEMBER_UNKNOWN");check(m.active||(r.target==get_self()&&(r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="delprofile"_n||r.action=="recovergrant"_n||r.action=="arbconsent"_n)),"MEMBER_INACTIVE");
     check(r.nonce==m.nonce&&m.nonce<std::numeric_limits<uint64_t>::max(),"NONCE");
     auto now=current_time_point().sec_since_epoch();check(r.expires>now&&uint64_t(r.expires)<=uint64_t(now)+900,"EXPIRED_OR_TOO_LONG");
     check(r.data.size()>=24&&r.data.size()<=16384,"PAYLOAD_SIZE");auto context=unpack<actor_context>(r.data);
     check(context.runtime==get_self()&&context.dao_id==r.dao_id&&context.member_id==r.member_id,"PAYLOAD_DOMAIN");
-    if(r.target==get_self())check(r.action=="protectdao"_n||r.action=="arbbackup"_n||r.action=="arbconsent"_n||r.action=="arbchallenge"_n||r.action=="refreshgov"_n||r.action=="setexecs"_n||r.action=="heartbeat"_n||r.action=="setvoter"_n||r.action=="archapprove"_n||r.action=="archrevoke"_n||r.action=="govresources"_n||r.action=="govhosted"_n||r.action=="govseatfee"_n||r.action=="govmodfee"_n||r.action=="govpayfees"_n||r.action=="govcreate"_n||r.action=="govlist"_n||r.action=="govunlist"_n||r.action=="govmodcopy"_n||r.action=="addmember"_n||r.action=="setadmit"_n||r.action=="setdaogov"_n||r.action=="setapp"_n||r.action=="addappses"_n||r.action=="addsession"_n||r.action=="delsession"_n||r.action=="setmeta"_n||r.action=="setprofile"_n||r.action=="setencprof"_n||r.action=="delprofile"_n||r.action=="restoredoc"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="unlinknat"_n||r.action=="linkevm"_n||r.action=="unlinkevm"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="leave"_n||r.action=="startclose"_n||r.action=="closedao"_n||r.action=="beginhand"_n||r.action=="scanhand"_n||r.action=="accepthand"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n||r.action=="govfees"_n,"ACTION_UNSUPPORTED");
+    if(r.target==get_self())check(r.action=="recovergrant"_n||r.action=="ackrecgrant"_n||r.action=="setcontacts"_n||r.action=="cancelrec"_n||r.action=="setrecpolicy"_n||r.action=="putrecpack"_n||r.action=="protectdao"_n||r.action=="arbbackup"_n||r.action=="arbconsent"_n||r.action=="arbchallenge"_n||r.action=="refreshgov"_n||r.action=="setexecs"_n||r.action=="heartbeat"_n||r.action=="setvoter"_n||r.action=="archapprove"_n||r.action=="archrevoke"_n||r.action=="govresources"_n||r.action=="govhosted"_n||r.action=="govseatfee"_n||r.action=="govmodfee"_n||r.action=="govpayfees"_n||r.action=="govcreate"_n||r.action=="govlist"_n||r.action=="govunlist"_n||r.action=="govmodcopy"_n||r.action=="addmember"_n||r.action=="setadmit"_n||r.action=="setdaogov"_n||r.action=="setapp"_n||r.action=="addappses"_n||r.action=="addsession"_n||r.action=="delsession"_n||r.action=="setmeta"_n||r.action=="setprofile"_n||r.action=="setencprof"_n||r.action=="delprofile"_n||r.action=="restoredoc"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="unlinknat"_n||r.action=="linkevm"_n||r.action=="unlinkevm"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="leave"_n||r.action=="startclose"_n||r.action=="closedao"_n||r.action=="beginhand"_n||r.action=="scanhand"_n||r.action=="accepthand"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n||r.action=="govfees"_n,"ACTION_UNSUPPORTED");
     else { modules rows(get_self(),r.dao_id);const auto& installed=rows.get(r.target.value,"MODULE_DISABLED");check(std::find(installed.actions.begin(),installed.actions.end(),r.action)!=installed.actions.end(),"ACTION_UNSUPPORTED");check_pinned(installed,r.target);require_module_access(get_self(),r.dao_id,r.target,r.action,d.member_count); }
   }
   void dispatch(const instruction& r) {
@@ -1613,6 +1620,7 @@ extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
     EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(setprofile)(setencprof)(delprofile)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(confirmext)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))
     EOSIO_DISPATCH_HELPER(runtime,(sethosted)(govhosted)(govseatfee)(orderfree)(setcapacity)(revokecap)(resumecap))
     EOSIO_DISPATCH_HELPER(runtime,(govmodfee)(setmodterm)(revmodterm)(resmodterm)(clearmterms))
+    EOSIO_DISPATCH_HELPER(runtime,(recovergrant)(ackrecgrant)(setcontacts)(acceptcont)(startrecover)(approverec)(finishrec)(cancelrec)(prunerec)(setrecpolicy)(putrecpack)(ackrecpack))
     EOSIO_DISPATCH_HELPER(runtime,(setapp)(addappses)(pruneappses)(initactivity)(enrollagent)(addmember)(initgov)(setdaogov)(addsession)(delsession)(guardpause)(guardrevoke)(guardrecover)(submitsess)(setfees)(listmod)(unlistmod)(setmodcopy)(setpolicy)(setgov)(setoracle)(govfees)(govpayfees)(setcreate)(govcreate)(setcrrate)(ordercreate)(cardcreate)(createpaid)(govlist)(govunlist)(govmodcopy))
   }}
   else if(action_name=="transfer"_n.value) execute_action(name(receiver),name(code),&runtime::deposit);

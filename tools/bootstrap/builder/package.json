@@ -9,7 +9,8 @@
     "@wharfkit/antelope": "4.0.2",
     "multiformats": "14.0.5",
     "semver": "7.8.5",
-    "zod": "4.6.5"
+    "zod": "4.6.5",
+    "shamir-secret-sharing": "0.0.4"
   },
   "devDependencies": {
     "@types/node": "24.19.1",

@@ -7,5 +7,19 @@
   "cdtDebSha256": "d946e6b64f297442d19e486401aa49f956080b07a1fa6335f29976106175b588",
   "springDebSha256": "531ed1c965f94dd7732f5e900401f132170769c45b7589819a0ba1336627687a",
   "source": "Official AntelopeIO GitHub latest stable release API, verified 2026-10-05",
-  "productionCompatibility": "Requires target-network runtime verification before release"
+  "productionCompatibility": "Requires target-network runtime verification before release",
+  "runtimePostprocessor": {
+    "tool": "Binaryen wasm-opt 108",
+    "flags": [
+      "--mvp-features",
+      "-Oz"
+    ],
+    "ubuntuDebSha256": "ef81caebd1cc28028cc5a3054cdebf500c3c1c6243438d224dd8c1614ff90644",
+    "scope": "Current runtime only; historical fixtures retain their original flags and hashes"
+  },
+  "nativeClockFixture": {
+    "tool": "libfaketime 0.9.10-2.1",
+    "ubuntuDebSha256": "25fc8987f1f700c58603f68edd93ac03a1b7dea35da1e84509f29f444d5b11e9",
+    "scope": "Owned native recovery test process only; advances from four days in the past, preserves monotonic time"
+  }
 }

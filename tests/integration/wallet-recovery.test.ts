@@ -156,9 +156,11 @@ beforeAll(async () => {
       });
     if (path.endsWith('get_abi')) return Response.json({ account_name: runtime, abi: runtimeAbi });
     if (!path.endsWith('get_table_rows')) throw new Error('Unexpected RPC fixture path');
-    const pending = beforeMembershipRead;
-    beforeMembershipRead = undefined;
-    await pending?.();
+    if (body.table === 'members') {
+      const pending = beforeMembershipRead;
+      beforeMembershipRead = undefined;
+      await pending?.();
+    }
     return Response.json({
       rows:
         body.table === 'daos'

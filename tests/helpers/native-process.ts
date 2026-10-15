@@ -1,4 +1,5 @@
 import { spawn, execFileSync } from 'node:child_process';
+import { renameSync } from 'node:fs';
 import { once } from 'node:events';
 import { mkdtempSync, openSync, closeSync, readFileSync, writeFileSync, statfsSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
@@ -30,7 +31,7 @@ const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 100));
 export type NativePushResult = Awaited<ReturnType<APIClient['v1']['chain']['push_transaction']>>;
 
 // Each caller owns a fresh process, genesis, localhost port and disposable signers.
-export async function nativeProcess() {
+export async function nativeProcess(clockLibrary?: string) {
   const testSpaceThreshold = process.env.DACLIFY_NATIVE_TEST_SPACE_THRESHOLD;
   const testNetLimit = process.env.DACLIFY_NATIVE_TEST_MAX_NET_USAGE;
   if (testNetLimit !== undefined) z.literal('600000').parse(testNetLimit);
@@ -49,6 +50,7 @@ export async function nativeProcess() {
     stdio: ['pipe', 'pipe', 'pipe'],
   }).trim();
   if (version !== 'v1.2.2') throw new Error('PINNED_NATIVE_RUNTIME_REQUIRED');
+  const initialClockOffset = clockLibrary ? -345602 : 0;
   const directory = mkdtempSync(join(tmpdir(), 'daclify-authority-fixture-'));
   const server = createServer();
   server.listen(0, '127.0.0.1');
@@ -63,7 +65,9 @@ export async function nativeProcess() {
   writeFileSync(
     join(directory, 'genesis.json'),
     JSON.stringify({
-      initial_timestamp: new Date().toISOString().replace(/Z$/, ''),
+      initial_timestamp: new Date(Date.now() + initialClockOffset * 1000)
+        .toISOString()
+        .replace(/Z$/, ''),
       initial_key: rootKey.toPublic().toString(),
       ...(testNetLimit
         ? {
@@ -84,38 +88,51 @@ export async function nativeProcess() {
     ].join('\n'),
     { mode: 0o600 },
   );
+  let clockOffset = initialClockOffset;
+  const clockFile = join(directory, 'clock');
+  if (clockLibrary) writeFileSync(clockFile, (clockOffset >= 0 ? '+' : '') + clockOffset);
+  const processEnvironment = clockLibrary
+    ? {
+        ...environment,
+        LD_PRELOAD: clockLibrary,
+        FAKETIME_TIMESTAMP_FILE: clockFile,
+        FAKETIME_NO_CACHE: '1',
+        FAKETIME_DONT_FAKE_MONOTONIC: '1',
+      }
+    : environment;
+  const nodeArguments = [
+    '--data-dir',
+    join(directory, 'data'),
+    '--config-dir',
+    directory,
+    '--genesis-json',
+    join(directory, 'genesis.json'),
+    '--http-server-address',
+    `127.0.0.1:${port}`,
+    '--p2p-listen-endpoint',
+    '127.0.0.1:0',
+    '--plugin',
+    'eosio::chain_api_plugin',
+    '--plugin',
+    'eosio::producer_plugin',
+    '--plugin',
+    'eosio::producer_api_plugin',
+    ...(clockLibrary ? ['--abi-serializer-max-time-ms', '1000'] : []),
+    '--wasm-runtime',
+    'eos-vm',
+    '--chain-state-db-size-mb',
+    '256',
+    '--chain-state-db-guard-size-mb',
+    '8',
+    '--max-body-size',
+    '8388608',
+    ...(testSpaceThreshold ? ['--resource-monitor-space-threshold', testSpaceThreshold] : []),
+  ];
   const log = openSync(join(directory, 'node.log'), 'w', 0o600);
-  const child = spawn(
-    binary,
-    [
-      '--data-dir',
-      join(directory, 'data'),
-      '--config-dir',
-      directory,
-      '--genesis-json',
-      join(directory, 'genesis.json'),
-      '--http-server-address',
-      `127.0.0.1:${port}`,
-      '--p2p-listen-endpoint',
-      '127.0.0.1:0',
-      '--plugin',
-      'eosio::chain_api_plugin',
-      '--plugin',
-      'eosio::producer_plugin',
-      '--plugin',
-      'eosio::producer_api_plugin',
-      '--wasm-runtime',
-      'eos-vm',
-      '--chain-state-db-size-mb',
-      '256',
-      '--chain-state-db-guard-size-mb',
-      '8',
-      '--max-body-size',
-      '8388608',
-      ...(testSpaceThreshold ? ['--resource-monitor-space-threshold', testSpaceThreshold] : []),
-    ],
-    { env: environment, stdio: ['ignore', log, log] },
-  );
+  const child = spawn(binary, nodeArguments, {
+    env: processEnvironment,
+    stdio: ['ignore', log, log],
+  });
   closeSync(log);
   let spawnError = false;
   child.on('error', () => {
@@ -166,6 +183,16 @@ export async function nativeProcess() {
       if (!head.chain_id.equals(chainId)) throw new Error('FIXTURE_CHAIN_MISMATCH');
       const transaction = Transaction.from({
         ...head.getTransactionHeader(120 + (sequence++ % 60)),
+        ...(clockLibrary
+          ? {
+              expiration: new Date(
+                Math.max(head.head_block_time.toMilliseconds(), Date.now() + clockOffset * 1000) +
+                  120000,
+              )
+                .toISOString()
+                .replace('Z', ''),
+            }
+          : {}),
         actions,
       });
       try {
@@ -348,7 +375,43 @@ export async function nativeProcess() {
       if (!feature) throw new Error('FIXTURE_FEATURE_REQUIRED');
       await activate(feature.feature_digest);
     }
+    async function advanceClock(seconds: number) {
+      if (!clockLibrary || !Number.isSafeInteger(seconds) || seconds < 1)
+        throw new Error('OWNED_TEST_CLOCK_REQUIRED');
+      const head = await api.v1.chain.get_info();
+      for (let count = 0; count < 100; count++) {
+        if (
+          (await api.v1.chain.get_info()).head_block_num.toNumber() > head.head_block_num.toNumber()
+        )
+          break;
+        await pause();
+      }
+      await producer('pause', {});
+      clockOffset += seconds;
+      writeFileSync(clockFile + '.next', (clockOffset >= 0 ? '+' : '') + clockOffset);
+      renameSync(clockFile + '.next', clockFile);
+      await producer('resume', {});
+      for (let count = 0; count < 100; count++) {
+        try {
+          if (
+            (await api.v1.chain.get_info()).head_block_time.toMilliseconds() >=
+            Date.now() + clockOffset * 1000 - 1000
+          )
+            return;
+        } catch {
+          /* The producer may be committing its previous pending block. */
+        }
+        await pause();
+      }
+      writeFileSync(
+        '.artifacts/contact-recovery-native-clock.log',
+        readFileSync(join(directory, 'node.log')),
+      );
+      throw new Error('NATIVE_TEST_CLOCK_TIMEOUT');
+    }
     return {
+      advanceClock,
+      now: () => Math.floor((Date.now() + clockOffset * 1000) / 1000),
       api,
       url,
       chainId: chainId.toString(),

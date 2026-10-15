@@ -2,6 +2,7 @@ export * from './base.js';
 export * from './dao.js';
 export * from './crypto.js';
 export * from './recovery.js';
+export * from './contact-recovery.js';
 export * from './signup.js';
 export * from './api.js';
 export * from './sign-in.js';

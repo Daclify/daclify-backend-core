@@ -1,0 +1,111 @@
+{
+  "date": "2026-10-15",
+  "status": "Development implementation; no deployment or production qualification",
+  "versions": {
+    "core": "0.15.0-alpha.30",
+    "modules": "0.10.0-alpha.40",
+    "frontend": "0.15.0-alpha.41",
+    "communityMcp": "0.1.0-alpha.20"
+  },
+  "toolchain": {
+    "cdt": "4.1.1",
+    "cdtFlags": [
+      "-O=s"
+    ],
+    "spring": "1.2.2",
+    "runtimePostprocessor": "Binaryen 108 --mvp-features -Oz",
+    "historicalFixtures": "Original recipes and hashes unchanged"
+  },
+  "runtime": {
+    "cdtOnlyBytes": 1138410,
+    "optimizedBytes": 853321,
+    "sha256": "afa80071de5578e915c5b4c37d02f294c612a713299fa264116e7f338d65ca2d",
+    "independentRebuildMatches": true
+  },
+  "nativeScenario": {
+    "init_cpu_us": 357,
+    "createdao_cpu_us": 609,
+    "enroll_cpu_us": 1043,
+    "submit_cpu_us": 7269,
+    "acceptcont_cpu_us": 1668,
+    "packet_ram_bytes": 2852,
+    "ackrecpack_cpu_us": 1557,
+    "startrecover_cpu_us": 2915,
+    "approverec_cpu_us": 1165,
+    "appoint_cpu_us": 574,
+    "finishrec_cpu_us": 5654,
+    "recovery_ram_bytes": 9729,
+    "runtime_wasm_bytes": 853321
+  },
+  "nativeScenarioCaveat": "Single disposable Spring process, virtual wall clock, real monotonic time. CPU is one execution sample, not a throughput or speedup benchmark. RAM includes recovery and governance/epoch setup; packet RAM is separately measured.",
+  "notRun": [
+    "Docker image build (no Docker binary on this host)",
+    "Live Anchor/EVM/provider qualification",
+    "One combined browser + API + native-chain database-loss drill",
+    "Production deployment or real contact enrollment/notification"
+  ],
+  "verification": {
+    "coreBroad": {
+      "passed": 1092,
+      "failed": 1,
+      "files": 187,
+      "failure": "20-second packaging-policy timeout under concurrent load; isolated rerun passed"
+    },
+    "coreFinalAffected": {
+      "passed": 67,
+      "failed": 0,
+      "files": 10
+    },
+    "modulesBroad": {
+      "passed": 287,
+      "failed": 0,
+      "files": 43
+    },
+    "modulesFinalArchive": {
+      "passed": 9,
+      "failed": 0,
+      "files": 2
+    },
+    "frontendBroad": {
+      "passed": 395,
+      "failed": 0,
+      "files": 73
+    },
+    "frontendFinalAffected": {
+      "passed": 26,
+      "failed": 0,
+      "files": 4
+    },
+    "browserDesktopAndMobile": {
+      "passed": 6,
+      "failed": 0
+    },
+    "postgresqlRecovery": {
+      "passed": 80,
+      "failed": 0
+    },
+    "postgresql17Erasure": {
+      "passed": 27,
+      "failed": 0
+    },
+    "nativePermissionsAndGovernance": {
+      "passed": 34,
+      "failed": 0
+    },
+    "nativeAccountingWorkflows": {
+      "passed": 41,
+      "failed": 0
+    },
+    "nativeCurrentRecovery": {
+      "passed": 1,
+      "failed": 0
+    },
+    "static": "Core TypeScript/ESLint/docs; modules TypeScript/docs; frontend Vue/TypeScript, lint and production build passed"
+  },
+  "reviewRegressions": [
+    "Original signing-key proof required for enrollment; DAO-supplied native/EVM bindings cannot authorize global recovery",
+    "Retired keys cannot choose new contacts in unrecovered memberships; existing chosen contacts can still recover them",
+    "Canonical P-256 coordinate encodings reject aliases of one decryption key",
+    "Completed ordinary replacement kits resume claim after service database loss; pre-completion ordinary kits do not create a profile"
+  ]
+}

@@ -1,4 +1,16 @@
 import { NativeQuickBallots } from './quick-ballots/chain.js';
+import {
+  ContactRecoveryTargetSchema,
+  ContactRecoveryStateSchema,
+  ContactRecoverySubmitSchema,
+  type ContactRecoveryTarget,
+  type ContactRecoverySubmit,
+} from '../../../protocol/contact-recovery.js';
+import {
+  contactRecoveryDigest,
+  contactRequestCommitment,
+  contactGrantLookup,
+} from '../../../sdk/contact-recovery.js';
 import { makeBallotExport } from '@daclify/modules/sdk';
 import type { BallotExport } from '@daclify/modules';
 import { checkNativeAuthority } from './auth/native-proof.js';
@@ -176,7 +188,12 @@ import {
 import { readMarketplace, readNameService } from './market/routes.js';
 import { PeopleRoutes, PublicProfileSchema } from '../../../protocol/people.js';
 import { makeAppJoinProof } from '../../../sdk/connected-apps.js';
-import {AppJoinTableSchemas,AppJoinCodeHash,AppJoinRawAbiHash,encodeAppJoin} from '../../../sdk/app-admission.js';
+import {
+  AppJoinTableSchemas,
+  AppJoinCodeHash,
+  AppJoinRawAbiHash,
+  encodeAppJoin,
+} from '../../../sdk/app-admission.js';
 export interface NativeChainConfig {
   rpcUrl: string;
   chainId: string;
@@ -210,26 +227,56 @@ export class NativeChainGateway implements ChainGateway {
   readonly connectedApps: import('./connected-apps/chain.js').ConnectedAppsChain = {
     admission: {
       source: () => this.config.appAdmission ?? null,
-      gateway: () => ({ account: this.config.relayActor, permission: this.config.relayPermission ?? 'active' }),
+      gateway: () => ({
+        account: this.config.relayActor,
+        permission: this.config.relayPermission ?? 'active',
+      }),
       policy: async (daoId, appId) => {
         await this.reviewedRuntime(this.config.runtime);
-        const source=this.config.appAdmission;if(!source)return null;
+        const source = this.config.appAdmission;
+        if (!source) return null;
         await this.reviewedAdmissionSource(source);
-        const governing=(await this.table('nativegov',this.config.runtime,'0',1))[0];
-        if(governing?.dao_id===daoId)return null;
-        const installed=(await this.table('modules',daoId,'0',100)).find(row=>row.account===source);
-        if(!installed||installed.code_hash!==AppJoinCodeHash||!installed.grants.includes('admitapp'))return null;
-        const domain=((BigInt(daoId)<<64n)|BigInt(appId)).toString();
-        const page=await this.moduleRows(source,'appjoins',AppJoinTableSchemas.appjoins,domain,domain,2,'i128',1);
-        if(page.more)throw new ApiError('CHAIN_RESPONSE_INVALID',503);
-        return page.rows.find(row=>row.dao_id===daoId&&row.app_id===appId)??null;
+        const governing = (await this.table('nativegov', this.config.runtime, '0', 1))[0];
+        if (governing?.dao_id === daoId) return null;
+        const installed = (await this.table('modules', daoId, '0', 100)).find(
+          (row) => row.account === source,
+        );
+        if (
+          !installed ||
+          installed.code_hash !== AppJoinCodeHash ||
+          !installed.grants.includes('admitapp')
+        )
+          return null;
+        const domain = ((BigInt(daoId) << 64n) | BigInt(appId)).toString();
+        const page = await this.moduleRows(
+          source,
+          'appjoins',
+          AppJoinTableSchemas.appjoins,
+          domain,
+          domain,
+          2,
+          'i128',
+          1,
+        );
+        if (page.more) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+        return page.rows.find((row) => row.dao_id === daoId && row.app_id === appId) ?? null;
       },
       invitation: async (daoId, id) => {
         await this.reviewedRuntime(this.config.runtime);
-        const source=this.config.appAdmission;if(!source)return null;
+        const source = this.config.appAdmission;
+        if (!source) return null;
         await this.reviewedAdmissionSource(source);
-        const page=await this.moduleRows(source,'appinvites',AppJoinTableSchemas.appinvites,id,id,1,'i64',1);
-        return page.rows.find(row=>row.id===id&&row.dao_id===daoId)??null;
+        const page = await this.moduleRows(
+          source,
+          'appinvites',
+          AppJoinTableSchemas.appinvites,
+          id,
+          id,
+          1,
+          'i64',
+          1,
+        );
+        return page.rows.find((row) => row.id === id && row.dao_id === daoId) ?? null;
       },
       member: async (account, daoId) => {
         const member = await this.connectedApps.membership(account, daoId);
@@ -238,15 +285,36 @@ export class NativeChainGateway implements ChainGateway {
           this.table('executives', daoId, member.memberId, 1),
           this.table('nonvoters', daoId, member.memberId, 1),
         ]);
-        return { memberId: member.memberId, admin: member.admin,
+        return {
+          memberId: member.memberId,
+          admin: member.admin,
           executive: executive[0]?.member_id === member.memberId,
-          canVote: restriction[0]?.member_id !== member.memberId };
+          canVote: restriction[0]?.member_id !== member.memberId,
+        };
       },
       admit: async (account, app, invitationId, tokenHash, signature) => {
         await this.reviewedRuntime(this.config.runtime);
-        if (!account.signingKey || !account.encryptionKey) throw new ApiError('ACCOUNT_SETUP_REQUIRED', 409);
-        const source=this.config.appAdmission;if(!source)throw new ApiError('APP_JOIN_UNAVAILABLE',503);
-        await this.pushEncoded(source,'appadmit',encodeAppJoin('appadmit',{proof:makeAppJoinProof(app,account,source,invitationId,tokenHash,signature?.expires),...(signature?{invitation_signature:signature.signature}:{})}),this.config.relayActor,this.config.relayKey);
+        if (!account.signingKey || !account.encryptionKey)
+          throw new ApiError('ACCOUNT_SETUP_REQUIRED', 409);
+        const source = this.config.appAdmission;
+        if (!source) throw new ApiError('APP_JOIN_UNAVAILABLE', 503);
+        await this.pushEncoded(
+          source,
+          'appadmit',
+          encodeAppJoin('appadmit', {
+            proof: makeAppJoinProof(
+              app,
+              account,
+              source,
+              invitationId,
+              tokenHash,
+              signature?.expires,
+            ),
+            ...(signature ? { invitation_signature: signature.signature } : {}),
+          }),
+          this.config.relayActor,
+          this.config.relayKey,
+        );
       },
     },
     keys: async (app, memberId) => {
@@ -518,13 +586,26 @@ export class NativeChainGateway implements ChainGateway {
     )
       throw new Error('Chain RPC requires TLS outside local tests');
     this.api = createRpcClient(config.rpcUrl);
-    if(config.quickAuthority) {
-      if(config.environment==='mainnet') throw new Error('QUICK_TESTNET_ONLY');
-      const source=config.modules?.find(module=>module.id==='quick-ballots')?.account;
-      if(!source) throw new Error('QUICK_CONFIGURATION_INVALID');
-      this.quickBallots=new NativeQuickBallots({rpcUrl:config.rpcUrl,chainId:config.chainId,runtime:config.runtime,authority:config.quickAuthority,source,gateway:{actor:config.relayActor,permission:config.relayPermission??'active'}},{key:config.relayKey,resources:()=>this.assertResources(config.relayActor),confirm:block=>this.confirmBlock(block)});
+    if (config.quickAuthority) {
+      if (config.environment === 'mainnet') throw new Error('QUICK_TESTNET_ONLY');
+      const source = config.modules?.find((module) => module.id === 'quick-ballots')?.account;
+      if (!source) throw new Error('QUICK_CONFIGURATION_INVALID');
+      this.quickBallots = new NativeQuickBallots(
+        {
+          rpcUrl: config.rpcUrl,
+          chainId: config.chainId,
+          runtime: config.runtime,
+          authority: config.quickAuthority,
+          source,
+          gateway: { actor: config.relayActor, permission: config.relayPermission ?? 'active' },
+        },
+        {
+          key: config.relayKey,
+          resources: () => this.assertResources(config.relayActor),
+          confirm: (block) => this.confirmBlock(block),
+        },
+      );
     }
-
   }
   private async reviewedRuntime(runtime: string) {
     const response = await fetch(this.config.rpcUrl + '/v1/chain/get_info', {
@@ -788,6 +869,281 @@ export class NativeChainGateway implements ChainGateway {
     if (settings?.chain_id !== dao.chainId) throw new ApiError('PAYMENT_DAO', 403);
     return (await gateway.memberships(account)).filter((m) => m.dao.daoId === dao.daoId);
   }
+  async accountRecoveryIdentity(signingKey: string) {
+    const network = await this.network();
+    if (!network.capabilities.includes('trusted-contact-recovery-v1')) return null;
+    const key = Checksum256.hash(
+      Serializer.encode({ type: 'public_key', object: PublicKey.from(signingKey) }).array,
+    ).toString();
+    const rows = await this.moduleRows(
+      this.config.runtime,
+      'recroots',
+      RuntimeTableSchemas.recroots,
+      key,
+      key,
+      2,
+      'sha256',
+      1,
+      this.config.runtime,
+    );
+    const identity = rows.rows[0];
+    if (!identity) return null;
+    if (identity.signing_key !== signingKey) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+    return { network: { chainId: network.chainId, runtime: network.runtime }, identity };
+  }
+  async accountKeyRetired(signingKey: string): Promise<boolean> {
+    if (!(await this.network()).capabilities.includes('trusted-contact-recovery-v1')) return false;
+    const packed = Serializer.encode({
+      type: 'public_key',
+      object: PublicKey.from(signingKey),
+    }).array;
+    const key = Checksum256.hash(packed).toString();
+    const rows = await this.moduleRows(
+      this.config.runtime,
+      'recretired',
+      RuntimeTableSchemas.recretired,
+      key,
+      key,
+      2,
+      'sha256',
+      1,
+      this.config.runtime,
+    );
+    const row = rows.rows[0];
+    if (row && row.signing_key !== signingKey) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+    return !!row;
+  }
+  async contactRecoveryGrant(
+    input: import('../../../protocol/contact-recovery.js').ContactRecoveryGrantQuery,
+  ) {
+    const { ContactRecoveryRoutes } = await import('../../../protocol/contact-recovery.js');
+    const query = ContactRecoveryRoutes.contactRecoveryGrant.input.parse(input),
+      state = await this.contactRecovery(query.target);
+    if (!state.supported) throw new ApiError('CONTACT_RECOVERY_UNAVAILABLE', 409);
+    const requestId = query.requestId ?? state.result?.request.request_id;
+    if (!requestId) return { grant: null };
+    const key = contactGrantLookup(query.target.memberId, requestId, query.epoch);
+    const rows = await this.moduleRows(
+      this.config.runtime,
+      'recgrants',
+      RuntimeTableSchemas.recgrants,
+      key,
+      key,
+      2,
+      'sha256',
+      1,
+      query.target.dao.daoId,
+    );
+    const row = rows.rows[0];
+    if (!row) return { grant: null };
+    if (
+      row.member_id !== query.target.memberId ||
+      row.epoch !== query.epoch ||
+      row.request_id !== requestId
+    )
+      throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+    const { EpochGrantSchema } = await import('../../../protocol/crypto.js');
+    return { grant: EpochGrantSchema.parse(JSON.parse(row.envelope)) };
+  }
+  async contactRecovery(input: ContactRecoveryTarget, after = '0') {
+    const target = ContactRecoveryTargetSchema.parse(input);
+    if (target.dao.chainId !== this.config.chainId || target.dao.contract !== this.config.runtime)
+      throw new ApiError('DAO_REFERENCE', 400);
+    Uint64Schema.parse(after);
+    const supported = (await this.network()).capabilities.includes('trusted-contact-recovery-v1');
+    if (!supported)
+      return ContactRecoveryStateSchema.parse({
+        target,
+        supported: false,
+        documentsAllowed: false,
+        nextPacketId: '1',
+        member: null,
+        policy: null,
+        pending: null,
+        result: null,
+        packets: [],
+        next: null,
+      });
+    await this.reviewedRuntime(target.dao.contract);
+    const daoId = target.dao.daoId,
+      memberId = target.memberId;
+    const [people, policies, requests, results, configs, packets] = await Promise.all([
+      this.table('members', daoId, memberId, 1),
+      this.table('reccontacts', daoId, memberId, 1),
+      this.table('recrequests', daoId, memberId, 1),
+      this.table('recresults', daoId, memberId, 1),
+      this.table('recdocpols', this.config.runtime, daoId, 1),
+      BigInt(after) === 18446744073709551615n
+        ? Promise.resolve({ rows: [], more: false })
+        : this.moduleRows(
+            this.config.runtime,
+            'recdocpkts',
+            RuntimeTableSchemas.recdocpkts,
+            ((BigInt(memberId) << 64n) | (BigInt(after) + 1n)).toString(),
+            ((BigInt(memberId) << 64n) | 18446744073709551615n).toString(),
+            2,
+            'i128',
+            20,
+            daoId,
+          ),
+    ]);
+    if (
+      packets.rows.some(
+        (packet) => packet.member_id !== memberId || BigInt(packet.id) <= BigInt(after),
+      ) ||
+      (packets.more && !packets.rows.length)
+    )
+      throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+    const member = people.find((row) => row.id === memberId) ?? null;
+    let identity: z.infer<typeof RuntimeTableSchemas.recroots> | null = null;
+    if (member) {
+      const packed = Serializer.encode({
+        type: 'public_key',
+        object: PublicKey.from(member.signing_key),
+      }).array;
+      const key = Checksum256.hash(packed).toString();
+      const history = await this.moduleRows(
+        this.config.runtime,
+        'recretired',
+        RuntimeTableSchemas.recretired,
+        key,
+        key,
+        2,
+        'sha256',
+        1,
+        this.config.runtime,
+      );
+      const retired = history.rows[0];
+      if (retired) {
+        if (retired.signing_key !== member.signing_key)
+          throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+        identity =
+          (await this.table('recroots', this.config.runtime, retired.identity_id, 1)).find(
+            (row) => row.id === retired.identity_id,
+          ) ?? null;
+        if (!identity) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+      } else {
+        const current = await this.moduleRows(
+          this.config.runtime,
+          'recroots',
+          RuntimeTableSchemas.recroots,
+          key,
+          key,
+          2,
+          'sha256',
+          1,
+          this.config.runtime,
+        );
+        identity = current.rows[0] ?? null;
+        if (identity && identity.signing_key !== member.signing_key)
+          throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+      }
+    }
+    const config = configs.find((row) => row.dao_id === daoId);
+    return ContactRecoveryStateSchema.parse({
+      target,
+      supported: true,
+      documentsAllowed: config?.allowed ?? false,
+      nextPacketId: (BigInt(config?.next_packet ?? '0') + 1n).toString(),
+      member,
+      identity,
+      policy: policies.find((row) => row.member_id === memberId) ?? null,
+      pending: requests.find((row) => row.member_id === memberId) ?? null,
+      result: results.find((row) => row.member_id === memberId) ?? null,
+      packets: packets.rows,
+      next: packets.more ? packets.rows.at(-1)?.id : null,
+    });
+  }
+  async submitContactRecovery(value: ContactRecoverySubmit): Promise<{ transactionId: string }> {
+    const input = ContactRecoverySubmitSchema.parse(value);
+    const context = input.action === 'finishrec' ? input.data : input.data.proof;
+    const target: ContactRecoveryTarget = {
+      dao: {
+        chainId: this.config.chainId,
+        contract: this.config.runtime,
+        daoId: context.dao_id,
+        interfaceVersion: 1,
+      },
+      memberId: context.member_id,
+    };
+    const state = await this.contactRecovery(target);
+    if (!state.supported || !state.policy || !state.member)
+      throw new ApiError('CONTACT_RECOVERY_UNAVAILABLE', 409);
+    const validSignature = (signature: string, digest: Checksum256, key: string) => {
+      try {
+        return Signature.from(signature).verifyDigest(digest, PublicKey.from(key));
+      } catch {
+        return false;
+      }
+    };
+    const now = Math.floor(Date.now() / 1000);
+    if (input.action === 'finishrec') {
+      if (
+        !state.pending ||
+        state.pending.request.request_id !== input.data.request_id ||
+        !state.pending.execute_after ||
+        state.pending.execute_after > now ||
+        state.pending.request.expires <= now
+      )
+        throw new ApiError('RECOVERY_PENDING', 409);
+      if (state.pending.request.native_account)
+        throw new ApiError('RECOVERY_NATIVE_WALLET_REQUIRED', 409);
+    } else {
+      const { proof, sig } = input.data,
+        contact = state.policy.contacts[proof.contact];
+      if (
+        !contact ||
+        proof.contact > 2 ||
+        proof.action !== input.action ||
+        proof.chain_id !== this.config.chainId ||
+        proof.runtime !== this.config.runtime ||
+        proof.revision !== state.policy.revision ||
+        state.policy.owner_key !== state.member.signing_key ||
+        proof.expires <= now ||
+        proof.expires > now + 900
+      )
+        throw new ApiError('RECOVERY_CONTEXT', 400);
+      let hash = '00'.repeat(32),
+        requestId = '0';
+      if (input.action === 'startrecover') {
+        const request = input.data.request;
+        hash = contactRequestCommitment(request).toString();
+        requestId = request.request_id;
+        if (
+          request.action !== 'startrecover' ||
+          request.chain_id !== proof.chain_id ||
+          request.runtime !== proof.runtime ||
+          request.dao_id !== proof.dao_id ||
+          request.member_id !== proof.member_id ||
+          request.revision !== proof.revision ||
+          !validSignature(input.data.new_sig, Checksum256.from(hash), request.signing_key)
+        )
+          throw new ApiError('RECOVERY_CONTEXT', 400);
+      } else if (input.action === 'approverec') {
+        if (!state.pending) throw new ApiError('RECOVERY_REQUEST_UNKNOWN', 404);
+        hash = contactRequestCommitment(state.pending.request).toString();
+        requestId = state.pending.request.request_id;
+      } else if (input.action === 'ackrecpack') {
+        const packet = (await this.table('recdocpkts', target.dao.daoId, proof.request_id, 1))[0];
+        if (
+          !packet ||
+          packet.id !== proof.request_id ||
+          packet.member_id !== target.memberId ||
+          packet.revision !== proof.revision
+        )
+          throw new ApiError('RECOVERY_PACKET_UNKNOWN', 404);
+        hash = packet.commitment;
+        requestId = packet.id;
+      }
+      if (
+        proof.data_hash !== hash ||
+        proof.request_id !== requestId ||
+        !validSignature(sig, contactRecoveryDigest(proof), contact.signing_key)
+      )
+        throw new ApiError('RECOVERY_PROOF_INVALID', 401);
+    }
+    return this.push(input.action, input.data, this.config.relayActor, this.config.relayKey);
+  }
   async network(): Promise<Network> {
     const { abi } = await this.api.v1.chain.get_abi(this.config.runtime).catch(() => {
       throw new ApiError('CHAIN_UNAVAILABLE', 503);
@@ -816,6 +1172,11 @@ export class NativeChainGateway implements ChainGateway {
       interfaceVersion: 1,
       coreVersion: VERSION,
       capabilities: [
+        ...(actions.includes('startrecover') &&
+        actions.includes('finishrec') &&
+        actions.includes('putrecpack')
+          ? ['trusted-contact-recovery-v1']
+          : []),
         ...(creatorOwnership ? ['creator-owner-executive-active'] : []),
         'internal-k1',
         'native-linked',
@@ -3372,12 +3733,32 @@ export class NativeChainGateway implements ChainGateway {
       throw cause;
     }
   }
-  private async reviewedAdmissionSource(source:string){
-    const deployed=await this.api.v1.chain.get_raw_abi(source);
-    if(String(deployed.code_hash)!==AppJoinCodeHash||String(deployed.abi_hash)!==AppJoinRawAbiHash)throw new ApiError('APP_JOIN_UNAVAILABLE',503);
-    const page=await this.moduleRows(source,'settings',AppJoinTableSchemas.settings,'0','18446744073709551615',1,'i64',1,source);
-    const settings=page.rows[0];
-    if(page.more||!settings||settings.runtime!==this.config.runtime||settings.chain_id!==this.config.chainId)throw new ApiError('APP_JOIN_UNAVAILABLE',503);
+  private async reviewedAdmissionSource(source: string) {
+    const deployed = await this.api.v1.chain.get_raw_abi(source);
+    if (
+      String(deployed.code_hash) !== AppJoinCodeHash ||
+      String(deployed.abi_hash) !== AppJoinRawAbiHash
+    )
+      throw new ApiError('APP_JOIN_UNAVAILABLE', 503);
+    const page = await this.moduleRows(
+      source,
+      'settings',
+      AppJoinTableSchemas.settings,
+      '0',
+      '18446744073709551615',
+      1,
+      'i64',
+      1,
+      source,
+    );
+    const settings = page.rows[0];
+    if (
+      page.more ||
+      !settings ||
+      settings.runtime !== this.config.runtime ||
+      settings.chain_id !== this.config.chainId
+    )
+      throw new ApiError('APP_JOIN_UNAVAILABLE', 503);
   }
   private async moduleRows<T>(
     account: string,

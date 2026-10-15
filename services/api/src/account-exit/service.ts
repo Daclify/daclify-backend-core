@@ -836,6 +836,7 @@ export class AccountExit {
       )
         return 'retry';
       for (const table of [
+        'contact_recovery_accounts',
         'vault_recovery_grants',
         'vault_recovery_handoffs',
         'vault_recovery_devices',

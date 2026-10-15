@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'node:util';
 import { rollbackTransaction } from './transaction.js';
 import type { Pool } from 'pg';
 import { createHash, randomBytes, randomUUID, ECDH, timingSafeEqual } from 'node:crypto';
@@ -84,6 +85,30 @@ const accountFromRow = (row: AccountRow): Account =>
       ? { walletOrigin: 'signup' }
       : {}),
   });
+export function verifyLoginChallenge(
+  challenge: Challenge,
+  signature: string,
+  encryption: ReturnType<typeof EncryptionPublicKeySchema.parse>,
+  context?: { origin: string; audience: string },
+): boolean {
+  try {
+    const message = LoginMessageSchema.parse(JSON.parse(challenge.message));
+    if (
+      message.signingKey !== challenge.signing_key ||
+      message.challenge !== challenge.id ||
+      message.expires !== challenge.expires_at.toISOString() ||
+      !isDeepStrictEqual(message.encryptionKey, encryption) ||
+      (context && (message.origin !== context.origin || message.audience !== context.audience))
+    )
+      return false;
+    return Signature.from(signature).verifyMessage(
+      new TextEncoder().encode(challenge.message),
+      PublicKey.from(challenge.signing_key),
+    );
+  } catch {
+    return false;
+  }
+}
 export async function createChallenge(
   pool: Pool,
   input: ReturnType<typeof ChallengeRequestSchema.parse>,
@@ -117,6 +142,7 @@ export async function authenticate(
   signature: string,
   encryptionKey: unknown,
   context?: { origin: string; audience: string },
+  checkKey?: (key: string) => Promise<void>,
 ): Promise<{ account: VaultAccount; token: string; csrfToken: string }> {
   const encryption = validEncryptionKey(encryptionKey);
   const client = await pool.connect();
@@ -129,27 +155,9 @@ export async function authenticate(
         [id],
       )
     ).rows[0];
-    let valid = false;
-    if (challenge) {
-      try {
-        const message = LoginMessageSchema.parse(JSON.parse(challenge.message));
-        if (
-          message.signingKey !== challenge.signing_key ||
-          message.challenge !== challenge.id ||
-          message.expires !== challenge.expires_at.toISOString() ||
-          JSON.stringify(message.encryptionKey) !== JSON.stringify(encryption) ||
-          (context && (message.origin !== context.origin || message.audience !== context.audience))
-        )
-          throw new Error('Wrong login context');
-        valid = Signature.from(signature).verifyMessage(
-          new TextEncoder().encode(challenge.message),
-          PublicKey.from(challenge.signing_key),
-        );
-      } catch {
-        valid = false;
-      }
-    }
+    const valid = !!challenge && verifyLoginChallenge(challenge, signature, encryption, context);
     if (!challenge || !valid) throw new ApiError('AUTH_INVALID', 401);
+    await checkKey?.(challenge.signing_key);
     await client.query(
       "INSERT INTO accounts(signing_key,custody,encryption_key) VALUES($1,'user-controlled',$2) ON CONFLICT(signing_key) DO NOTHING",
       [challenge.signing_key, encryption],

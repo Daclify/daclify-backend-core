@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle:HelpBundle={
   "producer": "core",
-  "packageVersion": "0.15.0-alpha.29",
+  "packageVersion": "0.15.0-alpha.30",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -161,7 +161,7 @@ export const CoreHelpBundle:HelpBundle={
       "id": "recovery",
       "title": "Recover keys and blockchain access",
       "paragraphs": [
-        "In Account → Sign-in methods → Fast sign-in with full access, choose which paired methods may unlock your original signing and private-document keys. Pairing alone grants sign-in only. Once enabled, sign in through that method on another device; no JSON file or vault password is needed. Keys stay in unlocked browser memory and lock when idle. Existing account IDs and DAO rights stay the same.",
+        "In Account → Sign-in methods → Fast sign-in with full access, choose which paired methods may unlock your original signing and private-document keys. Pairing alone grants sign-in only. Once enabled, sign in through that method on another device; no JSON file or vault password is needed. Keys stay in unlocked browser memory and lock when idle. Existing account IDs and DAO rights stay the same. For a pre-enrolled two-of-three contact route, open Account → Trusted-contact recovery and read the Trusted-contact recovery guide.",
         "Wallet-protected recovery uses a separate private unlock signature that the wallet must reproduce; keep it private and never broadcast it. Passkey-protected recovery requires a supported PRF authenticator. Both require actual client qualification. Daclify-assisted recovery can use any supported paired method, including email or Telegram, but explicitly authorizes Daclify to recover signing and document keys. Existing accounts require explicit enrollment; availability is reported by the service. Production requires independently qualified storage and recovery hosts. An explicitly enabled single-VM testnet mode does not establish recovery after losing that VM. Disabling assisted recovery cannot undo past operator access; strict private DAO policy blocks assisted vaults.",
         "Account → Access & recovery → Turn off Daclify-assisted recovery removes every assisted full-access route, outstanding assisted unlock grant and pending assisted enrollment. Telegram/email pairings remain for sign-in, and independent client-protected methods remain enrolled. Before removing the final assisted route, retain a currently qualified independent method or create a same-key encrypted recovery kit: the app decrypts both envelopes locally, checks the original keys, and requires downloading and acknowledging the saved password or recovery code. A kit for another account is refused. Existing local kits for other accounts are preserved. Cancelling leaves assisted recovery enabled.",
         "Opt-out stops future recovery through these service routes. It cannot erase plaintext or keys already copied, rotate existing keys, or relabel this vault as never operator-exposed. Permanent assisted-recovery history remains visible for strict private DAO admission. Re-enabling assistance requires fresh explicit consent after the opt-out; an earlier pending consent cannot revive it.",
@@ -176,7 +176,17 @@ export const CoreHelpBundle:HelpBundle={
         "An old kit may still decrypt old documents after its signing key was rotated on chain, but that old signing key alone no longer authorizes governance. Use a surviving current wallet or other current control path. Human-member signing-key rotation requires that member’s authorization; another administrator’s kit cannot reset it. New vault keys do not replace the member’s existing encryption identity.",
         "Wallet-only profiles must retain a blockchain control credential. Removing the last one is rejected transactionally. Unlinking or revoking a governance binding on chain removes the corresponding access; an old service pairing does not restore it. Inactive memberships do not gain new governance rights; existing exit rights remain governed by the contract.",
         "After recovering current administrator access, Resources can rebuild hosted document, public-card and Archive references in bounded batches from surviving chain references and Daclify-owned provider inventory. Every imported object needs verified size and committed bytes. Repeated CIDs count once per DAO; released hosting is not silently resumed. This restores neither Stripe payments nor social pairings and never uploads or deletes a file. Missing original file pins still need your independent copies.",
-        "Production assisted recovery requires actual independent-host and off-site restore qualification. Development testnet availability does not establish this qualification. Restore a current database, retained encrypted backup and original key-service material on a replacement host; revoke restored sessions and quarantine full-access methods until current pairing/revocation history is reconciled. A stale snapshot must not revive a revoked pairing. If every wallet key, vault recovery path and independent backup is lost, Daclify cannot manufacture the missing secrets."
+        "Production assisted recovery requires actual independent-host and off-site restore qualification. Development testnet availability does not establish this qualification. Restore a current database, retained encrypted backup and original key-service material on a replacement host; revoke restored sessions and quarantine full-access methods until current pairing/revocation history is reconciled. A stale snapshot must not revive a revoked pairing. If every wallet key, vault recovery path, previously enrolled contact route and independent backup is lost, Daclify cannot manufacture the missing secrets."
+      ]
+    },
+    {
+      "id": "contact-recovery",
+      "title": "Trusted-contact account and document recovery",
+      "paragraphs": [
+        "In Account → Trusted-contact recovery, unlock your original Daclify keys and enroll three distinct contacts separately for each membership and share its public recovery code. Each contact must accept before the account route is ready. A lost device prepares a fresh encrypted vault and public recovery offer. Export the pending replacement backup and keep its vault password separately; Resume an exported replacement backup restores that device without creating another service profile. Contacts independently verify the person and full replacement key fingerprint. The first accepted contact creates a seven-day request; the second starts a 48-hour wait. Contact changes require the original signing key; a DAO-created wallet binding cannot enroll recovery for someone else’s service profile. Surviving current control, including a bound wallet, can cancel before completion. Recover each membership separately with the same replacement device.",
+        "Recovery preserves the member ID, roles, balances and existing rights while replacing its Daclify signing and encryption keys. Old delegated credentials and governance bindings are invalidated. Native governance needs explicit replacement-wallet consent and refuses a change that strands governance or silently removes the recovered admin role. A stable on-chain recovery identity links successive replacements and an immutable original key; retired keys cannot regain service access through an old database snapshot. A fresh completed-recovery proof preserves the service account ID when its row survives. If another DAO still uses an older key, its contacts can recover it even after the replacement device is lost again. Pair sign-in methods again after a key change. External wallet keys and funds are not restored.",
+        "Each DAO separately allows or forbids trusted-contact document recovery; existing DAOs default to forbidden. When allowed, opt in and use Back up next document keys after new epochs are created. On-chain encrypted packets hold only keys already granted to this member in this DAO, with one encrypted share for each contact. Check the listed epochs and at least two acknowledgments. Missing or newer epochs are not covered. Packets and rewrapped grants consume DAO RAM.",
+        "After account completion, two contacts export shares encrypted to the replacement device. Import both for each packet to reconstruct its eligible epoch keys locally and save additional grants encrypted to the replacement personal key. Original grants stay intact, and the ordinary replacement recovery kit can open the added grants later. No personal decryption or signing private key is given to contacts. Any two contacts can also combine their saved shares without you; the account delay cannot prevent offline document decryption. Forbidding recovery later cannot erase copies already held. For a forbidden DAO, explicit administrator approval after a fresh epoch permits future access and does not restore old document keys. Recovery still needs the original encrypted document bytes."
       ]
     },
     {
@@ -652,8 +662,21 @@ export const CoreHelpBundle:HelpBundle={
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "1f11f774c6a60d0a1fba84149216a85cb262288478ef10c75dbea54ed7e84ecd",
+      "sourceAbiHash": "1e499cb028fdb27714243bfbe8020fe13fc14f777a7b385c31151aa59251bc53",
       "actions": [
+        {
+          "name": "acceptcont",
+          "fields": [
+            {
+              "name": "proof",
+              "type": "contact_proof"
+            },
+            {
+              "name": "sig",
+              "type": "signature"
+            }
+          ]
+        },
         {
           "name": "accepthand",
           "fields": [
@@ -672,6 +695,40 @@ export const CoreHelpBundle:HelpBundle={
             {
               "name": "expected_commitment",
               "type": "checksum256"
+            }
+          ]
+        },
+        {
+          "name": "ackrecgrant",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "recipient",
+              "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "ackrecpack",
+          "fields": [
+            {
+              "name": "proof",
+              "type": "contact_proof"
+            },
+            {
+              "name": "sig",
+              "type": "signature"
             }
           ]
         },
@@ -855,6 +912,19 @@ export const CoreHelpBundle:HelpBundle={
             {
               "name": "source_id",
               "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "approverec",
+          "fields": [
+            {
+              "name": "proof",
+              "type": "contact_proof"
+            },
+            {
+              "name": "sig",
+              "type": "signature"
             }
           ]
         },
@@ -1284,6 +1354,23 @@ export const CoreHelpBundle:HelpBundle={
             },
             {
               "name": "source_id",
+              "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "cancelrec",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
               "type": "uint64"
             }
           ]
@@ -1825,6 +1912,23 @@ export const CoreHelpBundle:HelpBundle={
             {
               "name": "reference",
               "type": "checksum256"
+            }
+          ]
+        },
+        {
+          "name": "finishrec",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "request_id",
+              "type": "uint64"
             }
           ]
         },
@@ -2738,6 +2842,19 @@ export const CoreHelpBundle:HelpBundle={
           ]
         },
         {
+          "name": "prunerec",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            }
+          ]
+        },
+        {
           "name": "putdoc",
           "fields": [
             {
@@ -2824,6 +2941,31 @@ export const CoreHelpBundle:HelpBundle={
           ]
         },
         {
+          "name": "putrecpack",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "packet_id",
+              "type": "uint64"
+            },
+            {
+              "name": "packet",
+              "type": "string"
+            }
+          ]
+        },
+        {
           "name": "ramadjust",
           "fields": [
             {
@@ -2879,6 +3021,35 @@ export const CoreHelpBundle:HelpBundle={
             {
               "name": "member_id",
               "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "recovergrant",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "request_id",
+              "type": "uint64"
+            },
+            {
+              "name": "epoch",
+              "type": "uint64"
+            },
+            {
+              "name": "envelope",
+              "type": "string"
             }
           ]
         },
@@ -3261,6 +3432,31 @@ export const CoreHelpBundle:HelpBundle={
             {
               "name": "receipt",
               "type": "checksum256"
+            }
+          ]
+        },
+        {
+          "name": "setcontacts",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "contacts",
+              "type": "recovery_contact[]"
+            },
+            {
+              "name": "documents",
+              "type": "bool"
             }
           ]
         },
@@ -3695,6 +3891,27 @@ export const CoreHelpBundle:HelpBundle={
           ]
         },
         {
+          "name": "setrecpolicy",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "allowed",
+              "type": "bool"
+            }
+          ]
+        },
+        {
           "name": "setresources",
           "fields": [
             {
@@ -3799,6 +4016,27 @@ export const CoreHelpBundle:HelpBundle={
             {
               "name": "member_id",
               "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "startrecover",
+          "fields": [
+            {
+              "name": "request",
+              "type": "contact_request"
+            },
+            {
+              "name": "new_sig",
+              "type": "signature"
+            },
+            {
+              "name": "proof",
+              "type": "contact_proof"
+            },
+            {
+              "name": "sig",
+              "type": "signature"
             }
           ]
         },
@@ -6015,6 +6253,89 @@ export const CoreHelpBundle:HelpBundle={
           ]
         },
         {
+          "name": "reccontacts",
+          "fields": [
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "revision",
+              "type": "uint64"
+            },
+            {
+              "name": "next_request",
+              "type": "uint64"
+            },
+            {
+              "name": "owner_key",
+              "type": "public_key"
+            },
+            {
+              "name": "contacts",
+              "type": "recovery_contact[]"
+            },
+            {
+              "name": "accepted",
+              "type": "uint8"
+            },
+            {
+              "name": "documents",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "name": "recdocpkts",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "revision",
+              "type": "uint64"
+            },
+            {
+              "name": "packet",
+              "type": "string"
+            },
+            {
+              "name": "commitment",
+              "type": "checksum256"
+            },
+            {
+              "name": "acknowledged",
+              "type": "uint8"
+            }
+          ]
+        },
+        {
+          "name": "recdocpols",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "allowed",
+              "type": "bool"
+            },
+            {
+              "name": "revision",
+              "type": "uint64"
+            },
+            {
+              "name": "next_packet",
+              "type": "uint64"
+            }
+          ]
+        },
+        {
           "name": "receipts",
           "fields": [
             {
@@ -6052,6 +6373,135 @@ export const CoreHelpBundle:HelpBundle={
             {
               "name": "transaction_id",
               "type": "checksum256"
+            }
+          ]
+        },
+        {
+          "name": "recgrants",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "request_id",
+              "type": "uint64"
+            },
+            {
+              "name": "epoch",
+              "type": "uint64"
+            },
+            {
+              "name": "envelope",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "name": "recrequests",
+          "fields": [
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "request",
+              "type": "contact_request"
+            },
+            {
+              "name": "old_signing_key",
+              "type": "public_key"
+            },
+            {
+              "name": "approvals",
+              "type": "uint8"
+            },
+            {
+              "name": "execute_after",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
+          "name": "recresults",
+          "fields": [
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "request",
+              "type": "contact_request"
+            },
+            {
+              "name": "old_signing_key",
+              "type": "public_key"
+            },
+            {
+              "name": "completed",
+              "type": "uint32"
+            },
+            {
+              "name": "document_epoch",
+              "type": "uint64"
+            },
+            {
+              "name": "documents_approved",
+              "type": "bool"
+            },
+            {
+              "name": "future_grants",
+              "type": "bool"
+            },
+            {
+              "name": "identity_id",
+              "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "recretired",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uint64"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "signing_key",
+              "type": "public_key"
+            },
+            {
+              "name": "identity_id",
+              "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "recroots",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uint64"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "signing_key",
+              "type": "public_key"
+            },
+            {
+              "name": "origin_key",
+              "type": "public_key"
             }
           ]
         },
@@ -7251,6 +7701,1448 @@ export const CoreHelpBundle:HelpBundle={
     }
   ],
   "api": [
+    {
+      "method": "POST",
+      "path": "/v1/recovery/contacts/grant",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "object",
+            "properties": {
+              "dao": {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "contract": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "daoId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "interfaceVersion": {
+                    "type": "number",
+                    "const": 1
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "contract",
+                  "daoId",
+                  "interfaceVersion"
+                ],
+                "additionalProperties": false
+              },
+              "memberId": {
+                "type": "string",
+                "maxLength": 20
+              }
+            },
+            "required": [
+              "dao",
+              "memberId"
+            ],
+            "additionalProperties": false
+          },
+          "epoch": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "requestId": {
+            "type": "string",
+            "maxLength": 20
+          }
+        },
+        "required": [
+          "target",
+          "epoch"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "grant": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "ephemeralKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "salt": {
+                    "type": "string",
+                    "maxLength": 44,
+                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                  },
+                  "envelope": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "algorithm": {
+                        "type": "string",
+                        "const": "AES-256-GCM"
+                      },
+                      "iv": {
+                        "type": "string",
+                        "maxLength": 16,
+                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                      },
+                      "ciphertext": {
+                        "type": "string",
+                        "maxLength": 140000000,
+                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "algorithm",
+                      "iv",
+                      "ciphertext"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "version",
+                  "ephemeralKey",
+                  "salt",
+                  "envelope"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "grant"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "contact-recovery"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/recovery/contacts/state",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "object",
+            "properties": {
+              "dao": {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "contract": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "daoId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "interfaceVersion": {
+                    "type": "number",
+                    "const": 1
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "contract",
+                  "daoId",
+                  "interfaceVersion"
+                ],
+                "additionalProperties": false
+              },
+              "memberId": {
+                "type": "string",
+                "maxLength": 20
+              }
+            },
+            "required": [
+              "dao",
+              "memberId"
+            ],
+            "additionalProperties": false
+          },
+          "after": {
+            "type": "string",
+            "maxLength": 20
+          }
+        },
+        "required": [
+          "target"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "object",
+            "properties": {
+              "dao": {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "contract": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "daoId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "interfaceVersion": {
+                    "type": "number",
+                    "const": 1
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "contract",
+                  "daoId",
+                  "interfaceVersion"
+                ],
+                "additionalProperties": false
+              },
+              "memberId": {
+                "type": "string",
+                "maxLength": 20
+              }
+            },
+            "required": [
+              "dao",
+              "memberId"
+            ],
+            "additionalProperties": false
+          },
+          "supported": {
+            "type": "boolean"
+          },
+          "documentsAllowed": {
+            "type": "boolean"
+          },
+          "nextPacketId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "member": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "native_account": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "signing_key": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  "encryption_key": {
+                    "type": "string",
+                    "maxLength": 16384
+                  },
+                  "custody": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 255
+                  },
+                  "nonce": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "credits": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "active": {
+                    "type": "boolean"
+                  },
+                  "admin": {
+                    "type": "boolean"
+                  },
+                  "reviewer": {
+                    "type": "boolean"
+                  },
+                  "stake": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "claim": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "join_epoch": {
+                    "type": "string",
+                    "maxLength": 20
+                  }
+                },
+                "required": [
+                  "id",
+                  "native_account",
+                  "signing_key",
+                  "encryption_key",
+                  "custody",
+                  "nonce",
+                  "credits",
+                  "active",
+                  "admin",
+                  "reviewer",
+                  "stake",
+                  "claim",
+                  "join_epoch"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "identity": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "dao_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "signing_key": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  "origin_key": {
+                    "type": "string",
+                    "maxLength": 128
+                  }
+                },
+                "required": [
+                  "id",
+                  "dao_id",
+                  "signing_key",
+                  "origin_key"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "policy": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "member_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "revision": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "next_request": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "owner_key": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  "contacts": {
+                    "maxItems": 5000,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "signing_key": {
+                          "type": "string",
+                          "maxLength": 128
+                        },
+                        "encryption_key": {
+                          "type": "string",
+                          "maxLength": 16384
+                        }
+                      },
+                      "required": [
+                        "signing_key",
+                        "encryption_key"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "accepted": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 255
+                  },
+                  "documents": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "member_id",
+                  "revision",
+                  "next_request",
+                  "owner_key",
+                  "contacts",
+                  "accepted",
+                  "documents"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pending": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "member_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "request": {
+                    "type": "object",
+                    "properties": {
+                      "action": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "chain_id": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "runtime": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "dao_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "member_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "request_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "signing_key": {
+                        "type": "string",
+                        "maxLength": 128
+                      },
+                      "encryption_key": {
+                        "type": "string",
+                        "maxLength": 16384
+                      },
+                      "native_account": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "expires": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 4294967295
+                      }
+                    },
+                    "required": [
+                      "action",
+                      "chain_id",
+                      "runtime",
+                      "dao_id",
+                      "member_id",
+                      "revision",
+                      "request_id",
+                      "signing_key",
+                      "encryption_key",
+                      "native_account",
+                      "expires"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "old_signing_key": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  "approvals": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 255
+                  },
+                  "execute_after": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4294967295
+                  }
+                },
+                "required": [
+                  "member_id",
+                  "request",
+                  "old_signing_key",
+                  "approvals",
+                  "execute_after"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "result": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "member_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "request": {
+                    "type": "object",
+                    "properties": {
+                      "action": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "chain_id": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "runtime": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "dao_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "member_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "request_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "signing_key": {
+                        "type": "string",
+                        "maxLength": 128
+                      },
+                      "encryption_key": {
+                        "type": "string",
+                        "maxLength": 16384
+                      },
+                      "native_account": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "expires": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 4294967295
+                      }
+                    },
+                    "required": [
+                      "action",
+                      "chain_id",
+                      "runtime",
+                      "dao_id",
+                      "member_id",
+                      "revision",
+                      "request_id",
+                      "signing_key",
+                      "encryption_key",
+                      "native_account",
+                      "expires"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "old_signing_key": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  "completed": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4294967295
+                  },
+                  "document_epoch": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "documents_approved": {
+                    "type": "boolean"
+                  },
+                  "future_grants": {
+                    "type": "boolean"
+                  },
+                  "identity_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  }
+                },
+                "required": [
+                  "member_id",
+                  "request",
+                  "old_signing_key",
+                  "completed",
+                  "document_epoch",
+                  "documents_approved",
+                  "future_grants",
+                  "identity_id"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "packets": {
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "member_id": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "revision": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "packet": {
+                  "type": "string",
+                  "maxLength": 16384
+                },
+                "commitment": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "acknowledged": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                }
+              },
+              "required": [
+                "id",
+                "member_id",
+                "revision",
+                "packet",
+                "commitment",
+                "acknowledged"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "next": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "target",
+          "supported",
+          "documentsAllowed",
+          "nextPacketId",
+          "member",
+          "identity",
+          "policy",
+          "pending",
+          "result",
+          "packets",
+          "next"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "contact-recovery"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/recovery/contacts/submit",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "const": "acceptcont"
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "proof": {
+                    "type": "object",
+                    "properties": {
+                      "action": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "chain_id": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "runtime": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "dao_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "member_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "request_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "contact": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 255
+                      },
+                      "data_hash": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "expires": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 4294967295
+                      }
+                    },
+                    "required": [
+                      "action",
+                      "chain_id",
+                      "runtime",
+                      "dao_id",
+                      "member_id",
+                      "revision",
+                      "request_id",
+                      "contact",
+                      "data_hash",
+                      "expires"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "sig": {
+                    "type": "string",
+                    "maxLength": 160
+                  }
+                },
+                "required": [
+                  "proof",
+                  "sig"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "action",
+              "data"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "const": "startrecover"
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "request": {
+                    "type": "object",
+                    "properties": {
+                      "action": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "chain_id": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "runtime": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "dao_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "member_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "request_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "signing_key": {
+                        "type": "string",
+                        "maxLength": 128
+                      },
+                      "encryption_key": {
+                        "type": "string",
+                        "maxLength": 16384
+                      },
+                      "native_account": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "expires": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 4294967295
+                      }
+                    },
+                    "required": [
+                      "action",
+                      "chain_id",
+                      "runtime",
+                      "dao_id",
+                      "member_id",
+                      "revision",
+                      "request_id",
+                      "signing_key",
+                      "encryption_key",
+                      "native_account",
+                      "expires"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "new_sig": {
+                    "type": "string",
+                    "maxLength": 160
+                  },
+                  "proof": {
+                    "type": "object",
+                    "properties": {
+                      "action": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "chain_id": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "runtime": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "dao_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "member_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "request_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "contact": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 255
+                      },
+                      "data_hash": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "expires": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 4294967295
+                      }
+                    },
+                    "required": [
+                      "action",
+                      "chain_id",
+                      "runtime",
+                      "dao_id",
+                      "member_id",
+                      "revision",
+                      "request_id",
+                      "contact",
+                      "data_hash",
+                      "expires"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "sig": {
+                    "type": "string",
+                    "maxLength": 160
+                  }
+                },
+                "required": [
+                  "request",
+                  "new_sig",
+                  "proof",
+                  "sig"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "action",
+              "data"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "const": "approverec"
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "proof": {
+                    "type": "object",
+                    "properties": {
+                      "action": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "chain_id": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "runtime": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "dao_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "member_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "request_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "contact": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 255
+                      },
+                      "data_hash": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "expires": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 4294967295
+                      }
+                    },
+                    "required": [
+                      "action",
+                      "chain_id",
+                      "runtime",
+                      "dao_id",
+                      "member_id",
+                      "revision",
+                      "request_id",
+                      "contact",
+                      "data_hash",
+                      "expires"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "sig": {
+                    "type": "string",
+                    "maxLength": 160
+                  }
+                },
+                "required": [
+                  "proof",
+                  "sig"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "action",
+              "data"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "const": "finishrec"
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "dao_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "member_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "request_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  }
+                },
+                "required": [
+                  "dao_id",
+                  "member_id",
+                  "request_id"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "action",
+              "data"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "const": "ackrecpack"
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "proof": {
+                    "type": "object",
+                    "properties": {
+                      "action": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "chain_id": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "runtime": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "dao_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "member_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "revision": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "request_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "contact": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 255
+                      },
+                      "data_hash": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "expires": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 4294967295
+                      }
+                    },
+                    "required": [
+                      "action",
+                      "chain_id",
+                      "runtime",
+                      "dao_id",
+                      "member_id",
+                      "revision",
+                      "request_id",
+                      "contact",
+                      "data_hash",
+                      "expires"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "sig": {
+                    "type": "string",
+                    "maxLength": 160
+                  }
+                },
+                "required": [
+                  "proof",
+                  "sig"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "action",
+              "data"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "transactionId"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "contact-recovery"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/recovery/contacts/claim",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "object",
+            "properties": {
+              "dao": {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "contract": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "daoId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "interfaceVersion": {
+                    "type": "number",
+                    "const": 1
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "contract",
+                  "daoId",
+                  "interfaceVersion"
+                ],
+                "additionalProperties": false
+              },
+              "memberId": {
+                "type": "string",
+                "maxLength": 20
+              }
+            },
+            "required": [
+              "dao",
+              "memberId"
+            ],
+            "additionalProperties": false
+          },
+          "requestId": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "challengeId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "signature": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "encryptionKey": {
+            "type": "object",
+            "properties": {
+              "kty": {
+                "type": "string",
+                "const": "EC"
+              },
+              "crv": {
+                "type": "string",
+                "const": "P-256"
+              },
+              "x": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              },
+              "y": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]{43}$"
+              }
+            },
+            "required": [
+              "kty",
+              "crv",
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "target",
+          "requestId",
+          "challengeId",
+          "signature",
+          "encryptionKey"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "account": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "signingKey": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
+                  "custody": {
+                    "type": "string",
+                    "enum": [
+                      "user-controlled",
+                      "managed"
+                    ]
+                  },
+                  "encryptionKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "signingKey",
+                  "custody",
+                  "encryptionKey"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "custody": {
+                    "type": "string",
+                    "const": "user-controlled"
+                  },
+                  "signingKey": {
+                    "type": "null"
+                  },
+                  "encryptionKey": {
+                    "type": "null"
+                  },
+                  "walletOrigin": {
+                    "type": "string",
+                    "enum": [
+                      "signup",
+                      "recovered"
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "custody",
+                  "signingKey",
+                  "encryptionKey"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "csrfToken": {
+            "type": "string",
+            "minLength": 32,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "account",
+          "csrfToken"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "contact-recovery"
+    },
     {
       "method": "GET",
       "path": "/v1/me/quick-account",

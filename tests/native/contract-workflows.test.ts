@@ -2,7 +2,7 @@ import { encryptProfile } from '../../sdk/profiles.js';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { generateKeyPairSync, randomUUID } from 'node:crypto';
-import { Action, Authority, Checksum256, PrivateKey, Serializer } from '@wharfkit/antelope';
+import { Action, Authority, Checksum256, PrivateKey, Serializer, UInt64 } from '@wharfkit/antelope';
 import { ModulePermissions } from '@daclify/modules';
 import {
   encodeDecide,
@@ -11,6 +11,7 @@ import {
   encodeGrants,
   encodeEndorse,
   ModuleCodeHashes,
+  DecideTableSchemas,
 } from '@daclify/modules/sdk';
 import { encodeAction } from '../../sdk/index.js';
 import { AccountSchema, CreateDaoSchema } from '../../protocol/api.js';
@@ -833,18 +834,41 @@ it('completes Grants → Decide → Works → Runtime plus Payroll with isolated
       metadata: '{}',
     }),
   );
+  const definition = DecideTableSchemas.ballotdefs.parse(
+    (
+      await f.api.v1.chain.get_table_rows({
+        code: 'decide',
+        scope: 'daclifycore',
+        table: 'ballotdefs',
+        key_type: 'i64',
+        lower_bound: UInt64.from('4001'),
+        upper_bound: UInt64.from('4001'),
+        limit: 1,
+      })
+    ).rows[0],
+  );
   for (const member of ['1', '2'])
     await dao.act(
       'decide',
-      'vote',
-      encodeDecide('vote', { ...dao.actor(member), ballot_id: '4001', choice: 1 }),
+      'votecommit',
+      encodeDecide('votecommit', {
+        ...dao.actor(member),
+        ballot_id: '4001',
+        expected: definition.commitment,
+        choice: 1,
+      }),
       member,
     );
   await expect(
     dao.act(
       'decide',
-      'vote',
-      encodeDecide('vote', { ...dao.actor('2'), ballot_id: '4001', choice: 1 }),
+      'votecommit',
+      encodeDecide('votecommit', {
+        ...dao.actor('2'),
+        ballot_id: '4001',
+        expected: definition.commitment,
+        choice: 1,
+      }),
       '2',
     ),
   ).rejects.toThrow('ALREADY_VOTED');
@@ -852,8 +876,13 @@ it('completes Grants → Decide → Works → Runtime plus Payroll with isolated
   await expect(
     second.act(
       'decide',
-      'vote',
-      encodeDecide('vote', { ...second.actor(), ballot_id: '4001', choice: 1 }),
+      'votecommit',
+      encodeDecide('votecommit', {
+        ...second.actor(),
+        ballot_id: '4001',
+        expected: definition.commitment,
+        choice: 1,
+      }),
     ),
   ).rejects.toThrow('BALLOT_DOMAIN');
   expect(await second.member()).toEqual(victimMember);
