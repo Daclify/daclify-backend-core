@@ -75,6 +75,9 @@ describe('release manifest', () => {
     expect(manifest.qualified).toBe(false);
     expect(manifest.checks.recordedPasses).toEqual([]);
     expect(manifest.artifacts.runtimeCodeHash).toHaveLength(64);
+    expect(manifest.moduleCapabilities).toContain('quick-ballots');
+    expect(manifest.moduleCapabilities).not.toContain('quickfixture');
+    expect(manifest.moduleCapabilities).not.toContain('quickvote');
     expect(() => publishRelease(manifest)).toThrow('PUBLICATION_REFUSED');
   });
 

@@ -1,0 +1,84 @@
+{
+  "actions": 5021,
+  "additionalRowBytes": [
+    "1034",
+    "810",
+    "322",
+    "1835"
+  ],
+  "medianCpuMicroseconds": 9593,
+  "p95CpuMicroseconds": 12036,
+  "maximumCpuMicroseconds": 35285,
+  "artifacts": {
+    "runtime": {
+      "bytes": 1048475,
+      "sha256": "e40c7854b7354df2147097ccf2e63a4e8b6cd94f10d90427865a62458b484843"
+    },
+    "quickvote": {
+      "bytes": 187960,
+      "sha256": "c54fb4ff71c159c60d6d0bc461d8f5a1185d564995f9cf07590fb48a27fb75dd"
+    }
+  },
+  "positiveRamSubmissionActions": 5018,
+  "description": "qsubmit measurements include replacement and other suite cases, not only unique accounts.",
+  "schemaVersion": 1,
+  "status": "source-qualified",
+  "deployed": false,
+  "native": {
+    "testsPassed": 25,
+    "durationSeconds": 504.04,
+    "loadResponses": 5000,
+    "receiptBytes": 1024,
+    "up": 2500,
+    "down": 2500,
+    "retentionCalendarFixture": true
+  },
+  "archiveWorker": {
+    "status": "passed",
+    "kind": "offline-worker-capacity",
+    "rows": 5000,
+    "receiptBytes": 1024,
+    "calendarSimulation": true,
+    "nativeArchiveAttested": false,
+    "workerHeapLimitMiB": 128,
+    "durationMs": 269979,
+    "parentInitialRssBytes": 263667712,
+    "peakProcessRssBytes": 405278720,
+    "parentMaxLagMs": 133,
+    "chunks": 20,
+    "encodedBytes": 7148600
+  },
+  "testSuites": {
+    "core": {
+      "files": 184,
+      "passed": 1077
+    },
+    "modules": {
+      "files": 43,
+      "passed": 286
+    },
+    "frontend": {
+      "files": 72,
+      "passed": 393
+    },
+    "mcp": {
+      "files": 7,
+      "passed": 13
+    },
+    "postgresFocused": {
+      "files": 5,
+      "passed": 47
+    },
+    "browserFixture": {
+      "passed": 14,
+      "actualWallet": false
+    }
+  },
+  "limitations": [
+    "Independent cryptographic audit not performed",
+    "No mainnet qualification",
+    "Native retention boundary uses owned fixture clock; offline worker advances only planning calendar",
+    "Browser source is a fixture; live acceptance is separate",
+    "Live provider qualification and rollout recorded separately"
+  ]
+}

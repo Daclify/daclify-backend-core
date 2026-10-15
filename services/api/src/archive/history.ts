@@ -1,5 +1,6 @@
 import {
   ArchiveRoutes,
+  archiveRecoveryId,
   verifyAnchoredArchive,
   decodeArchiveManifest,
   ArchiveBundleSchema,
@@ -70,8 +71,7 @@ export class ArchiveHistory {
           ),
         });
       // A recovery download has a stable ID even when the original SQL export UUID has been lost.
-      const h = input.manifestCommitment,
-        id = `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-8${h.slice(17, 20)}-${h.slice(20, 32)}`;
+      const id = archiveRecoveryId(input.manifestCommitment);
       const bundle = ArchiveBundleSchema.parse({
         id,
         manifest: m,

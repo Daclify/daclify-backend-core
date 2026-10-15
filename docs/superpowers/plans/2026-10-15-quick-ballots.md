@@ -47,7 +47,7 @@
 - [x] Write failing canonical identity/encoding/domain tests and native registration/denial tests.
 - [x] Implement producer schemas, encoding and native authentication; regenerate public artifacts with pinned compiler.
 - [x] Verify root, native and EVM paths; wrong gateway/anchor/target/chain, default substitution, expiry/epoch/nonce replay, deactivation/reactivation and registry exhaustion/cleanup. Check raw old runtime rows/permissions through upgrade. See 2026-10-15 account-authorization evidence; coordinated release-policy checks remain task 6.
-- [ ] Review inline, record exact tests/resource measurements and commit the producer-owned change with capability disabled until compatible consumers exist.
+- [x] Review inline, record exact tests/resource measurements and commit the producer-owned change with capability disabled until compatible consumers exist.
 
 ## Task 2 — Modules-owned encrypted ballot state machine
 
@@ -63,48 +63,48 @@
 - `finalize` verifies the qualified decryption proof against authoritative frozen inputs and accepts only bounded up/down totals. Empty/cancelled aggregates use the same verifier. Reject any root/key/definition/submitted-input substitution. Final proof submission cannot reopen voting.
 - Justify by-DAO discovery and due-work indexes; benchmark representative valid/rejected actions, maximum payloads and 5,000-row bounded preparation. Preserve exact historical verifier behavior/artifacts for later checks.
 
-- [ ] Add failing state/authorization/proof/privacy/aggregate tests and port the existing independent vectors.
-- [ ] Implement the minimum shared verifier and state machine, resource ownership and generated producer SDK.
-- [ ] Verify changes/removals, concurrent versions, public nonmember voting, selected-DAO credentials, key/reader snapshots, manual/timed close, complete snapshots, invalid final proofs and bounded RAM/CPU.
-- [ ] Review inline and commit compatible module/core producer pins without enabling the UI prematurely.
+- [x] Add failing state/authorization/proof/privacy/aggregate tests and port the existing independent vectors.
+- [x] Implement the minimum shared verifier and state machine, resource ownership and generated producer SDK.
+- [x] Verify changes/removals, concurrent versions, public nonmember voting, selected-DAO credentials, key/reader snapshots, manual/timed close, complete snapshots, invalid final proofs and bounded RAM/CPU.
+- [x] Review inline and commit compatible module/core producer pins without enabling the UI prematurely.
 
 ## Task 3 — API and existing account integration
 
 **Files:** core `services/api/src/quick-ballots/{service,routes,chain,jobs}.ts`, existing server/native gateway/account-exit hooks, `protocol/quick-ballots.ts`, service API exports, and the next PostgreSQL migration for immutable canonical-account anchors. Use supported migration/rollback tests.
 
-- [ ] Register bounded discovery/detail/own-response/preparation/submission routes through existing sessions, CSRF/origin checks, public schemas and typed errors. Do not accept plaintext choice or arbitrary relay actions.
-- [ ] Derive canonical anchors from the existing account/verified signup identity in a transaction, preserve aliases/reconnection/vault attachment, and reject an attempted replacement. Registration attestation always uses actual active account state and a fresh exact user intent.
-- [ ] Extend the existing default approval setup rather than create a second wallet account. Validate incoming consent and prepared action bytes before signing/relay. Rate/resource limits do not replace native authorization.
-- [ ] Add bounded timed-closure/snapshot jobs through the existing worker pattern. Tally secrets remain in the client; unavailable clients leave a visible awaiting-proof state.
-- [ ] Add native account deactivation/cleanup to existing exit/revocation behavior and make DAO closure explicit; do not retain disposable hosted identity/profile data in ballot tables.
-- [ ] Exercise session/account/credential changes, stale prepared actions, retries, restart, SQL upgrade/restore, rate limits and service outage. Review and commit.
+- [x] Register bounded discovery/detail/own-response/preparation/submission routes through existing sessions, CSRF/origin checks, public schemas and typed errors. Do not accept plaintext choice or arbitrary relay actions.
+- [x] Derive canonical anchors from the existing account/verified signup identity in a transaction, preserve aliases/reconnection/vault attachment, and reject an attempted replacement. Registration attestation always uses actual active account state and a fresh exact user intent.
+- [x] Extend the existing default approval setup rather than create a second wallet account. Validate incoming consent and prepared action bytes before signing/relay. Rate/resource limits do not replace native authorization.
+- [x] Add bounded timed-closure/snapshot jobs through the existing worker pattern. Tally secrets remain in the client; unavailable clients leave a visible awaiting-proof state.
+- [x] Add native account deactivation/cleanup to existing exit/revocation behavior and make DAO closure explicit; do not retain disposable hosted identity/profile data in ballot tables.
+- [x] Exercise session/account/credential changes, stale prepared actions, retries, restart, SQL upgrade/restore, rate limits and service outage. Review and commit.
 
 ## Task 4 — Browser voting, private receipts and executive tallying
 
 **Files:** frontend reviewed Quick ballot page/components/routes, existing sidebar/DAO navigation, approval setup/action signer, vault/key grant helpers, API client and focused unit/desktop/mobile browser tests.
 
-- [ ] Add a simple Quick ballots view with question, audiences/deadline, participation, vote/change/remove controls and verified up/down totals. Keep the existing Decide governance feature intact.
-- [ ] Executive creation generates a dedicated key locally and wraps it to the fixed reader snapshot with existing authenticated P-256 grants. Explicitly show public question text, readers and applicable managed-key custody. Never export secrets to the API.
-- [ ] Generate ciphertext/validity proofs in a worker, validate every prepared signing payload against the local intent and selected default method, and clear private work on account/network/key changes.
-- [ ] Encrypt own receipts to the existing account encryption key where available. For wallet-only accounts without that key, use a device-bound private receipt with an honest device-only recovery label; do not block otherwise authorized public participation or expose a plaintext choice in storage.
-- [ ] Authorized executives decrypt grants and generate final proofs locally in a cancellable worker. Inspect row coverage/source root and every validity proof before publishing a result. Show awaiting/no-verified-result states when keys or evidence are missing.
-- [ ] Test actual generated cryptography plus keyboard/focus/layout at desktop/mobile sizes. Keep fixture sign-in/wallet tests labelled; qualify a real testnet wallet separately when needed. Review and commit.
+- [x] Add a simple Quick ballots view with question, audiences/deadline, participation, vote/change/remove controls and verified up/down totals. Keep the existing Decide governance feature intact.
+- [x] Executive creation generates a dedicated key locally and wraps it to the fixed reader snapshot with existing authenticated P-256 grants. Explicitly show public question text, readers and applicable managed-key custody. Never export secrets to the API.
+- [x] Generate ciphertext/validity proofs in a worker, validate every prepared signing payload against the local intent and selected default method, and clear private work on account/network/key changes.
+- [x] Encrypt own receipts to the existing account encryption key where available. For wallet-only accounts without that key, use a device-bound private receipt with an honest device-only recovery label; do not block otherwise authorized public participation or expose a plaintext choice in storage.
+- [x] Authorized executives decrypt grants and generate final proofs locally in a cancellable worker. Inspect row coverage/source root and every validity proof before publishing a result. Show awaiting/no-verified-result states when keys or evidence are missing.
+- [x] Test actual generated cryptography plus keyboard/focus/layout at desktop/mobile sizes. Keep fixture sign-in/wallet tests labelled; qualify a real testnet wallet separately when needed. Review and commit.
 
 ## Task 5 — Verified archival cleanup and lifecycle
 
 **Files:** Quick source pruning/closure actions, existing core archive/source eligibility and account/DAO lifecycle integration, modules archive schema/exporter and API archive verification/backup paths, producer-owned help.
 
-- [ ] Define canonical encrypted final-row export with complete coverage, source/schema/block domains, proof/public inputs and independent backup. Never include secret keys/nonces or plaintext choices.
-- [ ] Add bounded retry-safe row pruning at the exact 30-day boundary, requiring irreversible closure, verified retrievable archive/backup and source coverage proofs. Never prune an open ballot or silently change frozen totals/root.
-- [ ] Permit unavailable-tally cleanup under the confirmed archive/backup/30-day gates. Preserve the aggregate and verifier inputs for a valid late proof; archive coverage verification is independent of plaintext decryption availability.
-- [ ] Handle DAO closure without stranded resource records or requiring a nonexistent current executive after every member leaves. Qualify a narrowly scoped closed-DAO archive path rather than weaken existing ordinary archive approval.
-- [ ] Exercise before/at/after boundary, missing/corrupt/wrong-domain/unavailable archives, interrupted batches, lost keys, deleted accounts, closed DAOs, ID reuse and historical upgrades. Review and commit.
+- [x] Define canonical encrypted final-row export with complete coverage, source/schema/block domains, proof/public inputs and independent backup. Never include secret keys/nonces or plaintext choices.
+- [x] Add bounded retry-safe row pruning at the exact 30-day boundary, requiring irreversible closure, verified retrievable archive/backup and source coverage proofs. Never prune an open ballot or silently change frozen totals/root.
+- [x] Permit unavailable-tally cleanup under the confirmed archive/backup/30-day gates. Preserve the aggregate and verifier inputs for a valid late proof; archive coverage verification is independent of plaintext decryption availability.
+- [x] Handle DAO closure without stranded resource records or requiring a nonexistent current executive after every member leaves. Qualify a narrowly scoped closed-DAO archive path rather than weaken existing ordinary archive approval.
+- [x] Exercise before/at/after boundary, missing/corrupt/wrong-domain/unavailable archives, interrupted batches, lost keys, deleted accounts, closed DAOs, ID reuse and historical upgrades. Review and commit.
 
 ## Task 6 — Complete qualification and coordinated release
 
-- [ ] Run native end-to-end root/default-wallet registration → create → selected/public vote → change/remove → timed/manual close → snapshot → proof → archive/backup → cleanup, including public voters with no DAO and one user in multiple audience DAOs.
-- [ ] Inspect actual browser/API/action/archive bytes for choice/secret leaks; deny nonreaders, test fixed historic readers and disclose inference/custody limits. Tests are not an independent cryptographic audit.
-- [ ] Complete meaningful core/modules/frontend suites, strict types/Vue templates, generated docs, compatibility/migration/upgrade/source-loss recovery and pinned native resource checks. No absent/empty required suite may count as passed.
+- [x] Run native end-to-end root/default-wallet registration → create → selected/public vote → change/remove → timed/manual close → snapshot → proof → archive/backup → cleanup, including public voters with no DAO and one user in multiple audience DAOs.
+- [x] Inspect actual browser/API/action/archive bytes for choice/secret leaks; deny nonreaders, test fixed historic readers and disclose inference/custody limits. Tests are not an independent cryptographic audit.
+- [x] Complete meaningful core/modules/frontend suites, strict types/Vue templates, generated docs, compatibility/migration/upgrade/source-loss recovery and pinned native resource checks. No absent/empty required suite may count as passed.
 - [ ] Publish matching prerelease public artifacts, first-party module metadata/help and current-status/release evidence; preserve immutable historical downloads. Review the whole change inline and merge/push only owned changes to `dev`.
 
 ## Task 7 — Testnet deployment and live acceptance
@@ -119,5 +119,7 @@
 - 15 October: user clarified “Finish Quick ballots, then launch it”; prototype-only deployment is insufficient.
 - Readers fixed when opening and verified encrypted archival cleanup after 30 days without a tally are both confirmed. Untallied results remain explicitly unverified and may accept a later proof.
 - Isolated sibling branches `feat/quick-ballots`: core `1ecb7c4`, modules `140abf1`, frontend `21d9760`. Previous proof qualification remains intact.
-- Current testnet core alpha23 remains running. No restart/deployment/native authority change has occurred during this phase.
+- Before cutover, shared testnet core alpha23 remains running. The 15 October source qualification is complete; deployment evidence is recorded separately.
 - Development disk was nearly full. Removed only owned Node/tsx compiler-cache files older than 24 hours (609,195,338 bytes); retained source, releases, database and backups. Continue measuring available space before native fixtures.
+
+- Source qualification: core1,077/modules286/frontend393/MCP13 tests passed; native25 including5,000 maximum-receipt votes; browser fixtures14 cases. See current implementation evidence for scope and limits. Fresh version29 key-service snapshot restore passed with the original key and source unavailable, then source service recovered; independentHost=false.

@@ -1,6 +1,7 @@
 import { startQuickBallotWorker } from './quick-ballots/jobs.js';
 import { QuickBallots } from './quick-ballots/service.js';
-import {NativeAccountSchema} from '../../../protocol/base.js';
+import { QuickBallotArchives } from './quick-ballots/archives.js';
+import { NativeAccountSchema } from '../../../protocol/base.js';
 import { governedDirectoryModeration } from './mini-apps/directory-moderation.js';
 import { DirectoryService } from './mini-apps/directory.js';
 import { McpArtifacts } from './mcp/artifacts.js';
@@ -155,8 +156,10 @@ const chain = new NativeChainGateway(
     hub: env.HUB_ACCOUNT ?? null,
     environment: env.NETWORK_ENVIRONMENT,
     relayActor: env.RELAY_ACCOUNT,
-    ...(env.QUICK_AUTHORITY_ACCOUNT ? {quickAuthority:env.QUICK_AUTHORITY_ACCOUNT}:{}),
-    ...(env.CORE_APP_ADMISSION_ACCOUNT ? {appAdmission:NativeAccountSchema.parse(env.CORE_APP_ADMISSION_ACCOUNT)} : {}),
+    ...(env.QUICK_AUTHORITY_ACCOUNT ? { quickAuthority: env.QUICK_AUTHORITY_ACCOUNT } : {}),
+    ...(env.CORE_APP_ADMISSION_ACCOUNT
+      ? { appAdmission: NativeAccountSchema.parse(env.CORE_APP_ADMISSION_ACCOUNT) }
+      : {}),
     relayKey: privateKey(env.RELAY_PRIVATE_KEY),
     relayPermission: env.RELAY_PERMISSION,
     ...(env.BOOTSTRAP_OWNER && env.BOOTSTRAP_PRIVATE_KEY
@@ -212,27 +215,55 @@ const gatewayAllowance =
         env.CONTENT_GATEWAY_BUDGET_ID ?? null,
       )
     : undefined;
-const content =
+const contentProvider =
   env.PINATA_JWT && env.CONTENT_GATEWAY
-    ? new ContentService(
+    ? new PinataStorage(
+        env.PINATA_JWT,
+        env.CONTENT_GATEWAY,
+        env.CONTENT_GATEWAY_KEY,
+        gatewayAllowance,
+      )
+    : undefined;
+const archiveBackup = archiveBackupConfig
+  ? new EncryptedArchiveBackup(archiveBackupConfig)
+  : undefined;
+const content = contentProvider
+  ? new ContentService(
+      pool,
+      chain,
+      contentProvider,
+      BigInt(env.CONTENT_FREE_STORAGE_BYTES),
+      'pinata',
+      env.PINATA_STORAGE_SCOPE,
+      archiveBackup,
+      hostedStorage
+        ? {
+            enabled: retentionEnabled,
+            reconcilePayment: (dao) => hostedStorage.reconcileRetention(dao),
+          }
+        : undefined,
+    )
+  : undefined;
+const quickSource = chain.quickBallots;
+const quickArchives =
+  quickSource && content && contentProvider && archiveBackup
+    ? new QuickBallotArchives(
         pool,
-        chain,
-        new PinataStorage(
-          env.PINATA_JWT,
-          env.CONTENT_GATEWAY,
-          env.CONTENT_GATEWAY_KEY,
-          gatewayAllowance,
-        ),
+        {
+          configuration: () => quickSource.configuration(),
+          detail: (id) => quickSource.detail(id),
+          archiveSnapshot: (id, includeResponses) =>
+            quickSource.archiveSnapshot(id, includeResponses),
+          pruneArchiveRows: (bundle, anchor, position) =>
+            quickSource.pruneArchiveRows(bundle, anchor, position),
+          archiveHistory: (value) => chain.archiveHistory(value),
+          archiveAnchor: (dao, commitment) => chain.archiveAnchor(dao, commitment),
+          attestArchive: (value) => chain.attestArchive(value),
+        },
+        contentProvider,
+        content.providerScope,
         BigInt(env.CONTENT_FREE_STORAGE_BYTES),
-        'pinata',
-        env.PINATA_STORAGE_SCOPE,
-        archiveBackupConfig ? new EncryptedArchiveBackup(archiveBackupConfig) : undefined,
-        hostedStorage
-          ? {
-              enabled: retentionEnabled,
-              reconcilePayment: (dao) => hostedStorage.reconcileRetention(dao),
-            }
-          : undefined,
+        archiveBackup,
       )
     : undefined;
 const ramCardConfig = readRamCardConfig(process.env, env.NETWORK_ENVIRONMENT, env.FRONTEND_ORIGIN);
@@ -345,7 +376,16 @@ const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
   ...(mcpArtifacts ? { mcpArtifacts } : {}),
   ...(profileKeysConfiguration ? { profileKeys: profileKeysConfiguration } : {}),
   ...(accountExit ? { accountExit } : {}),
-  ...(chain.quickBallots ? {quickBallots:new QuickBallots(pool,chain.quickBallots,env.NETWORK_ENVIRONMENT==='mainnet'?40:41)}:{}),
+  ...(chain.quickBallots
+    ? {
+        quickBallots: new QuickBallots(
+          pool,
+          chain.quickBallots,
+          env.NETWORK_ENVIRONMENT === 'mainnet' ? 40 : 41,
+        ),
+      }
+    : {}),
+  ...(quickArchives ? { quickArchives } : {}),
   telosGovernance: readTelosPins(process.env),
   ...(connectedApps ? { connectedApps } : {}),
   ...(miniApps ? { miniApps } : {}),
@@ -378,7 +418,9 @@ const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
 });
 await app.listen({ host: env.API_HOST, port: env.API_PORT });
 const authWorker = startAuthMaintenance(pool);
-const quickWorker=chain.quickBallots?startQuickBallotWorker(pool,chain.quickBallots):undefined;
+const quickWorker = chain.quickBallots
+  ? startQuickBallotWorker(pool, chain.quickBallots, quickArchives)
+  : undefined;
 const daoClaimsWorker = startPollingWorker(
   async () => ((await daoClaims.cleanup()) ? 'progress' : 'idle'),
   'DAO_CLAIM_MAINTENANCE_UNAVAILABLE',

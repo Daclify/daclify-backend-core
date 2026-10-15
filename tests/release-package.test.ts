@@ -7,11 +7,12 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { VERSION } from '../protocol/base.js';
+import { ModuleCodeHashes } from '@daclify/modules/sdk';
 import { loadCheckoutManifest, releaseSubject, ReleaseChecks } from '../tools/release/manifest.js';
 it('packages complete synthetic evidence immutably and refuses a dirty source tree', () => {
   const workspace = mkdtempSync(join(tmpdir(), 'daclify-package-policy-')),
     core = join(workspace, 'daclify-backend-core');
-  const put = (file: string, data: string) => {
+  const put = (file: string, data: string | Uint8Array) => {
     mkdirSync(dirname(file), { recursive: true });
     writeFileSync(file, data);
   };
@@ -83,15 +84,31 @@ it('packages complete synthetic evidence immutably and refuses a dirty source tr
     put(join(core, 'dist/protocol/index.js'), 'export const fixture=true;');
     put(join(core, 'dist/sdk/index.js'), 'export const fixture=true;');
     put(join(core, 'contracts/common/fixture.hpp'), '// Synthetic fixture');
-    put(
-      join(workspace, 'daclify-backend-modules/contracts/works/works.cpp'),
-      '// Synthetic fixture',
-    );
-    put(
-      join(workspace, 'daclify-backend-modules/.artifacts/contracts/works.wasm'),
-      'synthetic works',
-    );
-    put(join(workspace, 'daclify-backend-modules/.artifacts/contracts/works.abi'), '{}');
+    // Real pinned code is fixture input; the source repositories and qualification reports remain synthetic.
+    for (const id of Object.keys(ModuleCodeHashes)) {
+      const name =
+        id === 'quick-ballots'
+          ? 'quickvote'
+          : id === 'grants-rounds'
+            ? 'grants'
+            : id === 'endorsement-admission'
+              ? 'endorse'
+              : id;
+      put(
+        join(workspace, `daclify-backend-modules/contracts/${name}/${name}.cpp`),
+        '// Synthetic packaging-policy source',
+      );
+      put(
+        join(workspace, `daclify-backend-modules/.artifacts/contracts/${name}.wasm`),
+        readFileSync(
+          new URL(
+            `../../daclify-backend-modules/.artifacts/contracts/${name}.wasm`,
+            import.meta.url,
+          ),
+        ),
+      );
+      put(join(workspace, `daclify-backend-modules/.artifacts/contracts/${name}.abi`), '{}');
+    }
     put(
       join(workspace, 'daclify-backend-modules/.artifacts', `daclify-modules-${VERSION}.tgz`),
       'synthetic modules package',

@@ -7,6 +7,7 @@ import { QuickBallotRoutes } from '@daclify/modules';
 import { ApiError } from '../errors.js';
 import { createWindowLimiter } from '../limits.js';
 import type { QuickBallots } from './service.js';
+import type { QuickBallotArchives } from './archives.js';
 
 export function registerQuickBallotRoutes(
   app: FastifyInstance,
@@ -14,8 +15,11 @@ export function registerQuickBallotRoutes(
   cookieName: string,
   session: (token: string | undefined, csrf?: string) => Promise<Account>,
   spend: (id: string) => void,
+  archives?: Pick<QuickBallotArchives, 'history'>,
 ) {
   const readLimit = createWindowLimiter(120, 60000, 2000);
+  const archiveLimit = createWindowLimiter(6, 60_000, 60);
+  let archiveReads = 0;
   const required = () => {
     if (!service) throw new ApiError('QUICK_UNAVAILABLE', 503);
     return service;
@@ -75,6 +79,17 @@ export function registerQuickBallotRoutes(
         .parse(request.params);
       if (name === 'quickReaders' && params.id) return required().chain.readers(params.id);
       if (!params.ballotId) throw new ApiError('INPUT_INVALID', 400);
+      if (name === 'quickArchive') {
+        if (!archives) throw new ApiError('QUICK_ARCHIVE_UNAVAILABLE', 503);
+        if (archiveReads >= 2 || !archiveLimit(request.ip, Date.now()))
+          throw new ApiError('RATE_LIMIT', 429);
+        archiveReads++;
+        try {
+          return await archives.history(params.ballotId);
+        } finally {
+          archiveReads--;
+        }
+      }
       if (name === 'quickDetail') return required().chain.detail(params.ballotId);
       if (name === 'quickResponses')
         return required().chain.responses(params.ballotId, request.query);

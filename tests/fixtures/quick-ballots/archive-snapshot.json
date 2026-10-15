@@ -1,0 +1,72 @@
+{
+  "dao": {
+    "chainId": "f9d1f278e9fd3f593bfe684293070e58d3ad4d09bcd44ecf5e56d7d239ab8cdb",
+    "contract": "daclifycore1",
+    "daoId": "1",
+    "interfaceVersion": 1
+  },
+  "source": {
+    "account": "quickvote",
+    "codeHash": "c54fb4ff71c159c60d6d0bc461d8f5a1185d564995f9cf07590fb48a27fb75dd",
+    "abiHash": "f259cd6b5925a8467308fae2509457b45b8e77187360ea3d7a985edbd09f5ab5"
+  },
+  "snapshot": {
+    "blockNumber": 38,
+    "blockId": "0000002668438cdc06ee7e80c3c4b95e144d9109df831c74d9f8591288bb04bd",
+    "timestamp": "2026-10-15T14:34:16.500Z"
+  },
+  "sourceUpdatedAt": "2026-10-15T14:34:16.500Z",
+  "ballot": {
+    "id": "121",
+    "dao_id": "1",
+    "creator_id": "1",
+    "opened_at": 1789396454,
+    "definition": {
+      "protocol": 1,
+      "question": "Should we do this?",
+      "explanation": "An encrypted up/down question",
+      "all_accounts": true,
+      "audience": [],
+      "closes": 0,
+      "readers": [
+        {
+          "member_id": "1",
+          "encryption_key": "{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"fixture\",\"y\":\"fixture\"}"
+        }
+      ]
+    },
+    "definition_hash": "8317d24d32a12ba2b732b38b2e73724451cdd3facdb8e6369184b9883bd61666",
+    "key": "ada62b468b145846793a0ae46570141bdb6bba4e67079c945eb66cef1e11c4e2afad5832807cf9c97871a61f3561ee04f9d2311e9ebc2bc735a0a140b5cbc31a2f3fe04057df5533078323061fcca78a6c19d0bff7f366b5f97e649640f62e15",
+    "key_proof": "5852f8d057b4a210268202248866c6b0f1e33a04f4f1527a0098084c93c6c4628d949b3e16bcfb9baf9dce363eb16906a91950c9443b95e683a33c40c1a55c0c",
+    "aggregate": "a093cd9acd5474a36017b60e0272595f3848d0b2ef52d87fc86c641b86d7ed3ec89a47a2b1938d43c98e7dfcf2a5430fdad8eb355354bab60ea76593b94fc4909ae57964e7dbc56232bd3aef2800e04dc85e83ccc56772eb383c6ba754b17b0aeb319bcc82e537c6086e2ddc458a28506382789d65541db54e831951548d434194eccf714d221015c73d3a86b63451157ad864391b367faa0f7d37563c1093f5c1f9ecc55ab339965d610cea903208923b916647e817348bb409515c8025b818",
+    "count": 2,
+    "identities": 2,
+    "closed_at": 1789396456,
+    "scan_cursor": "16",
+    "scan_rows": 2,
+    "scan_count": 2,
+    "scan_aggregate": "",
+    "response_root": "c275d793a2dbd7a80d9d14fcf542a05089cae57e8f1fb070dbc94248eb787aad",
+    "prepared": true,
+    "up": 0,
+    "final_proof": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "verified": false,
+    "pruned": false
+  },
+  "responses": [
+    {
+      "primaryKey": "15",
+      "packed": "0f000000000000000100000000000000790000000000000062b2ceb3bfd1f2b9bcfa5908378abe3653aa19658f8b83dc28b56e00bc4d07be010000000000000001c001b4f847367dcfbffa23f543a3b0dcccc59fe1a72fec7ae1e5fb2c311b1c0aaec3156753ab9c117b3fae962f227aaf260fa10f7d17784150313646a2f73068aab0a1c99b16c3eeef69206ee42df86f13e9863d8a12ca7a858b9e297a931e009312eaf7a673fc0fc30f211e8a23a07ffb439a4046f30f85b5d9680b3441aa9aee0512c0993016ab63f17c852faab2939f0651d57d6885dc5fe7d27cad378c755af7cc64cb94ae65ae516d4e941ba437e6fc56d001a072737daf955f814dfde2e50b8001acd803db909025902b39ffc832ea9dd7bfd71511052dc55b2d66a1ff0eec6013abf44737ae71ef7bdf22531d8c6cf71e210a7d42ce84fda67e8f74b94742e971ebb8b9e1c22d8f41b3332899941919cae56584cf5be3bc9919d42780e525236879f101ed5aaa007de12fd1c47b40e83f06aa547aabda900a7664ab2694dbbf4f8008ababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababe705a86a"
+    },
+    {
+      "primaryKey": "16",
+      "packed": "100000000000000001000000000000007900000000000000caf4132f2d526ce9b96a5b99900f86471bd321fad47ca822baf2d23b2d9f2087010000000000000001c001afaaf32ac317510b434fb5098e625ba0a506cae555fa73f7dbada2bdacad617e69e7219c59e517d04257f7cbebe7da11dc0bfed715ce7276e15e08870630cec7b9afc95fcd8174155b08a3ec68c0533fc20cdb5f713e25b232b03c43d375910b96d2ca32292934e115e7ced018055a3faebd1ca38568ca071a0a0f63e566e28f089c399696e651338fb89647dd6e2f13091e738f16c1b5bad618b6d42ef0776a0d5678e905700a003f29d6913bf5f3a5b816c94d660e8e713cf5a32e18c9dc13800143a372d3b44bf1b15145f8386f534f428945f6b51ab8c37023d00a71be0ced3ab9a498b593c16a414a0749402a8df8e42da14a6344539463ce0dc85e1d862f03b0177dc3458c85fe19a19e5a2a58ea36b26b00e42109c591475779a8c1255c0e5fb050590d2d0ebbeaa1e8b0298a83be5fe308882407d48e9b9852a0b14e283a00e705a86a"
+    }
+  ],
+  "grants": [
+    {
+      "primaryKey": "121",
+      "packed": "790000000000000001000000000000000160abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab"
+    }
+  ]
+}

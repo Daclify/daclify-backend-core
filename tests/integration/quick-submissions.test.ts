@@ -7,6 +7,7 @@ import { QuickBallots, type QuickGateway } from '../../services/api/src/quick-ba
 import { quickAccountCandidate } from '../../services/api/src/quick-ballots/accounts.js';
 import { QuickAuthCodeHash } from '../../sdk/quick-accounts.js';
 import type { ExitSubmission } from '../../protocol/account-exit.js';
+import { QuickSubmissionRejection } from '../../services/api/src/quick-ballots/rejections.js';
 
 const url = process.env.DATABASE_URL;
 if (
@@ -46,6 +47,8 @@ async function fixture() {
     throw Error('unused');
   };
   const gateway: QuickGateway = {
+    pruneInactiveAccounts: unused,
+    validatePreparation: async () => {},
     list: unused,
     detail: unused,
     responses: unused,
@@ -124,6 +127,36 @@ it('persists one exact signed packet before broadcast and reconciles it after a 
     state: 'confirmed',
   });
   expect(f.counts()).toEqual({ signed: 1, sent: 1 });
+});
+it('reports a known native rejection while retaining the exact packet until inclusion is reconciled', async () => {
+  const f = await fixture();
+  const prepared = await f.service.prepare(f.owner, f.token, {
+    expectedIdentity: f.candidate.identity,
+    intent: { operation: 'register' },
+  });
+  const input = { id: prepared.id, proof: '11'.repeat(66), incoming: '' };
+  f.gateway.submit = async () => {
+    throw new QuickSubmissionRejection('QUICK_REVISION');
+  };
+  await expect(f.service.submit(f.owner, f.token, input)).rejects.toThrow('QUICK_REVISION');
+  const original = (
+    await pool.query<{ packet: ExitSubmission }>(
+      'SELECT packet FROM quick_account_preparations WHERE id=$1',
+      [prepared.id],
+    )
+  ).rows[0]?.packet;
+  expect(original?.transactionId).toBe('33'.repeat(32));
+  f.confirm();
+  expect((await f.service.submit(f.owner, f.token, input)).state).toBe('confirmed');
+  expect(
+    (
+      await pool.query<{ packet: ExitSubmission }>(
+        'SELECT packet FROM quick_account_preparations WHERE id=$1',
+        [prepared.id],
+      )
+    ).rows[0]?.packet,
+  ).toEqual(original);
+  expect(f.counts().signed).toBe(1);
 });
 it('binds preparations to owner and session and freezes their exact intent and packet in SQL', async () => {
   const f = await fixture(),

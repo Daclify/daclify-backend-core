@@ -14,6 +14,7 @@ import type { NativeQuickBallots } from './chain.js';
 import { freezeQuickAccount, quickAccountCandidate } from './accounts.js';
 import { withTransaction } from '../auth/account-session.js';
 import { ApiError } from '../errors.js';
+import { QuickSubmissionRejection } from './rejections.js';
 
 export type QuickGateway = Pick<
   NativeQuickBallots,
@@ -32,6 +33,8 @@ export type QuickGateway = Pick<
   | 'finalize'
   | 'dueBallots'
   | 'needsAdvance'
+  | 'validatePreparation'
+  | 'pruneInactiveAccounts'
 >;
 const digest = (value: string) => createHash('sha256').update(value).digest();
 const savedSchema = z.object({
@@ -185,6 +188,7 @@ export class QuickBallots {
       expiresAt: new Date(expires * 1000).toISOString(),
       ...operation,
     });
+    await this.chain.validatePreparation(prepared);
     await withTransaction(this.pool, async (db) => {
       // Serialize the bounded global pending-intent budget across API processes.
       await db.query("SELECT pg_advisory_xact_lock(hashtextextended('quick-preparations',0))");
@@ -233,6 +237,7 @@ export class QuickBallots {
     const packet = ExitSubmissionSchema.parse({ ...saved.packet, cursor: saved.cursor });
     if (saved.confirmed)
       return { transactionId: packet.transactionId, state: 'confirmed' as const };
+    let rejection: QuickSubmissionRejection | undefined;
     if (saved.fresh) {
       try {
         await this.chain.submit(saved.prepared, packet);
@@ -240,7 +245,8 @@ export class QuickBallots {
           input.id,
         ]);
         return { transactionId: packet.transactionId, state: 'confirmed' as const };
-      } catch {
+      } catch (cause) {
+        if (cause instanceof QuickSubmissionRejection) rejection = cause;
         /* The exact packet is durable even when the broadcast response is lost. */
       }
     }
@@ -262,10 +268,12 @@ export class QuickBallots {
           input.id,
         ]);
         return { transactionId: packet.transactionId, state: 'confirmed' as const };
-      } catch {
+      } catch (cause) {
+        if (cause instanceof QuickSubmissionRejection) rejection = cause;
         /* Replaying identical transaction bytes cannot duplicate a response. */
       }
     }
+    if (rejection && receipt.state !== 'confirmed') throw rejection;
     return { transactionId: packet.transactionId, state: receipt.state };
   }
 }

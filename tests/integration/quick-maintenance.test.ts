@@ -16,7 +16,7 @@ if (
 const pool = new Pool({ connectionString: url });
 beforeAll(() => migrate(pool));
 afterAll(() => pool.end());
-function fixture() {
+function fixture(prepared = false, closedAt = 2) {
   const config = {
     chainId: randomBytes(32).toString('hex'),
     runtime: 'daclifycore1',
@@ -47,13 +47,13 @@ function fixture() {
     aggregate: '00'.repeat(192),
     count: 0,
     identities: 0,
-    closed_at: 2,
+    closed_at: closedAt,
     scan_cursor: '0',
     scan_rows: 0,
     scan_count: 0,
     scan_aggregate: '00'.repeat(192),
     response_root: '22'.repeat(32),
-    prepared: false,
+    prepared,
     up: 0,
     final_proof: '00'.repeat(64),
     verified: false,
@@ -63,6 +63,8 @@ function fixture() {
     throw Error('unused');
   };
   const chain: QuickGateway = {
+    pruneInactiveAccounts: unused,
+    validatePreparation: unused,
     configuration: async () => config,
     account: unused,
     defaultOwner: unused,
@@ -118,4 +120,76 @@ it('retains a failed snapshot job with bounded backoff instead of dropping its b
   expect(rows.rows).toEqual([
     { state: 'pending', last_error_code: 'QUICK_MAINTENANCE_UNAVAILABLE' },
   ]);
+});
+it('archives prepared untallied ballots after thirty days and resumes pruning in bounded steps', async () => {
+  const f = fixture(true, Math.floor(Date.now() / 1000) - 30 * 86400);
+  f.chain.dueBallots = async () => [];
+  let staged = 0,
+    exports = 0,
+    prunes = 0;
+  const archives = {
+    stage: async () => {
+      staged++;
+      return ['ed069b99-16de-4b55-8a55-05ee2505a619'];
+    },
+    exportStep: async () => {
+      exports++;
+      return 'complete' as const;
+    },
+    pruneStep: async () => (++prunes >= 2 ? ('complete' as const) : ('progress' as const)),
+  };
+  await quickBallotWork(pool, f.chain, archives);
+  expect(staged).toBe(0);
+  await quickBallotWork(pool, f.chain, archives);
+  expect(prunes).toBe(1);
+  await quickBallotWork(pool, f.chain, archives);
+  expect({ staged, exports, prunes }).toEqual({ staged: 2, exports: 2, prunes: 2 });
+  const rows = await pool.query<{ state: string }>('SELECT state FROM jobs WHERE job_key=$1', [
+    `quick:${f.config.chainId}:${f.config.runtime}:${f.config.source}:archive:1`,
+  ]);
+  expect(rows.rows).toEqual([{ state: 'completed' }]);
+});
+it('does not schedule archive cleanup before thirty days even when no tally keys remain', async () => {
+  const f = fixture(true, Math.floor(Date.now() / 1000) - 30 * 86400 + 120);
+  f.chain.dueBallots = async () => [];
+  const archives = {
+    stage: async () => {
+      throw Error('EARLY_CLEANUP');
+    },
+    exportStep: async () => 'complete' as const,
+    pruneStep: async () => 'complete' as const,
+  };
+  await quickBallotWork(pool, f.chain, archives);
+  const rows = await pool.query('SELECT id FROM jobs WHERE job_key=$1', [
+    `quick:${f.config.chainId}:${f.config.runtime}:${f.config.source}:archive:1`,
+  ]);
+  expect(rows.rows).toEqual([]);
+});
+it('persists a bounded inactive-account scan cursor and starts a new cycle after exhaustion', async () => {
+  const f = fixture();
+  f.chain.dueBallots = async () => [];
+  f.chain.list = async () => ({
+    available: true,
+    experimental: true,
+    domain: { chainId: f.config.chainId, runtime: f.config.runtime, source: f.config.source },
+    ballots: [],
+    next: null,
+  });
+  const visited: string[] = [];
+  f.chain.pruneInactiveAccounts = async (after) => {
+    visited.push(after);
+    return { next: after === '0' ? '25' : null, removed: 0 };
+  };
+  await quickBallotWork(pool, f.chain);
+  const key = `quick:${f.config.chainId}:${f.config.runtime}:${f.config.source}:accounts`;
+  for (let n = 0; n < 2; n++) {
+    await pool.query('UPDATE jobs SET due_at=now() WHERE job_key=$1', [key]);
+    await quickBallotWork(pool, f.chain);
+  }
+  expect(visited).toEqual(['0', '25']);
+  const saved = await pool.query<{ payload: { after: string }; state: string }>(
+    'SELECT payload,state FROM jobs WHERE job_key=$1',
+    [key],
+  );
+  expect(saved.rows).toEqual([{ payload: { after: '0' }, state: 'pending' }]);
 });

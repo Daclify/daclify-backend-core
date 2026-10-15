@@ -20,7 +20,9 @@ import {
   encodeQuickAnchor,
   quickAccountDigest,
   QuickAuthTableSchemas,
+  quickAccountRequest,
 } from '../../sdk/quick-accounts.js';
+import { QuickAccountPreparedSchema } from '../../protocol/quick-accounts.js';
 import { CoreContextActions } from '../../sdk/permissions.js';
 import { buildArchiveTree, encodeArchiveChunk } from '@daclify/modules/archive';
 import { QuickBallotTableSchemas, verifyQuickBallotSnapshot } from '@daclify/modules/quick-ballots';
@@ -747,6 +749,73 @@ describe('native encrypted Quick ballot state and proofs', () => {
 
   it('checks current selected-DAO membership using the proved credential', async () => {
     const b = await open('102', ['1']);
+    const api = new NativeQuickBallots(
+      {
+        rpcUrl: f.url,
+        chainId: f.chainId,
+        runtime,
+        authority,
+        source,
+        gateway: { actor: 'gateway', permission: 'active' },
+      },
+      {
+        key: f.key('gateway'),
+        resources: async () => {},
+        confirm: async (block) =>
+          waitForIrreversibleBlock(
+            async () => Number((await f.api.v1.chain.get_info()).last_irreversible_block_num),
+            block,
+          ),
+      },
+    );
+    for (const actor of ['alice', 'bob']) {
+      const account = accounts.get(actor);
+      if (!account) throw Error('REGISTERED_ACCOUNT_REQUIRED');
+      const anchor = { kind: 'key' as const, publicKey: f.key(actor).toPublic().toString() },
+        context = {
+          ...(await api.configuration()),
+          anchor,
+          identity: account.identity,
+          frozen: true,
+          record: await api.account(account.identity),
+        };
+      const expires = expiration();
+      const operation = quickAccountRequest(
+        context,
+        {
+          operation: 'submit',
+          action: 'respond',
+          data: Serializer.encode({
+            abi: vote,
+            type: 'respond',
+            object: {
+              actor: {
+                runtime,
+                authority,
+                account_id: account.id,
+                credential: encodeQuickAnchor(anchor),
+              },
+              ballot_id: b.id,
+              expected_revision: '0',
+              ciphertext: zeroCipher,
+              proof: '00'.repeat(128),
+              receipt: '',
+            },
+          }).hexString,
+          useDefault: false,
+        },
+        expires,
+      );
+      const prepared = QuickAccountPreparedSchema.parse({
+        ...operation,
+        context,
+        id: '00000000-0000-4000-8000-000000000001',
+        expiresAt: new Date(expires * 1000).toISOString(),
+      });
+      if (actor === 'alice')
+        await expect(api.validatePreparation(prepared)).resolves.toBeUndefined();
+      else await expect(api.validatePreparation(prepared)).rejects.toThrow('QUICK_AUDIENCE');
+    }
     await expect(respond('bob', b, 1)).rejects.toThrow('QUICK_AUDIENCE');
     await respond('alice', b, 0);
     expect((await ballot(b.id)).count).toBe(1);
@@ -1315,6 +1384,204 @@ describe('native encrypted Quick ballot state and proofs', () => {
     ).rejects.toThrow('QUICK_SNAPSHOT_CHANGED');
   });
 
+  it('exports an irreversible canonical encrypted archive snapshot and measures maximal receipt RAM', async () => {
+    const api = new NativeQuickBallots(
+      {
+        rpcUrl: f.url,
+        chainId: f.chainId,
+        runtime,
+        authority,
+        source,
+        gateway: { actor: 'gateway', permission: 'active' },
+      },
+      {
+        key: f.key('gateway'),
+        resources: async () => {},
+        confirm: async (block) =>
+          waitForIrreversibleBlock(
+            async () => Number((await f.api.v1.chain.get_info()).last_irreversible_block_num),
+            block,
+          ),
+      },
+    );
+    const b = await open('121');
+    await respond('alice', b, 1, '0', false, 'ab'.repeat(1024));
+    const measured = measurements.at(-1);
+    expect(measured).toMatchObject({
+      action: 'qsubmit',
+      ramAccount: source,
+      ramDeltaBytes: '1835',
+    });
+    await respond('bob', b, 0);
+    await close(b.id);
+    await age(b.id, Math.floor(Date.now() / 1000) - 31 * 86400);
+    const snapshot = await api.archiveSnapshot(b.id);
+    expect(snapshot.ballot).toMatchObject({ id: b.id, prepared: true, verified: false, count: 2 });
+    expect(snapshot.responses).toHaveLength(2);
+    expect(snapshot.grants).toHaveLength(1);
+    const { planQuickBallotArchive } = await import('@daclify/modules/archive');
+    mkdirSync('.artifacts/quick-ballots', { recursive: true });
+    writeFileSync(
+      '.artifacts/quick-ballots/archive-native-snapshot-debug.json',
+      JSON.stringify(snapshot, null, 2) + '\n',
+    );
+    const { responses, grants, ...base } = snapshot;
+    expect(
+      planQuickBallotArchive({ ...base, kind: 'quick-ballot-responses', rows: responses }).blocked,
+    ).toEqual([]);
+    expect(
+      planQuickBallotArchive({ ...base, kind: 'quick-ballot-grants', rows: grants }).blocked,
+    ).toEqual([]);
+    mkdirSync('.artifacts/quick-ballots', { recursive: true });
+    writeFileSync(
+      '.artifacts/quick-ballots/archive-native-snapshot.json',
+      JSON.stringify(snapshot, null, 2) + '\n',
+    );
+    writeFileSync(
+      '.artifacts/quick-ballots/max-receipt-native.json',
+      JSON.stringify(measured, null, 2) + '\n',
+    );
+  });
+
+  it('rolls back a response and account nonce when the originating DAOs funded ordinary RAM is exhausted', async () => {
+    await createDao('7');
+    const b = await open('122', [], 0, {}, undefined, '7');
+    // Fund actual unmanaged Telos RAM on this disposable chain; boot accounts otherwise have unlimited RAM.
+    for (const name of ['BLOCKCHAIN_PARAMETERS', 'CONFIGURABLE_WASM_LIMITS2', 'SAVANNA']) {
+      const digest = f.featureDigests.get(name);
+      if (!digest) throw Error('SYSTEM_FEATURE_REQUIRED');
+      await f.activate(digest);
+    }
+    for (const actor of [
+      'eosio.ram',
+      'eosio.ramfee',
+      'eosio.stake',
+      'eosio.bpay',
+      'eosio.vpay',
+      'eosio.saving',
+      'eosio.names',
+      'eosio.rex',
+      'eosio.tedp',
+    ])
+      await f.create(actor);
+    const token = await f.deploy('eosio.token', '.artifacts/contracts/testtoken');
+    await f.push(
+      [
+        f.action(
+          'eosio.token',
+          'create',
+          { issuer: 'eosio', maximum: '10000000000.0000 TLOS' },
+          [{ actor: 'eosio.token', permission: 'active' }],
+          token,
+        ),
+      ],
+      [f.key('eosio.token')],
+    );
+    await f.push(
+      [
+        f.action(
+          'eosio.token',
+          'issue',
+          { to: 'eosio', quantity: '1000000000.0000 TLOS', memo: '' },
+          [{ actor: 'eosio', permission: 'active' }],
+          token,
+        ),
+      ],
+      [f.key('eosio')],
+    );
+    const system = await f.deploy('eosio', '.artifacts/quick-ballots/telos-system/eosio.system');
+    expect((await f.api.v1.chain.get_raw_abi('eosio')).code_hash.toString()).toBe(
+      '48d74c3df9f5c9952c0f87ab6c01e1c6dfe621429f59932ecf609b5d81e668e4',
+    );
+    await f.push(
+      [
+        f.action(
+          'eosio',
+          'init',
+          { version: 0, core: '4,TLOS' },
+          [{ actor: 'eosio', permission: 'active' }],
+          system,
+        ),
+      ],
+      [f.key('eosio')],
+    );
+    for (const payer of [runtime, authority, source]) {
+      await f.push(
+        [
+          f.action(
+            'eosio',
+            'buyrambytes',
+            { payer: 'eosio', receiver: payer, bytes: 16 * 1024 * 1024 },
+            [{ actor: 'eosio', permission: 'active' }],
+            system,
+          ),
+        ],
+        [f.key('eosio')],
+      );
+      const account = await f.api.v1.chain.get_account(payer);
+      await call(
+        runtime,
+        'setrampool',
+        {
+          payer,
+          expected_quota: account.ram_quota.toString(),
+          baseline_bytes: account.ram_usage.toString(),
+          platform_headroom: '32768',
+        },
+        [runtime],
+      );
+    }
+    for (const claims of [false, true])
+      await call(runtime, 'adoptram', { dao_id: '7', claims, limit: 25 }, [runtime]);
+    for (const payer of [runtime, authority, source])
+      await call(
+        runtime,
+        'inheritram',
+        {
+          dao_id: '7',
+          payer,
+          activity_headroom: payer === source ? '0' : '8192',
+          identity_headroom: '0',
+          completion_headroom: '32768',
+        },
+        [runtime],
+      );
+    await call(runtime, 'setdaoquota', { dao_id: '7', enabled: true }, [runtime]);
+    const before = await ballot(b.id),
+      account = accounts.get('bob');
+    if (!account) throw Error('REGISTERED_ACCOUNT_REQUIRED');
+    const registry = QuickAuthTableSchemas.qaccounts.parse(
+      (await rows(authority, 'qaccounts')).find(
+        (value) => QuickAuthTableSchemas.qaccounts.parse(value).id === account.id,
+      ),
+    );
+    const counters = await rows(runtime, 'ramstats', '7');
+    await expect(respond('bob', b, 1)).rejects.toThrow('RAM_ORDINARY_EXHAUSTED');
+    expect(await ballot(b.id)).toEqual(before);
+    expect(
+      QuickAuthTableSchemas.qaccounts.parse(
+        (await rows(authority, 'qaccounts')).find(
+          (value) => QuickAuthTableSchemas.qaccounts.parse(value).id === account.id,
+        ),
+      ),
+    ).toEqual(registry);
+    expect(await rows(runtime, 'ramstats', '7')).toEqual(counters);
+    await call(
+      runtime,
+      'grantdaoram',
+      {
+        dao_id: '7',
+        payer: source,
+        reference: '223',
+        activity: '4096',
+        identity: '0',
+        completion: '32768',
+      },
+      [runtime],
+    );
+    await respond('bob', b, 1);
+    expect((await ballot(b.id)).count).toBe(1);
+  });
   it('prepares all five thousand genuinely authorized current responses in bounded batches', async () => {
     await createDao('6');
     const b = await open('119', [], 0, {}, undefined, '6');

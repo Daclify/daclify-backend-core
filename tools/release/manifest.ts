@@ -5,6 +5,7 @@ import { existsSync, readFileSync, readdirSync, realpathSync, statSync, lstatSyn
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { z } from 'zod';
+import { ModuleCodeHashes } from '@daclify/modules/sdk';
 import { MiniAppReleaseManifestSchema } from '../../protocol/mini-apps.js';
 import { McpReleaseManifestSchema } from '../../protocol/mcp.js';
 import { miniAppReleaseId } from '../../services/api/src/mini-apps/artifacts.js';
@@ -355,28 +356,28 @@ function modulePins(modulesRoot: string): {
   hashes: Record<string, string>;
   abiHashes: Record<string, string>;
 } {
-  const contracts = path.join(modulesRoot, 'contracts');
-  const capabilities = readdirSync(contracts, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && entry.name !== 'common' && entry.name !== 'vendor')
-    .map((entry) => entry.name)
-    .filter((name) => existsSync(path.join(contracts, name, `${name}.cpp`)))
-    .sort();
+  const capabilities = Object.keys(ModuleCodeHashes).sort();
   if (capabilities.length === 0) pin('module capabilities are missing');
   const hashes: Record<string, string> = {};
   const abiHashes: Record<string, string> = {};
-  for (const name of capabilities) {
-    const id =
-      name === 'grants' ? 'grants-rounds' : name === 'endorse' ? 'endorsement-admission' : name;
+  for (const [id, expectedHash] of Object.entries(ModuleCodeHashes)) {
+    const name =
+      id === 'quick-ballots'
+        ? 'quickvote'
+        : id === 'grants-rounds'
+          ? 'grants'
+          : id === 'endorsement-admission'
+            ? 'endorse'
+            : id;
+    if (!existsSync(path.join(modulesRoot, 'contracts', name, `${name}.cpp`)))
+      pin('reviewed module source is missing');
     abiHashes[id] = sha256(path.join(modulesRoot, '.artifacts', 'contracts', `${name}.abi`));
-    hashes[
-      name === 'grants' ? 'grants-rounds' : name === 'endorse' ? 'endorsement-admission' : name
-    ] = sha256(path.join(modulesRoot, '.artifacts', 'contracts', `${name}.wasm`));
+    hashes[id] = sha256(path.join(modulesRoot, '.artifacts', 'contracts', `${name}.wasm`));
+    if (hashes[id] !== expectedHash) pin('reviewed module code differs from the public SDK');
   }
   return {
     abiHashes,
-    capabilities: capabilities.map((name) =>
-      name === 'grants' ? 'grants-rounds' : name === 'endorse' ? 'endorsement-admission' : name,
-    ),
+    capabilities,
     hashes,
   };
 }

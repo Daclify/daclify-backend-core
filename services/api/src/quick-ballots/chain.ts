@@ -18,7 +18,7 @@ import {
   type QuickAccountAnchor,
   type QuickAccountPrepared,
 } from '../../../../protocol/quick-accounts.js';
-import { ChainIdSchema, IdSchema } from '../../../../protocol/base.js';
+import { ChainIdSchema, IdSchema, Uint64Schema } from '../../../../protocol/base.js';
 import { RuntimeCodeHash, RuntimeRawAbiHash, RuntimeTableSchemas } from '../../../../sdk/index.js';
 import {
   QuickAuthCodeHash,
@@ -27,11 +27,15 @@ import {
   quickAuthAbi,
   quickAccountAction,
   encodeQuickAnchor,
+  decodeQuickAnchor,
+  encodeQuickAuth,
 } from '../../../../sdk/quick-accounts.js';
 import { QuickBallotRoutes } from '@daclify/modules';
+import { verifyAnchoredArchive, quickArchivePruneBatch } from '@daclify/modules/archive';
 import {
   ModuleCodeHashes,
   QuickBallotTableSchemas,
+  QuickBallotActionSchemas,
   quickvoteAbi,
   encodeQuickBallot,
   verifyQuickBallotResult,
@@ -43,6 +47,7 @@ import { NativeProofSchema } from '../../../../protocol/sign-in.js';
 import { ExitSubmissionSchema, type ExitSubmission } from '../../../../protocol/account-exit.js';
 import { executedChainResult } from '../chain-result.js';
 import { reconcileChainSubmission } from '../chain-confirmation.js';
+import { quickSubmissionRejection } from './rejections.js';
 
 const maxId = '18446744073709551615';
 const ConfigurationSchema = QuickAccountContextSchema.omit({
@@ -203,10 +208,13 @@ export class NativeQuickBallots {
     const { transaction, packet } = this.packet(prepared, input);
     await this.configuration();
     await this.operator.resources();
-    const result = executedChainResult(
-      await this.api.v1.chain.push_transaction(transaction),
-      packet.transactionId,
-    );
+    let broadcast;
+    try {
+      broadcast = await this.api.v1.chain.push_transaction(transaction);
+    } catch (cause) {
+      throw quickSubmissionRejection(cause) ?? cause;
+    }
+    const result = executedChainResult(broadcast, packet.transactionId);
     await this.operator.confirm(result.blockNum);
     return { transactionId: result.transactionId };
   }
@@ -248,6 +256,139 @@ export class NativeQuickBallots {
       .safeParse(response);
     if (!parsed.success) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
     return parsed.data;
+  }
+  async validatePreparation(value: QuickAccountPrepared) {
+    const prepared = QuickAccountPreparedSchema.parse(value);
+    if (prepared.action !== 'qsubmit') return;
+    const { request, context } = prepared;
+    if (request.action !== 'respond' && request.action !== 'remove')
+      throw new ApiError('QUICK_ACTION', 409);
+    let payload;
+    let responding: z.infer<typeof QuickBallotActionSchemas.respond> | undefined;
+    try {
+      const decoded = Serializer.objectify(
+        Serializer.decode({
+          abi: ABI.from(quickvoteAbi),
+          type: request.action,
+          data: request.data,
+        }),
+      );
+      const transport = {
+        actor: QuickBallotActionSchemas.respond.shape.actor.extend({
+          account_id: QuickAuthTableSchemas.qaccounts.shape.id,
+        }),
+        ballot_id: QuickBallotTableSchemas.qresponses.shape.ballot_id,
+        expected_revision: QuickBallotTableSchemas.qresponses.shape.revision,
+      };
+      if (request.action === 'respond')
+        responding = QuickBallotActionSchemas.respond.extend(transport).parse(decoded);
+      payload = responding ?? QuickBallotActionSchemas.remove.extend(transport).parse(decoded);
+      if (
+        Serializer.encode({ abi: ABI.from(quickvoteAbi), type: request.action, object: payload })
+          .hexString !== request.data
+      )
+        throw Error('NON_CANONICAL');
+    } catch {
+      throw new ApiError('QUICK_ACTION', 409);
+    }
+    const credential = request.control.use_default
+      ? context.record?.approval
+      : encodeQuickAnchor(context.anchor);
+    if (
+      !credential ||
+      payload.actor.runtime !== context.runtime ||
+      payload.actor.authority !== context.authority ||
+      payload.actor.account_id !== context.record?.id ||
+      payload.actor.credential.kind !== credential.kind ||
+      payload.actor.credential.credential !== credential.credential
+    )
+      throw new ApiError('QUICK_ACTOR', 409);
+    const { ballot } = await this.detail(payload.ballot_id);
+    if (ballot.closed_at || (await this.needsAdvance(ballot)))
+      throw new ApiError('QUICK_CLOSED', 409);
+    const { response } = await this.ownResponse(ballot.id, { identity: context.identity });
+    if (payload.expected_revision !== (response?.revision ?? '0'))
+      throw new ApiError('QUICK_REVISION', 409);
+    if (request.action === 'remove') {
+      if (!response?.active) throw new ApiError('QUICK_RESPONSE_REMOVED', 409);
+      return;
+    }
+    if (!response && ballot.identities >= 5000) throw new ApiError('QUICK_CAPACITY', 409);
+    if (
+      responding &&
+      (responding.ciphertext.length !== 384 ||
+        responding.proof.length !== 256 ||
+        responding.receipt.length > 2048)
+    )
+      throw new ApiError('QUICK_RESPONSE_SHAPE', 409);
+    if (!ballot.definition.all_accounts) {
+      let eligible = false;
+      for (const dao of ballot.definition.audience)
+        if (await this.eligibleMember(dao, credential)) {
+          eligible = true;
+          break;
+        }
+      if (!eligible) throw new ApiError('QUICK_AUDIENCE', 403);
+    }
+  }
+  private async eligibleMember(dao: string, credential: { kind: number; credential: string }) {
+    const runtime = this.config.runtime,
+      method = decodeQuickAnchor(credential);
+    if (!method) return false;
+    const life = await this.page(
+      runtime,
+      runtime,
+      'daolife',
+      RuntimeTableSchemas.daolife,
+      dao,
+      dao,
+      1,
+      'i64',
+      1,
+    );
+    if (life.rows.some((row) => row.state !== 0)) return false;
+    const key = Checksum256.hash(Buffer.from(credential.credential, 'hex')).toString();
+    if (method.kind === 'evm') {
+      const bindings = await this.page(
+          runtime,
+          dao,
+          'evmbindings',
+          RuntimeTableSchemas.evmbindings,
+          key,
+          key,
+          2,
+          'sha256',
+          1,
+        ),
+        binding = bindings.rows[0];
+      if (!binding?.active) return false;
+      const people = await this.page(
+        runtime,
+        dao,
+        'members',
+        RuntimeTableSchemas.members,
+        binding.member_id,
+        binding.member_id,
+        1,
+        'i64',
+        1,
+      );
+      return people.rows[0]?.active ?? false;
+    }
+    const native = method.kind === 'native',
+      index = native ? Name.from(method.account).value.toString() : key;
+    const people = await this.page(
+      runtime,
+      dao,
+      'members',
+      RuntimeTableSchemas.members,
+      index,
+      index,
+      native ? 2 : 3,
+      native ? 'i64' : 'sha256',
+      1,
+    );
+    return people.rows[0]?.active ?? false;
   }
   async configuration() {
     const config = this.config;
@@ -389,6 +530,42 @@ export class NativeQuickBallots {
       next: page.more || page.rows.length > 25 ? (page.rows[24]?.id ?? null) : null,
     });
   }
+  async pruneInactiveAccounts(afterValue: string) {
+    const after = BigInt(Uint64Schema.parse(afterValue));
+    await this.configuration();
+    if (after === BigInt(maxId)) return { next: null, removed: 0 };
+    const page = await this.page(
+        this.config.authority,
+        this.config.runtime,
+        'qaccounts',
+        QuickAuthTableSchemas.qaccounts,
+        String(after + 1n),
+        maxId,
+        1,
+        'i64',
+        25,
+      ),
+      info = await this.api.v1.chain.get_info(),
+      now = Math.floor(info.head_block_time.toDate().getTime() / 1000);
+    let previous = after;
+    for (const row of page.rows) {
+      if (BigInt(row.id) <= previous) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+      previous = BigInt(row.id);
+    }
+    if (page.more && !page.rows.length) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+    const ids = page.rows
+      .filter(
+        (row) => !row.active && row.deactivated_at > 0 && now - row.deactivated_at >= 30 * 86400,
+      )
+      .map((row) => row.id);
+    if (ids.length)
+      await this.maintenance(
+        'qprune',
+        encodeQuickAuth('qprune', { runtime: this.config.runtime, ids }),
+        'authority',
+      );
+    return { next: page.more ? String(previous) : null, removed: ids.length };
+  }
   async detail(idValue: string) {
     const id = IdSchema.parse(idValue),
       config = await this.configuration();
@@ -454,12 +631,16 @@ export class NativeQuickBallots {
       root: ballot.response_root,
     });
   }
-  private async maintenance(name: 'prepare' | 'finalize', data: Uint8Array) {
+  private async maintenance(
+    name: 'prepare' | 'finalize' | 'prune' | 'prunegrants' | 'qprune',
+    data: Uint8Array,
+    target: 'source' | 'authority' = 'source',
+  ) {
     await this.configuration();
     await this.operator.resources();
     const info = await this.api.v1.chain.get_info(),
       action = Action.from({
-        account: this.config.source,
+        account: this.config[target],
         name,
         authorization: [this.config.gateway],
         data,
@@ -582,6 +763,150 @@ export class NativeQuickBallots {
         25,
       )
     ).rows.map((row) => row.id);
+  }
+  private async packedPage(
+    table: 'qresponses' | 'qgrants',
+    lower: string,
+    upper: string,
+    index: 1 | 3,
+  ) {
+    const value = await this.api.call({
+      path: '/v1/chain/get_table_rows',
+      params: {
+        json: false,
+        code: this.config.source,
+        scope: this.config.runtime,
+        table,
+        index_position: String(index),
+        key_type: index === 3 ? 'i128' : 'i64',
+        lower_bound: lower,
+        upper_bound: upper,
+        limit: 25,
+      },
+    });
+    return z
+      .object({
+        rows: z
+          .array(
+            z
+              .string()
+              .max(16384)
+              .regex(/^(?:[0-9a-f]{2})+$/),
+          )
+          .max(25),
+        more: z.boolean(),
+      })
+      .parse(value);
+  }
+  private packedRow<T extends { id: string; dao_id: string }>(
+    table: 'qresponses' | 'qgrants',
+    packed: string,
+    schema: z.ZodType<T>,
+  ) {
+    const type = table === 'qresponses' ? 'quick_response' : 'quick_grant';
+    const row = schema.parse(
+      Serializer.objectify(Serializer.decode({ abi: ABI.from(quickvoteAbi), type, data: packed })),
+    );
+    if (Serializer.encode({ abi: ABI.from(quickvoteAbi), type, object: row }).hexString !== packed)
+      throw new ApiError('ARCHIVE_ROW_CANONICAL', 503);
+    return row;
+  }
+  async archiveSnapshot(idValue: string, includeResponses = true) {
+    const id = IdSchema.parse(idValue),
+      detail = await this.detail(id),
+      { ballot } = detail;
+    if (!ballot.closed_at || !ballot.prepared) throw new ApiError('QUICK_SNAPSHOT', 409);
+    if (ballot.pruned) throw new ApiError('QUICK_ARCHIVE_REQUIRED', 409);
+    const source = await this.api.v1.chain.get_account(this.config.source),
+      info = await this.api.v1.chain.get_info();
+    // Table reads can include the pending block beyond the reported head.
+    const snapshotBlock = Number(info.head_block_num) + 1;
+    await this.operator.confirm(snapshotBlock);
+    const block = await this.api.v1.chain.get_block(snapshotBlock);
+    const responses: { primaryKey: string; packed: string }[] = [],
+      base = BigInt(id) << 64n;
+    let cursor = 0n,
+      more = includeResponses;
+    while (more) {
+      const page = await this.packedPage(
+        'qresponses',
+        String(base + cursor + 1n),
+        String(base + BigInt(maxId)),
+        3,
+      );
+      if (page.more && !page.rows.length) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+      for (const packed of page.rows) {
+        const row = this.packedRow('qresponses', packed, QuickBallotTableSchemas.qresponses);
+        if (
+          row.ballot_id !== id ||
+          row.dao_id !== ballot.dao_id ||
+          BigInt(row.id) <= cursor ||
+          responses.length >= 5000
+        )
+          throw new ApiError('ARCHIVE_ROW_DOMAIN', 503);
+        cursor = BigInt(row.id);
+        responses.push({ primaryKey: row.id, packed });
+      }
+      more = page.more;
+    }
+    const page = await this.packedPage('qgrants', id, id, 1),
+      grants: { primaryKey: string; packed: string }[] = [];
+    if (page.more || page.rows.length > 1) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+    for (const packed of page.rows) {
+      const row = this.packedRow('qgrants', packed, QuickBallotTableSchemas.qgrants);
+      if (row.id !== id || row.dao_id !== ballot.dao_id)
+        throw new ApiError('ARCHIVE_ROW_DOMAIN', 503);
+      grants.push({ primaryKey: row.id, packed });
+    }
+    const current = (await this.detail(id)).ballot;
+    if (
+      current.definition_hash !== ballot.definition_hash ||
+      current.response_root !== ballot.response_root ||
+      current.count !== ballot.count ||
+      current.identities !== ballot.identities ||
+      current.aggregate !== ballot.aggregate ||
+      current.closed_at !== ballot.closed_at ||
+      current.pruned ||
+      (includeResponses && responses.length !== ballot.identities)
+    )
+      throw new ApiError('QUICK_SNAPSHOT_CHANGED', 409);
+    return {
+      dao: {
+        chainId: this.config.chainId,
+        contract: this.config.runtime,
+        daoId: ballot.dao_id,
+        interfaceVersion: 1 as const,
+      },
+      source: {
+        account: this.config.source,
+        codeHash: ModuleCodeHashes['quick-ballots'],
+        abiHash: sourceAbiHash,
+      },
+      snapshot: {
+        blockNumber: Number(block.block_num),
+        blockId: block.id.toString(),
+        timestamp: block.timestamp.toDate().toISOString(),
+      },
+      sourceUpdatedAt: source.last_code_update.toDate().toISOString(),
+      ballot: current,
+      responses,
+      grants,
+    };
+  }
+  async pruneArchiveRows(value: unknown, anchorValue: unknown, position: unknown) {
+    const bundle = verifyAnchoredArchive(value, anchorValue);
+    if (
+      bundle.manifest.dao.chainId !== this.config.chainId ||
+      bundle.manifest.dao.contract !== this.config.runtime ||
+      bundle.manifest.source.account !== this.config.source
+    )
+      throw new ApiError('ARCHIVE_DOMAIN', 409);
+    const batch = quickArchivePruneBatch(bundle, anchorValue, position);
+    if (!batch) return false;
+    if (batch.action === 'prune')
+      await this.maintenance('prune', encodeQuickBallot('prune', batch.data));
+    else await this.maintenance('prunegrants', encodeQuickBallot('prunegrants', batch.data));
+    return true;
   }
   async ownResponse(idValue: string, value: unknown) {
     const id = IdSchema.parse(idValue),
