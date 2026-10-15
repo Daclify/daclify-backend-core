@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { FastifyInstance, InjectOptions } from 'fastify';
+import type { FastifyInstance, InjectOptions, LightMyRequestResponse } from 'fastify';
 import type { PrivateKey } from '@wharfkit/antelope';
 import { z } from 'zod';
 import { AccountControlChallengeSchema } from '../../protocol/sign-in.js';
@@ -8,7 +8,7 @@ export async function controlledInject(
   app: FastifyInstance,
   key: PrivateKey,
   options: InjectOptions,
-) {
+): Promise<LightMyRequestResponse> {
   const headers = z
     .object({ origin: z.string(), cookie: z.string(), 'x-csrf-token': z.string() })
     .parse(options.headers);

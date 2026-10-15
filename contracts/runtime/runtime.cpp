@@ -251,7 +251,7 @@ public:
   using settings=runtime_settings;
   using config = ram_singleton<"settings"_n,settings>;
   ACTION beginram(std::vector<ram_migration_source> sources){
-    require_auth(get_self());check(sources.size()<=7,"RAM_MIGRATION_SOURCE_LIMIT");
+    require_auth(get_self());check(sources.size()<=9,"RAM_MIGRATION_SOURCE_LIMIT");
     ram_observer_settings observer(get_self(),get_self().value);check(!observer.exists(),"ALREADY_INITIALIZED");
     ram_migration_settings migration(get_self(),get_self().value);check(!migration.exists(),"ALREADY_INITIALIZED");
     ram_migration_sources snapshots(get_self(),get_self().value);ram_sources allowed(get_self(),get_self().value);
@@ -267,7 +267,7 @@ public:
     }
     uint32_t communities=0;for(const auto& dao:dao_rows){
       check(++communities<=5000,"RAM_POOL_SCAN_LIMIT");modules installed(get_self(),dao.id);uint32_t module_count=0;
-      for(const auto& grant:installed){check(++module_count<=7,"RAM_MIGRATION_SOURCE_LIMIT");const auto& source=snapshots.get(grant.account.value,"RAM_MIGRATION_SOURCE");check(source.code_hash==grant.code_hash,"MODULE_CODE");}
+      for(const auto& grant:installed){check(++module_count<=9,"RAM_MIGRATION_SOURCE_LIMIT");const auto& source=snapshots.get(grant.account.value,"RAM_MIGRATION_SOURCE");check(source.code_hash==grant.code_hash,"MODULE_CODE");}
     }
     observer.set(cfg,get_self());migration.set(ram_migration_state{},get_self());
   }
@@ -1058,7 +1058,7 @@ public:
     check(h->expires<=current_time_point().sec_since_epoch(),"PRIVATE_HANDOVER_PENDING");rows.erase(h);
   }
   ACTION setlifecode(name account,checksum256 code_hash,uint8_t kind){
-    require_auth(get_self());check(account!=get_self()&&is_account(account)&&kind>=1&&kind<=7,"LIFECYCLE_SOURCE");
+    require_auth(get_self());check(account!=get_self()&&is_account(account)&&kind>=1&&kind<=9,"LIFECYCLE_SOURCE");
     check(code_hash!=checksum256{}&&get_code_hash(account)==code_hash,"MODULE_CODE");
     lifecycle_sources rows(get_self(),get_self().value);auto found=rows.find(account.value);
     if(found==rows.end()){uint32_t count=0;for(auto it=rows.begin();it!=rows.end()&&count<256;++it)++count;check(count<256,"LIFECYCLE_SOURCE_LIMIT");rows.emplace(get_self(),[&](auto& r){r.account=account;r.code_hash=code_hash;r.kind=kind;});}

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { DaoRefSchema, Uint64Schema, type DaoRef } from '../protocol/base.js';
 import { EvmAddressSchema, TelosEvmChainSchema } from '../protocol/evm-wallet.js';
 import { RuntimeActionSchemas } from './generated/schemas.js';
+import { QuickAccountDomainSchema } from '../protocol/quick-accounts.js';
 import type { instruction } from './generated/runtime.js';
 const BindingSchema = z.strictObject({
   chainId: TelosEvmChainSchema,
@@ -22,6 +23,7 @@ const domainFields: Field[] = [
   { name: 'chainId', type: 'uint256' },
   { name: 'salt', type: 'bytes32' },
 ];
+const quickAccountFields: Field[] = [{ name: 'operation', type: 'bytes32' }];
 const bindingFields: Field[] = [
   { name: 'nativeChain', type: 'bytes32' },
   { name: 'runtime', type: 'uint64' },
@@ -65,12 +67,26 @@ function join(parts: readonly Uint8Array[]): Uint8Array {
 function domain(native: DaoRef, chain: number) {
   DaoRefSchema.parse(native);
   TelosEvmChainSchema.parse(chain);
+  return chainDomain(native.chainId, native.contract, chain);
+}
+function chainDomain(chainId: string, runtime: string, chain: number) {
   const salt = hex(
-    keccak_256(
-      join([unhex(native.chainId), uintWord(Name.from(native.contract).value.toString(), 64)]),
-    ),
+    keccak_256(join([unhex(chainId), uintWord(Name.from(runtime).value.toString(), 64)])),
   );
   return { name: 'Daclify', version: '1', chainId: chain, salt };
+}
+export function quickAccountTypedData(value: unknown, chain: number, operation: string) {
+  const native = QuickAccountDomainSchema.parse(value);
+  TelosEvmChainSchema.parse(chain);
+  z.string()
+    .regex(/^[0-9a-f]{64}$/)
+    .parse(operation);
+  return {
+    types: { EIP712Domain: domainFields, QuickAccount: quickAccountFields },
+    primaryType: 'QuickAccount' as const,
+    domain: chainDomain(native.chainId, native.runtime, chain),
+    message: { operation: `0x${operation}` as const },
+  };
 }
 function common(
   native: DaoRef,
@@ -205,14 +221,17 @@ export function evmTypedDigest(
   data:
     | ReturnType<typeof bindingTypedData>
     | ReturnType<typeof governanceTypedData>
-    | ReturnType<typeof exitGovernanceTypedData>,
+    | ReturnType<typeof exitGovernanceTypedData>
+    | ReturnType<typeof quickAccountTypedData>,
 ): Uint8Array {
   const fields =
-    data.primaryType === 'DaclifyBinding'
-      ? bindingFields
-      : data.primaryType === 'DaclifyExitInstruction'
-        ? exitInstructionFields
-        : instructionFields;
+    data.primaryType === 'QuickAccount'
+      ? quickAccountFields
+      : data.primaryType === 'DaclifyBinding'
+        ? bindingFields
+        : data.primaryType === 'DaclifyExitInstruction'
+          ? exitInstructionFields
+          : instructionFields;
   return keccak_256(
     join([
       new Uint8Array([0x19, 0x01]),

@@ -4,7 +4,7 @@
 
 **Goal:** Deliver encrypted on-chain up/down ballots, account-wide participation, publicly verified final totals and guarded cleanup in the existing Daclify app, then deploy the matching testnet release.
 
-**Architecture:** Core authenticates one canonical account across paired approval methods; the existing member-signing path still authorizes executive actions. A separate modules-owned `quickvote` contract maintains encrypted responses and frozen source commitments. The browser encrypts votes and produces tally proofs; the API never receives ballot secret keys or individual plaintext choices. Reuse existing RAM metering, encrypted key grants, archive verification/backup, account exit and release tooling.
+**Architecture:** A small core-owned `quickauth` companion authenticates one canonical account across paired approval methods; the existing member-signing path still authorizes executive actions. This keeps the main runtime below Spring's measured 1 MiB deployment decoder ceiling. A separate modules-owned `quickvote` contract maintains encrypted responses and frozen source commitments. The browser encrypts votes and produces tally proofs; the API never receives ballot secret keys or individual plaintext choices. Reuse existing RAM metering, encrypted key grants, archive verification/backup, account exit and release tooling.
 
 **Tech stack:** Existing strict TypeScript/Zod, Vue/Vite, PostgreSQL, Noble 2.4.0, CDT 4.1.1 `-O=s`, Spring 1.2.2 and native/actual-WASM/browser checks. No new server, proof circuit, generic plugin loader or database service.
 
@@ -18,7 +18,7 @@
 - Readers are fixed when the ballot opens (user decision, 15 October). They are the originating DAO's then-current executives; selected audience DAOs gain no reader rights. Copied keys cannot be revoked. Lost keys never permit invented totals.
 - Each ballot has its own encryption key and authenticated P-256 grants, separate from ordinary member/profile keys. Reuse existing grant encryption with a new ballot/recipient domain. Grant correctness and recipient failure must be visible; do not claim that publishing ciphertext proves every reader decrypted it.
 - Keep the retained final proof, encryption public key, aggregate/count/source root and protocol/domain inputs on-chain. Individual rows become cleanup-eligible 2,592,000 seconds after the voting deadline or manual closure, not after a delayed finalization job.
-- Existing rule: require a verified tally before pruning. The user is being asked whether unavailable tallies may instead be archived/pruned after 30 days while retaining “No verified result” and allowing a later proof. Do not assume that answer or implement dependent cleanup until it arrives.
+- User decision, 15 October: a missing tally does not prevent cleanup after 30 days once the encrypted archive and independent backup are verified. Retain the frozen aggregate/count/root/key/protocol inputs on-chain, show “No verified result” and permit a valid later proof. Never invent totals or prune an open ballot.
 - Originating DAO pays ballot/response/grant storage through existing metered funded allowances. Audience DAOs are never charged. Account authentication records use the core operator pool, with a 5,000-record initial bound and bounded inactive-record cleanup. No treasury, role or arbitrary execution authority is introduced.
 - This is a testnet launch. Independent cryptographic review, production custody and mainnet release remain separate qualification gates; the UI/help must identify experimental encrypted voting honestly.
 - Preserve existing Decide ballots, account identities, native ownership/authorities, pending claims, all historical fixtures and other workspace changes. New current contracts use pinned `-O=s`; historical rebuild flags/hashes remain unchanged.
@@ -33,20 +33,20 @@
 
 ## Task 1 — Core account authorization
 
-**Files:** core `contracts/common/quick_accounts.hpp`, `contracts/runtime/runtime.cpp`, `contracts/common/ram_families.hpp`, `protocol/quick-accounts.ts`, `sdk/quick-accounts.ts`, generated ABI/schema/release pins, `tests/quick-accounts.test.ts` and `tests/native/quick-accounts.test.ts`.
+**Files:** core `contracts/common/quick_accounts.hpp`, `contracts/quickauth/{quickauth.cpp,authorization.hpp}`, bounded source lists in `contracts/runtime/runtime.cpp` and `contracts/common/ram_families.hpp`, `protocol/quick-accounts.ts`, `sdk/quick-accounts.ts`, generated ABI/schema/release pins, `tests/quick-accounts.test.ts` and `tests/native/quick-accounts.test.ts`.
 
 **Interfaces:**
 
 - `QuickAccountAnchorSchema`: exactly one K1 public key, native active permission, or namespaced supported EVM EOA. `quickAccountIdentity(chainId, runtime, anchor)` hashes a canonical versioned packed anchor/domain. A service UUID or user-supplied identity string cannot replace this derived subject.
 - The account service records an immutable anchor for its canonical existing account. Existing key accounts anchor to the original account key; wallet-only accounts anchor to their initial verified wallet. Later vault attachment or paired-method changes preserve it. Native registration requires the configured gateway's restricted authority plus actual anchor proof. The gateway can attest registration/censor issuance; it cannot sign as the anchor or change an existing subject's owner. Disclose the registration-service trust boundary.
 - `qaccounts`: monotonic ID, immutable identity hash, one optional default approval credential, epoch, nonce and active/inactive time. A unique identity index prevents duplicate registrations. Do not copy profile fields or store multiple wallet tables. Cleanup preserves a global ID high-water mark; ballot deduplication uses the stable identity hash, never a reusable numeric ID.
-- `qregister`, root-authorized `qdefault`, authenticated `qsubmit`/`qnative`/`qevm`, deactivation and bounded cleanup are restricted to Quick ballot purposes. Root proof always remains an option. Incoming default-wallet consent binds the exact change. Existing Account approval setup enables the default once; do not silently copy DAO spending authority.
-- `quick_account_context` is a core-owned packed prefix identifying runtime/account ID and the actually proved credential. The instruction binds version, chain/runtime, account/epoch/nonce, expiry, exact target/action and bytes. Core forwards only `respond`/`remove` to a pinned Quick source with `execctx`; no arbitrary target or core action is allowed.
+- Companion actions `qregister`, root-authorized `qdefault`, authenticated `qsubmit`, deactivation and bounded cleanup are restricted to Quick ballot purposes. Root proof always remains an option. Incoming default-wallet consent binds the exact change. Existing Account approval setup enables the default once; do not silently copy DAO spending authority.
+- `quick_actor_context` is a core-owned packed prefix identifying original runtime, companion authority, account ID and the actually proved credential. Every signed request binds both runtime and companion authority. The instruction also binds version, chain, account/epoch/nonce, expiry, exact target/action/code hash and bytes. The companion forwards only `respond`/`remove` to a pinned Quick source with its restricted `execctx`; no arbitrary target or core action is allowed. The source checks this pinned companion sender. Canonical identity excludes the replaceable companion address.
 - Selected-DAO eligibility compares this proved credential to current native member signing/native/EVM records. Root/member rotation fails closed until an already approved current method is used. This avoids a redundant membership-link table. Public voters need no DAO membership.
 
-- [ ] Write failing canonical identity/encoding/domain tests and native registration/denial tests.
-- [ ] Implement producer schemas, encoding and native authentication; regenerate public artifacts with pinned compiler.
-- [ ] Verify root, native and EVM paths; wrong gateway/anchor/target/chain, default substitution, expiry/epoch/nonce replay, deactivation/reactivation and registry exhaustion/cleanup. Check raw old runtime rows/permissions through upgrade.
+- [x] Write failing canonical identity/encoding/domain tests and native registration/denial tests.
+- [x] Implement producer schemas, encoding and native authentication; regenerate public artifacts with pinned compiler.
+- [x] Verify root, native and EVM paths; wrong gateway/anchor/target/chain, default substitution, expiry/epoch/nonce replay, deactivation/reactivation and registry exhaustion/cleanup. Check raw old runtime rows/permissions through upgrade. See 2026-10-15 account-authorization evidence; coordinated release-policy checks remain task 6.
 - [ ] Review inline, record exact tests/resource measurements and commit the producer-owned change with capability disabled until compatible consumers exist.
 
 ## Task 2 — Modules-owned encrypted ballot state machine
@@ -96,7 +96,7 @@
 
 - [ ] Define canonical encrypted final-row export with complete coverage, source/schema/block domains, proof/public inputs and independent backup. Never include secret keys/nonces or plaintext choices.
 - [ ] Add bounded retry-safe row pruning at the exact 30-day boundary, requiring irreversible closure, verified retrievable archive/backup and source coverage proofs. Never prune an open ballot or silently change frozen totals/root.
-- [ ] Apply the user's unavailable-tally answer once received; otherwise retain the existing verified-result guard. Preserve the aggregate and verifier inputs for a valid late proof after any permitted row cleanup.
+- [ ] Permit unavailable-tally cleanup under the confirmed archive/backup/30-day gates. Preserve the aggregate and verifier inputs for a valid late proof; archive coverage verification is independent of plaintext decryption availability.
 - [ ] Handle DAO closure without stranded resource records or requiring a nonexistent current executive after every member leaves. Qualify a narrowly scoped closed-DAO archive path rather than weaken existing ordinary archive approval.
 - [ ] Exercise before/at/after boundary, missing/corrupt/wrong-domain/unavailable archives, interrupted batches, lost keys, deleted accounts, closed DAOs, ID reuse and historical upgrades. Review and commit.
 
@@ -117,7 +117,7 @@
 ## Execution ledger
 
 - 15 October: user clarified “Finish Quick ballots, then launch it”; prototype-only deployment is insufficient.
-- Readers fixed when opening is confirmed. Unavailable-tally cleanup question is pending; its implementation remains conditional.
+- Readers fixed when opening and verified encrypted archival cleanup after 30 days without a tally are both confirmed. Untallied results remain explicitly unverified and may accept a later proof.
 - Isolated sibling branches `feat/quick-ballots`: core `1ecb7c4`, modules `140abf1`, frontend `21d9760`. Previous proof qualification remains intact.
 - Current testnet core alpha23 remains running. No restart/deployment/native authority change has occurred during this phase.
 - Development disk was nearly full. Removed only owned Node/tsx compiler-cache files older than 24 hours (609,195,338 bytes); retained source, releases, database and backups. Continue measuring available space before native fixtures.

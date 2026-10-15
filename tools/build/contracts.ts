@@ -13,8 +13,10 @@ if (
 )
   throw new Error('PINNED_CDT_REQUIRED');
 mkdirSync('.artifacts/contracts', { recursive: true });
-for (const contract of [
+const contracts = [
   'runtime',
+  'quickauth',
+  'quickprobe',
   'appjoin',
   'hub',
   'permprobe',
@@ -26,7 +28,10 @@ for (const contract of [
   'modrelay',
   'names',
   'eosstub',
-]) {
+];
+const selected = process.argv.slice(2);
+if (selected.some((contract) => !contracts.includes(contract))) throw new Error('UNKNOWN_CONTRACT');
+for (const contract of selected.length ? selected : contracts) {
   execFileSync(
     compiler ?? 'docker',
     [

@@ -1,0 +1,117 @@
+{
+  "compiler": "CDT 4.1.1 -O=s",
+  "runtime": "Spring 1.2.2",
+  "artifacts": {
+    "runtime": {
+      "bytes": 1047804,
+      "sha256": "62c6914323a783f8caedc9e29463a3c58be701150ee3efa0b167f8cb42d57030"
+    },
+    "quickauth": {
+      "bytes": 83452,
+      "sha256": "d2c7102b79cccb2ca020a071cf46c53da825f4ac86dde8b8264fab3a767db953"
+    },
+    "quickprobe": {
+      "bytes": 6016,
+      "sha256": "7b6730dd037f179ed3dfb3841d715ce02ed5554f53e00976aee38ea05b44e922"
+    }
+  },
+  "measurements": [
+    {
+      "action": "init",
+      "cpuMicroseconds": 531,
+      "ramDeltaBytes": "0"
+    },
+    {
+      "action": "qconfig",
+      "cpuMicroseconds": 522,
+      "ramDeltaBytes": "536"
+    },
+    {
+      "action": "qregister",
+      "cpuMicroseconds": 1094,
+      "ramDeltaBytes": "447"
+    },
+    {
+      "action": "qregister",
+      "cpuMicroseconds": 904,
+      "ramDeltaBytes": "335"
+    },
+    {
+      "action": "qdefault",
+      "cpuMicroseconds": 923,
+      "ramDeltaBytes": "16"
+    },
+    {
+      "action": "qregister",
+      "cpuMicroseconds": 1114,
+      "ramDeltaBytes": "335"
+    },
+    {
+      "action": "qsubmit",
+      "cpuMicroseconds": 1219,
+      "ramDeltaBytes": "0"
+    },
+    {
+      "action": "qsubmit",
+      "cpuMicroseconds": 980,
+      "ramDeltaBytes": "0"
+    },
+    {
+      "action": "qdefault",
+      "cpuMicroseconds": 1404,
+      "ramDeltaBytes": "12"
+    },
+    {
+      "action": "qsubmit",
+      "cpuMicroseconds": 1409,
+      "ramDeltaBytes": "0"
+    },
+    {
+      "action": "qdeactivate",
+      "cpuMicroseconds": 1001,
+      "ramDeltaBytes": "-28"
+    },
+    {
+      "action": "qregister",
+      "cpuMicroseconds": 1103,
+      "ramDeltaBytes": "0"
+    }
+  ],
+  "status": "local foundation verified; product and testnet deployment incomplete",
+  "tests": {
+    "focusedUnit": {
+      "files": 6,
+      "passed": 28,
+      "failed": 0
+    },
+    "nativeAuthorization": {
+      "passed": 9,
+      "failed": 0
+    },
+    "nativeCore27UpgradeRollback": {
+      "passed": 1,
+      "failed": 0
+    },
+    "strictTypecheck": {
+      "exitCode": 0
+    },
+    "fullCoreUnitBeforeCoordinatedPackaging": {
+      "filesPassed": 174,
+      "filesFailed": 2,
+      "passed": 1042,
+      "failed": 17,
+      "failures": [
+        "release-qualification.test.ts (16)",
+        "release-manifest.test.ts (1)"
+      ],
+      "reason": "isolated worktree build outputs absent in the first run; after building, exact new companion artifact cohort still requires coordinated packaging in task 6"
+    },
+    "dockerObservedUpgrade": {
+      "run": false,
+      "reason": "owned resource fixture .artifacts/native/network.json absent; portable core27 upgrade/rollback ran instead"
+    }
+  },
+  "publicationQualified": false,
+  "deployed": false,
+  "independentCryptographicAudit": false
+}

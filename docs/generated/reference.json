@@ -1,6 +1,6 @@
 {
   "producer": "core",
-  "packageVersion": "0.15.0-alpha.27",
+  "packageVersion": "0.15.0-alpha.28",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -6967,6 +6967,281 @@
             {
               "name": "cpu_stake",
               "type": "asset"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "quickauth",
+      "abiVersion": "eosio::abi/1.2",
+      "sourceAbiHash": "e2a8f74aa227dff447fb38ed85965cbb6180c445f23ec2f4c30f123159652ae9",
+      "actions": [
+        {
+          "name": "checkmig",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "kind",
+              "type": "uint8"
+            }
+          ]
+        },
+        {
+          "name": "qconfig",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "source",
+              "type": "name"
+            },
+            {
+              "name": "code_hash",
+              "type": "checksum256"
+            },
+            {
+              "name": "gateway",
+              "type": "permission_level"
+            },
+            {
+              "name": "maximum",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
+          "name": "qdeactivate",
+          "fields": [
+            {
+              "name": "request",
+              "type": "quick_control"
+            },
+            {
+              "name": "proof",
+              "type": "bytes"
+            }
+          ]
+        },
+        {
+          "name": "qdefault",
+          "fields": [
+            {
+              "name": "request",
+              "type": "quick_default"
+            },
+            {
+              "name": "proof",
+              "type": "bytes"
+            },
+            {
+              "name": "incoming",
+              "type": "bytes"
+            }
+          ]
+        },
+        {
+          "name": "qprune",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "ids",
+              "type": "uint64[]"
+            }
+          ]
+        },
+        {
+          "name": "qregister",
+          "fields": [
+            {
+              "name": "request",
+              "type": "quick_registration"
+            },
+            {
+              "name": "proof",
+              "type": "bytes"
+            }
+          ]
+        },
+        {
+          "name": "qsubmit",
+          "fields": [
+            {
+              "name": "request",
+              "type": "quick_instruction"
+            },
+            {
+              "name": "proof",
+              "type": "bytes"
+            }
+          ]
+        },
+        {
+          "name": "scanram",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "table",
+              "type": "name"
+            },
+            {
+              "name": "limit",
+              "type": "uint32"
+            }
+          ]
+        }
+      ],
+      "tables": [
+        {
+          "name": "closechecks",
+          "fields": [
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "code_hash",
+              "type": "checksum256"
+            },
+            {
+              "name": "closing_at",
+              "type": "uint32"
+            },
+            {
+              "name": "stage",
+              "type": "uint8"
+            },
+            {
+              "name": "cursor",
+              "type": "uint64"
+            },
+            {
+              "name": "complete",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "name": "qaccounts",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uint64"
+            },
+            {
+              "name": "identity",
+              "type": "checksum256"
+            },
+            {
+              "name": "approval",
+              "type": "quick_anchor"
+            },
+            {
+              "name": "epoch",
+              "type": "uint64"
+            },
+            {
+              "name": "nonce",
+              "type": "uint64"
+            },
+            {
+              "name": "active",
+              "type": "bool"
+            },
+            {
+              "name": "deactivated_at",
+              "type": "uint32"
+            }
+          ]
+        },
+        {
+          "name": "qcfg",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uint64"
+            },
+            {
+              "name": "source",
+              "type": "name"
+            },
+            {
+              "name": "code_hash",
+              "type": "checksum256"
+            },
+            {
+              "name": "gateway",
+              "type": "permission_level"
+            },
+            {
+              "name": "maximum",
+              "type": "uint32"
+            },
+            {
+              "name": "records",
+              "type": "uint32"
+            },
+            {
+              "name": "next_id",
+              "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "ramcursors",
+          "fields": [
+            {
+              "name": "table",
+              "type": "name"
+            },
+            {
+              "name": "cursor",
+              "type": "uint64"
+            },
+            {
+              "name": "advanced",
+              "type": "bool"
+            },
+            {
+              "name": "complete",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "name": "ramoverlays",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uint64"
+            },
+            {
+              "name": "table",
+              "type": "name"
+            },
+            {
+              "name": "row",
+              "type": "uint64"
+            }
+          ]
+        },
+        {
+          "name": "rampayer",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
             }
           ]
         }

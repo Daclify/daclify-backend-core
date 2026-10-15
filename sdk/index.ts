@@ -18,6 +18,7 @@ export type { RuntimeActions, instruction } from './generated/runtime.js';
 export { RuntimeActionSchemas, RuntimeTableSchemas } from './generated/schemas.js';
 export { CoreContextActions } from './permissions.js';
 export * from './app-admission.js';
+export * from './quick-accounts.js';
 export {
   privateHandoverCommitment,
   exitInstructionDigest,
@@ -37,6 +38,7 @@ export {
 } from './names.js';
 export {
   bindingTypedData,
+  quickAccountTypedData,
   governanceTypedData,
   exitGovernanceTypedData,
   evmTypedDigest,

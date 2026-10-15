@@ -1,15 +1,19 @@
-// Preserve the deployed core18 compiler flags and hash for claim upgrade/rollback qualification.
+// Preserve each frozen release's compiler flags and hash for upgrade/rollback qualification.
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-const root = resolve('.artifacts/claim-upgrade18');
+const flags = process.argv.slice(2);
+if (flags.length && (flags.length !== 1 || flags[0] !== '--quick'))
+  throw Error('UPGRADE_FIXTURE_ARGUMENTS');
+const quick = flags[0] === '--quick';
+const root = resolve(quick ? '.artifacts/quick-account-upgrade27' : '.artifacts/claim-upgrade18');
 mkdirSync(root, { recursive: true });
 const archive = resolve(root, 'source.tar');
 execFileSync('git', [
   'archive',
   '--output=' + archive,
-  '59319aca8b4578a4322447413dd4380fd29d4054',
+  quick ? '1ecb7c4' : '59319aca8b4578a4322447413dd4380fd29d4054',
   'contracts',
 ]);
 execFileSync('tar', ['-xf', archive, '-C', root]);
@@ -55,7 +59,10 @@ execFileSync(
 if (
   createHash('sha256')
     .update(readFileSync(resolve(root, 'runtime.wasm')))
-    .digest('hex') !== 'e6aaeeccb949710444e0fe4ca32331ffeeb5a6eeae688a417ae3d22cd3469d95'
+    .digest('hex') !==
+  (quick
+    ? '53a25162f0984a19a9b52e692d196fed9fabd7362d34543c7069d0801e0996de'
+    : 'e6aaeeccb949710444e0fe4ca32331ffeeb5a6eeae688a417ae3d22cd3469d95')
 )
   throw Error('HISTORICAL_CLAIM_FIXTURE_HASH');
-console.log('Preserved core18 upgrade fixture matches the deployed WASM hash.');
+console.log('Preserved upgrade fixture matches its frozen WASM hash.');

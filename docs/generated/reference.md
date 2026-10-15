@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.15.0-alpha.27 · interface 1.
+Package 0.15.0-alpha.28 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -3254,6 +3254,129 @@ Source ABI JSON SHA-256: `0e0d996e5ac592ba29a1d1531a575d88d2370d314123b848932631
 | ram_bytes | uint32 |
 | net_stake | asset |
 | cpu_stake | asset |
+
+## quickauth contract
+
+Source ABI JSON SHA-256: `e2a8f74aa227dff447fb38ed85965cbb6180c445f23ec2f4c30f123159652ae9`.
+
+### Action: checkmig
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| kind | uint8 |
+
+### Action: qconfig
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| source | name |
+| code_hash | checksum256 |
+| gateway | permission_level |
+| maximum | uint32 |
+
+### Action: qdeactivate
+
+| Field | ABI type |
+| --- | --- |
+| request | quick_control |
+| proof | bytes |
+
+### Action: qdefault
+
+| Field | ABI type |
+| --- | --- |
+| request | quick_default |
+| proof | bytes |
+| incoming | bytes |
+
+### Action: qprune
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| ids | uint64[] |
+
+### Action: qregister
+
+| Field | ABI type |
+| --- | --- |
+| request | quick_registration |
+| proof | bytes |
+
+### Action: qsubmit
+
+| Field | ABI type |
+| --- | --- |
+| request | quick_instruction |
+| proof | bytes |
+
+### Action: scanram
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| table | name |
+| limit | uint32 |
+
+### Table: closechecks
+
+| Field | ABI type |
+| --- | --- |
+| dao_id | uint64 |
+| code_hash | checksum256 |
+| closing_at | uint32 |
+| stage | uint8 |
+| cursor | uint64 |
+| complete | bool |
+
+### Table: qaccounts
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| identity | checksum256 |
+| approval | quick_anchor |
+| epoch | uint64 |
+| nonce | uint64 |
+| active | bool |
+| deactivated_at | uint32 |
+
+### Table: qcfg
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| source | name |
+| code_hash | checksum256 |
+| gateway | permission_level |
+| maximum | uint32 |
+| records | uint32 |
+| next_id | uint64 |
+
+### Table: ramcursors
+
+| Field | ABI type |
+| --- | --- |
+| table | name |
+| cursor | uint64 |
+| advanced | bool |
+| complete | bool |
+
+### Table: ramoverlays
+
+| Field | ABI type |
+| --- | --- |
+| id | uint64 |
+| table | name |
+| row | uint64 |
+
+### Table: rampayer
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
 
 ## GET /v1/dao-claims/sign-in-approval
 

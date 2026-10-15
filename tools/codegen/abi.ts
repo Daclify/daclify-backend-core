@@ -10,10 +10,44 @@ const output = generateContract(
 mkdirSync('sdk/generated', { recursive: true });
 writeFileSync('sdk/generated/runtime.ts', output.types);
 writeFileSync('sdk/generated/schemas.ts', output.schemas);
-const appjoin = generateContract(readFileSync('.artifacts/contracts/appjoin.abi', 'utf8'), 'appjoin', '../../protocol/base.js');
+const appjoin = generateContract(
+  readFileSync('.artifacts/contracts/appjoin.abi', 'utf8'),
+  'appjoin',
+  '../../protocol/base.js',
+);
 writeFileSync('sdk/generated/appjoin.ts', appjoin.types);
 writeFileSync('sdk/generated/appjoin-schemas.ts', appjoin.schemas);
-writeFileSync('sdk/generated/appjoin-release.ts', `// Generated from compiled app admission artifact; do not edit.\nexport const AppJoinCodeHash='${createHash('sha256').update(readFileSync('.artifacts/contracts/appjoin.wasm')).digest('hex')}';\nexport const AppJoinRawAbiHash='${createHash('sha256').update(Serializer.encode({object:ABI.from(readFileSync('.artifacts/contracts/appjoin.abi','utf8'))}).array).digest('hex')}';\n`);
+writeFileSync(
+  'sdk/generated/appjoin-release.ts',
+  `// Generated from compiled app admission artifact; do not edit.\nexport const AppJoinCodeHash='${createHash('sha256').update(readFileSync('.artifacts/contracts/appjoin.wasm')).digest('hex')}';\nexport const AppJoinRawAbiHash='${createHash(
+    'sha256',
+  )
+    .update(
+      Serializer.encode({
+        object: ABI.from(readFileSync('.artifacts/contracts/appjoin.abi', 'utf8')),
+      }).array,
+    )
+    .digest('hex')}';\n`,
+);
+const quickauth = generateContract(
+  readFileSync('.artifacts/contracts/quickauth.abi', 'utf8'),
+  'quickauth',
+  '../../protocol/base.js',
+);
+writeFileSync('sdk/generated/quickauth.ts', quickauth.types);
+writeFileSync('sdk/generated/quickauth-schemas.ts', quickauth.schemas);
+writeFileSync(
+  'sdk/generated/quickauth-release.ts',
+  `// Generated from compiled Quick account artifact; do not edit.\nexport const QuickAuthCodeHash='${createHash('sha256').update(readFileSync('.artifacts/contracts/quickauth.wasm')).digest('hex')}';\nexport const QuickAuthRawAbiHash='${createHash(
+    'sha256',
+  )
+    .update(
+      Serializer.encode({
+        object: ABI.from(readFileSync('.artifacts/contracts/quickauth.abi', 'utf8')),
+      }).array,
+    )
+    .digest('hex')}';\n`,
+);
 const names = generateContract(
   readFileSync('.artifacts/contracts/names.abi', 'utf8'),
   'names',
