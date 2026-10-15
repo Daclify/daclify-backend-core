@@ -20,6 +20,7 @@ import {
 } from '../../protocol/api.js';
 import {
   ConnectedAppConfigSchema,
+  appConfigurationHash,
   AppTokenSchema,
   AppClaimsSchema,
 } from '../../protocol/connected-apps.js';
@@ -522,6 +523,89 @@ it('protects consent with frontend Origin and CSRF while app CORS grants no cook
     payload: {},
   });
   expect(root.statusCode).toBe(403);
+});
+it('allows a live mini-app after multiple pages of inactive same-origin registrations', async () => {
+  const origin = 'https://shared-apps.example';
+  await pool.query('TRUNCATE connected_apps CASCADE');
+  const configs = new Map<string, z.infer<typeof ConnectedAppConfigSchema>>();
+  for (let index = 1; index <= 129; index++) {
+    const id = '00000000-0000-4000-8000-' + String(index).padStart(12, '0');
+    const config = ConnectedAppConfigSchema.parse({
+      ...app().config,
+      dao: { ...dao, daoId: String(index) },
+      appId: '1',
+      origins: [origin],
+      redirectUris: [origin + '/callback'],
+      sourceApiBase: origin,
+    });
+    configs.set(id, config);
+    await pool.query(
+      'INSERT INTO connected_apps(id,chain_id,runtime,dao_id,app_id) VALUES($1,$2,$3,$4,1)',
+      [id, dao.chainId, dao.contract, config.dao.daoId],
+    );
+    await pool.query(
+      'INSERT INTO connected_app_configs(client_id,revision,config,config_hash) VALUES($1,1,$2,$3)',
+      [id, config, appConfigurationHash(config)],
+    );
+  }
+  // Place the live client beyond both the old arbitrary cap and the first ordered page.
+  const oldCandidates = z
+    .array(z.object({ id: z.uuid() }))
+    .parse(
+      (
+        await pool.query(
+          "SELECT DISTINCT client_id AS id FROM connected_app_configs WHERE config->'origins' ? $1 LIMIT 64",
+          [origin],
+        )
+      ).rows,
+    );
+  const live = [...configs.entries()]
+    .slice(64)
+    .find(([id]) => !oldCandidates.some((row) => row.id === id));
+  if (!live) throw new Error('Fixture live registration missing');
+  const [clientId, config] = live;
+  let enabled = true;
+  vi.spyOn(service.chain, 'registry').mockImplementation(async (daoId) =>
+    enabled && daoId === config.dao.daoId
+      ? [
+          RuntimeTableSchemas.appregs.parse({
+            id: '1',
+            revision: '1',
+            config_hash: appConfigurationHash(config),
+            target: 'activity',
+            enabled: true,
+            security_epoch: '1',
+          }),
+        ]
+      : [],
+  );
+  expect((await service.client(clientId)).clientId).toBe(clientId);
+  const preflight = await server.inject({
+    method: 'OPTIONS',
+    url: '/v1/connected-apps/token',
+    headers: {
+      origin,
+      'access-control-request-method': 'POST',
+      'access-control-request-headers': 'content-type',
+    },
+  });
+  expect(preflight.statusCode).toBe(204);
+  expect(preflight.headers['access-control-allow-origin']).toBe(origin);
+  expect(preflight.headers['access-control-allow-credentials']).toBeUndefined();
+  const access = await service.sourceAccess(account(2), clientId);
+  const userinfo = await server.inject({
+    method: 'GET',
+    url: '/v1/connected-apps/userinfo',
+    headers: { origin, authorization: 'Bearer ' + access.accessToken },
+  });
+  expect(userinfo.statusCode).toBe(200);
+  expect(AppClaimsSchema.parse(userinfo.json()).memberId).toBe('3');
+  await expect(service.access(access.accessToken, 'https://unregistered.example')).rejects.toThrow(
+    'APP_ORIGIN',
+  );
+  expect(await service.allowedOrigin('https://unregistered.example')).toBe(false);
+  enabled = false;
+  expect(await service.allowedOrigin(origin)).toBe(false);
 });
 it.each(['recordact', 'askreview'] as const)(
   'relays canonical %s ABI bytes over HTTP and rejects another app payload',

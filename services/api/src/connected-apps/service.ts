@@ -82,19 +82,27 @@ export class ConnectedApps {
       .sign(this.key);
   }
   async allowedOrigin(origin: string) {
-    const ids = await this.pool.query(
-      "SELECT DISTINCT client_id AS id FROM connected_app_configs WHERE config->'origins' ? $1 LIMIT 64",
-      [origin],
-    );
-    for (const row of ids.rows) {
-      try {
-        const client = await this.client(z.object({ id: z.uuid() }).parse(row).id);
-        if (client.config.origins.includes(origin)) return true;
-      } catch (error) {
-        if (!(error instanceof ApiError)) throw error;
+    let after: string | null = null;
+    for (;;) {
+      const ids: { id: string }[] = z.array(z.object({ id: z.uuid() })).parse(
+        (
+          await this.pool.query(
+            "SELECT DISTINCT client_id AS id FROM connected_app_configs WHERE config->'origins' ? $1 AND ($2::uuid IS NULL OR client_id > $2::uuid) ORDER BY client_id LIMIT 64",
+            [origin, after],
+          )
+        ).rows,
+      );
+      for (const row of ids) {
+        after = row.id;
+        try {
+          const client = await this.client(after);
+          if (client.config.origins.includes(origin)) return true;
+        } catch (error) {
+          if (!(error instanceof ApiError)) throw error;
+        }
       }
+      if (ids.length < 64) return false;
     }
-    return false;
   }
   discovery() {
     return {
