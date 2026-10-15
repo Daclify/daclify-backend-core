@@ -35,7 +35,7 @@ const ModuleDeploymentConfigSchema = z
       account: NativeAccountSchema,
     }),
   )
-  .max(6)
+  .max(7)
   .refine((rows) => new Set(rows.map((row) => row.id)).size === rows.length, 'Duplicate module');
 
 export type ModuleDeploymentConfig = z.infer<typeof ModuleDeploymentConfigSchema>;
