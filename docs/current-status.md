@@ -6,7 +6,7 @@ Audience: community members, DAO administrators, mini-app builders and operators
 
 The shared dev app is [testnet.app.daclify.com](https://testnet.app.daclify.com/); its [handbook](https://testnet.app.daclify.com/docs) displays the installed SDK/help versions. The public [network response](https://testnet.api.daclify.com/v1/network) identifies the API, chain, runtime and advertised capabilities. A capability name or package version alone does not verify a provider, client wallet or deployed contract hash.
 
-The shared testnet runs core/SDK `0.15.0-alpha.30`, modules `0.10.0-alpha.40`, frontend `0.15.0-alpha.41`, and MCP `0.1.0-alpha.20`. Contract interface remains 1. Runtime and module bytecode, catalogue/install pins, RAM observer and relay links were upgraded together; previous download cohorts remain available. Exact identities and verification are in the [trusted-contact deployment record](evidence/2026-10-15-trusted-contact-recovery-testnet.md). Consult the live API before relying on this dated checkpoint.
+The shared testnet runs core/SDK `0.15.0-alpha.31`, modules SDK/help `0.10.0-alpha.41` and frontend `0.15.0-alpha.42`. The independently pinned MCP package remains `0.1.0-alpha.20`. Contract interface remains 1. The [legal-template deployment record](evidence/2026-10-15-dao-legal-templates-testnet.md) identifies the current API/frontend cohort; native bytecode and permissions retain the [trusted-contact deployment](evidence/2026-10-15-trusted-contact-recovery-testnet.md). Previous download cohorts remain available. Consult the live API before relying on this dated checkpoint.
 
 ## Availability
 
@@ -14,6 +14,7 @@ The shared testnet runs core/SDK `0.15.0-alpha.30`, modules `0.10.0-alpha.40`, f
 | --- | --- | --- |
 | Accounts, paired sign-ins, DAO membership, approved actions and encrypted documents | Implemented; methods depend on service/client configuration | Sign-in, signing authority and private-content access are separate |
 | Quick signup and explicitly consented assisted recovery | Shared testnet uses labelled same-VM recovery | It does not survive loss of the VM by itself or qualify independent production recovery |
+| Guided DAO legal templates | Live: Documents → Create from template, with twelve curated drafts | Publication, registration, adoption and acceptance remain separate; templates do not establish legal suitability |
 | Trusted-contact account/document recovery | Available on shared testnet; choose three contacts in advance | Two approvals start a 48-hour wait; DAO document recovery defaults off; two contacts can decrypt backed-up keys together |
 | Wallet/passkey protected key unlock | Implemented behind client qualification | Ordinary wallet/passkey sign-in does not qualify protected key recovery |
 | Connected-app registration, sign-in and selected Community Activity | Implemented on testnet | Active DAO administration/module/signing prerequisites apply; detailed app data stays in the app |
@@ -24,7 +25,7 @@ The shared testnet runs core/SDK `0.15.0-alpha.30`, modules `0.10.0-alpha.40`, f
 | Account exit / hosted erasure orchestration | Implemented; currently disabled on shared testnet | Operator backup-retention and controlled-restore exclusion configuration is required before enablement |
 | Mainnet launch, universal provider/client support and independent recovery | Unqualified by this checkpoint | Development, local mocks and a same-host restore do not establish production readiness |
 
-The shared testnet recovery qualification has a freshly verified version-bound expiry of **21 October 2026, 20:41 UTC**. Operators must verify the actual current report and renew qualification before expiry. Unavailable recovery options must remain unavailable until their requirements are met.
+The shared testnet recovery qualification has a freshly verified version-bound expiry of **21 October 2026, 22:33 UTC**. Operators must verify the actual current report and renew qualification before expiry. Unavailable recovery options must remain unavailable until their requirements are met.
 
 ## Where to go next
 

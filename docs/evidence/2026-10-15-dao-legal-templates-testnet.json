@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 1,
+  "feature": "dao-legal-templates",
+  "scope": "shared-testnet",
+  "deployment": {
+    "status": "deployed",
+    "at": "2026-10-15T22:34:45.567Z",
+    "network": "testnet",
+    "coreVersion": "0.15.0-alpha.31",
+    "modulesVersion": "0.10.0-alpha.41",
+    "frontendVersion": "0.15.0-alpha.42",
+    "sources": {
+      "daclify-backend-core": "1a639c0c0620a5c5b25e4dd73ffbe0f9a5147b9d",
+      "daclify-backend-modules": "a2cdc7106d72ccfe605d7f65e63b32bf8310c9f1",
+      "daclify-frontend": "644dfdd163bc3f7bfab43f209771bdbf02887452"
+    },
+    "nativeCodeUnchanged": true,
+    "migrationsUnchanged": true,
+    "publicEntrySha256": "1b1a20248c01ece3d7eb5d22b4872362b494b287bafde2b1f03b16029982d609",
+    "priorEntrySha256": "66763b58a72a83c396e54cadca0f49b404123e68eb574a45b71f0044a622c93e",
+    "retainedHashedAssets": true,
+    "rollbackAvailable": true,
+    "recoveryQualified": true,
+    "miniRelease": "289d37c82fc44d9545c7696f8a9c0225381b1e521e160ddeed9009e47c93559b",
+    "mcpReleasePreserved": "ad170b5f2dd3c79da54c50bc9bac17f1786ac6bc59ec121b0197d813468a5d81"
+  },
+  "verification": {
+    "database": {
+      "status": "passed",
+      "at": "2026-10-15T22:33:11.460Z",
+      "backupSha256": "5ed813c92ce57cda31de1a1eb571404003dffe02c10e9cee76746419c1482963",
+      "backupBytes": 403809,
+      "preservedTables": 98,
+      "priorMigrations": 61,
+      "migration": "056_contact_recovery.sql",
+      "twiceApplied": true,
+      "sourceUntouched": true
+    },
+    "recovery": {
+      "status": "passed",
+      "kind": "testnet-local-restore",
+      "origin": "https://testnet.app.daclify.com",
+      "coreVersion": "0.15.0-alpha.31",
+      "independentHost": false,
+      "sourceUnavailable": true,
+      "sourceRemoved": false,
+      "originalKeyRecovered": true,
+      "leastPrivilegeDenials": 4,
+      "auditPlaintextExcluded": true,
+      "tlsVerified": true,
+      "providerVersion": "2.7.1",
+      "snapshotSha256": "6c2d2eb6016230bab98d5910bffdaf853362ecfb8a2b48c3459c49eb2bde5824",
+      "checkedAt": "2026-10-15T22:33:26.357Z"
+    },
+    "public": {
+      "status": "passed",
+      "at": "2026-10-15T22:36:46.155Z",
+      "coreVersion": "0.15.0-alpha.31",
+      "staticFilesMatched": 154,
+      "moduleHashesVerified": 7,
+      "runtimeHashVerified": true,
+      "downloadsVerified": 6,
+      "previousMiniReleaseAvailable": true,
+      "mcpReleasePreserved": true,
+      "testnetLockVerified": true,
+      "liveReadOnlyBrowser": [
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "status": "passed",
+          "errors": [],
+          "apiServerErrors": []
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "status": "passed",
+          "errors": [],
+          "apiServerErrors": []
+        }
+      ],
+      "signedLivePublication": "not run",
+      "externalWalletCeremonies": "not run"
+    },
+    "standardPublicBrowser": {
+      "status": "passed",
+      "viewports": [
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "result": "passed",
+          "requests": 30,
+          "errors": [],
+          "misplacedApiRequests": [],
+          "serverErrors": []
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "result": "passed",
+          "requests": 32,
+          "errors": [],
+          "misplacedApiRequests": [],
+          "serverErrors": []
+        }
+      ]
+    }
+  },
+  "frontendArtifact": {
+    "path": "/data/daclify-runtime/artifacts/2026-10-15-legal-templates/frontend-testnet-0.15.0-alpha.42.tgz",
+    "sha256": "5f98f865c6e1dbbdd1b4283eec1e5372f36e4f0f3f2000541d51965b32551f74"
+  },
+  "commands": [
+    "npm run build (staged core)",
+    "npm run package:mini-app-starter (staged core)",
+    "node --import=tsx database.mts (disposable restored PostgreSQL database)",
+    "NODE_EXTRA_CA_CERTS=<existing CA> node --import=tsx recovery-qualification/qualify.mts",
+    "NODE_EXTRA_CA_CERTS=<existing CA> node --import=tsx stage-env.mjs",
+    "node --check cutover.mjs && node cutover.mjs",
+    "LD_LIBRARY_PATH=<existing browser libs> npm run test:testnet-public",
+    "LD_LIBRARY_PATH=<existing browser libs> node .artifacts/legal-template-deploy-check.mjs"
+  ],
+  "liveEditorChecks": [
+    "twelve templates available on desktop and mobile",
+    "public DAO prefill and guided fields",
+    "edit an unpublished draft without hosted or native writes",
+    "anonymous publication remains disabled",
+    "draft text absent from browser storage",
+    "Constitution & legal available; anonymous registration disabled"
+  ],
+  "rollback": {
+    "directory": "/data/daclify-runtime/legal-templates-deploy-20261015/rollback",
+    "apiSource": "/data/daclify-runtime/releases/20261015-trusted-contact-recovery/daclify-backend-core",
+    "apiVersion": "0.15.0-alpha.30",
+    "frontendVersion": "0.15.0-alpha.41",
+    "matchingConfigCaptured": true,
+    "databaseCheckpointSha256": "1e5808292006948102850f74a4999b2060a9c32b7c64205eb908ac2ac47067ac",
+    "dataRestoreRequiredForOrdinaryRollback": false,
+    "retainNativeAndHostedRecords": true
+  },
+  "limits": [
+    "Shared testnet only; mainnet remains unqualified.",
+    "No new signed live publication, external wallet ceremony, or live storage-provider upload was performed.",
+    "Prior feature tests include synthetic provider faults and native fixtures; they are not live provider qualification.",
+    "Recovery restore is on the same VM, not independent host recovery.",
+    "Names oracle retains its existing snapshot; native code and permissions were not changed."
+  ],
+  "serverDisk": {
+    "availableBytes": 699150336,
+    "cleanupPerformed": false
+  },
+  "liveCheckScript": {
+    "preservedPath": "/data/daclify-runtime/legal-templates-deploy-20261015/legal-template-deploy-check.mjs",
+    "executedPath": "/data/daclify-frontend/.artifacts/legal-template-deploy-check.mjs",
+    "sha256": "1409dd055180c923f2e8477be911d511b250c5a274cc7722f52bda3697dd9c52"
+  },
+  "resolvedVerificationDiagnostics": [
+    "The ad hoc public checker first requested ModuleCodeHashes from the protocol entry; corrected to the released @daclify/modules/sdk export and rerun.",
+    "The final live editor check waits for loaded content, then opens and edits a real draft; a transient disabled control during loading was not accepted as editor validation."
+  ]
+}
