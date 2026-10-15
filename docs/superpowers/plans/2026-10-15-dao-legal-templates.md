@@ -151,13 +151,13 @@ Repository-relative paths below are prefixed `frontend/`, `core/`, `modules/` fo
 
 ## Delivery checklist
 
-- [ ] Twelve curated templates, source audit and complete placeholder coverage.
-- [ ] Guided filling, editable preview, explicit export/import and truthful draft persistence behavior.
-- [ ] Public/private publication and readable review of exact verified bytes, including allowed recovered grants and refused historical access.
-- [ ] Explicit, resumable registration/proposal/adoption and preserved member acceptance history.
-- [ ] Optional overview setup and safe new-Works-proposal handoff.
-- [ ] Matching help, passing relevant checks and complete evidence with no mocked/live ambiguity.
-- [ ] Reviewed `dev` changes and immutable deployment artifact; no unrequested live cutover.
+- [x] Twelve curated templates, source audit and complete placeholder coverage.
+- [x] Guided filling, editable preview, explicit export/import and truthful draft persistence behavior.
+- [x] Public/private publication and readable review of exact verified bytes, including allowed recovered grants and refused historical access.
+- [x] Explicit, resumable registration/proposal/adoption and preserved member acceptance history.
+- [x] Optional overview setup and safe new-Works-proposal handoff.
+- [x] Matching help, passing relevant checks and complete evidence with no mocked/live ambiguity.
+- [x] Reviewed `dev` changes and immutable deployment artifact; no unrequested live cutover.
 
 ## Planning review and execution handoff
 
@@ -166,3 +166,12 @@ Inline self-review maps source normalization to Tasks 1–2; editing/visibility/
 Latest-dev revalidation maps recovery disclosures/no hidden enrollment to Task 3, same-ID key invalidation to Tasks 3–5, additional grants/denied historical access to Task 4, current signers/stable published-record recovery to Task 5, and new release/optimizer/archive compatibility to Tasks 0/7. No additional feature task or native upgrade is needed.
 
 Plan/design writing is complete when their links, source hash, touched-file map and scope are checked. All application task checkboxes remain unchecked until implementation evidence exists. Execution, if requested, remains inline using `superpowers:executing-plans`; do not ask the user to choose delegation again. Legal suitability/external contract execution, mainnet and per-document audiences are not qualified by this plan.
+
+
+## Implementation disposition — 2026-10-15
+
+Tasks 0–7 are implemented and verified for development integration. The detailed acceptance matrix, exact source/package/native/static identities, commands and qualification limits are in [implementation evidence](../../evidence/2026-10-15-dao-legal-templates-implementation.md) and its companion JSON. The expanded scenario bullets above remain the original qualification checklist; they do not imply that every possible recovery ceremony, wallet GUI, provider fault or concurrency schedule was executed.
+
+Execution rulings: complete-register pagination is shared by the chooser/register; existing raw Library downloads are preserved; known post-upload native conflicts retain the original object and save its receipt before a new review. Producer help changes advance core/SDK to alpha31 and modules SDK to alpha41 while retaining native contract versions/hashes. Frontend alpha42 therefore needs the matching API/help cohort for rollout. The standalone MCP release remains independently pinned.
+
+All delivered-feature acceptance items below are covered by recorded checks. Live provider and full SQL-backed browser qualification are held explicitly; no production/mainnet qualification or deployment is implied. Deployment is the separate rollout checklist in the evidence document, not unfinished implementation work.
