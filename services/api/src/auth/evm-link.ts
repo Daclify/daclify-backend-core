@@ -1,3 +1,4 @@
+import type { QuickBallots } from '../quick-ballots/service.js';
 import { randomBytes, randomUUID } from 'node:crypto';
 import type { Pool, PoolClient } from 'pg';
 import { ApiError } from '../errors.js';
@@ -90,6 +91,7 @@ export async function finishEvmLink(
   chainId: TelosEvmChainId,
   address: string,
   signature: string,
+  quickWalletChange?: QuickBallots['walletChange'],
 ): Promise<EvmLink> {
   const claimed = address.toLowerCase();
   if (!/^0x[0-9a-f]{40}$/.test(claimed)) throw new ApiError('EVM_SIGNATURE_INVALID', 401);
@@ -116,6 +118,12 @@ export async function finishEvmLink(
           [accountId, chainId],
         )
       ).rows[0];
+      await quickWalletChange?.(
+        client,
+        accountId,
+        previous ? { kind: 'evm', chainId, address: previous.address } : null,
+        { kind: 'evm', chainId, address: recovered },
+      );
       await client.query(
         `INSERT INTO evm_links(account_id,chain_id,address,control_verified_at) VALUES($1,$2,$3,now())
          ON CONFLICT (account_id, chain_id) DO UPDATE SET address=EXCLUDED.address,control_verified_at=now(), created_at=now()`,
@@ -135,6 +143,7 @@ export async function unlinkEvm(
   pool: Pool,
   accountId: string,
   chainId: TelosEvmChainId,
+  quickWalletChange?: QuickBallots['walletChange'],
 ): Promise<void> {
   await withTransaction(pool, async (client) => {
     await client.query('SELECT id FROM accounts WHERE id=$1 FOR UPDATE', [accountId]);
@@ -145,6 +154,12 @@ export async function unlinkEvm(
       )
     ).rows[0];
     if (!row) throw new ApiError('EVM_UNKNOWN', 404);
+    await quickWalletChange?.(
+      client,
+      accountId,
+      { kind: 'evm', chainId, address: row.address },
+      null,
+    );
     await revokeCredentialSessions(client, accountId, `evm:${chainId}:${row.address}`);
   });
 }

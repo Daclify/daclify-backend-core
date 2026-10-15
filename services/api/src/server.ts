@@ -1,3 +1,5 @@
+import { registerQuickBallotRoutes } from './quick-ballots/routes.js';
+import type { QuickBallots } from './quick-ballots/service.js';
 import { registerDirectoryRoutes } from './mini-apps/directory-routes.js';
 import type { DirectoryService } from './mini-apps/directory.js';
 import { registerMcpSetupRoutes } from './mcp/setup.js';
@@ -123,6 +125,7 @@ export async function createServer(
   options: {
     profileKeys?: ProfileKeysConfiguration;
     accountExit?: AccountExit;
+    quickBallots?: QuickBallots;
     connectedApps?: ConnectedApps;
     mcpPairings?: McpPairings;
     mcpArtifacts?: McpArtifacts;
@@ -322,6 +325,7 @@ export async function createServer(
       throw new ApiError('CSRF_REQUIRED', 403);
     return account;
   }
+  registerQuickBallotRoutes(app, options.quickBallots, cookieName, session, spend);
   if (options.daoClaims)
     registerDaoClaimRoutes(
       app,
@@ -798,6 +802,7 @@ export async function createServer(
         ...(options.miniAppDirectory ? ['mini-app-directory-v1'] : []),
         ...(options.mcpOAuth ? ['community-mcp-http-v1'] : []),
         ...(options.accountExit ? ['account-exit-v1'] : []),
+        ...(options.quickBallots ? ['quick-ballots-v1'] : []),
         ...(profileKeys.enabled && network.capabilities.includes('encrypted-profiles-v2')
           ? ['profile-key-envelopes-v1']
           : []),
@@ -1392,7 +1397,7 @@ export async function createServer(
     sessionCookie,
     sharedProxyIps,
   );
-  registerEvmRoutes(app, pool, cookieName, session);
+  registerEvmRoutes(app, pool, cookieName, session, options.quickBallots?.walletChange.bind(options.quickBallots));
   registerVaultAttachRoutes(app, pool, origin, cookieName, session, sessionCookie, audience);
   registerAccountReconnectRoutes(
     app,
@@ -1414,6 +1419,7 @@ export async function createServer(
     chain.walletMemberships?.bind(chain),
     audience,
     sharedProxyIps,
+    options.quickBallots?.walletChange.bind(options.quickBallots),
   );
   registerNativeRoutes(
     app,
@@ -1428,6 +1434,7 @@ export async function createServer(
     audience,
     chain.nativeGovernanceWalletInUse?.bind(chain),
     sharedProxyIps,
+    options.quickBallots?.walletChange.bind(options.quickBallots),
   );
   registerTelosGovernanceRoutes(app, async () =>
     createTelosGovernanceClient(

@@ -1,3 +1,5 @@
+import { startQuickBallotWorker } from './quick-ballots/jobs.js';
+import { QuickBallots } from './quick-ballots/service.js';
 import {NativeAccountSchema} from '../../../protocol/base.js';
 import { governedDirectoryModeration } from './mini-apps/directory-moderation.js';
 import { DirectoryService } from './mini-apps/directory.js';
@@ -89,6 +91,7 @@ const configuration = z
     RUNTIME_ACCOUNT: z.string(),
     RELAY_ACCOUNT: z.string(),
     CORE_APP_ADMISSION_ACCOUNT: z.string().optional(),
+    QUICK_AUTHORITY_ACCOUNT: NativeAccountSchema.optional(),
     RELAY_PRIVATE_KEY: z.string(),
     RELAY_PERMISSION: z.enum(['active', 'operator']).default('active'),
     HUB_ACCOUNT: z.string().optional(),
@@ -152,6 +155,7 @@ const chain = new NativeChainGateway(
     hub: env.HUB_ACCOUNT ?? null,
     environment: env.NETWORK_ENVIRONMENT,
     relayActor: env.RELAY_ACCOUNT,
+    ...(env.QUICK_AUTHORITY_ACCOUNT ? {quickAuthority:env.QUICK_AUTHORITY_ACCOUNT}:{}),
     ...(env.CORE_APP_ADMISSION_ACCOUNT ? {appAdmission:NativeAccountSchema.parse(env.CORE_APP_ADMISSION_ACCOUNT)} : {}),
     relayKey: privateKey(env.RELAY_PRIVATE_KEY),
     relayPermission: env.RELAY_PERMISSION,
@@ -341,6 +345,7 @@ const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
   ...(mcpArtifacts ? { mcpArtifacts } : {}),
   ...(profileKeysConfiguration ? { profileKeys: profileKeysConfiguration } : {}),
   ...(accountExit ? { accountExit } : {}),
+  ...(chain.quickBallots ? {quickBallots:new QuickBallots(pool,chain.quickBallots,env.NETWORK_ENVIRONMENT==='mainnet'?40:41)}:{}),
   telosGovernance: readTelosPins(process.env),
   ...(connectedApps ? { connectedApps } : {}),
   ...(miniApps ? { miniApps } : {}),
@@ -373,6 +378,7 @@ const app = await createServer(pool, chain, env.FRONTEND_ORIGIN, {
 });
 await app.listen({ host: env.API_HOST, port: env.API_PORT });
 const authWorker = startAuthMaintenance(pool);
+const quickWorker=chain.quickBallots?startQuickBallotWorker(pool,chain.quickBallots):undefined;
 const daoClaimsWorker = startPollingWorker(
   async () => ((await daoClaims.cleanup()) ? 'progress' : 'idle'),
   'DAO_CLAIM_MAINTENANCE_UNAVAILABLE',
@@ -415,6 +421,7 @@ const retentionWorker = content?.retention.cleanupEnabled
 async function shutdown() {
   await app.close();
   await authWorker.stop();
+  await quickWorker?.stop();
   await daoClaimsWorker.stop();
   await mcpWorker?.stop();
   await directoryWorker?.stop();

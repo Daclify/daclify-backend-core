@@ -58,9 +58,9 @@ protocol's response-validity evidence. A retry cannot create a second response
 or increment participation twice. The final proof counts the latest accepted
 response for each account, excluding removed responses.
 
-The question, explanatory text, originating DAO, audience and closing rule are
-fixed after the first vote. Corrections then require a new, clearly identified
-ballot rather than changing what existing votes mean.
+The question, explanatory text, originating DAO, audience, closing rule and
+reader key snapshot are fixed at opening. This binds key-possession and response
+proofs to one immutable definition. Corrections require a new ballot.
 
 With a deadline, voting closes at that instant according to authoritative
 chain time. Express stored times in UTC and show them in the viewer's
@@ -69,7 +69,10 @@ the originating DAO's current executives can close the ballot manually. Other
 current executives can manage it if its creator leaves. Closure freezes voting;
 show a separate "Closed — awaiting verified result" state until the contract
 accepts the final tally proof. A missing/failed tally cannot reopen voting,
-produce invented totals or permit pruning.
+produce invented totals or permit early pruning. The confirmed 15 October
+policy permits cleanup without a tally after the same 30-day, irreversible
+closure, verified encrypted archive and independent-backup gates. Retain the
+frozen inputs, show "No verified result" and accept a valid late proof.
 
 The audience and vote domain include the operator, network, runtime and DAO
 references. The first version does not federate accounts or votes across
@@ -105,10 +108,11 @@ separate from the ordinary results display; its exact UI remains to be designed.
 
 The confirmed policy permits executive access to individual choices and
 requires public cryptographic verification of the final totals. As a proposed
-scope default, the authorized readers are the originating DAO's executives;
+scope, the authorized readers are the originating DAO's executives at opening;
 selecting another DAO as an audience does not grant its executives decryption
-rights. Voters retain access to their own responses. Define and show the reader
-policy before the first vote; do not add recipients silently afterward.
+rights. The user confirmed on 15 October that this snapshot remains fixed.
+New executives receive no automatic historic access; former readers may retain
+copied keys. Voters retain access to their own responses.
 
 Encrypt choices in the voter client before API submission, signing-request
 creation or publication. Private decryption keys and plaintext choices never go
@@ -197,9 +201,10 @@ The contract owns ballot creation, response changes/removal, proof verification,
 canonical final totals, closure and guarded vote-row pruning. Reuse core's
 authoritative identities, executive roles, membership, approved signing methods,
 funded RAM accounting and archive verification through qualified public
-interfaces. Keep one account and approval flow in the frontend. Do not introduce
-a separate identity registry or
-grant the contract treasury, role-assignment or arbitrary execution powers.
+interfaces. Keep one account and approval flow in the frontend. A small core-owned
+`quickauth` companion projects existing canonical account anchors into on-chain
+authorization for nonmember voters; it creates no second login/account system.
+Do not grant the voting contract treasury, role-assignment or arbitrary execution powers.
 
 This boundary separates account-wide and cross-DAO participation from Decide's
 formal governance and executable decisions. It permits a distinct upgrade and
@@ -230,7 +235,8 @@ Lifecycle implementing the confirmed retention policy:
    duplicate responses and support changes/removal.
    Never prune them while voting is open. An open-ended ballot retains this
    cost until it is closed.
-2. Verify the final tally proof and wait for irreversibility. Retain the bounded
+2. Freeze the complete response root, aggregate and count at closure and wait
+   for irreversibility. Verify a final tally proof when it is available. Retain the bounded
    question, originating DAO, audience, final up/down totals, closure metadata
    and proof/archive commitments on-chain. Old results should remain readable
    without replaying transaction history. A closed ballot cannot reopen, and
@@ -244,9 +250,10 @@ Lifecycle implementing the confirmed retention policy:
    eligible for removal in bounded, retry-safe batches, verifying archive
    proofs. Measure from the voting deadline for timed ballots, or the recorded
    manual closure time for open-ended ballots. A delayed finalization job does
-   not restart this clock. Pruning still requires an irreversible finalized
-   result and a verified archive with its backup; keep the rows longer if those
-   checks fail. A cleanup worker submits transactions; the contract does not
+   not restart this clock. Pruning still requires irreversible closure and a
+   verified encrypted archive with its independent backup; keep rows longer if
+   those checks fail. A missing tally leaves "No verified result" and preserves
+   every input needed for a valid late proof. A cleanup worker submits transactions; the contract does not
    run itself when a timer expires.
 
 Reclaiming table RAM makes it reusable by its payer. It does not erase past

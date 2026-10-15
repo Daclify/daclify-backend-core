@@ -1,3 +1,4 @@
+import type { QuickBallots } from '../quick-ballots/service.js';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { Pool } from 'pg';
 import {
@@ -12,6 +13,7 @@ export function registerEvmRoutes(
   pool: Pool,
   cookieName: string,
   session: (token: string | undefined, csrf?: string) => Promise<Account>,
+  quickWalletChange?: QuickBallots['walletChange'],
 ): void {
   function csrf(header: string | string[] | undefined): string {
     return typeof header === 'string' ? header : '';
@@ -30,12 +32,19 @@ export function registerEvmRoutes(
   app.post('/v1/account/evm/link', async (request) => {
     const current = await account(request);
     const input = LinkSchema.parse(request.body);
-    return finishEvmLink(pool, current.id, input.chainId, input.address, input.signature);
+    return finishEvmLink(
+      pool,
+      current.id,
+      input.chainId,
+      input.address,
+      input.signature,
+      quickWalletChange,
+    );
   });
   app.post('/v1/account/evm/unlink', async (request, reply) => {
     const current = await account(request);
     const input = ChainSchema.parse(request.body);
-    await unlinkEvm(pool, current.id, input.chainId);
+    await unlinkEvm(pool, current.id, input.chainId, quickWalletChange);
     return reply.code(204).send();
   });
 }

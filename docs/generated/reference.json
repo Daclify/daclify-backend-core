@@ -1,6 +1,6 @@
 {
   "producer": "core",
-  "packageVersion": "0.15.0-alpha.28",
+  "packageVersion": "0.15.0-alpha.29",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -43,7 +43,7 @@
         "Sign in with your Daclify keys or a previously paired supported email, Google, Telegram, passkey, Telos Zero account or Telos EVM wallet. A currently activated on-chain wallet can also reconstruct wallet-only access after the service database is lost. Signing in and recovering service access do not create membership or grant new permissions in a DAO. Provider availability depends on server configuration and verified client support. A configured Google browser button requires an already paired Google account; an implemented provider does not establish live sign-in qualification.",
         "The Telos network voting page offers explicit native-wallet signup. A fresh verified Telos Zero proof creates a wallet-only Daclify account and pairing before the external vote. Returning native login reuses that signup account without DAO membership. Existing pairings and vault keys are preserved; recovered wallet-only accounts still need their current on-chain membership. Signup grants no Daclify membership or private-document keys. Use Account and key setup before joining a new Daclify DAO.",
         "Adding or removing a sign-in method requires a fresh proof from existing Daclify keys or an already verified paired wallet, plus proof of the incoming credential. Review the exact credential before confirming. Removal revokes sessions opened with that credential; history is available in Account → Sign-in methods → Sign-in changes.",
-        "A paired native or EVM wallet can authorize governance after explicit activation for the same member in each DAO. It adds no member or voting weight. Full access also unlocks the document keys held by your same Daclify account; a wallet login alone cannot decrypt private documents.",
+        "A paired native or EVM wallet can authorize governance after explicit activation for the same member in each DAO. It adds no member or voting weight. Full access also unlocks the document keys held by your same Daclify account; a wallet login alone cannot decrypt private documents. Experimental Quick ballots reuse the account approval setup. The first registration freezes a public voting anchor for this account and runtime. Attaching vault keys or moving paired methods during a proved reconnect preserves that identity. Two already distinct voting identities cannot be merged by a database relink. Root approval enables one default wallet for account-wide voting without granting DAO spending authority. Every native request still requires its exact signed user intent; a sign-in session alone cannot forge a response. Participation remains publicly linkable and is not proof of one human per account.",
         "User-controlled accounts keep encrypted signing and decryption keys in your browser. Restore an encrypted kit using either the vault password saved with that kit or its separate recovery code, shown as the recovery credential during setup. Choose a new password for this device; the original signing and decryption keys stay the same. A publicly visible login signature cannot derive these keys. Explicitly enabled full-access methods can restore the original keys on another device, without a vault password.",
         "Managed recovery delegates signing and decryption recovery to an operator. Full-access methods and operator recovery need explicit consent. Availability comes from the current service configuration; the optional single-VM testnet mode is development recovery, while production requires independent service, audit, backup and restore qualification.",
         "Accounts with vault keys can share Account → Access & recovery → Public join identity with a DAO administrator. Never share recovery kits or their credentials. A saved service-to-member association can survive DAO signing-key rotation while its database exists; a lost mapping cannot make an old signing key current again. Current chain permissions and wallet bindings remain authoritative.",
@@ -7249,6 +7249,1803 @@
     }
   ],
   "api": [
+    {
+      "method": "GET",
+      "path": "/v1/me/quick-account",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean",
+                "const": false
+              },
+              "context": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "available",
+              "context"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "available": {
+                "type": "boolean",
+                "const": true
+              },
+              "context": {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "runtime": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "authority": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "authorityCodeHash": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "source": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "sourceCodeHash": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "gateway": {
+                    "type": "object",
+                    "properties": {
+                      "actor": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "permission": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      }
+                    },
+                    "required": [
+                      "actor",
+                      "permission"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "anchor": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "const": "key"
+                          },
+                          "publicKey": {
+                            "type": "string",
+                            "maxLength": 128
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "publicKey"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "const": "native"
+                          },
+                          "account": {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          },
+                          "permission": {
+                            "type": "string",
+                            "const": "active"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "account",
+                          "permission"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "const": "evm"
+                          },
+                          "chainId": {
+                            "anyOf": [
+                              {
+                                "type": "number",
+                                "const": 40
+                              },
+                              {
+                                "type": "number",
+                                "const": 41
+                              }
+                            ]
+                          },
+                          "address": {
+                            "type": "string",
+                            "pattern": "^0x[0-9a-fA-F]{40}$"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "chainId",
+                          "address"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "identity": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "frozen": {
+                    "type": "boolean"
+                  },
+                  "record": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "identity": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "approval": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 255
+                              },
+                              "credential": {
+                                "type": "string",
+                                "maxLength": 32768,
+                                "pattern": "^(?:[0-9a-f]{2})*$"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "credential"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "epoch": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "nonce": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "active": {
+                            "type": "boolean"
+                          },
+                          "deactivated_at": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "identity",
+                          "approval",
+                          "epoch",
+                          "nonce",
+                          "active",
+                          "deactivated_at"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "runtime",
+                  "authority",
+                  "authorityCodeHash",
+                  "source",
+                  "sourceCodeHash",
+                  "gateway",
+                  "anchor",
+                  "identity",
+                  "frozen",
+                  "record"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "available",
+              "context"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/me/quick-account/prepare",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "expectedIdentity": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "intent": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "operation": {
+                    "type": "string",
+                    "const": "register"
+                  }
+                },
+                "required": [
+                  "operation"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operation": {
+                    "type": "string",
+                    "const": "default"
+                  },
+                  "method": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "const": "native"
+                              },
+                              "account": {
+                                "type": "string",
+                                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                              },
+                              "permission": {
+                                "type": "string",
+                                "const": "active"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "account",
+                              "permission"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "string",
+                                "const": "evm"
+                              },
+                              "chainId": {
+                                "anyOf": [
+                                  {
+                                    "type": "number",
+                                    "const": 40
+                                  },
+                                  {
+                                    "type": "number",
+                                    "const": 41
+                                  }
+                                ]
+                              },
+                              "address": {
+                                "type": "string",
+                                "pattern": "^0x[0-9a-fA-F]{40}$"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "chainId",
+                              "address"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "operation",
+                  "method"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operation": {
+                    "type": "string",
+                    "const": "submit"
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "respond",
+                      "remove"
+                    ]
+                  },
+                  "data": {
+                    "type": "string",
+                    "maxLength": 8192,
+                    "pattern": "^(?:[0-9a-f]{2})*$"
+                  },
+                  "useDefault": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "operation",
+                  "action",
+                  "data",
+                  "useDefault"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "operation": {
+                    "type": "string",
+                    "const": "deactivate"
+                  },
+                  "useDefault": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "operation",
+                  "useDefault"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "required": [
+          "expectedIdentity",
+          "intent"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "const": "qregister"
+              },
+              "request": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65535
+                  },
+                  "chain_id": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "runtime": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "authority": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "anchor": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 255
+                      },
+                      "credential": {
+                        "type": "string",
+                        "maxLength": 32768,
+                        "pattern": "^(?:[0-9a-f]{2})*$"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "credential"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "account_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "epoch": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "expires": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4294967295
+                  }
+                },
+                "required": [
+                  "version",
+                  "chain_id",
+                  "runtime",
+                  "authority",
+                  "anchor",
+                  "account_id",
+                  "epoch",
+                  "expires"
+                ],
+                "additionalProperties": false
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "context": {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "runtime": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "authority": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "authorityCodeHash": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "source": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "sourceCodeHash": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "gateway": {
+                    "type": "object",
+                    "properties": {
+                      "actor": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "permission": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      }
+                    },
+                    "required": [
+                      "actor",
+                      "permission"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "anchor": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "const": "key"
+                          },
+                          "publicKey": {
+                            "type": "string",
+                            "maxLength": 128
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "publicKey"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "const": "native"
+                          },
+                          "account": {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          },
+                          "permission": {
+                            "type": "string",
+                            "const": "active"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "account",
+                          "permission"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "const": "evm"
+                          },
+                          "chainId": {
+                            "anyOf": [
+                              {
+                                "type": "number",
+                                "const": 40
+                              },
+                              {
+                                "type": "number",
+                                "const": 41
+                              }
+                            ]
+                          },
+                          "address": {
+                            "type": "string",
+                            "pattern": "^0x[0-9a-fA-F]{40}$"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "chainId",
+                          "address"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "identity": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "frozen": {
+                    "type": "boolean"
+                  },
+                  "record": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "identity": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "approval": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 255
+                              },
+                              "credential": {
+                                "type": "string",
+                                "maxLength": 32768,
+                                "pattern": "^(?:[0-9a-f]{2})*$"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "credential"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "epoch": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "nonce": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "active": {
+                            "type": "boolean"
+                          },
+                          "deactivated_at": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "identity",
+                          "approval",
+                          "epoch",
+                          "nonce",
+                          "active",
+                          "deactivated_at"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "runtime",
+                  "authority",
+                  "authorityCodeHash",
+                  "source",
+                  "sourceCodeHash",
+                  "gateway",
+                  "anchor",
+                  "identity",
+                  "frozen",
+                  "record"
+                ],
+                "additionalProperties": false
+              },
+              "expiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              }
+            },
+            "required": [
+              "action",
+              "request",
+              "id",
+              "context",
+              "expiresAt"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "const": "qdefault"
+              },
+              "request": {
+                "type": "object",
+                "properties": {
+                  "control": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 65535
+                      },
+                      "chain_id": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "runtime": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "authority": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "anchor": {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 255
+                          },
+                          "credential": {
+                            "type": "string",
+                            "maxLength": 32768,
+                            "pattern": "^(?:[0-9a-f]{2})*$"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "credential"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "account_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "epoch": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "nonce": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "expires": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 4294967295
+                      },
+                      "use_default": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "chain_id",
+                      "runtime",
+                      "authority",
+                      "anchor",
+                      "account_id",
+                      "epoch",
+                      "nonce",
+                      "expires",
+                      "use_default"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "method": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 255
+                      },
+                      "credential": {
+                        "type": "string",
+                        "maxLength": 32768,
+                        "pattern": "^(?:[0-9a-f]{2})*$"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "credential"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "control",
+                  "method"
+                ],
+                "additionalProperties": false
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "context": {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "runtime": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "authority": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "authorityCodeHash": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "source": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "sourceCodeHash": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "gateway": {
+                    "type": "object",
+                    "properties": {
+                      "actor": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "permission": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      }
+                    },
+                    "required": [
+                      "actor",
+                      "permission"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "anchor": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "const": "key"
+                          },
+                          "publicKey": {
+                            "type": "string",
+                            "maxLength": 128
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "publicKey"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "const": "native"
+                          },
+                          "account": {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          },
+                          "permission": {
+                            "type": "string",
+                            "const": "active"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "account",
+                          "permission"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "const": "evm"
+                          },
+                          "chainId": {
+                            "anyOf": [
+                              {
+                                "type": "number",
+                                "const": 40
+                              },
+                              {
+                                "type": "number",
+                                "const": 41
+                              }
+                            ]
+                          },
+                          "address": {
+                            "type": "string",
+                            "pattern": "^0x[0-9a-fA-F]{40}$"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "chainId",
+                          "address"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "identity": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "frozen": {
+                    "type": "boolean"
+                  },
+                  "record": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "identity": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "approval": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 255
+                              },
+                              "credential": {
+                                "type": "string",
+                                "maxLength": 32768,
+                                "pattern": "^(?:[0-9a-f]{2})*$"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "credential"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "epoch": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "nonce": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "active": {
+                            "type": "boolean"
+                          },
+                          "deactivated_at": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "identity",
+                          "approval",
+                          "epoch",
+                          "nonce",
+                          "active",
+                          "deactivated_at"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "runtime",
+                  "authority",
+                  "authorityCodeHash",
+                  "source",
+                  "sourceCodeHash",
+                  "gateway",
+                  "anchor",
+                  "identity",
+                  "frozen",
+                  "record"
+                ],
+                "additionalProperties": false
+              },
+              "expiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              }
+            },
+            "required": [
+              "action",
+              "request",
+              "id",
+              "context",
+              "expiresAt"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "const": "qsubmit"
+              },
+              "request": {
+                "type": "object",
+                "properties": {
+                  "control": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 65535
+                      },
+                      "chain_id": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "runtime": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "authority": {
+                        "type": "string",
+                        "maxLength": 13
+                      },
+                      "anchor": {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 255
+                          },
+                          "credential": {
+                            "type": "string",
+                            "maxLength": 32768,
+                            "pattern": "^(?:[0-9a-f]{2})*$"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "credential"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "account_id": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "epoch": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "nonce": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "expires": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 4294967295
+                      },
+                      "use_default": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "chain_id",
+                      "runtime",
+                      "authority",
+                      "anchor",
+                      "account_id",
+                      "epoch",
+                      "nonce",
+                      "expires",
+                      "use_default"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "target": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "action": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "code_hash": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "data": {
+                    "type": "string",
+                    "maxLength": 32768,
+                    "pattern": "^(?:[0-9a-f]{2})*$"
+                  }
+                },
+                "required": [
+                  "control",
+                  "target",
+                  "action",
+                  "code_hash",
+                  "data"
+                ],
+                "additionalProperties": false
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "context": {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "runtime": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "authority": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "authorityCodeHash": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "source": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "sourceCodeHash": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "gateway": {
+                    "type": "object",
+                    "properties": {
+                      "actor": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "permission": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      }
+                    },
+                    "required": [
+                      "actor",
+                      "permission"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "anchor": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "const": "key"
+                          },
+                          "publicKey": {
+                            "type": "string",
+                            "maxLength": 128
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "publicKey"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "const": "native"
+                          },
+                          "account": {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          },
+                          "permission": {
+                            "type": "string",
+                            "const": "active"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "account",
+                          "permission"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "const": "evm"
+                          },
+                          "chainId": {
+                            "anyOf": [
+                              {
+                                "type": "number",
+                                "const": 40
+                              },
+                              {
+                                "type": "number",
+                                "const": 41
+                              }
+                            ]
+                          },
+                          "address": {
+                            "type": "string",
+                            "pattern": "^0x[0-9a-fA-F]{40}$"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "chainId",
+                          "address"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "identity": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "frozen": {
+                    "type": "boolean"
+                  },
+                  "record": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "identity": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "approval": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 255
+                              },
+                              "credential": {
+                                "type": "string",
+                                "maxLength": 32768,
+                                "pattern": "^(?:[0-9a-f]{2})*$"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "credential"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "epoch": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "nonce": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "active": {
+                            "type": "boolean"
+                          },
+                          "deactivated_at": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "identity",
+                          "approval",
+                          "epoch",
+                          "nonce",
+                          "active",
+                          "deactivated_at"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "runtime",
+                  "authority",
+                  "authorityCodeHash",
+                  "source",
+                  "sourceCodeHash",
+                  "gateway",
+                  "anchor",
+                  "identity",
+                  "frozen",
+                  "record"
+                ],
+                "additionalProperties": false
+              },
+              "expiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              }
+            },
+            "required": [
+              "action",
+              "request",
+              "id",
+              "context",
+              "expiresAt"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "const": "qdeactivate"
+              },
+              "request": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65535
+                  },
+                  "chain_id": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "runtime": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "authority": {
+                    "type": "string",
+                    "maxLength": 13
+                  },
+                  "anchor": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 255
+                      },
+                      "credential": {
+                        "type": "string",
+                        "maxLength": 32768,
+                        "pattern": "^(?:[0-9a-f]{2})*$"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "credential"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "account_id": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "epoch": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "nonce": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "expires": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 4294967295
+                  },
+                  "use_default": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "version",
+                  "chain_id",
+                  "runtime",
+                  "authority",
+                  "anchor",
+                  "account_id",
+                  "epoch",
+                  "nonce",
+                  "expires",
+                  "use_default"
+                ],
+                "additionalProperties": false
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "context": {
+                "type": "object",
+                "properties": {
+                  "chainId": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "runtime": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "authority": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "authorityCodeHash": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "source": {
+                    "type": "string",
+                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                  },
+                  "sourceCodeHash": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "gateway": {
+                    "type": "object",
+                    "properties": {
+                      "actor": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      },
+                      "permission": {
+                        "type": "string",
+                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                      }
+                    },
+                    "required": [
+                      "actor",
+                      "permission"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "anchor": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "const": "key"
+                          },
+                          "publicKey": {
+                            "type": "string",
+                            "maxLength": 128
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "publicKey"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "const": "native"
+                          },
+                          "account": {
+                            "type": "string",
+                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                          },
+                          "permission": {
+                            "type": "string",
+                            "const": "active"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "account",
+                          "permission"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "type": "string",
+                            "const": "evm"
+                          },
+                          "chainId": {
+                            "anyOf": [
+                              {
+                                "type": "number",
+                                "const": 40
+                              },
+                              {
+                                "type": "number",
+                                "const": 41
+                              }
+                            ]
+                          },
+                          "address": {
+                            "type": "string",
+                            "pattern": "^0x[0-9a-fA-F]{40}$"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "chainId",
+                          "address"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "identity": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "frozen": {
+                    "type": "boolean"
+                  },
+                  "record": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "identity": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "approval": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 255
+                              },
+                              "credential": {
+                                "type": "string",
+                                "maxLength": 32768,
+                                "pattern": "^(?:[0-9a-f]{2})*$"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "credential"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "epoch": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "nonce": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "active": {
+                            "type": "boolean"
+                          },
+                          "deactivated_at": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 4294967295
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "identity",
+                          "approval",
+                          "epoch",
+                          "nonce",
+                          "active",
+                          "deactivated_at"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "chainId",
+                  "runtime",
+                  "authority",
+                  "authorityCodeHash",
+                  "source",
+                  "sourceCodeHash",
+                  "gateway",
+                  "anchor",
+                  "identity",
+                  "frozen",
+                  "record"
+                ],
+                "additionalProperties": false
+              },
+              "expiresAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              }
+            },
+            "required": [
+              "action",
+              "request",
+              "id",
+              "context",
+              "expiresAt"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "helpTopic": "accounts"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/me/quick-account/submit",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "proof": {
+            "type": "string",
+            "maxLength": 132,
+            "pattern": "^(?:[0-9a-f]{2})*$"
+          },
+          "incoming": {
+            "type": "string",
+            "maxLength": 130,
+            "pattern": "^(?:[0-9a-f]{2})*$"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "native": {
+            "type": "object",
+            "properties": {
+              "packedTransaction": {
+                "type": "string",
+                "pattern": "^(?:[0-9a-f]{2}){1,4096}$"
+              },
+              "signatures": {
+                "minItems": 1,
+                "maxItems": 8,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 160
+                }
+              }
+            },
+            "required": [
+              "packedTransaction",
+              "signatures"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "proof",
+          "incoming",
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "transactionId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "pending"
+            ]
+          }
+        },
+        "required": [
+          "transactionId",
+          "state"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "accounts"
+    },
     {
       "method": "GET",
       "path": "/v1/dao-claims/sign-in-approval",

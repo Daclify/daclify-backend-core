@@ -9,16 +9,15 @@ if (
   'cdt-cpp version 4.1.1'
 )
   throw new Error('PINNED_CDT_REQUIRED');
-mkdirSync('.artifacts/ballot-proof', { recursive: true });
 mkdirSync('.artifacts/contracts', { recursive: true });
 for (const contract of ['boot', 'ballotprobe']) {
-  const directory = contract === 'boot' ? '.artifacts/contracts' : '.artifacts/ballot-proof';
+  const directory = '.artifacts/contracts';
   execFileSync(
     compiler,
     [
       `contracts/${contract}/${contract}.cpp`,
       '-O=s',
-      ...(contract === 'ballotprobe' ? ['-std=c++2a'] : []),
+      ...(contract === 'ballotprobe' ? ['-std=c++2a', '-I', 'node_modules/@daclify/modules/contracts/common'] : []),
       '-o',
       `${directory}/${contract}.wasm`,
       '--abigen',

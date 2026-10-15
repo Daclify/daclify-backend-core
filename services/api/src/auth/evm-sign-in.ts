@@ -1,3 +1,4 @@
+import type { QuickBallots } from '../quick-ballots/service.js';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import type { Pool } from 'pg';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
@@ -34,6 +35,7 @@ export function registerEvmSignInRoutes(
   discover?: (wallet: WalletIdentity) => Promise<UserMembership[]>,
   audience: string = origin,
   sharedProxyIps: readonly string[] = [],
+  quickWalletChange?: QuickBallots['walletChange'],
 ): void {
   const secure = new URL(origin).protocol === 'https:',
     attemptCookie = secure ? '__Host-daclify_evm_attempt' : 'daclify_evm_attempt',
@@ -135,6 +137,12 @@ export function registerEvmSignInRoutes(
             [current.id, chainId],
           )
         ).rows[0];
+        await quickWalletChange?.(
+          client,
+          current.id,
+          previous ? { kind: 'evm', chainId, address: previous.address } : null,
+          { kind: 'evm', chainId, address: row.address },
+        );
         await client.query(
           'INSERT INTO evm_links(account_id,chain_id,address,control_verified_at) VALUES($1,$2,$3,now()) ON CONFLICT(account_id,chain_id) DO UPDATE SET address=EXCLUDED.address,control_verified_at=now(),created_at=now()',
           [current.id, chainId, row.address],

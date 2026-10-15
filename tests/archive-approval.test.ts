@@ -140,6 +140,28 @@ beforeEach(async () => {
   );
   await send(runtime, 'setarchcfg', ['bob', 7776000, false], domain.contract + '@active');
 });
+it.each([
+  ['quick-ballot-responses', 'qresponses'],
+  ['quick-ballot-grants', 'qgrants'],
+])(
+  'accepts %s only for a platform-qualified Quick source and its exact table',
+  async (kind, table) => {
+    const value = descriptor(),
+      family = value.families[0];
+    if (!family) throw Error('ARCHIVE_FIXTURE_FAMILY');
+    const quick = { ...value, families: [{ ...family, kind, table }] };
+    await expect(attest(quick)).rejects.toThrow('ARCHIVE_FAMILY_PROTECTED');
+    await send(runtime, 'setlifecode', ['permprobe', codeHash, 9], domain.contract + '@active');
+    await send(runtime, 'setmodule', [1, 'permprobe', 1, [], [], '00'.repeat(32)], 'alice@active');
+    expect(
+      row(runtime, 'modules', 1n, BigInt(Name.from('permprobe').value.toString())),
+    ).toMatchObject({ code_hash: codeHash, actions: [], grants: [] });
+    await attest(quick);
+    await expect(
+      attest({ ...quick, families: [{ ...quick.families[0], ...family, kind, table: 'members' }] }),
+    ).rejects.toThrow('ARCHIVE_FAMILY_PROTECTED');
+  },
+);
 it('separates availability attestation from exact signed administrator approval and revocation', async () => {
   await expect(attest(descriptor(), 'relay')).rejects.toThrow();
   await attest();

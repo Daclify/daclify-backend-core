@@ -1,3 +1,4 @@
+import { NativeQuickBallots } from './quick-ballots/chain.js';
 import { makeBallotExport } from '@daclify/modules/sdk';
 import type { BallotExport } from '@daclify/modules';
 import { checkNativeAuthority } from './auth/native-proof.js';
@@ -19,7 +20,7 @@ import {
   type ContentPageQuery,
   type DaoContent,
 } from '../../../protocol/content.js';
-import { waitForIrreversibleBlock } from './chain-confirmation.js';
+import { waitForIrreversibleBlock, reconcileChainSubmission } from './chain-confirmation.js';
 import { createRpcClient } from './rpc.js';
 import {
   TreasurySchema,
@@ -186,6 +187,7 @@ export interface NativeChainConfig {
   relayKey: PrivateKey;
   relayPermission?: 'active' | 'operator';
   appAdmission?: string;
+  quickAuthority?: string;
   bootstrap?: { owner: string; key: PrivateKey };
   modules?: ReadonlyArray<{ id: ModuleDeployment['id']; account: string }>;
 }
@@ -497,6 +499,7 @@ export class NativeChainGateway implements ChainGateway {
       );
     },
   };
+  readonly quickBallots?: NativeQuickBallots;
   private readonly api: APIClient;
   constructor(
     private readonly config: NativeChainConfig,
@@ -515,6 +518,13 @@ export class NativeChainGateway implements ChainGateway {
     )
       throw new Error('Chain RPC requires TLS outside local tests');
     this.api = createRpcClient(config.rpcUrl);
+    if(config.quickAuthority) {
+      if(config.environment==='mainnet') throw new Error('QUICK_TESTNET_ONLY');
+      const source=config.modules?.find(module=>module.id==='quick-ballots')?.account;
+      if(!source) throw new Error('QUICK_CONFIGURATION_INVALID');
+      this.quickBallots=new NativeQuickBallots({rpcUrl:config.rpcUrl,chainId:config.chainId,runtime:config.runtime,authority:config.quickAuthority,source,gateway:{actor:config.relayActor,permission:config.relayPermission??'active'}},{key:config.relayKey,resources:()=>this.assertResources(config.relayActor),confirm:block=>this.confirmBlock(block)});
+    }
+
   }
   private async reviewedRuntime(runtime: string) {
     const response = await fetch(this.config.rpcUrl + '/v1/chain/get_info', {
@@ -4459,56 +4469,7 @@ export class NativeChainGateway implements ChainGateway {
   ): Promise<{ state: 'confirmed' | 'pending' | 'unavailable'; cursor: number }> {
     const { packet } = await this.exitPacket(input, scoped);
     await this.reviewedRuntime(this.config.runtime);
-    try {
-      const result = await this.api.v1.chain.get_transaction_status(packet.transactionId);
-      if (result.state === 'IRREVERSIBLE') return { state: 'confirmed', cursor: packet.cursor };
-    } catch {
-      /* Nodes may not enable finality tracking; reconcile the exact ID in irreversible blocks. */
-    }
-    const info = await this.api.v1.chain.get_info();
-    if (info.chain_id.toString() !== this.config.chainId)
-      throw new ApiError('CHAIN_ID_MISMATCH', 503);
-    const end = Math.min(
-      Number(info.last_irreversible_block_num),
-      packet.firstBlock + 128,
-      packet.cursor + 24,
-    );
-    for (let cursor = packet.cursor; cursor <= end; cursor++) {
-      const value = await this.api.call({
-        path: '/v1/chain/get_block',
-        params: { block_num_or_id: cursor },
-      });
-      const block = z
-        .object({
-          block_num: z.int(),
-          timestamp: z.string(),
-          transactions: z.array(
-            z.object({
-              status: z.string(),
-              trx: z.union([z.string(), z.object({ id: ChainIdSchema })]),
-            }),
-          ),
-        })
-        .parse(value);
-      if (block.block_num !== cursor) throw new ApiError('EXIT_RECEIPT', 503);
-      if (
-        block.transactions.some(
-          (item) =>
-            (typeof item.trx === 'string' ? item.trx : item.trx.id) === packet.transactionId &&
-            item.status === 'executed',
-        )
-      )
-        return { state: 'confirmed', cursor };
-      if (
-        Date.parse(block.timestamp + (block.timestamp.endsWith('Z') ? '' : 'Z')) >
-        Date.parse(packet.expiresAt)
-      )
-        return { state: 'unavailable', cursor };
-    }
-    return {
-      state: packet.cursor >= packet.firstBlock + 128 ? 'unavailable' : 'pending',
-      cursor: end >= packet.cursor ? end + 1 : packet.cursor,
-    };
+    return reconcileChainSubmission(this.api, this.config.chainId, packet);
   }
   private async checkRelayAuthority(
     account: Account,

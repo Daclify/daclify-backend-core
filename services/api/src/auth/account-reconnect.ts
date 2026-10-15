@@ -241,6 +241,7 @@ export async function reconnectAccounts(
         UNION ALL SELECT 1 FROM asset_uploads s JOIN asset_uploads t ON s.request_id=t.request_id WHERE s.account_id=$1 AND t.account_id IN (SELECT account_scope($2))
         UNION ALL SELECT 1 FROM archive_exports s JOIN archive_exports t ON s.request_id=t.request_id WHERE s.requested_by=$1 AND t.requested_by IN (SELECT account_scope($2))
         UNION ALL SELECT 1 FROM vault_recovery_methods WHERE account_id=$1
+        UNION ALL SELECT 1 FROM quick_account_anchors s JOIN quick_account_anchors t USING(chain_id,runtime) WHERE s.account_id=$1 AND t.account_id=$2
         UNION ALL SELECT 1 FROM quick_signup_pending_accounts WHERE account_id=ANY($3::uuid[])`,
         [current.id, target.id, ids],
       );
@@ -252,6 +253,7 @@ export async function reconnectAccounts(
         'evm_links',
         'memberships',
         'connected_app_subjects',
+        'quick_account_anchors',
       ])
         await db.query(`UPDATE ${table} SET account_id=$2 WHERE account_id=$1`, [
           current.id,

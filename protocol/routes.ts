@@ -53,7 +53,9 @@ import {
 } from './resources.js';
 import { StorageCurationRoutes } from './storage-retention.js';
 import { ModuleFeeRoutes } from './module-fees.js';
+import { QuickAccountRoutes } from './quick-accounts.js';
 export const ApiRoutes = {
+  ...QuickAccountRoutes,
   ...DaoClaimRoutes,
   ...ProfileRoutes,
   ...AccountExitRoutes,

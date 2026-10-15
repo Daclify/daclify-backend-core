@@ -15,6 +15,7 @@ import {
   proveBallotTally,
 } from '../helpers/ballot-proof.js';
 
+const artifact = z.enum(['.artifacts/contracts/ballotprobe', '.artifacts/ballot-proof/ballotprobe']).parse(process.env.DACLIFY_BALLOT_PROOF_ARTIFACT ?? '.artifacts/contracts/ballotprobe');
 const pointHex = z.string().regex(/^[0-9a-f]{192}$/);
 const scalarHex = z.string().regex(/^[0-9a-f]{64}$/);
 const vectors = z
@@ -112,7 +113,7 @@ describe('private ballot native proof qualification', () => {
       if (attempt === 49) throw new Error('PROBE_BLS_ACTIVATION_TIMEOUT');
       await new Promise<void>((resolve) => setTimeout(resolve, 100));
     }
-    abi = await f.deploy('ballotprobe', '.artifacts/ballot-proof/ballotprobe');
+    abi = await f.deploy('ballotprobe', artifact);
     initialRam = (await f.api.v1.chain.get_account('ballotprobe')).ram_usage.toString();
   }, 60000);
 
@@ -361,8 +362,8 @@ describe('private ballot native proof qualification', () => {
     expect(measurements.every((row) => row.cpuUs >= 0)).toBe(true);
     const output = process.env.DACLIFY_BALLOT_PROOF_REPORT;
     if (output) {
-      const wasm = readFileSync('.artifacts/ballot-proof/ballotprobe.wasm');
-      const rawAbi = readFileSync('.artifacts/ballot-proof/ballotprobe.abi');
+      const wasm = readFileSync(artifact + '.wasm');
+      const rawAbi = readFileSync(artifact + '.abi');
       const observed = await f.api.v1.chain.get_raw_abi('ballotprobe');
       const codeHash = createHash('sha256').update(wasm).digest('hex');
       expect(observed.code_hash.toString()).toBe(codeHash);

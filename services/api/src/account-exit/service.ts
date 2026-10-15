@@ -1,3 +1,4 @@
+import { requireQuickDeactivation } from '../quick-ballots/accounts.js';
 import type { MiniAppCleanup } from '../mini-apps/cleanup.js';
 import { reconcileHostedClosure, type HostedClosureReconciliation } from './hosted-closure.js';
 import {
@@ -362,6 +363,7 @@ export class AccountExit {
       }
       await this.configuration.appCleanup?.freeze(db, id);
       if (intent.mode === 'delete-account') {
+        await requireQuickDeactivation(db, ids, this.chain.quickBallots);
         await db.query(
           'UPDATE sessions SET revoked_at=now() WHERE account_id=ANY($1::uuid[]) AND revoked_at IS NULL',
           [ids],

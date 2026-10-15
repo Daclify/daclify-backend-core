@@ -1162,11 +1162,17 @@ private:
     check(manifest.format_version==1&&manifest.chain_id==configuration().chain_id&&manifest.runtime==get_self()&&manifest.dao_id==dao_id&&manifest.source.value,"ARCHIVE_DOMAIN");
     check(manifest.families.size()==1&&manifest.files.size()<=archive_max_leaves,"ARCHIVE_FAMILY_PROTECTED");
     ram_observer_settings observer(get_self(),get_self().value);check(observer.exists()&&observer.get().runtime_hash==get_code_hash(get_self()),"RAM_OBSERVER_REQUIRED");
+    const auto& family=manifest.families.front();bool quick=false;
+    if((family.kind=="quick-ballot-responses"&&family.table=="qresponses"_n)||(family.kind=="quick-ballot-grants"&&family.table=="qgrants"_n)){
+      lifecycle_sources approved(get_self(),get_self().value);auto source=approved.find(manifest.source.value);quick=source!=approved.end()&&source->kind==9&&source->code_hash==manifest.code_hash;
+    }
     if(manifest.source==get_self()){check(manifest.code_hash==get_code_hash(get_self()),"ARCHIVE_SOURCE_CODE");require_document_coverage(dao_id);}else{modules installed(get_self(),dao_id);const auto& source=installed.get(manifest.source.value,"MODULE_DISABLED");check_pinned(source,manifest.source);check(manifest.code_hash==source.code_hash,"ARCHIVE_SOURCE_CODE");}check(manifest.abi_hash!=checksum256{},"ARCHIVE_SOURCE_CODE");
     const auto block=manifest.block_id.extract_as_byte_array();const uint32_t number=(uint32_t(block[0])<<24)|(uint32_t(block[1])<<16)|(uint32_t(block[2])<<8)|uint32_t(block[3]);
     check(number==manifest.block_number&&number>0&&manifest.timestamp.size()>=20&&manifest.timestamp.size()<=32,"ARCHIVE_SNAPSHOT");
-    const auto& family=manifest.families.front();check(family.parent_id>0&&family.schema_hash!=checksum256{},"ARCHIVE_FAMILY_PROTECTED");
-    if(manifest.source==get_self())check(family.kind=="document-versions"&&family.table=="documents"_n&&family.scope==dao_id,"ARCHIVE_FAMILY_PROTECTED");else check(family.kind=="ordinary-poll-votes"&&family.table=="votes"_n&&family.scope==get_self().value&&manifest.files.empty(),"ARCHIVE_FAMILY_PROTECTED");
+    check(family.parent_id>0&&family.schema_hash!=checksum256{},"ARCHIVE_FAMILY_PROTECTED");
+    if(manifest.source==get_self())check(family.kind=="document-versions"&&family.table=="documents"_n&&family.scope==dao_id,"ARCHIVE_FAMILY_PROTECTED");else{
+      check(((family.kind=="ordinary-poll-votes"&&family.table=="votes"_n)||quick)&&family.scope==get_self().value&&manifest.files.empty(),"ARCHIVE_FAMILY_PROTECTED");
+    }
     check(family.chunks.size()<=archive_anchor_max_chunks&&family.records<=archive_max_leaves,"ARCHIVE_CHUNK_COUNT");uint64_t count=0,last=0;bool first=true;
     for(uint32_t ordinal=0;ordinal<family.chunks.size();ordinal++){
       const auto& chunk=family.chunks[ordinal];const auto& d=chunk.domain;archive_domain_hash(d);
@@ -1507,6 +1513,10 @@ private:
       catalogue listed(get_self(),get_self().value);const auto& item=listed.get(account.value,"MODULE_UNLISTED");
       check(item.complies==1,"FEE_RULE");check(item.code_hash==code_hash,"MODULE_CODE");
       check_ram_source(account,code_hash);
+    }else{
+      // Quick ballots retain their qualified code pin for closure and archival cleanup after disabling.
+      lifecycle_sources qualified(get_self(),get_self().value);auto source=qualified.find(account.value);
+      if(source!=qualified.end()&&source->kind==9&&source->code_hash==get_code_hash(account))pinned=source->code_hash;
     }
     modules rows(get_self(),dao_id);auto it=rows.find(account.value);
     if(it==rows.end())rows.emplace(get_self(),[&](auto& r){r.account=account;r.version=version;r.actions=actions;r.grants=grants;r.code_hash=pinned;});else rows.modify(it,same_payer,[&](auto& r){r.version=version;r.actions=actions;r.grants=grants;r.code_hash=pinned;});

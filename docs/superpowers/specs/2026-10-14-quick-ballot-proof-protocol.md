@@ -148,7 +148,9 @@ archive; measuring its table RAM belongs to the product implementation.
 Archive ciphertext rows, proof/public inputs and the qualified historical
 verifier artifacts; never archive `x`, encryption/proof nonces or plaintext
 individual choices. Reclaim row RAM only after the full 30-day/irreversible
-result/archive/backup gates. Participation and small/unanimous-result inference
+closure/archive/independent-backup gates. The user confirmed on 15 October that
+unavailable tally keys do not block this cleanup: retain all frozen public inputs,
+report "No verified result" and permit a valid late proof. Participation and small/unanimous-result inference
 remain disclosed limitations.
 
 ## Qualification boundary
