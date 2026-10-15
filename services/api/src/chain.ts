@@ -124,6 +124,14 @@ export interface ChainGateway {
   treasury(daoId: string): Promise<Treasury>;
   settle(input: SettlementRequest): Promise<SettlementResult>;
   finalize(input: FinalizationRequest): Promise<FinalizationResult>;
+  contentDocument(
+    daoId: string,
+    documentId: string,
+    version: number,
+  ): Promise<{
+    dao: DaoRef;
+    document: DaoContent['documents'][number] | null;
+  }>;
   content(daoId: string, query?: ContentPageQuery): Promise<DaoContent>;
   privateAccessPolicy?(daoId: string): Promise<PrivateAccessPolicy>;
   privateHandover?(daoId: string): Promise<DaoHandover | null>;

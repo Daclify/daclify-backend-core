@@ -10,6 +10,7 @@ import {
 import { createServer } from '../../services/api/src/server.js';
 import { migrate } from '../../services/api/src/store.js';
 import { authChain } from '../helpers/auth-chain.js';
+import type { ChainGateway } from '../../services/api/src/chain.js';
 import { DaoContentSchema } from '../../protocol/content.js';
 import { ApiRoutes } from '../../protocol/routes.js';
 
@@ -40,7 +41,7 @@ it('bounds public provider reads across documents and branding without making ci
     fundingReference: 'owned-fixture',
   });
   const allowance = new GatewayAllowance(pool, scope, gateway, id);
-  const chain = {
+  const chain: ChainGateway = {
     ...authChain,
     content: async () =>
       DaoContentSchema.parse({
@@ -63,6 +64,16 @@ it('bounds public provider reads across documents and branding without making ci
           },
         ],
       }),
+  };
+  chain.contentDocument = async (_daoId: string, documentId: string, version: number) => {
+    const content = await chain.content('1');
+    return {
+      dao: content.dao,
+      document:
+        content.documents.find(
+          (row) => row.document_id === documentId && row.version === version,
+        ) ?? null,
+    };
   };
   const provider: ContentProvider = {
     async upload() {

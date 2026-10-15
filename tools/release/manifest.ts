@@ -10,6 +10,7 @@ import { MiniAppReleaseManifestSchema } from '../../protocol/mini-apps.js';
 import { McpReleaseManifestSchema } from '../../protocol/mcp.js';
 import { miniAppReleaseId } from '../../services/api/src/mini-apps/artifacts.js';
 import { mcpReleaseId } from '../../services/api/src/mcp/artifacts.js';
+import { checkoutMcpArchives } from './community-mcp.js';
 import { loadRequirementRegister } from './requirements.js';
 
 const REPOSITORIES = [
@@ -408,6 +409,9 @@ export function loadCheckoutManifest(coreRoot: string): ReleaseManifest {
     ),
     modulesVersion = packageVersion(path.join(modulesRoot, 'package.json'), '@daclify/modules');
   const mcpPackage = path.join(coreRoot, 'packages/community-mcp/package.json');
+  const mcpArchives = existsSync(mcpPackage)
+    ? checkoutMcpArchives(coreRoot, modulesRoot)
+    : undefined;
   const packageHashes = {
     'core.tgz': sha256(
       path.join(coreRoot, '.artifacts', `daclify-core-protocol-${coreVersion}.tgz`),
@@ -416,15 +420,9 @@ export function loadCheckoutManifest(coreRoot: string): ReleaseManifest {
       path.join(modulesRoot, '.artifacts', `daclify-modules-${modulesVersion}.tgz`),
     ),
   };
-  const companionArtifacts = existsSync(mcpPackage)
+  const companionArtifacts = mcpArchives
     ? {
-        communityMcpPackageSha256: sha256(
-          path.join(
-            coreRoot,
-            '.artifacts/community-mcp',
-            `daclify-community-mcp-${packageVersion(mcpPackage, '@daclify/community-mcp')}.tgz`,
-          ),
-        ),
+        communityMcpPackageSha256: sha256(mcpArchives.mcpArchive),
         miniAppReleaseManifestSha256: companionBundleHash(
           path.join(coreRoot, '.artifacts/mini-apps'),
           coreVersion,
@@ -433,19 +431,14 @@ export function loadCheckoutManifest(coreRoot: string): ReleaseManifest {
         ),
         mcpReleaseManifestSha256: companionBundleHash(
           path.join(coreRoot, '.artifacts/community-mcp/releases'),
-          coreVersion,
-          modulesVersion,
+          mcpArchives.coreVersion,
+          mcpArchives.modulesVersion,
           {
-            ...packageHashes,
-            'mcp.tgz': sha256(
-              path.join(
-                coreRoot,
-                '.artifacts/community-mcp',
-                `daclify-community-mcp-${packageVersion(mcpPackage, '@daclify/community-mcp')}.tgz`,
-              ),
-            ),
+            'core.tgz': sha256(mcpArchives.coreArchive),
+            'modules.tgz': sha256(mcpArchives.modulesArchive),
+            'mcp.tgz': sha256(mcpArchives.mcpArchive),
           },
-          packageVersion(mcpPackage, '@daclify/community-mcp'),
+          mcpArchives.mcpVersion,
         ),
       }
     : undefined;

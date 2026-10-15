@@ -114,6 +114,7 @@ it('requires session/CSRF/current administrator and binds the readonly result to
     treasury: unavailable,
     settle: unavailable,
     finalize: unavailable,
+    contentDocument: unavailable,
     content: unavailable,
     dao: unavailable,
     moduleState: unavailable,

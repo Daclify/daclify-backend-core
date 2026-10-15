@@ -82,6 +82,9 @@ const chain: ChainGateway = {
   dao: async () => {
     throw new Error('unused');
   },
+  contentDocument: async () => {
+    throw new Error('unused');
+  },
   content: async () => {
     throw new Error('unused');
   },

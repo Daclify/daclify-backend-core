@@ -187,6 +187,9 @@ beforeEach(async () => {
     treasury: async () => {
       throw new Error('Fixture treasury unavailable');
     },
+    contentDocument: async () => {
+      throw new Error('Fixture content unavailable');
+    },
     content: async () => {
       throw new Error('Fixture content unavailable');
     },

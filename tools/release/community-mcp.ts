@@ -1,8 +1,9 @@
-import { readFile, mkdir } from 'node:fs/promises';
+import { readFile, mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { createHash } from 'node:crypto';
-import { resolve } from 'node:path';
+import { resolve, join } from 'node:path';
 import { z } from 'zod';
 import { McpReleaseManifestSchema } from '../../protocol/mcp.js';
 import { mcpReleaseId, McpArtifacts } from '../../services/api/src/mcp/artifacts.js';
@@ -76,19 +77,56 @@ export async function buildMcpRelease(
   );
   return McpArtifacts.load(directory);
 }
-if (import.meta.main) {
-  const core: unknown = JSON.parse(await readFile('sdk/public-package.json', 'utf8')),
-    modules: unknown = JSON.parse(
-      await readFile('../daclify-backend-modules/package.json', 'utf8'),
+export function checkoutMcpArchives(coreRoot: string, modulesRoot: string) {
+  const mcp = info
+    .extend({
+      peerDependencies: z.object({
+        '@daclify/core-protocol': z.string().regex(/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/),
+        '@daclify/modules': z.string().regex(/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/),
+      }),
+    })
+    .parse(JSON.parse(readFileSync(join(coreRoot, 'packages/community-mcp/package.json'), 'utf8')));
+  if (mcp.name !== '@daclify/community-mcp') throw Error('MCP_RELEASE_PINS');
+  return {
+    coreVersion: mcp.peerDependencies['@daclify/core-protocol'],
+    modulesVersion: mcp.peerDependencies['@daclify/modules'],
+    mcpVersion: mcp.version,
+    coreArchive: join(
+      coreRoot,
+      `.artifacts/daclify-core-protocol-${mcp.peerDependencies['@daclify/core-protocol']}.tgz`,
     ),
-    mcp: unknown = JSON.parse(await readFile('packages/community-mcp/package.json', 'utf8'));
-  const versions = z.object({ version: z.string() });
+    modulesArchive: join(
+      modulesRoot,
+      `.artifacts/daclify-modules-${mcp.peerDependencies['@daclify/modules']}.tgz`,
+    ),
+    mcpArchive: join(coreRoot, `.artifacts/community-mcp/daclify-community-mcp-${mcp.version}.tgz`),
+  };
+}
+if (import.meta.main) {
+  const archives = checkoutMcpArchives(process.cwd(), resolve('../daclify-backend-modules'));
+  await mkdir('.artifacts/community-mcp', { recursive: true });
+  const stage = await mkdtemp('.artifacts/community-mcp/pack-');
+  try {
+    const { stdout } = await run(
+      'npm',
+      ['pack', '--ignore-scripts', '--json', '--pack-destination', resolve(stage)],
+      { cwd: 'packages/community-mcp', maxBuffer: 65536 },
+    );
+    const [packed] = z
+      .array(
+        z.object({ filename: z.string().regex(/^daclify-community-mcp-[0-9A-Za-z.-]+\.tgz$/) }),
+      )
+      .length(1)
+      .parse(JSON.parse(stdout));
+    if (!packed) throw Error('MCP_RELEASE_FILE');
+    await writeImmutableArtifact(archives.mcpArchive, await readFile(join(stage, packed.filename)));
+  } finally {
+    await rm(stage, { recursive: true, force: true });
+  }
   const result = await buildMcpRelease(
-    '.artifacts/daclify-core-protocol-' + versions.parse(core).version + '.tgz',
-    '../daclify-backend-modules/.artifacts/daclify-modules-' +
-      versions.parse(modules).version +
-      '.tgz',
-    '.artifacts/community-mcp/daclify-community-mcp-' + versions.parse(mcp).version + '.tgz',
+    archives.coreArchive,
+    archives.modulesArchive,
+    archives.mcpArchive,
     '.artifacts/community-mcp/releases',
   );
   console.log(

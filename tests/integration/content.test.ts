@@ -139,6 +139,13 @@ function setup(allowance = 1000n, providerScope = randomUUID()) {
     },
     network: async () => network,
     dao: async () => dao,
+    contentDocument: async (_daoId, documentId, version) => ({
+      dao: content.dao,
+      document:
+        content.documents.find(
+          (row) => row.document_id === documentId && row.version === version,
+        ) ?? null,
+    }),
     content: async () => content,
     listDaos: async () => [dao],
     memberships: async (user) =>
@@ -1952,8 +1959,19 @@ describe('hosted upload transactions with a simulated provider', () => {
       key_epoch: document.keyEpoch,
     });
     fixture.content.members[0] = { ...member, active: false };
+    const collections = vi
+      .spyOn(fixture.chain, 'content')
+      .mockRejectedValue(new Error('UNRELATED_HISTORY_READ'));
+    const lookup = vi.spyOn(fixture.chain, 'contentDocument');
     const status = await fixture.service.refreshStatus(account, request.requestId);
     expect(status.state).toBe('published');
+    expect(lookup).toHaveBeenCalledWith(
+      fixture.dao.reference.daoId,
+      document.documentId,
+      document.version,
+    );
+    expect(collections).not.toHaveBeenCalled();
+    collections.mockRestore();
     expect((await fixture.service.upload(account, request)).cid).toBe(document.cid);
     expect(
       await fixture.service.retrieve(
@@ -2315,4 +2333,19 @@ it('queues one notice per original period/stage, retries delivery and cancels it
   } finally {
     await pool.query('DELETE FROM credentials WHERE provider_key=$1', [mail]);
   }
+});
+
+it('keeps a verified upload and its storage hold when exact lookup returns a foreign DAO reference', async () => {
+  const fixture = setup();
+  const request = fixture.request();
+  await fixture.service.upload(account, request);
+  fixture.chain.contentDocument = async () => ({
+    dao: { ...fixture.dao.reference, daoId: '0' },
+    document: null,
+  });
+  await expect(fixture.service.refreshStatus(account, request.requestId)).rejects.toThrow(
+    'DAO_REFERENCE',
+  );
+  expect((await fixture.service.status(account, request.requestId)).state).toBe('verified');
+  expect(fixture.provider.remove).not.toHaveBeenCalled();
 });

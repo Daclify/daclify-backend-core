@@ -108,6 +108,14 @@ it('preserves hosted Markdown identity across separate adoption, acceptance and 
     '2',
   );
   await dao.act('daclifycore', 'putdoc', encodeAction('putdoc', { ...document, version: 2 }));
+  expect((await fixture.gateway.contentDocument(dao.daoId, '42', 1)).document).toMatchObject({
+    document_id: '42',
+    version: 1,
+    commitment,
+    cid: document.cid,
+  });
+  expect((await fixture.gateway.contentDocument(dao.daoId, '42', 2)).document?.version).toBe(2);
+  expect((await fixture.gateway.contentDocument(dao.daoId, '42', 3)).document).toBeNull();
   const state = await fixture.gateway.moduleState(dao.daoId),
     adopted = await fixture.gateway.governingDocuments(dao.daoId, { adoptionId: proposal.id });
   expect(state.projects.find((row) => row.id === '42')?.document_version).toBe(1);

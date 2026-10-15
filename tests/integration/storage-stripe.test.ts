@@ -104,6 +104,7 @@ function setup() {
     treasury: unavailable,
     settle: unavailable,
     finalize: unavailable,
+    contentDocument: unavailable,
     content: unavailable,
     dao: unavailable,
     moduleState: unavailable,

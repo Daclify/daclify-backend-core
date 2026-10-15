@@ -352,14 +352,12 @@ const mcpPairings =
         connectedApps,
       )
     : undefined;
+const mcpClients =
+  env.COMMUNITY_MCP_HTTP_ENABLED === '1'
+    ? await loadMcpOAuthClients(JSON.parse(process.env.COMMUNITY_MCP_HTTP_CLIENTS ?? '[]'))
+    : [];
 const mcpOAuth =
-  env.COMMUNITY_MCP_HTTP_ENABLED === '1' && mcpPairings
-    ? new McpOAuth(
-        mcpPairings,
-        await loadMcpOAuthClients(JSON.parse(process.env.COMMUNITY_MCP_HTTP_CLIENTS ?? '[]')),
-      )
-    : undefined;
-if (mcpOAuth && !mcpOAuth.clients.length) throw Error('MCP_REGISTERED_CLIENT_REQUIRED');
+  mcpPairings && mcpClients.length ? new McpOAuth(mcpPairings, mcpClients) : undefined;
 const mcpArtifacts = process.env.COMMUNITY_MCP_RELEASE_DIRECTORY
   ? await McpArtifacts.load(
       process.env.COMMUNITY_MCP_RELEASE_DIRECTORY,

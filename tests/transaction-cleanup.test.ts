@@ -107,6 +107,7 @@ const chain: ChainGateway = {
   treasury: unavailable,
   settle: unavailable,
   dao: unavailable,
+  contentDocument: unavailable,
   content: unavailable,
   moduleState: unavailable,
   network: unavailable,

@@ -21,6 +21,7 @@ function fixture(
     execute: fail,
     settle: fail,
     finalize: fail,
+    contentDocument: fail,
     content: fail,
     dao: fail,
     network: fail,

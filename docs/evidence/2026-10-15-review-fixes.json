@@ -1,0 +1,49 @@
+{
+  "scope": "Three confirmed findings in review-all-20261015/review.json",
+  "excluded": [
+    "almaiso-verde-garden-care"
+  ],
+  "sourceBase": "df5e25ddb117ff111f040eeced5baf55ecbbfd83",
+  "status": "fixed-and-verified",
+  "passed": {
+    "focused": 28,
+    "postgres": 73,
+    "native": 2,
+    "mcpPackage": 13,
+    "coreUnit": 1113
+  },
+  "checks": [
+    "typecheck",
+    "lint",
+    "build",
+    "docs:check",
+    "changed-file formatting",
+    "source-only backend bootstrap",
+    "full three-repository bootstrap"
+  ],
+  "mcpReleaseId": "ad170b5f2dd3c79da54c50bc9bac17f1786ac6bc59ec121b0197d813468a5d81",
+  "archives": {
+    "core31": "81013b10af2c32fd80e71e3f608980edccb733e3345d1f1c2bc46c7d8d14618c",
+    "modules41": "555ac994d2e745b1fa815d5d071749fa1ebfa12dabc1c8eca811ee63d6b9a01c",
+    "mcp20": "fb79c38b63733a77ff1399a13d5103cfabb9658667a84b5d8cf896bef85605fc",
+    "mcpCorePeer30": "9101d98d8c2b1c06096df09ba117010a51665eaac006cc32a8b98a514eb9f198",
+    "mcpModulesPeer40": "63ed4584b36fc79ca05fbda2fef9d01d6a813c9c60a8aff2bd6c5a40a6ce2eeb"
+  },
+  "limits": [
+    "No deployment or live wallet/provider/browser qualification",
+    "Full native suite not rerun; two targeted Spring tests passed"
+  ],
+  "recordedAt": "2026-10-15T23:15:14.008649+00:00",
+  "coreUnitFiles": 189,
+  "failures": 0,
+  "coreUnitLog": "core-final.log",
+  "integrationFiles": 5,
+  "nativeFiles": 1,
+  "mcpPackageFiles": 7,
+  "changes": {
+    "deployment": false,
+    "contractChanges": false,
+    "publicSdkChanges": false,
+    "databaseMigrations": false
+  }
+}

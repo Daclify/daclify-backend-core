@@ -6,7 +6,6 @@ import { ApiOriginSchema } from '../../../../protocol/base.js';
 import type { Account } from '../../../../protocol/api.js';
 import {
   McpOAuthClaimsSchema,
-  McpOAuthClientSchema,
   McpOAuthAuthorizeSchema,
   McpOAuthApprovalSchema,
   McpOAuthTokenInputSchema,
@@ -15,7 +14,7 @@ import {
 import { readAccount, withTransaction } from '../auth/account-session.js';
 import { ApiError } from '../errors.js';
 import type { McpPairings } from './pairing.js';
-import { CHATGPT_CLIENT_METADATA } from './clients.js';
+import { CHATGPT_CLIENT_METADATA, validateMcpOAuthClients } from './clients.js';
 const hash = (value: string) => createHash('sha256').update(value).digest();
 const invalid = () => new ApiError('MCP_TOKEN_REQUIRED', 401);
 const opaque = () => randomBytes(32).toString('base64url');
@@ -62,27 +61,7 @@ export class McpOAuth {
     readonly pairings: McpPairings,
     clients: unknown,
   ) {
-    this.clients = z.array(McpOAuthClientSchema).max(32).parse(clients);
-    if (new Set(this.clients.map((value) => value.clientId)).size !== this.clients.length)
-      throw Error('MCP_CLIENT_DUPLICATE');
-    for (const client of this.clients)
-      for (const uri of client.redirectUris) {
-        const url = new URL(uri);
-        const fixedLoopback =
-          url.protocol === 'http:' &&
-          (url.hostname === '127.0.0.1' || url.hostname === 'localhost') &&
-          Number(url.port) >= 1024 &&
-          Number(url.port) <= 65535 &&
-          url.pathname === '/callback' &&
-          !url.search;
-        if (
-          (url.protocol !== 'https:' && !fixedLoopback) ||
-          url.username ||
-          url.password ||
-          url.hash
-        )
-          throw Error('MCP_REDIRECT_INVALID');
-      }
+    this.clients = validateMcpOAuthClients(clients);
     const api = ApiOriginSchema.parse(pairings.api);
     this.issuer = api + '/mcp/oauth';
     this.resource = api + '/mcp';

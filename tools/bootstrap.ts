@@ -160,19 +160,7 @@ async function installFrontendPackages() {
 const companion = join(core, 'packages/community-mcp');
 async function installCompanionPackages() {
   await mkdir(join(artifacts, 'community-mcp'), { recursive: true });
-  npm(
-    [
-      'install',
-      '--package-lock-only',
-      '--save-dev',
-      '--ignore-scripts',
-      '--no-audit',
-      '--no-fund',
-      `../../.artifacts/daclify-core-protocol-${publicManifest.version}.tgz`,
-      `../../../daclify-backend-modules/.artifacts/daclify-modules-${moduleManifest.version}.tgz`,
-    ],
-    companion,
-  );
+  command(process.execPath, [join(core, 'tools/bootstrap/mcp.ts')], core);
   npm(['ci', '--ignore-scripts', '--no-audit', '--no-fund'], companion);
 }
 // Development artifacts have not been published. Refresh their lock integrities explicitly;
@@ -244,7 +232,6 @@ if (flags.includes('--contracts')) {
 }
 if (flags.includes('--contracts')) await installCompanionPackages();
 npm(['run', 'build'], companion);
-npm(['pack', '--pack-destination', join(artifacts, 'community-mcp')], companion);
 npm(['run', 'package:mini-app-starter'], core);
 npm(['run', 'package:community-mcp'], core);
 console.log(

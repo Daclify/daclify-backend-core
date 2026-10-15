@@ -496,17 +496,18 @@ export class ContentService {
     const network = await this.chain.network();
     if (network.chainId !== row.intent.dao.chainId || network.runtime !== row.intent.dao.contract)
       throw new ApiError('DAO_REFERENCE');
-    const content = await this.chain.content(row.intent.dao.daoId);
+    const content = await this.chain.contentDocument(
+      row.intent.dao.daoId,
+      row.intent.documentId,
+      row.intent.version,
+    );
     if (
       content.dao.chainId !== row.intent.dao.chainId ||
       content.dao.contract !== row.intent.dao.contract ||
       content.dao.daoId !== row.intent.dao.daoId
     )
       throw new ApiError('DAO_REFERENCE');
-    const published = content.documents.find(
-      (document) =>
-        document.document_id === row.intent.documentId && document.version === row.intent.version,
-    );
+    const published = content.document;
     if (
       row.state === 'verified' &&
       published &&
@@ -572,10 +573,7 @@ export class ContentService {
     return this.status(account, requestId);
   }
   async retrieve(daoId: string, documentId: string, version: number): Promise<Uint8Array> {
-    const content = await this.chain.content(daoId);
-    const document = content.documents.find(
-      (row) => row.document_id === documentId && row.version === version,
-    );
+    const { document } = await this.chain.contentDocument(daoId, documentId, version);
     if (!document?.cid) throw new ApiError('DOCUMENT_UNKNOWN', 404);
     const bytes = await this.provider.retrieve(document.cid, document.bytes);
     if (bytes.length !== document.bytes || hash(bytes) !== document.commitment)

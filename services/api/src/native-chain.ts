@@ -2541,6 +2541,37 @@ export class NativeChainGateway implements ChainGateway {
         : {}),
     });
   }
+  async contentDocument(daoId: string, documentId: string, version: number) {
+    IdSchema.parse(daoId);
+    IdSchema.parse(documentId);
+    z.int().min(1).max(0xffffffff).parse(version);
+    const dao = (await this.table('daos', this.config.runtime, daoId, 1))[0];
+    if (!dao || dao.id !== daoId) throw new ApiError('DAO_UNKNOWN', 404);
+    const key = (BigInt(documentId) << 32n) | BigInt(version);
+    const page = await this.moduleRows(
+      this.config.runtime,
+      'documents',
+      RuntimeTableSchemas.documents,
+      key.toString(),
+      key.toString(),
+      2,
+      'i128',
+      1,
+      daoId,
+    );
+    if (page.more || page.rows.length > 1) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
+    const document = page.rows[0];
+    return {
+      dao: {
+        chainId: this.config.chainId,
+        contract: this.config.runtime,
+        daoId,
+        interfaceVersion: 1 as const,
+      },
+      document:
+        document?.document_id === documentId && document.version === version ? document : null,
+    };
+  }
   async content(daoId: string, query?: ContentPageQuery): Promise<DaoContent> {
     if (query === undefined) {
       const all = await this.content(daoId, {});

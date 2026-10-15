@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+Keep the API available when ChatGPT client metadata fails verification, while disabling that client and retaining strict local OAuth configuration checks. Preserve MCP’s independent SDK cohort in clean bootstrap and release manifests, and refuse replacement package bytes. Use the existing native document/version index for single-file downloads and upload reconciliation. Public SDKs, contracts, database layouts and historical release bytes remain unchanged.
+
 ## 0.15.0-alpha.22 development
 
 Correct current documentation and feature availability, add the task-first Start here handbook guide, and update mini-app downloads/registration and recovery instructions. Preserve existing guide IDs, historical evidence, action/schema/contract behavior and immutable earlier bundles.

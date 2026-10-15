@@ -413,6 +413,7 @@ it('requires session, CSRF, fresh proof and current administrator authority at t
     treasury: unavailable,
     settle: unavailable,
     finalize: unavailable,
+    contentDocument: unavailable,
     content: unavailable,
     dao: unavailable,
     moduleState: unavailable,

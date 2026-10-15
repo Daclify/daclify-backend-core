@@ -48,6 +48,9 @@ const chain: ChainGateway = {
   dao: async () => {
     throw new Error('not deployed');
   },
+  contentDocument: async () => {
+    throw new Error('not deployed');
+  },
   content: async () => {
     throw new Error('not deployed');
   },
