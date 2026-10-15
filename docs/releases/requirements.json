@@ -601,6 +601,14 @@
         "../daclify-frontend/tests/e2e/contact-recovery.spec.ts",
         "../daclify-frontend/tests/e2e/contact-recovery-approvals.spec.ts"
       ]
+    },
+    {
+      "id": "LEGAL-TEMPLATE-HOSTED-VERSION-ADOPTION-AND-WORKS",
+      "suite": "native",
+      "tests": [
+        "tests/native/legal-template-publication.test.ts",
+        "tests/native/governing-documents.test.ts"
+      ]
     }
   ]
 }

@@ -61,7 +61,7 @@ export async function nativeContracts(legacyRuntime = false) {
       ),
     );
     abis.set('daclifyhub', await f.deploy('daclifyhub', '.artifacts/contracts/hub'));
-    abis.set('appjoin',await f.deploy('appjoin','.artifacts/contracts/appjoin'));
+    abis.set('appjoin', await f.deploy('appjoin', '.artifacts/contracts/appjoin'));
     abis.set('names', await f.deploy('names', '.artifacts/contracts/names'));
     abis.set('eosio.token', await f.deploy('eosio.token', '.artifacts/contracts/testtoken'));
     if (
@@ -103,7 +103,11 @@ export async function nativeContracts(legacyRuntime = false) {
         waits: [],
         accounts: [{ permission: { actor: account, permission: 'eosio.code' }, weight: 1 }],
       });
-    for (const account of ['daclifycore', 'appjoin', ...nativeModules.map((module) => module.account)])
+    for (const account of [
+      'daclifycore',
+      'appjoin',
+      ...nativeModules.map((module) => module.account),
+    ])
       await f.update(account, 'active', 'owner', ownCode(account));
     const context = contextPermissionPlan('daclifycore', nativeModules);
     await f.update('daclifycore', 'execctx', 'active', Authority.from(context.authority));
@@ -175,6 +179,7 @@ export async function nativeContracts(legacyRuntime = false) {
       governedWorks = false,
       participantMode: 0 | 1 | 2 = 0,
       encryptionKeys: readonly string[] = [],
+      privacy: 0 | 1 | 2 = 0,
     ) {
       const daoId = String(++daoSequence),
         keys = Array.from({ length: Math.max(3, encryptionKeys.length) }, () =>
@@ -187,7 +192,7 @@ export async function nativeContracts(legacyRuntime = false) {
           dao_id: daoId,
           owner,
           metadata: '{}',
-          privacy: 0,
+          privacy,
           token_contract: 'eosio.token',
           token_symbol: '4,TLOS',
         },

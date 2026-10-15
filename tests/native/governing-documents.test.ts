@@ -3,7 +3,12 @@ import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { Checksum256 } from '@wharfkit/antelope';
 import { z } from 'zod';
 import { ModulePermissions } from '@daclify/modules';
-import { encodeDecide, ModuleCodeHashes, DecideTableSchemas } from '@daclify/modules/sdk';
+import {
+  encodeDecide,
+  prepareBallotVote,
+  ModuleCodeHashes,
+  DecideTableSchemas,
+} from '@daclify/modules/sdk';
 import { encodeAction } from '../../sdk/index.js';
 import { nativeContracts, type NativeContracts } from '../helpers/native-contracts.js';
 let f: NativeContracts;
@@ -149,7 +154,43 @@ it('preserves adoption and acceptance across a real code change while refusing o
       ballot_id: '0',
     }),
   );
-  const pending = (await f.gateway.governingDocuments(dao.daoId, {})).changes[0];
+  const adopted = (await f.gateway.governingDocuments(dao.daoId, {})).changes[0];
+  if (!adopted) throw new Error('FIXTURE_ADOPTION');
+  await dao.act(
+    'decide',
+    'adoptdoc',
+    encodeDecide('adoptdoc', { ...dao.actor(), proposal_id: adopted.id }),
+  );
+  await dao.act(
+    'decide',
+    'ackdoc',
+    encodeDecide('ackdoc', { ...dao.actor('2'), adoption_id: adopted.id }),
+    '2',
+  );
+  await dao.act(
+    'daclifycore',
+    'putjson',
+    encodeAction('putjson', {
+      ...dao.actor(),
+      document_id: '8',
+      version: 2,
+      value: '{"draft":true}',
+      envelope_version: 0,
+      key_epoch: '0',
+    }),
+  );
+  await dao.act(
+    'decide',
+    'proposedoc',
+    encodeDecide('proposedoc', {
+      ...dao.actor(),
+      register_id: registered.id,
+      document_version: 2,
+      expected_revision: '1',
+      ballot_id: '0',
+    }),
+  );
+  const pending = (await f.gateway.governingDocuments(dao.daoId, {})).changes.find((row) => row.register_id === registered.id && row.status === 0);
   if (!pending) throw new Error('FIXTURE_PROPOSAL');
   const probe = '../daclify-backend-modules/.artifacts/governing-document-upgrade/decide';
   const hash = Checksum256.hash(readFileSync(probe + '.wasm')).toString();
@@ -195,7 +236,7 @@ it('preserves adoption and acceptance across a real code change while refusing o
       z
         .array(DecideTableSchemas.docchanges)
         .parse(rows.rows)
-        .some((row) => row.status === 1),
+        .some((row) => row.id === adopted.id && row.dao_id === dao.daoId && row.status === 1),
     ).toBe(true);
     const acceptances = await f.api.v1.chain.get_table_rows({
       code: 'decide',
@@ -207,7 +248,7 @@ it('preserves adoption and acceptance across a real code change while refusing o
       z
         .array(DecideTableSchemas.docaccepts)
         .parse(acceptances.rows)
-        .some((row) => row.member_id === '2'),
+        .some((row) => row.adoption_id === adopted.id && row.member_id === '2'),
     ).toBe(true);
   } finally {
     await f.deploy('decide', '../daclify-backend-modules/.artifacts/contracts/decide');
@@ -261,13 +302,18 @@ it('adopts only the document version approved by a real member ballot', async ()
       encodeDecide('adoptdoc', { ...dao.actor(), proposal_id: pending.id }),
     ),
   ).rejects.toThrow('BALLOT_NOT_PASSED');
-  for (const member of ['1', '2'])
-    await dao.act(
-      'decide',
-      'vote',
-      encodeDecide('vote', { ...dao.actor(member), ballot_id: dao.daoId, choice: 1 }),
-      member,
-    );
+  for (const member of ['1', '2']) {
+    const vote = prepareBallotVote({
+      dao: dao.reference,
+      decide: 'decide',
+      memberId: member,
+      ballot,
+      definitions: first.ballotDefinitions,
+      documentChange: pending,
+      choice: 1,
+    });
+    await dao.act('decide', vote.action, encodeDecide(vote.action, vote.fields), member);
+  }
   await dao.act(
     'daclifycore',
     'putjson',
