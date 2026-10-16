@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-16T12:01:06.800607+00:00",
+  "scope": "Recover completed DAO claims after interrupted HTTP responses",
+  "frontendCommit": "3997c556ee6ed94210641f2d24db4df035efd0b3",
+  "frontendVersion": "0.15.0-alpha.48",
+  "unchangedCoreVersion": "0.15.0-alpha.32",
+  "unchangedModulesVersion": "0.10.0-alpha.42",
+  "diagnosis": {
+    "reported": "Claim confirmation returned 504 and browser reported missing CORS response header",
+    "readOnlyFindings": {
+      "claimCompleted": true,
+      "nativeDaoExists": true,
+      "memberCount": 1,
+      "executiveCount": 1,
+      "soleFounderActiveAndAdmin": true,
+      "claimantMatchesReportedAccount": true,
+      "secondsFromOrderSavedToCompletion": "6.236",
+      "activeOrBlockedDatabaseTransactions": 0
+    },
+    "cause": "The portal reported a lost response as failure without reconciling its saved creation order",
+    "unknown": "The exact upstream gateway delay/deadline was not reproduced; a current sample platform read completed in 540ms locally and 832ms publicly",
+    "privacy": "Real account/invitation identifiers, bearer token and key material omitted",
+    "realMutations": "None"
+  },
+  "verification": {
+    "status": "passed",
+    "at": "2026-10-16T11:59:27.528244+00:00",
+    "frontendVersion": "0.15.0-alpha.48",
+    "unitFiles": 77,
+    "unitTests": 414,
+    "browserUniqueCases": 76,
+    "browserProjects": [
+      "Desktop Chrome",
+      "Pixel 7 Chromium"
+    ],
+    "browserRuns": {
+      "initial": {
+        "passed": 74,
+        "failed": 2,
+        "failures": "One pre-existing outdated Account redirect expectation in desktop/mobile; corrected to the already-authorized DAO workspace destination"
+      },
+      "finalAffectedRerun": {
+        "passed": 6,
+        "failed": 0,
+        "scope": "Corrected redirect expectation, valid paid-order fixture and stronger late-account-result check"
+      }
+    },
+    "red": "Gateway response browser regression failed before the fix by staying on the claim page",
+    "build": "testnet passed",
+    "typecheck": "passed, including final browser fixtures",
+    "format": "changed TS/Vue/JSON passed",
+    "dependenciesChanged": false,
+    "sourceReview": "Claim entry/resume, canonical order status, creation view ownership/row locks/executive readback, account/network/generation cancellation, payment routing and retained token secrecy reviewed inline",
+    "limits": [
+      "Browser tests use synthetic accounts and stubbed transport, including simulated gateway and lost responses",
+      "Real incident verified through scoped read-only SQL and public canonical DAO/governance schemas",
+      "No real account/claim/order/native mutation or replacement DAO",
+      "API, native and database integration suites not rerun because their implementations are unchanged",
+      "Exact upstream gateway timeout cause not reproduced; CORS/origin and timeout settings unchanged"
+    ]
+  },
+  "deployment": {
+    "status": "deployed",
+    "at": "2026-10-16T11:59:47.574Z",
+    "network": "testnet",
+    "frontendVersion": "0.15.0-alpha.48",
+    "commit": "3997c556ee6ed94210641f2d24db4df035efd0b3",
+    "entrySha256": "524b2fdf7be4b7d676581bddf7e2f23d4a262f91d0eea62bb6509f2815ca4ad8",
+    "configSha256": "1e88b1cc64fb093c3211612309bd52cd4e254a7ce3f8c10a1959e4e2ca4c0f1f",
+    "filesPublished": 155,
+    "retainedOldHashedAssets": true,
+    "rollbackPrepared": true,
+    "portalRestarted": false,
+    "configChanged": false,
+    "apiRestarted": false,
+    "databaseChanged": false,
+    "nativeChanged": false
+  },
+  "public": {
+    "status": "passed",
+    "at": "2026-10-16T12:00:27.721Z",
+    "coreVersion": "0.15.0-alpha.32",
+    "staticFilesMatched": 155,
+    "moduleHashesVerified": 7,
+    "runtimeHashVerified": true,
+    "nativeRawAbisVerified": [
+      {
+        "account": "daclifycore1",
+        "rawAbiSha256": "3855a7b8e283d33744ad126b3e1762fa15bf7fe8b4c0534b4e8a8104f4d0c5b4"
+      },
+      {
+        "account": "daclifydecid",
+        "rawAbiSha256": "2268cd779edfda686b5b5533ea1a9f8b771952b43c2628cdda28ac5e30e44511"
+      },
+      {
+        "account": "daclifyworks",
+        "rawAbiSha256": "4a2c595ff504b1305d32531432c78abe25fc1e3ee902ddff10d2d1c867082c88"
+      },
+      {
+        "account": "daclifypayr1",
+        "rawAbiSha256": "30859bbd6b3a4c18244dceed93cb9d49f941c55c0924c748f111b0589a5c7bcb"
+      },
+      {
+        "account": "daclifygrant",
+        "rawAbiSha256": "ed73e0b960db25be350ac54b800146e92e874d9200d121756fa7e8edcd17be31"
+      },
+      {
+        "account": "daclifyendor",
+        "rawAbiSha256": "2a74e6139a5a3713fe76a7f5c2bb2f8b6dd6277d77a55c341db9b1f988541c31"
+      },
+      {
+        "account": "daclifyactiv",
+        "rawAbiSha256": "f7c8d87159fc12087ea0998d501f594bda7d6080e9c68af077c6801819f65476"
+      },
+      {
+        "account": "daclifyquick",
+        "rawAbiSha256": "f259cd6b5925a8467308fae2509457b45b8e77187360ea3d7a985edbd09f5ab5"
+      }
+    ],
+    "downloadsVerified": 54,
+    "previousMiniReleaseAvailable": true,
+    "mcpReleasePreserved": true,
+    "testnetLockVerified": true,
+    "liveReadOnlyBrowser": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "status": "passed",
+        "errors": [],
+        "apiServerErrors": []
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "status": "passed",
+        "errors": [],
+        "apiServerErrors": []
+      }
+    ],
+    "allRetainedDownloadsVerified": true,
+    "signedLivePublication": "not run",
+    "externalWalletCeremonies": "not run"
+  },
+  "limitations": [
+    "No new real claim was submitted to demonstrate recovery against the live gateway",
+    "The exact gateway timeout cause remains unqualified; this fixes outcome reconciliation rather than asserting a latency fix",
+    "API/DB/native binaries, CORS policy and gateway timeout configuration unchanged"
+  ]
+}
