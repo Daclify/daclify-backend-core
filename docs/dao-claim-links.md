@@ -6,6 +6,8 @@ If an ordinary free shared order is already saved but uncreated, choose **Prepar
 
 The first eligible signed-in person to confirm becomes the sole initial member, administrator and executive. The issuer receives no office or membership. An existing account can sign in with a paired method while its vault stays locked. A new account finishes its public signing/encryption identity and recovery kit before claiming.
 
+Successful creation or claiming opens the DAO workspace, including when keys are locked. Use **Set up approvals** there when signing is needed; it opens the account's Access & recovery section with a return link to that DAO. This does not bypass signing, wallet authorization or private-document keys.
+
 Invitations support human and mixed communities, expire after seven days, and can be revoked before reservation. Setup is immutable: issue a new invitation to change it. Treat the complete link as a private bearer credential. Its secret is in the URL fragment and is sent only in POST bodies; public listings contain no secret. Account entry keeps the fragment in temporary tab storage and passes only an opaque checkpoint through login redirects.
 
 The recipient reviews the name, governance, privacy, network and current fees before **Claim and create DAO**. Existing custody, module availability and hosting rules apply. Any payment uses the recipient's existing creation order. An expired invitation does not release an already reserved order to another person. Reload or retry resumes the same order; success requires authoritative native administrator and executive readback.

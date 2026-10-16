@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-16T11:20:01.656114+00:00",
+  "scope": "Account section order and DAO destination after creation; frontend behavior only",
+  "frontendCommit": "75e9586de22d00ca270443c709adff887bc38466",
+  "frontendVersion": "0.15.0-alpha.46",
+  "unchangedCoreVersion": "0.15.0-alpha.32",
+  "unchangedModulesVersion": "0.10.0-alpha.42",
+  "verification": {
+    "status": "passed",
+    "at": "2026-10-16T11:18:26.393822+00:00",
+    "frontendVersion": "0.15.0-alpha.46",
+    "unitFiles": 77,
+    "unitTests": 414,
+    "uniqueBrowserCasesPassed": 32,
+    "browserRuns": [
+      {
+        "log": "browser-final.log",
+        "status": "SIGTERM after 25 passed cases; final three rerun separately",
+        "passedCases": 25
+      },
+      {
+        "log": "browser-mobile-final.log",
+        "status": "passed",
+        "passedCases": 3
+      },
+      {
+        "log": "browser-entry.log",
+        "status": "passed",
+        "passedCases": 4
+      }
+    ],
+    "browserProjects": ["Desktop Chrome", "Pixel 7 Chromium"],
+    "build": "testnet passed",
+    "format": "changed files passed",
+    "dependenciesChanged": false,
+    "beforeFix": "3 expected browser failures: tab order, created-order destination and resumed-order destination",
+    "sourceReview": "Inline review of all three createdDaoLocation callers, Account tab/keyboard/lazy panels, embedded/access-only props, entry/restore flow, billing/Telegram/device redirects and existing workspace signer guard. Shared destination now removes readiness-based redirection; signing gates unchanged.",
+    "visualReview": "Desktop and mobile account screenshots inspected; keyboard navigation, 320px width and enlarged text passed accessibility checks.",
+    "limits": [
+      "Synthetic accounts and stubbed API/provider transport",
+      "No real DAO, claim, payment or user account/keys changed",
+      "Native creation integration suites not rerun; backend and contracts unchanged"
+    ]
+  },
+  "deployment": {
+    "status": "deployed",
+    "at": "2026-10-16T11:19:00.185Z",
+    "network": "testnet",
+    "frontendVersion": "0.15.0-alpha.46",
+    "commit": "75e9586de22d00ca270443c709adff887bc38466",
+    "entrySha256": "3cbf60238e19daa6cbe496365a6a4cfddb7ad88540801efa31b114a3d40396f1",
+    "configSha256": "1e88b1cc64fb093c3211612309bd52cd4e254a7ce3f8c10a1959e4e2ca4c0f1f",
+    "filesPublished": 155,
+    "retainedOldHashedAssets": true,
+    "rollbackPrepared": true,
+    "portalRestarted": false,
+    "configChanged": false,
+    "apiRestarted": false,
+    "databaseChanged": false,
+    "nativeChanged": false
+  },
+  "liveReadOnlyChecks": {
+    "status": "passed",
+    "at": "2026-10-16T11:19:40.170Z",
+    "coreVersion": "0.15.0-alpha.32",
+    "staticFilesMatched": 155,
+    "moduleHashesVerified": 7,
+    "runtimeHashVerified": true,
+    "nativeRawAbisVerified": [
+      {
+        "account": "daclifycore1",
+        "rawAbiSha256": "3855a7b8e283d33744ad126b3e1762fa15bf7fe8b4c0534b4e8a8104f4d0c5b4"
+      },
+      {
+        "account": "daclifydecid",
+        "rawAbiSha256": "2268cd779edfda686b5b5533ea1a9f8b771952b43c2628cdda28ac5e30e44511"
+      },
+      {
+        "account": "daclifyworks",
+        "rawAbiSha256": "4a2c595ff504b1305d32531432c78abe25fc1e3ee902ddff10d2d1c867082c88"
+      },
+      {
+        "account": "daclifypayr1",
+        "rawAbiSha256": "30859bbd6b3a4c18244dceed93cb9d49f941c55c0924c748f111b0589a5c7bcb"
+      },
+      {
+        "account": "daclifygrant",
+        "rawAbiSha256": "ed73e0b960db25be350ac54b800146e92e874d9200d121756fa7e8edcd17be31"
+      },
+      {
+        "account": "daclifyendor",
+        "rawAbiSha256": "2a74e6139a5a3713fe76a7f5c2bb2f8b6dd6277d77a55c341db9b1f988541c31"
+      },
+      {
+        "account": "daclifyactiv",
+        "rawAbiSha256": "f7c8d87159fc12087ea0998d501f594bda7d6080e9c68af077c6801819f65476"
+      },
+      {
+        "account": "daclifyquick",
+        "rawAbiSha256": "f259cd6b5925a8467308fae2509457b45b8e77187360ea3d7a985edbd09f5ab5"
+      }
+    ],
+    "downloadsVerified": 54,
+    "previousMiniReleaseAvailable": true,
+    "mcpReleasePreserved": true,
+    "testnetLockVerified": true,
+    "liveReadOnlyBrowser": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "status": "passed",
+        "errors": [],
+        "apiServerErrors": []
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "status": "passed",
+        "errors": [],
+        "apiServerErrors": []
+      }
+    ],
+    "allRetainedDownloadsVerified": true,
+    "signedLivePublication": "not run",
+    "externalWalletCeremonies": "not run"
+  },
+  "coreDocsCheck": "passed; generated documentation unchanged",
+  "manifestPath": "/data/daclify-runtime/releases/20261016-account-navigation/manifest.json",
+  "manifestSha256": "8d4efaa5c1cdf1bac3575f6cafd460244d52c26f32f257011b61bc8b40c9b6e4",
+  "boundaries": [
+    "No real user order, DAO, claim, payment or account/keys changed",
+    "No API/config restart, migration or native transaction",
+    "Native integration suites and real wallet ceremonies not rerun",
+    "Almaiso excluded"
+  ]
+}
