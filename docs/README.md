@@ -56,6 +56,7 @@ Use [current status](current-status.md) for the latest dated checkpoint; [audit 
 
 ## Evidence and unresolved qualification
 
+- [Maximum content privacy design](superpowers/specs/2026-10-16-maximum-content-privacy-design.md) and [implementation plan](superpowers/plans/2026-10-16-maximum-content-privacy.md): proposed confidential identity, setup/invitations, ballot content and module labels; not yet implemented or enabled. The [separate Telos EVM privacy proposal](proposals/2026-10-16-telos-evm-privacy.md) investigates shielded payments and their public entry/exit limits.
 - [Three-repository security audit](evidence/2026-10-11-security-audit.md): four reproduced API resource-limit bypasses repaired, local/native verification and remaining development-dependency/provider qualification limits.
 - [Native RAM and history simulation](evidence/2026-10-08-ram-history-simulation.md): measured 200 shared DAOs/40,000 active memberships, growth projections and proposed archive-before-prune safeguards.
 - [Recovery documentation checks](evidence/2026-10-07-recovery-documentation.md): regenerated handbook, README/runbook consistency and the current documentation verification.
