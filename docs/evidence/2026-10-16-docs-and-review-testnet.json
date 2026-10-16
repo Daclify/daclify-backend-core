@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "scope": "documentation-audit-and-prior-review-fixes/shared-testnet",
+  "recordedAt": "2026-10-16T00:11:17.788102+00:00",
+  "deployment": {
+    "status": "deployed",
+    "at": "2026-10-16T00:08:05.424Z",
+    "network": "testnet",
+    "coreVersion": "0.15.0-alpha.32",
+    "modulesVersion": "0.10.0-alpha.42",
+    "frontendVersion": "0.15.0-alpha.43",
+    "sources": {
+      "daclify-backend-core": "dc749e1f52e6c25ced820baad71b52fd3b52125d",
+      "daclify-backend-modules": "491e9dbed0fd0895bc54c75bbfe4198aec132a9c",
+      "daclify-frontend": "2c377675cb1336eef0d227a0ae5959adc0fd3164"
+    },
+    "nativeCodeUnchanged": true,
+    "migrationsUnchanged": true,
+    "publicEntrySha256": "70c45a08a52d7ad7fc97b5aa172de408684d7d403ef3d6ac3e37153a22a138cb",
+    "priorEntrySha256": "1b1a20248c01ece3d7eb5d22b4872362b494b287bafde2b1f03b16029982d609",
+    "retainedHashedAssets": true,
+    "rollbackAvailable": true,
+    "recoveryQualified": true,
+    "miniRelease": "9237c0b53f641847924662df222ea2c8af2904cf1ecebbfc3fda36c75a8d48b0",
+    "mcpReleasePreserved": "ad170b5f2dd3c79da54c50bc9bac17f1786ac6bc59ec121b0197d813468a5d81"
+  },
+  "checks": {
+    "localTests": {
+      "core": {
+        "initialPassed": 1113,
+        "initialTimedOut": 1,
+        "timedOutTest": "tests/release-package.test.ts",
+        "isolatedRerun": "passed",
+        "uniqueCasesVerified": 1114
+      },
+      "frontend": 414,
+      "modulesCompiledWasm": 287,
+      "website": 43,
+      "uniqueCasesVerifiedTotal": 1858
+    },
+    "portal": {
+      "status": "passed",
+      "at": "2026-10-16T00:08:50.332Z",
+      "coreVersion": "0.15.0-alpha.32",
+      "staticFilesMatched": 154,
+      "moduleHashesVerified": 7,
+      "runtimeHashVerified": true,
+      "nativeRawAbisVerified": [
+        {
+          "account": "daclifycore1",
+          "rawAbiSha256": "3855a7b8e283d33744ad126b3e1762fa15bf7fe8b4c0534b4e8a8104f4d0c5b4"
+        },
+        {
+          "account": "daclifydecid",
+          "rawAbiSha256": "2268cd779edfda686b5b5533ea1a9f8b771952b43c2628cdda28ac5e30e44511"
+        },
+        {
+          "account": "daclifyworks",
+          "rawAbiSha256": "4a2c595ff504b1305d32531432c78abe25fc1e3ee902ddff10d2d1c867082c88"
+        },
+        {
+          "account": "daclifypayr1",
+          "rawAbiSha256": "30859bbd6b3a4c18244dceed93cb9d49f941c55c0924c748f111b0589a5c7bcb"
+        },
+        {
+          "account": "daclifygrant",
+          "rawAbiSha256": "ed73e0b960db25be350ac54b800146e92e874d9200d121756fa7e8edcd17be31"
+        },
+        {
+          "account": "daclifyendor",
+          "rawAbiSha256": "2a74e6139a5a3713fe76a7f5c2bb2f8b6dd6277d77a55c341db9b1f988541c31"
+        },
+        {
+          "account": "daclifyactiv",
+          "rawAbiSha256": "f7c8d87159fc12087ea0998d501f594bda7d6080e9c68af077c6801819f65476"
+        },
+        {
+          "account": "daclifyquick",
+          "rawAbiSha256": "f259cd6b5925a8467308fae2509457b45b8e77187360ea3d7a985edbd09f5ab5"
+        }
+      ],
+      "downloadsVerified": 54,
+      "previousMiniReleaseAvailable": true,
+      "mcpReleasePreserved": true,
+      "testnetLockVerified": true,
+      "liveReadOnlyBrowser": [
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "status": "passed",
+          "errors": [],
+          "apiServerErrors": []
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "status": "passed",
+          "errors": [],
+          "apiServerErrors": []
+        }
+      ],
+      "allRetainedDownloadsVerified": true,
+      "signedLivePublication": "not run",
+      "externalWalletCeremonies": "not run"
+    },
+    "publicJourneys": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "result": "passed",
+        "apiReads": 33,
+        "javascriptErrors": 0,
+        "misplacedApiRequests": 0,
+        "accessibilityViolations": 0
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "result": "passed",
+        "apiReads": 32,
+        "javascriptErrors": 0,
+        "misplacedApiRequests": 0,
+        "accessibilityViolations": 0
+      }
+    ],
+    "database": {
+      "status": "passed",
+      "at": "2026-10-16T00:01:37.365Z",
+      "backupSha256": "255ac37bda0fcba98cadfc2144fb2c7b19a29cb2e3653f1bb40935e2edf5e277",
+      "backupBytes": 403808,
+      "preservedTables": 98,
+      "priorMigrations": 61,
+      "migration": "056_contact_recovery.sql",
+      "twiceApplied": true,
+      "sourceUntouched": true
+    },
+    "recovery": {
+      "status": "passed",
+      "kind": "testnet-local-restore",
+      "origin": "https://testnet.app.daclify.com",
+      "coreVersion": "0.15.0-alpha.32",
+      "independentHost": false,
+      "sourceUnavailable": true,
+      "sourceRemoved": false,
+      "originalKeyRecovered": true,
+      "leastPrivilegeDenials": 4,
+      "auditPlaintextExcluded": true,
+      "tlsVerified": true,
+      "providerVersion": "2.7.1",
+      "snapshotSha256": "91679c81e13c6508a7111202a315265ccd4784bff374eb586a1743fc7820b7b8",
+      "checkedAt": "2026-10-15T23:58:59.229Z"
+    },
+    "website": {
+      "status": "passed",
+      "at": "2026-10-16T00:00:19.890Z",
+      "filesMatched": 45,
+      "htmlPagesMatched": 15,
+      "wwwRedirect": 301,
+      "missingPageStatus": 404,
+      "publishedBytesAlreadyCurrent": true,
+      "republished": false
+    },
+    "services": {
+      "status": "passed",
+      "at": "2026-10-16T00:10:11.417943+00:00",
+      "units": {
+        "daclify-api.service": "active",
+        "daclify-frontend.service": "active",
+        "daclify-postgres.service": "active",
+        "daclify-testnet-recovery.service": "active",
+        "daclify-testnet-recovery-agent.service": "active",
+        "daclify-names-oracle.timer": "active"
+      },
+      "apiErrorEntriesSinceCutover": 0,
+      "chatgptMetadataUnavailableEntries": 0,
+      "diskFreeMiB": 331
+    }
+  },
+  "archives": {
+    "miniCohortsIncludingCurrent": 10,
+    "mcpCohortsIncludingCurrent": 8,
+    "allDownloadFilesVerified": 54,
+    "mcpIndependentlyPinned": true
+  },
+  "notRun": [
+    "mainnet deployment",
+    "signed public-chain mutation journeys",
+    "external wallet and ChatGPT account ceremonies",
+    "independent cryptographic or legal review"
+  ],
+  "operatorEvidenceDirectory": "/data/daclify-runtime/docs-deploy-20261016",
+  "rollbackRetained": true
+}
