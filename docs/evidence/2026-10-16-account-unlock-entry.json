@@ -1,0 +1,126 @@
+{
+  "status": "passed",
+  "at": "2026-10-16T17:23:36.689Z",
+  "frontendVersion": "0.15.0-alpha.54",
+  "apiVersion": "0.15.0-alpha.34",
+  "protocolVersion": "0.15.0-alpha.32",
+  "modulesVersion": "0.10.0-alpha.42",
+  "unit": {
+    "files": 77,
+    "passed": 423
+  },
+  "browser": {
+    "passed": 70,
+    "failed": 0,
+    "scope": "Unique selected cases observed passing across recorded runs; no single complete 70-case run",
+    "projects": [
+      "Desktop Chrome",
+      "Pixel 7 Chromium"
+    ]
+  },
+  "compiledCandidateTests": 16,
+  "build": "Vue/TypeScript testnet build passed",
+  "lint": "5 frontend policy tests passed",
+  "format": "changed TS/Vue/JSON and whitespace checks passed",
+  "red": "Three new entry/password/device cases failed on missing UI before the implementation",
+  "intermediateChecks": {
+    "narrow": {
+      "firstNarrowRun": {
+        "passed": 2,
+        "failed": 4,
+        "causes": [
+          "Test clicked the header before the initial profile route was ready",
+          "Disposable password fixture initially omitted the required origin/audience login message"
+        ]
+      },
+      "resolution": "Wait for the actual profile page and use the canonical scoped login message; six narrow desktop/mobile cases passed without weakening auth validation."
+    },
+    "sourceBrowser": {
+      "firstRun": {
+        "passedBeforeInterruption": 59,
+        "assertionFailures": 0,
+        "exitCode": 143,
+        "cause": "not established"
+      },
+      "secondRun": {
+        "passedBeforeInterruption": 47,
+        "assertionFailures": 0,
+        "exitCode": 143,
+        "cause": "not established"
+      },
+      "completedMobileSessionRun": {
+        "passed": 14,
+        "failed": 0
+      },
+      "uniqueCasesCovered": 70
+    }
+  },
+  "changed": [
+    "Explicit header unlock entry and return destination",
+    "Matching encrypted-vault password form in Profile",
+    "Direct kit/device recovery actions; device accordion opened and focused"
+  ],
+  "unchanged": [
+    "Custody permissions and original keys",
+    "Session/key timers, email-code expiry and auth challenge validation",
+    "Public SDK/module pins",
+    "Backend code, database and native contracts"
+  ],
+  "limits": [
+    "Only configured full-access methods can unlock keys",
+    "Browser transport uses disposable identities and real WebCrypto/signatures; no real user email/code/key used",
+    "Real account recovery not attempted",
+    "No API/web-server restart or mainnet/Almaiso changes planned"
+  ],
+  "deployment": {
+    "status": "deployed",
+    "at": "2026-10-16T17:24:02.532Z",
+    "network": "testnet",
+    "frontendVersion": "0.15.0-alpha.54",
+    "commit": "9da2eb7286114fa8884df9cdd0f3a972544566b0",
+    "entrySha256": "faca51860a6b42b0311c9c8d936e83f83db0fae07e2144221daeec2eae888fd0",
+    "configSha256": "1e88b1cc64fb093c3211612309bd52cd4e254a7ce3f8c10a1959e4e2ca4c0f1f",
+    "filesPublished": 155,
+    "retainedOldHashedAssets": true,
+    "rollbackPrepared": true,
+    "portalRestarted": false,
+    "configChanged": false,
+    "apiRestarted": false,
+    "databaseChanged": false,
+    "nativeChanged": false
+  },
+  "publicChecks": {
+    "status": "passed",
+    "at": "2026-10-16T17:24:22.572Z",
+    "frontendVersion": "0.15.0-alpha.54",
+    "commit": "9da2eb7286114fa8884df9cdd0f3a972544566b0",
+    "staticFilesMatched": 155,
+    "apiVersion": "0.15.0-alpha.34",
+    "protocolVersion": "0.15.0-alpha.32",
+    "services": "active",
+    "apiRestarted": false,
+    "proxyChanged": false,
+    "pages": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "errors": [],
+        "apiServerErrors": []
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "errors": [],
+        "apiServerErrors": []
+      }
+    ],
+    "realUserUnlock": "not attempted"
+  },
+  "liveCompiledBrowserTests": 16,
+  "apiImplementationChanged": false,
+  "realAccountUnlock": "not attempted"
+}
