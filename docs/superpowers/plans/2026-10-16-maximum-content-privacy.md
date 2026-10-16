@@ -87,20 +87,20 @@ Do not assume every listed file needs editing. Before each task, trace all calle
 
 **Interfaces:** Add a versioned definition for a single-origin-DAO protected question reference. Question readership follows that DAO's existing content grants; individual-vote readers remain the original fixed executive set. Bind the protected reference to opening commitments, valid-choice proofs, final tally inputs and archived definition.
 
-- [ ] Extend modules `tests/{quick-ballot-context,quick-ballot-proof,quick-ballot-snapshot,quick-ballot-archive}.test.ts` and native Quickvote tests: cross-ballot copied questions/proofs fail; legacy version 1 remains valid; cleanup preserves the bound question reference and final-proof inputs.
-- [ ] Extend frontend `tests/e2e/quick-ballots.spec.ts`: eligible non-executive member can read a private question and vote but cannot decrypt others' choices; a missing grant blocks voting; all-account/cross-DAO questions display the explicit public disclosure and never claim private question access.
-- [ ] Run narrow regressions red; implement separate question/vote reader handling without altering fixed readers, eligibility, account uniqueness or the approved 30-day archive rule. Do not distribute the vote-decryption key to the question audience.
-- [ ] Verify real compiled proof paths and desktop/mobile workflows. Preserve public multi-DAO/all-account support; confidential cross-DAO question-key distribution remains disabled until separately qualified. Commit the versioned package and guides.
+- [x] Extend modules `tests/{quick-ballot-context,quick-ballot-proof,quick-ballot-snapshot,quick-ballot-archive}.test.ts` and native Quickvote tests: cross-ballot copied questions/proofs fail; legacy version 1 remains valid; cleanup preserves the bound question reference and final-proof inputs.
+- [x] Extend frontend `tests/e2e/quick-ballots.spec.ts`: eligible non-executive member can read a private question and vote but cannot decrypt others' choices; a missing grant blocks voting; all-account/cross-DAO questions display the explicit public disclosure and never claim private question access.
+- [x] Run narrow regressions red; implement separate question/vote reader handling without altering fixed readers, eligibility, account uniqueness or the approved 30-day archive rule. Do not distribute the vote-decryption key to the question audience.
+- [x] Verify real compiled proof paths and desktop/mobile workflows. Preserve public multi-DAO/all-account support; confidential cross-DAO question-key distribution remains disabled until separately qualified. Commit the versioned package and guides.
 
 ### Task 6: signed migration and recovery continuity
 
 **Interfaces:** A read-only migration preview reports public fields, proposed protected successors, required keys/grants, retained historical references and unchanged public protocol state. Applying a preview requires the normal authorized signed actions. A cursor identifies bounded resumable work; it grants no new authority and never stores plaintext.
 
-- [ ] Add core `tests/native/private-content-upgrade.test.ts` and integration migration tests from pinned current fixtures. Exercise mixed readers/writers, interrupted batches, lost responses, wrong account, downgrade rejection and old open ballots/approved payroll surviving the upgrade.
-- [ ] Extend frontend `tests/e2e/private-access-continuity.spec.ts`: migration with original keys; locked account fails clearly; signed opt-in only; keys/roles/balances preserved; historic plaintext warning; private source/key loss never causes replacement identity creation.
-- [ ] Run red first; implement preview/application using existing epoch/document-reference operations. Keep completed stages resumable and reconcile uncertain transactions before another signature. Bound each grant/cleanup operation to existing limits.
-- [ ] Verify legitimate full-history/from-join recoveries, retained term/document versions, closure and safe cleanup. Leave TESTDAO-2 unchanged until its owner can unlock the originals and deliberately approves its exact preview.
-- [ ] Commit the tested migration and recovery runbook. Do not claim retroactive secrecy, erasure or independent-provider qualification from local fixtures.
+- [x] Add core `tests/native/private-content-upgrade.test.ts` and integration migration tests from pinned current fixtures. Exercise mixed readers/writers, interrupted batches, lost responses, wrong account, downgrade rejection and old open ballots/approved payroll surviving the upgrade.
+- [x] Extend frontend `tests/e2e/private-access-continuity.spec.ts`: migration with original keys; locked account fails clearly; signed opt-in only; keys/roles/balances preserved; historic plaintext warning; private source/key loss never causes replacement identity creation.
+- [x] Run red first; implement preview/application using existing epoch/document-reference operations. Keep completed stages resumable and reconcile uncertain transactions before another signature. Bound each grant/cleanup operation to existing limits.
+- [x] Verify legitimate full-history/from-join recoveries, retained term/document versions, closure and safe cleanup. Leave TESTDAO-2 unchanged until its owner can unlock the originals and deliberately approves its exact preview.
+- [x] Commit the tested migration and recovery runbook. Do not claim retroactive secrecy, erasure or independent-provider qualification from local fixtures.
 
 ### Task 7: leakage, release and operational verification
 

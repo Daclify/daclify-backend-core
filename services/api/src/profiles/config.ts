@@ -20,7 +20,9 @@ export async function readProfileKeysConfiguration(
       .parse(env.PROFILE_KEYS_EXCLUSIONS_DIRECTORY);
     if (
       env.NETWORK_ENVIRONMENT === 'mainnet' &&
-      ['/tmp', '/var/tmp'].some((path) => directory === path || directory.startsWith(path + '/'))
+      ['/tmp', '/var/tmp', '/dev/shm'].some(
+        (path) => directory === path || directory.startsWith(path + '/'),
+      )
     )
       throw new Error();
     const exclusions = new FileProfileExclusions(directory);

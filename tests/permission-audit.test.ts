@@ -99,7 +99,7 @@ describe('deployment permission inspection', () => {
       plan,
       account([permission('execctx', [{ account: 'auditworks', action: null }])]),
     );
-    expect(audit.missingLinks).toHaveLength(70);
+    expect(audit.missingLinks).toHaveLength(71);
     expect(audit.unexpectedLinks).toEqual([{ account: 'auditworks', action: '*' }]);
   });
   it.each([
@@ -123,7 +123,7 @@ describe('deployment permission inspection', () => {
   it('reports a missing execution authority and refuses a wrong account', () => {
     const audit = auditContextPermission(plan, account([]));
     expect(audit.authorityMatches).toBe(false);
-    expect(audit.missingLinks).toHaveLength(70);
+    expect(audit.missingLinks).toHaveLength(71);
     expect(() => auditContextPermission(plan, account([], 'othercore'))).toThrow(
       'PERMISSION_ACCOUNT_MISMATCH',
     );
@@ -187,8 +187,9 @@ describe('deployment permission inspection', () => {
   it('uses all configured modules while keeping service-only accounts out of member execution', async () => {
     const audit = deploymentContextPermissionPlan(await loadEnvironment('testnet'));
     expect(audit.account).toBe('daclifycore1');
-    expect(audit.links).toHaveLength(108);
+    expect(audit.links).toHaveLength(111);
     for (const action of [
+      'setagentdesc',
       'setencprof',
       'delprofile',
       'leave',
@@ -199,6 +200,8 @@ describe('deployment permission inspection', () => {
       'accepthand',
     ])
       expect(audit.links).toContainEqual({ account: 'daclifycore1', action });
+    for (const action of ['commitpriv', 'editpriv'])
+      expect(audit.links).toContainEqual({ account: 'daclifypayr1', action });
     for (const action of ['regdoc', 'proposedoc', 'adoptdoc', 'canceldoc', 'ackdoc'])
       expect(audit.links).toContainEqual({ account: 'daclifydecid', action });
     expect(audit.links.map((link) => link.action)).not.toContain('cleardocs');

@@ -308,6 +308,7 @@ try {
         encryptionKey: EncryptionPublicKeySchema,
         admin: z.boolean().default(true),
         platform: z.boolean().default(false),
+        legacyPrivate: z.boolean().default(false),
       })
       .parse(request.body);
     const reference = randomBytes(32).toString('hex'),
@@ -337,7 +338,7 @@ try {
           title: 'Mini app browser community',
           description: 'Owned paid native fixture',
         },
-        privacy: 'public',
+        privacy: input.legacyPrivate ? 'encrypted-user-controlled' : 'public',
         setup: defaultDaoSetup('custom'),
         token: { chainId: f.chainId, contract: 'eosio.token', symbol: 'TLOS', precision: 4 },
       }),

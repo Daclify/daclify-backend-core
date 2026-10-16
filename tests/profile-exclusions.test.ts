@@ -99,3 +99,17 @@ it('requires finite explicit retention and refuses ephemeral mainnet configurati
     readProfileKeysConfiguration({ ...config, NETWORK_ENVIRONMENT: 'mainnet' }),
   ).rejects.toThrow('PROFILE_KEYS_CONFIGURATION_INVALID');
 });
+
+it.each(['/tmp/profiles', '/var/tmp/profiles', '/dev/shm/profiles'])(
+  'rejects the known temporary journal location %s before mainnet startup',
+  async (path) => {
+    await expect(
+      readProfileKeysConfiguration({
+        PROFILE_KEYS_ENABLED: '1',
+        PROFILE_KEYS_MAX_BACKUP_AGE_SECONDS: '86400',
+        PROFILE_KEYS_EXCLUSIONS_DIRECTORY: path,
+        NETWORK_ENVIRONMENT: 'mainnet',
+      }),
+    ).rejects.toThrow('PROFILE_KEYS_CONFIGURATION_INVALID');
+  },
+);

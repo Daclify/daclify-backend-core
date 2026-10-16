@@ -35,8 +35,21 @@ export const testnetMissingLinks = [
   'govresources',
 ];
 
-export async function nativeContracts(legacyRuntime = false) {
+export async function nativeContracts(
+  legacyRuntime: boolean | 'pre-private-content' = false,
+  observeRam = false,
+) {
   const f: NativeProcess = await nativeProcess();
+  const privacyBaseline = legacyRuntime === 'pre-private-content';
+  const releaseHashes = {
+    ...ModuleCodeHashes,
+    ...(privacyBaseline
+      ? {
+          decide: '1dbbd528e111c750e1b33eeef21db2252243de134fede3dea02ebb4341f1b95c',
+          payroll: 'c5b6aa9975709b6094c716df00b7a1c7134b1e9e9597c632090e54bbbb9184fc',
+        }
+      : {}),
+  };
   try {
     const abis = new Map<string, ABI>();
     for (const account of [
@@ -57,7 +70,11 @@ export async function nativeContracts(legacyRuntime = false) {
       'daclifycore',
       await f.deploy(
         'daclifycore',
-        legacyRuntime ? '.artifacts/ownership-policy1/runtime' : '.artifacts/contracts/runtime',
+        privacyBaseline
+          ? '.artifacts/privacy-upgrade/runtime'
+          : legacyRuntime
+            ? '.artifacts/ownership-policy1/runtime'
+            : '.artifacts/contracts/runtime',
       ),
     );
     abis.set('daclifyhub', await f.deploy('daclifyhub', '.artifacts/contracts/hub'));
@@ -66,18 +83,23 @@ export async function nativeContracts(legacyRuntime = false) {
     abis.set('eosio.token', await f.deploy('eosio.token', '.artifacts/contracts/testtoken'));
     if (
       (await f.api.v1.chain.get_raw_abi('daclifycore')).code_hash.toString() !==
-      (legacyRuntime
-        ? 'ecdb1e3dab7fb57502dd9ea8cde447a00892f20f4d30fa373f02c072eca03f40'
-        : RuntimeCodeHash)
+      (privacyBaseline
+        ? 'afa80071de5578e915c5b4c37d02f294c612a713299fa264116e7f338d65ca2d'
+        : legacyRuntime
+          ? 'ecdb1e3dab7fb57502dd9ea8cde447a00892f20f4d30fa373f02c072eca03f40'
+          : RuntimeCodeHash)
     )
       throw new Error('FIXTURE_RUNTIME_RELEASE_MISMATCH');
     for (const module of nativeModules) {
       // Binary artifacts only; public pinned SDK hashes define the accepted release.
-      const path = '../daclify-backend-modules/.artifacts/contracts/' + module.account;
+      const path =
+        privacyBaseline && (module.id === 'decide' || module.id === 'payroll')
+          ? '.artifacts/privacy-upgrade/' + module.account
+          : '../daclify-backend-modules/.artifacts/contracts/' + module.account;
       abis.set(module.account, await f.deploy(module.account, path));
       if (
         (await f.api.v1.chain.get_raw_abi(module.account)).code_hash.toString() !==
-        ModuleCodeHashes[module.id]
+        releaseHashes[module.id]
       )
         throw new Error('FIXTURE_MODULE_RELEASE_MISMATCH');
     }
@@ -132,6 +154,14 @@ export async function nativeContracts(legacyRuntime = false) {
       [f.key('daclifycore')],
     );
     await call('daclifycore', 'init', { chain_id: f.chainId });
+    if (observeRam) {
+      await call('daclifycore', 'initramobs', {});
+      for (const module of nativeModules)
+        await call('daclifycore', 'setramcode', {
+          account: module.account,
+          code_hash: releaseHashes[module.id],
+        });
+    }
     await call('eosio.token', 'create', { issuer: 'alice', maximum: '1000000.0000 TLOS' });
     await call(
       'eosio.token',
@@ -160,7 +190,7 @@ export async function nativeContracts(legacyRuntime = false) {
         party: 0,
         accepts_fee_rule: 1,
         price: '0.0000 TLOS',
-        code_hash: ModuleCodeHashes[module.id],
+        code_hash: releaseHashes[module.id],
         title: 'Dummy ' + module.id,
       });
     const gateway = new NativeChainGateway({
@@ -245,7 +275,7 @@ export async function nativeContracts(legacyRuntime = false) {
             version: 1,
             actions: ModulePermissions[module.id].actions,
             grants: ModulePermissions[module.id].grants,
-            code_hash: ModuleCodeHashes[module.id],
+            code_hash: releaseHashes[module.id],
           },
           owner,
         );

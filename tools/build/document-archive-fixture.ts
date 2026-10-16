@@ -11,21 +11,37 @@ const source = readFileSync('contracts/runtime/runtime.cpp', 'utf8')
   )
   .replace('(backfilldocs)(prunedocs)', '(backfilldocs)(agedoc)(prunedocs)');
 writeFileSync(directory + '/runtime.cpp', source);
+const compiler = process.env.DACLIFY_CDT_BINARY;
+const environment = compiler
+  ? { ...process.env, LD_LIBRARY_PATH: process.env.DACLIFY_NATIVE_LIBS ?? '' }
+  : process.env;
+if (
+  compiler &&
+  execFileSync(compiler, ['--version'], { env: environment, encoding: 'utf8' }).trim() !==
+    'cdt-cpp version 4.1.1'
+)
+  throw Error('PINNED_CDT_REQUIRED');
 execFileSync(
-  'docker',
+  compiler ?? 'docker',
   [
-    'run',
-    '--rm',
-    '--platform',
-    'linux/amd64',
-    '-v',
-    resolve('.') + ':/work',
-    'daclify-v2-toolchain:4.1.1-spring1.2.2',
-    'cdt-cpp',
+    ...(compiler
+      ? []
+      : [
+          'run',
+          '--rm',
+          '--platform',
+          'linux/amd64',
+          '-v',
+          resolve('.') + ':/work',
+          'daclify-v2-toolchain:4.1.1-spring1.2.2',
+          'cdt-cpp',
+        ]),
     directory + '/runtime.cpp',
     '-O=s',
     '-I',
     'contracts/common',
+    '-I',
+    'contracts/runtime',
     '-I',
     'contracts/vendor',
     '-o',
@@ -34,5 +50,17 @@ execFileSync(
     '-contract',
     'runtime',
   ],
-  { stdio: 'pipe', maxBuffer: 4 * 1024 * 1024 },
+  { stdio: 'pipe', maxBuffer: 4 * 1024 * 1024, env: environment },
+);
+
+const optimizer = process.env.DACLIFY_WASM_OPT_BINARY ?? 'wasm-opt';
+if (
+  execFileSync(optimizer, ['--version'], { env: environment, encoding: 'utf8' }).trim() !==
+  'wasm-opt version 108'
+)
+  throw Error('PINNED_WASM_OPT_REQUIRED');
+execFileSync(
+  optimizer,
+  [directory + '/runtime.wasm', '--mvp-features', '-Oz', '-o', directory + '/runtime.wasm'],
+  { env: environment, stdio: 'pipe' },
 );

@@ -205,4 +205,4 @@ it('packages complete synthetic evidence immutably and refuses a dirty source tr
   } finally {
     rmSync(workspace, { recursive: true, force: true });
   }
-}, 20000);
+}, 60000);

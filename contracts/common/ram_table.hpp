@@ -58,9 +58,15 @@ class ram_table:public eosio::multi_index<Table,Row,Indices...>{
     if constexpr(is_module)return static_cast<uint64_t>(Table)=="controls"_n.value||static_cast<uint64_t>(Table)=="termholds"_n.value||static_cast<uint64_t>(Table)=="terms"_n.value||static_cast<uint64_t>(Table)=="pollends"_n.value;
     switch(static_cast<uint64_t>(Table)){case "docsrcs"_n.value:case "docrefs"_n.value:case "receipts"_n.value:case "ramholds"_n.value:case "ramclmholds"_n.value:case "actors"_n.value:case "appscopes"_n.value:case "sessions"_n.value:case "evmbindings"_n.value:return true;default:return false;}
   }
+  uint64_t stored_row_bytes(const Row& row)const{
+    const auto it=eosio::internal_use_do_not_use::db_find_i64(base::get_code().value,base::get_scope(),static_cast<uint64_t>(Table),row.primary_key());
+    eosio::check(it>=0,"RAM_ROW_MISSING");const auto bytes=eosio::internal_use_do_not_use::db_get_i64(it,nullptr,0);eosio::check(bytes>=0,"RAM_ROW_SIZE");
+    // A new binary extension can serialize defaults that are absent from a historical row.
+    return static_cast<uint64_t>(bytes)+ram_row_bytes<Row,Indices...>(row)-eosio::pack_size(row);
+  }
   ram_migration_cursor capture(const Row& row){
     auto progress=migration_cursor(runtime(),base::get_code(),base::get_scope(),eosio::name{Table},false,scoped()?base::get_scope():0,ram_scope_bytes<Indices...>());
-    migration_capture(runtime(),base::get_code(),base::get_scope(),progress,row.primary_key(),owner(row),ram_row_bytes<Row,Indices...>(row));return progress;
+    migration_capture(runtime(),base::get_code(),base::get_scope(),progress,row.primary_key(),owner(row),stored_row_bytes(row));return progress;
   }
   void delta(uint64_t dao,uint64_t added,uint64_t removed){observe_ram(runtime(),dao,base::get_code(),eosio::name{Table},added,removed);}
   void header(uint64_t dao,uint64_t added,uint64_t removed){observe_ram(runtime(),scoped()?dao:0,base::get_code(),eosio::name{Table},added,removed);}
@@ -75,7 +81,7 @@ public:
   using base::base;
   void backfill(uint32_t limit){
     eosio::check(ram_backfill_active(runtime()),"RAM_MIGRATION_INACTIVE");
-    migration_scan(runtime(),base::get_code(),base::get_scope(),eosio::name{Table},*this,scoped()?base::get_scope():0,ram_scope_bytes<Indices...>(),limit,[&](const Row& r){return owner(r);},[](const Row& r){return ram_row_bytes<Row,Indices...>(r);});
+    migration_scan(runtime(),base::get_code(),base::get_scope(),eosio::name{Table},*this,scoped()?base::get_scope():0,ram_scope_bytes<Indices...>(),limit,[&](const Row& r){return owner(r);},[&](const Row& r){return stored_row_bytes(r);});
   }
   template<typename Constructor>auto emplace(eosio::name payer,Constructor&& fn){
     if constexpr(is_module)check_ram_payer_runtime(base::get_code(),runtime());
@@ -87,12 +93,12 @@ public:
   template<typename Updater>void modify(const Row& obj,eosio::name payer,Updater&& fn){
     if constexpr(is_module)check_ram_payer_runtime(base::get_code(),runtime());
     const bool migrating=ram_backfill_active(runtime());if(migrating)capture(obj);
-    eosio::check(!payer.value||payer==base::get_code(),"RAM_FOREIGN_PAYER");auto old_owner=owner(obj);auto before=ram_row_bytes<Row,Indices...>(obj);auto key=obj.primary_key();base::modify(obj,payer,std::forward<Updater>(fn));const auto& updated=base::get(key);auto next_owner=owner(updated);auto after=ram_row_bytes<Row,Indices...>(updated);
+    eosio::check(!payer.value||payer==base::get_code(),"RAM_FOREIGN_PAYER");auto old_owner=owner(obj);auto before=stored_row_bytes(obj);auto key=obj.primary_key();base::modify(obj,payer,std::forward<Updater>(fn));const auto& updated=base::get(key);auto next_owner=owner(updated);auto after=ram_row_bytes<Row,Indices...>(updated);
     eosio::check(!migrating||after<=before||protected_table(),"RAM_MIGRATION_GROWTH");
     if(old_owner!=next_owner){delta(old_owner,0,before);delta(next_owner,after,0);}else if(after>before)delta(old_owner,after-before,0);else if(before>after)delta(old_owner,0,before-after);
   }
   template<typename Updater>void modify(typename base::const_iterator it,eosio::name payer,Updater&& fn){modify(*it,payer,std::forward<Updater>(fn));}
-  auto erase(typename base::const_iterator it){if constexpr(is_module)check_ram_payer_runtime(base::get_code(),runtime());const bool migrating=ram_backfill_active(runtime());eosio::check(!migrating||protected_table(),"RAM_MIGRATION_PRUNING");if(migrating)capture(*it);auto key=it->primary_key(),dao=owner(*it);auto bytes=ram_row_bytes<Row,Indices...>(*it);auto next=base::erase(it);delta(dao,0,bytes);if(base::begin()==base::end())header(dao,0,ram_scope_bytes<Indices...>());if(migrating)migration_unmark(runtime(),base::get_code(),base::get_scope(),eosio::name{Table},key);return next;}
+  auto erase(typename base::const_iterator it){if constexpr(is_module)check_ram_payer_runtime(base::get_code(),runtime());const bool migrating=ram_backfill_active(runtime());eosio::check(!migrating||protected_table(),"RAM_MIGRATION_PRUNING");if(migrating)capture(*it);auto key=it->primary_key(),dao=owner(*it);auto bytes=stored_row_bytes(*it);auto next=base::erase(it);delta(dao,0,bytes);if(base::begin()==base::end())header(dao,0,ram_scope_bytes<Indices...>());if(migrating)migration_unmark(runtime(),base::get_code(),base::get_scope(),eosio::name{Table},key);return next;}
   void erase(const Row& obj){erase(base::iterator_to(obj));}
   template<eosio::name::raw IndexName>auto get_index(){auto value=base::template get_index<IndexName>();return tracked_index<decltype(value)>{value,this};}
   template<eosio::name::raw IndexName>auto get_index()const{return base::template get_index<IndexName>();}

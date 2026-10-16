@@ -1,5 +1,7 @@
 # Recovering Daclify after service or device loss
 
+For an optional signed upgrade of existing public descriptions, see [private content migration](private-content-migration.md). It preserves original keys and historical obligations; it cannot erase earlier disclosures.
+
 This runbook separates recovering your own keys and DAO access from restoring the operator’s database, key service and files. Read [current availability](current-status.md) for the shared testnet limits. Historical [0.6](operations/upgrade-0.6.md) and [0.7](operations/upgrade-0.7.md) upgrade instructions retain their version-specific prerequisites; later evidence and current configuration determine what is enabled.
 
 ## A ten-member DAO loses its server

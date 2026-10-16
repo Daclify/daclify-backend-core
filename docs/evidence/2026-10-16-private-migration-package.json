@@ -1,0 +1,149 @@
+{
+  "date": "2026-10-16",
+  "scope": "Task 6 signed migration and original-key continuity; local qualification only",
+  "cohort": {
+    "core": "0.15.0-alpha.44",
+    "modules": "0.10.0-alpha.55",
+    "contracts": "0.10.0-alpha.10",
+    "frontend": "0.15.0-alpha.62"
+  },
+  "compiler": "CDT 4.1.1 -O=s; runtime keeps pinned wasm-opt 108 MVP -Oz",
+  "artifacts": {
+    "runtime": {
+      "bytes": 868206,
+      "sha256": "082626e899cc9bc4ede81ad7c7e56f1c82c145785b225b3d94ace61347736dc7"
+    },
+    "hub": {
+      "bytes": 56610,
+      "sha256": "81ffd1545d365d94068bacc2665915abb1c9c74e8880b4a5d5d410d194883bc6"
+    },
+    "appjoin": {
+      "bytes": 113443,
+      "sha256": "c39829d8b2ee61bbc842584df16ca1a0c6b08dcb0f6ca96bae883350a40b4b58"
+    },
+    "quickauth": {
+      "bytes": 83595,
+      "sha256": "a67ce528c4eebaaa4ca4a411e2fca54499da214133944072306e5cbb4977f54e"
+    },
+    "names": {
+      "bytes": 91743,
+      "sha256": "29f3155cc67c86871aa862b0ae9168acfdbaadf899721d4f5ef9a7ccaff86a65"
+    },
+    "decide": {
+      "bytes": 454744,
+      "sha256": "e549cbd8ab46fa254e23a0616aa6d1ee2eef99a685a844fd51c2678c8bb2b853"
+    },
+    "works": {
+      "bytes": 173193,
+      "sha256": "34a808d913fa3a663815840917725505655e5fd5c757bb98ba115e198a107e26"
+    },
+    "payroll": {
+      "bytes": 129080,
+      "sha256": "c998bb71978e530bdb6a87c2c7cdd15ea82dba12b87931938a056a77f726192b"
+    },
+    "grants": {
+      "bytes": 143689,
+      "sha256": "feba5cefb95e672b08b64f3b9093ac7f989425916e7d9b9880665365c2497198"
+    },
+    "endorse": {
+      "bytes": 163504,
+      "sha256": "0c743db842736fc070bc68ccfeb993106869e93b35a9d3c5cd481a294f542791"
+    },
+    "activity": {
+      "bytes": 203982,
+      "sha256": "07489cf54a2520c829aa5b5e590c8936330befcfde264ce08b8d1828b69a721a"
+    },
+    "quickvote": {
+      "bytes": 271416,
+      "sha256": "ff91fc2b4e54b6d1a87f365f006af4acb9ee52b6d9094d8df4bf162ae1868ebc"
+    }
+  },
+  "measurements": {
+    "private-identity": {
+      "runtimeCodeHash": "082626e899cc9bc4ede81ad7c7e56f1c82c145785b225b3d94ace61347736dc7",
+      "compiler": "CDT 4.1.1 -O=s, existing MVP wasm-opt -Oz",
+      "operation": "legacy metadata -> private metadata with three fixed docref slots",
+      "nativeRamDeltaBytes": 1718,
+      "cpuUsageUs": 3127,
+      "newTables": 0,
+      "newSecondaryIndexes": 0,
+      "referenceSlots": 3,
+      "note": "Owned local Spring measurement; not a network CPU or price guarantee."
+    },
+    "private-module": {
+      "runtimeCodeHash": "082626e899cc9bc4ede81ad7c7e56f1c82c145785b225b3d94ace61347736dc7",
+      "payrollCodeHash": "c998bb71978e530bdb6a87c2c7cdd15ea82dba12b87931938a056a77f726192b",
+      "runtimeWasmBytes": 868206,
+      "payrollWasmBytes": 129080,
+      "privateCommitRamBytes": 4542,
+      "privateCommitCpuUs": 12062,
+      "displayRenameRamBytes": 0,
+      "displayRenameCpuUs": 2605,
+      "agentDescriptionRamBytes": 486,
+      "agentDescriptionCpuUs": 1612,
+      "newTables": 0,
+      "newSecondaryIndexes": 0,
+      "note": "Owned local Spring authority/resource check with synthetic envelopes; actual encryption/decryption is tested in browsers. No network cost guarantee."
+    },
+    "private-archive": {
+      "runtimeCodeHash": "082626e899cc9bc4ede81ad7c7e56f1c82c145785b225b3d94ace61347736dc7",
+      "removedRamBytes": 492,
+      "pruneCpuUs": 2298,
+      "restoreCpuUs": 2323,
+      "note": "Owned native fixture; archive attestation uses owned verified bytes, not independent-provider qualification."
+    }
+  },
+  "verification": {
+    "frontendUnit": {
+      "passed": 463,
+      "files": 83
+    },
+    "focusedRecoveryUnit": {
+      "passed": 36,
+      "files": 6
+    },
+    "corePostgresqlNativeCreationClaims": {
+      "passed": 23,
+      "files": 3
+    },
+    "privateBrowser": {
+      "passedCases": 24,
+      "combinedRun": {
+        "passed": 23,
+        "failed": 1
+      },
+      "isolatedDesktopClaimRerun": {
+        "passed": 1
+      },
+      "note": "Initial localhost/127.0.0.1 mismatch and stale fixture pins are rejected setup attempts, not acceptance. Retry poll reports response status instead of parsing error bodies as successful DTOs."
+    },
+    "native": {
+      "passed": 4,
+      "files": 4,
+      "note": "Three passed in the final combined run; archive rerun passed after correcting its test category from retained to activity. Actual row growth matches RAM counters for historical actors and payroll controls."
+    },
+    "historicalArchiveCodecs": {
+      "fixedIdentityCheck": "passed",
+      "families": [
+        "document-versions",
+        "ordinary-poll-votes",
+        "quick-ballot-responses",
+        "quick-ballot-grants"
+      ],
+      "passed": 27,
+      "immediatePredecessorQuickCodeHash": "963a7b2b7cd558c3726f00a68a67b404a0b94aa6c3b8f8b66149269ba6ce94bc"
+    },
+    "broadSuites": "Core repeat:1132 passed,1 known temporary-path failure corrected with7 green focused checks. Modules repeat overlapped archive/version changes and is not final qualification. Task7 repeats a frozen cohort.",
+    "profileExclusionConfiguration": {
+      "passed": 7,
+      "note": "Running tests in /dev/shm exposed missing mainnet temporary-journal rejection; /dev/shm now rejects like /tmp and /var/tmp."
+    }
+  },
+  "limits": [
+    "No customer DAO, production database or live service changed.",
+    "TESTDAO-2 is not initialized or migrated.",
+    "No new account keys or assisted recovery enrollment.",
+    "No independent storage-provider/backup qualification from the owned archive verifier.",
+    "Shared upgrade/adoption, leakage and live rollout remain Task 7 gates."
+  ]
+}
