@@ -128,10 +128,131 @@
     "No mainnet deployment or native authority changes"
   ],
   "deployment": {
-    "status": "pending",
+    "status": "deployed and checked",
     "network": "testnet",
-    "nativeChanged": false,
-    "migrationsChanged": false,
-    "publicProtocolVersion": "0.15.0-alpha.32"
+    "api": {
+      "status": "deployed",
+      "at": "2026-10-16T16:31:47.983Z",
+      "network": "testnet",
+      "apiVersion": "0.15.0-alpha.33",
+      "protocolVersion": "0.15.0-alpha.32",
+      "coreCommit": "136e7a94b3bab0e0394e5c05ffcf8437952cf102",
+      "sessionMetadataExposed": true,
+      "anonymousReadStatus": 204,
+      "bodySchemaUnchanged": true,
+      "sessionLifetimeChanged": false,
+      "databaseChanged": false,
+      "nativeChanged": false,
+      "environmentChanged": false,
+      "rollbackPrepared": true
+    },
+    "portal": {
+      "status": "deployed",
+      "at": "2026-10-16T16:31:59.399Z",
+      "network": "testnet",
+      "frontendVersion": "0.15.0-alpha.52",
+      "commit": "630c98ac4373ceb6fc7710cd07d14a294e8fd4ad",
+      "entrySha256": "bc96ced8e5616211d4e247226fb7ee4e8af0bd5c40dfbfe42c72c923f92a0c10",
+      "configSha256": "1e88b1cc64fb093c3211612309bd52cd4e254a7ce3f8c10a1959e4e2ca4c0f1f",
+      "filesPublished": 155,
+      "retainedOldHashedAssets": true,
+      "rollbackPrepared": true,
+      "portalRestarted": false,
+      "configChanged": false,
+      "apiRestarted": true,
+      "databaseChanged": false,
+      "nativeChanged": false
+    },
+    "publicChecks": {
+      "status": "passed",
+      "at": "2026-10-16T16:32:55.930Z",
+      "coreVersion": "0.15.0-alpha.32",
+      "emailRecoveryService": {
+        "emailDelivery": "mail",
+        "assistedAvailable": true
+      },
+      "staticFilesMatched": 155,
+      "moduleHashesVerified": 7,
+      "runtimeHashVerified": true,
+      "nativeRawAbisVerified": [
+        {
+          "account": "daclifycore1",
+          "rawAbiSha256": "3855a7b8e283d33744ad126b3e1762fa15bf7fe8b4c0534b4e8a8104f4d0c5b4"
+        },
+        {
+          "account": "daclifydecid",
+          "rawAbiSha256": "2268cd779edfda686b5b5533ea1a9f8b771952b43c2628cdda28ac5e30e44511"
+        },
+        {
+          "account": "daclifyworks",
+          "rawAbiSha256": "4a2c595ff504b1305d32531432c78abe25fc1e3ee902ddff10d2d1c867082c88"
+        },
+        {
+          "account": "daclifypayr1",
+          "rawAbiSha256": "30859bbd6b3a4c18244dceed93cb9d49f941c55c0924c748f111b0589a5c7bcb"
+        },
+        {
+          "account": "daclifygrant",
+          "rawAbiSha256": "ed73e0b960db25be350ac54b800146e92e874d9200d121756fa7e8edcd17be31"
+        },
+        {
+          "account": "daclifyendor",
+          "rawAbiSha256": "2a74e6139a5a3713fe76a7f5c2bb2f8b6dd6277d77a55c341db9b1f988541c31"
+        },
+        {
+          "account": "daclifyactiv",
+          "rawAbiSha256": "f7c8d87159fc12087ea0998d501f594bda7d6080e9c68af077c6801819f65476"
+        },
+        {
+          "account": "daclifyquick",
+          "rawAbiSha256": "f259cd6b5925a8467308fae2509457b45b8e77187360ea3d7a985edbd09f5ab5"
+        }
+      ],
+      "downloadsVerified": 54,
+      "previousMiniReleaseAvailable": true,
+      "mcpReleasePreserved": true,
+      "testnetLockVerified": true,
+      "liveReadOnlyBrowser": [
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "status": "passed",
+          "errors": [],
+          "apiServerErrors": []
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "status": "passed",
+          "errors": [],
+          "apiServerErrors": []
+        }
+      ],
+      "allRetainedDownloadsVerified": true,
+      "signedLivePublication": "not run",
+      "externalWalletCeremonies": "not run"
+    },
+    "deployedBundleChecks": {
+      "passed": 10,
+      "failed": 0,
+      "transport": "Controlled email/API/key-broker fixtures against the actual public bundle with real SDK/WebCrypto"
+    },
+    "release": "/data/daclify-runtime/releases/20261016-portal-key-lock-r2",
+    "runtimeImportProbe": "passed before final restart",
+    "initialAttempts": [
+      {
+        "status": "rolled back",
+        "reason": "Deployment command timeout matched the service 30-second shutdown budget; increased command wait to 45 seconds"
+      },
+      {
+        "status": "rolled back",
+        "reason": "Staged archive omitted nested community-mcp dependency directory; corrected dependency linkage and verified server/native/MCP imports before restart"
+      }
+    ],
+    "privateUserRecovery": "not run"
   }
 }
