@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-16T12:23:24.877749+00:00",
+  "scope": "Unlock existing private profiles through enrolled paired sign-in",
+  "frontendVersion": "0.15.0-alpha.49",
+  "frontendCommit": "5afbfcc03acd48000acc950ba7f336e471401949",
+  "unchangedCoreVersion": "0.15.0-alpha.32",
+  "unchangedModulesVersion": "0.10.0-alpha.42",
+  "diagnosis": {
+    "reported": "Email-created account with Daclify-assisted keys cannot edit profile after keys lock",
+    "scopedReadOnlyFacts": {
+      "assistedEver": true,
+      "emailPairings": 1,
+      "usableAssistedEmailBackups": 1,
+      "quarantinedBackups": 0,
+      "publicServiceEmailDelivery": "mail",
+      "publicServiceAssistedRecoveryAvailable": true
+    },
+    "rootCause": "Profile requires decrypted in-memory keys but previously displayed only an unlock instruction; existing paired sign-in recovery controls were elsewhere and gated to setup flows",
+    "scope": "Expose existing qualified paired sign-in directly in Profile, preserving original identity/key checks and memory-only lifetime",
+    "privateIdentifiers": "Account identity, email, bearer credentials and all key/backup records omitted",
+    "mutations": "None to real accounts, keys, credentials, recovery methods, profiles, orders or DAO state"
+  },
+  "verification": {
+    "status": "passed",
+    "at": "2026-10-16T12:21:43.729414+00:00",
+    "frontendVersion": "0.15.0-alpha.49",
+    "unitFiles": 77,
+    "unitTests": 414,
+    "browserTests": 72,
+    "browserProjects": [
+      "Desktop Chrome",
+      "Pixel 7 Chromium"
+    ],
+    "red": [
+      "Signed-in locked-profile email entry absent before the fix",
+      "A second regression found two email fields after visiting Sign-in methods"
+    ],
+    "build": "final testnet build including Vue/TypeScript passed",
+    "lint": "final five policy checks passed",
+    "format": "changed TS/Vue/JSON passed",
+    "dependenciesChanged": false,
+    "sourceReview": "ProfilePanel sole caller Account, embedded/standalone account rendering, provider sign-in callbacks, recovery grants, original key identity/context guards, memory-only key lifetime and existing approval/create destinations reviewed inline",
+    "finalEditVerification": "Final template-only inactive-form exclusion checked by complete 72-case browser run, lint and Vue/TypeScript build; session/crypto unit implementations unchanged since 414-test pass",
+    "coverage": [
+      "Paired email restores original signing/encryption identity and editable profile without a vault password",
+      "Page reload and ten-minute inactivity lock require verification again",
+      "Missing grant, failed storage and rejected email code keep fields locked",
+      "Sign-in-only methods omitted, unavailable method listing can retry and kit/device fallback remains accessible",
+      "Account/Profile tab stays selected even with an action returnTo",
+      "Hidden account forms cannot duplicate email labels; new locked Profile Axe check passes",
+      "Existing keyboard/tab navigation, profile drafts, wallet activation, kit restoration and saved/claimed DAO flows pass"
+    ],
+    "limits": [
+      "Browser transport, inbox and key-broker responses use controlled fixtures; recovery encryption/decryption and key identity checks use real SDK/WebCrypto",
+      "Only scoped read-only real account recovery metadata and public service availability were inspected",
+      "No real email, recovery grant, private key, profile, credential, DAO or chain mutation",
+      "Actual inbox verification was not attempted; backend/native integrations unchanged and not rerun"
+    ]
+  },
+  "deployment": {
+    "status": "deployed",
+    "at": "2026-10-16T12:22:00.715Z",
+    "network": "testnet",
+    "frontendVersion": "0.15.0-alpha.49",
+    "commit": "5afbfcc03acd48000acc950ba7f336e471401949",
+    "entrySha256": "e9324b87450e0af5b3cae90aa5ccd9a737ebd203a4ae703399d006970b5ced31",
+    "configSha256": "1e88b1cc64fb093c3211612309bd52cd4e254a7ce3f8c10a1959e4e2ca4c0f1f",
+    "filesPublished": 155,
+    "retainedOldHashedAssets": true,
+    "rollbackPrepared": true,
+    "portalRestarted": false,
+    "configChanged": false,
+    "apiRestarted": false,
+    "databaseChanged": false,
+    "nativeChanged": false
+  },
+  "public": {
+    "status": "passed",
+    "at": "2026-10-16T12:22:31.205Z",
+    "coreVersion": "0.15.0-alpha.32",
+    "emailRecoveryService": {
+      "emailDelivery": "mail",
+      "assistedAvailable": true
+    },
+    "staticFilesMatched": 155,
+    "moduleHashesVerified": 7,
+    "runtimeHashVerified": true,
+    "nativeRawAbisVerified": [
+      {
+        "account": "daclifycore1",
+        "rawAbiSha256": "3855a7b8e283d33744ad126b3e1762fa15bf7fe8b4c0534b4e8a8104f4d0c5b4"
+      },
+      {
+        "account": "daclifydecid",
+        "rawAbiSha256": "2268cd779edfda686b5b5533ea1a9f8b771952b43c2628cdda28ac5e30e44511"
+      },
+      {
+        "account": "daclifyworks",
+        "rawAbiSha256": "4a2c595ff504b1305d32531432c78abe25fc1e3ee902ddff10d2d1c867082c88"
+      },
+      {
+        "account": "daclifypayr1",
+        "rawAbiSha256": "30859bbd6b3a4c18244dceed93cb9d49f941c55c0924c748f111b0589a5c7bcb"
+      },
+      {
+        "account": "daclifygrant",
+        "rawAbiSha256": "ed73e0b960db25be350ac54b800146e92e874d9200d121756fa7e8edcd17be31"
+      },
+      {
+        "account": "daclifyendor",
+        "rawAbiSha256": "2a74e6139a5a3713fe76a7f5c2bb2f8b6dd6277d77a55c341db9b1f988541c31"
+      },
+      {
+        "account": "daclifyactiv",
+        "rawAbiSha256": "f7c8d87159fc12087ea0998d501f594bda7d6080e9c68af077c6801819f65476"
+      },
+      {
+        "account": "daclifyquick",
+        "rawAbiSha256": "f259cd6b5925a8467308fae2509457b45b8e77187360ea3d7a985edbd09f5ab5"
+      }
+    ],
+    "downloadsVerified": 54,
+    "previousMiniReleaseAvailable": true,
+    "mcpReleasePreserved": true,
+    "testnetLockVerified": true,
+    "liveReadOnlyBrowser": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "status": "passed",
+        "errors": [],
+        "apiServerErrors": []
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "status": "passed",
+        "errors": [],
+        "apiServerErrors": []
+      }
+    ],
+    "allRetainedDownloadsVerified": true,
+    "signedLivePublication": "not run",
+    "externalWalletCeremonies": "not run"
+  }
+}
