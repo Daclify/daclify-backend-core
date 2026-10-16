@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+API implementation 0.15.0-alpha.34: reuse the account-locking recovery transaction when projecting DAO memberships. This prevents assisted setup, enrollment and email unlock from waiting on their own account foreign-key lock. Preserve recovery policy checks, grant rollback, SDK/protocol 0.15.0-alpha.32 and existing native contracts.
+
 Keep the API available when ChatGPT client metadata fails verification, while disabling that client and retaining strict local OAuth configuration checks. Preserve MCP’s independent SDK cohort in clean bootstrap and release manifests, and refuse replacement package bytes. Use the existing native document/version index for single-file downloads and upload reconciliation. Public SDKs, contracts, database layouts and historical release bytes remain unchanged.
 
 ## 0.15.0-alpha.22 development

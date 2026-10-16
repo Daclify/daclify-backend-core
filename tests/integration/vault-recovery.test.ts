@@ -42,6 +42,7 @@ import {
 import { controlledInject } from '../helpers/account-control.js';
 import { RecoveryKitSchema } from '../../protocol/crypto.js';
 import { RecoveryService } from '../../services/api/src/auth/recovery.js';
+import { NativeChainGateway } from '../../services/api/src/native-chain.js';
 
 const url = process.env.DATABASE_URL;
 if (
@@ -803,6 +804,7 @@ describe('full access through explicitly selected paired methods', () => {
   });
   it('restores original keys through an explicitly enabled email after fresh real OTP verification', async () => {
     recovery.assistedQualified = true;
+    const boundedPool = new Pool({ connectionString: url, options: '-c lock_timeout=500ms' });
     try {
       const user = await owner(),
         email = `${crypto.randomUUID()}@example.test`;
@@ -868,6 +870,59 @@ describe('full access through explicitly selected paired methods', () => {
       const session = SessionSchema.parse(result.json()),
         recipient = await createRecoveryRecipient();
       expect(session.account).toEqual(user.session.account);
+      await pool.query('DELETE FROM evm_links WHERE account_id=$1', [session.account.id]);
+      const dao = DaoSummarySchema.parse({
+        reference: { chainId, contract: 'daclifycore', daoId: '7', interfaceVersion: 1 },
+        title: 'New membership',
+        description: '',
+        privacy: 'public',
+        owner: 'alice',
+        token: { chainId, contract: 'eosio.token', symbol: 'TLOS', precision: 4 },
+        members: 1,
+        available: '0',
+        reserved: '0',
+        claims: '0',
+        keyEpoch: '0',
+      });
+      const gateway = new NativeChainGateway(
+        {
+          rpcUrl: 'http://127.0.0.1:19988',
+          chainId,
+          runtime: 'daclifycore',
+          hub: null,
+          environment: 'local',
+          relayActor: 'relay',
+          relayKey: PrivateKey.generate('K1'),
+        },
+        boundedPool,
+      );
+      vi.spyOn(gateway, 'listDaos').mockResolvedValue([dao]);
+      vi.spyOn(chain, 'dao').mockResolvedValue(dao);
+      vi.spyOn(chain, 'memberships').mockImplementation((account, db) =>
+        gateway.memberships(account, db),
+      );
+      vi.stubGlobal('fetch', async () =>
+        Response.json({
+          rows: [
+            {
+              id: '1',
+              native_account: '',
+              signing_key: user.key.toPublic().toString(),
+              encryption_key: JSON.stringify(session.account.encryptionKey),
+              custody: 1,
+              nonce: '0',
+              active: true,
+              admin: true,
+              reviewer: false,
+              credits: '0',
+              claim: '0',
+              stake: '0',
+              join_epoch: '0',
+            },
+          ],
+          more: false,
+        }),
+      );
       const response = await app.inject({
         method: 'POST',
         url: '/v1/account/recovery/claim',
@@ -891,7 +946,18 @@ describe('full access through explicitly selected paired methods', () => {
         restored.fill(0);
       }
       expect(JSON.stringify(response.json())).not.toContain(user.secrets.encryptionPrivateKey.d);
+      expect(
+        (
+          await pool.query(
+            'SELECT member_id::text FROM memberships WHERE account_id=$1 AND dao_id=7',
+            [session.account.id],
+          )
+        ).rows,
+      ).toEqual([{ member_id: '1' }]);
     } finally {
+      vi.restoreAllMocks();
+      vi.unstubAllGlobals();
+      await boundedPool.end();
       recovery.assistedQualified = false;
     }
   });

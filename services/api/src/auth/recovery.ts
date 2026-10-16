@@ -206,7 +206,7 @@ export class RecoveryService {
   }
   private async assistedPolicy(account: Account, db: Pool | PoolClient): Promise<void> {
     try {
-      const memberships = await this.chain.memberships(account);
+      const memberships = await this.chain.memberships(account, db);
       const historical = await db.query<{ chain_id: string; contract: string; dao_id: string }>(
         'SELECT chain_id,contract,dao_id::text FROM memberships WHERE account_id=$1',
         [account.id],
