@@ -1,0 +1,195 @@
+{
+  "status": "passed",
+  "at": "2026-10-16T16:57:24.422Z",
+  "frontendVersion": "0.15.0-alpha.53",
+  "apiVersion": "0.15.0-alpha.34",
+  "protocolVersion": "0.15.0-alpha.32",
+  "modulesVersion": "0.10.0-alpha.42",
+  "coreUnit": {
+    "files": 189,
+    "passed": 1114
+  },
+  "frontendUnit": {
+    "files": 77,
+    "passed": 423
+  },
+  "integrationTests": 70,
+  "browser": {
+    "passed": 86,
+    "failed": 0,
+    "projects": [
+      "Desktop Chrome",
+      "Pixel 7 Chromium"
+    ]
+  },
+  "compiledCandidateTests": 14,
+  "red": {
+    "integration": "69 passed, 1 failed; assisted claim blocked on membership foreign key",
+    "workspace": "7 passed, 1 failed; profile identity cleared on temporary failure",
+    "deployedOldBundle": "profile editor closes after recovery and membership refresh failure"
+  },
+  "implementation": [
+    "Use the existing recovery transaction for native membership projection",
+    "Keep profile identity and draft during temporary same-account refresh failures"
+  ],
+  "unchanged": [
+    "public SDK and module versions",
+    "native contracts and permissions",
+    "migrations and stored keys",
+    "session/key timers and grant consumption guards",
+    "provider and proxy configuration"
+  ],
+  "limits": [
+    "Chain RPC and email/custody transports use disposable controlled data in tests",
+    "No real user email code, backup or private-key operation",
+    "No mainnet or Almaiso changes"
+  ],
+  "operations": {
+    "initialAutomaticApiRestart": false,
+    "manualStuckConnectionReleaseCausedOneRestart": true,
+    "automaticRecoveryReadyAt": "2026-10-16T16:47:46Z",
+    "blockedDbQueriesAfterRelease": 0,
+    "generalDbDisconnectionResilience": "unchanged"
+  },
+  "deployment": {
+    "api": {
+      "status": "deployed",
+      "at": "2026-10-16T16:57:50.344Z",
+      "network": "testnet",
+      "apiVersion": "0.15.0-alpha.34",
+      "protocolVersion": "0.15.0-alpha.32",
+      "coreCommit": "c801ef92461d5d02e4fdd3b40aaab65eaf97c1c6",
+      "sessionMetadataExposed": true,
+      "anonymousReadStatus": 204,
+      "bodySchemaUnchanged": true,
+      "sessionLifetimeChanged": false,
+      "databaseChanged": false,
+      "nativeChanged": false,
+      "environmentChanged": false,
+      "rollbackPrepared": true
+    },
+    "portal": {
+      "status": "deployed",
+      "at": "2026-10-16T16:58:02.796Z",
+      "network": "testnet",
+      "frontendVersion": "0.15.0-alpha.53",
+      "commit": "e30fade00dc9a3566bfa587ef819a2653a91a48d",
+      "entrySha256": "b8dc26698328d2eae34670c822bf91c728fd34e0ea5731ac14505f4e6e4eab2e",
+      "configSha256": "1e88b1cc64fb093c3211612309bd52cd4e254a7ce3f8c10a1959e4e2ca4c0f1f",
+      "filesPublished": 155,
+      "retainedOldHashedAssets": true,
+      "rollbackPrepared": true,
+      "portalRestarted": false,
+      "configChanged": false,
+      "apiRestarted": true,
+      "databaseChanged": false,
+      "nativeChanged": false
+    },
+    "publicChecks": {
+      "status": "passed",
+      "at": "2026-10-16T16:58:52.798Z",
+      "coreVersion": "0.15.0-alpha.32",
+      "emailRecoveryService": {
+        "emailDelivery": "mail",
+        "assistedAvailable": true
+      },
+      "staticFilesMatched": 155,
+      "moduleHashesVerified": 7,
+      "runtimeHashVerified": true,
+      "nativeRawAbisVerified": [
+        {
+          "account": "daclifycore1",
+          "rawAbiSha256": "3855a7b8e283d33744ad126b3e1762fa15bf7fe8b4c0534b4e8a8104f4d0c5b4"
+        },
+        {
+          "account": "daclifydecid",
+          "rawAbiSha256": "2268cd779edfda686b5b5533ea1a9f8b771952b43c2628cdda28ac5e30e44511"
+        },
+        {
+          "account": "daclifyworks",
+          "rawAbiSha256": "4a2c595ff504b1305d32531432c78abe25fc1e3ee902ddff10d2d1c867082c88"
+        },
+        {
+          "account": "daclifypayr1",
+          "rawAbiSha256": "30859bbd6b3a4c18244dceed93cb9d49f941c55c0924c748f111b0589a5c7bcb"
+        },
+        {
+          "account": "daclifygrant",
+          "rawAbiSha256": "ed73e0b960db25be350ac54b800146e92e874d9200d121756fa7e8edcd17be31"
+        },
+        {
+          "account": "daclifyendor",
+          "rawAbiSha256": "2a74e6139a5a3713fe76a7f5c2bb2f8b6dd6277d77a55c341db9b1f988541c31"
+        },
+        {
+          "account": "daclifyactiv",
+          "rawAbiSha256": "f7c8d87159fc12087ea0998d501f594bda7d6080e9c68af077c6801819f65476"
+        },
+        {
+          "account": "daclifyquick",
+          "rawAbiSha256": "f259cd6b5925a8467308fae2509457b45b8e77187360ea3d7a985edbd09f5ab5"
+        }
+      ],
+      "downloadsVerified": 54,
+      "previousMiniReleaseAvailable": true,
+      "mcpReleasePreserved": true,
+      "testnetLockVerified": true,
+      "liveReadOnlyBrowser": [
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "status": "passed",
+          "errors": [],
+          "apiServerErrors": []
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "status": "passed",
+          "errors": [],
+          "apiServerErrors": []
+        }
+      ],
+      "allRetainedDownloadsVerified": true,
+      "signedLivePublication": "not run",
+      "externalWalletCeremonies": "not run"
+    },
+    "health": {
+      "status": "passed",
+      "at": "2026-10-16T16:58:24.542Z",
+      "repos": {
+        "daclify-frontend": "e30fade00dc9a3566bfa587ef819a2653a91a48d",
+        "daclify-backend-core": "c801ef92461d5d02e4fdd3b40aaab65eaf97c1c6",
+        "daclify-backend-modules": "491e9dbed0fd0895bc54c75bbfe4198aec132a9c"
+      },
+      "services": [
+        "active",
+        "active"
+      ],
+      "frontendVersion": "0.15.0-alpha.53",
+      "apiVersion": "0.15.0-alpha.34",
+      "protocolVersion": "0.15.0-alpha.32",
+      "entrySha256": "b8dc26698328d2eae34670c822bf91c728fd34e0ea5731ac14505f4e6e4eab2e",
+      "coreBuildCommit": "c801ef92461d5d02e4fdd3b40aaab65eaf97c1c6",
+      "laterCoreChanges": "evidence only",
+      "coreFilesMatched": 2605,
+      "sessionMetadataExposed": true,
+      "apiErrorsSinceFinalReadiness": 0,
+      "configChanged": false,
+      "realUserRecovery": "not run"
+    },
+    "database": {
+      "at": "2026-10-16T16:58:48.927Z",
+      "status": "passed",
+      "blocked_queries": 0,
+      "old_idle_transactions": 0,
+      "liveRecoveryRecordsRead": false
+    },
+    "liveBundleBrowserTests": 14,
+    "realUserEmailRecovery": "not attempted; user retry required"
+  }
+}
