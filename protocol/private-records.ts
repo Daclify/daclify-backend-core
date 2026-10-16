@@ -62,6 +62,10 @@ export const PrivateAgentBodySchema = z.strictObject({
   operatorLabel: text(64),
   description: text(4000),
 });
+export const PrivateQuickQuestionBodySchema = z.strictObject({
+  question: text(256, 256).refine((value) => value.trim().length > 0),
+  explanation: text(4096, 4096),
+});
 const context = {
   schemaVersion: z.literal(1),
   source: NativeAccountSchema,
@@ -71,6 +75,7 @@ export const PrivateRecordPayloadSchema = z.discriminatedUnion('kind', [
   z.strictObject({ ...context, kind: z.literal('dao-identity'), body: PrivateIdentityBodySchema }),
   z.strictObject({ ...context, kind: z.literal('ballot-content'), body: PrivateBallotBodySchema }),
   z.strictObject({ ...context, kind: z.literal('payroll-label'), body: PrivatePayrollBodySchema }),
+  z.strictObject({ ...context, kind: z.literal('quick-question'), body: PrivateQuickQuestionBodySchema }),
   z.strictObject({
     ...context,
     kind: z.literal('agent-description'),

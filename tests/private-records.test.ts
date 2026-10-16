@@ -11,6 +11,16 @@ const identity = {
 };
 
 describe('protected descriptive records', () => {
+  it('keeps the full Quick-question byte limits in a separate protected payload', () => {
+    const payload = { ...identity, kind: 'quick-question', source: 'quickvote', body: { question: 'q'.repeat(256), explanation: 'e'.repeat(4096) } };
+    expect(PrivateRecordPayloadSchema.parse(payload)).toEqual(payload);
+    for (const body of [
+      { ...payload.body, question: 'q'.repeat(257) },
+      { ...payload.body, question: '💫'.repeat(65) },
+      { ...payload.body, explanation: 'e'.repeat(4097) },
+      { ...payload.body, voteKey: 'must not be part of the question' },
+    ]) expect(PrivateRecordPayloadSchema.safeParse({ ...payload, body }).success).toBe(false);
+  });
   it('accepts a canonical ciphertext reference and rejects unbound or ambiguous references', () => {
     expect(PrivateRecordReferenceSchema.parse(reference)).toEqual(reference);
     for (const invalid of [

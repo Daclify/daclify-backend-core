@@ -1207,6 +1207,15 @@ export class NativeChainGateway implements ChainGateway {
         /* Unqualified native code must never receive a private label writer. */
       }
     }
+    let privateQuick = false;
+    if (privateIdentity && this.quickBallots) {
+      try {
+        await this.quickBallots.configuration();
+        privateQuick = true;
+      } catch {
+        /* Keep private questions disabled unless runtime, authority and source all match. */
+      }
+    }
     return NetworkSchema.parse({
       chainId: this.config.chainId,
       rpcUrl: this.config.rpcUrl,
@@ -1222,6 +1231,7 @@ export class NativeChainGateway implements ChainGateway {
               'private-dao-identity-v1',
               ...(privateBallots ? ['private-ballot-content-v1'] : []),
               ...(privatePayroll ? ['private-payroll-labels-v1'] : []),
+              ...(privateQuick ? ['private-quick-question-v1'] : []),
               ...(this.config.bootstrap && claimFounder && presets
                 ? ['private-claim-content-v1']
                 : []),

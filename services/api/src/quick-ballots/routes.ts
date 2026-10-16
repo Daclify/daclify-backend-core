@@ -3,7 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import type { Account } from '../../../../protocol/api.js';
 import { QuickAccountRoutes } from '../../../../protocol/quick-accounts.js';
 import { IdSchema } from '../../../../protocol/base.js';
-import { QuickBallotRoutes } from '@daclify/modules';
+import { QuickBallotRoutes, LegacyQuickBallotRoutes } from '@daclify/modules';
 import { ApiError } from '../errors.js';
 import { createWindowLimiter } from '../limits.js';
 import type { QuickBallots } from './service.js';
@@ -98,4 +98,19 @@ export function registerQuickBallotRoutes(
       throw new ApiError('QUICK_UNAVAILABLE', 503);
     });
   }
+  app.get(LegacyQuickBallotRoutes.quickList.path, async (request, reply) => {
+    reply.header('cache-control', 'no-store');
+    if (!readLimit(request.ip, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    const page = service ? await service.chain.list(request.query) : { available: false, experimental: true, domain: null, ballots: [], next: null };
+    return LegacyQuickBallotRoutes.quickList.response.parse({ ...page, ballots: page.ballots.filter((ballot) => ballot.definition.protocol === 1) });
+  });
+  app.get(LegacyQuickBallotRoutes.quickDetail.path, async (request, reply) => {
+    reply.header('cache-control', 'no-store');
+    if (!readLimit(request.ip, Date.now())) throw new ApiError('RATE_LIMIT', 429);
+    const { ballotId } = z.strictObject({ ballotId: IdSchema }).parse(request.params);
+    const detail = await required().chain.detail(ballotId);
+    if (detail.ballot.definition.protocol !== 1)
+      return reply.code(409).send({ code: 'CLIENT_UPDATE_REQUIRED', message: 'Update Daclify to read this ballot definition. Its original proof and permissions are unchanged.' });
+    return LegacyQuickBallotRoutes.quickDetail.response.parse(detail);
+  });
 }

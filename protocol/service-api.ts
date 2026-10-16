@@ -445,6 +445,12 @@ export const ServiceResponseRoutes = [
 }[];
 
 export const ContractFailureMessages = {
+  PRIVATE_QUICK_REQUIRED: 'Encrypt this DAO question or explicitly review public publication with a compatible client.',
+  PRIVATE_QUICK_UNSUPPORTED: 'Private Quick questions are not enabled on this deployment. No public fallback was sent.',
+  QUICK_QUESTION_REFERENCE: 'The encrypted question reference is invalid or unavailable.',
+  QUICK_QUESTION_PARENT: 'The encrypted question belongs to a different ballot.',
+  QUICK_QUESTION_AUDIENCE: 'Private questions currently support only the originating DAO. Use explicit public publication for a wider audience.',
+  QUICK_QUESTION_UNREAD: 'Read and verify the encrypted question before voting.',
   PRIVATE_AGENT_REQUIRED: 'Use Agent as the public participant label. Keep operating details in encrypted content.',
   PRIVATE_PAYROLL_REQUIRED: 'Encrypt payroll names with a compatible client. Existing payments and pause controls remain available.',
   PRIVATE_PAYROLL_PARENT: 'The encrypted agreed name belongs to a different payroll schedule.',

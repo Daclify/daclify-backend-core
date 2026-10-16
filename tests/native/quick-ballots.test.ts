@@ -476,15 +476,15 @@ async function archiveChunk(
   return { attestation, anchor, records, tree };
 }
 
-async function createDao(daoId: string) {
+async function createDao(daoId: string, privacy: 0 | 2 = 0) {
   await call(
     runtime,
     'createdao',
     {
       dao_id: daoId,
       owner: 'alice',
-      metadata: '{}',
-      privacy: 0,
+      metadata: privacy ? JSON.stringify({ schemaVersion: 4, title: 'Private DAO', description: '', purpose: 'custom', setup: null, privateIdentity: null }) : '{}',
+      privacy,
       token_contract: 'eosio.token',
       token_symbol: '4,TLOS',
     },
@@ -731,6 +731,41 @@ describe('native encrypted Quick ballot state and proofs', () => {
       if (f) await f.stop();
     }
   });
+
+  it('binds a private question to one DAO and its real proof context while preserving fixed vote readers', async () => {
+    await createDao('777', 2);
+    await executive('commitepoch', { epoch: '1', commitment: 'ac'.repeat(32), self_grant: '{}' }, undefined, '777', runtime);
+    const value = JSON.stringify({ version: 1, algorithm: 'AES-256-GCM', iv: btoa('i'.repeat(12)), ciphertext: btoa('c'.repeat(32)) });
+    await executive('putjson', { document_id: '701', version: 1, value, envelope_version: 1, key_epoch: '1' }, undefined, '777', runtime);
+    const reference = { documentId: '701', version: 1, commitment: createHash('sha256').update(value).digest('hex'), keyEpoch: '1' };
+    const b = await open('701', ['777'], 0, { protocol: 2, question: JSON.stringify(reference), explanation: '' }, undefined, '777');
+    await respond('alice', b, 1);
+    await expect(respond('bob', b, 1)).rejects.toThrow('QUICK_AUDIENCE');
+    await expect(open('702', ['777'], 0, { protocol: 2, question: JSON.stringify(reference), explanation: '' }, undefined, '777')).rejects.toThrow('QUICK_QUESTION_PARENT');
+    await expect(open('703', [], 0, {}, undefined, '777')).rejects.toThrow('PRIVATE_QUICK_REQUIRED');
+    await open('703', [], 0, { protocol: 3 }, undefined, '777');
+    await executive('close', { ballot_id: b.id }, undefined, '777');
+    await prepare(b.id);
+    const frozen = await ballot(b.id);
+    const proof = proveBallotTally(context('tally', b.id, b.definitionHash, [Checksum256.from(frozen.response_root).array, packed(UInt64.from(1)), Bytes.from(frozen.aggregate).array]), b.secret, frozen.aggregate, 1n, 1n);
+    await call(source, 'finalize', { runtime, ballot_id: b.id, up: 1, proof }, ['bob']);
+    expect((await ballot(b.id)).verified).toBe(true);
+    expect((await rows(runtime, 'docrefs', '777')).some((entry) => z.object({ source: z.string(), table: z.string(), document_id: z.coerce.string() }).parse(entry).table === 'qballots')).toBe(true);
+    const aged = await age(b.id, Math.floor(Date.now() / 1000) - 30 * 86400);
+    await call(runtime, 'setarchcfg', { verifier: 'gateway', minimum_retention_seconds: 90 * 86400, pruning_enabled: true }, [runtime]);
+    const archived = await archiveChunk(b.id, '777', 'qresponses', aged), grants = await archiveChunk(b.id, '777', 'qgrants', aged);
+    await call(source, 'prune', { runtime, ballot_id: b.id, archive_id: archived.anchor.id, chunk_ordinal: 0, start: 0, proofs: archived.records.map((record, index) => ({ primary_key: record.primaryKey, siblings: archived.tree.proof(index) })) }, ['bob']);
+    expect((await rows(runtime, 'docrefs', '777')).length).toBeGreaterThan(0);
+    await call(source, 'prunegrants', { runtime, ballot_id: b.id, archive_id: grants.anchor.id, siblings: grants.tree.proof(0) }, ['bob']);
+    await call(source, 'backfillrefs', { runtime, dao_id: '777' }, [runtime]);
+    expect(await rows(runtime, 'docrefs', '777')).toHaveLength(0);
+    const cleaned = await ballot(b.id);
+    const finalProof = proveBallotTally(context('tally', b.id, b.definitionHash, [Checksum256.from(cleaned.response_root).array, packed(UInt64.from(1)), Bytes.from(cleaned.aggregate).array]), b.secret, cleaned.aggregate, 1n, 1n);
+    await call(source, 'finalize', { runtime, ballot_id: b.id, up: 1, proof: finalProof }, ['bob']);
+    expect((await ballot(b.id)).definition_hash).toBe(b.definitionHash);
+    expect((await ballot(b.id)).verified).toBe(true);
+    expect(await rows(source, 'qresponses')).toHaveLength(0);
+  }, 45000);
 
   it('allows a registered nonmember to vote on an all-account ballot without disclosing its choice', async () => {
     const b = await open('101');

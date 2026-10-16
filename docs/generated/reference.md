@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.15.0-alpha.41 · interface 1.
+Package 0.15.0-alpha.43 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -34,6 +34,8 @@ Deactivating a member advances the epoch for future content; an authorized admin
 On deployments advertising private-dao-identity-v1, encrypted DAO creation seals the internal name and description before saving an order or claim invitation. Public discovery uses Private DAO unless you deliberately publish an alias. Original keys and an epoch grant are required to read or change internal details; interrupted setup can be resumed without publishing plaintext. Memberships, timing, native votes and financial records remain public. See the private DAO identity guide for exact boundaries.
 
 Deployments advertising private-ballot-content-v1 also encrypt ordinary ballot titles, explanations and custom option labels for permitted DAO content readers. Read the selected ballot before voting; missing keys, changed references or unavailable ciphertext disable voting. The native definition freezes numbered choices and exact protected versions; supporting document IDs/hashes remain public retention data. Ordinary votes, participation and totals remain public. Publishing wording publicly requires an explicit disclosure choice. Saved encrypted drafts reconcile the original record and ballot ID after interruptions; they do not grant extra authority.
+
+With private-quick-question-v1, an encrypted originating DAO can restrict a Quick question and explanation to its permitted content readers. Read and verify that selected question before responding. These DAO question keys never grant access to individual votes: vote readers remain the executives fixed when opening. Multi-DAO and all-account questions require explicit public publication; confidential questions for those audiences are not enabled. The complete question reference remains part of the original definition and proof context after vote-row archiving.
 
 ## Quick signup or your own encrypted vault
 

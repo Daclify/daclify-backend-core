@@ -1,5 +1,6 @@
 import { DaoClaimLinks } from '../../services/api/src/dao-claims.js';
 import { CreationService } from '../../services/api/src/creation.js';
+import { QuickBallots } from '../../services/api/src/quick-ballots/service.js';
 import { ContentService } from '../../services/api/src/content/service.js';
 import { LocalContentFixture } from '../../tools/native/content-fixture.js';
 import { DirectoryService } from '../../services/api/src/mini-apps/directory.js';
@@ -24,7 +25,7 @@ import { ABI, Authority, PublicKey } from '@wharfkit/antelope';
 import { z } from 'zod';
 import { ModulePermissions } from '@daclify/modules';
 import { ModuleCodeHashes } from '@daclify/modules/sdk';
-import { nativeContracts, nativeModules } from './native-contracts.js';
+import { nativeContracts, nativeModules, testnetMissingLinks } from './native-contracts.js';
 import { NativeChainGateway } from '../../services/api/src/native-chain.js';
 import { migrate } from '../../services/api/src/store.js';
 import { createServer } from '../../services/api/src/server.js';
@@ -57,6 +58,27 @@ let profileWorker: ReturnType<typeof startProfileWorker> | undefined;
 await owner.query(`CREATE DATABASE ${name}`);
 try {
   await migrate(pool);
+  const bls = f.featureDigests.get('BLS_PRIMITIVES2');
+  if (!bls) throw Error('FIXTURE_BLS_REQUIRED');
+  await f.activate(bls);
+  await f.push(testnetMissingLinks.map((action) => f.system('linkauth', { account: 'daclifycore', code: 'daclifycore', type: action, requirement: 'execctx' }, 'daclifycore', 'owner')), [f.key('daclifycore')]);
+  const quickAbis = new Map<string, ABI>();
+  for (const account of ['quickauth', 'quickvote']) {
+    await f.create(account);
+    quickAbis.set(account, await f.deploy(account, account === 'quickauth' ? '.artifacts/contracts/quickauth' : '../daclify-backend-modules/.artifacts/contracts/quickvote'));
+    await f.update(account, 'active', 'owner', Authority.from({ threshold: 1, keys: [{ key: f.key(account).toPublic(), weight: 1 }], accounts: [{ permission: { actor: account, permission: 'eosio.code' }, weight: 1 }], waits: [] }));
+  }
+  const quickCall = async (account: string, action: string, data: object, actors: string[]) => {
+    const abi = quickAbis.get(account);
+    if (!abi) throw Error('FIXTURE_QUICK_ABI');
+    await f.push([f.action(account, action, data, actors.map((actor) => ({ actor, permission: 'active' })), abi)], actors.map((actor) => f.key(actor)));
+  };
+  await f.update('quickauth', 'execctx', 'active', Authority.from({ threshold: 1, keys: [], accounts: [{ permission: { actor: 'quickauth', permission: 'eosio.code' }, weight: 1 }], waits: [] }));
+  for (const [actor, actions] of [['daclifycore', ['open', 'close']], ['quickauth', ['respond', 'remove']]] as const)
+    await f.push(actions.map((action) => f.system('linkauth', { account: actor, code: 'quickvote', type: action, requirement: 'execctx' }, actor, 'owner')), [f.key(actor)]);
+  await quickCall('quickauth', 'qconfig', { runtime: 'daclifycore', source: 'quickvote', code_hash: ModuleCodeHashes['quick-ballots'], gateway: { actor: 'relay', permission: 'active' }, maximum: 5000 }, ['daclifycore', 'quickauth']);
+  await quickCall('quickvote', 'init', { runtime: 'daclifycore', authority: 'quickauth', authority_hash: (await f.api.v1.chain.get_raw_abi('quickauth')).code_hash.toString() }, ['daclifycore', 'quickvote']);
+  await f.call('daclifycore', 'listmod', { account: 'quickvote', publisher: 'alice', party: 0, accepts_fee_rule: 1, price: '0.0000 TLOS', code_hash: ModuleCodeHashes['quick-ballots'], title: 'Owned Quick ballot fixture' });
   await f.create('activity');
   const activityAbi: ABI = await f.deploy(
     'activity',
@@ -132,8 +154,9 @@ try {
       environment: 'local',
       relayActor: 'relay',
       relayKey: f.key('relay'),
+      quickAuthority: 'quickauth',
       bootstrap: { owner: 'alice', key: f.key('alice') },
-      modules: [...nativeModules, { id: 'activity', account: 'activity' }],
+      modules: [...nativeModules, { id: 'activity', account: 'activity' }, { id: 'quick-ballots', account: 'quickvote' }],
     },
     pool,
   );
@@ -179,7 +202,9 @@ try {
   const mcpPairings = new McpPairings(pool, gateway, 'http://127.0.0.1:' + apiPort, origin, apps);
   const deliveredEmailCodes = new Map<string, string>();
   const creation = new CreationService(pool, gateway);
+  if (!gateway.quickBallots) throw Error('FIXTURE_QUICK_REQUIRED');
   server = await createServer(pool, gateway, origin, {
+    quickBallots: new QuickBallots(pool, gateway.quickBallots, 41),
     content: new ContentService(
       pool,
       gateway,
