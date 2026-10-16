@@ -196,6 +196,9 @@ it('reads the existing account without renewing sign-in freshness or rotating CS
   expect(response.headers['cache-control']).toBe('no-store');
   expect(response.headers['set-cookie']).toBeUndefined();
   expect(response.headers['x-daclify-recovery-grant']).toBeUndefined();
+  expect(Number(response.headers['x-daclify-session-ms'])).toBeGreaterThan(43_190_000);
+  expect(Number(response.headers['x-daclify-session-ms'])).toBeLessThanOrEqual(43_200_000);
+  expect(response.headers['access-control-expose-headers']).toContain('x-daclify-session-ms');
   const after = await pool.query(
     'SELECT csrf_hash,step_up_at,credential_key FROM sessions WHERE token_hash=$1',
     [tokenHash],
@@ -212,11 +215,19 @@ it('reads the existing account without renewing sign-in freshness or rotating CS
     });
     expect(unavailable.statusCode).toBe(204);
     expect(unavailable.body).toBe('');
+    expect(unavailable.headers['x-daclify-session-ms']).toBeUndefined();
     await pool.query(
       "UPDATE sessions SET revoked_at=NULL,expires_at=now()+interval '1 hour' WHERE token_hash=$1",
       [tokenHash],
     );
   }
+  const shortened = await configured.inject({
+    method: 'GET',
+    url: '/v1/sign-in/session',
+    headers: { cookie: 'daclify_session=' + current.token, origin },
+  });
+  expect(Number(shortened.headers['x-daclify-session-ms'])).toBeGreaterThan(3_590_000);
+  expect(Number(shortened.headers['x-daclify-session-ms'])).toBeLessThanOrEqual(3_600_000);
 });
 async function google(subject: string, email = 'same-person@example.test') {
   return new SignJWT({

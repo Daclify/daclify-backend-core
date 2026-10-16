@@ -208,6 +208,16 @@ export async function readSession(pool: Pool, token: string): Promise<Account | 
   ).rows[0];
   return row ? accountFromRow(row) : undefined;
 }
+export async function sessionRemainingMs(pool: Pool, token: string): Promise<number | undefined> {
+  if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return undefined;
+  const row = (
+    await pool.query<{ remaining: number }>(
+      'SELECT floor(extract(epoch FROM (expires_at-now()))*1000)::float8 AS remaining FROM sessions WHERE token_hash=$1 AND revoked_at IS NULL AND expires_at>now()',
+      [hash(token)],
+    )
+  ).rows[0];
+  return row?.remaining;
+}
 export async function checkCsrf(pool: Pool, token: string, csrf: string): Promise<boolean> {
   if (!/^[A-Za-z0-9_-]{43}$/.test(csrf)) return false;
   const row = (

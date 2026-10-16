@@ -63,7 +63,14 @@ import {
   ProviderProofSchema,
   ProviderUnlinkSchema,
 } from '../../../protocol/api.js';
-import { createChallenge, authenticate, readSession, revokeSession, checkCsrf } from './auth.js';
+import {
+  createChallenge,
+  authenticate,
+  readSession,
+  revokeSession,
+  checkCsrf,
+  sessionRemainingMs,
+} from './auth.js';
 import {
   linkProvider,
   openLinkedSession,
@@ -267,11 +274,11 @@ export async function createServer(
           'x-account-signature',
           'x-account-proof',
         ],
-        exposedHeaders: ['x-daclify-recovery-grant'],
+        exposedHeaders: ['x-daclify-recovery-grant', 'x-daclify-session-ms'],
       };
     },
     credentials: true,
-    exposedHeaders: ['x-daclify-recovery-grant'],
+    exposedHeaders: ['x-daclify-recovery-grant', 'x-daclify-session-ms'],
     methods: ['GET', 'POST'],
     allowedHeaders: [
       'content-type',
@@ -1252,6 +1259,9 @@ export async function createServer(
     return createChallenge(pool, input, request.headers.origin ?? origin, audience);
   });
   async function sessionCookie(reply: FastifyReply, token: string, site?: string): Promise<void> {
+    const remaining = await sessionRemainingMs(pool, token);
+    if (remaining === undefined) throw new ApiError('AUTH_REQUIRED', 401);
+    reply.header('x-daclify-session-ms', remaining);
     reply.setCookie(cookieName, token, {
       path: '/',
       httpOnly: true,

@@ -1,0 +1,137 @@
+{
+  "status": "passed",
+  "at": "2026-10-16T16:27:49.567Z",
+  "frontendVersion": "0.15.0-alpha.52",
+  "apiVersion": "0.15.0-alpha.33",
+  "protocolVersion": "0.15.0-alpha.32",
+  "modulesVersion": "0.10.0-alpha.42",
+  "frontendUnit": {
+    "files": 77,
+    "tests": 422,
+    "failed": 0
+  },
+  "coreUnit": {
+    "files": 189,
+    "tests": 1114,
+    "fullRun": {
+      "passed": 1113,
+      "failed": 1,
+      "environment": "TMPDIR=/dev/shm/daclify-security-20261016/tmp"
+    },
+    "correctedInvocation": {
+      "file": "tests/profile-exclusions.test.ts",
+      "passed": 4,
+      "failed": 0,
+      "environment": "TMPDIR=/tmp"
+    },
+    "failureName": "requires finite explicit retention and refuses ephemeral mainnet configuration",
+    "resolution": "Unchanged test expects the conventional temporary directory prefix; rerun with /tmp passed without a source change.",
+    "outstandingFailures": 0
+  },
+  "integrationTests": 70,
+  "compatibilityTests": 37,
+  "browser": {
+    "passed": 84,
+    "failed": 0,
+    "projects": [
+      "Desktop Chrome",
+      "Pixel 7 Chromium"
+    ]
+  },
+  "finalSessionSecurityBrowserTests": 28,
+  "compiledCandidateTests": 10,
+  "builds": "Vue/TypeScript testnet build and core TypeScript build passed",
+  "lint": "frontend policy and core ESLint passed",
+  "generatedDocs": "unchanged",
+  "format": "changed TS/Vue/JSON and whitespace checks passed",
+  "testOnlyFollowup": "Profile tests explicitly select their tab to avoid asynchronous startup selection; compiled application inputs unchanged.",
+  "intermediateChecks": {
+    "frontendUnit": {
+      "passed": 421,
+      "failed": 1,
+      "test": "isolates real Vue component state and offers only contract-authorized actions",
+      "resolution": "Use the existing disposable vault setup before protected components; final 422-test rerun passed."
+    },
+    "initialBrowser": {
+      "passed": 43,
+      "failed": 1,
+      "interrupted": 2,
+      "notRun": 38,
+      "test": "requires another paired email verification after the inactivity lock",
+      "resolution": "Replace ten-minute fixture advance with twelve hours; final 84 cases passed."
+    },
+    "initialCore": {
+      "status": "interrupted after compatibility failures",
+      "failureNames": [
+        "packages complete synthetic evidence immutably and refuses a dirty source tree 20254ms",
+        "releases at most 25 accumulated ready holds on full exit and lets bounded cleanup finish 27636ms",
+        "builds a clean installable starter with exact vendored public dependency versions 17ms",
+        "qualifies exact pins only after every required report passes and records its provenance 1375ms",
+        "does not permit qualification from missing, duplicate or unknown checks 804ms",
+        "requires native permissions, restore/key erasure, complete journeys and actual harness evidence 546ms",
+        "refuses a dirty source snapshot even when its report bundle otherwise matches 891ms",
+        "rejects stale pins and changed evidence bytes 495ms",
+        "rejects a report that cannot establish its declared check: {\"status\":\"failed\"} 754ms",
+        "rejects a report that cannot establish its declared check: {\"assertions\":0} 646ms",
+        "rejects a report that cannot establish its declared check: {\"failed\":1} 645ms",
+        "rejects a report that cannot establish its declared check: {\"skipped\":1} 467ms",
+        "rejects a report that cannot establish its declared check: {\"exitCode\":1} 398ms",
+        "rejects a report that cannot establish its declared check: {\"subject\":\"cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd\"} 560ms",
+        "rejects a report that cannot establish its declared check: {\"check\":\"ram\"} 572ms",
+        "rejects paths outside the evidence directory, including symlinks 420ms",
+        "revalidates qualification rather than trusting a forged passed flag 647ms",
+        "rejects changing source/artifact pins after qualification 687ms",
+        "permits explicit operator review evidence without pretending it was a command 644ms",
+        "loads this checkout without treating recorded history as qualification 735ms",
+        "retains the official register when Decide member actions are disabled 116ms",
+        "returns bounded DAO index pages and advances the registration cursor 13ms",
+        "rejects a cross-DAO row returned inside a scoped register index 30ms"
+      ],
+      "resolution": "Keep exact published protocol/SDK version 32; API package 33 only. Repeat compatibility and complete core suites without heavy concurrent builds."
+    },
+    "initialFrontendTypecheck": {
+      "status": "failed",
+      "reason": "Optional session value could also compare equal to an undefined vault identity",
+      "resolution": "Explicitly require a session record; final Vue typecheck/build passed."
+    },
+    "compiledFixtureRuns": [
+      {
+        "passed": 9,
+        "failed": 1,
+        "test": "requires another paired email verification after the inactivity lock"
+      },
+      {
+        "passed": 9,
+        "failed": 1,
+        "test": "keeps the paired email and offers retry when requesting a code fails"
+      }
+    ],
+    "compiledFixtureResolution": "Tests select Profile explicitly; final ten compiled-bundle checks passed."
+  },
+  "changed": [
+    "Visible portal activity keeps unlocked keys active",
+    "Twelve-hour inactivity limit",
+    "Validated remaining-session header and hard deadline",
+    "Suspended-timer checks and pending-private-work invalidation",
+    "User guidance"
+  ],
+  "unchanged": [
+    "Fixed twelve-hour sign-in lifetime and freshness",
+    "Ten-minute email-code lifetime",
+    "Private-key custody and persistence",
+    "Public body schemas, SDK pins and native code/ABI hashes",
+    "Database migrations, modules, environment and proxy configuration"
+  ],
+  "limits": [
+    "Browser authentication/key-broker transport is controlled test data with real SDK/WebCrypto",
+    "No real user email, private keys or recovery ceremony used",
+    "No mainnet deployment or native authority changes"
+  ],
+  "deployment": {
+    "status": "pending",
+    "network": "testnet",
+    "nativeChanged": false,
+    "migrationsChanged": false,
+    "publicProtocolVersion": "0.15.0-alpha.32"
+  }
+}

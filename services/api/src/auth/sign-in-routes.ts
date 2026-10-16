@@ -15,6 +15,7 @@ import {
   SignInRemoveSchema as RemoveSchema,
 } from '../../../../protocol/sign-in.js';
 import { ApiError } from '../errors.js';
+import { sessionRemainingMs } from '../auth.js';
 import { createWindowLimiter } from '../limits.js';
 import {
   linkProvider,
@@ -124,7 +125,12 @@ export function registerSignInRoutes(
   app.get('/v1/sign-in/session', async (request, reply) => {
     reply.header('cache-control', 'no-store');
     try {
-      return ApiRoutes.me.response.parse({ account: await session(request.cookies[cookieName]) });
+      const token = request.cookies[cookieName];
+      const current = await session(token);
+      const remaining = token ? await sessionRemainingMs(pool, token) : undefined;
+      if (remaining === undefined) throw new ApiError('AUTH_REQUIRED', 401);
+      reply.header('x-daclify-session-ms', remaining);
+      return ApiRoutes.me.response.parse({ account: current });
     } catch (cause) {
       // Signed-out startup is ordinary; service failures still reach the error handler.
       if (cause instanceof ApiError && cause.code === 'AUTH_REQUIRED')
