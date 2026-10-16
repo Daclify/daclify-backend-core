@@ -26,6 +26,7 @@ export const CoreContextActions = [
   'setmeta',
   'setprofile',
   'setencprof',
+  'setagentdesc',
   'delprofile',
   'putdoc',
   'putjson',

@@ -657,7 +657,7 @@ private:
     gov_policies policies(get_self(),get_self().value);auto policy=policies.find(dao_id);
     check(kind==0||(policy!=policies.end()&&policy->config.participant_mode>0),"PARTICIPANT_MODE");
     check(kind==1||policy==policies.end()||policy->config.participant_mode!=2,"PARTICIPANT_MODE");
-    if(kind==1){check(!operator_label.empty()&&operator_label.size()<=64,"AGENT_OPERATOR");for(unsigned char c:operator_label)check(c>=0x20&&c<=0x7e,"AGENT_OPERATOR");}
+    if(kind==1){check(!operator_label.empty()&&operator_label.size()<=64,"AGENT_OPERATOR");for(unsigned char c:operator_label)check(c>=0x20&&c<=0x7e,"AGENT_OPERATOR");if(d.privacy>0){const auto metadata=nlohmann::json::parse(d.metadata,nullptr,false);if(metadata.is_object()&&metadata.contains("schemaVersion")&&metadata["schemaVersion"]==4)check(operator_label=="Agent","PRIVATE_AGENT_REQUIRED");}}
     check(member_id>d.max_member&&member_id>0,"MEMBER_ID"); check(d.member_count<5000,"MEMBER_LIMIT");
     check(custody<=1&&!(d.privacy==2&&custody==1),"CUSTODY_POLICY");
     check(!encryption_key.empty()&&encryption_key.size()<=1024,"ENCRYPTION_KEY");
@@ -749,6 +749,13 @@ public:
       for(uint8_t i=0;i<2;i++)retain_private_reference(dao_id,i+1,after.contains("privateAssets")&&i<after["privateAssets"].size()?after["privateAssets"][i]:nlohmann::json());
     }
     dao_rows.modify(d,same_payer,[&](auto& r){r.metadata=metadata;});
+  }
+  ACTION setagentdesc(name runtime,uint64_t dao_id,uint64_t member_id,uint64_t subject,std::optional<private_record_reference> reference){
+    require_active_dao(get_self(),dao_id);authorized_actor(runtime,dao_id,member_id,subject!=member_id);
+    participants actors(get_self(),dao_id);const auto& actor=actors.get(subject,"MEMBER_UNKNOWN");check(actor.kind==1,"PARTICIPANT_KIND");
+    if(reference)protected_document(get_self(),dao_id,*reference);
+    protect_document(dao_id,subject,0,reference?reference->document_id:0,reference?reference->version:0,"actors"_n);
+    actors.modify(actor,same_payer,[&](auto& r){r.description.emplace(reference);if(reference)r.operator_label="Agent";});
   }
   ACTION setprofile(name runtime,uint64_t dao_id,uint64_t member_id,name account_name,std::string profile) {
     authorized_actor(runtime,dao_id,member_id);(void)account_name;(void)profile;
@@ -1633,7 +1640,7 @@ private:
     auto now=current_time_point().sec_since_epoch();check(r.expires>now&&uint64_t(r.expires)<=uint64_t(now)+900,"EXPIRED_OR_TOO_LONG");
     check(r.data.size()>=24&&r.data.size()<=16384,"PAYLOAD_SIZE");auto context=unpack<actor_context>(r.data);
     check(context.runtime==get_self()&&context.dao_id==r.dao_id&&context.member_id==r.member_id,"PAYLOAD_DOMAIN");
-    if(r.target==get_self())check(r.action=="recovergrant"_n||r.action=="ackrecgrant"_n||r.action=="setcontacts"_n||r.action=="cancelrec"_n||r.action=="setrecpolicy"_n||r.action=="putrecpack"_n||r.action=="protectdao"_n||r.action=="arbbackup"_n||r.action=="arbconsent"_n||r.action=="arbchallenge"_n||r.action=="refreshgov"_n||r.action=="setexecs"_n||r.action=="heartbeat"_n||r.action=="setvoter"_n||r.action=="archapprove"_n||r.action=="archrevoke"_n||r.action=="govresources"_n||r.action=="govhosted"_n||r.action=="govseatfee"_n||r.action=="govmodfee"_n||r.action=="govpayfees"_n||r.action=="govcreate"_n||r.action=="govlist"_n||r.action=="govunlist"_n||r.action=="govmodcopy"_n||r.action=="addmember"_n||r.action=="setadmit"_n||r.action=="setdaogov"_n||r.action=="setapp"_n||r.action=="addappses"_n||r.action=="addsession"_n||r.action=="delsession"_n||r.action=="setmeta"_n||r.action=="setprofile"_n||r.action=="setencprof"_n||r.action=="delprofile"_n||r.action=="restoredoc"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="unlinknat"_n||r.action=="linkevm"_n||r.action=="unlinkevm"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="leave"_n||r.action=="startclose"_n||r.action=="closedao"_n||r.action=="beginhand"_n||r.action=="scanhand"_n||r.action=="accepthand"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n||r.action=="govfees"_n,"ACTION_UNSUPPORTED");
+    if(r.target==get_self())check(r.action=="recovergrant"_n||r.action=="ackrecgrant"_n||r.action=="setcontacts"_n||r.action=="cancelrec"_n||r.action=="setrecpolicy"_n||r.action=="putrecpack"_n||r.action=="protectdao"_n||r.action=="arbbackup"_n||r.action=="arbconsent"_n||r.action=="arbchallenge"_n||r.action=="refreshgov"_n||r.action=="setexecs"_n||r.action=="heartbeat"_n||r.action=="setvoter"_n||r.action=="archapprove"_n||r.action=="archrevoke"_n||r.action=="govresources"_n||r.action=="govhosted"_n||r.action=="govseatfee"_n||r.action=="govmodfee"_n||r.action=="govpayfees"_n||r.action=="govcreate"_n||r.action=="govlist"_n||r.action=="govunlist"_n||r.action=="govmodcopy"_n||r.action=="addmember"_n||r.action=="setadmit"_n||r.action=="setdaogov"_n||r.action=="setapp"_n||r.action=="addappses"_n||r.action=="addsession"_n||r.action=="delsession"_n||r.action=="setmeta"_n||r.action=="setprofile"_n||r.action=="setencprof"_n||r.action=="setagentdesc"_n||r.action=="delprofile"_n||r.action=="restoredoc"_n||r.action=="putdoc"_n||r.action=="putjson"_n||r.action=="rotateepoch"_n||r.action=="rotatekey"_n||r.action=="commitepoch"_n||r.action=="linknative"_n||r.action=="unlinknat"_n||r.action=="linkevm"_n||r.action=="unlinkevm"_n||r.action=="setactive"_n||r.action=="setroles"_n||r.action=="leave"_n||r.action=="startclose"_n||r.action=="closedao"_n||r.action=="beginhand"_n||r.action=="scanhand"_n||r.action=="accepthand"_n||r.action=="grantkey"_n||r.action=="withdraw"_n||r.action=="unstake"_n||r.action=="modconfig"_n||r.action=="setcredits"_n||r.action=="confirmext"_n||r.action=="govfees"_n,"ACTION_UNSUPPORTED");
     else { modules rows(get_self(),r.dao_id);const auto& installed=rows.get(r.target.value,"MODULE_DISABLED");check(std::find(installed.actions.begin(),installed.actions.end(),r.action)!=installed.actions.end(),"ACTION_UNSUPPORTED");check_pinned(installed,r.target);require_module_access(get_self(),r.dao_id,r.target,r.action,d.member_count); }
   }
   void dispatch(const instruction& r) {
@@ -1655,7 +1662,7 @@ extern "C" void apply(uint64_t receiver,uint64_t code,uint64_t action_name) {
     EOSIO_DISPATCH_HELPER(runtime,(docsrc)(docref)(docscanstep)(backfilldocs)(prunedocs)(restoredoc))
     EOSIO_DISPATCH_HELPER(runtime,(beginram)(scanram)(adoptram)(sealram)(setarchcfg)(archattest)(archapprove)(archrevoke)(archstep)(clearholds)(initramobs)(rebindramobs)(setramauto)(setrampool)(grantdaoram)(inheritram)(setdaoquota)(checkdaoram)(checkrampool)(setresources)(govresources)(setramcode)(ramadjust)(orderram)(finishram)(fulfilram))
     EOSIO_DISPATCH_HELPER(runtime,(leave)(startclose)(closedao)(beginhand)(scanhand)(accepthand)(clearhand)(setlifecode)(clearlifecode)(closehost))
-    EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(setprofile)(setencprof)(delprofile)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(confirmext)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))
+    EOSIO_DISPATCH_HELPER(runtime,(init)(createdao)(enroll)(submit)(submitnat)(setmeta)(setprofile)(setencprof)(setagentdesc)(delprofile)(grantcredit)(setmodule)(reserve)(approveob)(cancelob)(confirmext)(payob)(putdoc)(putjson)(commitepoch)(rotateepoch)(rotatekey)(linknative)(setactive)(setroles)(grantkey)(govlock)(govunlock)(withdraw)(unstake)(modconfig)(setcredits))
     EOSIO_DISPATCH_HELPER(runtime,(sethosted)(govhosted)(govseatfee)(orderfree)(setcapacity)(revokecap)(resumecap))
     EOSIO_DISPATCH_HELPER(runtime,(govmodfee)(setmodterm)(revmodterm)(resmodterm)(clearmterms))
     EOSIO_DISPATCH_HELPER(runtime,(recovergrant)(ackrecgrant)(setcontacts)(acceptcont)(startrecover)(approverec)(finishrec)(cancelrec)(prunerec)(setrecpolicy)(putrecpack)(ackrecpack))

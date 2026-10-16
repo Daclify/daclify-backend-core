@@ -867,6 +867,25 @@ export async function createServer(
   app.get<{ Params: { id: string } }>(ApiRoutes.treasury.path, async (request) =>
     chain.treasury(IdSchema.parse(request.params.id)),
   );
+  app.get<{ Params: { id: string; member: string } }>(
+    PrivateRecordRoutes.agent.path,
+    async (request) => {
+      if (!chain.privateAgent) throw new ApiError('PRIVATE_IDENTITY_UNSUPPORTED', 409);
+      const id = IdSchema.parse(request.params.id);
+      const result = PrivateRecordRoutes.agent.response.parse(
+        await chain.privateAgent(id, IdSchema.parse(request.params.member)),
+      );
+      if (result.dao.daoId !== id) throw new ApiError('DAO_REFERENCE', 409);
+      return result;
+    },
+  );
+  app.get<{ Params: { id: string; schedule: string } }>(ModuleApiRoutes.privatePayroll.path, async request => {
+    if (!chain.privatePayroll) throw new ApiError('PRIVATE_IDENTITY_UNSUPPORTED', 409);
+    const id = IdSchema.parse(request.params.id), schedule = IdSchema.parse(request.params.schedule);
+    const result = ModuleApiRoutes.privatePayroll.response.parse(await chain.privatePayroll(id, schedule));
+    if (result.dao.daoId !== id || result.scheduleId !== schedule) throw new ApiError('DAO_REFERENCE', 409);
+    return result;
+  });
   app.post(ApiRoutes.settle.path, async (request) => {
     const account = await session(
       request.cookies[cookieName],

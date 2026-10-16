@@ -1,5 +1,7 @@
 #pragma once
 #include "records.hpp"
+#include "private_records.hpp"
+#include <eosio/binary_extension.hpp>
 namespace daclify {
 struct gov_settings {
  uint8_t participant_mode; name decide; name guardian; uint8_t kind; uint32_t duration; uint16_t quorum; uint16_t approval;
@@ -14,8 +16,9 @@ struct [[eosio::table("govpolicies"), eosio::contract("runtime")]] gov_policy_re
 using gov_policies=ram_table<"govpolicies"_n,gov_policy_record>;
 struct [[eosio::table("actors"), eosio::contract("runtime")]] participant_record {
  uint64_t id; uint8_t kind=0; std::string operator_label; bool revoked=false; uint64_t credential_epoch=1;
+ eosio::binary_extension<std::optional<private_record_reference>> description;
  uint64_t primary_key()const{return id;}
- EOSLIB_SERIALIZE(participant_record,(id)(kind)(operator_label)(revoked)(credential_epoch))
+ EOSLIB_SERIALIZE(participant_record,(id)(kind)(operator_label)(revoked)(credential_epoch)(description))
 };
 using participants=ram_table<"actors"_n,participant_record>;
 struct session_permission {

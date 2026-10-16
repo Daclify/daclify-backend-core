@@ -445,6 +445,9 @@ export const ServiceResponseRoutes = [
 }[];
 
 export const ContractFailureMessages = {
+  PRIVATE_AGENT_REQUIRED: 'Use Agent as the public participant label. Keep operating details in encrypted content.',
+  PRIVATE_PAYROLL_REQUIRED: 'Encrypt payroll names with a compatible client. Existing payments and pause controls remain available.',
+  PRIVATE_PAYROLL_PARENT: 'The encrypted agreed name belongs to a different payroll schedule.',
   PRIVATE_BALLOT_REVIEW_REQUIRED: 'Read and verify the encrypted ballot wording before voting.',
   PRIVATE_BALLOT_CONTEXT:
     'The encrypted wording does not match this ballot, its ordered choices or its supporting document. Voting is unavailable.',

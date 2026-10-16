@@ -7,7 +7,7 @@ import * as ts from 'typescript';
 import { generateContract } from '../sdk/compiler.js';
 const json = readFileSync('.artifacts/contracts/runtime.abi', 'utf8');
 describe('public ABI compiler', () => {
-  it('lets a typed legacy caller omit a trailing binary extension', () => {
+  it.each(['$', '?', '?$'])('lets a typed caller omit an absent ABI field (%s)', (suffix) => {
     const directory = mkdtempSync(join(process.cwd(), '.artifacts', 'compiler-extension-'));
     try {
       const fixture = JSON.stringify({
@@ -19,7 +19,7 @@ describe('public ABI compiler', () => {
             base: '',
             fields: [
               { name: 'id', type: 'uint64' },
-              { name: 'founder', type: 'uint64$' },
+              { name: 'founder', type: 'uint64' + suffix },
             ],
           },
         ],

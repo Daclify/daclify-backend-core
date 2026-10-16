@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle:HelpBundle={
   "producer": "core",
-  "packageVersion": "0.15.0-alpha.39",
+  "packageVersion": "0.15.0-alpha.41",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -666,7 +666,7 @@ export const CoreHelpBundle:HelpBundle={
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "0efbf8e885f8d1054732da76fd6d728d4dab6d2254855542f39287db869c61a4",
+      "sourceAbiHash": "c6908ce8ae83ba76f7b1df5d172165943e69bccf50463728faae3c7162931343",
       "actions": [
         {
           "name": "acceptcont",
@@ -3365,6 +3365,31 @@ export const CoreHelpBundle:HelpBundle={
           ]
         },
         {
+          "name": "setagentdesc",
+          "fields": [
+            {
+              "name": "runtime",
+              "type": "name"
+            },
+            {
+              "name": "dao_id",
+              "type": "uint64"
+            },
+            {
+              "name": "member_id",
+              "type": "uint64"
+            },
+            {
+              "name": "subject",
+              "type": "uint64"
+            },
+            {
+              "name": "reference",
+              "type": "private_record_reference?"
+            }
+          ]
+        },
+        {
           "name": "setapp",
           "fields": [
             {
@@ -4259,6 +4284,10 @@ export const CoreHelpBundle:HelpBundle={
             {
               "name": "credential_epoch",
               "type": "uint64"
+            },
+            {
+              "name": "description",
+              "type": "private_record_reference?$"
             }
           ]
         },
@@ -8467,6 +8496,86 @@ export const CoreHelpBundle:HelpBundle={
           "reference",
           "metadata",
           "metadataCommitment"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "privacy"
+    },
+    {
+      "method": "GET",
+      "path": "/v1/daos/:id/private-agents/:member",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "documentId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 4294967295
+                  },
+                  "commitment": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "keyEpoch": {
+                    "type": "string",
+                    "maxLength": 20
+                  }
+                },
+                "required": [
+                  "documentId",
+                  "version",
+                  "commitment",
+                  "keyEpoch"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "dao",
+          "reference"
         ],
         "additionalProperties": false
       },
@@ -12877,6 +12986,52 @@ export const CoreHelpBundle:HelpBundle={
                                 "envelope"
                               ],
                               "additionalProperties": false
+                            },
+                            "agentDescription": {
+                              "type": "object",
+                              "properties": {
+                                "documentId": {
+                                  "type": "string",
+                                  "maxLength": 20
+                                },
+                                "envelope": {
+                                  "type": "object",
+                                  "properties": {
+                                    "version": {
+                                      "type": "number",
+                                      "const": 1
+                                    },
+                                    "algorithm": {
+                                      "type": "string",
+                                      "const": "AES-256-GCM"
+                                    },
+                                    "iv": {
+                                      "type": "string",
+                                      "minLength": 16,
+                                      "maxLength": 16,
+                                      "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                    },
+                                    "ciphertext": {
+                                      "type": "string",
+                                      "minLength": 24,
+                                      "maxLength": 49152,
+                                      "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                    }
+                                  },
+                                  "required": [
+                                    "version",
+                                    "algorithm",
+                                    "iv",
+                                    "ciphertext"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "documentId",
+                                "envelope"
+                              ],
+                              "additionalProperties": false
                             }
                           },
                           "required": [
@@ -14037,6 +14192,52 @@ export const CoreHelpBundle:HelpBundle={
                           "envelope"
                         ],
                         "additionalProperties": false
+                      },
+                      "agentDescription": {
+                        "type": "object",
+                        "properties": {
+                          "documentId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 49152,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "documentId",
+                          "envelope"
+                        ],
+                        "additionalProperties": false
                       }
                     },
                     "required": [
@@ -15146,6 +15347,52 @@ export const CoreHelpBundle:HelpBundle={
                                   "version",
                                   "ephemeralKey",
                                   "salt",
+                                  "envelope"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "agentDescription": {
+                                "type": "object",
+                                "properties": {
+                                  "documentId": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  },
+                                  "envelope": {
+                                    "type": "object",
+                                    "properties": {
+                                      "version": {
+                                        "type": "number",
+                                        "const": 1
+                                      },
+                                      "algorithm": {
+                                        "type": "string",
+                                        "const": "AES-256-GCM"
+                                      },
+                                      "iv": {
+                                        "type": "string",
+                                        "minLength": 16,
+                                        "maxLength": 16,
+                                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                      },
+                                      "ciphertext": {
+                                        "type": "string",
+                                        "minLength": 24,
+                                        "maxLength": 49152,
+                                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "version",
+                                      "algorithm",
+                                      "iv",
+                                      "ciphertext"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "documentId",
                                   "envelope"
                                 ],
                                 "additionalProperties": false
@@ -16337,6 +16584,52 @@ export const CoreHelpBundle:HelpBundle={
                               "envelope"
                             ],
                             "additionalProperties": false
+                          },
+                          "agentDescription": {
+                            "type": "object",
+                            "properties": {
+                              "documentId": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "envelope": {
+                                "type": "object",
+                                "properties": {
+                                  "version": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "algorithm": {
+                                    "type": "string",
+                                    "const": "AES-256-GCM"
+                                  },
+                                  "iv": {
+                                    "type": "string",
+                                    "minLength": 16,
+                                    "maxLength": 16,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  },
+                                  "ciphertext": {
+                                    "type": "string",
+                                    "minLength": 24,
+                                    "maxLength": 49152,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  }
+                                },
+                                "required": [
+                                  "version",
+                                  "algorithm",
+                                  "iv",
+                                  "ciphertext"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "documentId",
+                              "envelope"
+                            ],
+                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -17513,6 +17806,52 @@ export const CoreHelpBundle:HelpBundle={
                               "envelope"
                             ],
                             "additionalProperties": false
+                          },
+                          "agentDescription": {
+                            "type": "object",
+                            "properties": {
+                              "documentId": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "envelope": {
+                                "type": "object",
+                                "properties": {
+                                  "version": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "algorithm": {
+                                    "type": "string",
+                                    "const": "AES-256-GCM"
+                                  },
+                                  "iv": {
+                                    "type": "string",
+                                    "minLength": 16,
+                                    "maxLength": 16,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  },
+                                  "ciphertext": {
+                                    "type": "string",
+                                    "minLength": 24,
+                                    "maxLength": 49152,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  }
+                                },
+                                "required": [
+                                  "version",
+                                  "algorithm",
+                                  "iv",
+                                  "ciphertext"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "documentId",
+                              "envelope"
+                            ],
+                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -17749,6 +18088,52 @@ export const CoreHelpBundle:HelpBundle={
                   "version",
                   "ephemeralKey",
                   "salt",
+                  "envelope"
+                ],
+                "additionalProperties": false
+              },
+              "agentDescription": {
+                "type": "object",
+                "properties": {
+                  "documentId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "envelope": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "algorithm": {
+                        "type": "string",
+                        "const": "AES-256-GCM"
+                      },
+                      "iv": {
+                        "type": "string",
+                        "minLength": 16,
+                        "maxLength": 16,
+                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                      },
+                      "ciphertext": {
+                        "type": "string",
+                        "minLength": 24,
+                        "maxLength": 49152,
+                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "algorithm",
+                      "iv",
+                      "ciphertext"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "documentId",
                   "envelope"
                 ],
                 "additionalProperties": false
@@ -18896,6 +19281,52 @@ export const CoreHelpBundle:HelpBundle={
                           "version",
                           "ephemeralKey",
                           "salt",
+                          "envelope"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "agentDescription": {
+                        "type": "object",
+                        "properties": {
+                          "documentId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 49152,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "documentId",
                           "envelope"
                         ],
                         "additionalProperties": false
@@ -38386,6 +38817,52 @@ export const CoreHelpBundle:HelpBundle={
                           "envelope"
                         ],
                         "additionalProperties": false
+                      },
+                      "agentDescription": {
+                        "type": "object",
+                        "properties": {
+                          "documentId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 49152,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "documentId",
+                          "envelope"
+                        ],
+                        "additionalProperties": false
                       }
                     },
                     "required": [
@@ -39542,6 +40019,52 @@ export const CoreHelpBundle:HelpBundle={
                           "version",
                           "ephemeralKey",
                           "salt",
+                          "envelope"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "agentDescription": {
+                        "type": "object",
+                        "properties": {
+                          "documentId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 49152,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "documentId",
                           "envelope"
                         ],
                         "additionalProperties": false
@@ -40870,6 +41393,52 @@ export const CoreHelpBundle:HelpBundle={
                           "version",
                           "ephemeralKey",
                           "salt",
+                          "envelope"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "agentDescription": {
+                        "type": "object",
+                        "properties": {
+                          "documentId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 49152,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "documentId",
                           "envelope"
                         ],
                         "additionalProperties": false
@@ -42229,6 +42798,52 @@ export const CoreHelpBundle:HelpBundle={
                           "version",
                           "ephemeralKey",
                           "salt",
+                          "envelope"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "agentDescription": {
+                        "type": "object",
+                        "properties": {
+                          "documentId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 49152,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "documentId",
                           "envelope"
                         ],
                         "additionalProperties": false
@@ -48116,6 +48731,52 @@ export const CoreHelpBundle:HelpBundle={
                       "envelope"
                     ],
                     "additionalProperties": false
+                  },
+                  "agentDescription": {
+                    "type": "object",
+                    "properties": {
+                      "documentId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "envelope": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "algorithm": {
+                            "type": "string",
+                            "const": "AES-256-GCM"
+                          },
+                          "iv": {
+                            "type": "string",
+                            "minLength": 16,
+                            "maxLength": 16,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "ciphertext": {
+                            "type": "string",
+                            "minLength": 24,
+                            "maxLength": 49152,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "algorithm",
+                          "iv",
+                          "ciphertext"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "documentId",
+                      "envelope"
+                    ],
+                    "additionalProperties": false
                   }
                 },
                 "required": [
@@ -49533,6 +50194,52 @@ export const CoreHelpBundle:HelpBundle={
                                 "envelope"
                               ],
                               "additionalProperties": false
+                            },
+                            "agentDescription": {
+                              "type": "object",
+                              "properties": {
+                                "documentId": {
+                                  "type": "string",
+                                  "maxLength": 20
+                                },
+                                "envelope": {
+                                  "type": "object",
+                                  "properties": {
+                                    "version": {
+                                      "type": "number",
+                                      "const": 1
+                                    },
+                                    "algorithm": {
+                                      "type": "string",
+                                      "const": "AES-256-GCM"
+                                    },
+                                    "iv": {
+                                      "type": "string",
+                                      "minLength": 16,
+                                      "maxLength": 16,
+                                      "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                    },
+                                    "ciphertext": {
+                                      "type": "string",
+                                      "minLength": 24,
+                                      "maxLength": 49152,
+                                      "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                    }
+                                  },
+                                  "required": [
+                                    "version",
+                                    "algorithm",
+                                    "iv",
+                                    "ciphertext"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "documentId",
+                                "envelope"
+                              ],
+                              "additionalProperties": false
                             }
                           },
                           "required": [
@@ -50693,6 +51400,52 @@ export const CoreHelpBundle:HelpBundle={
                           "envelope"
                         ],
                         "additionalProperties": false
+                      },
+                      "agentDescription": {
+                        "type": "object",
+                        "properties": {
+                          "documentId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 49152,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "documentId",
+                          "envelope"
+                        ],
+                        "additionalProperties": false
                       }
                     },
                     "required": [
@@ -51802,6 +52555,52 @@ export const CoreHelpBundle:HelpBundle={
                                   "version",
                                   "ephemeralKey",
                                   "salt",
+                                  "envelope"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "agentDescription": {
+                                "type": "object",
+                                "properties": {
+                                  "documentId": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  },
+                                  "envelope": {
+                                    "type": "object",
+                                    "properties": {
+                                      "version": {
+                                        "type": "number",
+                                        "const": 1
+                                      },
+                                      "algorithm": {
+                                        "type": "string",
+                                        "const": "AES-256-GCM"
+                                      },
+                                      "iv": {
+                                        "type": "string",
+                                        "minLength": 16,
+                                        "maxLength": 16,
+                                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                      },
+                                      "ciphertext": {
+                                        "type": "string",
+                                        "minLength": 24,
+                                        "maxLength": 49152,
+                                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "version",
+                                      "algorithm",
+                                      "iv",
+                                      "ciphertext"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "documentId",
                                   "envelope"
                                 ],
                                 "additionalProperties": false
@@ -52993,6 +53792,52 @@ export const CoreHelpBundle:HelpBundle={
                               "envelope"
                             ],
                             "additionalProperties": false
+                          },
+                          "agentDescription": {
+                            "type": "object",
+                            "properties": {
+                              "documentId": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "envelope": {
+                                "type": "object",
+                                "properties": {
+                                  "version": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "algorithm": {
+                                    "type": "string",
+                                    "const": "AES-256-GCM"
+                                  },
+                                  "iv": {
+                                    "type": "string",
+                                    "minLength": 16,
+                                    "maxLength": 16,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  },
+                                  "ciphertext": {
+                                    "type": "string",
+                                    "minLength": 24,
+                                    "maxLength": 49152,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  }
+                                },
+                                "required": [
+                                  "version",
+                                  "algorithm",
+                                  "iv",
+                                  "ciphertext"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "documentId",
+                              "envelope"
+                            ],
+                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -54169,6 +55014,52 @@ export const CoreHelpBundle:HelpBundle={
                               "envelope"
                             ],
                             "additionalProperties": false
+                          },
+                          "agentDescription": {
+                            "type": "object",
+                            "properties": {
+                              "documentId": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "envelope": {
+                                "type": "object",
+                                "properties": {
+                                  "version": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "algorithm": {
+                                    "type": "string",
+                                    "const": "AES-256-GCM"
+                                  },
+                                  "iv": {
+                                    "type": "string",
+                                    "minLength": 16,
+                                    "maxLength": 16,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  },
+                                  "ciphertext": {
+                                    "type": "string",
+                                    "minLength": 24,
+                                    "maxLength": 49152,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  }
+                                },
+                                "required": [
+                                  "version",
+                                  "algorithm",
+                                  "iv",
+                                  "ciphertext"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "documentId",
+                              "envelope"
+                            ],
+                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -54405,6 +55296,52 @@ export const CoreHelpBundle:HelpBundle={
                   "version",
                   "ephemeralKey",
                   "salt",
+                  "envelope"
+                ],
+                "additionalProperties": false
+              },
+              "agentDescription": {
+                "type": "object",
+                "properties": {
+                  "documentId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "envelope": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "algorithm": {
+                        "type": "string",
+                        "const": "AES-256-GCM"
+                      },
+                      "iv": {
+                        "type": "string",
+                        "minLength": 16,
+                        "maxLength": 16,
+                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                      },
+                      "ciphertext": {
+                        "type": "string",
+                        "minLength": 24,
+                        "maxLength": 49152,
+                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "algorithm",
+                      "iv",
+                      "ciphertext"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "documentId",
                   "envelope"
                 ],
                 "additionalProperties": false
@@ -55552,6 +56489,52 @@ export const CoreHelpBundle:HelpBundle={
                           "version",
                           "ephemeralKey",
                           "salt",
+                          "envelope"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "agentDescription": {
+                        "type": "object",
+                        "properties": {
+                          "documentId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 49152,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "documentId",
                           "envelope"
                         ],
                         "additionalProperties": false

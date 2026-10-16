@@ -45,6 +45,45 @@ export class CreationService {
     private readonly pool: Pool,
     readonly chain: Chain,
   ) {}
+  private async checkFounderPolicy(
+    account: Account,
+    input: CreationRequest,
+    db: Pick<PoolClient, 'query'>,
+  ) {
+    const founder = input.request.foundingAgent ?? account;
+    if (
+      input.request.metadata.schemaVersion === 4 &&
+      input.request.foundingAgent &&
+      (founder.signingKey !== account.signingKey ||
+        !isDeepStrictEqual(founder.encryptionKey, account.encryptionKey))
+    )
+      throw new ApiError('PRIVATE_FOUNDER_IDENTITY', 409);
+    if (input.request.privacy !== 'encrypted-user-controlled') return;
+    if (!input.request.foundingAgent && account.custody === 'managed')
+      throw new ApiError('CUSTODY_POLICY', 403);
+    if (!founder.encryptionKey) throw new ApiError('VAULT_IDENTITY_REQUIRED', 409);
+    const spellings = (coordinate: string) => {
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+      const canonical = Buffer.from(coordinate, 'base64url').toString('base64url');
+      const last = canonical.at(-1);
+      if (canonical.length !== 43 || !last) throw new ApiError('INPUT_INVALID', 400);
+      // Base64url's unused final two bits permit four spellings of each coordinate.
+      return Array.from(
+        { length: 4 },
+        (_, index) => canonical.slice(0, -1) + alphabet[alphabet.indexOf(last) + index],
+      );
+    };
+    const encryptionKey = founder.encryptionKey;
+    const equivalentKeys = spellings(encryptionKey.x).flatMap((x) =>
+      spellings(encryptionKey.y).map((y) => JSON.stringify({ ...encryptionKey, x, y })),
+    );
+    const managed = await db.query(
+      `SELECT 1 FROM accounts a WHERE (a.signing_key=$1 OR a.encryption_key=ANY($2::jsonb[]))
+       AND (a.custody='managed' OR EXISTS(SELECT 1 FROM vault_recovery_state r WHERE r.account_id=a.id AND r.assisted_ever)) LIMIT 1`,
+      [founder.signingKey, equivalentKeys],
+    );
+    if (managed.rowCount) throw new ApiError('CUSTODY_POLICY', 403);
+  }
   async preflight(
     account: Account,
     input: CreationRequest,
@@ -60,14 +99,7 @@ export class CreationService {
     status ??= await this.chain.platform();
     if (!status.chainMatches || input.request.token.chainId !== status.network.chainId)
       throw new ApiError('DAO_REFERENCE', 409);
-    if (input.request.privacy === 'encrypted-user-controlled' && !input.request.foundingAgent) {
-      const assisted = await db.query(
-        'SELECT 1 FROM vault_recovery_state WHERE account_id=$1 AND assisted_ever',
-        [account.id],
-      );
-      if (account.custody === 'managed' || assisted.rowCount)
-        throw new ApiError('CUSTODY_POLICY', 403);
-    }
+    await this.checkFounderPolicy(account, input, db);
     if (input.method === 'free' && (!status.hosting || status.creation?.shared_usd !== 0))
       throw new ApiError('HOSTING_UNAVAILABLE', 503);
     if (input.method !== 'free' && status.creation?.shared_usd === 0)
@@ -109,12 +141,7 @@ export class CreationService {
     const status = await this.chain.platform();
     if (input.request.token.chainId !== status.network.chainId)
       throw new ApiError('ASSET_CHAIN_MISMATCH');
-    if (
-      input.request.privacy === 'encrypted-user-controlled' &&
-      account.custody === 'managed' &&
-      !input.request.foundingAgent
-    )
-      throw new ApiError('CUSTODY_POLICY', 403);
+    await this.checkFounderPolicy(account, input, this.pool);
     const reference = createHash('sha256')
       .update(
         `${status.network.chainId}:${status.network.runtime}:${account.id}:${input.requestId}`,
@@ -130,13 +157,7 @@ export class CreationService {
       const current = await readAccount(client, account.id);
       if (!current || current.signingKey !== account.signingKey)
         throw new ApiError('CREATION_OWNER', 403);
-      if (input.request.privacy === 'encrypted-user-controlled' && !input.request.foundingAgent) {
-        const state = await client.query(
-          'SELECT 1 FROM vault_recovery_state WHERE account_id=$1 AND assisted_ever',
-          [account.id],
-        );
-        if (state.rowCount) throw new ApiError('CUSTODY_POLICY', 403);
-      }
+      await this.checkFounderPolicy(current, input, client);
       const claim = await client.query(
         'SELECT request,method,chain_id,runtime FROM dao_claim_links WHERE id=$1 AND account_owns($2,claimant_account_id)',
         [input.requestId, account.id],
@@ -307,13 +328,14 @@ export class CreationService {
       ...(claim.rowCount ? { founderExecutive: claim.rows[0]?.completed_at !== null } : {}),
       network: status.network,
       setup: row.request.request,
-      creator: row.request.request.foundingAgent
-        ? {
-            signingKey: row.request.request.foundingAgent.signingKey,
-            encryptionKey: row.request.request.foundingAgent.encryptionKey,
-            custody: 'user-controlled',
-          }
-        : await this.creator(row.account_id),
+      creator:
+        row.request.request.foundingAgent && row.request.request.metadata.schemaVersion !== 4
+          ? {
+              signingKey: row.request.request.foundingAgent.signingKey,
+              encryptionKey: row.request.request.foundingAgent.encryptionKey,
+              custody: 'user-controlled',
+            }
+          : await this.creator(row.account_id),
       requestId: row.id,
       deployment: row.request.deployment,
       method: row.request.method,

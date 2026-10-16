@@ -150,6 +150,15 @@ export const CreateDaoSchema = z
       JSON.stringify(value.metadata.setup) === JSON.stringify(value.setup ?? null)
     );
   }, 'Private creation requires sealed setup and exact operational provenance')
+  .refine((value) => {
+    if (value.metadata.schemaVersion !== 4 || value.privateSetup?.stage !== 'founder') return true;
+    return (
+      !!value.foundingAgent === !!value.privateSetup.agentDescription &&
+      (!value.foundingAgent ||
+        (value.foundingAgent.operator === 'Agent' &&
+          value.privateSetup.agentDescription?.documentId !== value.privateSetup.documentId))
+    );
+  }, 'A private agent founder requires a separate encrypted description and a generic public label')
   .refine(
     (value) => new TextEncoder().encode(JSON.stringify(value)).length <= 61440,
     'Creation setup exceeds the request limit',

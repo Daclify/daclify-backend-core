@@ -77,11 +77,11 @@ Do not assume every listed file needs editing. Before each task, trace all calle
 
 **Interfaces:** Introduce additive private payroll label/reference actions and records, preserving legacy 80-byte ASCII labels and their historic interpretation. Distinguish immutable agreed label reference from editable display reference. Reuse existing encrypted Works/Grants/review/agreement/service documents; do not duplicate private prose in public module metadata. Agent descriptions use the spec's protected record kind while required kind/identity flags remain public.
 
-- [ ] Extend modules `tests/{payroll,grants,contribution-agreements,arbitration-agreements}.test.ts` and compiled/native tests: settled/approved amounts unchanged, label edit cannot alter agreed terms, successor uniqueness, reference release only after rights permit it and interrupted upgrades retain payability.
-- [ ] Add frontend `tests/e2e/private-module-content.spec.ts`: author/reviewer names and narratives stay in encrypted bodies; public controls use generic technical labels; personal-profile visibility stays explicit; missing history keys show unavailable content and block unread acceptance.
-- [ ] Run new regressions red, implement the reference-bound label path and remove narrative duplication in all caller paths, including generated funding/review ballots and admission/operator labels. Do not change native recipients, amounts or eligibility flags.
-- [ ] Exercise post-deactivation rotation, from-join/full-history access, original-key restore and lost-ciphertext failure. Assert canary absence in both immutable and editable payroll rows and service/API notifications.
-- [ ] Run affected suites and resource checks; commit module producers and pinned consumers with precise privacy-limit help.
+- [x] Extend modules `tests/{payroll,grants,contribution-agreements,arbitration-agreements}.test.ts` and compiled/native tests: settled/approved amounts unchanged, label edit cannot alter agreed terms, successor uniqueness, reference release only after rights permit it and interrupted upgrades retain payability.
+- [x] Add frontend `tests/e2e/private-module-content.spec.ts`: author/reviewer names and narratives stay in encrypted bodies; public controls use generic technical labels; personal-profile visibility stays explicit; missing history keys show unavailable content and block unread acceptance.
+- [x] Run new regressions red, implement the reference-bound label path and remove narrative duplication in all caller paths, including generated funding/review ballots and admission/operator labels. Do not change native recipients, amounts or eligibility flags.
+- [x] Verify current guarded reads, lock clearing, original-key agent initialization and canary absence in immutable/editable payroll rows and API submissions. Complete post-deactivation rotation, from-join/full-history access, original-key restoration and interrupted-upgrade continuity for these surfaces in Task 6 before activation (execution-ledger ruling).
+- [x] Run affected suites and resource checks; commit module producers and pinned consumers with precise privacy-limit help.
 
 ### Task 5: private Quick ballot questions for a single DAO
 

@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 import { NativeQuickBallots } from './quick-ballots/chain.js';
 import {
   ContactRecoveryTargetSchema,
@@ -85,6 +86,7 @@ import {
   DecideTableSchemas,
   WorksTableSchemas,
   PayrollTableSchemas,
+  payrollAbi,
   GrantsTableSchemas,
   EndorseTableSchemas,
   ActivityTableSchemas,
@@ -1192,6 +1194,19 @@ export class NativeChainGateway implements ChainGateway {
         /* Keep unsupported module writers disabled without taking the portal down. */
       }
     }
+    let privatePayroll = false;
+    const payroll = this.config.modules?.find((module) => module.id === 'payroll');
+    if (privateIdentity && payroll) {
+      try {
+        const deployed = await this.api.v1.chain.get_raw_abi(payroll.account);
+        privatePayroll =
+          deployed.code_hash.toString() === ModuleCodeHashes.payroll &&
+          deployed.abi_hash.toString() ===
+            Checksum256.hash(Serializer.encode({ object: ABI.from(payrollAbi) })).toString();
+      } catch {
+        /* Unqualified native code must never receive a private label writer. */
+      }
+    }
     return NetworkSchema.parse({
       chainId: this.config.chainId,
       rpcUrl: this.config.rpcUrl,
@@ -1206,6 +1221,7 @@ export class NativeChainGateway implements ChainGateway {
               'private-records-v1',
               'private-dao-identity-v1',
               ...(privateBallots ? ['private-ballot-content-v1'] : []),
+              ...(privatePayroll ? ['private-payroll-labels-v1'] : []),
               ...(this.config.bootstrap && claimFounder && presets
                 ? ['private-claim-content-v1']
                 : []),
@@ -2604,6 +2620,83 @@ export class NativeChainGateway implements ChainGateway {
       metadataCommitment: createHash('sha256').update(row.metadata).digest('hex'),
     });
   }
+  async privatePayroll(daoId: string, scheduleId: string) {
+    const dao = await this.dao(IdSchema.parse(daoId)),
+      id = IdSchema.parse(scheduleId),
+      deployment = this.config.modules?.find((module) => module.id === 'payroll');
+    if (!deployment) throw new ApiError('PRIVATE_IDENTITY_UNSUPPORTED', 409);
+    const schedules = await this.moduleRows(
+      deployment.account,
+      'schedules',
+      PayrollTableSchemas.schedules,
+      id,
+      id,
+      1,
+      'i64',
+      1,
+    );
+    if (!schedules.rows.some((row) => row.id === id && row.dao_id === daoId))
+      throw new ApiError('PAYROLL_DOMAIN', 404);
+    const [flags, terms] = await Promise.all([
+      this.moduleRows(
+        deployment.account,
+        'controls',
+        PayrollTableSchemas.controls,
+        id,
+        id,
+        1,
+        'i64',
+        1,
+      ),
+      this.moduleRows(
+        deployment.account,
+        'payterms',
+        PayrollTableSchemas.payterms,
+        id,
+        id,
+        1,
+        'i64',
+        1,
+      ),
+    ]);
+    const reference = (ref: z.infer<typeof PayrollTableSchemas.controls>['private_label']) =>
+      ref
+        ? {
+            documentId: ref.document_id,
+            version: ref.version,
+            commitment: ref.commitment,
+            keyEpoch: ref.key_epoch,
+          }
+        : null;
+    return ModuleApiRoutes.privatePayroll.response.parse({
+      dao: dao.reference,
+      source: deployment.account,
+      scheduleId: id,
+      agreed: reference(
+        terms.rows.find((row) => row.schedule_id === id && row.dao_id === daoId)?.private_label,
+      ),
+      display: reference(flags.rows.find((row) => row.schedule_id === id)?.private_label),
+    });
+  }
+  async privateAgent(daoId: string, memberId: string) {
+    const dao = await this.dao(IdSchema.parse(daoId));
+    const actor = (await this.tablePage('actors', daoId, IdSchema.parse(memberId), 1)).rows.find(
+      (row) => row.id === memberId,
+    );
+    if (!actor || actor.kind !== 1) throw new ApiError('PARTICIPANT_KIND', 404);
+    const ref = actor.description;
+    return PrivateRecordRoutes.agent.response.parse({
+      dao: dao.reference,
+      reference: ref
+        ? {
+            documentId: ref.document_id,
+            version: ref.version,
+            commitment: ref.commitment,
+            keyEpoch: ref.key_epoch,
+          }
+        : null,
+    });
+  }
   async contentDocument(daoId: string, documentId: string, version: number) {
     IdSchema.parse(daoId);
     IdSchema.parse(documentId);
@@ -2786,7 +2879,7 @@ export class NativeChainGateway implements ChainGateway {
     return GovernanceStateSchema.parse({
       dao: dao.reference,
       policy: policies.find((row) => row.dao_id === daoId) ?? null,
-      actors,
+      actors: actors.map(({ description: _privateDescription, ...actor }) => actor),
       sessions,
       guardian: guardians.find((row) => row.dao_id === daoId) ?? null,
       budget: budgets.find((row) => row.dao_id === daoId) ?? null,
@@ -3490,6 +3583,13 @@ export class NativeChainGateway implements ChainGateway {
   ): Promise<DaoSummary> {
     if (account.signingKey === null) throw new ApiError('VAULT_IDENTITY_REQUIRED', 409);
     await this.validateCreation(input);
+    if (
+      input.metadata.schemaVersion === 4 &&
+      input.foundingAgent &&
+      (input.foundingAgent.signingKey !== account.signingKey ||
+        !isDeepStrictEqual(input.foundingAgent.encryptionKey, account.encryptionKey))
+    )
+      throw new ApiError('PRIVATE_FOUNDER_IDENTITY', 409);
     const bootstrap = this.config.bootstrap;
     if (!bootstrap) throw new ApiError('DAO_CREATION_UNAVAILABLE', 503);
     if (input.token.chainId !== this.config.chainId) throw new ApiError('ASSET_CHAIN_MISMATCH');
@@ -3646,7 +3746,7 @@ export class NativeChainGateway implements ChainGateway {
             native_account: '',
             signing_key: input.foundingAgent.signingKey,
             encryption_key: JSON.stringify(input.foundingAgent.encryptionKey),
-            custody: 0,
+            custody: input.metadata.schemaVersion === 4 && account.custody === 'managed' ? 1 : 0,
             operator_label: input.foundingAgent.operator,
           }),
         });
@@ -4664,7 +4764,11 @@ export class NativeChainGateway implements ChainGateway {
             'i64',
             1,
           );
-          controls.push(...flags.rows.filter((row) => row.schedule_id === schedule.id));
+          controls.push(
+            ...flags.rows
+              .filter((row) => row.schedule_id === schedule.id)
+              .map(({ private_label: _privateLabel, ...control }) => control),
+          );
           const details = await this.moduleRows(
             deployment.account,
             'payterms',
@@ -4677,7 +4781,9 @@ export class NativeChainGateway implements ChainGateway {
           );
           if (details.rows.some((row) => row.schedule_id !== schedule.id || row.dao_id !== daoId))
             throw new ApiError('MODULE_RECORD_DOMAIN', 502);
-          payrollTerms.push(...details.rows);
+          payrollTerms.push(
+            ...details.rows.map(({ private_label: _privateLabel, ...term }) => term),
+          );
         }
       }
     }

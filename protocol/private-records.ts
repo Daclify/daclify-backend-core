@@ -99,6 +99,7 @@ export const PrivateFounderSetupSchema = z.strictObject({
     salt: EpochGrantSchema.shape.salt.length(44),
     envelope: setupEnvelope.extend({ ciphertext: setupEnvelope.shape.ciphertext.max(4096) }),
   }),
+  agentDescription: z.strictObject({ documentId: IdSchema, envelope: setupEnvelope }).optional(),
 });
 export const PrivateDaoSetupSchema = z.discriminatedUnion('stage', [
   z.strictObject({ ...setup, stage: z.literal('invitation') }),

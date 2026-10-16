@@ -9,6 +9,7 @@ import { CreationService } from '../../services/api/src/creation.js';
 import { StripeBilling } from '../../services/api/src/billing/service.js';
 import { createStripeClient } from '../../services/api/src/billing/stripe.js';
 import { migrate } from '../../services/api/src/store.js';
+import { defaultDaoSetup } from '../../protocol/dao.js';
 const url = process.env.DATABASE_URL;
 if (
   !url ||
@@ -168,6 +169,67 @@ it('blocks strict-private creation after assisted authority was enabled and repo
     [account.id],
   );
   try {
+    const setup = defaultDaoSetup('custom');
+    const guarded = CreateDaoSchema.parse({
+      ...request,
+      privacy: 'encrypted-user-controlled',
+      setup: {
+        ...setup,
+        participantMode: 'agents-guarded',
+        governance: {
+          ...setup.governance,
+          guardian: 'guardian',
+          governedWorks: true,
+          maxCommitment: '10000',
+          dailyCommitment: '20000',
+        },
+      },
+      foundingAgent: {
+        signingKey: account.signingKey,
+        encryptionKey: account.encryptionKey,
+        operator: 'Agent',
+      },
+    });
+    const agentOrder = {
+      requestId: randomUUID(),
+      deployment: 'shared' as const,
+      method: 'tlos' as const,
+      request: guarded,
+    };
+    await expect(service.preflight(account, agentOrder, platform)).rejects.toMatchObject({
+      code: 'CUSTODY_POLICY',
+    });
+    await expect(service.prepare(account, agentOrder)).rejects.toMatchObject({
+      code: 'CUSTODY_POLICY',
+    });
+    if (!account.encryptionKey) throw new Error('Missing fixture encryption key');
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+    const coordinate = account.encryptionKey.x;
+    const canonical = Buffer.from(coordinate, 'base64url').toString('base64url');
+    const last = canonical.at(-1);
+    if (!last) throw new Error('Missing fixture coordinate');
+    const alias = canonical.slice(0, -1) + alphabet[alphabet.indexOf(last) + 1];
+    expect(Buffer.from(alias, 'base64url')).toEqual(Buffer.from(coordinate, 'base64url'));
+    for (const x of [coordinate, alias]) {
+      const reused = {
+        ...agentOrder,
+        requestId: randomUUID(),
+        request: {
+          ...guarded,
+          foundingAgent: {
+            signingKey: PrivateKey.generate('K1').toPublic().toString(),
+            encryptionKey: { ...account.encryptionKey, x },
+            operator: 'Agent',
+          },
+        },
+      };
+      await expect(service.preflight(account, reused, platform)).rejects.toMatchObject({
+        code: 'CUSTODY_POLICY',
+      });
+      await expect(service.prepare(account, reused)).rejects.toMatchObject({
+        code: 'CUSTODY_POLICY',
+      });
+    }
     await expect(
       service.prepare(account, {
         requestId: randomUUID(),

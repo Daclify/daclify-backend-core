@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = '0efbf8e885f8d1054732da76fd6d728d4dab6d2254855542f39287db869c61a4';
+export const runtimeAbiHash = 'c6908ce8ae83ba76f7b1df5d172165943e69bccf50463728faae3c7162931343';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -4343,6 +4343,10 @@ export const runtimeAbi = {
         {
           "name": "credential_epoch",
           "type": "uint64"
+        },
+        {
+          "name": "description",
+          "type": "private_record_reference?$"
         }
       ]
     },
@@ -4437,6 +4441,28 @@ export const runtimeAbi = {
         {
           "name": "expires",
           "type": "uint32"
+        }
+      ]
+    },
+    {
+      "name": "private_record_reference",
+      "base": "",
+      "fields": [
+        {
+          "name": "document_id",
+          "type": "uint64"
+        },
+        {
+          "name": "version",
+          "type": "uint32"
+        },
+        {
+          "name": "commitment",
+          "type": "checksum256"
+        },
+        {
+          "name": "key_epoch",
+          "type": "uint64"
         }
       ]
     },
@@ -5879,6 +5905,32 @@ export const runtimeAbi = {
         {
           "name": "admin_override",
           "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "setagentdesc",
+      "base": "",
+      "fields": [
+        {
+          "name": "runtime",
+          "type": "name"
+        },
+        {
+          "name": "dao_id",
+          "type": "uint64"
+        },
+        {
+          "name": "member_id",
+          "type": "uint64"
+        },
+        {
+          "name": "subject",
+          "type": "uint64"
+        },
+        {
+          "name": "reference",
+          "type": "private_record_reference?"
         }
       ]
     },
@@ -7381,6 +7433,11 @@ export const runtimeAbi = {
     {
       "name": "setadmit",
       "type": "setadmit",
+      "ricardian_contract": ""
+    },
+    {
+      "name": "setagentdesc",
+      "type": "setagentdesc",
       "ricardian_contract": ""
     },
     {
@@ -9387,6 +9444,7 @@ export interface participant_record {
   operator_label: string;
   revoked: boolean;
   credential_epoch: string;
+  description?: private_record_reference | undefined | undefined;
 }
 export interface payment_policy {
   bps: number;
@@ -9412,6 +9470,12 @@ export interface private_handover_record {
   complete: boolean;
   accepted: boolean;
   expires: number;
+}
+export interface private_record_reference {
+  document_id: string;
+  version: number;
+  commitment: string;
+  key_epoch: string;
 }
 export interface profile_record {
   id: string;
@@ -9803,6 +9867,13 @@ export interface setadmit {
   allow_agents: boolean;
   admin_override: boolean;
 }
+export interface setagentdesc {
+  runtime: string;
+  dao_id: string;
+  member_id: string;
+  subject: string;
+  reference?: private_record_reference | undefined;
+}
 export interface setapp {
   runtime: string;
   dao_id: string;
@@ -10171,6 +10242,7 @@ export interface RuntimeActions {
   sealram: sealram;
   setactive: setactive;
   setadmit: setadmit;
+  setagentdesc: setagentdesc;
   setapp: setapp;
   setarchcfg: setarchcfg;
   setcapacity: setcapacity;

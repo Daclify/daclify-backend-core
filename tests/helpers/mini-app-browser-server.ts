@@ -245,6 +245,24 @@ try {
     deliveredEmailCodes.delete(email);
     return { code };
   });
+  server.post('/fixture/fund-dao', async (request) => {
+    const { daoId } = z
+      .strictObject({ daoId: z.string().regex(/^[1-9][0-9]*$/) })
+      .parse(request.body);
+    await gateway.dao(daoId);
+    await f.call(
+      'eosio.token',
+      'transfer',
+      {
+        from: 'alice',
+        to: 'daclifycore',
+        quantity: '5.0000 TLOS',
+        memo: 'dao:' + daoId,
+      },
+      'alice',
+    );
+    return { funded: true };
+  });
   server.post('/fixture/expire-mcp-sign-in', async (request) => {
     z.strictObject({}).parse(request.body);
     const session = request.cookies.daclify_session;

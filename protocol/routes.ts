@@ -58,6 +58,7 @@ import { ModuleFeeRoutes } from './module-fees.js';
 import { QuickAccountRoutes } from './quick-accounts.js';
 export const ApiRoutes = {
   privateIdentity: PrivateRecordRoutes.identity,
+  privateAgent: PrivateRecordRoutes.agent,
   ...ContactRecoveryRoutes,
   ...QuickAccountRoutes,
   ...DaoClaimRoutes,

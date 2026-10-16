@@ -231,7 +231,7 @@ export const DaoPresets = Object.freeze(
 export const GovernanceStateSchema = z.strictObject({
   dao: DaoRefSchema,
   policy: RuntimeTableSchemas.govpolicies.nullable(),
-  actors: z.array(RuntimeTableSchemas.actors),
+  actors: z.array(RuntimeTableSchemas.actors.omit({ description: true })),
   sessions: z.array(RuntimeTableSchemas.sessions),
   guardian: RuntimeTableSchemas.guards.nullable(),
   budget: RuntimeTableSchemas.budgets.nullable(),

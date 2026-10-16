@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.15.0-alpha.39 · interface 1.
+Package 0.15.0-alpha.41 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -716,7 +716,7 @@ If a response is lost, retry the same link or resume the saved creation order. P
 
 ## runtime contract
 
-Source ABI JSON SHA-256: `0efbf8e885f8d1054732da76fd6d728d4dab6d2254855542f39287db869c61a4`.
+Source ABI JSON SHA-256: `c6908ce8ae83ba76f7b1df5d172165943e69bccf50463728faae3c7162931343`.
 
 ### Action: acceptcont
 
@@ -1832,6 +1832,16 @@ Source ABI JSON SHA-256: `0efbf8e885f8d1054732da76fd6d728d4dab6d2254855542f39287
 | allow_agents | bool |
 | admin_override | bool |
 
+### Action: setagentdesc
+
+| Field | ABI type |
+| --- | --- |
+| runtime | name |
+| dao_id | uint64 |
+| member_id | uint64 |
+| subject | uint64 |
+| reference | private_record_reference? |
+
 ### Action: setapp
 
 | Field | ABI type |
@@ -2220,6 +2230,7 @@ Source ABI JSON SHA-256: `0efbf8e885f8d1054732da76fd6d728d4dab6d2254855542f39287
 | operator_label | string |
 | revoked | bool |
 | credential_epoch | uint64 |
+| description | private_record_reference?$ |
 
 ### Table: admpolicies
 
@@ -4346,6 +4357,92 @@ Response:
     "reference",
     "metadata",
     "metadataCommitment"
+  ],
+  "additionalProperties": false
+}
+```
+
+## GET /v1/daos/:id/private-agents/:member
+
+Guide: privacy.
+
+No request body.
+
+Response:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "dao": {
+      "type": "object",
+      "properties": {
+        "chainId": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "contract": {
+          "type": "string",
+          "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+        },
+        "daoId": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "interfaceVersion": {
+          "type": "number",
+          "const": 1
+        }
+      },
+      "required": [
+        "chainId",
+        "contract",
+        "daoId",
+        "interfaceVersion"
+      ],
+      "additionalProperties": false
+    },
+    "reference": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "documentId": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4294967295
+            },
+            "commitment": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "keyEpoch": {
+              "type": "string",
+              "maxLength": 20
+            }
+          },
+          "required": [
+            "documentId",
+            "version",
+            "commitment",
+            "keyEpoch"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "dao",
+    "reference"
   ],
   "additionalProperties": false
 }
@@ -8834,6 +8931,52 @@ Response:
                           "envelope"
                         ],
                         "additionalProperties": false
+                      },
+                      "agentDescription": {
+                        "type": "object",
+                        "properties": {
+                          "documentId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 49152,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "documentId",
+                          "envelope"
+                        ],
+                        "additionalProperties": false
                       }
                     },
                     "required": [
@@ -9998,6 +10141,52 @@ Request:
                     "envelope"
                   ],
                   "additionalProperties": false
+                },
+                "agentDescription": {
+                  "type": "object",
+                  "properties": {
+                    "documentId": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "envelope": {
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "type": "number",
+                          "const": 1
+                        },
+                        "algorithm": {
+                          "type": "string",
+                          "const": "AES-256-GCM"
+                        },
+                        "iv": {
+                          "type": "string",
+                          "minLength": 16,
+                          "maxLength": 16,
+                          "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                        },
+                        "ciphertext": {
+                          "type": "string",
+                          "minLength": 24,
+                          "maxLength": 49152,
+                          "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                        }
+                      },
+                      "required": [
+                        "version",
+                        "algorithm",
+                        "iv",
+                        "ciphertext"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "documentId",
+                    "envelope"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
@@ -11112,6 +11301,52 @@ Response:
                             "version",
                             "ephemeralKey",
                             "salt",
+                            "envelope"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "agentDescription": {
+                          "type": "object",
+                          "properties": {
+                            "documentId": {
+                              "type": "string",
+                              "maxLength": 20
+                            },
+                            "envelope": {
+                              "type": "object",
+                              "properties": {
+                                "version": {
+                                  "type": "number",
+                                  "const": 1
+                                },
+                                "algorithm": {
+                                  "type": "string",
+                                  "const": "AES-256-GCM"
+                                },
+                                "iv": {
+                                  "type": "string",
+                                  "minLength": 16,
+                                  "maxLength": 16,
+                                  "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                },
+                                "ciphertext": {
+                                  "type": "string",
+                                  "minLength": 24,
+                                  "maxLength": 49152,
+                                  "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                }
+                              },
+                              "required": [
+                                "version",
+                                "algorithm",
+                                "iv",
+                                "ciphertext"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "documentId",
                             "envelope"
                           ],
                           "additionalProperties": false
@@ -12312,6 +12547,52 @@ Response:
                         "envelope"
                       ],
                       "additionalProperties": false
+                    },
+                    "agentDescription": {
+                      "type": "object",
+                      "properties": {
+                        "documentId": {
+                          "type": "string",
+                          "maxLength": 20
+                        },
+                        "envelope": {
+                          "type": "object",
+                          "properties": {
+                            "version": {
+                              "type": "number",
+                              "const": 1
+                            },
+                            "algorithm": {
+                              "type": "string",
+                              "const": "AES-256-GCM"
+                            },
+                            "iv": {
+                              "type": "string",
+                              "minLength": 16,
+                              "maxLength": 16,
+                              "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                            },
+                            "ciphertext": {
+                              "type": "string",
+                              "minLength": 24,
+                              "maxLength": 49152,
+                              "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                            }
+                          },
+                          "required": [
+                            "version",
+                            "algorithm",
+                            "iv",
+                            "ciphertext"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "documentId",
+                        "envelope"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
@@ -13497,6 +13778,52 @@ Response:
                         "envelope"
                       ],
                       "additionalProperties": false
+                    },
+                    "agentDescription": {
+                      "type": "object",
+                      "properties": {
+                        "documentId": {
+                          "type": "string",
+                          "maxLength": 20
+                        },
+                        "envelope": {
+                          "type": "object",
+                          "properties": {
+                            "version": {
+                              "type": "number",
+                              "const": 1
+                            },
+                            "algorithm": {
+                              "type": "string",
+                              "const": "AES-256-GCM"
+                            },
+                            "iv": {
+                              "type": "string",
+                              "minLength": 16,
+                              "maxLength": 16,
+                              "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                            },
+                            "ciphertext": {
+                              "type": "string",
+                              "minLength": 24,
+                              "maxLength": 49152,
+                              "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                            }
+                          },
+                          "required": [
+                            "version",
+                            "algorithm",
+                            "iv",
+                            "ciphertext"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "documentId",
+                        "envelope"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
@@ -13737,6 +14064,52 @@ Request:
             "version",
             "ephemeralKey",
             "salt",
+            "envelope"
+          ],
+          "additionalProperties": false
+        },
+        "agentDescription": {
+          "type": "object",
+          "properties": {
+            "documentId": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "envelope": {
+              "type": "object",
+              "properties": {
+                "version": {
+                  "type": "number",
+                  "const": 1
+                },
+                "algorithm": {
+                  "type": "string",
+                  "const": "AES-256-GCM"
+                },
+                "iv": {
+                  "type": "string",
+                  "minLength": 16,
+                  "maxLength": 16,
+                  "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                },
+                "ciphertext": {
+                  "type": "string",
+                  "minLength": 24,
+                  "maxLength": 49152,
+                  "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                }
+              },
+              "required": [
+                "version",
+                "algorithm",
+                "iv",
+                "ciphertext"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "documentId",
             "envelope"
           ],
           "additionalProperties": false
@@ -14889,6 +15262,52 @@ Response:
                     "version",
                     "ephemeralKey",
                     "salt",
+                    "envelope"
+                  ],
+                  "additionalProperties": false
+                },
+                "agentDescription": {
+                  "type": "object",
+                  "properties": {
+                    "documentId": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "envelope": {
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "type": "number",
+                          "const": 1
+                        },
+                        "algorithm": {
+                          "type": "string",
+                          "const": "AES-256-GCM"
+                        },
+                        "iv": {
+                          "type": "string",
+                          "minLength": 16,
+                          "maxLength": 16,
+                          "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                        },
+                        "ciphertext": {
+                          "type": "string",
+                          "minLength": 24,
+                          "maxLength": 49152,
+                          "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                        }
+                      },
+                      "required": [
+                        "version",
+                        "algorithm",
+                        "iv",
+                        "ciphertext"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "documentId",
                     "envelope"
                   ],
                   "additionalProperties": false
@@ -35201,6 +35620,52 @@ Request:
                     "envelope"
                   ],
                   "additionalProperties": false
+                },
+                "agentDescription": {
+                  "type": "object",
+                  "properties": {
+                    "documentId": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "envelope": {
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "type": "number",
+                          "const": 1
+                        },
+                        "algorithm": {
+                          "type": "string",
+                          "const": "AES-256-GCM"
+                        },
+                        "iv": {
+                          "type": "string",
+                          "minLength": 16,
+                          "maxLength": 16,
+                          "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                        },
+                        "ciphertext": {
+                          "type": "string",
+                          "minLength": 24,
+                          "maxLength": 49152,
+                          "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                        }
+                      },
+                      "required": [
+                        "version",
+                        "algorithm",
+                        "iv",
+                        "ciphertext"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "documentId",
+                    "envelope"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
@@ -36362,6 +36827,52 @@ Response:
                     "version",
                     "ephemeralKey",
                     "salt",
+                    "envelope"
+                  ],
+                  "additionalProperties": false
+                },
+                "agentDescription": {
+                  "type": "object",
+                  "properties": {
+                    "documentId": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "envelope": {
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "type": "number",
+                          "const": 1
+                        },
+                        "algorithm": {
+                          "type": "string",
+                          "const": "AES-256-GCM"
+                        },
+                        "iv": {
+                          "type": "string",
+                          "minLength": 16,
+                          "maxLength": 16,
+                          "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                        },
+                        "ciphertext": {
+                          "type": "string",
+                          "minLength": 24,
+                          "maxLength": 49152,
+                          "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                        }
+                      },
+                      "required": [
+                        "version",
+                        "algorithm",
+                        "iv",
+                        "ciphertext"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "documentId",
                     "envelope"
                   ],
                   "additionalProperties": false
@@ -37696,6 +38207,52 @@ Response:
                     "version",
                     "ephemeralKey",
                     "salt",
+                    "envelope"
+                  ],
+                  "additionalProperties": false
+                },
+                "agentDescription": {
+                  "type": "object",
+                  "properties": {
+                    "documentId": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "envelope": {
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "type": "number",
+                          "const": 1
+                        },
+                        "algorithm": {
+                          "type": "string",
+                          "const": "AES-256-GCM"
+                        },
+                        "iv": {
+                          "type": "string",
+                          "minLength": 16,
+                          "maxLength": 16,
+                          "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                        },
+                        "ciphertext": {
+                          "type": "string",
+                          "minLength": 24,
+                          "maxLength": 49152,
+                          "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                        }
+                      },
+                      "required": [
+                        "version",
+                        "algorithm",
+                        "iv",
+                        "ciphertext"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "documentId",
                     "envelope"
                   ],
                   "additionalProperties": false
@@ -39073,6 +39630,52 @@ Response:
                     "version",
                     "ephemeralKey",
                     "salt",
+                    "envelope"
+                  ],
+                  "additionalProperties": false
+                },
+                "agentDescription": {
+                  "type": "object",
+                  "properties": {
+                    "documentId": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "envelope": {
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "type": "number",
+                          "const": 1
+                        },
+                        "algorithm": {
+                          "type": "string",
+                          "const": "AES-256-GCM"
+                        },
+                        "iv": {
+                          "type": "string",
+                          "minLength": 16,
+                          "maxLength": 16,
+                          "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                        },
+                        "ciphertext": {
+                          "type": "string",
+                          "minLength": 24,
+                          "maxLength": 49152,
+                          "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                        }
+                      },
+                      "required": [
+                        "version",
+                        "algorithm",
+                        "iv",
+                        "ciphertext"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "documentId",
                     "envelope"
                   ],
                   "additionalProperties": false
@@ -45169,6 +45772,52 @@ Request:
                 "envelope"
               ],
               "additionalProperties": false
+            },
+            "agentDescription": {
+              "type": "object",
+              "properties": {
+                "documentId": {
+                  "type": "string",
+                  "maxLength": 20
+                },
+                "envelope": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "type": "number",
+                      "const": 1
+                    },
+                    "algorithm": {
+                      "type": "string",
+                      "const": "AES-256-GCM"
+                    },
+                    "iv": {
+                      "type": "string",
+                      "minLength": 16,
+                      "maxLength": 16,
+                      "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                    },
+                    "ciphertext": {
+                      "type": "string",
+                      "minLength": 24,
+                      "maxLength": 49152,
+                      "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                    }
+                  },
+                  "required": [
+                    "version",
+                    "algorithm",
+                    "iv",
+                    "ciphertext"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "documentId",
+                "envelope"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
@@ -46624,6 +47273,52 @@ Response:
                           "envelope"
                         ],
                         "additionalProperties": false
+                      },
+                      "agentDescription": {
+                        "type": "object",
+                        "properties": {
+                          "documentId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 49152,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "documentId",
+                          "envelope"
+                        ],
+                        "additionalProperties": false
                       }
                     },
                     "required": [
@@ -47788,6 +48483,52 @@ Request:
                     "envelope"
                   ],
                   "additionalProperties": false
+                },
+                "agentDescription": {
+                  "type": "object",
+                  "properties": {
+                    "documentId": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "envelope": {
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "type": "number",
+                          "const": 1
+                        },
+                        "algorithm": {
+                          "type": "string",
+                          "const": "AES-256-GCM"
+                        },
+                        "iv": {
+                          "type": "string",
+                          "minLength": 16,
+                          "maxLength": 16,
+                          "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                        },
+                        "ciphertext": {
+                          "type": "string",
+                          "minLength": 24,
+                          "maxLength": 49152,
+                          "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                        }
+                      },
+                      "required": [
+                        "version",
+                        "algorithm",
+                        "iv",
+                        "ciphertext"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "documentId",
+                    "envelope"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
@@ -48902,6 +49643,52 @@ Response:
                             "version",
                             "ephemeralKey",
                             "salt",
+                            "envelope"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "agentDescription": {
+                          "type": "object",
+                          "properties": {
+                            "documentId": {
+                              "type": "string",
+                              "maxLength": 20
+                            },
+                            "envelope": {
+                              "type": "object",
+                              "properties": {
+                                "version": {
+                                  "type": "number",
+                                  "const": 1
+                                },
+                                "algorithm": {
+                                  "type": "string",
+                                  "const": "AES-256-GCM"
+                                },
+                                "iv": {
+                                  "type": "string",
+                                  "minLength": 16,
+                                  "maxLength": 16,
+                                  "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                },
+                                "ciphertext": {
+                                  "type": "string",
+                                  "minLength": 24,
+                                  "maxLength": 49152,
+                                  "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                }
+                              },
+                              "required": [
+                                "version",
+                                "algorithm",
+                                "iv",
+                                "ciphertext"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "documentId",
                             "envelope"
                           ],
                           "additionalProperties": false
@@ -50102,6 +50889,52 @@ Response:
                         "envelope"
                       ],
                       "additionalProperties": false
+                    },
+                    "agentDescription": {
+                      "type": "object",
+                      "properties": {
+                        "documentId": {
+                          "type": "string",
+                          "maxLength": 20
+                        },
+                        "envelope": {
+                          "type": "object",
+                          "properties": {
+                            "version": {
+                              "type": "number",
+                              "const": 1
+                            },
+                            "algorithm": {
+                              "type": "string",
+                              "const": "AES-256-GCM"
+                            },
+                            "iv": {
+                              "type": "string",
+                              "minLength": 16,
+                              "maxLength": 16,
+                              "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                            },
+                            "ciphertext": {
+                              "type": "string",
+                              "minLength": 24,
+                              "maxLength": 49152,
+                              "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                            }
+                          },
+                          "required": [
+                            "version",
+                            "algorithm",
+                            "iv",
+                            "ciphertext"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "documentId",
+                        "envelope"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
@@ -51287,6 +52120,52 @@ Response:
                         "envelope"
                       ],
                       "additionalProperties": false
+                    },
+                    "agentDescription": {
+                      "type": "object",
+                      "properties": {
+                        "documentId": {
+                          "type": "string",
+                          "maxLength": 20
+                        },
+                        "envelope": {
+                          "type": "object",
+                          "properties": {
+                            "version": {
+                              "type": "number",
+                              "const": 1
+                            },
+                            "algorithm": {
+                              "type": "string",
+                              "const": "AES-256-GCM"
+                            },
+                            "iv": {
+                              "type": "string",
+                              "minLength": 16,
+                              "maxLength": 16,
+                              "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                            },
+                            "ciphertext": {
+                              "type": "string",
+                              "minLength": 24,
+                              "maxLength": 49152,
+                              "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                            }
+                          },
+                          "required": [
+                            "version",
+                            "algorithm",
+                            "iv",
+                            "ciphertext"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "documentId",
+                        "envelope"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [
@@ -51527,6 +52406,52 @@ Request:
             "version",
             "ephemeralKey",
             "salt",
+            "envelope"
+          ],
+          "additionalProperties": false
+        },
+        "agentDescription": {
+          "type": "object",
+          "properties": {
+            "documentId": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "envelope": {
+              "type": "object",
+              "properties": {
+                "version": {
+                  "type": "number",
+                  "const": 1
+                },
+                "algorithm": {
+                  "type": "string",
+                  "const": "AES-256-GCM"
+                },
+                "iv": {
+                  "type": "string",
+                  "minLength": 16,
+                  "maxLength": 16,
+                  "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                },
+                "ciphertext": {
+                  "type": "string",
+                  "minLength": 24,
+                  "maxLength": 49152,
+                  "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                }
+              },
+              "required": [
+                "version",
+                "algorithm",
+                "iv",
+                "ciphertext"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "documentId",
             "envelope"
           ],
           "additionalProperties": false
@@ -52679,6 +53604,52 @@ Response:
                     "version",
                     "ephemeralKey",
                     "salt",
+                    "envelope"
+                  ],
+                  "additionalProperties": false
+                },
+                "agentDescription": {
+                  "type": "object",
+                  "properties": {
+                    "documentId": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "envelope": {
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "type": "number",
+                          "const": 1
+                        },
+                        "algorithm": {
+                          "type": "string",
+                          "const": "AES-256-GCM"
+                        },
+                        "iv": {
+                          "type": "string",
+                          "minLength": 16,
+                          "maxLength": 16,
+                          "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                        },
+                        "ciphertext": {
+                          "type": "string",
+                          "minLength": 24,
+                          "maxLength": 49152,
+                          "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                        }
+                      },
+                      "required": [
+                        "version",
+                        "algorithm",
+                        "iv",
+                        "ciphertext"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "documentId",
                     "envelope"
                   ],
                   "additionalProperties": false

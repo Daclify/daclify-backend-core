@@ -59,7 +59,7 @@ export function generateContract(
   };
   output += `import type { ABI } from '@wharfkit/antelope';\nexport const ${name}AbiHash = '${Checksum256.hash(new TextEncoder().encode(json))}';\nexport const ${name}Abi = ${JSON.stringify(definition, null, 2)} satisfies ABI.Def;\n`;
   for (const struct of abi.structs)
-    output += `export interface ${struct.name}${struct.base ? ` extends ${struct.base}` : ''} {\n${struct.fields.map((field) => `  ${field.name}${field.type.endsWith('$') ? '?' : ''}: ${typeOf(field.type)};`).join('\n')}\n}\n`;
+    output += `export interface ${struct.name}${struct.base ? ` extends ${struct.base}` : ''} {\n${struct.fields.map((field) => `  ${field.name}${field.type.endsWith('$') || field.type.endsWith('?') ? '?' : ''}: ${typeOf(field.type)};`).join('\n')}\n}\n`;
   output += `export interface ${title}Actions {\n${abi.actions.map((action) => `  ${action.name}: ${action.type};`).join('\n')}\n}\n`;
   function schemaOf(type: string, table: boolean): string {
     if (type.endsWith('[]'))

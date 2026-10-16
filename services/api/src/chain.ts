@@ -142,9 +142,18 @@ export interface ChainGateway {
     >
   >;
   privateHandover?(daoId: string): Promise<DaoHandover | null>;
+  privateAgent?(
+    daoId: string,
+    memberId: string,
+  ): Promise<
+    z.infer<
+      typeof import('../../../protocol/private-identity.js').PrivateRecordRoutes.agent.response
+    >
+  >;
   dao(daoId: string): Promise<DaoSummary>;
   network(): Promise<Network>;
   moduleState(daoId: string, query?: ModulePageQuery): Promise<ModuleState>;
+  privatePayroll?(daoId: string, scheduleId: string): Promise<z.infer<typeof import('@daclify/modules').ModuleApiRoutes.privatePayroll.response>>;
   governingDocuments?(
     daoId: string,
     query: import('@daclify/modules').GoverningDocumentQuery,
