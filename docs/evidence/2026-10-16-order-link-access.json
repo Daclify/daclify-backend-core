@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-16T11:40:12.297311+00:00",
+  "scope": "Clarify owner-only DAO orders versus claim invitations",
+  "frontendCommit": "e4d99836d616285754a07f100896a1bbe1bdb667",
+  "frontendVersion": "0.15.0-alpha.47",
+  "unchangedCoreVersion": "0.15.0-alpha.32",
+  "unchangedModulesVersion": "0.10.0-alpha.42",
+  "diagnosis": {
+    "userConfirmed": "Different account/person should claim it",
+    "readOnlyFindings": {
+      "ordinaryOrderExists": true,
+      "correspondingClaimInvitationExists": false,
+      "nativeReceiptPaid": true,
+      "nativeDaoCreated": false,
+      "orderMethod": "free"
+    },
+    "cause": "Personal order resume link shared with a different account; owner check correctly returns CREATION_ORDER_UNKNOWN",
+    "scope": "Promote correct invitation link and provide account/claim guidance on rejection; preserve server ownership checks",
+    "mutations": "None to real order, claim, account, receipt or chain"
+  },
+  "verification": {
+    "status": "passed",
+    "at": "2026-10-16T11:38:12.597213+00:00",
+    "frontendVersion": "0.15.0-alpha.47",
+    "unitFiles": 77,
+    "unitTests": 414,
+    "browserTests": 24,
+    "browserProjects": ["Desktop Chrome", "Pixel 7 Chromium"],
+    "build": "testnet passed",
+    "format": "changed files passed",
+    "dependenciesChanged": false,
+    "beforeFix": "3 expected browser failures: ambiguous personal-copy placement, hidden invitation preparation and absent rejected-link guidance",
+    "sourceReview": "Both create/claim-link issuers, order loading and generation/account/network guards, personal copying and new-order request retention reviewed inline. Owner-only API and native receipt checks unchanged.",
+    "localFixtureLimits": [
+      "Synthetic accounts and stubbed API transport",
+      "Only scoped read-only inspection of the reported real order and native receipt",
+      "No real order, invitation, account or chain mutation",
+      "Backend/native integration suites not rerun; ownership and contracts unchanged"
+    ]
+  },
+  "deployment": {
+    "status": "deployed",
+    "at": "2026-10-16T11:38:42.358Z",
+    "network": "testnet",
+    "frontendVersion": "0.15.0-alpha.47",
+    "commit": "e4d99836d616285754a07f100896a1bbe1bdb667",
+    "entrySha256": "c16bdffe13ddc16c156c39735aaef0747bda308600ed8493dff904675a5399c6",
+    "configSha256": "1e88b1cc64fb093c3211612309bd52cd4e254a7ce3f8c10a1959e4e2ca4c0f1f",
+    "filesPublished": 155,
+    "retainedOldHashedAssets": true,
+    "rollbackPrepared": true,
+    "portalRestarted": false,
+    "configChanged": false,
+    "apiRestarted": false,
+    "databaseChanged": false,
+    "nativeChanged": false
+  },
+  "liveReadOnlyChecks": {
+    "status": "passed",
+    "at": "2026-10-16T11:39:39.248Z",
+    "coreVersion": "0.15.0-alpha.32",
+    "staticFilesMatched": 155,
+    "moduleHashesVerified": 7,
+    "runtimeHashVerified": true,
+    "nativeRawAbisVerified": [
+      {
+        "account": "daclifycore1",
+        "rawAbiSha256": "3855a7b8e283d33744ad126b3e1762fa15bf7fe8b4c0534b4e8a8104f4d0c5b4"
+      },
+      {
+        "account": "daclifydecid",
+        "rawAbiSha256": "2268cd779edfda686b5b5533ea1a9f8b771952b43c2628cdda28ac5e30e44511"
+      },
+      {
+        "account": "daclifyworks",
+        "rawAbiSha256": "4a2c595ff504b1305d32531432c78abe25fc1e3ee902ddff10d2d1c867082c88"
+      },
+      {
+        "account": "daclifypayr1",
+        "rawAbiSha256": "30859bbd6b3a4c18244dceed93cb9d49f941c55c0924c748f111b0589a5c7bcb"
+      },
+      {
+        "account": "daclifygrant",
+        "rawAbiSha256": "ed73e0b960db25be350ac54b800146e92e874d9200d121756fa7e8edcd17be31"
+      },
+      {
+        "account": "daclifyendor",
+        "rawAbiSha256": "2a74e6139a5a3713fe76a7f5c2bb2f8b6dd6277d77a55c341db9b1f988541c31"
+      },
+      {
+        "account": "daclifyactiv",
+        "rawAbiSha256": "f7c8d87159fc12087ea0998d501f594bda7d6080e9c68af077c6801819f65476"
+      },
+      {
+        "account": "daclifyquick",
+        "rawAbiSha256": "f259cd6b5925a8467308fae2509457b45b8e77187360ea3d7a985edbd09f5ab5"
+      }
+    ],
+    "downloadsVerified": 54,
+    "previousMiniReleaseAvailable": true,
+    "mcpReleasePreserved": true,
+    "testnetLockVerified": true,
+    "liveReadOnlyBrowser": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "status": "passed",
+        "errors": [],
+        "apiServerErrors": []
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "status": "passed",
+        "errors": [],
+        "apiServerErrors": []
+      }
+    ],
+    "allRetainedDownloadsVerified": true,
+    "signedLivePublication": "not run",
+    "externalWalletCeremonies": "not run"
+  },
+  "coreDocsCheck": "passed; generated documentation unchanged",
+  "manifestPath": "/data/daclify-runtime/releases/20261016-order-link-access/manifest.json",
+  "manifestSha256": "3b5e77d71c05082174437e6739acac1f2f32f388db6eae841738206038d45b00",
+  "boundaries": [
+    "Read-only inspection bounded to the user-provided order ID and its native receipt; no account identities or credentials recorded",
+    "No real order, claim, payment, account, key or native transaction changed",
+    "Personal URLs remain owner-only; real invitation issuance requires the eligible original account",
+    "No API restart, config change or database migration",
+    "Almaiso excluded"
+  ]
+}
