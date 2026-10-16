@@ -43,6 +43,7 @@ import { TreasurySchema, SettlementRequestSchema, SettlementResultSchema } from 
 import { Uint64Schema } from './base.js';
 import { PlatformRoutes } from './platform.js';
 import { DaoClaimRoutes } from './dao-claims.js';
+import { PrivateRecordRoutes } from './private-identity.js';
 import { SpendingReportSchema } from './reporting.js';
 import {
   RamUsageSchema,
@@ -56,6 +57,7 @@ import { StorageCurationRoutes } from './storage-retention.js';
 import { ModuleFeeRoutes } from './module-fees.js';
 import { QuickAccountRoutes } from './quick-accounts.js';
 export const ApiRoutes = {
+  privateIdentity: PrivateRecordRoutes.identity,
   ...ContactRecoveryRoutes,
   ...QuickAccountRoutes,
   ...DaoClaimRoutes,

@@ -1,14 +1,17 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 import type { Pool, PoolClient } from 'pg';
 import { z } from 'zod';
 import type { Account } from '../../../protocol/api.js';
+import { privateCreationCommitment } from '../../../protocol/api.js';
 import {
   DaoClaimIssueSchema,
   DaoClaimSetupSchema,
   DaoClaimTokenSchema,
   DaoClaimViewSchema,
+  DaoClaimRoutes,
 } from '../../../protocol/dao-claims.js';
-import { CreationMethodSchema } from '../../../protocol/platform.js';
+import { CreationMethodSchema, CreationRequestSchema } from '../../../protocol/platform.js';
 import type { NativeChainGateway } from './native-chain.js';
 import { CreationService } from './creation.js';
 import { daoClaimReference } from './dao-claim-reference.js';
@@ -94,14 +97,35 @@ export class DaoClaimLinks {
   }
   async issue(account: Account, input: z.infer<typeof DaoClaimIssueSchema>) {
     input = DaoClaimIssueSchema.parse(input);
+    if (input.request.privateSetup && input.request.privateSetup.stage !== 'invitation')
+      throw new ApiError('PRIVATE_INVITATION_REQUIRED', 409);
     const token = randomBytes(32).toString('base64url');
     return withTransaction(this.pool, async (db) => {
       const current = await this.account(db, account.id);
       if (!(await this.eligibility(current, db)).eligible)
         throw new ApiError('DAO_CLAIM_EXECUTIVE_REQUIRED', 403);
       const status = await this.chain.platform();
+      if (
+        input.request.privateSetup &&
+        !status.network.capabilities.includes('private-claim-content-v1')
+      )
+        throw new ApiError('PRIVATE_IDENTITY_UNSUPPORTED', 409);
       if (input.request.token.chainId !== status.network.chainId)
         throw new ApiError('DAO_REFERENCE', 409);
+      if (
+        input.request.privateSetup &&
+        input.request.privateSetup.contextCommitment !==
+          privateCreationCommitment(
+            {
+              chainId: status.network.chainId,
+              contract: status.network.runtime,
+              daoId: input.request.privateSetup.daoId,
+              interfaceVersion: 1,
+            },
+            input.request,
+          )
+      )
+        throw new ApiError('PRIVATE_SETUP_CHANGED', 409);
       const count = await db.query(
         'SELECT count(*)::int AS count FROM dao_claim_links WHERE issuer_account_id=$1 AND claimant_account_id IS NULL AND revoked_at IS NULL AND expires_at>now()',
         [current.id],
@@ -159,10 +183,8 @@ export class DaoClaimLinks {
       return view(RowSchema.parse(updated.rows[0]));
     });
   }
-  async claim(
-    account: Account,
-    input: { token: string; method: z.infer<typeof CreationMethodSchema> },
-  ) {
+  async claim(account: Account, input: z.infer<typeof DaoClaimRoutes.daoClaimConfirm.input>) {
+    input = DaoClaimRoutes.daoClaimConfirm.input.parse(input);
     const method = CreationMethodSchema.parse(input.method);
     const row = await withTransaction(this.pool, async (db) => {
       const current = await this.account(db, account.id);
@@ -180,6 +202,11 @@ export class DaoClaimLinks {
         if (!z.object({ owns: z.boolean() }).parse(owner.rows[0]).owns)
           throw new ApiError('DAO_CLAIM_RESERVED', 409);
         if (method !== draft.method) throw new ApiError('CREATION_ORDER_CONFLICT', 409);
+        if (
+          input.privateSetup &&
+          !isDeepStrictEqual(input.privateSetup, draft.request?.privateSetup)
+        )
+          throw new ApiError('CREATION_ORDER_CONFLICT', 409);
         return draft;
       }
       const native = await this.chain.creationOrder(
@@ -192,6 +219,36 @@ export class DaoClaimLinks {
           native.method !== (method === 'free' ? 2 : method === 'card' ? 1 : 0))
       )
         throw new ApiError('DAO_CLAIM_RESERVED', 409);
+      const original = draft.request?.privateSetup;
+      if (original) {
+        if (
+          !input.privateSetup ||
+          input.privateSetup.daoId !== original.daoId ||
+          input.privateSetup.documentId !== original.documentId
+        )
+          throw new ApiError('PRIVATE_FOUNDER_REQUIRED', 409);
+        if (input.privateSetup.contextCommitment !== original.contextCommitment)
+          throw new ApiError('PRIVATE_SETUP_CHANGED', 409);
+        if (native) {
+          const saved = await db.query('SELECT request FROM creation_orders WHERE id=$1', [
+            draft.id,
+          ]);
+          if (
+            !saved.rowCount ||
+            !isDeepStrictEqual(
+              z.object({ request: CreationRequestSchema }).parse(saved.rows[0]).request.request
+                .privateSetup,
+              input.privateSetup,
+            )
+          )
+            throw new ApiError('CREATION_ORDER_CONFLICT', 409);
+        }
+        if (!draft.request) throw new ApiError('DAO_CLAIM_UNKNOWN', 404);
+        draft.request = DaoClaimSetupSchema.parse({
+          ...draft.request,
+          privateSetup: input.privateSetup,
+        });
+      } else if (input.privateSetup) throw new ApiError('CREATION_ORDER_CONFLICT', 409);
       if (!native) {
         if (draft.revoked_at) throw new ApiError('DAO_CLAIM_REVOKED', 409);
         if (draft.expires_at.getTime() <= Date.now()) throw new ApiError('DAO_CLAIM_EXPIRED', 410);
@@ -209,8 +266,8 @@ export class DaoClaimLinks {
           throw new ApiError('DAO_REFERENCE', 409);
       }
       const updated = await db.query(
-        'UPDATE dao_claim_links SET claimant_account_id=$2,method=$3 WHERE id=$1 RETURNING *',
-        [draft.id, current.id, method],
+        'UPDATE dao_claim_links SET claimant_account_id=$2,method=$3,request=$4 WHERE id=$1 RETURNING *',
+        [draft.id, current.id, method, draft.request],
       );
       return RowSchema.parse(updated.rows[0]);
     });

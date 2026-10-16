@@ -1,6 +1,6 @@
 // Generated from compiled C++ ABI. Regenerate with npm run codegen; do not edit.
 import type { ABI } from '@wharfkit/antelope';
-export const runtimeAbiHash = '1e499cb028fdb27714243bfbe8020fe13fc14f777a7b385c31151aa59251bc53';
+export const runtimeAbiHash = '0efbf8e885f8d1054732da76fd6d728d4dab6d2254855542f39287db869c61a4';
 export const runtimeAbi = {
   "version": "eosio::abi/1.2",
   "types": [],
@@ -6227,6 +6227,10 @@ export const runtimeAbi = {
         {
           "name": "metadata",
           "type": "string"
+        },
+        {
+          "name": "expected",
+          "type": "checksum256$"
         }
       ]
     },
@@ -9893,6 +9897,7 @@ export interface setmeta {
   dao_id: string;
   member_id: string;
   metadata: string;
+  expected?: string | undefined;
 }
 export interface setmodcopy {
   account: string;

@@ -14,6 +14,7 @@ Email/Telegram quick signup, the independent vault path and account-wide assiste
 | --- | --- |
 | Community member or DAO administrator | [Start here handbook](https://testnet.app.daclify.com/docs/start-here), [guide index](docs/README.md) |
 | Mini-app builder or integrator | [Connect a community app](docs/connected-community-apps.md), [database/identity contract](docs/guides/mini-app-database-contract.md) |
+| Private DAO implementer | [Protected descriptive record format](docs/guides/private-record-format.md), [private creation, invitations and identity](docs/guides/private-dao-identity.md) |
 | Contributor or operator | [Development setup](docs/development.md), [operations](docs/operations.md), [recovery](docs/disaster-recovery.md) |
 
 For communities designing their own apps, see the [connected-app guide](docs/connected-community-apps.md) and [reusable mini-app design example](docs/examples/community-mini-app-design.md). Registration, sign-in, selected activity, matched downloads and Mini Apps discovery are implemented on the shared testnet. App hosting and databases remain the builder’s responsibility.

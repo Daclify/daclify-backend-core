@@ -134,6 +134,13 @@ export interface ChainGateway {
   }>;
   content(daoId: string, query?: ContentPageQuery): Promise<DaoContent>;
   privateAccessPolicy?(daoId: string): Promise<PrivateAccessPolicy>;
+  privateIdentity?(
+    daoId: string,
+  ): Promise<
+    z.infer<
+      typeof import('../../../protocol/private-identity.js').PrivateRecordRoutes.identity.response
+    >
+  >;
   privateHandover?(daoId: string): Promise<DaoHandover | null>;
   dao(daoId: string): Promise<DaoSummary>;
   network(): Promise<Network>;

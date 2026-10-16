@@ -1,5 +1,10 @@
 import { expect, it } from 'vitest';
-import { MetadataSchema, defaultDaoSetup, BrandImageSchema } from '../protocol/dao.js';
+import {
+  MetadataSchema,
+  defaultDaoSetup,
+  BrandImageSchema,
+  brandImageMatchesType,
+} from '../protocol/dao.js';
 import { validateBrandImage } from '../services/api/src/content/branding.js';
 import { createHash } from 'node:crypto';
 import { Blockchain } from '@proton/vert';
@@ -11,6 +16,17 @@ const image = BrandImageSchema.parse({
   bytes: 8,
   mediaType: 'image/png',
   commitment: 'ab'.repeat(32),
+});
+it('shares raster signature checks with private image previews and rejects active or mismatched content', () => {
+  expect(brandImageMatchesType(Uint8Array.of(137, 80, 78, 71, 13, 10, 26, 10), 'image/png')).toBe(
+    true,
+  );
+  expect(brandImageMatchesType(Uint8Array.of(255, 216, 255), 'image/jpeg')).toBe(true);
+  expect(brandImageMatchesType(new TextEncoder().encode('RIFF0000WEBP'), 'image/webp')).toBe(true);
+  for (const type of ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'])
+    expect(brandImageMatchesType(new TextEncoder().encode('<svg onload="alert(1)"/>'), type)).toBe(
+      false,
+    );
 });
 it('reads old identities and adds bounded public branding without changing preset provenance', () => {
   for (const schemaVersion of [1, 2])

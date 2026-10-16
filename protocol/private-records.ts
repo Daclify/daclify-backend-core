@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ChainIdSchema, IdSchema, NativeAccountSchema } from './base.js';
+import { ContentEnvelopeSchema, EpochGrantSchema } from './crypto.js';
 
 export const PrivateRecordReferenceSchema = z.strictObject({
   documentId: IdSchema,
@@ -78,3 +79,30 @@ export const PrivateRecordPayloadSchema = z.discriminatedUnion('kind', [
 ]);
 export type PrivateRecordReference = z.infer<typeof PrivateRecordReferenceSchema>;
 export type PrivateRecordPayload = z.infer<typeof PrivateRecordPayloadSchema>;
+
+const setupEnvelope = ContentEnvelopeSchema.extend({
+  iv: ContentEnvelopeSchema.shape.iv.length(16),
+  ciphertext: ContentEnvelopeSchema.shape.ciphertext.min(24).max(49152),
+});
+const setup = {
+  schemaVersion: z.literal(1),
+  daoId: IdSchema,
+  documentId: IdSchema,
+  contextCommitment: ChainIdSchema,
+  envelope: setupEnvelope,
+};
+export const PrivateFounderSetupSchema = z.strictObject({
+  ...setup,
+  stage: z.literal('founder'),
+  epochCommitment: ChainIdSchema,
+  selfGrant: EpochGrantSchema.extend({
+    salt: EpochGrantSchema.shape.salt.length(44),
+    envelope: setupEnvelope.extend({ ciphertext: setupEnvelope.shape.ciphertext.max(4096) }),
+  }),
+});
+export const PrivateDaoSetupSchema = z.discriminatedUnion('stage', [
+  z.strictObject({ ...setup, stage: z.literal('invitation') }),
+  PrivateFounderSetupSchema,
+]);
+export type PrivateDaoSetup = z.infer<typeof PrivateDaoSetupSchema>;
+export type PrivateFounderSetup = z.infer<typeof PrivateFounderSetupSchema>;

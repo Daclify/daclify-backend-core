@@ -10,6 +10,7 @@ export * from './native-wallet.js';
 export * from './evm-wallet.js';
 export * from './content.js';
 export * from './private-records.js';
+export * from './private-identity.js';
 export * from './people.js';
 export * from './docs.js';
 export * from './routes.js';

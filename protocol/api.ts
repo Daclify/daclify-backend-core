@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { bytesToHex } from '@noble/hashes/utils.js';
+import { PrivateDaoSetupSchema } from './private-records.js';
 import { DaoLifecycleSchema } from './account-exit.js';
 import { EncryptionPublicKeySchema, SigningPublicKeySchema } from './crypto.js';
 import type { NativeIdentity } from './native-wallet.js';
@@ -18,6 +21,7 @@ import {
   DaoPurposeSchema,
   ParticipantModeSchema,
   DaoBrandingSchema,
+  PrivateMetadataSchema,
 } from './dao.js';
 export { SigningPublicKeySchema } from './crypto.js';
 export const VaultAccountSchema = z.strictObject({
@@ -123,6 +127,7 @@ export const CreateDaoSchema = z
     token: AssetRefSchema,
     setup: DaoSetupSchema.optional(),
     foundingAgent: FoundingAgentSchema.optional(),
+    privateSetup: PrivateDaoSetupSchema.optional(),
   })
   .refine(
     (value) =>
@@ -135,7 +140,52 @@ export const CreateDaoSchema = z
       (value.setup !== undefined &&
         JSON.stringify(value.metadata.setup) === JSON.stringify(value.setup)),
     'Metadata and requested setup must match',
+  )
+  .refine((value) => {
+    if (value.metadata.schemaVersion !== 4) return value.privateSetup === undefined;
+    return (
+      value.privacy !== 'public' &&
+      value.privateSetup !== undefined &&
+      value.metadata.privateIdentity === null &&
+      JSON.stringify(value.metadata.setup) === JSON.stringify(value.setup ?? null)
+    );
+  }, 'Private creation requires sealed setup and exact operational provenance')
+  .refine(
+    (value) => new TextEncoder().encode(JSON.stringify(value)).length <= 61440,
+    'Creation setup exceeds the request limit',
   );
+const PrivateCreationContextSchema = z
+  .object({
+    metadata: PrivateMetadataSchema,
+    privacy: PrivacySchema.exclude(['public']),
+    token: AssetRefSchema,
+    setup: DaoSetupSchema.optional(),
+    foundingAgent: FoundingAgentSchema.optional(),
+  })
+  .strip()
+  .refine(
+    (value) =>
+      value.metadata.privateIdentity === null &&
+      JSON.stringify(value.metadata.setup) === JSON.stringify(value.setup ?? null),
+    'Private setup provenance must match',
+  );
+export function privateCreationCommitment(
+  dao: z.infer<typeof DaoRefSchema>,
+  input: unknown,
+): string {
+  const request = PrivateCreationContextSchema.parse(input);
+  return bytesToHex(
+    sha256(
+      new TextEncoder().encode(
+        JSON.stringify({
+          domain: 'daclify.private-creation.v1',
+          dao: DaoRefSchema.parse(dao),
+          request,
+        }),
+      ),
+    ),
+  );
+}
 export const NetworkSchema = z.strictObject({
   chainId: z.string().regex(/^[0-9a-f]{64}$/),
   rpcUrl: z.url(),

@@ -1,0 +1,19 @@
+# Private DAO identity
+
+Encrypted DAO creation seals the internal name and description in the browser before saving an order or invitation. Public discovery shows `Private DAO` unless an administrator deliberately publishes a public alias/card. Policy, purpose, participants, memberships, timing, native votes and financial records remain public. Older already-public identities remain historical disclosure.
+
+The deployment must advertise `private-records-v1` and `private-dao-identity-v1`; private invitations additionally require `private-claim-content-v1`. Capability checks include the reviewed native code/ABI. An unqualified deployment must refuse private writers rather than send a plaintext substitute.
+
+Normal creation uses the founder's original account encryption keys. After the opaque DAO and founder exist, the browser commits the initial epoch with its self-grant, publishes the encrypted identity document, and signs its exact retained reference. Small envelopes use native JSON; larger descriptions use the existing encrypted hosted-file upload/verification flow. A saved ciphertext request can be resumed after an interrupted upload; no second plaintext store or server decryption key is introduced. A failed signature or lost response leaves setup pending, not publicly exposed.
+
+Private invitations have a versioned URL fragment containing separate claim and content secrets. Only the claim token goes to the preview/claim API. The issuer's content key decrypts the invitation, never the final DAO epoch. The recipient reviews the private text locally and generates a fresh epoch/self-grant with their own original account keys. The first confirmed claimant is the sole initial member, administrator and executive. The issuer gets neither membership nor a key grant. Expiry, revocation, ownership and once-only native creation rules still apply.
+
+Both staged formats carry `contextCommitment`: the hash of the canonical opaque operational request and full prospective DAO domain. Their separate staging AES-GCM domains bind that checksum and document ID. The API and browser reject substituted custody, governance, token or public setup; claimant resealing preserves the reviewed commitment. Published DAO documents and recipient epoch grants continue using their existing domains.
+
+Sign-in continuation carries an opaque checkpoint. Its content key stays in memory; a reload or an external sign-in round trip can require reopening the original invitation. The original private link must be shared privately. Signing in with another paired account does not invent missing encryption keys or authorize assisted custody. Self-custody remains self-custody.
+
+The new `/v1/daos/:id/private-identity` response contains the full DAO domain, exact protected reference, parsed metadata and a checksum of the raw stored metadata. Current writers preserve setup, public aliases and asset references and sign that checksum; stale updates and plaintext downgrade fail natively. Existing strict summary response shapes are unchanged.
+
+Metadata format 4 stores no extra native table/index: its bounded identity and at most two unique encrypted asset references reuse `docrefs` with table `daos`, source ID equal to the DAO ID and three fixed slots. Each reference pins an exact version, ciphertext hash and key epoch. Unused slots hold zero references; repeated edits reuse those slots. Required historical terms continue to use their own retention rules.
+
+Decrypt only for an active authorized member with the original keys and required epoch grant. Keep presentations in memory and clear them on lock, account/network changes and navigation. A missing/corrupt source is unavailable content, never permission to fall back to historical plaintext. Public exports and hosted AI/MCP receive only the public identity by default.

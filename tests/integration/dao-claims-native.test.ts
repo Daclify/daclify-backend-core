@@ -14,8 +14,14 @@ import { CreationService } from '../../services/api/src/creation.js';
 import { DaoClaimLinks } from '../../services/api/src/dao-claims.js';
 import { createServer } from '../../services/api/src/server.js';
 import { migrate } from '../../services/api/src/store.js';
-import { ApiRoutes, DaoClaimRoutes, defaultDaoSetup } from '../../protocol/index.js';
+import {
+  ApiRoutes,
+  DaoClaimRoutes,
+  defaultDaoSetup,
+  privateCreationCommitment,
+} from '../../protocol/index.js';
 import { encodeAction } from '../../sdk/index.js';
+import { PrivateFounderSetupSchema } from '../../protocol/private-records.js';
 
 const url = process.env.DATABASE_URL;
 if (!url || new URL(url).hostname !== '127.0.0.1' || !new URL(url).pathname.endsWith('_test'))
@@ -254,6 +260,89 @@ it('reconciles an actual native commit when its API response is lost', async () 
   expect(resumed.statusCode, resumed.body).toBe(200);
   expect(resumed.json().founderExecutive).toBe(true);
   expect(await chain.listDaos()).toHaveLength(before.length + 1);
+});
+it('creates only an opaque private DAO for the claimant and leaves content initialization to their original keys', async () => {
+  const setup = defaultDaoSetup('custom'),
+    envelope = {
+      version: 1,
+      algorithm: 'AES-256-GCM',
+      iv: btoa('i'.repeat(12)),
+      ciphertext: btoa('c'.repeat(32)),
+    };
+  const draft = {
+    schemaVersion: 1,
+    stage: 'invitation',
+    daoId: '987654321',
+    documentId: '41',
+    contextCommitment: 'aa'.repeat(32),
+    envelope,
+  };
+  const request = {
+    metadata: {
+      schemaVersion: 4,
+      title: 'Private DAO',
+      description: '',
+      purpose: 'custom',
+      setup,
+      privateIdentity: null,
+    },
+    privacy: 'encrypted-user-controlled',
+    token: { chainId: native.chainId, contract: 'eosio.token', symbol: 'TLOS', precision: 4 },
+    setup,
+    privateSetup: draft,
+  };
+  draft.contextCommitment = privateCreationCommitment(
+    { chainId: native.chainId, contract: 'daclifycore', daoId: draft.daoId, interfaceVersion: 1 },
+    request,
+  );
+  const issued = await controlledInject(server, executive.root, {
+    method: 'POST',
+    url: DaoClaimRoutes.daoClaimIssue.path,
+    headers: executive.headers,
+    payload: { request },
+  });
+  expect(issued.statusCode, issued.body).toBe(200);
+  const invitation = DaoClaimRoutes.daoClaimIssue.response.parse(issued.json());
+  const incomplete = await server.inject({
+    method: 'POST',
+    url: DaoClaimRoutes.daoClaimConfirm.path,
+    headers: first.headers,
+    payload: { token: invitation.token, method: 'free' },
+  });
+  expect(incomplete.json().code).toBe('PRIVATE_FOUNDER_REQUIRED');
+  const privateSetup = PrivateFounderSetupSchema.parse({
+    ...draft,
+    stage: 'founder',
+    epochCommitment: 'ac'.repeat(32),
+    selfGrant: {
+      version: 1,
+      ephemeralKey: first.account.encryptionKey,
+      salt: btoa('s'.repeat(32)),
+      envelope,
+    },
+  });
+  const confirmed = await server.inject({
+    method: 'POST',
+    url: DaoClaimRoutes.daoClaimConfirm.path,
+    headers: first.headers,
+    payload: { token: invitation.token, method: 'free', privateSetup },
+  });
+  expect(confirmed.statusCode, confirmed.body).toBe(200);
+  const result = DaoClaimRoutes.daoClaimConfirm.response.parse(confirmed.json());
+  expect(result.dao?.daoId).toBe(draft.daoId);
+  expect((await chain.privateIdentity(draft.daoId)).metadata).toMatchObject({
+    schemaVersion: 4,
+    title: 'Private DAO',
+    privateIdentity: null,
+    setup,
+  });
+  const members = (await chain.governance(draft.daoId)).executiveMembers;
+  expect(members).toMatchObject([
+    { id: '1', active: true, admin: true, signing_key: first.account.signingKey },
+  ]);
+  expect(members.some((row) => row.signing_key === executive.account.signingKey)).toBe(false);
+  expect((await chain.content(draft.daoId)).keyGrants).toEqual([]);
+  expect((await chain.content(draft.daoId)).epochs).toEqual([]);
 });
 it('bounds anonymous preview requests without revealing raw invitation secrets', async () => {
   let status = 0;

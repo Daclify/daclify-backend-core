@@ -55,6 +55,8 @@ export class CreationService {
       throw new ApiError('VAULT_IDENTITY_REQUIRED', 409);
     input = CreationRequestSchema.parse(input);
     if (input.deployment !== 'shared') throw new ApiError('INDEPENDENT_UNAVAILABLE', 409);
+    if (input.request.privateSetup?.stage === 'invitation')
+      throw new ApiError('PRIVATE_FOUNDER_REQUIRED', 409);
     status ??= await this.chain.platform();
     if (!status.chainMatches || input.request.token.chainId !== status.network.chainId)
       throw new ApiError('DAO_REFERENCE', 409);
@@ -118,7 +120,10 @@ export class CreationService {
         `${status.network.chainId}:${status.network.runtime}:${account.id}:${input.requestId}`,
       )
       .digest('hex');
-    const daoId = BigInt('0x' + randomBytes(8).toString('hex')).toString();
+    if (input.request.privateSetup && input.request.privateSetup.stage !== 'founder')
+      throw new ApiError('PRIVATE_FOUNDER_REQUIRED', 409);
+    const daoId =
+      input.request.privateSetup?.daoId ?? BigInt('0x' + randomBytes(8).toString('hex')).toString();
     if (daoId === '0') throw new ApiError('DAO_ID_RETRY', 503);
     await withTransaction(this.pool, async (client) => {
       await client.query('SELECT id FROM accounts WHERE id=$1 FOR UPDATE', [account.id]);

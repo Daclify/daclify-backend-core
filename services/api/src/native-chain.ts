@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { NativeQuickBallots } from './quick-ballots/chain.js';
 import {
   ContactRecoveryTargetSchema,
@@ -16,6 +17,8 @@ import type { BallotExport } from '@daclify/modules';
 import { checkNativeAuthority } from './auth/native-proof.js';
 import { NamesActionSchemas, NamesTableSchemas } from '../../../sdk/generated/names-schemas.js';
 import { EncryptionPublicKeySchema } from '../../../protocol/crypto.js';
+import { PrivateRecordRoutes } from '../../../protocol/private-identity.js';
+import { privateCreationCommitment } from '../../../protocol/api.js';
 import { ProfileRecipientPageSchema } from '../../../protocol/profiles.js';
 import { decodeRawNativeProfile } from '../../../sdk/profiles.js';
 import { privateHandoverCommitment, exitInstructionDigest } from '../../../sdk/account-exit.js';
@@ -1163,6 +1166,19 @@ export class NativeChainGateway implements ChainGateway {
     const claimFounder = abi?.structs
       .find((row) => row.name === createType)
       ?.fields.some((field) => field.name === 'founder' && field.type === 'claim_founder$');
+    const metadataType = abi?.actions.find((action) => action.name.toString() === 'setmeta')?.type;
+    const guardedMetadata = abi?.structs
+      .find((row) => row.name === metadataType)
+      ?.fields.some((field) => field.name === 'expected' && field.type === 'checksum256$');
+    let privateIdentity = false;
+    if (guardedMetadata) {
+      try {
+        await this.reviewedRuntime(this.config.runtime);
+        privateIdentity = true;
+      } catch {
+        /* An older or unverified deployment must not accept private writers. */
+      }
+    }
     return NetworkSchema.parse({
       chainId: this.config.chainId,
       rpcUrl: this.config.rpcUrl,
@@ -1172,6 +1188,15 @@ export class NativeChainGateway implements ChainGateway {
       interfaceVersion: 1,
       coreVersion: VERSION,
       capabilities: [
+        ...(privateIdentity
+          ? [
+              'private-records-v1',
+              'private-dao-identity-v1',
+              ...(this.config.bootstrap && claimFounder && presets
+                ? ['private-claim-content-v1']
+                : []),
+            ]
+          : []),
         ...(actions.includes('startrecover') &&
         actions.includes('finishrec') &&
         actions.includes('putrecpack')
@@ -2494,6 +2519,12 @@ export class NativeChainGateway implements ChainGateway {
   }
   private async summary(row: z.infer<typeof RuntimeTableSchemas.daos>): Promise<DaoSummary> {
     const metadata = MetadataSchema.safeParse(JSON.parse(row.metadata));
+    const identity =
+      metadata.success && metadata.data.schemaVersion === 4
+        ? metadata.data.publicIdentity
+        : metadata.success
+          ? metadata.data
+          : undefined;
     const setup =
       metadata.success && metadata.data.schemaVersion !== 1 ? metadata.data.setup : null;
     const policy = setup
@@ -2514,8 +2545,8 @@ export class NativeChainGateway implements ChainGateway {
         daoId: row.id,
         interfaceVersion: 1,
       },
-      title: metadata.success ? metadata.data.title : `DAO ${row.id}`,
-      description: metadata.success ? metadata.data.description : '',
+      title: identity?.title ?? (metadata.success ? metadata.data.title : `DAO ${row.id}`),
+      description: identity?.description ?? '',
       privacy: ['public', 'encrypted-managed-allowed', 'encrypted-user-controlled'][row.privacy],
       owner: row.owner,
       token: {
@@ -2538,7 +2569,25 @@ export class NativeChainGateway implements ChainGateway {
       setup,
       ...(metadata.success && metadata.data.schemaVersion === 3
         ? { branding: metadata.data.branding }
-        : {}),
+        : metadata.success &&
+            metadata.data.schemaVersion === 4 &&
+            metadata.data.publicIdentity?.branding
+          ? { branding: metadata.data.publicIdentity.branding }
+          : {}),
+    });
+  }
+  async privateIdentity(daoId: string) {
+    IdSchema.parse(daoId);
+    const row = (await this.tablePage('daos', this.config.runtime, daoId, 1)).rows.find(
+      (item) => item.id === daoId,
+    );
+    if (!row) throw new ApiError('DAO_UNKNOWN', 404);
+    const metadata = MetadataSchema.parse(JSON.parse(row.metadata));
+    return PrivateRecordRoutes.identity.response.parse({
+      dao: (await this.summary(row)).reference,
+      reference: metadata.schemaVersion === 4 ? metadata.privateIdentity : null,
+      metadata,
+      metadataCommitment: createHash('sha256').update(row.metadata).digest('hex'),
     });
   }
   async contentDocument(daoId: string, documentId: string, version: number) {
@@ -3359,6 +3408,20 @@ export class NativeChainGateway implements ChainGateway {
   }
   async validateCreation(input: z.infer<typeof CreateDaoSchema>): Promise<void> {
     input = CreateDaoSchema.parse(input);
+    if (input.privateSetup) {
+      if (input.privateSetup.stage !== 'founder')
+        throw new ApiError('PRIVATE_FOUNDER_REQUIRED', 409);
+      if (!(await this.network()).capabilities.includes('private-dao-identity-v1'))
+        throw new ApiError('PRIVATE_IDENTITY_UNSUPPORTED', 409);
+      const domain = {
+        chainId: this.config.chainId,
+        contract: this.config.runtime,
+        daoId: input.privateSetup.daoId,
+        interfaceVersion: 1 as const,
+      };
+      if (input.privateSetup.contextCommitment !== privateCreationCommitment(domain, input))
+        throw new ApiError('PRIVATE_SETUP_CHANGED', 409);
+    }
     if (input.token.chainId !== this.config.chainId) throw new ApiError('ASSET_CHAIN_MISMATCH');
     const guardian = input.setup?.governance.guardian;
     if (guardian) {
@@ -3513,7 +3576,7 @@ export class NativeChainGateway implements ChainGateway {
           dao_id: id,
           owner: bootstrap.owner,
           metadata: JSON.stringify(
-            setup
+            setup && input.metadata.schemaVersion !== 4
               ? {
                   schemaVersion: 2,
                   title: input.metadata.title,

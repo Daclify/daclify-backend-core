@@ -4,6 +4,7 @@ import { PrivateKey } from '@wharfkit/antelope';
 import { Pool } from 'pg';
 import {
   AccountSchema,
+  privateCreationCommitment,
   CreateDaoSchema,
   UserMembershipSchema,
   DaoSummarySchema,
@@ -15,6 +16,7 @@ import { DaoClaimLinks } from '../../services/api/src/dao-claims.js';
 import { CreationService } from '../../services/api/src/creation.js';
 import { migrate } from '../../services/api/src/store.js';
 import { assertErasureInventory } from '../../services/api/src/account-exit/inventory.js';
+import { PrivateFounderSetupSchema } from '../../protocol/private-records.js';
 const url = process.env.DATABASE_URL;
 if (
   !url ||
@@ -49,7 +51,7 @@ const dao = {
   chainId: network.chainId,
   contract: network.runtime,
   daoId: '1',
-  interfaceVersion: 1,
+  interfaceVersion: 1 as const,
 };
 const codeHash = 'cd'.repeat(32);
 const platform = ChainPlatformSchema.parse({
@@ -265,11 +267,99 @@ beforeAll(async () => {
     );
 });
 beforeEach(() => {
+  platform.network.capabilities = ['shared-dao-create'];
   authorized = true;
   platform.sharedAvailable = true;
   if (platform.creation) platform.creation.shared_usd = 0;
   chain.validateCreation.mockReset();
   chain.validateCreation.mockResolvedValue();
+});
+it('reserves sealed private setup for the sole claimant without persisting private prose or accepting a later key replacement', async () => {
+  const setup = defaultDaoSetup('custom');
+  const envelope = {
+    version: 1,
+    algorithm: 'AES-256-GCM',
+    iv: btoa('i'.repeat(12)),
+    ciphertext: btoa('c'.repeat(32)),
+  };
+  const privateRequest = CreateDaoSchema.parse({
+    ...request,
+    privacy: 'encrypted-user-controlled',
+    metadata: {
+      schemaVersion: 4,
+      title: 'Private DAO',
+      description: '',
+      purpose: 'custom',
+      setup,
+      privateIdentity: null,
+    },
+    privateSetup: {
+      schemaVersion: 1,
+      stage: 'invitation',
+      daoId: '791',
+      documentId: '41',
+      contextCommitment: 'aa'.repeat(32),
+      envelope,
+    },
+  });
+  if (!privateRequest.privateSetup) throw Error('private setup missing');
+  privateRequest.privateSetup.contextCommitment = privateCreationCommitment(
+    { ...dao, daoId: privateRequest.privateSetup.daoId },
+    privateRequest,
+  );
+  await expect(links.issue(issuer, { request: privateRequest })).rejects.toMatchObject({
+    code: 'PRIVATE_IDENTITY_UNSUPPORTED',
+  });
+  platform.network.capabilities.push('private-dao-identity-v1', 'private-claim-content-v1');
+  const invitation = await links.issue(issuer, { request: privateRequest });
+  const founder = PrivateFounderSetupSchema.parse({
+    ...privateRequest.privateSetup,
+    stage: 'founder',
+    epochCommitment: 'ac'.repeat(32),
+    selfGrant: {
+      version: 1,
+      ephemeralKey: first.encryptionKey,
+      salt: btoa('s'.repeat(32)),
+      envelope,
+    },
+  });
+  await expect(
+    links.claim(first, { token: invitation.token, method: 'free' }),
+  ).rejects.toMatchObject({ code: 'PRIVATE_FOUNDER_REQUIRED' });
+  expect((await links.preview(invitation.token)).state).toBe('ready');
+  await expect(
+    links.claim(first, {
+      token: invitation.token,
+      method: 'free',
+      privateSetup: { ...founder, daoId: '792' },
+    }),
+  ).rejects.toMatchObject({ code: 'PRIVATE_FOUNDER_REQUIRED' });
+  const result = await links.claim(first, {
+    token: invitation.token,
+    method: 'free',
+    privateSetup: founder,
+  });
+  expect(result.dao?.daoId).toBe('791');
+  expect(result.setup.privateSetup).toEqual(founder);
+  const persisted = (
+    await pool.query('SELECT request FROM creation_orders WHERE id=$1', [invitation.claim.id])
+  ).rows[0];
+  expect(persisted.request.request.privateSetup).toEqual(founder);
+  expect(JSON.stringify(persisted)).not.toContain(invitation.token);
+  expect(JSON.stringify(await links.preview(invitation.token))).not.toContain(issuer.signingKey);
+  await expect(
+    links.claim(first, {
+      token: invitation.token,
+      method: 'free',
+      privateSetup: { ...founder, epochCommitment: 'ff'.repeat(32) },
+    }),
+  ).rejects.toMatchObject({ code: 'CREATION_ORDER_CONFLICT' });
+  await expect(
+    links.claim(second, { token: invitation.token, method: 'free', privateSetup: founder }),
+  ).rejects.toMatchObject({ code: 'DAO_CLAIM_RESERVED' });
+  expect((await links.claim(first, { token: invitation.token, method: 'free' })).dao).toEqual(
+    result.dao,
+  );
 });
 afterAll(async () => {
   await pool.end();
@@ -454,7 +544,14 @@ it('keeps a reserved paid order usable after link expiry and issuer loses office
       requestId: order.requestId,
       deployment: 'shared',
       method: 'card',
-      request: { ...request, metadata: { ...request.metadata, title: 'Substituted' } },
+      request: {
+        ...request,
+        metadata: {
+          schemaVersion: 1,
+          title: 'Substituted',
+          description: request.metadata.description,
+        },
+      },
     }),
   ).rejects.toMatchObject({ code: 'CREATION_ORDER_CONFLICT' });
   await links.cleanup();

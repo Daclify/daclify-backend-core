@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+Core protocol/SDK37, modules46 and frontend57 development cohort: add opaque metadata4, retained encrypted identity/image references, optimistic signed updates, and browser-sealed creation/claim setup bound to the exact public operational context. Private invitations use a fragment-only content key and fresh claimant-owned DAO keys. Preserve strict legacy summaries, self-custody and existing order/claim ownership. Deployment and remaining content surfaces require the complete privacy-plan qualification; this entry does not claim live activation.
+
 Core protocol/SDK 0.15.0-alpha.35: add strict private-record references and typed descriptive bodies, separating internal DAO identity, ballot text, agreed/display payroll names and agent descriptions. Reuse existing encrypted document domains and grants; no native contract or live privacy capability is changed by this foundation package. Consume the compatible modules43 development cohort.
 
 API implementation 0.15.0-alpha.34: reuse the account-locking recovery transaction when projecting DAO memberships. This prevents assisted setup, enrollment and email unlock from waiting on their own account foreign-key lock. Preserve recovery policy checks, grant rollback, SDK/protocol 0.15.0-alpha.32 and existing native contracts.

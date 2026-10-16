@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle:HelpBundle={
   "producer": "core",
-  "packageVersion": "0.15.0-alpha.35",
+  "packageVersion": "0.15.0-alpha.37",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -31,7 +31,8 @@ export const CoreHelpBundle:HelpBundle={
       "paragraphs": [
         "Private DAO documents are encrypted in the browser before they reach Pinata or the public IPFS network. Signing and document decryption use separate keys.",
         "Memberships, voting activity, outcomes, balances, timing, and content hashes remain visible on a public blockchain. This release does not provide anonymous governance.",
-        "Deactivating a member advances the epoch for future content; an authorized administrator must initialize its new key and grants. This cannot erase plaintext or old keys the member already kept. Re-pinning preserves ciphertext, not confidentiality after a key compromise."
+        "Deactivating a member advances the epoch for future content; an authorized administrator must initialize its new key and grants. This cannot erase plaintext or old keys the member already kept. Re-pinning preserves ciphertext, not confidentiality after a key compromise.",
+        "On deployments advertising private-dao-identity-v1, encrypted DAO creation seals the internal name and description before saving an order or claim invitation. Public discovery uses Private DAO unless you deliberately publish an alias. Original keys and an epoch grant are required to read or change internal details; interrupted setup can be resumed without publishing plaintext. Memberships, timing, native votes and financial records remain public. See the private DAO identity guide for exact boundaries."
       ]
     },
     {
@@ -664,7 +665,7 @@ export const CoreHelpBundle:HelpBundle={
     {
       "name": "runtime",
       "abiVersion": "eosio::abi/1.2",
-      "sourceAbiHash": "1e499cb028fdb27714243bfbe8020fe13fc14f777a7b385c31151aa59251bc53",
+      "sourceAbiHash": "0efbf8e885f8d1054732da76fd6d728d4dab6d2254855542f39287db869c61a4",
       "actions": [
         {
           "name": "acceptcont",
@@ -3691,6 +3692,10 @@ export const CoreHelpBundle:HelpBundle={
             {
               "name": "metadata",
               "type": "string"
+            },
+            {
+              "name": "expected",
+              "type": "checksum256$"
             }
           ]
         },
@@ -7704,6 +7709,769 @@ export const CoreHelpBundle:HelpBundle={
   ],
   "api": [
     {
+      "method": "GET",
+      "path": "/v1/daos/:id/private-identity",
+      "response": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "dao": {
+            "type": "object",
+            "properties": {
+              "chainId": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "contract": {
+                "type": "string",
+                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "interfaceVersion": {
+                "type": "number",
+                "const": 1
+              }
+            },
+            "required": [
+              "chainId",
+              "contract",
+              "daoId",
+              "interfaceVersion"
+            ],
+            "additionalProperties": false
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "documentId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "version": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 4294967295
+                  },
+                  "commitment": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "keyEpoch": {
+                    "type": "string",
+                    "maxLength": 20
+                  }
+                },
+                "required": [
+                  "documentId",
+                  "version",
+                  "commitment",
+                  "keyEpoch"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "schemaVersion": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160
+                  },
+                  "description": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 4000
+                  }
+                },
+                "required": [
+                  "schemaVersion",
+                  "title",
+                  "description"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "schemaVersion": {
+                    "type": "number",
+                    "const": 2
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160
+                  },
+                  "description": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 4000
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "enum": [
+                      "community",
+                      "ngo-grants",
+                      "gaming-guild",
+                      "team",
+                      "custom"
+                    ]
+                  },
+                  "setup": {
+                    "type": "object",
+                    "properties": {
+                      "presetId": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "presetVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "participantMode": {
+                        "type": "string",
+                        "enum": [
+                          "humans",
+                          "mixed",
+                          "agents-guarded"
+                        ]
+                      },
+                      "governance": {
+                        "type": "object",
+                        "properties": {
+                          "weight": {
+                            "type": "string",
+                            "enum": [
+                              "member",
+                              "credit",
+                              "native-stake"
+                            ]
+                          },
+                          "duration": {
+                            "type": "integer",
+                            "minimum": 60,
+                            "maximum": 2592000
+                          },
+                          "quorumBasisPoints": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 10000
+                          },
+                          "approvalBasisPoints": {
+                            "type": "integer",
+                            "minimum": 5001,
+                            "maximum": 10000
+                          },
+                          "governedWorks": {
+                            "type": "boolean"
+                          },
+                          "maxCommitment": {
+                            "type": "string"
+                          },
+                          "dailyCommitment": {
+                            "type": "string"
+                          },
+                          "guardian": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "const": ""
+                              },
+                              {
+                                "type": "string",
+                                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "weight",
+                          "duration",
+                          "quorumBasisPoints",
+                          "approvalBasisPoints",
+                          "governedWorks",
+                          "maxCommitment",
+                          "dailyCommitment",
+                          "guardian"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "presetId",
+                      "presetVersion",
+                      "participantMode",
+                      "governance"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "schemaVersion",
+                  "title",
+                  "description",
+                  "purpose",
+                  "setup"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "schemaVersion": {
+                    "type": "number",
+                    "const": 3
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160
+                  },
+                  "description": {
+                    "default": "",
+                    "type": "string",
+                    "maxLength": 4000
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "enum": [
+                      "community",
+                      "ngo-grants",
+                      "gaming-guild",
+                      "team",
+                      "custom"
+                    ]
+                  },
+                  "setup": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "presetId": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "presetVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "participantMode": {
+                            "type": "string",
+                            "enum": [
+                              "humans",
+                              "mixed",
+                              "agents-guarded"
+                            ]
+                          },
+                          "governance": {
+                            "type": "object",
+                            "properties": {
+                              "weight": {
+                                "type": "string",
+                                "enum": [
+                                  "member",
+                                  "credit",
+                                  "native-stake"
+                                ]
+                              },
+                              "duration": {
+                                "type": "integer",
+                                "minimum": 60,
+                                "maximum": 2592000
+                              },
+                              "quorumBasisPoints": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 10000
+                              },
+                              "approvalBasisPoints": {
+                                "type": "integer",
+                                "minimum": 5001,
+                                "maximum": 10000
+                              },
+                              "governedWorks": {
+                                "type": "boolean"
+                              },
+                              "maxCommitment": {
+                                "type": "string"
+                              },
+                              "dailyCommitment": {
+                                "type": "string"
+                              },
+                              "guardian": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "const": ""
+                                  },
+                                  {
+                                    "type": "string",
+                                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "weight",
+                              "duration",
+                              "quorumBasisPoints",
+                              "approvalBasisPoints",
+                              "governedWorks",
+                              "maxCommitment",
+                              "dailyCommitment",
+                              "guardian"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "presetId",
+                          "presetVersion",
+                          "participantMode",
+                          "governance"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "branding": {
+                    "type": "object",
+                    "properties": {
+                      "summary": {
+                        "type": "string",
+                        "maxLength": 280
+                      },
+                      "logo": {
+                        "type": "object",
+                        "properties": {
+                          "cid": {
+                            "type": "string",
+                            "maxLength": 128
+                          },
+                          "bytes": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 2097152
+                          },
+                          "mediaType": {
+                            "type": "string",
+                            "enum": [
+                              "image/png",
+                              "image/jpeg",
+                              "image/webp"
+                            ]
+                          },
+                          "commitment": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          }
+                        },
+                        "required": [
+                          "cid",
+                          "bytes",
+                          "mediaType",
+                          "commitment"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "cover": {
+                        "type": "object",
+                        "properties": {
+                          "cid": {
+                            "type": "string",
+                            "maxLength": 128
+                          },
+                          "bytes": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 2097152
+                          },
+                          "mediaType": {
+                            "type": "string",
+                            "enum": [
+                              "image/png",
+                              "image/jpeg",
+                              "image/webp"
+                            ]
+                          },
+                          "commitment": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          }
+                        },
+                        "required": [
+                          "cid",
+                          "bytes",
+                          "mediaType",
+                          "commitment"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "schemaVersion",
+                  "title",
+                  "description",
+                  "purpose",
+                  "setup",
+                  "branding"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "schemaVersion": {
+                    "type": "number",
+                    "const": 4
+                  },
+                  "title": {
+                    "type": "string",
+                    "const": "Private DAO"
+                  },
+                  "description": {
+                    "type": "string",
+                    "const": ""
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "enum": [
+                      "community",
+                      "ngo-grants",
+                      "gaming-guild",
+                      "team",
+                      "custom"
+                    ]
+                  },
+                  "setup": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "presetId": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "presetVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "participantMode": {
+                            "type": "string",
+                            "enum": [
+                              "humans",
+                              "mixed",
+                              "agents-guarded"
+                            ]
+                          },
+                          "governance": {
+                            "type": "object",
+                            "properties": {
+                              "weight": {
+                                "type": "string",
+                                "enum": [
+                                  "member",
+                                  "credit",
+                                  "native-stake"
+                                ]
+                              },
+                              "duration": {
+                                "type": "integer",
+                                "minimum": 60,
+                                "maximum": 2592000
+                              },
+                              "quorumBasisPoints": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 10000
+                              },
+                              "approvalBasisPoints": {
+                                "type": "integer",
+                                "minimum": 5001,
+                                "maximum": 10000
+                              },
+                              "governedWorks": {
+                                "type": "boolean"
+                              },
+                              "maxCommitment": {
+                                "type": "string"
+                              },
+                              "dailyCommitment": {
+                                "type": "string"
+                              },
+                              "guardian": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "const": ""
+                                  },
+                                  {
+                                    "type": "string",
+                                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "weight",
+                              "duration",
+                              "quorumBasisPoints",
+                              "approvalBasisPoints",
+                              "governedWorks",
+                              "maxCommitment",
+                              "dailyCommitment",
+                              "guardian"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "presetId",
+                          "presetVersion",
+                          "participantMode",
+                          "governance"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "privateIdentity": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "documentId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "version": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 4294967295
+                          },
+                          "commitment": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "keyEpoch": {
+                            "type": "string",
+                            "maxLength": 20
+                          }
+                        },
+                        "required": [
+                          "documentId",
+                          "version",
+                          "commitment",
+                          "keyEpoch"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "privateAssets": {
+                    "maxItems": 2,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "documentId": {
+                          "type": "string",
+                          "maxLength": 20
+                        },
+                        "version": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 4294967295
+                        },
+                        "commitment": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{64}$"
+                        },
+                        "keyEpoch": {
+                          "type": "string",
+                          "maxLength": 20
+                        }
+                      },
+                      "required": [
+                        "documentId",
+                        "version",
+                        "commitment",
+                        "keyEpoch"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "publicIdentity": {
+                    "type": "object",
+                    "properties": {
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                      },
+                      "description": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "branding": {
+                        "type": "object",
+                        "properties": {
+                          "summary": {
+                            "type": "string",
+                            "maxLength": 280
+                          },
+                          "logo": {
+                            "type": "object",
+                            "properties": {
+                              "cid": {
+                                "type": "string",
+                                "maxLength": 128
+                              },
+                              "bytes": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 2097152
+                              },
+                              "mediaType": {
+                                "type": "string",
+                                "enum": [
+                                  "image/png",
+                                  "image/jpeg",
+                                  "image/webp"
+                                ]
+                              },
+                              "commitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              }
+                            },
+                            "required": [
+                              "cid",
+                              "bytes",
+                              "mediaType",
+                              "commitment"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "cover": {
+                            "type": "object",
+                            "properties": {
+                              "cid": {
+                                "type": "string",
+                                "maxLength": 128
+                              },
+                              "bytes": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 2097152
+                              },
+                              "mediaType": {
+                                "type": "string",
+                                "enum": [
+                                  "image/png",
+                                  "image/jpeg",
+                                  "image/webp"
+                                ]
+                              },
+                              "commitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              }
+                            },
+                            "required": [
+                              "cid",
+                              "bytes",
+                              "mediaType",
+                              "commitment"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "title",
+                      "description"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "schemaVersion",
+                  "title",
+                  "description",
+                  "purpose",
+                  "setup",
+                  "privateIdentity"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "metadataCommitment": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "required": [
+          "dao",
+          "reference",
+          "metadata",
+          "metadataCommitment"
+        ],
+        "additionalProperties": false
+      },
+      "helpTopic": "privacy"
+    },
+    {
       "method": "POST",
       "path": "/v1/recovery/contacts/grant",
       "input": {
@@ -11415,6 +12183,308 @@ export const CoreHelpBundle:HelpBundle={
                             "branding"
                           ],
                           "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "schemaVersion": {
+                              "type": "number",
+                              "const": 4
+                            },
+                            "title": {
+                              "type": "string",
+                              "const": "Private DAO"
+                            },
+                            "description": {
+                              "type": "string",
+                              "const": ""
+                            },
+                            "purpose": {
+                              "type": "string",
+                              "enum": [
+                                "community",
+                                "ngo-grants",
+                                "gaming-guild",
+                                "team",
+                                "custom"
+                              ]
+                            },
+                            "setup": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "presetId": {
+                                      "type": "string",
+                                      "enum": [
+                                        "community",
+                                        "ngo-grants",
+                                        "gaming-guild",
+                                        "team",
+                                        "custom"
+                                      ]
+                                    },
+                                    "presetVersion": {
+                                      "type": "number",
+                                      "const": 1
+                                    },
+                                    "participantMode": {
+                                      "type": "string",
+                                      "enum": [
+                                        "humans",
+                                        "mixed",
+                                        "agents-guarded"
+                                      ]
+                                    },
+                                    "governance": {
+                                      "type": "object",
+                                      "properties": {
+                                        "weight": {
+                                          "type": "string",
+                                          "enum": [
+                                            "member",
+                                            "credit",
+                                            "native-stake"
+                                          ]
+                                        },
+                                        "duration": {
+                                          "type": "integer",
+                                          "minimum": 60,
+                                          "maximum": 2592000
+                                        },
+                                        "quorumBasisPoints": {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 10000
+                                        },
+                                        "approvalBasisPoints": {
+                                          "type": "integer",
+                                          "minimum": 5001,
+                                          "maximum": 10000
+                                        },
+                                        "governedWorks": {
+                                          "type": "boolean"
+                                        },
+                                        "maxCommitment": {
+                                          "type": "string"
+                                        },
+                                        "dailyCommitment": {
+                                          "type": "string"
+                                        },
+                                        "guardian": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string",
+                                              "const": ""
+                                            },
+                                            {
+                                              "type": "string",
+                                              "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "weight",
+                                        "duration",
+                                        "quorumBasisPoints",
+                                        "approvalBasisPoints",
+                                        "governedWorks",
+                                        "maxCommitment",
+                                        "dailyCommitment",
+                                        "guardian"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "required": [
+                                    "presetId",
+                                    "presetVersion",
+                                    "participantMode",
+                                    "governance"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "privateIdentity": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "documentId": {
+                                      "type": "string",
+                                      "maxLength": 20
+                                    },
+                                    "version": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 4294967295
+                                    },
+                                    "commitment": {
+                                      "type": "string",
+                                      "pattern": "^[0-9a-f]{64}$"
+                                    },
+                                    "keyEpoch": {
+                                      "type": "string",
+                                      "maxLength": 20
+                                    }
+                                  },
+                                  "required": [
+                                    "documentId",
+                                    "version",
+                                    "commitment",
+                                    "keyEpoch"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "privateAssets": {
+                              "maxItems": 2,
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "documentId": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  },
+                                  "version": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 4294967295
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  },
+                                  "keyEpoch": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  }
+                                },
+                                "required": [
+                                  "documentId",
+                                  "version",
+                                  "commitment",
+                                  "keyEpoch"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "publicIdentity": {
+                              "type": "object",
+                              "properties": {
+                                "title": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 160
+                                },
+                                "description": {
+                                  "default": "",
+                                  "type": "string",
+                                  "maxLength": 4000
+                                },
+                                "branding": {
+                                  "type": "object",
+                                  "properties": {
+                                    "summary": {
+                                      "type": "string",
+                                      "maxLength": 280
+                                    },
+                                    "logo": {
+                                      "type": "object",
+                                      "properties": {
+                                        "cid": {
+                                          "type": "string",
+                                          "maxLength": 128
+                                        },
+                                        "bytes": {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 2097152
+                                        },
+                                        "mediaType": {
+                                          "type": "string",
+                                          "enum": [
+                                            "image/png",
+                                            "image/jpeg",
+                                            "image/webp"
+                                          ]
+                                        },
+                                        "commitment": {
+                                          "type": "string",
+                                          "pattern": "^[0-9a-f]{64}$"
+                                        }
+                                      },
+                                      "required": [
+                                        "cid",
+                                        "bytes",
+                                        "mediaType",
+                                        "commitment"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    "cover": {
+                                      "type": "object",
+                                      "properties": {
+                                        "cid": {
+                                          "type": "string",
+                                          "maxLength": 128
+                                        },
+                                        "bytes": {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 2097152
+                                        },
+                                        "mediaType": {
+                                          "type": "string",
+                                          "enum": [
+                                            "image/png",
+                                            "image/jpeg",
+                                            "image/webp"
+                                          ]
+                                        },
+                                        "commitment": {
+                                          "type": "string",
+                                          "pattern": "^[0-9a-f]{64}$"
+                                        }
+                                      },
+                                      "required": [
+                                        "cid",
+                                        "bytes",
+                                        "mediaType",
+                                        "commitment"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "title",
+                                "description"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "schemaVersion",
+                            "title",
+                            "description",
+                            "purpose",
+                            "setup",
+                            "privateIdentity"
+                          ],
+                          "additionalProperties": false
                         }
                       ]
                     },
@@ -11597,6 +12667,230 @@ export const CoreHelpBundle:HelpBundle={
                         "operator"
                       ],
                       "additionalProperties": false
+                    },
+                    "privateSetup": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "schemaVersion": {
+                              "type": "number",
+                              "const": 1
+                            },
+                            "daoId": {
+                              "type": "string",
+                              "maxLength": 20
+                            },
+                            "documentId": {
+                              "type": "string",
+                              "maxLength": 20
+                            },
+                            "contextCommitment": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "envelope": {
+                              "type": "object",
+                              "properties": {
+                                "version": {
+                                  "type": "number",
+                                  "const": 1
+                                },
+                                "algorithm": {
+                                  "type": "string",
+                                  "const": "AES-256-GCM"
+                                },
+                                "iv": {
+                                  "type": "string",
+                                  "minLength": 16,
+                                  "maxLength": 16,
+                                  "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                },
+                                "ciphertext": {
+                                  "type": "string",
+                                  "minLength": 24,
+                                  "maxLength": 49152,
+                                  "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                }
+                              },
+                              "required": [
+                                "version",
+                                "algorithm",
+                                "iv",
+                                "ciphertext"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "stage": {
+                              "type": "string",
+                              "const": "invitation"
+                            }
+                          },
+                          "required": [
+                            "schemaVersion",
+                            "daoId",
+                            "documentId",
+                            "contextCommitment",
+                            "envelope",
+                            "stage"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "schemaVersion": {
+                              "type": "number",
+                              "const": 1
+                            },
+                            "daoId": {
+                              "type": "string",
+                              "maxLength": 20
+                            },
+                            "documentId": {
+                              "type": "string",
+                              "maxLength": 20
+                            },
+                            "contextCommitment": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "envelope": {
+                              "type": "object",
+                              "properties": {
+                                "version": {
+                                  "type": "number",
+                                  "const": 1
+                                },
+                                "algorithm": {
+                                  "type": "string",
+                                  "const": "AES-256-GCM"
+                                },
+                                "iv": {
+                                  "type": "string",
+                                  "minLength": 16,
+                                  "maxLength": 16,
+                                  "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                },
+                                "ciphertext": {
+                                  "type": "string",
+                                  "minLength": 24,
+                                  "maxLength": 49152,
+                                  "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                }
+                              },
+                              "required": [
+                                "version",
+                                "algorithm",
+                                "iv",
+                                "ciphertext"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "stage": {
+                              "type": "string",
+                              "const": "founder"
+                            },
+                            "epochCommitment": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "selfGrant": {
+                              "type": "object",
+                              "properties": {
+                                "version": {
+                                  "type": "number",
+                                  "const": 1
+                                },
+                                "ephemeralKey": {
+                                  "type": "object",
+                                  "properties": {
+                                    "kty": {
+                                      "type": "string",
+                                      "const": "EC"
+                                    },
+                                    "crv": {
+                                      "type": "string",
+                                      "const": "P-256"
+                                    },
+                                    "x": {
+                                      "type": "string",
+                                      "pattern": "^[A-Za-z0-9_-]{43}$"
+                                    },
+                                    "y": {
+                                      "type": "string",
+                                      "pattern": "^[A-Za-z0-9_-]{43}$"
+                                    }
+                                  },
+                                  "required": [
+                                    "kty",
+                                    "crv",
+                                    "x",
+                                    "y"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "salt": {
+                                  "type": "string",
+                                  "minLength": 44,
+                                  "maxLength": 44,
+                                  "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                },
+                                "envelope": {
+                                  "type": "object",
+                                  "properties": {
+                                    "version": {
+                                      "type": "number",
+                                      "const": 1
+                                    },
+                                    "algorithm": {
+                                      "type": "string",
+                                      "const": "AES-256-GCM"
+                                    },
+                                    "iv": {
+                                      "type": "string",
+                                      "minLength": 16,
+                                      "maxLength": 16,
+                                      "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                    },
+                                    "ciphertext": {
+                                      "type": "string",
+                                      "minLength": 24,
+                                      "maxLength": 4096,
+                                      "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                    }
+                                  },
+                                  "required": [
+                                    "version",
+                                    "algorithm",
+                                    "iv",
+                                    "ciphertext"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "version",
+                                "ephemeralKey",
+                                "salt",
+                                "envelope"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "schemaVersion",
+                            "daoId",
+                            "documentId",
+                            "contextCommitment",
+                            "envelope",
+                            "stage",
+                            "epochCommitment",
+                            "selfGrant"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
                     }
                   },
                   "required": [
@@ -12046,6 +13340,309 @@ export const CoreHelpBundle:HelpBundle={
                       "branding"
                     ],
                     "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 4
+                      },
+                      "title": {
+                        "type": "string",
+                        "const": "Private DAO"
+                      },
+                      "description": {
+                        "type": "string",
+                        "const": ""
+                      },
+                      "purpose": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "setup": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "presetId": {
+                                "type": "string",
+                                "enum": [
+                                  "community",
+                                  "ngo-grants",
+                                  "gaming-guild",
+                                  "team",
+                                  "custom"
+                                ]
+                              },
+                              "presetVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "participantMode": {
+                                "type": "string",
+                                "enum": [
+                                  "humans",
+                                  "mixed",
+                                  "agents-guarded"
+                                ]
+                              },
+                              "governance": {
+                                "type": "object",
+                                "properties": {
+                                  "weight": {
+                                    "type": "string",
+                                    "enum": [
+                                      "member",
+                                      "credit",
+                                      "native-stake"
+                                    ]
+                                  },
+                                  "duration": {
+                                    "type": "integer",
+                                    "minimum": 60,
+                                    "maximum": 2592000
+                                  },
+                                  "quorumBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 10000
+                                  },
+                                  "approvalBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 5001,
+                                    "maximum": 10000
+                                  },
+                                  "governedWorks": {
+                                    "type": "boolean"
+                                  },
+                                  "maxCommitment": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  },
+                                  "dailyCommitment": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  },
+                                  "guardian": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "const": ""
+                                      },
+                                      {
+                                        "type": "string",
+                                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "weight",
+                                  "duration",
+                                  "quorumBasisPoints",
+                                  "approvalBasisPoints",
+                                  "governedWorks",
+                                  "maxCommitment",
+                                  "dailyCommitment",
+                                  "guardian"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "presetId",
+                              "presetVersion",
+                              "participantMode",
+                              "governance"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "privateIdentity": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "documentId": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "version": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 4294967295
+                              },
+                              "commitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              },
+                              "keyEpoch": {
+                                "type": "string",
+                                "maxLength": 20
+                              }
+                            },
+                            "required": [
+                              "documentId",
+                              "version",
+                              "commitment",
+                              "keyEpoch"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "privateAssets": {
+                        "maxItems": 2,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "documentId": {
+                              "type": "string",
+                              "maxLength": 20
+                            },
+                            "version": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 4294967295
+                            },
+                            "commitment": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "keyEpoch": {
+                              "type": "string",
+                              "maxLength": 20
+                            }
+                          },
+                          "required": [
+                            "documentId",
+                            "version",
+                            "commitment",
+                            "keyEpoch"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "publicIdentity": {
+                        "type": "object",
+                        "properties": {
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "description": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 4000
+                          },
+                          "branding": {
+                            "type": "object",
+                            "properties": {
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 280
+                              },
+                              "logo": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "cover": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "title"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "description",
+                      "purpose",
+                      "setup",
+                      "privateIdentity"
+                    ],
+                    "additionalProperties": false
                   }
                 ]
               },
@@ -12230,6 +13827,230 @@ export const CoreHelpBundle:HelpBundle={
                   "operator"
                 ],
                 "additionalProperties": false
+              },
+              "privateSetup": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "daoId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "documentId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "contextCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "envelope": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "algorithm": {
+                            "type": "string",
+                            "const": "AES-256-GCM"
+                          },
+                          "iv": {
+                            "type": "string",
+                            "minLength": 16,
+                            "maxLength": 16,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "ciphertext": {
+                            "type": "string",
+                            "minLength": 24,
+                            "maxLength": 49152,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "algorithm",
+                          "iv",
+                          "ciphertext"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "stage": {
+                        "type": "string",
+                        "const": "invitation"
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "daoId",
+                      "documentId",
+                      "contextCommitment",
+                      "envelope",
+                      "stage"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "daoId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "documentId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "contextCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "envelope": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "algorithm": {
+                            "type": "string",
+                            "const": "AES-256-GCM"
+                          },
+                          "iv": {
+                            "type": "string",
+                            "minLength": 16,
+                            "maxLength": 16,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "ciphertext": {
+                            "type": "string",
+                            "minLength": 24,
+                            "maxLength": 49152,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "algorithm",
+                          "iv",
+                          "ciphertext"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "stage": {
+                        "type": "string",
+                        "const": "founder"
+                      },
+                      "epochCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "selfGrant": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "ephemeralKey": {
+                            "type": "object",
+                            "properties": {
+                              "kty": {
+                                "type": "string",
+                                "const": "EC"
+                              },
+                              "crv": {
+                                "type": "string",
+                                "const": "P-256"
+                              },
+                              "x": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9_-]{43}$"
+                              },
+                              "y": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9_-]{43}$"
+                              }
+                            },
+                            "required": [
+                              "kty",
+                              "crv",
+                              "x",
+                              "y"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "salt": {
+                            "type": "string",
+                            "minLength": 44,
+                            "maxLength": 44,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 4096,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "ephemeralKey",
+                          "salt",
+                          "envelope"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "daoId",
+                      "documentId",
+                      "contextCommitment",
+                      "envelope",
+                      "stage",
+                      "epochCommitment",
+                      "selfGrant"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
               }
             },
             "required": [
@@ -12634,6 +14455,308 @@ export const CoreHelpBundle:HelpBundle={
                               "branding"
                             ],
                             "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "schemaVersion": {
+                                "type": "number",
+                                "const": 4
+                              },
+                              "title": {
+                                "type": "string",
+                                "const": "Private DAO"
+                              },
+                              "description": {
+                                "type": "string",
+                                "const": ""
+                              },
+                              "purpose": {
+                                "type": "string",
+                                "enum": [
+                                  "community",
+                                  "ngo-grants",
+                                  "gaming-guild",
+                                  "team",
+                                  "custom"
+                                ]
+                              },
+                              "setup": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "presetId": {
+                                        "type": "string",
+                                        "enum": [
+                                          "community",
+                                          "ngo-grants",
+                                          "gaming-guild",
+                                          "team",
+                                          "custom"
+                                        ]
+                                      },
+                                      "presetVersion": {
+                                        "type": "number",
+                                        "const": 1
+                                      },
+                                      "participantMode": {
+                                        "type": "string",
+                                        "enum": [
+                                          "humans",
+                                          "mixed",
+                                          "agents-guarded"
+                                        ]
+                                      },
+                                      "governance": {
+                                        "type": "object",
+                                        "properties": {
+                                          "weight": {
+                                            "type": "string",
+                                            "enum": [
+                                              "member",
+                                              "credit",
+                                              "native-stake"
+                                            ]
+                                          },
+                                          "duration": {
+                                            "type": "integer",
+                                            "minimum": 60,
+                                            "maximum": 2592000
+                                          },
+                                          "quorumBasisPoints": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 10000
+                                          },
+                                          "approvalBasisPoints": {
+                                            "type": "integer",
+                                            "minimum": 5001,
+                                            "maximum": 10000
+                                          },
+                                          "governedWorks": {
+                                            "type": "boolean"
+                                          },
+                                          "maxCommitment": {
+                                            "type": "string"
+                                          },
+                                          "dailyCommitment": {
+                                            "type": "string"
+                                          },
+                                          "guardian": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string",
+                                                "const": ""
+                                              },
+                                              {
+                                                "type": "string",
+                                                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "weight",
+                                          "duration",
+                                          "quorumBasisPoints",
+                                          "approvalBasisPoints",
+                                          "governedWorks",
+                                          "maxCommitment",
+                                          "dailyCommitment",
+                                          "guardian"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    },
+                                    "required": [
+                                      "presetId",
+                                      "presetVersion",
+                                      "participantMode",
+                                      "governance"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "privateIdentity": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "documentId": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                      },
+                                      "version": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 4294967295
+                                      },
+                                      "commitment": {
+                                        "type": "string",
+                                        "pattern": "^[0-9a-f]{64}$"
+                                      },
+                                      "keyEpoch": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                      }
+                                    },
+                                    "required": [
+                                      "documentId",
+                                      "version",
+                                      "commitment",
+                                      "keyEpoch"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "privateAssets": {
+                                "maxItems": 2,
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "documentId": {
+                                      "type": "string",
+                                      "maxLength": 20
+                                    },
+                                    "version": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 4294967295
+                                    },
+                                    "commitment": {
+                                      "type": "string",
+                                      "pattern": "^[0-9a-f]{64}$"
+                                    },
+                                    "keyEpoch": {
+                                      "type": "string",
+                                      "maxLength": 20
+                                    }
+                                  },
+                                  "required": [
+                                    "documentId",
+                                    "version",
+                                    "commitment",
+                                    "keyEpoch"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "publicIdentity": {
+                                "type": "object",
+                                "properties": {
+                                  "title": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 160
+                                  },
+                                  "description": {
+                                    "default": "",
+                                    "type": "string",
+                                    "maxLength": 4000
+                                  },
+                                  "branding": {
+                                    "type": "object",
+                                    "properties": {
+                                      "summary": {
+                                        "type": "string",
+                                        "maxLength": 280
+                                      },
+                                      "logo": {
+                                        "type": "object",
+                                        "properties": {
+                                          "cid": {
+                                            "type": "string",
+                                            "maxLength": 128
+                                          },
+                                          "bytes": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 2097152
+                                          },
+                                          "mediaType": {
+                                            "type": "string",
+                                            "enum": [
+                                              "image/png",
+                                              "image/jpeg",
+                                              "image/webp"
+                                            ]
+                                          },
+                                          "commitment": {
+                                            "type": "string",
+                                            "pattern": "^[0-9a-f]{64}$"
+                                          }
+                                        },
+                                        "required": [
+                                          "cid",
+                                          "bytes",
+                                          "mediaType",
+                                          "commitment"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "cover": {
+                                        "type": "object",
+                                        "properties": {
+                                          "cid": {
+                                            "type": "string",
+                                            "maxLength": 128
+                                          },
+                                          "bytes": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 2097152
+                                          },
+                                          "mediaType": {
+                                            "type": "string",
+                                            "enum": [
+                                              "image/png",
+                                              "image/jpeg",
+                                              "image/webp"
+                                            ]
+                                          },
+                                          "commitment": {
+                                            "type": "string",
+                                            "pattern": "^[0-9a-f]{64}$"
+                                          }
+                                        },
+                                        "required": [
+                                          "cid",
+                                          "bytes",
+                                          "mediaType",
+                                          "commitment"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "title",
+                                  "description"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "schemaVersion",
+                              "title",
+                              "description",
+                              "purpose",
+                              "setup",
+                              "privateIdentity"
+                            ],
+                            "additionalProperties": false
                           }
                         ]
                       },
@@ -12816,6 +14939,230 @@ export const CoreHelpBundle:HelpBundle={
                           "operator"
                         ],
                         "additionalProperties": false
+                      },
+                      "privateSetup": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "schemaVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "daoId": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "documentId": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "contextCommitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              },
+                              "envelope": {
+                                "type": "object",
+                                "properties": {
+                                  "version": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "algorithm": {
+                                    "type": "string",
+                                    "const": "AES-256-GCM"
+                                  },
+                                  "iv": {
+                                    "type": "string",
+                                    "minLength": 16,
+                                    "maxLength": 16,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  },
+                                  "ciphertext": {
+                                    "type": "string",
+                                    "minLength": 24,
+                                    "maxLength": 49152,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  }
+                                },
+                                "required": [
+                                  "version",
+                                  "algorithm",
+                                  "iv",
+                                  "ciphertext"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "stage": {
+                                "type": "string",
+                                "const": "invitation"
+                              }
+                            },
+                            "required": [
+                              "schemaVersion",
+                              "daoId",
+                              "documentId",
+                              "contextCommitment",
+                              "envelope",
+                              "stage"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "schemaVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "daoId": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "documentId": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "contextCommitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              },
+                              "envelope": {
+                                "type": "object",
+                                "properties": {
+                                  "version": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "algorithm": {
+                                    "type": "string",
+                                    "const": "AES-256-GCM"
+                                  },
+                                  "iv": {
+                                    "type": "string",
+                                    "minLength": 16,
+                                    "maxLength": 16,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  },
+                                  "ciphertext": {
+                                    "type": "string",
+                                    "minLength": 24,
+                                    "maxLength": 49152,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  }
+                                },
+                                "required": [
+                                  "version",
+                                  "algorithm",
+                                  "iv",
+                                  "ciphertext"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "stage": {
+                                "type": "string",
+                                "const": "founder"
+                              },
+                              "epochCommitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              },
+                              "selfGrant": {
+                                "type": "object",
+                                "properties": {
+                                  "version": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "ephemeralKey": {
+                                    "type": "object",
+                                    "properties": {
+                                      "kty": {
+                                        "type": "string",
+                                        "const": "EC"
+                                      },
+                                      "crv": {
+                                        "type": "string",
+                                        "const": "P-256"
+                                      },
+                                      "x": {
+                                        "type": "string",
+                                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                                      },
+                                      "y": {
+                                        "type": "string",
+                                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "kty",
+                                      "crv",
+                                      "x",
+                                      "y"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "salt": {
+                                    "type": "string",
+                                    "minLength": 44,
+                                    "maxLength": 44,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  },
+                                  "envelope": {
+                                    "type": "object",
+                                    "properties": {
+                                      "version": {
+                                        "type": "number",
+                                        "const": 1
+                                      },
+                                      "algorithm": {
+                                        "type": "string",
+                                        "const": "AES-256-GCM"
+                                      },
+                                      "iv": {
+                                        "type": "string",
+                                        "minLength": 16,
+                                        "maxLength": 16,
+                                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                      },
+                                      "ciphertext": {
+                                        "type": "string",
+                                        "minLength": 24,
+                                        "maxLength": 4096,
+                                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "version",
+                                      "algorithm",
+                                      "iv",
+                                      "ciphertext"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "version",
+                                  "ephemeralKey",
+                                  "salt",
+                                  "envelope"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "schemaVersion",
+                              "daoId",
+                              "documentId",
+                              "contextCommitment",
+                              "envelope",
+                              "stage",
+                              "epochCommitment",
+                              "selfGrant"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
                       }
                     },
                     "required": [
@@ -13296,6 +15643,308 @@ export const CoreHelpBundle:HelpBundle={
                           "branding"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 4
+                          },
+                          "title": {
+                            "type": "string",
+                            "const": "Private DAO"
+                          },
+                          "description": {
+                            "type": "string",
+                            "const": ""
+                          },
+                          "purpose": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "setup": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "presetId": {
+                                    "type": "string",
+                                    "enum": [
+                                      "community",
+                                      "ngo-grants",
+                                      "gaming-guild",
+                                      "team",
+                                      "custom"
+                                    ]
+                                  },
+                                  "presetVersion": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "participantMode": {
+                                    "type": "string",
+                                    "enum": [
+                                      "humans",
+                                      "mixed",
+                                      "agents-guarded"
+                                    ]
+                                  },
+                                  "governance": {
+                                    "type": "object",
+                                    "properties": {
+                                      "weight": {
+                                        "type": "string",
+                                        "enum": [
+                                          "member",
+                                          "credit",
+                                          "native-stake"
+                                        ]
+                                      },
+                                      "duration": {
+                                        "type": "integer",
+                                        "minimum": 60,
+                                        "maximum": 2592000
+                                      },
+                                      "quorumBasisPoints": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 10000
+                                      },
+                                      "approvalBasisPoints": {
+                                        "type": "integer",
+                                        "minimum": 5001,
+                                        "maximum": 10000
+                                      },
+                                      "governedWorks": {
+                                        "type": "boolean"
+                                      },
+                                      "maxCommitment": {
+                                        "type": "string"
+                                      },
+                                      "dailyCommitment": {
+                                        "type": "string"
+                                      },
+                                      "guardian": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string",
+                                            "const": ""
+                                          },
+                                          {
+                                            "type": "string",
+                                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "weight",
+                                      "duration",
+                                      "quorumBasisPoints",
+                                      "approvalBasisPoints",
+                                      "governedWorks",
+                                      "maxCommitment",
+                                      "dailyCommitment",
+                                      "guardian"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "presetId",
+                                  "presetVersion",
+                                  "participantMode",
+                                  "governance"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "privateIdentity": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "documentId": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  },
+                                  "version": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 4294967295
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  },
+                                  "keyEpoch": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  }
+                                },
+                                "required": [
+                                  "documentId",
+                                  "version",
+                                  "commitment",
+                                  "keyEpoch"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "privateAssets": {
+                            "maxItems": 2,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "documentId": {
+                                  "type": "string",
+                                  "maxLength": 20
+                                },
+                                "version": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 4294967295
+                                },
+                                "commitment": {
+                                  "type": "string",
+                                  "pattern": "^[0-9a-f]{64}$"
+                                },
+                                "keyEpoch": {
+                                  "type": "string",
+                                  "maxLength": 20
+                                }
+                              },
+                              "required": [
+                                "documentId",
+                                "version",
+                                "commitment",
+                                "keyEpoch"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "publicIdentity": {
+                            "type": "object",
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 160
+                              },
+                              "description": {
+                                "default": "",
+                                "type": "string",
+                                "maxLength": 4000
+                              },
+                              "branding": {
+                                "type": "object",
+                                "properties": {
+                                  "summary": {
+                                    "type": "string",
+                                    "maxLength": 280
+                                  },
+                                  "logo": {
+                                    "type": "object",
+                                    "properties": {
+                                      "cid": {
+                                        "type": "string",
+                                        "maxLength": 128
+                                      },
+                                      "bytes": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 2097152
+                                      },
+                                      "mediaType": {
+                                        "type": "string",
+                                        "enum": [
+                                          "image/png",
+                                          "image/jpeg",
+                                          "image/webp"
+                                        ]
+                                      },
+                                      "commitment": {
+                                        "type": "string",
+                                        "pattern": "^[0-9a-f]{64}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "cid",
+                                      "bytes",
+                                      "mediaType",
+                                      "commitment"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "cover": {
+                                    "type": "object",
+                                    "properties": {
+                                      "cid": {
+                                        "type": "string",
+                                        "maxLength": 128
+                                      },
+                                      "bytes": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 2097152
+                                      },
+                                      "mediaType": {
+                                        "type": "string",
+                                        "enum": [
+                                          "image/png",
+                                          "image/jpeg",
+                                          "image/webp"
+                                        ]
+                                      },
+                                      "commitment": {
+                                        "type": "string",
+                                        "pattern": "^[0-9a-f]{64}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "cid",
+                                      "bytes",
+                                      "mediaType",
+                                      "commitment"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "title",
+                              "description"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "title",
+                          "description",
+                          "purpose",
+                          "setup",
+                          "privateIdentity"
+                        ],
+                        "additionalProperties": false
                       }
                     ]
                   },
@@ -13478,6 +16127,230 @@ export const CoreHelpBundle:HelpBundle={
                       "operator"
                     ],
                     "additionalProperties": false
+                  },
+                  "privateSetup": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "daoId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "documentId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "contextCommitment": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 49152,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "stage": {
+                            "type": "string",
+                            "const": "invitation"
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "daoId",
+                          "documentId",
+                          "contextCommitment",
+                          "envelope",
+                          "stage"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "daoId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "documentId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "contextCommitment": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 49152,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "stage": {
+                            "type": "string",
+                            "const": "founder"
+                          },
+                          "epochCommitment": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "selfGrant": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "ephemeralKey": {
+                                "type": "object",
+                                "properties": {
+                                  "kty": {
+                                    "type": "string",
+                                    "const": "EC"
+                                  },
+                                  "crv": {
+                                    "type": "string",
+                                    "const": "P-256"
+                                  },
+                                  "x": {
+                                    "type": "string",
+                                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                                  },
+                                  "y": {
+                                    "type": "string",
+                                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                                  }
+                                },
+                                "required": [
+                                  "kty",
+                                  "crv",
+                                  "x",
+                                  "y"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "salt": {
+                                "type": "string",
+                                "minLength": 44,
+                                "maxLength": 44,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "envelope": {
+                                "type": "object",
+                                "properties": {
+                                  "version": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "algorithm": {
+                                    "type": "string",
+                                    "const": "AES-256-GCM"
+                                  },
+                                  "iv": {
+                                    "type": "string",
+                                    "minLength": 16,
+                                    "maxLength": 16,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  },
+                                  "ciphertext": {
+                                    "type": "string",
+                                    "minLength": 24,
+                                    "maxLength": 4096,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  }
+                                },
+                                "required": [
+                                  "version",
+                                  "algorithm",
+                                  "iv",
+                                  "ciphertext"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "ephemeralKey",
+                              "salt",
+                              "envelope"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "daoId",
+                          "documentId",
+                          "contextCommitment",
+                          "envelope",
+                          "stage",
+                          "epochCommitment",
+                          "selfGrant"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -13946,6 +16819,308 @@ export const CoreHelpBundle:HelpBundle={
                           "branding"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 4
+                          },
+                          "title": {
+                            "type": "string",
+                            "const": "Private DAO"
+                          },
+                          "description": {
+                            "type": "string",
+                            "const": ""
+                          },
+                          "purpose": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "setup": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "presetId": {
+                                    "type": "string",
+                                    "enum": [
+                                      "community",
+                                      "ngo-grants",
+                                      "gaming-guild",
+                                      "team",
+                                      "custom"
+                                    ]
+                                  },
+                                  "presetVersion": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "participantMode": {
+                                    "type": "string",
+                                    "enum": [
+                                      "humans",
+                                      "mixed",
+                                      "agents-guarded"
+                                    ]
+                                  },
+                                  "governance": {
+                                    "type": "object",
+                                    "properties": {
+                                      "weight": {
+                                        "type": "string",
+                                        "enum": [
+                                          "member",
+                                          "credit",
+                                          "native-stake"
+                                        ]
+                                      },
+                                      "duration": {
+                                        "type": "integer",
+                                        "minimum": 60,
+                                        "maximum": 2592000
+                                      },
+                                      "quorumBasisPoints": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 10000
+                                      },
+                                      "approvalBasisPoints": {
+                                        "type": "integer",
+                                        "minimum": 5001,
+                                        "maximum": 10000
+                                      },
+                                      "governedWorks": {
+                                        "type": "boolean"
+                                      },
+                                      "maxCommitment": {
+                                        "type": "string"
+                                      },
+                                      "dailyCommitment": {
+                                        "type": "string"
+                                      },
+                                      "guardian": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string",
+                                            "const": ""
+                                          },
+                                          {
+                                            "type": "string",
+                                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "weight",
+                                      "duration",
+                                      "quorumBasisPoints",
+                                      "approvalBasisPoints",
+                                      "governedWorks",
+                                      "maxCommitment",
+                                      "dailyCommitment",
+                                      "guardian"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "presetId",
+                                  "presetVersion",
+                                  "participantMode",
+                                  "governance"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "privateIdentity": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "documentId": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  },
+                                  "version": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 4294967295
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  },
+                                  "keyEpoch": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  }
+                                },
+                                "required": [
+                                  "documentId",
+                                  "version",
+                                  "commitment",
+                                  "keyEpoch"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "privateAssets": {
+                            "maxItems": 2,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "documentId": {
+                                  "type": "string",
+                                  "maxLength": 20
+                                },
+                                "version": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 4294967295
+                                },
+                                "commitment": {
+                                  "type": "string",
+                                  "pattern": "^[0-9a-f]{64}$"
+                                },
+                                "keyEpoch": {
+                                  "type": "string",
+                                  "maxLength": 20
+                                }
+                              },
+                              "required": [
+                                "documentId",
+                                "version",
+                                "commitment",
+                                "keyEpoch"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "publicIdentity": {
+                            "type": "object",
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 160
+                              },
+                              "description": {
+                                "default": "",
+                                "type": "string",
+                                "maxLength": 4000
+                              },
+                              "branding": {
+                                "type": "object",
+                                "properties": {
+                                  "summary": {
+                                    "type": "string",
+                                    "maxLength": 280
+                                  },
+                                  "logo": {
+                                    "type": "object",
+                                    "properties": {
+                                      "cid": {
+                                        "type": "string",
+                                        "maxLength": 128
+                                      },
+                                      "bytes": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 2097152
+                                      },
+                                      "mediaType": {
+                                        "type": "string",
+                                        "enum": [
+                                          "image/png",
+                                          "image/jpeg",
+                                          "image/webp"
+                                        ]
+                                      },
+                                      "commitment": {
+                                        "type": "string",
+                                        "pattern": "^[0-9a-f]{64}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "cid",
+                                      "bytes",
+                                      "mediaType",
+                                      "commitment"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "cover": {
+                                    "type": "object",
+                                    "properties": {
+                                      "cid": {
+                                        "type": "string",
+                                        "maxLength": 128
+                                      },
+                                      "bytes": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 2097152
+                                      },
+                                      "mediaType": {
+                                        "type": "string",
+                                        "enum": [
+                                          "image/png",
+                                          "image/jpeg",
+                                          "image/webp"
+                                        ]
+                                      },
+                                      "commitment": {
+                                        "type": "string",
+                                        "pattern": "^[0-9a-f]{64}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "cid",
+                                      "bytes",
+                                      "mediaType",
+                                      "commitment"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "title",
+                              "description"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "title",
+                          "description",
+                          "purpose",
+                          "setup",
+                          "privateIdentity"
+                        ],
+                        "additionalProperties": false
                       }
                     ]
                   },
@@ -14128,6 +17303,230 @@ export const CoreHelpBundle:HelpBundle={
                       "operator"
                     ],
                     "additionalProperties": false
+                  },
+                  "privateSetup": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "daoId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "documentId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "contextCommitment": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 49152,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "stage": {
+                            "type": "string",
+                            "const": "invitation"
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "daoId",
+                          "documentId",
+                          "contextCommitment",
+                          "envelope",
+                          "stage"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "daoId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "documentId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "contextCommitment": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 49152,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "stage": {
+                            "type": "string",
+                            "const": "founder"
+                          },
+                          "epochCommitment": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "selfGrant": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "ephemeralKey": {
+                                "type": "object",
+                                "properties": {
+                                  "kty": {
+                                    "type": "string",
+                                    "const": "EC"
+                                  },
+                                  "crv": {
+                                    "type": "string",
+                                    "const": "P-256"
+                                  },
+                                  "x": {
+                                    "type": "string",
+                                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                                  },
+                                  "y": {
+                                    "type": "string",
+                                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                                  }
+                                },
+                                "required": [
+                                  "kty",
+                                  "crv",
+                                  "x",
+                                  "y"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "salt": {
+                                "type": "string",
+                                "minLength": 44,
+                                "maxLength": 44,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "envelope": {
+                                "type": "object",
+                                "properties": {
+                                  "version": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "algorithm": {
+                                    "type": "string",
+                                    "const": "AES-256-GCM"
+                                  },
+                                  "iv": {
+                                    "type": "string",
+                                    "minLength": 16,
+                                    "maxLength": 16,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  },
+                                  "ciphertext": {
+                                    "type": "string",
+                                    "minLength": 24,
+                                    "maxLength": 4096,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  }
+                                },
+                                "required": [
+                                  "version",
+                                  "algorithm",
+                                  "iv",
+                                  "ciphertext"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "ephemeralKey",
+                              "salt",
+                              "envelope"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "daoId",
+                          "documentId",
+                          "contextCommitment",
+                          "envelope",
+                          "stage",
+                          "epochCommitment",
+                          "selfGrant"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -14211,6 +17610,160 @@ export const CoreHelpBundle:HelpBundle={
               "tlos",
               "free"
             ]
+          },
+          "privateSetup": {
+            "type": "object",
+            "properties": {
+              "schemaVersion": {
+                "type": "number",
+                "const": 1
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "documentId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "contextCommitment": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "envelope": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "algorithm": {
+                    "type": "string",
+                    "const": "AES-256-GCM"
+                  },
+                  "iv": {
+                    "type": "string",
+                    "minLength": 16,
+                    "maxLength": 16,
+                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                  },
+                  "ciphertext": {
+                    "type": "string",
+                    "minLength": 24,
+                    "maxLength": 49152,
+                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                  }
+                },
+                "required": [
+                  "version",
+                  "algorithm",
+                  "iv",
+                  "ciphertext"
+                ],
+                "additionalProperties": false
+              },
+              "stage": {
+                "type": "string",
+                "const": "founder"
+              },
+              "epochCommitment": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "selfGrant": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "ephemeralKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "salt": {
+                    "type": "string",
+                    "minLength": 44,
+                    "maxLength": 44,
+                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                  },
+                  "envelope": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "algorithm": {
+                        "type": "string",
+                        "const": "AES-256-GCM"
+                      },
+                      "iv": {
+                        "type": "string",
+                        "minLength": 16,
+                        "maxLength": 16,
+                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                      },
+                      "ciphertext": {
+                        "type": "string",
+                        "minLength": 24,
+                        "maxLength": 4096,
+                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "algorithm",
+                      "iv",
+                      "ciphertext"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "version",
+                  "ephemeralKey",
+                  "salt",
+                  "envelope"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "schemaVersion",
+              "daoId",
+              "documentId",
+              "contextCommitment",
+              "envelope",
+              "stage",
+              "epochCommitment",
+              "selfGrant"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -14652,6 +18205,308 @@ export const CoreHelpBundle:HelpBundle={
                       "branding"
                     ],
                     "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 4
+                      },
+                      "title": {
+                        "type": "string",
+                        "const": "Private DAO"
+                      },
+                      "description": {
+                        "type": "string",
+                        "const": ""
+                      },
+                      "purpose": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "setup": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "presetId": {
+                                "type": "string",
+                                "enum": [
+                                  "community",
+                                  "ngo-grants",
+                                  "gaming-guild",
+                                  "team",
+                                  "custom"
+                                ]
+                              },
+                              "presetVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "participantMode": {
+                                "type": "string",
+                                "enum": [
+                                  "humans",
+                                  "mixed",
+                                  "agents-guarded"
+                                ]
+                              },
+                              "governance": {
+                                "type": "object",
+                                "properties": {
+                                  "weight": {
+                                    "type": "string",
+                                    "enum": [
+                                      "member",
+                                      "credit",
+                                      "native-stake"
+                                    ]
+                                  },
+                                  "duration": {
+                                    "type": "integer",
+                                    "minimum": 60,
+                                    "maximum": 2592000
+                                  },
+                                  "quorumBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 10000
+                                  },
+                                  "approvalBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 5001,
+                                    "maximum": 10000
+                                  },
+                                  "governedWorks": {
+                                    "type": "boolean"
+                                  },
+                                  "maxCommitment": {
+                                    "type": "string"
+                                  },
+                                  "dailyCommitment": {
+                                    "type": "string"
+                                  },
+                                  "guardian": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "const": ""
+                                      },
+                                      {
+                                        "type": "string",
+                                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "weight",
+                                  "duration",
+                                  "quorumBasisPoints",
+                                  "approvalBasisPoints",
+                                  "governedWorks",
+                                  "maxCommitment",
+                                  "dailyCommitment",
+                                  "guardian"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "presetId",
+                              "presetVersion",
+                              "participantMode",
+                              "governance"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "privateIdentity": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "documentId": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "version": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 4294967295
+                              },
+                              "commitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              },
+                              "keyEpoch": {
+                                "type": "string",
+                                "maxLength": 20
+                              }
+                            },
+                            "required": [
+                              "documentId",
+                              "version",
+                              "commitment",
+                              "keyEpoch"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "privateAssets": {
+                        "maxItems": 2,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "documentId": {
+                              "type": "string",
+                              "maxLength": 20
+                            },
+                            "version": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 4294967295
+                            },
+                            "commitment": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "keyEpoch": {
+                              "type": "string",
+                              "maxLength": 20
+                            }
+                          },
+                          "required": [
+                            "documentId",
+                            "version",
+                            "commitment",
+                            "keyEpoch"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "publicIdentity": {
+                        "type": "object",
+                        "properties": {
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "description": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 4000
+                          },
+                          "branding": {
+                            "type": "object",
+                            "properties": {
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 280
+                              },
+                              "logo": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "cover": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "title",
+                          "description"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "description",
+                      "purpose",
+                      "setup",
+                      "privateIdentity"
+                    ],
+                    "additionalProperties": false
                   }
                 ]
               },
@@ -14834,6 +18689,230 @@ export const CoreHelpBundle:HelpBundle={
                   "operator"
                 ],
                 "additionalProperties": false
+              },
+              "privateSetup": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "daoId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "documentId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "contextCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "envelope": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "algorithm": {
+                            "type": "string",
+                            "const": "AES-256-GCM"
+                          },
+                          "iv": {
+                            "type": "string",
+                            "minLength": 16,
+                            "maxLength": 16,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "ciphertext": {
+                            "type": "string",
+                            "minLength": 24,
+                            "maxLength": 49152,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "algorithm",
+                          "iv",
+                          "ciphertext"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "stage": {
+                        "type": "string",
+                        "const": "invitation"
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "daoId",
+                      "documentId",
+                      "contextCommitment",
+                      "envelope",
+                      "stage"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "daoId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "documentId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "contextCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "envelope": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "algorithm": {
+                            "type": "string",
+                            "const": "AES-256-GCM"
+                          },
+                          "iv": {
+                            "type": "string",
+                            "minLength": 16,
+                            "maxLength": 16,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "ciphertext": {
+                            "type": "string",
+                            "minLength": 24,
+                            "maxLength": 49152,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "algorithm",
+                          "iv",
+                          "ciphertext"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "stage": {
+                        "type": "string",
+                        "const": "founder"
+                      },
+                      "epochCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "selfGrant": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "ephemeralKey": {
+                            "type": "object",
+                            "properties": {
+                              "kty": {
+                                "type": "string",
+                                "const": "EC"
+                              },
+                              "crv": {
+                                "type": "string",
+                                "const": "P-256"
+                              },
+                              "x": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9_-]{43}$"
+                              },
+                              "y": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9_-]{43}$"
+                              }
+                            },
+                            "required": [
+                              "kty",
+                              "crv",
+                              "x",
+                              "y"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "salt": {
+                            "type": "string",
+                            "minLength": 44,
+                            "maxLength": 44,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 4096,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "ephemeralKey",
+                          "salt",
+                          "envelope"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "daoId",
+                      "documentId",
+                      "contextCommitment",
+                      "envelope",
+                      "stage",
+                      "epochCommitment",
+                      "selfGrant"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
               }
             },
             "required": [
@@ -33610,6 +37689,309 @@ export const CoreHelpBundle:HelpBundle={
                       "branding"
                     ],
                     "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 4
+                      },
+                      "title": {
+                        "type": "string",
+                        "const": "Private DAO"
+                      },
+                      "description": {
+                        "type": "string",
+                        "const": ""
+                      },
+                      "purpose": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "setup": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "presetId": {
+                                "type": "string",
+                                "enum": [
+                                  "community",
+                                  "ngo-grants",
+                                  "gaming-guild",
+                                  "team",
+                                  "custom"
+                                ]
+                              },
+                              "presetVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "participantMode": {
+                                "type": "string",
+                                "enum": [
+                                  "humans",
+                                  "mixed",
+                                  "agents-guarded"
+                                ]
+                              },
+                              "governance": {
+                                "type": "object",
+                                "properties": {
+                                  "weight": {
+                                    "type": "string",
+                                    "enum": [
+                                      "member",
+                                      "credit",
+                                      "native-stake"
+                                    ]
+                                  },
+                                  "duration": {
+                                    "type": "integer",
+                                    "minimum": 60,
+                                    "maximum": 2592000
+                                  },
+                                  "quorumBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 10000
+                                  },
+                                  "approvalBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 5001,
+                                    "maximum": 10000
+                                  },
+                                  "governedWorks": {
+                                    "type": "boolean"
+                                  },
+                                  "maxCommitment": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  },
+                                  "dailyCommitment": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  },
+                                  "guardian": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "const": ""
+                                      },
+                                      {
+                                        "type": "string",
+                                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "weight",
+                                  "duration",
+                                  "quorumBasisPoints",
+                                  "approvalBasisPoints",
+                                  "governedWorks",
+                                  "maxCommitment",
+                                  "dailyCommitment",
+                                  "guardian"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "presetId",
+                              "presetVersion",
+                              "participantMode",
+                              "governance"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "privateIdentity": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "documentId": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "version": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 4294967295
+                              },
+                              "commitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              },
+                              "keyEpoch": {
+                                "type": "string",
+                                "maxLength": 20
+                              }
+                            },
+                            "required": [
+                              "documentId",
+                              "version",
+                              "commitment",
+                              "keyEpoch"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "privateAssets": {
+                        "maxItems": 2,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "documentId": {
+                              "type": "string",
+                              "maxLength": 20
+                            },
+                            "version": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 4294967295
+                            },
+                            "commitment": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "keyEpoch": {
+                              "type": "string",
+                              "maxLength": 20
+                            }
+                          },
+                          "required": [
+                            "documentId",
+                            "version",
+                            "commitment",
+                            "keyEpoch"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "publicIdentity": {
+                        "type": "object",
+                        "properties": {
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "description": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 4000
+                          },
+                          "branding": {
+                            "type": "object",
+                            "properties": {
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 280
+                              },
+                              "logo": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "cover": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "title"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "description",
+                      "purpose",
+                      "setup",
+                      "privateIdentity"
+                    ],
+                    "additionalProperties": false
                   }
                 ]
               },
@@ -33794,6 +38176,230 @@ export const CoreHelpBundle:HelpBundle={
                   "operator"
                 ],
                 "additionalProperties": false
+              },
+              "privateSetup": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "daoId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "documentId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "contextCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "envelope": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "algorithm": {
+                            "type": "string",
+                            "const": "AES-256-GCM"
+                          },
+                          "iv": {
+                            "type": "string",
+                            "minLength": 16,
+                            "maxLength": 16,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "ciphertext": {
+                            "type": "string",
+                            "minLength": 24,
+                            "maxLength": 49152,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "algorithm",
+                          "iv",
+                          "ciphertext"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "stage": {
+                        "type": "string",
+                        "const": "invitation"
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "daoId",
+                      "documentId",
+                      "contextCommitment",
+                      "envelope",
+                      "stage"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "daoId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "documentId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "contextCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "envelope": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "algorithm": {
+                            "type": "string",
+                            "const": "AES-256-GCM"
+                          },
+                          "iv": {
+                            "type": "string",
+                            "minLength": 16,
+                            "maxLength": 16,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "ciphertext": {
+                            "type": "string",
+                            "minLength": 24,
+                            "maxLength": 49152,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "algorithm",
+                          "iv",
+                          "ciphertext"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "stage": {
+                        "type": "string",
+                        "const": "founder"
+                      },
+                      "epochCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "selfGrant": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "ephemeralKey": {
+                            "type": "object",
+                            "properties": {
+                              "kty": {
+                                "type": "string",
+                                "const": "EC"
+                              },
+                              "crv": {
+                                "type": "string",
+                                "const": "P-256"
+                              },
+                              "x": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9_-]{43}$"
+                              },
+                              "y": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9_-]{43}$"
+                              }
+                            },
+                            "required": [
+                              "kty",
+                              "crv",
+                              "x",
+                              "y"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "salt": {
+                            "type": "string",
+                            "minLength": 44,
+                            "maxLength": 44,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 4096,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "ephemeralKey",
+                          "salt",
+                          "envelope"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "daoId",
+                      "documentId",
+                      "contextCommitment",
+                      "envelope",
+                      "stage",
+                      "epochCommitment",
+                      "selfGrant"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
               }
             },
             "required": [
@@ -34245,6 +38851,308 @@ export const CoreHelpBundle:HelpBundle={
                       "branding"
                     ],
                     "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 4
+                      },
+                      "title": {
+                        "type": "string",
+                        "const": "Private DAO"
+                      },
+                      "description": {
+                        "type": "string",
+                        "const": ""
+                      },
+                      "purpose": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "setup": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "presetId": {
+                                "type": "string",
+                                "enum": [
+                                  "community",
+                                  "ngo-grants",
+                                  "gaming-guild",
+                                  "team",
+                                  "custom"
+                                ]
+                              },
+                              "presetVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "participantMode": {
+                                "type": "string",
+                                "enum": [
+                                  "humans",
+                                  "mixed",
+                                  "agents-guarded"
+                                ]
+                              },
+                              "governance": {
+                                "type": "object",
+                                "properties": {
+                                  "weight": {
+                                    "type": "string",
+                                    "enum": [
+                                      "member",
+                                      "credit",
+                                      "native-stake"
+                                    ]
+                                  },
+                                  "duration": {
+                                    "type": "integer",
+                                    "minimum": 60,
+                                    "maximum": 2592000
+                                  },
+                                  "quorumBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 10000
+                                  },
+                                  "approvalBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 5001,
+                                    "maximum": 10000
+                                  },
+                                  "governedWorks": {
+                                    "type": "boolean"
+                                  },
+                                  "maxCommitment": {
+                                    "type": "string"
+                                  },
+                                  "dailyCommitment": {
+                                    "type": "string"
+                                  },
+                                  "guardian": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "const": ""
+                                      },
+                                      {
+                                        "type": "string",
+                                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "weight",
+                                  "duration",
+                                  "quorumBasisPoints",
+                                  "approvalBasisPoints",
+                                  "governedWorks",
+                                  "maxCommitment",
+                                  "dailyCommitment",
+                                  "guardian"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "presetId",
+                              "presetVersion",
+                              "participantMode",
+                              "governance"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "privateIdentity": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "documentId": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "version": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 4294967295
+                              },
+                              "commitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              },
+                              "keyEpoch": {
+                                "type": "string",
+                                "maxLength": 20
+                              }
+                            },
+                            "required": [
+                              "documentId",
+                              "version",
+                              "commitment",
+                              "keyEpoch"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "privateAssets": {
+                        "maxItems": 2,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "documentId": {
+                              "type": "string",
+                              "maxLength": 20
+                            },
+                            "version": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 4294967295
+                            },
+                            "commitment": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "keyEpoch": {
+                              "type": "string",
+                              "maxLength": 20
+                            }
+                          },
+                          "required": [
+                            "documentId",
+                            "version",
+                            "commitment",
+                            "keyEpoch"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "publicIdentity": {
+                        "type": "object",
+                        "properties": {
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "description": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 4000
+                          },
+                          "branding": {
+                            "type": "object",
+                            "properties": {
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 280
+                              },
+                              "logo": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "cover": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "title",
+                          "description"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "description",
+                      "purpose",
+                      "setup",
+                      "privateIdentity"
+                    ],
+                    "additionalProperties": false
                   }
                 ]
               },
@@ -34427,6 +39335,230 @@ export const CoreHelpBundle:HelpBundle={
                   "operator"
                 ],
                 "additionalProperties": false
+              },
+              "privateSetup": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "daoId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "documentId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "contextCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "envelope": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "algorithm": {
+                            "type": "string",
+                            "const": "AES-256-GCM"
+                          },
+                          "iv": {
+                            "type": "string",
+                            "minLength": 16,
+                            "maxLength": 16,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "ciphertext": {
+                            "type": "string",
+                            "minLength": 24,
+                            "maxLength": 49152,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "algorithm",
+                          "iv",
+                          "ciphertext"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "stage": {
+                        "type": "string",
+                        "const": "invitation"
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "daoId",
+                      "documentId",
+                      "contextCommitment",
+                      "envelope",
+                      "stage"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "daoId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "documentId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "contextCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "envelope": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "algorithm": {
+                            "type": "string",
+                            "const": "AES-256-GCM"
+                          },
+                          "iv": {
+                            "type": "string",
+                            "minLength": 16,
+                            "maxLength": 16,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "ciphertext": {
+                            "type": "string",
+                            "minLength": 24,
+                            "maxLength": 49152,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "algorithm",
+                          "iv",
+                          "ciphertext"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "stage": {
+                        "type": "string",
+                        "const": "founder"
+                      },
+                      "epochCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "selfGrant": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "ephemeralKey": {
+                            "type": "object",
+                            "properties": {
+                              "kty": {
+                                "type": "string",
+                                "const": "EC"
+                              },
+                              "crv": {
+                                "type": "string",
+                                "const": "P-256"
+                              },
+                              "x": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9_-]{43}$"
+                              },
+                              "y": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9_-]{43}$"
+                              }
+                            },
+                            "required": [
+                              "kty",
+                              "crv",
+                              "x",
+                              "y"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "salt": {
+                            "type": "string",
+                            "minLength": 44,
+                            "maxLength": 44,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 4096,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "ephemeralKey",
+                          "salt",
+                          "envelope"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "daoId",
+                      "documentId",
+                      "contextCommitment",
+                      "envelope",
+                      "stage",
+                      "epochCommitment",
+                      "selfGrant"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
               }
             },
             "required": [
@@ -35047,6 +40179,308 @@ export const CoreHelpBundle:HelpBundle={
                       "branding"
                     ],
                     "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 4
+                      },
+                      "title": {
+                        "type": "string",
+                        "const": "Private DAO"
+                      },
+                      "description": {
+                        "type": "string",
+                        "const": ""
+                      },
+                      "purpose": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "setup": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "presetId": {
+                                "type": "string",
+                                "enum": [
+                                  "community",
+                                  "ngo-grants",
+                                  "gaming-guild",
+                                  "team",
+                                  "custom"
+                                ]
+                              },
+                              "presetVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "participantMode": {
+                                "type": "string",
+                                "enum": [
+                                  "humans",
+                                  "mixed",
+                                  "agents-guarded"
+                                ]
+                              },
+                              "governance": {
+                                "type": "object",
+                                "properties": {
+                                  "weight": {
+                                    "type": "string",
+                                    "enum": [
+                                      "member",
+                                      "credit",
+                                      "native-stake"
+                                    ]
+                                  },
+                                  "duration": {
+                                    "type": "integer",
+                                    "minimum": 60,
+                                    "maximum": 2592000
+                                  },
+                                  "quorumBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 10000
+                                  },
+                                  "approvalBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 5001,
+                                    "maximum": 10000
+                                  },
+                                  "governedWorks": {
+                                    "type": "boolean"
+                                  },
+                                  "maxCommitment": {
+                                    "type": "string"
+                                  },
+                                  "dailyCommitment": {
+                                    "type": "string"
+                                  },
+                                  "guardian": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "const": ""
+                                      },
+                                      {
+                                        "type": "string",
+                                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "weight",
+                                  "duration",
+                                  "quorumBasisPoints",
+                                  "approvalBasisPoints",
+                                  "governedWorks",
+                                  "maxCommitment",
+                                  "dailyCommitment",
+                                  "guardian"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "presetId",
+                              "presetVersion",
+                              "participantMode",
+                              "governance"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "privateIdentity": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "documentId": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "version": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 4294967295
+                              },
+                              "commitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              },
+                              "keyEpoch": {
+                                "type": "string",
+                                "maxLength": 20
+                              }
+                            },
+                            "required": [
+                              "documentId",
+                              "version",
+                              "commitment",
+                              "keyEpoch"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "privateAssets": {
+                        "maxItems": 2,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "documentId": {
+                              "type": "string",
+                              "maxLength": 20
+                            },
+                            "version": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 4294967295
+                            },
+                            "commitment": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "keyEpoch": {
+                              "type": "string",
+                              "maxLength": 20
+                            }
+                          },
+                          "required": [
+                            "documentId",
+                            "version",
+                            "commitment",
+                            "keyEpoch"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "publicIdentity": {
+                        "type": "object",
+                        "properties": {
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "description": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 4000
+                          },
+                          "branding": {
+                            "type": "object",
+                            "properties": {
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 280
+                              },
+                              "logo": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "cover": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "title",
+                          "description"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "description",
+                      "purpose",
+                      "setup",
+                      "privateIdentity"
+                    ],
+                    "additionalProperties": false
                   }
                 ]
               },
@@ -35229,6 +40663,230 @@ export const CoreHelpBundle:HelpBundle={
                   "operator"
                 ],
                 "additionalProperties": false
+              },
+              "privateSetup": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "daoId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "documentId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "contextCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "envelope": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "algorithm": {
+                            "type": "string",
+                            "const": "AES-256-GCM"
+                          },
+                          "iv": {
+                            "type": "string",
+                            "minLength": 16,
+                            "maxLength": 16,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "ciphertext": {
+                            "type": "string",
+                            "minLength": 24,
+                            "maxLength": 49152,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "algorithm",
+                          "iv",
+                          "ciphertext"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "stage": {
+                        "type": "string",
+                        "const": "invitation"
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "daoId",
+                      "documentId",
+                      "contextCommitment",
+                      "envelope",
+                      "stage"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "daoId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "documentId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "contextCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "envelope": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "algorithm": {
+                            "type": "string",
+                            "const": "AES-256-GCM"
+                          },
+                          "iv": {
+                            "type": "string",
+                            "minLength": 16,
+                            "maxLength": 16,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "ciphertext": {
+                            "type": "string",
+                            "minLength": 24,
+                            "maxLength": 49152,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "algorithm",
+                          "iv",
+                          "ciphertext"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "stage": {
+                        "type": "string",
+                        "const": "founder"
+                      },
+                      "epochCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "selfGrant": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "ephemeralKey": {
+                            "type": "object",
+                            "properties": {
+                              "kty": {
+                                "type": "string",
+                                "const": "EC"
+                              },
+                              "crv": {
+                                "type": "string",
+                                "const": "P-256"
+                              },
+                              "x": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9_-]{43}$"
+                              },
+                              "y": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9_-]{43}$"
+                              }
+                            },
+                            "required": [
+                              "kty",
+                              "crv",
+                              "x",
+                              "y"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "salt": {
+                            "type": "string",
+                            "minLength": 44,
+                            "maxLength": 44,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 4096,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "ephemeralKey",
+                          "salt",
+                          "envelope"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "daoId",
+                      "documentId",
+                      "contextCommitment",
+                      "envelope",
+                      "stage",
+                      "epochCommitment",
+                      "selfGrant"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
               }
             },
             "required": [
@@ -35880,6 +41538,308 @@ export const CoreHelpBundle:HelpBundle={
                       "branding"
                     ],
                     "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 4
+                      },
+                      "title": {
+                        "type": "string",
+                        "const": "Private DAO"
+                      },
+                      "description": {
+                        "type": "string",
+                        "const": ""
+                      },
+                      "purpose": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "setup": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "presetId": {
+                                "type": "string",
+                                "enum": [
+                                  "community",
+                                  "ngo-grants",
+                                  "gaming-guild",
+                                  "team",
+                                  "custom"
+                                ]
+                              },
+                              "presetVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "participantMode": {
+                                "type": "string",
+                                "enum": [
+                                  "humans",
+                                  "mixed",
+                                  "agents-guarded"
+                                ]
+                              },
+                              "governance": {
+                                "type": "object",
+                                "properties": {
+                                  "weight": {
+                                    "type": "string",
+                                    "enum": [
+                                      "member",
+                                      "credit",
+                                      "native-stake"
+                                    ]
+                                  },
+                                  "duration": {
+                                    "type": "integer",
+                                    "minimum": 60,
+                                    "maximum": 2592000
+                                  },
+                                  "quorumBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 10000
+                                  },
+                                  "approvalBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 5001,
+                                    "maximum": 10000
+                                  },
+                                  "governedWorks": {
+                                    "type": "boolean"
+                                  },
+                                  "maxCommitment": {
+                                    "type": "string"
+                                  },
+                                  "dailyCommitment": {
+                                    "type": "string"
+                                  },
+                                  "guardian": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "const": ""
+                                      },
+                                      {
+                                        "type": "string",
+                                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "weight",
+                                  "duration",
+                                  "quorumBasisPoints",
+                                  "approvalBasisPoints",
+                                  "governedWorks",
+                                  "maxCommitment",
+                                  "dailyCommitment",
+                                  "guardian"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "presetId",
+                              "presetVersion",
+                              "participantMode",
+                              "governance"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "privateIdentity": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "documentId": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "version": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 4294967295
+                              },
+                              "commitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              },
+                              "keyEpoch": {
+                                "type": "string",
+                                "maxLength": 20
+                              }
+                            },
+                            "required": [
+                              "documentId",
+                              "version",
+                              "commitment",
+                              "keyEpoch"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "privateAssets": {
+                        "maxItems": 2,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "documentId": {
+                              "type": "string",
+                              "maxLength": 20
+                            },
+                            "version": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 4294967295
+                            },
+                            "commitment": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "keyEpoch": {
+                              "type": "string",
+                              "maxLength": 20
+                            }
+                          },
+                          "required": [
+                            "documentId",
+                            "version",
+                            "commitment",
+                            "keyEpoch"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "publicIdentity": {
+                        "type": "object",
+                        "properties": {
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "description": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 4000
+                          },
+                          "branding": {
+                            "type": "object",
+                            "properties": {
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 280
+                              },
+                              "logo": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "cover": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "title",
+                          "description"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "description",
+                      "purpose",
+                      "setup",
+                      "privateIdentity"
+                    ],
+                    "additionalProperties": false
                   }
                 ]
               },
@@ -36062,6 +42022,230 @@ export const CoreHelpBundle:HelpBundle={
                   "operator"
                 ],
                 "additionalProperties": false
+              },
+              "privateSetup": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "daoId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "documentId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "contextCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "envelope": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "algorithm": {
+                            "type": "string",
+                            "const": "AES-256-GCM"
+                          },
+                          "iv": {
+                            "type": "string",
+                            "minLength": 16,
+                            "maxLength": 16,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "ciphertext": {
+                            "type": "string",
+                            "minLength": 24,
+                            "maxLength": 49152,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "algorithm",
+                          "iv",
+                          "ciphertext"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "stage": {
+                        "type": "string",
+                        "const": "invitation"
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "daoId",
+                      "documentId",
+                      "contextCommitment",
+                      "envelope",
+                      "stage"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "daoId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "documentId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "contextCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "envelope": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "algorithm": {
+                            "type": "string",
+                            "const": "AES-256-GCM"
+                          },
+                          "iv": {
+                            "type": "string",
+                            "minLength": 16,
+                            "maxLength": 16,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "ciphertext": {
+                            "type": "string",
+                            "minLength": 24,
+                            "maxLength": 49152,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "algorithm",
+                          "iv",
+                          "ciphertext"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "stage": {
+                        "type": "string",
+                        "const": "founder"
+                      },
+                      "epochCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "selfGrant": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "ephemeralKey": {
+                            "type": "object",
+                            "properties": {
+                              "kty": {
+                                "type": "string",
+                                "const": "EC"
+                              },
+                              "crv": {
+                                "type": "string",
+                                "const": "P-256"
+                              },
+                              "x": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9_-]{43}$"
+                              },
+                              "y": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9_-]{43}$"
+                              }
+                            },
+                            "required": [
+                              "kty",
+                              "crv",
+                              "x",
+                              "y"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "salt": {
+                            "type": "string",
+                            "minLength": 44,
+                            "maxLength": 44,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 4096,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "ephemeralKey",
+                          "salt",
+                          "envelope"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "daoId",
+                      "documentId",
+                      "contextCommitment",
+                      "envelope",
+                      "stage",
+                      "epochCommitment",
+                      "selfGrant"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
               }
             },
             "required": [
@@ -41235,6 +47419,309 @@ export const CoreHelpBundle:HelpBundle={
                   "branding"
                 ],
                 "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "schemaVersion": {
+                    "type": "number",
+                    "const": 4
+                  },
+                  "title": {
+                    "type": "string",
+                    "const": "Private DAO"
+                  },
+                  "description": {
+                    "type": "string",
+                    "const": ""
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "enum": [
+                      "community",
+                      "ngo-grants",
+                      "gaming-guild",
+                      "team",
+                      "custom"
+                    ]
+                  },
+                  "setup": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "presetId": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "presetVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "participantMode": {
+                            "type": "string",
+                            "enum": [
+                              "humans",
+                              "mixed",
+                              "agents-guarded"
+                            ]
+                          },
+                          "governance": {
+                            "type": "object",
+                            "properties": {
+                              "weight": {
+                                "type": "string",
+                                "enum": [
+                                  "member",
+                                  "credit",
+                                  "native-stake"
+                                ]
+                              },
+                              "duration": {
+                                "type": "integer",
+                                "minimum": 60,
+                                "maximum": 2592000
+                              },
+                              "quorumBasisPoints": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 10000
+                              },
+                              "approvalBasisPoints": {
+                                "type": "integer",
+                                "minimum": 5001,
+                                "maximum": 10000
+                              },
+                              "governedWorks": {
+                                "type": "boolean"
+                              },
+                              "maxCommitment": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "dailyCommitment": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "guardian": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "const": ""
+                                  },
+                                  {
+                                    "type": "string",
+                                    "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "weight",
+                              "duration",
+                              "quorumBasisPoints",
+                              "approvalBasisPoints",
+                              "governedWorks",
+                              "maxCommitment",
+                              "dailyCommitment",
+                              "guardian"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "presetId",
+                          "presetVersion",
+                          "participantMode",
+                          "governance"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "privateIdentity": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "documentId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "version": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 4294967295
+                          },
+                          "commitment": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "keyEpoch": {
+                            "type": "string",
+                            "maxLength": 20
+                          }
+                        },
+                        "required": [
+                          "documentId",
+                          "version",
+                          "commitment",
+                          "keyEpoch"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "privateAssets": {
+                    "maxItems": 2,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "documentId": {
+                          "type": "string",
+                          "maxLength": 20
+                        },
+                        "version": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 4294967295
+                        },
+                        "commitment": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{64}$"
+                        },
+                        "keyEpoch": {
+                          "type": "string",
+                          "maxLength": 20
+                        }
+                      },
+                      "required": [
+                        "documentId",
+                        "version",
+                        "commitment",
+                        "keyEpoch"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "publicIdentity": {
+                    "type": "object",
+                    "properties": {
+                      "title": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 160
+                      },
+                      "description": {
+                        "default": "",
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      "branding": {
+                        "type": "object",
+                        "properties": {
+                          "summary": {
+                            "type": "string",
+                            "maxLength": 280
+                          },
+                          "logo": {
+                            "type": "object",
+                            "properties": {
+                              "cid": {
+                                "type": "string",
+                                "maxLength": 128
+                              },
+                              "bytes": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 2097152
+                              },
+                              "mediaType": {
+                                "type": "string",
+                                "enum": [
+                                  "image/png",
+                                  "image/jpeg",
+                                  "image/webp"
+                                ]
+                              },
+                              "commitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              }
+                            },
+                            "required": [
+                              "cid",
+                              "bytes",
+                              "mediaType",
+                              "commitment"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "cover": {
+                            "type": "object",
+                            "properties": {
+                              "cid": {
+                                "type": "string",
+                                "maxLength": 128
+                              },
+                              "bytes": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 2097152
+                              },
+                              "mediaType": {
+                                "type": "string",
+                                "enum": [
+                                  "image/png",
+                                  "image/jpeg",
+                                  "image/webp"
+                                ]
+                              },
+                              "commitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              }
+                            },
+                            "required": [
+                              "cid",
+                              "bytes",
+                              "mediaType",
+                              "commitment"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "title"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "schemaVersion",
+                  "title",
+                  "description",
+                  "purpose",
+                  "setup",
+                  "privateIdentity"
+                ],
+                "additionalProperties": false
               }
             ]
           },
@@ -41419,6 +47906,230 @@ export const CoreHelpBundle:HelpBundle={
               "operator"
             ],
             "additionalProperties": false
+          },
+          "privateSetup": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "schemaVersion": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "daoId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "documentId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "contextCommitment": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "envelope": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "algorithm": {
+                        "type": "string",
+                        "const": "AES-256-GCM"
+                      },
+                      "iv": {
+                        "type": "string",
+                        "minLength": 16,
+                        "maxLength": 16,
+                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                      },
+                      "ciphertext": {
+                        "type": "string",
+                        "minLength": 24,
+                        "maxLength": 49152,
+                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "algorithm",
+                      "iv",
+                      "ciphertext"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "stage": {
+                    "type": "string",
+                    "const": "invitation"
+                  }
+                },
+                "required": [
+                  "schemaVersion",
+                  "daoId",
+                  "documentId",
+                  "contextCommitment",
+                  "envelope",
+                  "stage"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "schemaVersion": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "daoId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "documentId": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "contextCommitment": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "envelope": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "algorithm": {
+                        "type": "string",
+                        "const": "AES-256-GCM"
+                      },
+                      "iv": {
+                        "type": "string",
+                        "minLength": 16,
+                        "maxLength": 16,
+                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                      },
+                      "ciphertext": {
+                        "type": "string",
+                        "minLength": 24,
+                        "maxLength": 49152,
+                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "algorithm",
+                      "iv",
+                      "ciphertext"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "stage": {
+                    "type": "string",
+                    "const": "founder"
+                  },
+                  "epochCommitment": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "selfGrant": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "ephemeralKey": {
+                        "type": "object",
+                        "properties": {
+                          "kty": {
+                            "type": "string",
+                            "const": "EC"
+                          },
+                          "crv": {
+                            "type": "string",
+                            "const": "P-256"
+                          },
+                          "x": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{43}$"
+                          },
+                          "y": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_-]{43}$"
+                          }
+                        },
+                        "required": [
+                          "kty",
+                          "crv",
+                          "x",
+                          "y"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "salt": {
+                        "type": "string",
+                        "minLength": 44,
+                        "maxLength": 44,
+                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                      },
+                      "envelope": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "algorithm": {
+                            "type": "string",
+                            "const": "AES-256-GCM"
+                          },
+                          "iv": {
+                            "type": "string",
+                            "minLength": 16,
+                            "maxLength": 16,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "ciphertext": {
+                            "type": "string",
+                            "minLength": 24,
+                            "maxLength": 4096,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "algorithm",
+                          "iv",
+                          "ciphertext"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "ephemeralKey",
+                      "salt",
+                      "envelope"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "schemaVersion",
+                  "daoId",
+                  "documentId",
+                  "contextCommitment",
+                  "envelope",
+                  "stage",
+                  "epochCommitment",
+                  "selfGrant"
+                ],
+                "additionalProperties": false
+              }
+            ]
           }
         },
         "required": [
@@ -42128,6 +48839,308 @@ export const CoreHelpBundle:HelpBundle={
                             "branding"
                           ],
                           "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "schemaVersion": {
+                              "type": "number",
+                              "const": 4
+                            },
+                            "title": {
+                              "type": "string",
+                              "const": "Private DAO"
+                            },
+                            "description": {
+                              "type": "string",
+                              "const": ""
+                            },
+                            "purpose": {
+                              "type": "string",
+                              "enum": [
+                                "community",
+                                "ngo-grants",
+                                "gaming-guild",
+                                "team",
+                                "custom"
+                              ]
+                            },
+                            "setup": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "presetId": {
+                                      "type": "string",
+                                      "enum": [
+                                        "community",
+                                        "ngo-grants",
+                                        "gaming-guild",
+                                        "team",
+                                        "custom"
+                                      ]
+                                    },
+                                    "presetVersion": {
+                                      "type": "number",
+                                      "const": 1
+                                    },
+                                    "participantMode": {
+                                      "type": "string",
+                                      "enum": [
+                                        "humans",
+                                        "mixed",
+                                        "agents-guarded"
+                                      ]
+                                    },
+                                    "governance": {
+                                      "type": "object",
+                                      "properties": {
+                                        "weight": {
+                                          "type": "string",
+                                          "enum": [
+                                            "member",
+                                            "credit",
+                                            "native-stake"
+                                          ]
+                                        },
+                                        "duration": {
+                                          "type": "integer",
+                                          "minimum": 60,
+                                          "maximum": 2592000
+                                        },
+                                        "quorumBasisPoints": {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 10000
+                                        },
+                                        "approvalBasisPoints": {
+                                          "type": "integer",
+                                          "minimum": 5001,
+                                          "maximum": 10000
+                                        },
+                                        "governedWorks": {
+                                          "type": "boolean"
+                                        },
+                                        "maxCommitment": {
+                                          "type": "string"
+                                        },
+                                        "dailyCommitment": {
+                                          "type": "string"
+                                        },
+                                        "guardian": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string",
+                                              "const": ""
+                                            },
+                                            {
+                                              "type": "string",
+                                              "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "weight",
+                                        "duration",
+                                        "quorumBasisPoints",
+                                        "approvalBasisPoints",
+                                        "governedWorks",
+                                        "maxCommitment",
+                                        "dailyCommitment",
+                                        "guardian"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "required": [
+                                    "presetId",
+                                    "presetVersion",
+                                    "participantMode",
+                                    "governance"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "privateIdentity": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "documentId": {
+                                      "type": "string",
+                                      "maxLength": 20
+                                    },
+                                    "version": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 4294967295
+                                    },
+                                    "commitment": {
+                                      "type": "string",
+                                      "pattern": "^[0-9a-f]{64}$"
+                                    },
+                                    "keyEpoch": {
+                                      "type": "string",
+                                      "maxLength": 20
+                                    }
+                                  },
+                                  "required": [
+                                    "documentId",
+                                    "version",
+                                    "commitment",
+                                    "keyEpoch"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "privateAssets": {
+                              "maxItems": 2,
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "documentId": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  },
+                                  "version": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 4294967295
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  },
+                                  "keyEpoch": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  }
+                                },
+                                "required": [
+                                  "documentId",
+                                  "version",
+                                  "commitment",
+                                  "keyEpoch"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "publicIdentity": {
+                              "type": "object",
+                              "properties": {
+                                "title": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 160
+                                },
+                                "description": {
+                                  "default": "",
+                                  "type": "string",
+                                  "maxLength": 4000
+                                },
+                                "branding": {
+                                  "type": "object",
+                                  "properties": {
+                                    "summary": {
+                                      "type": "string",
+                                      "maxLength": 280
+                                    },
+                                    "logo": {
+                                      "type": "object",
+                                      "properties": {
+                                        "cid": {
+                                          "type": "string",
+                                          "maxLength": 128
+                                        },
+                                        "bytes": {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 2097152
+                                        },
+                                        "mediaType": {
+                                          "type": "string",
+                                          "enum": [
+                                            "image/png",
+                                            "image/jpeg",
+                                            "image/webp"
+                                          ]
+                                        },
+                                        "commitment": {
+                                          "type": "string",
+                                          "pattern": "^[0-9a-f]{64}$"
+                                        }
+                                      },
+                                      "required": [
+                                        "cid",
+                                        "bytes",
+                                        "mediaType",
+                                        "commitment"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    "cover": {
+                                      "type": "object",
+                                      "properties": {
+                                        "cid": {
+                                          "type": "string",
+                                          "maxLength": 128
+                                        },
+                                        "bytes": {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 2097152
+                                        },
+                                        "mediaType": {
+                                          "type": "string",
+                                          "enum": [
+                                            "image/png",
+                                            "image/jpeg",
+                                            "image/webp"
+                                          ]
+                                        },
+                                        "commitment": {
+                                          "type": "string",
+                                          "pattern": "^[0-9a-f]{64}$"
+                                        }
+                                      },
+                                      "required": [
+                                        "cid",
+                                        "bytes",
+                                        "mediaType",
+                                        "commitment"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  },
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "title",
+                                "description"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "schemaVersion",
+                            "title",
+                            "description",
+                            "purpose",
+                            "setup",
+                            "privateIdentity"
+                          ],
+                          "additionalProperties": false
                         }
                       ]
                     },
@@ -42310,6 +49323,230 @@ export const CoreHelpBundle:HelpBundle={
                         "operator"
                       ],
                       "additionalProperties": false
+                    },
+                    "privateSetup": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "schemaVersion": {
+                              "type": "number",
+                              "const": 1
+                            },
+                            "daoId": {
+                              "type": "string",
+                              "maxLength": 20
+                            },
+                            "documentId": {
+                              "type": "string",
+                              "maxLength": 20
+                            },
+                            "contextCommitment": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "envelope": {
+                              "type": "object",
+                              "properties": {
+                                "version": {
+                                  "type": "number",
+                                  "const": 1
+                                },
+                                "algorithm": {
+                                  "type": "string",
+                                  "const": "AES-256-GCM"
+                                },
+                                "iv": {
+                                  "type": "string",
+                                  "minLength": 16,
+                                  "maxLength": 16,
+                                  "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                },
+                                "ciphertext": {
+                                  "type": "string",
+                                  "minLength": 24,
+                                  "maxLength": 49152,
+                                  "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                }
+                              },
+                              "required": [
+                                "version",
+                                "algorithm",
+                                "iv",
+                                "ciphertext"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "stage": {
+                              "type": "string",
+                              "const": "invitation"
+                            }
+                          },
+                          "required": [
+                            "schemaVersion",
+                            "daoId",
+                            "documentId",
+                            "contextCommitment",
+                            "envelope",
+                            "stage"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "schemaVersion": {
+                              "type": "number",
+                              "const": 1
+                            },
+                            "daoId": {
+                              "type": "string",
+                              "maxLength": 20
+                            },
+                            "documentId": {
+                              "type": "string",
+                              "maxLength": 20
+                            },
+                            "contextCommitment": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "envelope": {
+                              "type": "object",
+                              "properties": {
+                                "version": {
+                                  "type": "number",
+                                  "const": 1
+                                },
+                                "algorithm": {
+                                  "type": "string",
+                                  "const": "AES-256-GCM"
+                                },
+                                "iv": {
+                                  "type": "string",
+                                  "minLength": 16,
+                                  "maxLength": 16,
+                                  "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                },
+                                "ciphertext": {
+                                  "type": "string",
+                                  "minLength": 24,
+                                  "maxLength": 49152,
+                                  "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                }
+                              },
+                              "required": [
+                                "version",
+                                "algorithm",
+                                "iv",
+                                "ciphertext"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "stage": {
+                              "type": "string",
+                              "const": "founder"
+                            },
+                            "epochCommitment": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "selfGrant": {
+                              "type": "object",
+                              "properties": {
+                                "version": {
+                                  "type": "number",
+                                  "const": 1
+                                },
+                                "ephemeralKey": {
+                                  "type": "object",
+                                  "properties": {
+                                    "kty": {
+                                      "type": "string",
+                                      "const": "EC"
+                                    },
+                                    "crv": {
+                                      "type": "string",
+                                      "const": "P-256"
+                                    },
+                                    "x": {
+                                      "type": "string",
+                                      "pattern": "^[A-Za-z0-9_-]{43}$"
+                                    },
+                                    "y": {
+                                      "type": "string",
+                                      "pattern": "^[A-Za-z0-9_-]{43}$"
+                                    }
+                                  },
+                                  "required": [
+                                    "kty",
+                                    "crv",
+                                    "x",
+                                    "y"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "salt": {
+                                  "type": "string",
+                                  "minLength": 44,
+                                  "maxLength": 44,
+                                  "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                },
+                                "envelope": {
+                                  "type": "object",
+                                  "properties": {
+                                    "version": {
+                                      "type": "number",
+                                      "const": 1
+                                    },
+                                    "algorithm": {
+                                      "type": "string",
+                                      "const": "AES-256-GCM"
+                                    },
+                                    "iv": {
+                                      "type": "string",
+                                      "minLength": 16,
+                                      "maxLength": 16,
+                                      "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                    },
+                                    "ciphertext": {
+                                      "type": "string",
+                                      "minLength": 24,
+                                      "maxLength": 4096,
+                                      "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                    }
+                                  },
+                                  "required": [
+                                    "version",
+                                    "algorithm",
+                                    "iv",
+                                    "ciphertext"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "version",
+                                "ephemeralKey",
+                                "salt",
+                                "envelope"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "schemaVersion",
+                            "daoId",
+                            "documentId",
+                            "contextCommitment",
+                            "envelope",
+                            "stage",
+                            "epochCommitment",
+                            "selfGrant"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
                     }
                   },
                   "required": [
@@ -42759,6 +49996,309 @@ export const CoreHelpBundle:HelpBundle={
                       "branding"
                     ],
                     "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 4
+                      },
+                      "title": {
+                        "type": "string",
+                        "const": "Private DAO"
+                      },
+                      "description": {
+                        "type": "string",
+                        "const": ""
+                      },
+                      "purpose": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "setup": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "presetId": {
+                                "type": "string",
+                                "enum": [
+                                  "community",
+                                  "ngo-grants",
+                                  "gaming-guild",
+                                  "team",
+                                  "custom"
+                                ]
+                              },
+                              "presetVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "participantMode": {
+                                "type": "string",
+                                "enum": [
+                                  "humans",
+                                  "mixed",
+                                  "agents-guarded"
+                                ]
+                              },
+                              "governance": {
+                                "type": "object",
+                                "properties": {
+                                  "weight": {
+                                    "type": "string",
+                                    "enum": [
+                                      "member",
+                                      "credit",
+                                      "native-stake"
+                                    ]
+                                  },
+                                  "duration": {
+                                    "type": "integer",
+                                    "minimum": 60,
+                                    "maximum": 2592000
+                                  },
+                                  "quorumBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 10000
+                                  },
+                                  "approvalBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 5001,
+                                    "maximum": 10000
+                                  },
+                                  "governedWorks": {
+                                    "type": "boolean"
+                                  },
+                                  "maxCommitment": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  },
+                                  "dailyCommitment": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  },
+                                  "guardian": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "const": ""
+                                      },
+                                      {
+                                        "type": "string",
+                                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "weight",
+                                  "duration",
+                                  "quorumBasisPoints",
+                                  "approvalBasisPoints",
+                                  "governedWorks",
+                                  "maxCommitment",
+                                  "dailyCommitment",
+                                  "guardian"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "presetId",
+                              "presetVersion",
+                              "participantMode",
+                              "governance"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "privateIdentity": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "documentId": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "version": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 4294967295
+                              },
+                              "commitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              },
+                              "keyEpoch": {
+                                "type": "string",
+                                "maxLength": 20
+                              }
+                            },
+                            "required": [
+                              "documentId",
+                              "version",
+                              "commitment",
+                              "keyEpoch"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "privateAssets": {
+                        "maxItems": 2,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "documentId": {
+                              "type": "string",
+                              "maxLength": 20
+                            },
+                            "version": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 4294967295
+                            },
+                            "commitment": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "keyEpoch": {
+                              "type": "string",
+                              "maxLength": 20
+                            }
+                          },
+                          "required": [
+                            "documentId",
+                            "version",
+                            "commitment",
+                            "keyEpoch"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "publicIdentity": {
+                        "type": "object",
+                        "properties": {
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "description": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 4000
+                          },
+                          "branding": {
+                            "type": "object",
+                            "properties": {
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 280
+                              },
+                              "logo": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "cover": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "title"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "description",
+                      "purpose",
+                      "setup",
+                      "privateIdentity"
+                    ],
+                    "additionalProperties": false
                   }
                 ]
               },
@@ -42943,6 +50483,230 @@ export const CoreHelpBundle:HelpBundle={
                   "operator"
                 ],
                 "additionalProperties": false
+              },
+              "privateSetup": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "daoId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "documentId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "contextCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "envelope": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "algorithm": {
+                            "type": "string",
+                            "const": "AES-256-GCM"
+                          },
+                          "iv": {
+                            "type": "string",
+                            "minLength": 16,
+                            "maxLength": 16,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "ciphertext": {
+                            "type": "string",
+                            "minLength": 24,
+                            "maxLength": 49152,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "algorithm",
+                          "iv",
+                          "ciphertext"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "stage": {
+                        "type": "string",
+                        "const": "invitation"
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "daoId",
+                      "documentId",
+                      "contextCommitment",
+                      "envelope",
+                      "stage"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "daoId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "documentId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "contextCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "envelope": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "algorithm": {
+                            "type": "string",
+                            "const": "AES-256-GCM"
+                          },
+                          "iv": {
+                            "type": "string",
+                            "minLength": 16,
+                            "maxLength": 16,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "ciphertext": {
+                            "type": "string",
+                            "minLength": 24,
+                            "maxLength": 49152,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "algorithm",
+                          "iv",
+                          "ciphertext"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "stage": {
+                        "type": "string",
+                        "const": "founder"
+                      },
+                      "epochCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "selfGrant": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "ephemeralKey": {
+                            "type": "object",
+                            "properties": {
+                              "kty": {
+                                "type": "string",
+                                "const": "EC"
+                              },
+                              "crv": {
+                                "type": "string",
+                                "const": "P-256"
+                              },
+                              "x": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9_-]{43}$"
+                              },
+                              "y": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9_-]{43}$"
+                              }
+                            },
+                            "required": [
+                              "kty",
+                              "crv",
+                              "x",
+                              "y"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "salt": {
+                            "type": "string",
+                            "minLength": 44,
+                            "maxLength": 44,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 4096,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "ephemeralKey",
+                          "salt",
+                          "envelope"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "daoId",
+                      "documentId",
+                      "contextCommitment",
+                      "envelope",
+                      "stage",
+                      "epochCommitment",
+                      "selfGrant"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
               }
             },
             "required": [
@@ -43347,6 +51111,308 @@ export const CoreHelpBundle:HelpBundle={
                               "branding"
                             ],
                             "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "schemaVersion": {
+                                "type": "number",
+                                "const": 4
+                              },
+                              "title": {
+                                "type": "string",
+                                "const": "Private DAO"
+                              },
+                              "description": {
+                                "type": "string",
+                                "const": ""
+                              },
+                              "purpose": {
+                                "type": "string",
+                                "enum": [
+                                  "community",
+                                  "ngo-grants",
+                                  "gaming-guild",
+                                  "team",
+                                  "custom"
+                                ]
+                              },
+                              "setup": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "presetId": {
+                                        "type": "string",
+                                        "enum": [
+                                          "community",
+                                          "ngo-grants",
+                                          "gaming-guild",
+                                          "team",
+                                          "custom"
+                                        ]
+                                      },
+                                      "presetVersion": {
+                                        "type": "number",
+                                        "const": 1
+                                      },
+                                      "participantMode": {
+                                        "type": "string",
+                                        "enum": [
+                                          "humans",
+                                          "mixed",
+                                          "agents-guarded"
+                                        ]
+                                      },
+                                      "governance": {
+                                        "type": "object",
+                                        "properties": {
+                                          "weight": {
+                                            "type": "string",
+                                            "enum": [
+                                              "member",
+                                              "credit",
+                                              "native-stake"
+                                            ]
+                                          },
+                                          "duration": {
+                                            "type": "integer",
+                                            "minimum": 60,
+                                            "maximum": 2592000
+                                          },
+                                          "quorumBasisPoints": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 10000
+                                          },
+                                          "approvalBasisPoints": {
+                                            "type": "integer",
+                                            "minimum": 5001,
+                                            "maximum": 10000
+                                          },
+                                          "governedWorks": {
+                                            "type": "boolean"
+                                          },
+                                          "maxCommitment": {
+                                            "type": "string"
+                                          },
+                                          "dailyCommitment": {
+                                            "type": "string"
+                                          },
+                                          "guardian": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string",
+                                                "const": ""
+                                              },
+                                              {
+                                                "type": "string",
+                                                "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "weight",
+                                          "duration",
+                                          "quorumBasisPoints",
+                                          "approvalBasisPoints",
+                                          "governedWorks",
+                                          "maxCommitment",
+                                          "dailyCommitment",
+                                          "guardian"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    },
+                                    "required": [
+                                      "presetId",
+                                      "presetVersion",
+                                      "participantMode",
+                                      "governance"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "privateIdentity": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "documentId": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                      },
+                                      "version": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 4294967295
+                                      },
+                                      "commitment": {
+                                        "type": "string",
+                                        "pattern": "^[0-9a-f]{64}$"
+                                      },
+                                      "keyEpoch": {
+                                        "type": "string",
+                                        "maxLength": 20
+                                      }
+                                    },
+                                    "required": [
+                                      "documentId",
+                                      "version",
+                                      "commitment",
+                                      "keyEpoch"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "privateAssets": {
+                                "maxItems": 2,
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "documentId": {
+                                      "type": "string",
+                                      "maxLength": 20
+                                    },
+                                    "version": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 4294967295
+                                    },
+                                    "commitment": {
+                                      "type": "string",
+                                      "pattern": "^[0-9a-f]{64}$"
+                                    },
+                                    "keyEpoch": {
+                                      "type": "string",
+                                      "maxLength": 20
+                                    }
+                                  },
+                                  "required": [
+                                    "documentId",
+                                    "version",
+                                    "commitment",
+                                    "keyEpoch"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "publicIdentity": {
+                                "type": "object",
+                                "properties": {
+                                  "title": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 160
+                                  },
+                                  "description": {
+                                    "default": "",
+                                    "type": "string",
+                                    "maxLength": 4000
+                                  },
+                                  "branding": {
+                                    "type": "object",
+                                    "properties": {
+                                      "summary": {
+                                        "type": "string",
+                                        "maxLength": 280
+                                      },
+                                      "logo": {
+                                        "type": "object",
+                                        "properties": {
+                                          "cid": {
+                                            "type": "string",
+                                            "maxLength": 128
+                                          },
+                                          "bytes": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 2097152
+                                          },
+                                          "mediaType": {
+                                            "type": "string",
+                                            "enum": [
+                                              "image/png",
+                                              "image/jpeg",
+                                              "image/webp"
+                                            ]
+                                          },
+                                          "commitment": {
+                                            "type": "string",
+                                            "pattern": "^[0-9a-f]{64}$"
+                                          }
+                                        },
+                                        "required": [
+                                          "cid",
+                                          "bytes",
+                                          "mediaType",
+                                          "commitment"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      "cover": {
+                                        "type": "object",
+                                        "properties": {
+                                          "cid": {
+                                            "type": "string",
+                                            "maxLength": 128
+                                          },
+                                          "bytes": {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 2097152
+                                          },
+                                          "mediaType": {
+                                            "type": "string",
+                                            "enum": [
+                                              "image/png",
+                                              "image/jpeg",
+                                              "image/webp"
+                                            ]
+                                          },
+                                          "commitment": {
+                                            "type": "string",
+                                            "pattern": "^[0-9a-f]{64}$"
+                                          }
+                                        },
+                                        "required": [
+                                          "cid",
+                                          "bytes",
+                                          "mediaType",
+                                          "commitment"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "title",
+                                  "description"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "schemaVersion",
+                              "title",
+                              "description",
+                              "purpose",
+                              "setup",
+                              "privateIdentity"
+                            ],
+                            "additionalProperties": false
                           }
                         ]
                       },
@@ -43529,6 +51595,230 @@ export const CoreHelpBundle:HelpBundle={
                           "operator"
                         ],
                         "additionalProperties": false
+                      },
+                      "privateSetup": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "schemaVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "daoId": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "documentId": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "contextCommitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              },
+                              "envelope": {
+                                "type": "object",
+                                "properties": {
+                                  "version": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "algorithm": {
+                                    "type": "string",
+                                    "const": "AES-256-GCM"
+                                  },
+                                  "iv": {
+                                    "type": "string",
+                                    "minLength": 16,
+                                    "maxLength": 16,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  },
+                                  "ciphertext": {
+                                    "type": "string",
+                                    "minLength": 24,
+                                    "maxLength": 49152,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  }
+                                },
+                                "required": [
+                                  "version",
+                                  "algorithm",
+                                  "iv",
+                                  "ciphertext"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "stage": {
+                                "type": "string",
+                                "const": "invitation"
+                              }
+                            },
+                            "required": [
+                              "schemaVersion",
+                              "daoId",
+                              "documentId",
+                              "contextCommitment",
+                              "envelope",
+                              "stage"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "schemaVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "daoId": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "documentId": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "contextCommitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              },
+                              "envelope": {
+                                "type": "object",
+                                "properties": {
+                                  "version": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "algorithm": {
+                                    "type": "string",
+                                    "const": "AES-256-GCM"
+                                  },
+                                  "iv": {
+                                    "type": "string",
+                                    "minLength": 16,
+                                    "maxLength": 16,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  },
+                                  "ciphertext": {
+                                    "type": "string",
+                                    "minLength": 24,
+                                    "maxLength": 49152,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  }
+                                },
+                                "required": [
+                                  "version",
+                                  "algorithm",
+                                  "iv",
+                                  "ciphertext"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "stage": {
+                                "type": "string",
+                                "const": "founder"
+                              },
+                              "epochCommitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              },
+                              "selfGrant": {
+                                "type": "object",
+                                "properties": {
+                                  "version": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "ephemeralKey": {
+                                    "type": "object",
+                                    "properties": {
+                                      "kty": {
+                                        "type": "string",
+                                        "const": "EC"
+                                      },
+                                      "crv": {
+                                        "type": "string",
+                                        "const": "P-256"
+                                      },
+                                      "x": {
+                                        "type": "string",
+                                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                                      },
+                                      "y": {
+                                        "type": "string",
+                                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "kty",
+                                      "crv",
+                                      "x",
+                                      "y"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "salt": {
+                                    "type": "string",
+                                    "minLength": 44,
+                                    "maxLength": 44,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  },
+                                  "envelope": {
+                                    "type": "object",
+                                    "properties": {
+                                      "version": {
+                                        "type": "number",
+                                        "const": 1
+                                      },
+                                      "algorithm": {
+                                        "type": "string",
+                                        "const": "AES-256-GCM"
+                                      },
+                                      "iv": {
+                                        "type": "string",
+                                        "minLength": 16,
+                                        "maxLength": 16,
+                                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                      },
+                                      "ciphertext": {
+                                        "type": "string",
+                                        "minLength": 24,
+                                        "maxLength": 4096,
+                                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "version",
+                                      "algorithm",
+                                      "iv",
+                                      "ciphertext"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "version",
+                                  "ephemeralKey",
+                                  "salt",
+                                  "envelope"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "schemaVersion",
+                              "daoId",
+                              "documentId",
+                              "contextCommitment",
+                              "envelope",
+                              "stage",
+                              "epochCommitment",
+                              "selfGrant"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
                       }
                     },
                     "required": [
@@ -44009,6 +52299,308 @@ export const CoreHelpBundle:HelpBundle={
                           "branding"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 4
+                          },
+                          "title": {
+                            "type": "string",
+                            "const": "Private DAO"
+                          },
+                          "description": {
+                            "type": "string",
+                            "const": ""
+                          },
+                          "purpose": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "setup": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "presetId": {
+                                    "type": "string",
+                                    "enum": [
+                                      "community",
+                                      "ngo-grants",
+                                      "gaming-guild",
+                                      "team",
+                                      "custom"
+                                    ]
+                                  },
+                                  "presetVersion": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "participantMode": {
+                                    "type": "string",
+                                    "enum": [
+                                      "humans",
+                                      "mixed",
+                                      "agents-guarded"
+                                    ]
+                                  },
+                                  "governance": {
+                                    "type": "object",
+                                    "properties": {
+                                      "weight": {
+                                        "type": "string",
+                                        "enum": [
+                                          "member",
+                                          "credit",
+                                          "native-stake"
+                                        ]
+                                      },
+                                      "duration": {
+                                        "type": "integer",
+                                        "minimum": 60,
+                                        "maximum": 2592000
+                                      },
+                                      "quorumBasisPoints": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 10000
+                                      },
+                                      "approvalBasisPoints": {
+                                        "type": "integer",
+                                        "minimum": 5001,
+                                        "maximum": 10000
+                                      },
+                                      "governedWorks": {
+                                        "type": "boolean"
+                                      },
+                                      "maxCommitment": {
+                                        "type": "string"
+                                      },
+                                      "dailyCommitment": {
+                                        "type": "string"
+                                      },
+                                      "guardian": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string",
+                                            "const": ""
+                                          },
+                                          {
+                                            "type": "string",
+                                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "weight",
+                                      "duration",
+                                      "quorumBasisPoints",
+                                      "approvalBasisPoints",
+                                      "governedWorks",
+                                      "maxCommitment",
+                                      "dailyCommitment",
+                                      "guardian"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "presetId",
+                                  "presetVersion",
+                                  "participantMode",
+                                  "governance"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "privateIdentity": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "documentId": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  },
+                                  "version": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 4294967295
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  },
+                                  "keyEpoch": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  }
+                                },
+                                "required": [
+                                  "documentId",
+                                  "version",
+                                  "commitment",
+                                  "keyEpoch"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "privateAssets": {
+                            "maxItems": 2,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "documentId": {
+                                  "type": "string",
+                                  "maxLength": 20
+                                },
+                                "version": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 4294967295
+                                },
+                                "commitment": {
+                                  "type": "string",
+                                  "pattern": "^[0-9a-f]{64}$"
+                                },
+                                "keyEpoch": {
+                                  "type": "string",
+                                  "maxLength": 20
+                                }
+                              },
+                              "required": [
+                                "documentId",
+                                "version",
+                                "commitment",
+                                "keyEpoch"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "publicIdentity": {
+                            "type": "object",
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 160
+                              },
+                              "description": {
+                                "default": "",
+                                "type": "string",
+                                "maxLength": 4000
+                              },
+                              "branding": {
+                                "type": "object",
+                                "properties": {
+                                  "summary": {
+                                    "type": "string",
+                                    "maxLength": 280
+                                  },
+                                  "logo": {
+                                    "type": "object",
+                                    "properties": {
+                                      "cid": {
+                                        "type": "string",
+                                        "maxLength": 128
+                                      },
+                                      "bytes": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 2097152
+                                      },
+                                      "mediaType": {
+                                        "type": "string",
+                                        "enum": [
+                                          "image/png",
+                                          "image/jpeg",
+                                          "image/webp"
+                                        ]
+                                      },
+                                      "commitment": {
+                                        "type": "string",
+                                        "pattern": "^[0-9a-f]{64}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "cid",
+                                      "bytes",
+                                      "mediaType",
+                                      "commitment"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "cover": {
+                                    "type": "object",
+                                    "properties": {
+                                      "cid": {
+                                        "type": "string",
+                                        "maxLength": 128
+                                      },
+                                      "bytes": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 2097152
+                                      },
+                                      "mediaType": {
+                                        "type": "string",
+                                        "enum": [
+                                          "image/png",
+                                          "image/jpeg",
+                                          "image/webp"
+                                        ]
+                                      },
+                                      "commitment": {
+                                        "type": "string",
+                                        "pattern": "^[0-9a-f]{64}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "cid",
+                                      "bytes",
+                                      "mediaType",
+                                      "commitment"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "title",
+                              "description"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "title",
+                          "description",
+                          "purpose",
+                          "setup",
+                          "privateIdentity"
+                        ],
+                        "additionalProperties": false
                       }
                     ]
                   },
@@ -44191,6 +52783,230 @@ export const CoreHelpBundle:HelpBundle={
                       "operator"
                     ],
                     "additionalProperties": false
+                  },
+                  "privateSetup": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "daoId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "documentId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "contextCommitment": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 49152,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "stage": {
+                            "type": "string",
+                            "const": "invitation"
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "daoId",
+                          "documentId",
+                          "contextCommitment",
+                          "envelope",
+                          "stage"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "daoId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "documentId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "contextCommitment": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 49152,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "stage": {
+                            "type": "string",
+                            "const": "founder"
+                          },
+                          "epochCommitment": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "selfGrant": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "ephemeralKey": {
+                                "type": "object",
+                                "properties": {
+                                  "kty": {
+                                    "type": "string",
+                                    "const": "EC"
+                                  },
+                                  "crv": {
+                                    "type": "string",
+                                    "const": "P-256"
+                                  },
+                                  "x": {
+                                    "type": "string",
+                                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                                  },
+                                  "y": {
+                                    "type": "string",
+                                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                                  }
+                                },
+                                "required": [
+                                  "kty",
+                                  "crv",
+                                  "x",
+                                  "y"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "salt": {
+                                "type": "string",
+                                "minLength": 44,
+                                "maxLength": 44,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "envelope": {
+                                "type": "object",
+                                "properties": {
+                                  "version": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "algorithm": {
+                                    "type": "string",
+                                    "const": "AES-256-GCM"
+                                  },
+                                  "iv": {
+                                    "type": "string",
+                                    "minLength": 16,
+                                    "maxLength": 16,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  },
+                                  "ciphertext": {
+                                    "type": "string",
+                                    "minLength": 24,
+                                    "maxLength": 4096,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  }
+                                },
+                                "required": [
+                                  "version",
+                                  "algorithm",
+                                  "iv",
+                                  "ciphertext"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "ephemeralKey",
+                              "salt",
+                              "envelope"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "daoId",
+                          "documentId",
+                          "contextCommitment",
+                          "envelope",
+                          "stage",
+                          "epochCommitment",
+                          "selfGrant"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -44659,6 +53475,308 @@ export const CoreHelpBundle:HelpBundle={
                           "branding"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 4
+                          },
+                          "title": {
+                            "type": "string",
+                            "const": "Private DAO"
+                          },
+                          "description": {
+                            "type": "string",
+                            "const": ""
+                          },
+                          "purpose": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "ngo-grants",
+                              "gaming-guild",
+                              "team",
+                              "custom"
+                            ]
+                          },
+                          "setup": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "presetId": {
+                                    "type": "string",
+                                    "enum": [
+                                      "community",
+                                      "ngo-grants",
+                                      "gaming-guild",
+                                      "team",
+                                      "custom"
+                                    ]
+                                  },
+                                  "presetVersion": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "participantMode": {
+                                    "type": "string",
+                                    "enum": [
+                                      "humans",
+                                      "mixed",
+                                      "agents-guarded"
+                                    ]
+                                  },
+                                  "governance": {
+                                    "type": "object",
+                                    "properties": {
+                                      "weight": {
+                                        "type": "string",
+                                        "enum": [
+                                          "member",
+                                          "credit",
+                                          "native-stake"
+                                        ]
+                                      },
+                                      "duration": {
+                                        "type": "integer",
+                                        "minimum": 60,
+                                        "maximum": 2592000
+                                      },
+                                      "quorumBasisPoints": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 10000
+                                      },
+                                      "approvalBasisPoints": {
+                                        "type": "integer",
+                                        "minimum": 5001,
+                                        "maximum": 10000
+                                      },
+                                      "governedWorks": {
+                                        "type": "boolean"
+                                      },
+                                      "maxCommitment": {
+                                        "type": "string"
+                                      },
+                                      "dailyCommitment": {
+                                        "type": "string"
+                                      },
+                                      "guardian": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string",
+                                            "const": ""
+                                          },
+                                          {
+                                            "type": "string",
+                                            "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "weight",
+                                      "duration",
+                                      "quorumBasisPoints",
+                                      "approvalBasisPoints",
+                                      "governedWorks",
+                                      "maxCommitment",
+                                      "dailyCommitment",
+                                      "guardian"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "required": [
+                                  "presetId",
+                                  "presetVersion",
+                                  "participantMode",
+                                  "governance"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "privateIdentity": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "documentId": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  },
+                                  "version": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 4294967295
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  },
+                                  "keyEpoch": {
+                                    "type": "string",
+                                    "maxLength": 20
+                                  }
+                                },
+                                "required": [
+                                  "documentId",
+                                  "version",
+                                  "commitment",
+                                  "keyEpoch"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "privateAssets": {
+                            "maxItems": 2,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "documentId": {
+                                  "type": "string",
+                                  "maxLength": 20
+                                },
+                                "version": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 4294967295
+                                },
+                                "commitment": {
+                                  "type": "string",
+                                  "pattern": "^[0-9a-f]{64}$"
+                                },
+                                "keyEpoch": {
+                                  "type": "string",
+                                  "maxLength": 20
+                                }
+                              },
+                              "required": [
+                                "documentId",
+                                "version",
+                                "commitment",
+                                "keyEpoch"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "publicIdentity": {
+                            "type": "object",
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 160
+                              },
+                              "description": {
+                                "default": "",
+                                "type": "string",
+                                "maxLength": 4000
+                              },
+                              "branding": {
+                                "type": "object",
+                                "properties": {
+                                  "summary": {
+                                    "type": "string",
+                                    "maxLength": 280
+                                  },
+                                  "logo": {
+                                    "type": "object",
+                                    "properties": {
+                                      "cid": {
+                                        "type": "string",
+                                        "maxLength": 128
+                                      },
+                                      "bytes": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 2097152
+                                      },
+                                      "mediaType": {
+                                        "type": "string",
+                                        "enum": [
+                                          "image/png",
+                                          "image/jpeg",
+                                          "image/webp"
+                                        ]
+                                      },
+                                      "commitment": {
+                                        "type": "string",
+                                        "pattern": "^[0-9a-f]{64}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "cid",
+                                      "bytes",
+                                      "mediaType",
+                                      "commitment"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "cover": {
+                                    "type": "object",
+                                    "properties": {
+                                      "cid": {
+                                        "type": "string",
+                                        "maxLength": 128
+                                      },
+                                      "bytes": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 2097152
+                                      },
+                                      "mediaType": {
+                                        "type": "string",
+                                        "enum": [
+                                          "image/png",
+                                          "image/jpeg",
+                                          "image/webp"
+                                        ]
+                                      },
+                                      "commitment": {
+                                        "type": "string",
+                                        "pattern": "^[0-9a-f]{64}$"
+                                      }
+                                    },
+                                    "required": [
+                                      "cid",
+                                      "bytes",
+                                      "mediaType",
+                                      "commitment"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "title",
+                              "description"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "title",
+                          "description",
+                          "purpose",
+                          "setup",
+                          "privateIdentity"
+                        ],
+                        "additionalProperties": false
                       }
                     ]
                   },
@@ -44841,6 +53959,230 @@ export const CoreHelpBundle:HelpBundle={
                       "operator"
                     ],
                     "additionalProperties": false
+                  },
+                  "privateSetup": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "daoId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "documentId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "contextCommitment": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 49152,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "stage": {
+                            "type": "string",
+                            "const": "invitation"
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "daoId",
+                          "documentId",
+                          "contextCommitment",
+                          "envelope",
+                          "stage"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "schemaVersion": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "daoId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "documentId": {
+                            "type": "string",
+                            "maxLength": 20
+                          },
+                          "contextCommitment": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 49152,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "stage": {
+                            "type": "string",
+                            "const": "founder"
+                          },
+                          "epochCommitment": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "selfGrant": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "ephemeralKey": {
+                                "type": "object",
+                                "properties": {
+                                  "kty": {
+                                    "type": "string",
+                                    "const": "EC"
+                                  },
+                                  "crv": {
+                                    "type": "string",
+                                    "const": "P-256"
+                                  },
+                                  "x": {
+                                    "type": "string",
+                                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                                  },
+                                  "y": {
+                                    "type": "string",
+                                    "pattern": "^[A-Za-z0-9_-]{43}$"
+                                  }
+                                },
+                                "required": [
+                                  "kty",
+                                  "crv",
+                                  "x",
+                                  "y"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "salt": {
+                                "type": "string",
+                                "minLength": 44,
+                                "maxLength": 44,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "envelope": {
+                                "type": "object",
+                                "properties": {
+                                  "version": {
+                                    "type": "number",
+                                    "const": 1
+                                  },
+                                  "algorithm": {
+                                    "type": "string",
+                                    "const": "AES-256-GCM"
+                                  },
+                                  "iv": {
+                                    "type": "string",
+                                    "minLength": 16,
+                                    "maxLength": 16,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  },
+                                  "ciphertext": {
+                                    "type": "string",
+                                    "minLength": 24,
+                                    "maxLength": 4096,
+                                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                                  }
+                                },
+                                "required": [
+                                  "version",
+                                  "algorithm",
+                                  "iv",
+                                  "ciphertext"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "ephemeralKey",
+                              "salt",
+                              "envelope"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "schemaVersion",
+                          "daoId",
+                          "documentId",
+                          "contextCommitment",
+                          "envelope",
+                          "stage",
+                          "epochCommitment",
+                          "selfGrant"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -44924,6 +54266,160 @@ export const CoreHelpBundle:HelpBundle={
               "tlos",
               "free"
             ]
+          },
+          "privateSetup": {
+            "type": "object",
+            "properties": {
+              "schemaVersion": {
+                "type": "number",
+                "const": 1
+              },
+              "daoId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "documentId": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "contextCommitment": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "envelope": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "algorithm": {
+                    "type": "string",
+                    "const": "AES-256-GCM"
+                  },
+                  "iv": {
+                    "type": "string",
+                    "minLength": 16,
+                    "maxLength": 16,
+                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                  },
+                  "ciphertext": {
+                    "type": "string",
+                    "minLength": 24,
+                    "maxLength": 49152,
+                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                  }
+                },
+                "required": [
+                  "version",
+                  "algorithm",
+                  "iv",
+                  "ciphertext"
+                ],
+                "additionalProperties": false
+              },
+              "stage": {
+                "type": "string",
+                "const": "founder"
+              },
+              "epochCommitment": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "selfGrant": {
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "ephemeralKey": {
+                    "type": "object",
+                    "properties": {
+                      "kty": {
+                        "type": "string",
+                        "const": "EC"
+                      },
+                      "crv": {
+                        "type": "string",
+                        "const": "P-256"
+                      },
+                      "x": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      },
+                      "y": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_-]{43}$"
+                      }
+                    },
+                    "required": [
+                      "kty",
+                      "crv",
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "salt": {
+                    "type": "string",
+                    "minLength": 44,
+                    "maxLength": 44,
+                    "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                  },
+                  "envelope": {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "algorithm": {
+                        "type": "string",
+                        "const": "AES-256-GCM"
+                      },
+                      "iv": {
+                        "type": "string",
+                        "minLength": 16,
+                        "maxLength": 16,
+                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                      },
+                      "ciphertext": {
+                        "type": "string",
+                        "minLength": 24,
+                        "maxLength": 4096,
+                        "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "algorithm",
+                      "iv",
+                      "ciphertext"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "version",
+                  "ephemeralKey",
+                  "salt",
+                  "envelope"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "schemaVersion",
+              "daoId",
+              "documentId",
+              "contextCommitment",
+              "envelope",
+              "stage",
+              "epochCommitment",
+              "selfGrant"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -45365,6 +54861,308 @@ export const CoreHelpBundle:HelpBundle={
                       "branding"
                     ],
                     "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 4
+                      },
+                      "title": {
+                        "type": "string",
+                        "const": "Private DAO"
+                      },
+                      "description": {
+                        "type": "string",
+                        "const": ""
+                      },
+                      "purpose": {
+                        "type": "string",
+                        "enum": [
+                          "community",
+                          "ngo-grants",
+                          "gaming-guild",
+                          "team",
+                          "custom"
+                        ]
+                      },
+                      "setup": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "presetId": {
+                                "type": "string",
+                                "enum": [
+                                  "community",
+                                  "ngo-grants",
+                                  "gaming-guild",
+                                  "team",
+                                  "custom"
+                                ]
+                              },
+                              "presetVersion": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "participantMode": {
+                                "type": "string",
+                                "enum": [
+                                  "humans",
+                                  "mixed",
+                                  "agents-guarded"
+                                ]
+                              },
+                              "governance": {
+                                "type": "object",
+                                "properties": {
+                                  "weight": {
+                                    "type": "string",
+                                    "enum": [
+                                      "member",
+                                      "credit",
+                                      "native-stake"
+                                    ]
+                                  },
+                                  "duration": {
+                                    "type": "integer",
+                                    "minimum": 60,
+                                    "maximum": 2592000
+                                  },
+                                  "quorumBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 10000
+                                  },
+                                  "approvalBasisPoints": {
+                                    "type": "integer",
+                                    "minimum": 5001,
+                                    "maximum": 10000
+                                  },
+                                  "governedWorks": {
+                                    "type": "boolean"
+                                  },
+                                  "maxCommitment": {
+                                    "type": "string"
+                                  },
+                                  "dailyCommitment": {
+                                    "type": "string"
+                                  },
+                                  "guardian": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "const": ""
+                                      },
+                                      {
+                                        "type": "string",
+                                        "pattern": "^[a-z1-5][a-z1-5.]{0,12}$"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "weight",
+                                  "duration",
+                                  "quorumBasisPoints",
+                                  "approvalBasisPoints",
+                                  "governedWorks",
+                                  "maxCommitment",
+                                  "dailyCommitment",
+                                  "guardian"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "presetId",
+                              "presetVersion",
+                              "participantMode",
+                              "governance"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "privateIdentity": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "documentId": {
+                                "type": "string",
+                                "maxLength": 20
+                              },
+                              "version": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 4294967295
+                              },
+                              "commitment": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{64}$"
+                              },
+                              "keyEpoch": {
+                                "type": "string",
+                                "maxLength": 20
+                              }
+                            },
+                            "required": [
+                              "documentId",
+                              "version",
+                              "commitment",
+                              "keyEpoch"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "privateAssets": {
+                        "maxItems": 2,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "documentId": {
+                              "type": "string",
+                              "maxLength": 20
+                            },
+                            "version": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 4294967295
+                            },
+                            "commitment": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "keyEpoch": {
+                              "type": "string",
+                              "maxLength": 20
+                            }
+                          },
+                          "required": [
+                            "documentId",
+                            "version",
+                            "commitment",
+                            "keyEpoch"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "publicIdentity": {
+                        "type": "object",
+                        "properties": {
+                          "title": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "description": {
+                            "default": "",
+                            "type": "string",
+                            "maxLength": 4000
+                          },
+                          "branding": {
+                            "type": "object",
+                            "properties": {
+                              "summary": {
+                                "type": "string",
+                                "maxLength": 280
+                              },
+                              "logo": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "cover": {
+                                "type": "object",
+                                "properties": {
+                                  "cid": {
+                                    "type": "string",
+                                    "maxLength": 128
+                                  },
+                                  "bytes": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 2097152
+                                  },
+                                  "mediaType": {
+                                    "type": "string",
+                                    "enum": [
+                                      "image/png",
+                                      "image/jpeg",
+                                      "image/webp"
+                                    ]
+                                  },
+                                  "commitment": {
+                                    "type": "string",
+                                    "pattern": "^[0-9a-f]{64}$"
+                                  }
+                                },
+                                "required": [
+                                  "cid",
+                                  "bytes",
+                                  "mediaType",
+                                  "commitment"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "title",
+                          "description"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "title",
+                      "description",
+                      "purpose",
+                      "setup",
+                      "privateIdentity"
+                    ],
+                    "additionalProperties": false
                   }
                 ]
               },
@@ -45547,6 +55345,230 @@ export const CoreHelpBundle:HelpBundle={
                   "operator"
                 ],
                 "additionalProperties": false
+              },
+              "privateSetup": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "daoId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "documentId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "contextCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "envelope": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "algorithm": {
+                            "type": "string",
+                            "const": "AES-256-GCM"
+                          },
+                          "iv": {
+                            "type": "string",
+                            "minLength": 16,
+                            "maxLength": 16,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "ciphertext": {
+                            "type": "string",
+                            "minLength": 24,
+                            "maxLength": 49152,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "algorithm",
+                          "iv",
+                          "ciphertext"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "stage": {
+                        "type": "string",
+                        "const": "invitation"
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "daoId",
+                      "documentId",
+                      "contextCommitment",
+                      "envelope",
+                      "stage"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "schemaVersion": {
+                        "type": "number",
+                        "const": 1
+                      },
+                      "daoId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "documentId": {
+                        "type": "string",
+                        "maxLength": 20
+                      },
+                      "contextCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "envelope": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "algorithm": {
+                            "type": "string",
+                            "const": "AES-256-GCM"
+                          },
+                          "iv": {
+                            "type": "string",
+                            "minLength": 16,
+                            "maxLength": 16,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "ciphertext": {
+                            "type": "string",
+                            "minLength": 24,
+                            "maxLength": 49152,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "algorithm",
+                          "iv",
+                          "ciphertext"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "stage": {
+                        "type": "string",
+                        "const": "founder"
+                      },
+                      "epochCommitment": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "selfGrant": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "ephemeralKey": {
+                            "type": "object",
+                            "properties": {
+                              "kty": {
+                                "type": "string",
+                                "const": "EC"
+                              },
+                              "crv": {
+                                "type": "string",
+                                "const": "P-256"
+                              },
+                              "x": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9_-]{43}$"
+                              },
+                              "y": {
+                                "type": "string",
+                                "pattern": "^[A-Za-z0-9_-]{43}$"
+                              }
+                            },
+                            "required": [
+                              "kty",
+                              "crv",
+                              "x",
+                              "y"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "salt": {
+                            "type": "string",
+                            "minLength": 44,
+                            "maxLength": 44,
+                            "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                          },
+                          "envelope": {
+                            "type": "object",
+                            "properties": {
+                              "version": {
+                                "type": "number",
+                                "const": 1
+                              },
+                              "algorithm": {
+                                "type": "string",
+                                "const": "AES-256-GCM"
+                              },
+                              "iv": {
+                                "type": "string",
+                                "minLength": 16,
+                                "maxLength": 16,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              },
+                              "ciphertext": {
+                                "type": "string",
+                                "minLength": 24,
+                                "maxLength": 4096,
+                                "pattern": "^[A-Za-z0-9+/]*={0,2}$"
+                              }
+                            },
+                            "required": [
+                              "version",
+                              "algorithm",
+                              "iv",
+                              "ciphertext"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "ephemeralKey",
+                          "salt",
+                          "envelope"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "schemaVersion",
+                      "daoId",
+                      "documentId",
+                      "contextCommitment",
+                      "envelope",
+                      "stage",
+                      "epochCommitment",
+                      "selfGrant"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
               }
             },
             "required": [

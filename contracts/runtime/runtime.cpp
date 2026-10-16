@@ -372,6 +372,8 @@ private:
     require_auth(owner); configuration(); check(dao_id>0,"DAO_ID"); check(privacy<=2,"PRIVACY_POLICY");
     check(is_account(owner),"OWNER_ACCOUNT"); check(token_contract.value>0&&token_symbol.is_valid(),"ASSET_IDENTITY");
     check(dao_rows.find(dao_id)==dao_rows.end(),"DAO_EXISTS"); validate_dao_metadata(metadata);
+    const auto value=nlohmann::json::parse(metadata);
+    if(value.is_object()&&value.contains("schemaVersion")&&value["schemaVersion"]==4)check(privacy>0&&value["privateIdentity"].is_null(),"PRIVATE_IDENTITY_PENDING");
     dao_rows.emplace(get_self(),[&](auto& d){ d.id=dao_id; d.owner=owner; d.metadata=metadata; d.privacy=privacy; d.token_contract=token_contract; d.token_symbol=token_symbol; });
     allocate_included_ram(dao_id);
   }
@@ -728,16 +730,23 @@ public:
     const auto body=evm_hash_words({evm_text("DaclifyInstruction(uint16 version,bytes32 nativeChain,uint64 runtime,uint64 daoId,uint64 memberId,uint64 evmChainId,address wallet,uint64 bindingEpoch,uint64 nonce,uint32 expires,uint64 target,uint64 action,bytes32 dataHash,uint16 signatureVersion)"),evm_uint(request.version),request.chain_id.extract_as_byte_array(),evm_uint(request.deployment.value),evm_uint(request.dao_id),evm_uint(request.member_id),evm_uint(evm_chain_id),evm_address_word(address),evm_uint(binding_epoch),evm_uint(request.nonce),evm_uint(request.expires),evm_uint(request.target.value),evm_uint(request.action.value),data_hash,evm_uint(1)});
     check(recover_evm_address(evm_typed_digest(request.chain_id,get_self(),evm_chain_id,body),proof)==address,"EVM_ADDRESS");dispatch(request);
   }
-  ACTION setmeta(name runtime,uint64_t dao_id,uint64_t member_id,std::string metadata) {
+  ACTION setmeta(name runtime,uint64_t dao_id,uint64_t member_id,std::string metadata,eosio::binary_extension<checksum256> expected) {
     require_active_dao(get_self(),dao_id);
     authorized_actor(runtime,dao_id,member_id,true); validate_dao_metadata(metadata);
     const auto& d=dao_rows.get(dao_id);
     const auto before=nlohmann::json::parse(d.metadata);const auto after=nlohmann::json::parse(metadata);
-    if(before.is_object()&&before.contains("schemaVersion")&&(before["schemaVersion"]==2||before["schemaVersion"]==3)&&before.contains("setup")){
-      check(after.is_object()&&after.contains("schemaVersion")&&(after["schemaVersion"]==2||after["schemaVersion"]==3)&&after.contains("setup")&&after["setup"]==before["setup"]&&after.contains("purpose")&&before.contains("purpose")&&after["purpose"]==before["purpose"],"PRESET_IDENTITY_IMMUTABLE");
-      if(before["schemaVersion"]==3)check(after["schemaVersion"]==3,"METADATA_VERSION");
+    if(before.is_object()&&before.contains("schemaVersion")&&before["schemaVersion"]==4)check(after.is_object()&&after.contains("schemaVersion")&&after["schemaVersion"]==4,"PRIVATE_METADATA_DOWNGRADE");
+    if(before.is_object()&&before.contains("schemaVersion")&&(before["schemaVersion"]==2||before["schemaVersion"]==3||before["schemaVersion"]==4)&&before.contains("setup")){
+      check(after.is_object()&&after.contains("schemaVersion")&&(after["schemaVersion"]==2||after["schemaVersion"]==3||after["schemaVersion"]==4)&&after.contains("setup")&&after["setup"]==before["setup"]&&after.contains("purpose")&&before.contains("purpose")&&after["purpose"]==before["purpose"],"PRESET_IDENTITY_IMMUTABLE");
+      if(before["schemaVersion"]==3)check(after["schemaVersion"]==3||after["schemaVersion"]==4,"METADATA_VERSION");
     }else if(after.is_object()&&after.contains("schemaVersion")){
-      if(after["schemaVersion"]==3)check(after["setup"].is_null()&&after["purpose"]=="custom","PRESET_IDENTITY_IMMUTABLE");
+      if(after["schemaVersion"]==3||after["schemaVersion"]==4)check(after["setup"].is_null()&&after["purpose"]=="custom","PRESET_IDENTITY_IMMUTABLE");
+    }
+    if(after.is_object()&&after.contains("schemaVersion")&&after["schemaVersion"]==4){
+      check(d.privacy>0,"PRIVATE_DAO_REQUIRED");
+      check(expected.has_value()&&expected.value()==sha256(d.metadata.data(),d.metadata.size()),"PRIVATE_METADATA_CHANGED");
+      retain_private_reference(dao_id,0,after["privateIdentity"]);
+      for(uint8_t i=0;i<2;i++)retain_private_reference(dao_id,i+1,after.contains("privateAssets")&&i<after["privateAssets"].size()?after["privateAssets"][i]:nlohmann::json());
     }
     dao_rows.modify(d,same_payer,[&](auto& r){r.metadata=metadata;});
   }
@@ -1427,16 +1436,45 @@ private:
   }
   void validate_dao_metadata(const std::string& metadata){
     validate_metadata(metadata);const auto value=nlohmann::json::parse(metadata);
+    if(value.is_object()&&value.contains("schemaVersion")&&value["schemaVersion"]==4){
+      check(value.size()==6+value.contains("publicIdentity")+value.contains("privateAssets")&&value.contains("title")&&value["title"]=="Private DAO"&&value.contains("description")&&value["description"]==""&&value.contains("purpose")&&value["purpose"].is_string()&&value.contains("setup")&&value.contains("privateIdentity"),"PRIVATE_METADATA_FIELDS");
+      validate_private_reference(value["privateIdentity"]);
+      if(value.contains("privateAssets")){
+        const auto& assets=value["privateAssets"];check(assets.is_array()&&assets.size()<=2,"PRIVATE_IDENTITY_REFERENCE");
+        for(size_t i=0;i<assets.size();i++){check(!assets[i].is_null(),"PRIVATE_IDENTITY_REFERENCE");validate_private_reference(assets[i]);for(size_t j=0;j<i;j++)check(assets[j]["documentId"]!=assets[i]["documentId"]||assets[j]["version"]!=assets[i]["version"],"PRIVATE_IDENTITY_REFERENCE");}
+      }
+      if(value.contains("publicIdentity")){
+        const auto& public_identity=value["publicIdentity"];check(public_identity.is_object()&&public_identity.size()==(public_identity.contains("branding")?3:2)&&public_identity.contains("title")&&public_identity["title"].is_string()&&!public_identity["title"].get<std::string>().empty()&&public_identity["title"].get<std::string>().size()<=640&&public_identity.contains("description")&&public_identity["description"].is_string(),"PRIVATE_PUBLIC_IDENTITY");
+        if(public_identity.contains("branding"))validate_branding(public_identity["branding"]);
+      }
+      return;
+    }
     if(!value.is_object()||!value.contains("schemaVersion")||value["schemaVersion"]!=3)return;
     check(value.size()==6&&value.contains("title")&&value["title"].is_string()&&value.contains("description")&&value["description"].is_string()&&value.contains("purpose")&&value["purpose"].is_string()&&value.contains("setup")&&value.contains("branding")&&value["branding"].is_object(),"METADATA_FIELDS");
     const auto title=value["title"].get<std::string>();check(!title.empty()&&title.size()<=640,"METADATA_FIELDS");
-    for(auto it=value["branding"].begin();it!=value["branding"].end();++it){
+    validate_branding(value["branding"]);
+  }
+  void validate_branding(const nlohmann::json& branding){
+    check(branding.is_object(),"BRANDING_IMAGE");
+    for(auto it=branding.begin();it!=branding.end();++it){
       if(it.key()=="summary"){check(it.value().is_string()&&it.value().get<std::string>().size()<=1120,"BRANDING_IMAGE");continue;}
       check(it.key()=="logo"||it.key()=="cover","BRANDING_IMAGE");const auto& image=it.value();
       check(image.is_object()&&image.size()==4&&image.contains("cid")&&image["cid"].is_string()&&image.contains("bytes")&&image["bytes"].is_number_unsigned()&&image["bytes"].get<uint64_t>()>0&&image["bytes"].get<uint64_t>()<=2097152&&image.contains("mediaType")&&image["mediaType"].is_string()&&image.contains("commitment")&&image["commitment"].is_string(),"BRANDING_IMAGE");
       validate_cid(image["cid"].get<std::string>());const auto mime=image["mediaType"].get<std::string>();check(mime=="image/png"||mime=="image/jpeg"||mime=="image/webp","BRANDING_IMAGE");
       const auto hash=image["commitment"].get<std::string>();check(hash.size()==64,"BRANDING_IMAGE");for(auto c:hash)check((c>='0'&&c<='9')||(c>='a'&&c<='f'),"BRANDING_IMAGE");
     }
+  }
+  void validate_private_reference(const nlohmann::json& ref){
+    if(ref.is_null())return;
+    check(ref.is_object()&&ref.size()==4&&ref.contains("documentId")&&ref["documentId"].is_string()&&ref.contains("keyEpoch")&&ref["keyEpoch"].is_string()&&ref.contains("version")&&ref["version"].is_number_unsigned()&&ref["version"].get<uint64_t>()>0&&ref["version"].get<uint64_t>()<=std::numeric_limits<uint32_t>::max()&&ref.contains("commitment")&&ref["commitment"].is_string(),"PRIVATE_IDENTITY_REFERENCE");
+    parse_id(ref["documentId"].get<std::string>());parse_id(ref["keyEpoch"].get<std::string>());const auto hash=ref["commitment"].get<std::string>();check(hash.size()==64,"PRIVATE_IDENTITY_REFERENCE");for(auto c:hash)check((c>='0'&&c<='9')||(c>='a'&&c<='f'),"PRIVATE_IDENTITY_REFERENCE");
+  }
+  void retain_private_reference(uint64_t dao_id,uint8_t slot,const nlohmann::json& ref){
+    if(ref.is_null()){protect_document(dao_id,dao_id,slot,0,0,"daos"_n);return;}
+    const auto document_id=parse_id(ref["documentId"].get<std::string>()),epoch=parse_id(ref["keyEpoch"].get<std::string>());const auto version=ref["version"].get<uint32_t>();
+    documents docs(get_self(),dao_id);auto versions=docs.get_index<"byversion"_n>();const auto& document=versions.get((uint128_t(document_id)<<32)|version,"DOCUMENT_UNKNOWN");
+    const auto raw=document.commitment.extract_as_byte_array();std::string commitment;const char* hex="0123456789abcdef";for(auto byte:raw){commitment+=hex[byte>>4];commitment+=hex[byte&15];}
+    check(document.envelope_version==1&&document.key_epoch==epoch&&ref["commitment"]==commitment,"PRIVATE_IDENTITY_REFERENCE");protect_document(dao_id,dao_id,slot,document_id,version,"daos"_n);
   }
   uint32_t profile_base64_bytes(const std::string& value) {
     check(!value.empty()&&value.size()%4==0,"PROFILE_FORMAT");
@@ -1481,9 +1519,9 @@ private:
   uint64_t protected_id(uint64_t dao_id,name source,uint64_t source_id){obligations rows(get_self(),dao_id);return obligation_id(rows,source,source_id);}
   void require_protected_source(const protected_obligation& p){check(get_sender()==p.source,"SOURCE_SENDER");require_auth(p.source);check(get_code_hash(p.source)==p.source_hash,"MODULE_CODE");}
   void require_protected_decide(const protected_obligation& p){check(get_sender()==p.rules.decide,"EXECUTOR_SENDER");require_auth(p.rules.decide);check(get_code_hash(p.rules.decide)==p.rules.decide_hash,"MODULE_CODE");}
-  checksum256 protect_document(uint64_t dao_id,uint64_t id,uint8_t slot,uint64_t document_id,uint32_t version){
+  checksum256 protect_document(uint64_t dao_id,uint64_t id,uint8_t slot,uint64_t document_id,uint32_t version,name table="protected"_n){
     checksum256 commitment{};if(document_id){documents docs(get_self(),dao_id);auto versions=docs.get_index<"byversion"_n>();commitment=versions.get((uint128_t(document_id)<<32)|version,"DOCUMENT_UNKNOWN").commitment;}
-    document_references refs(get_self(),dao_id);auto index=refs.get_index<"bysource"_n>();document_reference key{};key.source=get_self();key.table="protected"_n;key.source_id=id;key.slot=slot;auto found=index.find(key.by_source());
+    document_references refs(get_self(),dao_id);auto index=refs.get_index<"bysource"_n>();document_reference key{};key.source=get_self();key.table=table;key.source_id=id;key.slot=slot;auto found=index.find(key.by_source());
     if(found!=index.end())index.modify(found,same_payer,[&](auto& r){r.document_id=document_id;r.version=version;});else{auto next=refs.available_primary_key();if(!next)next=1;check(next<std::numeric_limits<uint64_t>::max(),"DOCUMENT_REFERENCE_LIMIT");refs.emplace(get_self(),[&](auto& r){r=key;r.id=next;r.document_id=document_id;r.version=version;});}return commitment;
   }
   void finish_protection(uint64_t dao_id,uint64_t id,bool payout){

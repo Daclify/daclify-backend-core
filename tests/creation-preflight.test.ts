@@ -4,6 +4,7 @@ import { NativeChainGateway } from '../services/api/src/native-chain.js';
 import { CreateDaoSchema } from '../protocol/api.js';
 import { defaultDaoSetup } from '../protocol/dao.js';
 import { MAX_ASSET_UNITS } from '../protocol/base.js';
+import { generateKeyPairSync } from 'node:crypto';
 const chainId = 'ab'.repeat(32);
 const gateway = () =>
   new NativeChainGateway({
@@ -26,6 +27,73 @@ const input = () =>
     },
   });
 afterEach(() => vi.unstubAllGlobals());
+it('requires a reviewed private identity capability and a founder seal before payment work', async () => {
+  const setup = defaultDaoSetup();
+  const privateInput = CreateDaoSchema.parse({
+    metadata: {
+      schemaVersion: 4,
+      title: 'Private DAO',
+      description: '',
+      purpose: setup.presetId,
+      setup,
+      privateIdentity: null,
+    },
+    privacy: 'encrypted-user-controlled',
+    token: { chainId, contract: 'eosio.token', symbol: 'TLOS', precision: 4 },
+    setup,
+    privateSetup: {
+      schemaVersion: 1,
+      stage: 'invitation',
+      daoId: '7',
+      documentId: '41',
+      contextCommitment: 'aa'.repeat(32),
+      envelope: {
+        version: 1,
+        algorithm: 'AES-256-GCM',
+        iv: btoa('i'.repeat(12)),
+        ciphertext: btoa('c'.repeat(32)),
+      },
+    },
+  });
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => Response.json({ rows: [{ supply: '0.0000 TLOS' }], more: false })),
+  );
+  await expect(gateway().validateCreation(privateInput)).rejects.toMatchObject({
+    code: 'PRIVATE_FOUNDER_REQUIRED',
+  });
+  const envelope = privateInput.privateSetup?.envelope;
+  const founder = CreateDaoSchema.parse({
+    ...privateInput,
+    privateSetup: {
+      ...privateInput.privateSetup,
+      stage: 'founder',
+      epochCommitment: 'aa'.repeat(32),
+      selfGrant: {
+        version: 1,
+        ephemeralKey: generateKeyPairSync('ec', { namedCurve: 'prime256v1' }).publicKey.export({
+          format: 'jwk',
+        }),
+        salt: btoa('s'.repeat(32)),
+        envelope,
+      },
+    },
+  });
+  const old = gateway();
+  vi.spyOn(old, 'network').mockResolvedValue({
+    chainId,
+    rpcUrl: 'http://127.0.0.1:20088',
+    runtime: 'daclifycore',
+    hub: null,
+    environment: 'local',
+    interfaceVersion: 1,
+    coreVersion: 'old',
+    capabilities: [],
+  });
+  await expect(old.validateCreation(founder)).rejects.toMatchObject({
+    code: 'PRIVATE_IDENTITY_UNSUPPORTED',
+  });
+});
 it('rejects a nonexistent guardian before token/payment work', async () => {
   const fetch = vi.fn(async () => Response.json({}, { status: 500 }));
   vi.stubGlobal('fetch', fetch);

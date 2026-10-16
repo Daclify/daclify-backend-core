@@ -40,6 +40,7 @@ import { HostingRoutes, HostingStatusSchema } from '../../../protocol/hosting.js
 import { daoPaymentKey } from '../../../protocol/payments.js';
 import { registerPaymentRoutes, CONNECT_WEBHOOK, BROKER_PATHS } from './payments/routes.js';
 import { DirectoryRoutes } from '../../../protocol/directory.js';
+import { PrivateRecordRoutes } from '../../../protocol/private-identity.js';
 import { PlatformStatusSchema } from '../../../protocol/platform.js';
 import { VERSION } from '../../../protocol/base.js';
 import { ApiOriginSchema } from '../../../protocol/base.js';
@@ -856,6 +857,13 @@ export async function createServer(
   app.get<{ Params: { id: string } }>(ApiRoutes.dao.path, async (request) =>
     chain.dao(IdSchema.parse(request.params.id)),
   );
+  app.get<{ Params: { id: string } }>(PrivateRecordRoutes.identity.path, async (request) => {
+    if (!chain.privateIdentity) throw new ApiError('PRIVATE_IDENTITY_UNSUPPORTED', 409);
+    const id = IdSchema.parse(request.params.id);
+    const result = PrivateRecordRoutes.identity.response.parse(await chain.privateIdentity(id));
+    if (result.dao.daoId !== id) throw new ApiError('DAO_REFERENCE', 409);
+    return result;
+  });
   app.get<{ Params: { id: string } }>(ApiRoutes.treasury.path, async (request) =>
     chain.treasury(IdSchema.parse(request.params.id)),
   );

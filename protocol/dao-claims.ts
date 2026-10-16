@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PrivateFounderSetupSchema } from './private-records.js';
 import { CreateDaoSchema } from './api.js';
 import { DaoRefSchema } from './base.js';
 import { CreationMethodSchema, CreationOrderViewSchema } from './platform.js';
@@ -68,7 +69,11 @@ export const DaoClaimRoutes = {
   daoClaimConfirm: {
     method: 'POST',
     path: '/v1/dao-claims/claim',
-    input: z.strictObject({ token: DaoClaimTokenSchema, method: CreationMethodSchema }),
+    input: z.strictObject({
+      token: DaoClaimTokenSchema,
+      method: CreationMethodSchema,
+      privateSetup: PrivateFounderSetupSchema.optional(),
+    }),
     response: CreationOrderViewSchema,
     helpTopic: 'dao-claim-links',
   },

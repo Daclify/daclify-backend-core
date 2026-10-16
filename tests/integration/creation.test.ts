@@ -209,7 +209,14 @@ describe('creation order PostgreSQL ownership and settlement', () => {
     await expect(
       service.prepare(account, {
         ...input,
-        request: { ...request, metadata: { ...request.metadata, title: 'Changed' } },
+        request: {
+          ...request,
+          metadata: {
+            schemaVersion: 1,
+            title: 'Changed',
+            description: request.metadata.description,
+          },
+        },
       }),
     ).rejects.toMatchObject({ code: 'CREATION_ORDER_CONFLICT' });
     await expect(service.status(randomUUID(), quote.requestId)).rejects.toMatchObject({

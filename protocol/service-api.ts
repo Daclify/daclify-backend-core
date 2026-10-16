@@ -445,6 +445,25 @@ export const ServiceResponseRoutes = [
 }[];
 
 export const ContractFailureMessages = {
+  PRIVATE_METADATA_CHANGED:
+    'The private DAO settings changed. Reload and review them before signing again.',
+  PRIVATE_SETUP_CHANGED:
+    'The sealed invitation no longer matches its reviewed setup. Reopen the original invitation or request a new one.',
+  PRIVATE_METADATA_DOWNGRADE:
+    'This DAO uses protected identity records. Use a compatible client to preserve them.',
+  PRIVATE_IDENTITY_REFERENCE:
+    'The private identity must reference an exact encrypted document version and key epoch.',
+  PRIVATE_FOUNDER_REQUIRED: 'Unlock the original founder account keys and resume the sealed setup.',
+  PRIVATE_IDENTITY_UNSUPPORTED:
+    'This deployment has not enabled private identity. No public fallback was sent.',
+  PRIVATE_INVITATION_REQUIRED:
+    'Reopen the complete original private invitation link. Its content key is kept only in your browser.',
+  PRIVATE_INITIALIZATION_CHANGED:
+    'The saved private setup no longer matches the DAO key epoch. Review it before continuing.',
+  PRIVATE_RECORD_PENDING:
+    'The encrypted record is not confirmed yet. Resume this saved operation before starting another.',
+  PENDING_UPLOAD_FINISH:
+    'Finish the pending encrypted upload for this DAO before choosing another record.',
   RECOVERY_ROOT_PROOF_REQUIRED:
     'Unlock the original Daclify keys to change recovery contacts. A paired wallet can still cancel a pending recovery.',
   CONTACT_RECOVERY_CLAIM_REQUIRED:

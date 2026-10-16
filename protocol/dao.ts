@@ -10,6 +10,7 @@ import {
 } from './base.js';
 import { RuntimeTableSchemas } from '../sdk/generated/schemas.js';
 import { EncryptionPublicKeySchema, SigningPublicKeySchema } from './crypto.js';
+import { PrivateRecordReferenceSchema } from './private-records.js';
 
 export const DaoPurposeSchema = z.enum([
   'community',
@@ -101,6 +102,16 @@ export const DaoBrandingSchema = z.strictObject({
   logo: BrandImageSchema.optional(),
   cover: BrandImageSchema.optional(),
 });
+export function brandImageMatchesType(bytes: Uint8Array, mediaType: string): boolean {
+  const starts = (prefix: number[]) => prefix.every((byte, index) => bytes[index] === byte);
+  if (mediaType === 'image/png') return starts([137, 80, 78, 71, 13, 10, 26, 10]);
+  if (mediaType === 'image/jpeg') return starts([255, 216, 255]);
+  return (
+    mediaType === 'image/webp' &&
+    starts([82, 73, 70, 70]) &&
+    [87, 69, 66, 80].every((byte, index) => bytes[index + 8] === byte)
+  );
+}
 export const BrandedMetadataSchema = z
   .strictObject({
     schemaVersion: z.literal(3),
@@ -113,8 +124,34 @@ export const BrandedMetadataSchema = z
     (value) => (value.setup ? value.purpose === value.setup.presetId : value.purpose === 'custom'),
     'Purpose must preserve provenance',
   );
+export const PrivateMetadataSchema = z
+  .strictObject({
+    schemaVersion: z.literal(4),
+    title: z.literal('Private DAO'),
+    description: z.literal(''),
+    purpose: DaoPurposeSchema,
+    setup: DaoSetupSchema.nullable(),
+    privateIdentity: PrivateRecordReferenceSchema.nullable(),
+    privateAssets: z
+      .array(PrivateRecordReferenceSchema)
+      .max(2)
+      .refine(
+        (references) =>
+          new Set(references.map((reference) => `${reference.documentId}:${reference.version}`))
+            .size === references.length,
+        'Duplicate private asset reference',
+      )
+      .optional(),
+    publicIdentity: z
+      .strictObject({ ...identity, branding: DaoBrandingSchema.optional() })
+      .optional(),
+  })
+  .refine(
+    (value) => (value.setup ? value.purpose === value.setup.presetId : value.purpose === 'custom'),
+    'Purpose must preserve provenance',
+  );
 export const MetadataSchema = z
-  .union([LegacyMetadataSchema, PresetMetadataSchema, BrandedMetadataSchema])
+  .union([LegacyMetadataSchema, PresetMetadataSchema, BrandedMetadataSchema, PrivateMetadataSchema])
   .refine(
     (value) => new TextEncoder().encode(JSON.stringify(value)).byteLength <= 4096,
     'Metadata exceeds 4096 bytes',
