@@ -1,0 +1,376 @@
+{
+  "schemaVersion": 1,
+  "scope": "shared-testnet/browser-security-remediation",
+  "recordedAt": "2026-10-16T10:16:54.878597+00:00",
+  "frontendVersion": "0.15.0-alpha.44",
+  "sources": {
+    "frontend": "16b12447240be385301f74f62e7e0fd617616713",
+    "coreDocumentationParent": "cb1ae288339bc888c909309d348bce6a043fbe6d",
+    "modules": "491e9dbed0fd0895bc54c75bbfe4198aec132a9c"
+  },
+  "findings": [
+    {
+      "id": "SEC-001",
+      "status": "fixed",
+      "evidence": "24 desktop/mobile browser cases including two-tab signing after logout and fallback behavior"
+    },
+    {
+      "id": "SEC-002",
+      "status": "fixed",
+      "evidence": {
+        "status": "passed",
+        "at": "2026-10-16T10:15:48.140Z",
+        "responses": [
+          {
+            "path": "/",
+            "status": 200,
+            "csp": "frame-ancestors 'none'",
+            "xFrameOptions": "DENY"
+          },
+          {
+            "path": "/account",
+            "status": 200,
+            "csp": "frame-ancestors 'none'",
+            "xFrameOptions": "DENY"
+          },
+          {
+            "path": "/mcp/oauth/consent",
+            "status": 200,
+            "csp": "frame-ancestors 'none'",
+            "xFrameOptions": "DENY"
+          },
+          {
+            "path": "/docs",
+            "status": 200,
+            "csp": "frame-ancestors 'none'",
+            "xFrameOptions": "DENY"
+          }
+        ],
+        "topLevelConsentVisible": true,
+        "realPopupConsentVisible": true,
+        "untrustedFrameBlockedByBrowser": true,
+        "accountUsed": false,
+        "approvalAttempted": false,
+        "writeRequests": [],
+        "browserErrors": []
+      }
+    }
+  ],
+  "deployment": {
+    "status": "deployed",
+    "at": "2026-10-16T10:15:02.684Z",
+    "network": "testnet",
+    "frontendVersion": "0.15.0-alpha.44",
+    "commit": "16b12447240be385301f74f62e7e0fd617616713",
+    "entrySha256": "154e7e73af15faea8050385325044fd0124a48e3a48ecd667568696f1719e7aa",
+    "configSha256": "1e88b1cc64fb093c3211612309bd52cd4e254a7ce3f8c10a1959e4e2ca4c0f1f",
+    "filesPublished": 155,
+    "retainedOldHashedAssets": true,
+    "rollbackPrepared": true,
+    "apiRestarted": false,
+    "databaseChanged": false,
+    "nativeChanged": false
+  },
+  "verification": {
+    "status": "passed",
+    "at": "2026-10-16T10:14:25.022626+00:00",
+    "frontendVersion": "0.15.0-alpha.44",
+    "unitFiles": 77,
+    "unitTests": 414,
+    "browserTests": 24,
+    "browserProjects": [
+      "Desktop Chrome",
+      "Pixel 7 Chromium"
+    ],
+    "build": "testnet passed",
+    "format": "passed",
+    "caddyConfigValidation": "passed",
+    "frontendAuditVulnerabilities": 0,
+    "regressionBeforeFix": {
+      "originalFailures": 6,
+      "delayedDifferentAccountLogout": "failed before fix"
+    },
+    "localFixtureLimits": [
+      "Synthetic keys, stubbed API transport",
+      "No new real-provider OAuth approval",
+      "No mainnet/native/DB changes"
+    ],
+    "sourceReview": "Inline adversarial review: scoped signals, bounds, stale state, fallback behavior, generation guards and callers reviewed; no remaining blocking finding."
+  },
+  "publicChecks": {
+    "status": "passed",
+    "at": "2026-10-16T10:16:14.019Z",
+    "coreVersion": "0.15.0-alpha.32",
+    "staticFilesMatched": 155,
+    "moduleHashesVerified": 7,
+    "runtimeHashVerified": true,
+    "nativeRawAbisVerified": [
+      {
+        "account": "daclifycore1",
+        "rawAbiSha256": "3855a7b8e283d33744ad126b3e1762fa15bf7fe8b4c0534b4e8a8104f4d0c5b4"
+      },
+      {
+        "account": "daclifydecid",
+        "rawAbiSha256": "2268cd779edfda686b5b5533ea1a9f8b771952b43c2628cdda28ac5e30e44511"
+      },
+      {
+        "account": "daclifyworks",
+        "rawAbiSha256": "4a2c595ff504b1305d32531432c78abe25fc1e3ee902ddff10d2d1c867082c88"
+      },
+      {
+        "account": "daclifypayr1",
+        "rawAbiSha256": "30859bbd6b3a4c18244dceed93cb9d49f941c55c0924c748f111b0589a5c7bcb"
+      },
+      {
+        "account": "daclifygrant",
+        "rawAbiSha256": "ed73e0b960db25be350ac54b800146e92e874d9200d121756fa7e8edcd17be31"
+      },
+      {
+        "account": "daclifyendor",
+        "rawAbiSha256": "2a74e6139a5a3713fe76a7f5c2bb2f8b6dd6277d77a55c341db9b1f988541c31"
+      },
+      {
+        "account": "daclifyactiv",
+        "rawAbiSha256": "f7c8d87159fc12087ea0998d501f594bda7d6080e9c68af077c6801819f65476"
+      },
+      {
+        "account": "daclifyquick",
+        "rawAbiSha256": "f259cd6b5925a8467308fae2509457b45b8e77187360ea3d7a985edbd09f5ab5"
+      }
+    ],
+    "downloadsVerified": 54,
+    "previousMiniReleaseAvailable": true,
+    "mcpReleasePreserved": true,
+    "testnetLockVerified": true,
+    "liveReadOnlyBrowser": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "status": "passed",
+        "errors": [],
+        "apiServerErrors": []
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "status": "passed",
+        "errors": [],
+        "apiServerErrors": []
+      }
+    ],
+    "allRetainedDownloadsVerified": true,
+    "signedLivePublication": "not run",
+    "externalWalletCeremonies": "not run"
+  },
+  "mcpDiscovery": [
+    {
+      "path": "/.well-known/oauth-protected-resource/mcp",
+      "status": 200,
+      "resource": "https://testnet.api.daclify.com/mcp",
+      "issuer": null
+    },
+    {
+      "path": "/.well-known/oauth-authorization-server/mcp/oauth",
+      "status": 200,
+      "resource": null,
+      "issuer": "https://testnet.api.daclify.com/mcp/oauth"
+    }
+  ],
+  "releaseManifest": {
+    "schemaVersion": 1,
+    "at": "2026-10-16T10:14:40.120860+00:00",
+    "network": "testnet",
+    "frontendVersion": "0.15.0-alpha.44",
+    "coreVersion": "0.15.0-alpha.32",
+    "modulesVersion": "0.10.0-alpha.42",
+    "commit": "16b12447240be385301f74f62e7e0fd617616713",
+    "sourceBranch": "dev",
+    "files": {
+      "LICENSE": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "_redirects": "6036983e5fc00f0169c9e939b1816ed771eee00e27f2fcc517b819041460b9ef",
+      "index.html": "154e7e73af15faea8050385325044fd0124a48e3a48ecd667568696f1719e7aa",
+      "_headers": "8054fb6ced38f23c0d4573d29a1ac318e253cb1eb1e1767db66878d9983f014b",
+      "networks.json": "b5ee8719dc5ddddaea08de1b326bf06f0c1be2f66040e8ee933ca8248b363787",
+      "manifest.webmanifest": "e7b63e3dd034ef9e00876e8c9088cb842d8b28bb397a27368bb40489b7ba8165",
+      "third-party-licenses/inter-OFL-1.1.txt": "3b0a5fca3d17942cde889069889dedbbbd075e9b599968c82a95f4d944e9b345",
+      "icons/icon-512.png": "e9129ce09213cd4d924ca7977eb024509a8a8305b78117da94812f87b3b7f275",
+      "icons/apple-touch-icon.png": "6796d9c0c14fde08f7920d944eb65d03f15ecf410086aa2c92b79afa223ae3cb",
+      "icons/icon-192.png": "fc05169ca9934af3afa8cefacfd667aab257bc730cdf8dc481b0f4f4788bc615",
+      "icons/daclify.svg": "2435641f1f7d9c68b21dec0c9e93176660f1cb2bb1465461c8ea46ce0b31255d",
+      "assets/shield-check-CRMfdRQm.js": "8d27f380311e43578051eae833755a97cfed5218fb580ff8d1671497d4b97f75",
+      "assets/contract-permissions-XjEH_yEU.svg": "ef6bea51b31106757bcd35811f5bc69c986e110c8294675f17e950f053915814",
+      "assets/Payments-CdvAFmCz.js": "16d50ad69cc1931e49844130a14b112dd966cd2a0fcde9eb7b69d59e3283753c",
+      "assets/telos-zero-6vFl663T.js": "d53072a173c100c250e635fd5e22cfc4feef0025e361b891860ced47c17ef54e",
+      "assets/wallet-cards-CB4qX3DK.js": "e534dbc1adc02677c2ed082ea40609e66fb6e9bd28bbf997f63dbf5cbab90c35",
+      "assets/telos-evm-CIM2UfZj.js": "bd29f1f5315ff689df7155eabb9fe153831fa01d74c5558b998efb1583c2d476",
+      "assets/ClaimDao-BIUKoJlT.css": "5aea93638a6f334c8df2295e366662244b1f8128bd1a46d0d9b2f046c7f0f35e",
+      "assets/shield-B_09zn3r.js": "214a1d5189ebe32a8ce837c5af7a683a53b943f1734fb691945e7bece7a3e4c7",
+      "assets/QuickBallots-By6cqh3e.js": "7651597fd69cac7da34e2c42d17ef821d49a1fcd38b21a2ce9bbb43f03f8945b",
+      "assets/arrow-up-right-DJLCKdsz.js": "4561f0be31b514f3ede82fc96c832b52e1bd371d72c4be6374b462319b3de708",
+      "assets/UserDetail-Du8gvwCk.js": "11580d5c3a5394bddf1e92e99e326a80379e1a9f4210f84b4c2565e2738586a2",
+      "assets/session-CQTnVdL3.js": "cd47d7dc1dbb55c206ea810b8c519d8ae8c28df01103921c6a8b90781d5373a9",
+      "assets/protocol-a50N_l8t.js": "10b804564fae4270a031d6c3f837a29e3c317d61cc25bd9f3293233eaace8efd",
+      "assets/Account-BSm1VKQs.js": "f7ca630853d2265753607f70eef3311f8cc1ae1f862db6da3d661a4275c4ce3c",
+      "assets/PlatformEntry-Dz-4u5Uq.js": "9d058a66741aefeb1d3e3fcde44173374dca5abdb8e0647c306e50224f62033e",
+      "assets/at-sign-B4pshKSW.js": "563b2b9bfd5649c77891ffa5adac6bfffa3d80081c7f58a1f8b9c54c0beb958f",
+      "assets/PeopleGrid-zntRGjtP.css": "1ce31d1c6b41ccc85879b600c822e0b8c4dd48bc25da76b4502ff185d2d5820b",
+      "assets/StorageUsagePanel-D-5fXs4y.js": "b6554ac30f806e9e27ac54c5ce5652785c7842a15a76b301a108b2261757a73d",
+      "assets/Pricing-DiNjWEgV.css": "6bcc1a54cdbe1fc6a58f3d8bb0f3e95c4d77b12be432678af7600002a844d195",
+      "assets/NotFound-DrcZ2iAT.js": "35c23035bffc1bfe58e6b3f44712df6542a0eefcd30ace1573939fbb4c126ff0",
+      "assets/Resources-B0eBs9yD.css": "7fe1fc480976b0eaf5f9f03a2ddd9e5b879758697b2db63fefb4fe007cf38a03",
+      "assets/McpOAuthConsent-EEW79oVs.js": "fb401e8a62fb77561a363f398bbdcbdcdc56db8ecd73dd9ac6d6ffea246242c3",
+      "assets/Modules-CGFP6qWY.js": "b4210f0fe99720dcfc18ab90ddf29233c91dceafbffc8fd4718573fa294eb927",
+      "assets/crypto.worker-DEC7IYaL.js": "13495ec4d68cde9bb98dd4d464ddc961ad99f16a0b52eca5ad92beb54b75c0fd",
+      "assets/client-Ds1_7Kec.js": "e7819883ca995ccd3b97b4e971f9a675de42f6fb200ffe3f0bf32c483a3594b6",
+      "assets/refresh-cw-DE6Oh0Si.js": "d25c879046e0e5b06e9848bcf9190c0e0ade762fc7a46199e738e231aad0053f",
+      "assets/PeopleGrid-CEavyZFS.js": "1b4e2cf20267096ce7808b738390aa1e576e32c6d9c87be08eda90cd335ef3dd",
+      "assets/Account-CVa6x3QF.css": "f615ca366593b5477a5b2c8c6f5f34151928ac7621d0e88a30777be57bce2a02",
+      "assets/operators-BhkRQXI4.js": "7b254618a766f28bdfb7ee14bdf07db266d9ca969b60e3e9c720d55d29f74948",
+      "assets/Docs-BGf5FSa3.js": "b1c7ed325e37df14dfc4404abd72777bf4090d69873c500c060d84affa0fa03a",
+      "assets/treasury-BY8rjSxl.js": "b6cdf37045e6c2c9f3b9926888300d9d79d4f1fb3df3d43bbc8ce657ab8d129b",
+      "assets/app-entry-inpNpj1E.js": "2a82175bb3d5c1d06b9dccf5d77024d6ed5fe1ca1c518290397236db32b6610d",
+      "assets/inter-cyrillic-wght-normal-DqGufNeO.woff2": "71d5ee93cc1e9f1d520a3a8b66456de18c7879d8df09d57fcd2eaff75fef0075",
+      "assets/MiniApps-sJQXTCV1.css": "d11f97ac94cb9866f455c1b4426903675fb00d135d619bfa82876c7482e34479",
+      "assets/Home-Dnln24-9.js": "f0aa3ef036ad4516e21b1e688086f768a24f6c163234a0560d9396f46f97246d",
+      "assets/sdk-DmdapAbV.js": "03ee26a4a1d91d8fe0f639d6fc74648269aa5f5356ca250a49bd687627d8adb9",
+      "assets/approval-preference-DvxvUGiP.js": "2cd991d048058033641cd1a7b5df573061eb6498cda732a3f1aafe970c255143",
+      "assets/billing-fEdvlyoZ.js": "58c460029471e76262f99d82ca58b328c2d9ac73af715c6bfb6a24e7a2da47fb",
+      "assets/workspace-_CEAkbsw.js": "04cd10ef15946a24645d0a61f55b61af04220578e83662c1427a7de20c5a2ddf",
+      "assets/ModulesPanel-Cfbag23e.js": "014f0c4d19573b9c19756c960fec787b6c94a11cca7b874505b5b5b5b4f5778d",
+      "assets/UserDetail-CfIMQ5yx.css": "d751dae6d25074d72777b628503c849e11f38c32f466dd65d47c81613618ee7a",
+      "assets/plus-Q12L42ZL.js": "d142f7d1104b41f08d171cd84d9e0d41083827bf94fdbd72b987e71d4de2ce90",
+      "assets/briefcase-business-BLcEpILd.js": "21c658028c584a4c3eed21ed07dc5759db544037a3f585276cddee2636021918",
+      "assets/Resources-CmSjOc4q.js": "a80886dedacbf6f93bbba7da5471b21dd60dc201bc2560c5e7f3cafd26cf07b9",
+      "assets/action-signer-CIPhReod.js": "b82e5d8d9484239117eb5f2d85bdb7d9071c13161bd7aff07e3ca06d506a0b35",
+      "assets/ActionSigner-l68IYNiO.js": "429f43292ce9f1984297be87d600f4d3cf3ef4b10e3e0f8639abdd69b4877102",
+      "assets/useApi-BPuI6ZR9-DOttAQf6.js": "df5a3d0f37127bbe761968cebb065c977535a037e7503faa0dad0468d840f059",
+      "assets/blocks-C5DPwA9p.js": "22f3ff0fd71a04e1f62b885cbfeb8154ad0d0191437ed9caa4c56bc6764856d4",
+      "assets/protocol-DjkDaMl5.js": "49d0a481ed6354d11cfa456dfa05e6382217b9ee6dec5b0958e9e0f2e99e3adf",
+      "assets/ConnectedApps-CpDfHOjo.js": "fbdf4ee9cc73946c1a36156978fe837cbcbd573350d6a1917c73bed8f7a3dada",
+      "assets/inter-latin-wght-normal-Dx4kXJAl.woff2": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62",
+      "assets/destination-DZ7LJtEl.js": "8956cb2d018a54b66c111f60a03f6017e0c10efa06c8c0f54b0ba379fb194e72",
+      "assets/AccountExit-AAVON9Dt.js": "e18799af7a2f6dce35b3627bf30319e036ab604fbba99c8d0c5cdfce2ef54f75",
+      "assets/Names-CeWY09ef.js": "e1456021797a4e7ee48c1ba51c8b288a5f18a33f7d9783076618e25484120562",
+      "assets/devtools-CN5uWJaH-Bg3PwPIV.js": "ae9ff028db534684c66476a6cc99ea6991fb38302c9b9b6ef85f116e3e2c3943",
+      "assets/Pricing-DBZxbunS.js": "988e6048746d02a14850a2d882e2e671893478411f091dddec32095061820492",
+      "assets/workspace-BU8Cpjq4.js": "dd2b54a4774febd4f8b0f8f4873c16828b7c18439b9103322e24544605b5ba3e",
+      "assets/database-BP5bUs19.js": "658453084567478a89f2518ca8142d7e9fa0ec96bccb2608906edf240554c6cc",
+      "assets/AccountExit-qRjFacxq.css": "611e71b6eb9b292c6301d7a936a63db103228ba1d52409fbf5474df059c55d0f",
+      "assets/Docs-CaZd9jsI.css": "cc50db40c2a1a24978590894efef68f6975ed4a6fe4fc3812cec9620a7e10237",
+      "assets/wallet-BSgsGmEm.js": "37159b158c06e0d3b0951cdef5e95ab006d950ac842e21e85d2a09d4f110138d",
+      "assets/WorkspaceDialog-CWjppeAv.css": "a8b8dd2047afab52cd8c98869dd91793f7f7a0a2332604f98e527bab141edada",
+      "assets/PercentageInput-DvUWTPf2.js": "7182e7ea4f52d6fc40e063afe1298ec7534c06b592722c4ab12327e368afd9b3",
+      "assets/GoogleSignIn-YPEFjJ8a.js": "93e83e124d65fbeefacca67b38f87e21d2f600cd01a103b26ca7e105ba7682ea",
+      "assets/Home-Dh6SC2GZ.css": "049d4969a8417a8cc207e688e6e28a958e0ec2d37e39f19a019857ad8330d1eb",
+      "assets/networks-BAQcJ2ud.js": "7119411367d6b0f9fe49eaf65deb41baa19aef7c0784b431f75f91098f79947a",
+      "assets/antelope.m-BW8CPsT8.js": "3389446e16070f0cb4dc75b21c79c138a8c1807791b0460403999ce619305032",
+      "assets/AppConsent-DodyR2UJ.js": "92d09a0355f8cb5972bcab3e35f94095e527f67f19d14218207b7dca459c4d74",
+      "assets/Workspace-C5VN-GPM.css": "5df59ad3c9a4baf1f9b24b77617febf355343ecd02d4e1d0bcf28fa4fce0ae09",
+      "assets/bot-CHQOzsN6.js": "1a681c6099319b7828b92cd0a782275f288a421b5cf1b2db13e20ee627220d90",
+      "assets/search-BeDDt8Zq.js": "9fdf9117527fc80bb48b3c54ae2c3abc8044f6ab29df659fe6fd79632a0b55b9",
+      "assets/TelosGovernance-DcbXmaN-.js": "59e07e25f6b6e51dfe8da99cccab814eeed93830c5d7ebf103c2d6d576e278b3",
+      "assets/LastDaoActivity-KMBam3OT.js": "65460fb2b60163a18e543e070f6f9d92750cf7729dae05623edf5162087b8736",
+      "assets/Account-B0sxutLz.js": "b0904ca5a92d6ff8018c201446880cc08d81d27daad089046adf9b6310874675",
+      "assets/inter-cyrillic-ext-wght-normal-BOeWTOD4.woff2": "ca157063339ac4ad418f214f3abfed119b0798ab4d377386ce5c9e5a7a435ebd",
+      "assets/telos-zero-light-Bztu7VI7.png": "3114e49a0219bca304dd7f6270063c7e4aa6285ccd7fafe0f9ffd345727c5d88",
+      "assets/inter-greek-wght-normal-CkhJZR-_.woff2": "1be3448e292fbf05ffe176fe1e43f135013d50b1e7d324ad1a558f623d3bb6f6",
+      "assets/connected-apps-DCW9hm9L.js": "70a8607cb40585488a52db99481400ccd5dddf1ef12b452791a9f55c593bf02f",
+      "assets/layout-grid-CXVSmJLn.js": "90541da2751a769ef754c8fb97c80dfa581b6e7800063c0da1dff537d08a9b37",
+      "assets/dao-claim-entry-6qN52eel.js": "3420161a8476a037c44a334e7c728e5fcdaf4bece630eba702cbaedbe8498e15",
+      "assets/ModulesPanel-CKK3l4W-.css": "ceaa946fe9638797f44850d70f36ca580c3ef76787ffd16323e9e0e78c3ab89f",
+      "assets/Hosting-E2b3Ch5b.js": "fcc7de30309a5a620e372f208ef6e63ed8a678895455bef829039eaad7e7760d",
+      "assets/runtime-core.esm-bundler-C43Eh746.js": "3fb56abe25085c4b91f23d14d6049302f9e5cb7e1981964e33586d300d794c10",
+      "assets/Users-BiKEzv6r.js": "7f93f60eed3f59ebef504bcf879eab8ff3dfceffc251bbf28079d47f59f789b5",
+      "assets/networks-DiEBFaqE.js": "3766a9bcf361873c7bada23e67c805d0d5d0cfc501bda1c4d7d8c9761a5d1619",
+      "assets/inter-latin-ext-wght-normal-DO1Apj_S.woff2": "34b9c504cab7a73e37b746343a449132e56cf7b5481af2cb81dc74dcff25c956",
+      "assets/_plugin-vue_export-helper-BDNMzG2s.js": "27e87fe62aa760227b7529576953d8314891fd2aec28e0a3f03aece406f2d7d7",
+      "assets/book-open-0XR760yi.js": "6f2efc74e3571dad6cfb45cd9cdb371fa2620c1d5fa02cac30b217cae5adbb1a",
+      "assets/server-DemGCd4a.js": "b03e5fd8c253d5c9dff113cc677ad5c5eb1da81ca6cf718066676f6a6f245d09",
+      "assets/WorkspaceDialog-DJjPYW3Q.js": "5be97a602a5bf2f22a1b0073358bf5b852eb0e58e3471263014c37c0f29e6e22",
+      "assets/createLucideIcon-DCMgImz4.js": "56ed183019924ea6cfbeb55dda75b7eccdf97a9be49ab10d1028407b942e4bb1",
+      "assets/inter-greek-ext-wght-normal-DlzME5K_.woff2": "6e9e020a25f9b56d418f2c085b1d3c09725a4da23fe693a5b463064606732190",
+      "assets/AppConsent-CwtKDXbV.css": "29fcde1dec7b2662593ab745cf523e001f7436ca6787dc25a41bc236db555138",
+      "assets/index-DsCkqpEo.css": "0c8078b71f0ffb39df819d745640f95617c78f6505db879ae7fe97c75cb6f03c",
+      "assets/Modules-DZR_uZcQ.css": "b5d51f33eaeb5522d5d42782417494404ff9fb541904589448daf3cac7a1175f",
+      "assets/operators-DREtAb3S.js": "531c581ff22249d789ee701978c05502aaad8224e9331a63b1459b77958ed52e",
+      "assets/QuickBallots-CIqjbjtp.css": "89321c161f826eeedf252a4fb86f886ebd57e89f95f2d52478c7cebd83ecc4a7",
+      "assets/CreateDao-DfFRWGCe.js": "135a5ff88bfce5987ce687f1d3c68c1d98ad330fbf06c1a7edeb18f05492ed8e",
+      "assets/session-BrCFSEA_.js": "cb1c22b27f31cdcfd66a32f2fe49e60ed6bc509c8820aeb272b3213281cdb988",
+      "assets/TelosGovernance-CNBirbXx.css": "27753bedfad2686086496e18026601a697b322a1d8b56b3a610a34b673a2a958",
+      "assets/McpOAuthConsent-BZpwKXgm.css": "82325b1d6f472b490397eefae8823d8d05bd884fdaed13b05cd2412ea2796375",
+      "assets/Names-DoOB4pxR.css": "6a453fe4da70c4027fea68a761ad0e728db9255f55db41282b5faf86f0d9d675",
+      "assets/user-round-BsHt2oi2.js": "fa7ec95a109ab954a35e2eec46fe99ea25eb1b0c075e30377d6fcf04636fa092",
+      "assets/Hub-CYxYx5_5.css": "23a0f68532916ebbd3c5bcb7492bebadcc9289db702c3f934d1a312ff04a778b",
+      "assets/telos-zero-h5ywgz7g.js": "8714b06b14626b6fb9fd56a9d7e4b28f3b4eb41ff895acda9dadc535c1aff5be",
+      "assets/approval-C-g-VMOi.js": "9869e0532f322865b6c9b3aab4c3a27af9f94969cd5553f80418dfa7d20bea80",
+      "assets/GoogleSignIn-Dpabq8Im.css": "5ec25dd221beba87220c5b0725a4f2b29ff41ec7f4277d9a8c1905becd9c0b0c",
+      "assets/Users-BxKzlQLG.css": "98b990c9447210abd951ef4a7a3650b543fbcd9868cb4a83699ea2a4f6dcdfc5",
+      "assets/read-response-TzIUjoru.js": "cf245012230905b00431e625871003ff0d2c46f216d9fd8c7551e473c81e8dd5",
+      "assets/antelope.m-DUM7LFJk.js": "df1983bca0afb90125f03ef16cde2185075a352748af1567c27837796c3497e7",
+      "assets/MiniApps-CaWsieT2.js": "404d1a2a1897281d1a6d52d7af3f5bf565bf5d2e05705f0af8bfc2ca2342370f",
+      "assets/index-V9NaJfv2.js": "87086202a68b43e346674e2b13cef248be6ef55ab0ecb2854072c8979f737306",
+      "assets/sdk-l-Ocf3LS.js": "e4306b91b4ffef1cb3ac063b7af04f173e56523ce7b687ed0d5b44b5915bf3e7",
+      "assets/runtime-dom.esm-bundler-DwIfP-UJ.js": "1b6785e8678d4491cd31fcbdfcccb2df4afe149a8b06a9d4756c9c40d3336d83",
+      "assets/arrow-up-BcU7BUCJ.js": "a7aced61b310fa41f3c110c2ed4da0f89de23320ad2f58388a31b14dc039636e",
+      "assets/network-GsunbM7H.js": "4ce06bac79a25c7b9d0ed4a1674764cd0b5e8c41a40fc4553dcc352a2079df25",
+      "assets/arrow-right-Co8R1lZl.js": "812a37a589779fc2afbf1709310b0d8a8f3263f18b41c262995b60a54d48df82",
+      "assets/Workspace-D1x-qFqX.js": "150f0e718a23b5eee25fb3ca1e6fe780734923fee2c558598f317b91bc697490",
+      "assets/ModuleAccess-CVBzXKKb.js": "a783fc7c967de55a5085282f0f03ebf51ec778eee4026e54907bbea9fd3ff446",
+      "assets/check-CggLiI1F.js": "968e24bdce9c5a631b50ac8b58a959a1dbdd55ce099410c2825319bf8e995855",
+      "assets/format-ppBp-3vX.js": "c2c998bc590953366155626c4a6ea87610c0aa68c2858d07393513e327a2c468",
+      "assets/circle-alert-CPJZ--3q.js": "3a24278f499e820e5ffe91289d015c3b90055e442cfe094ff08331419b369a74",
+      "assets/ClaimDao-6crKUn9R.js": "9f7f7568d69b4dc795ab7d61238e0eee6d0b2248b012c2fdf81842f43554ff8a",
+      "assets/AppEvidence-Ieiq1DmJ.js": "18d40fb0e3335ebebf1fff8b2f0338f2d6f20a2622e5526e5dbcbf8a9d83b036",
+      "assets/McpConsent-Gb3o_pK8.js": "63717ed5ab59b37145e87cf6059019ac377498e53b4162fdf6b7cc82b25e24d7",
+      "assets/LastDaoActivity-DUoS5Jel.css": "189c07d4e489dbabd766d90e2ce16527b0af2d853b0a753d6db7f3322ad2b193",
+      "assets/CreateDao-BPChlOcF.css": "35a749228062513e06d32b69d8dd17ef7969ca064d61a63553a2d9adb2ebaf53",
+      "assets/approval-preference-DUXqNARw.js": "57ce15f672936e274d8005ffabef1ffb45b3c728e486c44b21f56ff6a3102c38",
+      "assets/client-CHFY9MdS.js": "e128171ea40a7877313dc9a5d94ba39f312b42b799e362efafe1b746575b9f12",
+      "assets/globe-AI-SkDTj.js": "2e0be1a84f338cce8f864ef7be5e2e926c19ff8f764a4e502b141e92de4cfa48",
+      "assets/inter-vietnamese-wght-normal-CBcvBZtf.woff2": "5c66f9e07e90c6d4ac4922cc68d60de26c17b1858e677fb5e603fce3952b3ff2",
+      "assets/users-DHvzWn_C.js": "f8c0f514a66afdff50251da28feb72b8d4e66a62d2a350cbffc0718f91a4b7f8",
+      "assets/x-CuzbAXLZ.js": "c8b81421a5c82e4fb65e1cef8e1097e4acb83b2c4513f247e1fbc07900fc3cc0",
+      "assets/arrow-left-xO1hHeTS.js": "190f1c794b0a4edc32bd6f7287030f4af194179f5a72315820827618694a05d7",
+      "assets/Status-BSrp-RF_.css": "1dde11403be969c0b44a9c4d73e2c3a29f98463fa1b089cbbd32c02af1d5cd84",
+      "assets/Hub-DsGya8FS.js": "3ac7bc87615e36d79b1eb9c0a0f6ac8cabeaff52da0b18575300679e75e7cf6c",
+      "assets/vote-C_itt2cO.js": "157f8b7c4e508907344355d5d8407154647ca1e8e1215df348911948c959ea19",
+      "assets/AppInvitation-CAFJ8eUJ.js": "96125d465e5c929f82d99642a89945da94629c4437ac49c3bd5b85c172b99430",
+      "assets/PercentageInput-Bj5mpAun.css": "e8b6d06ad25090d4830d4bf31dd639c096ae39a15d51d8f96501a4a910e8a7a8",
+      "assets/Status-D-6sW5Qp.js": "86fb671d7c2aaad814a49ef17a865fe59450a9deb0279c53c2334fb139b5ca9a",
+      "assets/ConnectedApps-D2CMXAV1.css": "b9a822a6a3431ed5509e78b5bfdcd561fb4a8a88ea8edad2ad3afa33175900b4",
+      "assets/AppEvidence-CAxKqCuC.css": "7c72cdfed4e3dc285fcbf74e9c270b96bbf7ccfa9f5ada6aa0c9dfd073de58fa",
+      "assets/telos-evm-hZb94q8K.js": "b132a5cb0fb0e03efa22a0547c247d874ef65acbd5641ec0bb4f8732ffbcda4b",
+      "assets/McpConsent-f-VaH9R1.css": "a2b8ae9ff87501103cd5a2567657f98af7bf332433817b60a5cd1d52d637f64b"
+    },
+    "caddyConfigSha256": "1e88b1cc64fb093c3211612309bd52cd4e254a7ce3f8c10a1959e4e2ca4c0f1f",
+    "nativeChanged": false,
+    "databaseChanged": false
+  },
+  "upstreamDevAdvisories": [
+    {
+      "id": "GHSA-p6mc-m468-83gw",
+      "package": "lodash.set",
+      "status": "open: no listed patched package release",
+      "path": "development-only @proton/vert chain"
+    },
+    {
+      "id": "GHSA-848j-6mx2-7j84",
+      "package": "elliptic",
+      "status": "open: no listed patched package release",
+      "path": "development-only @proton/vert chain"
+    }
+  ],
+  "limits": [
+    "No new real ChatGPT/Claude/Codex OAuth account approval",
+    "No live signed publication or wallet ceremony",
+    "No mainnet release",
+    "Already loaded older portal JavaScript requires a page reload"
+  ],
+  "excluded": [
+    "Almaiso"
+  ]
+}
