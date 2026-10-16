@@ -1,0 +1,158 @@
+{
+  "at": "2026-10-16T15:25:50.804322+00:00",
+  "verification": {
+    "status": "passed",
+    "at": "2026-10-16T15:23:19.815415+00:00",
+    "frontendVersion": "0.15.0-alpha.51",
+    "unitFiles": 77,
+    "unitTests": 414,
+    "browser": {
+      "passed": 92,
+      "failed": 0,
+      "projects": [
+        "Desktop Chrome",
+        "Pixel 7 Chromium"
+      ],
+      "excludedKnownBaselineTest": "an authenticated nonmember can open admission, retain app return, and recheck membership (both projects); reproduced on prior unchanged dev in preceding evidence"
+    },
+    "red": "Accepted email code still present during delayed restoration",
+    "focusedFinal": {
+      "passed": 8,
+      "failed": 0
+    },
+    "intermediateBrowser": {
+      "passed": 55,
+      "failed": 3,
+      "interrupted": 2,
+      "notRun": 32,
+      "failures": [
+        "signed-in profile editing",
+        "wallet-recovery focus",
+        "kit-recovery selection restoration"
+      ],
+      "resolution": "Removed account-wide inert state; pause only paired sign-in controls. Final focused and complete selected browser runs pass."
+    },
+    "finalTemplateVerification": "The final change only narrows native inert attributes. The JS/TS logic was unchanged after the 414-test unit pass; final Vue/TypeScript build, lint and 92-case browser rerun passed.",
+    "build": "final testnet build and Vue/TypeScript passed",
+    "lint": "final five policy checks passed",
+    "format": "changed TS/Vue/JSON and git diff checks passed",
+    "dependenciesChanged": false,
+    "readOnlyFacts": {
+      "latestCodeValiditySeconds": 600,
+      "acceptedAfterSeconds": 32,
+      "emailSessionCreated": true,
+      "sessionDurationHours": 12,
+      "sameStorageScopeAndIdentity": true,
+      "keyServiceHealthyAtReadOnlyCheck": true,
+      "sessionRevoked": false
+    },
+    "timersChanged": false,
+    "review": "Shared email confirmation callers, parent async sign-in restoration, code consumption, native inert scope, key-use lock timer, server session/code lifetimes, credentials and recovery failure boundaries reviewed inline.",
+    "limits": [
+      "No supplied code used or stored",
+      "No real browser recovery was completed; metadata does not establish the first browser restoration failure",
+      "Service health and identity metadata checks do not establish successful private backup retrieval/decryption"
+    ],
+    "deployedBundleChecks": {
+      "passed": 8,
+      "failed": 0,
+      "transport": "Controlled email/API/key-broker fixtures against actual public compiled assets with real SDK/WebCrypto recovery",
+      "initialRun": {
+        "passed": 7,
+        "failed": 1,
+        "reason": "Multi-email test assumed Profile before asynchronous account bootstrap settled; final test explicitly selects its task tab. No production code changed."
+      }
+    },
+    "testFixtureCommit": "88829aa583cc59fc939c86c71e5289a2ca5b7540"
+  },
+  "deployment": {
+    "status": "deployed",
+    "at": "2026-10-16T15:23:33.825Z",
+    "network": "testnet",
+    "frontendVersion": "0.15.0-alpha.51",
+    "commit": "058234615f89ea8a46502284228f6b7516bdf54c",
+    "entrySha256": "30f4824a0f83f4f441d7354722947f1bbf8713f481b8cfb8fe1cdecfc77273bf",
+    "configSha256": "1e88b1cc64fb093c3211612309bd52cd4e254a7ce3f8c10a1959e4e2ca4c0f1f",
+    "filesPublished": 155,
+    "retainedOldHashedAssets": true,
+    "rollbackPrepared": true,
+    "portalRestarted": false,
+    "configChanged": false,
+    "apiRestarted": false,
+    "databaseChanged": false,
+    "nativeChanged": false
+  },
+  "publicChecks": {
+    "status": "passed",
+    "at": "2026-10-16T15:24:21.467Z",
+    "coreVersion": "0.15.0-alpha.32",
+    "emailRecoveryService": {
+      "emailDelivery": "mail",
+      "assistedAvailable": true
+    },
+    "staticFilesMatched": 155,
+    "moduleHashesVerified": 7,
+    "runtimeHashVerified": true,
+    "nativeRawAbisVerified": [
+      {
+        "account": "daclifycore1",
+        "rawAbiSha256": "3855a7b8e283d33744ad126b3e1762fa15bf7fe8b4c0534b4e8a8104f4d0c5b4"
+      },
+      {
+        "account": "daclifydecid",
+        "rawAbiSha256": "2268cd779edfda686b5b5533ea1a9f8b771952b43c2628cdda28ac5e30e44511"
+      },
+      {
+        "account": "daclifyworks",
+        "rawAbiSha256": "4a2c595ff504b1305d32531432c78abe25fc1e3ee902ddff10d2d1c867082c88"
+      },
+      {
+        "account": "daclifypayr1",
+        "rawAbiSha256": "30859bbd6b3a4c18244dceed93cb9d49f941c55c0924c748f111b0589a5c7bcb"
+      },
+      {
+        "account": "daclifygrant",
+        "rawAbiSha256": "ed73e0b960db25be350ac54b800146e92e874d9200d121756fa7e8edcd17be31"
+      },
+      {
+        "account": "daclifyendor",
+        "rawAbiSha256": "2a74e6139a5a3713fe76a7f5c2bb2f8b6dd6277d77a55c341db9b1f988541c31"
+      },
+      {
+        "account": "daclifyactiv",
+        "rawAbiSha256": "f7c8d87159fc12087ea0998d501f594bda7d6080e9c68af077c6801819f65476"
+      },
+      {
+        "account": "daclifyquick",
+        "rawAbiSha256": "f259cd6b5925a8467308fae2509457b45b8e77187360ea3d7a985edbd09f5ab5"
+      }
+    ],
+    "downloadsVerified": 54,
+    "previousMiniReleaseAvailable": true,
+    "mcpReleasePreserved": true,
+    "testnetLockVerified": true,
+    "liveReadOnlyBrowser": [
+      {
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "status": "passed",
+        "errors": [],
+        "apiServerErrors": []
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "status": "passed",
+        "errors": [],
+        "apiServerErrors": []
+      }
+    ],
+    "allRetainedDownloadsVerified": true,
+    "signedLivePublication": "not run",
+    "externalWalletCeremonies": "not run"
+  }
+}
