@@ -47,10 +47,10 @@ Do not assume every listed file needs editing. Before each task, trace all calle
 
 **Interfaces:** Produce `PrivateRecordReferenceSchema`, `PrivateRecordPayloadSchema`, `PrivateRecordReference` and `PrivateRecordPayload` in core, with the exact fields/kinds from the spec. Frontend produces `readPrivateRecord(dao: DaoRef, memberId: string, reference: PrivateRecordReference, records: DaoContent, expected: { kind: PrivateRecordPayload['kind']; source: string; recordId: string }): Promise<PrivateRecordPayload>` using existing document verification/decryption; validate `source` with the canonical native-account schema. Writers use existing document publication and its idempotent receipt flow; do not invent a new upload store.
 
-- [ ] Add core `tests/private-records.test.ts` and frontend `tests/unit/private-records.test.ts`: strict bounded shapes; wrong DAO/kind/ID/version/epoch; ciphertext/hash corruption; missing key; valid original-key open; replacement-key rejection; lock/context change during awaited retrieval.
-- [ ] Run `npx vitest run tests/private-records.test.ts` in core and the frontend test command for its named test; confirm failures on missing interfaces, then implement and rerun to passing results.
-- [ ] Expose schemas through the canonical public export and development package using the release tooling. Keep existing document/file byte limits and cryptographic domains unchanged. Decrypted results stay in caller-scoped memory and clear with the existing vault lifecycle.
-- [ ] Check core/frontend typechecks and affected content/recovery tests. Commit the tested producer boundary and its pinned development consumer update without overwriting released artifacts.
+- [x] Add core `tests/private-records.test.ts` and frontend `tests/unit/private-records.test.ts`: strict bounded shapes; wrong DAO/kind/ID/version/epoch; ciphertext/hash corruption; missing key; valid original-key open; replacement-key rejection; lock/context change during awaited retrieval.
+- [x] Run `npx vitest run tests/private-records.test.ts` in core and the frontend test command for its named test; confirm failures on missing interfaces, then implement and rerun to passing results.
+- [x] Expose schemas through the canonical public export and development package using the release tooling. Keep existing document/file byte limits and cryptographic domains unchanged. Decrypted results stay in caller-scoped memory and clear with the existing vault lifecycle.
+- [x] Check core/frontend typechecks and affected content/recovery tests. Commit the tested producer boundary and its pinned development consumer update without overwriting released artifacts.
 
 ### Task 2: confidential DAO identity from creation through discovery
 

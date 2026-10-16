@@ -1,6 +1,6 @@
 # Maximum practical privacy for Daclify
 
-**Date:** 2026-10-16. **Status:** design for review; product behavior described below is not implemented by this document.
+**Date:** 2026-10-16. **Status:** approved by the user on 2026-10-16; implementation is tracked in the linked plan and execution ledger. Approval is not a deployment or completion claim.
 
 **Request:** make as much DAO information private as possible, while separately proposing an integration with Telos EVM's privacy layer. This continues the user's requirement that their self-custody account remain under their control. Work is inline, without delegation, and excludes Almaiso.
 
@@ -104,4 +104,4 @@ Require measured resource deltas, generated SDK/schema/help consistency and immu
 
 Reviewed inline against the source paths above because delegation is prohibited. The design includes order/claim leakage, label size limits, option/target binding, retained historical terms, future-key rotation, public discovery and AI/notification/export leakage. The implementation plan is [here](../plans/2026-10-16-maximum-content-privacy.md).
 
-Author-selected defaults to review: encrypted DAOs use opaque identity by default; public identity is explicit; existing records migrate by signed opt-in; current protocol-visible governance/finance remains public; private Quick questions initially support a single DAO. These are implementation recommendations, not new user decisions or already-live capabilities.
+The reviewed defaults are now approved: encrypted DAOs use opaque identity by default; public identity is explicit; existing records migrate by signed opt-in; current protocol-visible governance/finance remains public; private Quick questions initially support a single DAO. Each capability still needs its implementation and verification before activation.

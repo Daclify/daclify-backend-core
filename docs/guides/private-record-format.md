@@ -1,0 +1,13 @@
+# Protected descriptive records, format 1
+
+This is the shared format for the approved [content privacy work](../superpowers/specs/2026-10-16-maximum-content-privacy-design.md). Schema and local-reader implementation alone do not enable private DAO identity or new module writers. A deployment must advertise and verify each surface's capability before use.
+
+`PrivateRecordReferenceSchema` contains `documentId`, positive document `version`, ciphertext `commitment` and positive `keyEpoch`. Resolve it within its parent's complete DAO reference. The exact protected document must exist, use envelope version 1, and match all reference fields. A CID, latest version, public document or another DAO's row is not a substitute.
+
+`PrivateRecordPayloadSchema` contains `schemaVersion: 1`, a `kind`, the owning native `source` contract, positive `recordId` and a strict kind-specific `body`. Kinds are `dao-identity`, `ballot-content`, `payroll-label` and `agent-description`. Body schemas bound identity text/asset references, ballot semantics and ordered labels, the agreed/display payroll distinction, and agent descriptions. Normalized duplicate ballot options are rejected. Private image fields reference encrypted documents rather than public image CIDs.
+
+Use existing client-side document encryption, DAO epochs and recipient grants. Encryption domains bind DAO deployment, document, version and epoch; decrypted payload validation additionally binds kind, source and parent record ID. Public commitments identify ciphertext, not guessed names or other low-entropy plaintext. Payloads that do not fit the complete 4096-byte inline envelope use the existing encrypted file path. Stored file bounds remain unchanged.
+
+The frontend's `readPrivateRecord` reuses normal document integrity/decryption checks. It requires an active member, the matching account encryption identity and an unlocked original vault; it rechecks context and active membership after asynchronous work. Inline ciphertext and encrypted `application/json` files are supported. It keeps no cache and stores/transmits no decrypted result; UI consumers must clear their own in-memory presentation when keys lock or context/access changes. Missing keys cannot be replaced by a paired-wallet login or by generating a new account identity.
+
+This format hides descriptive bodies from observers without an authorized key. It does not hide membership, timing, ordinary votes, contract-visible balances or payment activity. Old plaintext remains historical disclosure. A member or authorized recovery provider with decryption access can retain or disclose the content.
