@@ -21,6 +21,7 @@ The shared testnet runs core/SDK `0.15.0-alpha.31`, modules SDK/help `0.10.0-alp
 | Matching app connection bundles, immutable downloads and readiness diagnostics | Available through the testnet API | Server readiness does not prove member login or a confirmed native event |
 | Mini Apps directory | Enabled on the shared testnet | Origin verification is not Daclify certification or native registration |
 | Local and resource-bound HTTP MCP | Enabled on the shared testnet | Use the supported harness/tool matrix and separate scoped consent; no universal harness guarantee |
+| Encrypted Quick ballots | Experimental shared-testnet feature with up/down votes, fixed readers and public tally proofs | Participation stays public; readers can decrypt choices; independent cryptographic review and mainnet qualification remain open |
 | Encrypted personal profiles/key envelopes | Implemented with matching deployment capabilities | Original keys/envelopes and ciphertext are needed; recipient copies and public history cannot be erased |
 | Account exit / hosted erasure orchestration | Implemented; currently disabled on shared testnet | Operator backup-retention and controlled-restore exclusion configuration is required before enablement |
 | Mainnet launch, universal provider/client support and independent recovery | Unqualified by this checkpoint | Development, local mocks and a same-host restore do not establish production readiness |

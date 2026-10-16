@@ -10,6 +10,9 @@ Start with what you want to do. The [shared testnet handbook](https://testnet.ap
 | Admit members and understand permissions | [Members](https://testnet.app.daclify.com/docs/members), [Governance](https://testnet.app.daclify.com/docs/dao-governance) |
 | Vote, arrange work or manage money | [Decide](../../daclify-frontend/docs/users/decide.md), [Works](../../daclify-frontend/docs/users/works.md), [Treasury](https://testnet.app.daclify.com/docs/treasury) |
 | Publish or recover private documents | [Documents](https://testnet.app.daclify.com/docs/documents), [Recovery](disaster-recovery.md) |
+| Run encrypted up/down consultations | [Quick ballots](quick-ballots.md): audience, readers, proof and 30-day archive policy |
+| Create a DAO from an invitation | [DAO claim links](dao-claim-links.md) |
+| Draft legal documents from templates | [Documents handbook](https://testnet.app.daclify.com/docs/documents), [template source and maintenance](../../daclify-frontend/docs/legal-templates/README.md) |
 | Connect or register a mini app | [Connected apps](connected-community-apps.md), [Mini-app handbook](https://testnet.app.daclify.com/docs/connected-apps) |
 | Understand costs and storage | [Pricing](https://testnet.app.daclify.com/pricing), [DAO pricing](operations/dao-pricing.md), [Resources](https://testnet.app.daclify.com/docs/resources-and-retention) |
 
@@ -103,6 +106,8 @@ Resource checkpoint: [RAM accounting, native/card purchases and operator reserve
 The [documentation assistant and Telegram group runbook](operations/docs-assistant.md) explains backend-only model configuration, docs-only scope, approved-group webhooks, privacy mode, cost limits and at-most-once reply delivery. App AI needs an OpenRouter key; Telegram chat additionally requires explicit chat allowlists, enablement and webhook registration.
 
 ## Current audit and documentation review
+
+The [16 October documentation audit](evidence/2026-10-16-documentation-review.md) records the latest cross-repository corrections and separates historical plans from current capabilities.
 
 The [remediation guide](operations/project-audit-remediation.md) connects the six confirmed fixes, service-account migration, unchanged external proxy and coordinated runtime/API/frontend cutover. [Source verification](operations/project-audit-remediation-verification.md) records local/native/read-only-chain evidence; [2026-10-11 testnet rollout](evidence/2026-10-11-project-audit-testnet-rollout.md) records the expressly approved irreversible transactions and public desktop/mobile checks. The [documentation review](evidence/2026-10-10-project-documentation-review.md) records stale guidance corrected across all three current repos and separates historical checkpoints from deployed state. The compatibility register remains unqualified; these changes do not close provider or production release gates.
 

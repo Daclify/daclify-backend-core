@@ -96,7 +96,7 @@ Testnet names are ordinary 12-character Telos accounts. Production keeps the `we
 
 ## Stripe
 
-Set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `STRIPE_PRICE_ID` together, or leave all three unset. Prefer a restricted key, and use a different key for each environment. The card amount is the Stripe Price id, not a number in this repository.
+For optional account-service billing, set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and `STRIPE_PRICE_ID` together, or leave that billing feature disabled. Other configured payment products may use `STRIPE_SECRET_KEY` without enabling account-service billing; the key alone does not enable its checkout or webhook. Prefer a restricted key, and use a different key for each environment. The card amount is the Stripe Price id, not a number in this repository.
 
 `POST /v1/billing/checkout` starts a Checkout Session. `POST /v1/billing/stripe/webhook` is the fulfillment path. `GET /v1/billing/receipts` lists account receipts. A paid receipt does not change votes, permissions, withdrawals, treasury obligations, or storage entitlements. The procedure, the webhook events, and the cookie rules are in [Operations](docs/operations.md).
 

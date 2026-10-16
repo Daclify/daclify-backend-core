@@ -116,13 +116,15 @@ Hosted files need `PINATA_JWT`, `PINATA_STORAGE_SCOPE` and `CONTENT_GATEWAY`. Th
 
 ## Stripe Checkout
 
-Set these three together, or leave all three unset. A partial set refuses to start the API with `STRIPE_CONFIGURATION_INVALID`.
+For account-service billing, set these three together, or leave that billing feature disabled. Supplying its Price or webhook secret without the complete group refuses startup with `STRIPE_CONFIGURATION_INVALID`. The platform key alone can serve other configured payment products.
 
 - `STRIPE_SECRET_KEY`: a restricted key (`rk_`) for that environment. A secret key is accepted by the parser. Prefer the restricted key. Use a different key for develop, testnet, and production.
 - `STRIPE_WEBHOOK_SECRET`: the signing secret for this API's endpoint.
-- `STRIPE_PRICE_ID`: the optional account-service Stripe Price id. Create that Price in Stripe and paste its id here. Shared creation is now free with 10 included active members and optional approved graduated monthly capacity; independent options show Contact for pricing. New hosting uses its separate product/destination configuration in [payment operations](operations/connected-payments.md).
+- `STRIPE_PRICE_ID`: the account-service Stripe Price id, required together with its key and webhook secret when that optional billing feature is enabled. Create that Price in Stripe and paste its id here. Shared creation is now free with 10 included active members and optional approved graduated monthly capacity; independent options show Contact for pricing. New hosting uses its separate product/destination configuration in [payment operations](operations/connected-payments.md).
 
-Local and testnet APIs reject live Stripe keys. Only an explicitly configured mainnet API may use a live key. The configuration helper defaults to local when no environment is supplied. For local webhook forwarding, use the signing secret emitted by `stripe listen` for that listener; a separately registered Dashboard destination has its own secret. Keep all three settings in the Git-ignored environment file and select the same Stripe test account or sandbox for its key, Price and listener. The Price id is used by account service checkout; DAO setup checkout generates its amount from the captured creation order.
+Local and testnet APIs reject live Stripe keys. Only an explicitly configured mainnet API may use a live key. The configuration helper defaults to local when no environment is supplied. For local webhook forwarding, use the signing secret emitted by `stripe listen` for that listener; a separately registered Dashboard destination has its own secret. For account-service billing, keep all three settings in the Git-ignored environment file and select the same Stripe test account or sandbox for its key, Price and listener. The Price id is used by account service checkout; DAO setup checkout generates its amount from the captured creation order.
+
+A platform `STRIPE_SECRET_KEY` used by independently configured Connect, hosting, storage or RAM products does not by itself enable account-service billing. Supplying an account-service Price or webhook secret requires the complete three-setting billing group.
 
 The checkout route is `POST /v1/billing/checkout`. It requires a session and the CSRF token. It is limited to 8 starts per account and 80 starts per process in each hour, separate from the chain-write limiter. The success URL is `<FRONTEND_ORIGIN>/account?billing=submitted` and the cancel URL is `<FRONTEND_ORIGIN>/account?billing=cancelled`. Those query values are notes to the screen. They are not a receipt.
 

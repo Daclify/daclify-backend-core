@@ -29,7 +29,7 @@ export class MiniAppArtifacts {
   ): Promise<MiniAppArtifacts> {
     const parsedDirectories = z
       .array(z.string().startsWith('/').max(4096))
-      .max(8)
+      .max(16)
       .safeParse(archiveDirectories);
     if (!parsedDirectories.success) throw integrity();
     const path = resolve(directory, 'manifest.json');

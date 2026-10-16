@@ -64,6 +64,55 @@ it('rejects tampered manifest identifiers and changed artifact bytes before serv
   }
 });
 
+it('retains sixteen distinct mini-app cohorts and refuses an unbounded archive list', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'mini-retained-'));
+  const bytes = Buffer.from('immutable archive fixture');
+  const manifests = [];
+  const directories = [];
+  try {
+    for (let index = 0; index < 18; index++) {
+      const path = join(directory, String(index));
+      await mkdir(path);
+      const manifest = {
+        version: 1 as const,
+        coreVersion: `0.15.0-alpha.${index}`,
+        modulesVersion: '0.10.0-alpha.41',
+        packageLockHash: 'cd'.repeat(32),
+        releaseId: '00'.repeat(32),
+        files: ['core.tgz', 'modules.tgz', 'starter.tgz'].map((name) => ({
+          name,
+          bytes: bytes.length,
+          sha256: createHash('sha256').update(bytes).digest('hex'),
+        })),
+      };
+      manifest.releaseId = miniAppReleaseId(manifest);
+      for (const file of manifest.files) await writeFile(join(path, file.name), bytes);
+      await writeFile(join(path, 'manifest.json'), JSON.stringify(manifest));
+      manifests.push(manifest);
+      directories.push(path);
+    }
+    const active = directories[0];
+    if (!active) throw new Error('FIXTURE_DIRECTORY');
+    const retained = await MiniAppArtifacts.load(active, directories.slice(1, 17));
+    for (const manifest of manifests.slice(0, 17)) {
+      const release = retained.findRelease(manifest.releaseId);
+      expect(release?.manifest).toEqual(manifest);
+      if (!release) throw new Error('RETAINED_RELEASE_MISSING');
+      const handle = await release.openFile('starter.tgz');
+      try {
+        expect(await handle.readFile()).toEqual(bytes);
+      } finally {
+        await handle.close();
+      }
+    }
+    await expect(MiniAppArtifacts.load(active, directories.slice(1))).rejects.toThrow(
+      'MINI_APP_ARTIFACT_INTEGRITY',
+    );
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 it('builds a clean installable starter with exact vendored public dependency versions', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'mini-starter-build-'));
   try {
