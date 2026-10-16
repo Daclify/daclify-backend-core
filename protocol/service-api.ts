@@ -445,6 +445,27 @@ export const ServiceResponseRoutes = [
 }[];
 
 export const ContractFailureMessages = {
+  PRIVATE_BALLOT_REVIEW_REQUIRED: 'Read and verify the encrypted ballot wording before voting.',
+  PRIVATE_BALLOT_CONTEXT:
+    'The encrypted wording does not match this ballot, its ordered choices or its supporting document. Voting is unavailable.',
+  PRIVATE_BALLOT_REQUIRED:
+    'This DAO requires encrypted ballot wording. Use a compatible client or explicitly review public disclosure.',
+  PRIVATE_BALLOT_PARENT: 'The encrypted wording belongs to a different ballot.',
+  PRIVATE_BALLOT_FIELDS:
+    'The private ballot format contains unsupported or public descriptive fields.',
+  PRIVATE_BALLOT_UNSUPPORTED:
+    'Private ballots are not enabled on this deployment. No public fallback was sent.',
+  PRIVATE_CONTENT_REFERENCE:
+    'The protected content must match its exact encrypted document version, hash and key epoch.',
+  PRIVATE_CONTENT_EPOCH:
+    'Publish new private content with the current DAO epoch and its permitted grants.',
+  PRIVATE_RECORD_REFERENCE:
+    'The exact encrypted record is missing or has changed. Content cannot be read safely.',
+  PRIVATE_RECORD_CONTEXT: 'This encrypted record belongs to a different item or deployment.',
+  PRIVATE_RECORD_FORMAT:
+    'The encrypted record format is unsupported. No plaintext fallback was opened.',
+  PRIVATE_FOUNDER_IDENTITY:
+    'Use the selected founder’s original account keys to prepare this private DAO.',
   PRIVATE_METADATA_CHANGED:
     'The private DAO settings changed. Reload and review them before signing again.',
   PRIVATE_SETUP_CHANGED:

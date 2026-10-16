@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+Private ballot development checkpoint: keep encrypted descriptive wording behind exact DAO document references, frozen ordered choices, on-demand verified reading and original-key access. Extend the native source-family bound to five for retained ballot bodies, without a new table or index. Browser technical checkpoints reconcile interrupted openings and fresh membership nonces; public wording requires explicit disclosure. Remaining privacy tasks and live qualification are still required.
+
 Core protocol/SDK37, modules46 and frontend57 development cohort: add opaque metadata4, retained encrypted identity/image references, optimistic signed updates, and browser-sealed creation/claim setup bound to the exact public operational context. Private invitations use a fragment-only content key and fresh claimant-owned DAO keys. Preserve strict legacy summaries, self-custody and existing order/claim ownership. Deployment and remaining content surfaces require the complete privacy-plan qualification; this entry does not claim live activation.
 
 Core protocol/SDK 0.15.0-alpha.35: add strict private-record references and typed descriptive bodies, separating internal DAO identity, ballot text, agreed/display payroll names and agent descriptions. Reuse existing encrypted document domains and grants; no native contract or live privacy capability is changed by this foundation package. Consume the compatible modules43 development cohort.

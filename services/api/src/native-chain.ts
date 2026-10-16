@@ -1179,6 +1179,19 @@ export class NativeChainGateway implements ChainGateway {
         /* An older or unverified deployment must not accept private writers. */
       }
     }
+    let privateBallots = false;
+    const decide = this.config.modules?.find((module) => module.id === 'decide');
+    if (privateIdentity && decide) {
+      try {
+        const deployed = await this.api.v1.chain.get_raw_abi(decide.account),
+          pinned = archiveSourceSchema('ordinary-poll-votes');
+        privateBallots =
+          deployed.code_hash.toString() === pinned.codeHash &&
+          deployed.abi_hash.toString() === pinned.rawAbiHash;
+      } catch {
+        /* Keep unsupported module writers disabled without taking the portal down. */
+      }
+    }
     return NetworkSchema.parse({
       chainId: this.config.chainId,
       rpcUrl: this.config.rpcUrl,
@@ -1192,6 +1205,7 @@ export class NativeChainGateway implements ChainGateway {
           ? [
               'private-records-v1',
               'private-dao-identity-v1',
+              ...(privateBallots ? ['private-ballot-content-v1'] : []),
               ...(this.config.bootstrap && claimFounder && presets
                 ? ['private-claim-content-v1']
                 : []),
@@ -4421,7 +4435,7 @@ export class NativeChainGateway implements ChainGateway {
             if (definition.dao_id !== daoId || definition.ballot_id !== ballot.id)
               throw new ApiError('MODULE_RECORD_DOMAIN', 502);
             ballotDefinitions.push(definition);
-            if (definition.version === 2) {
+            if (definition.version === 2 || definition.version === 4) {
               const targets = await this.moduleRows(
                 deployment.account,
                 'votetargets',

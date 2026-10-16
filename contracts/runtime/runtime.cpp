@@ -103,7 +103,7 @@ public:
     positions.modify(progress,same_payer,[&](auto& r){r.pruned+=count;});
   }
   ACTION docsrc(uint64_t dao_id,name source,std::vector<name> tables){
-    check_document_source(dao_id,source);check(tables.size()<=4,"DOCUMENT_SOURCE_TABLE");for(size_t i=0;i<tables.size();i++)check(tables[i].value&&(!i||tables[i].value>tables[i-1].value),"DOCUMENT_SOURCE_TABLE");
+    check_document_source(dao_id,source);check(tables.size()<=5,"DOCUMENT_SOURCE_TABLE");for(size_t i=0;i<tables.size();i++)check(tables[i].value&&(!i||tables[i].value>tables[i-1].value),"DOCUMENT_SOURCE_TABLE");
     document_sources rows(get_self(),dao_id);auto prior=rows.find(source.value);const auto code=get_code_hash(source);
     if(prior!=rows.end()){if(prior->code_hash==code){check(prior->tables==tables,"DOCUMENT_SOURCE_IMMUTABLE");return;}for(const auto& table:prior->tables)check(std::find(tables.begin(),tables.end(),table)!=tables.end(),"DOCUMENT_SOURCE_TABLE_REMOVED");rows.modify(prior,same_payer,[&](auto& r){r.code_hash=code;r.tables=tables;});}
     else rows.emplace(get_self(),[&](auto& r){r.source=source;r.code_hash=code;r.tables=tables;});

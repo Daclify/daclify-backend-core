@@ -67,11 +67,11 @@ Do not assume every listed file needs editing. Before each task, trace all calle
 
 **Interfaces:** Modules publishes a new private ballot metadata variant: semantics, generic ordered choice indices and exact protected content reference. Extend `encodeBallotMetadata`/`readBallotMetadata` without changing legacy interpretation. The encrypted payload contains title, explanation, ordered original labels, semantics and the optional existing supporting document reference. Native definition commitment binds the new variant and its target/policy snapshot.
 
-- [ ] Extend modules `tests/{ballot-metadata,ballot-definition-encoding,ballot-commitment,ballot-export}.test.ts` and native/compiled Decide tests for copied references, changed option order/count, wrong document commitment, legacy commitments and unchanged executor authority.
-- [ ] Extend frontend `tests/e2e/{ballot-content,ballot-targets,module-authoring}.spec.ts`: title/description/custom choice canaries never appear in chain submissions; authorized members see them; locked/missing-grant/tampered clients cannot vote; disclosure is deliberate; funding/adoption/election ballots keep exact target review.
-- [ ] Run the narrow new regressions red; implement private writes and on-demand verified reads. Do not fetch/decrypt every ballot on page load. Remove plaintext text from page titles, logs, notifications and export metadata.
-- [ ] Keep open ballots immutable and readable under their opening format. Version retention/cleanup rules so referenced encrypted content survives finalization and archive. Ensure frozen semantics include ordered encrypted labels and supporting-reference identity rather than a mutable latest document.
-- [ ] Run affected module unit, compiled/native and desktop/mobile browser cases; measure metadata/RAM and commit with generated producer artifacts, consumer pins and guides.
+- [x] Extend modules `tests/{ballot-metadata,ballot-definition-encoding,ballot-commitment,ballot-export}.test.ts` and native/compiled Decide tests for copied references, changed option order/count, wrong document commitment, legacy commitments and unchanged executor authority.
+- [x] Extend frontend `tests/e2e/{ballot-content,ballot-targets,module-authoring}.spec.ts`: title/description/custom choice canaries never appear in chain submissions; authorized members see them; locked/missing-grant/tampered clients cannot vote; disclosure is deliberate; funding/adoption/election ballots keep exact target review.
+- [x] Run the narrow new regressions red; implement private writes and on-demand verified reads. Do not fetch/decrypt every ballot on page load. Remove plaintext text from page titles, logs, notifications and export metadata.
+- [x] Keep open ballots immutable and readable under their opening format. Version retention/cleanup rules so referenced encrypted content survives finalization and archive. Ensure frozen semantics include ordered encrypted labels and supporting-reference identity rather than a mutable latest document.
+- [x] Run affected module unit, compiled/native and desktop/mobile browser cases; measure metadata/RAM and commit with generated producer artifacts, consumer pins and guides.
 
 ### Task 4: payroll labels and remaining narratives
 

@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle:HelpBundle={
   "producer": "core",
-  "packageVersion": "0.15.0-alpha.37",
+  "packageVersion": "0.15.0-alpha.39",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -32,7 +32,8 @@ export const CoreHelpBundle:HelpBundle={
         "Private DAO documents are encrypted in the browser before they reach Pinata or the public IPFS network. Signing and document decryption use separate keys.",
         "Memberships, voting activity, outcomes, balances, timing, and content hashes remain visible on a public blockchain. This release does not provide anonymous governance.",
         "Deactivating a member advances the epoch for future content; an authorized administrator must initialize its new key and grants. This cannot erase plaintext or old keys the member already kept. Re-pinning preserves ciphertext, not confidentiality after a key compromise.",
-        "On deployments advertising private-dao-identity-v1, encrypted DAO creation seals the internal name and description before saving an order or claim invitation. Public discovery uses Private DAO unless you deliberately publish an alias. Original keys and an epoch grant are required to read or change internal details; interrupted setup can be resumed without publishing plaintext. Memberships, timing, native votes and financial records remain public. See the private DAO identity guide for exact boundaries."
+        "On deployments advertising private-dao-identity-v1, encrypted DAO creation seals the internal name and description before saving an order or claim invitation. Public discovery uses Private DAO unless you deliberately publish an alias. Original keys and an epoch grant are required to read or change internal details; interrupted setup can be resumed without publishing plaintext. Memberships, timing, native votes and financial records remain public. See the private DAO identity guide for exact boundaries.",
+        "Deployments advertising private-ballot-content-v1 also encrypt ordinary ballot titles, explanations and custom option labels for permitted DAO content readers. Read the selected ballot before voting; missing keys, changed references or unavailable ciphertext disable voting. The native definition freezes numbered choices and exact protected versions; supporting document IDs/hashes remain public retention data. Ordinary votes, participation and totals remain public. Publishing wording publicly requires an explicit disclosure choice. Saved encrypted drafts reconcile the original record and ballot ID after interruptions; they do not grant extra authority."
       ]
     },
     {

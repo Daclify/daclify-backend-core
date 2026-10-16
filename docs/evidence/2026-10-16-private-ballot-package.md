@@ -1,0 +1,19 @@
+# Private ordinary ballot implementation checkpoint
+
+This records Task 3 of the approved maximum-content-privacy plan, on isolated development branches. The matching cohort is core protocol/SDK39, modules48 and frontend59. It is not live activation or completion of all seven tasks. Intermediate SDK38/modules47 artifacts remain immutable and are not release candidates.
+
+Encrypted DAO ballot authoring publishes title, explanation and ordered custom labels through existing encrypted documents. Public metadata4 contains numbered choices, semantics and exact ciphertext references. Definition markers3/4 distinguish private ordinary/funding openings from historical custom metadata; marker4 preserves the immutable financial target snapshot. Original-key browser decryption and definition/parent/choice/support-reference verification precede voting. Existing ordinary choices and results remain public. Technical exports contain no decrypted wording. Public wording requires an explicit disclosure choice.
+
+Technical-only browser checkpoints reconcile interrupted publication/opening against the exact original ballot ID. Lock, membership, account, deployment and epoch changes clear decrypted state and invalidate pending reads. Epoch-change recovery and pending-provider cleanup are separately assigned to Task6. Generated prose-free funding ballots retain their existing target review. Original legacy commitment vectors and historical custom metadata4 ballots keep their meaning.
+
+## Verification recorded before integration
+
+- Modules SDK, commitments, metadata, exports, actual compiled Decide and legacy upgrade:42 passed in10 files. Document-reference pruning and compiled private tests:6 passed in2 files after reproducing and fixing the missing fifth-family backfill fixture.
+- Actual owned Spring1.2.2:1 passed, covering native permissions, exact retained references, bound voting, private financial targets through the API and unchanged treasury accounting.
+- Frontend private record/draft/policy checks:23 passed in3 files; typecheck and production build passed. Core typecheck/build, scoped lint and generated documentation checks passed; module typecheck/documentation checks passed.
+- Original-key private browser workflows:4 passed across desktop/mobile, including hosted ciphertext, Unicode wording, custom choices, lock/reload, public disclosure and a lost successful opening response without duplicate signatures.
+- The broader browser run passed26 cases; its two older module-authoring cases then passed on both screen sizes after updating current UI paths and fixing a real hidden admission-success message. Grant funding terms and evidence are reviewed before voting. A transient local node-read failure appeared in one earlier run; later creation workflows passed. A retry with missing browser-library environment was a harness failure, not acceptance evidence.
+
+The pinned CDT4.1.1 `-O=s` runtime remains857893 bytes; Decide grows from445278 to451731 bytes (+6453). In the owned native fixture two encrypted inline publications consumed2097 RAM bytes, and private opening consumed1179 RAM bytes and16570 microseconds CPU. Opening includes existing bookkeeping/source registration and reference rows. These are local measurements, not network guarantees. No new table/index is added: Decide registers a fifth bounded source family and retains body/support in existing slots0/1. The runtime permits at most5 families.
+
+The reproducible historical fixture builder uses fixed original full commits, original compiler flags and validated original WASM/raw-ABI hashes. A fresh rebuild matched both originals. No historical artifact was repacked, no customer DAO was migrated and TESTDAO-2 remains untouched. Full release/upgrade/proof/leakage checks and live activation remain Task7 work.

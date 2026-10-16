@@ -228,6 +228,7 @@ if (flags.includes('--contracts')) {
   npm(['exec', '--', 'tsx', 'tools/build/upgrade.ts', '--observer'], core);
   npm(['exec', '--', 'tsx', 'tools/build/reference-token.ts'], core);
   npm(['exec', '--', 'tsx', 'tools/build-upgrade.ts'], modules);
+  npm(['exec', '--', 'tsx', 'tools/build-private-content-legacy.ts'], modules);
   npm(['exec', '--', 'tsx', 'tools/build-document-upgrade.ts'], modules);
 }
 if (flags.includes('--contracts')) await installCompanionPackages();
