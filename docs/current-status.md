@@ -2,13 +2,13 @@
 
 Audience: community members, DAO administrators, mini-app builders and operators. This is a dated development checkpoint, reviewed 17 October 2026. Source implementation, an enabled service capability and production qualification are different facts. Daclify mainnet is not qualified by these records.
 
-The current development source cohort is core/SDK `0.15.0-alpha.50`, modules `0.10.0-alpha.63` and portal `0.15.0-alpha.70`. It includes the 17 October review repairs: preserving recovered Quick identities and paid receipts, removing nested connection borrowing and rejecting newly changed stale private-content references. The subsequent documentation corrections use a new module archive with the same core peer and contract bytes. This cohort has **not been deployed**. See the [repair evidence](evidence/2026-10-17-review-remediation.md) and [documentation correction evidence](evidence/2026-10-17-documentation-remediation.md) for verification and rollout requirements.
+The current shared-testnet cohort is core/SDK `0.15.0-alpha.50`, modules `0.10.0-alpha.63` and portal `0.15.0-alpha.70`. It includes the 17 October review repairs: preserving recovered Quick identities and paid receipts, removing nested connection borrowing and rejecting newly changed stale private-content references. The subsequent documentation corrections use a new module archive with the same core peer and contract bytes. This cohort was deployed on **17 October 2026 at 14:38 UTC**, with public desktop/mobile checks passing afterward. See the [deployment record](evidence/2026-10-17-review-release.md), [repair evidence](evidence/2026-10-17-review-remediation.md) and [documentation correction evidence](evidence/2026-10-17-documentation-remediation.md).
 
 ## Check the service you are using
 
 The shared dev app is [testnet.app.daclify.com](https://testnet.app.daclify.com/); its [handbook](https://testnet.app.daclify.com/docs) displays the installed SDK/help versions. The public [network response](https://testnet.api.daclify.com/v1/network) identifies the API, chain, runtime and advertised capabilities. A capability name or package version alone does not verify a provider, client wallet or deployed contract hash.
 
-The shared testnet currently runs core/SDK `0.15.0-alpha.46`, modules SDK/help `0.10.0-alpha.57`, portal `0.15.0-alpha.65` and the independently pinned MCP package `0.1.0-alpha.23`. Contract interface remains 1. The [private-content release record](evidence/2026-10-17-private-content-release.md) identifies this live cohort and its qualification limits. Previous download cohorts remain available. Consult the live API before relying on this dated checkpoint.
+The shared testnet currently runs core/SDK `0.15.0-alpha.50`, modules SDK/help `0.10.0-alpha.63`, portal `0.15.0-alpha.70` and the independently pinned MCP package `0.1.0-alpha.23`. MCP retains its own core46/modules57 peers. Contract interface remains 1. The [review release record](evidence/2026-10-17-review-release.md) identifies the deployed source, native transactions and qualification limits; the [private-content release record](evidence/2026-10-17-private-content-release.md) preserves the earlier cohort. Previous download cohorts remain available. Consult the live API before relying on this dated checkpoint.
 
 ## Availability
 
@@ -28,7 +28,7 @@ The shared testnet currently runs core/SDK `0.15.0-alpha.46`, modules SDK/help `
 | Account exit / hosted erasure orchestration | Implemented; currently disabled on shared testnet | Operator backup-retention and controlled-restore exclusion configuration is required before enablement |
 | Mainnet launch, universal provider/client support and independent recovery | Unqualified by this checkpoint | Development, local mocks and a same-host restore do not establish production readiness |
 
-The shared testnet recovery qualification has a freshly verified version-bound expiry of **21 October 2026, 23:59 UTC**. Operators must verify the actual current report and renew qualification before expiry. Unavailable recovery options must remain unavailable until their requirements are met.
+The shared testnet recovery qualification has a freshly verified version-bound expiry of **21 October 2026, 14:03:49 UTC**. Operators must verify the actual current report and renew qualification before expiry. Unavailable recovery options must remain unavailable until their requirements are met.
 
 ## Where to go next
 
