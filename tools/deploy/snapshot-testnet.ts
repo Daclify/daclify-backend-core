@@ -58,8 +58,11 @@ for (const account of names) {
     path: '/v1/chain/get_account',
     params: { account_name: account },
   });
-  nativeOwnershipAccount(accountState);
-  save(path + '/account.json', accountState);
+  const checkedAccount = nativeOwnershipAccount(accountState);
+  save(path + '/account.json', {
+    ...Serializer.objectify(checkedAccount),
+    eosio_any_linked_actions: [],
+  });
   const tables: { table: string; scope: string; rows: string[] }[] = [];
   let lower = '';
   for (let page = 0; page < 100; page++) {
