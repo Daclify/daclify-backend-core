@@ -14,6 +14,39 @@ beforeAll(async () => {
 afterAll(async () => {
   await fixture?.stop();
 });
+it('opens a frozen custom public poll with only the explicitly approved proposal methods', async () => {
+  const current = await fixture.paired(0, [], 0, ['proposal']);
+  const client = new LocalCommunityClient({
+    version: 1,
+    api: fixture.api,
+    grantToken: current.grant.token,
+    delegateKey: current.delegate.toString(),
+    grantId: current.grant.grant.id,
+  });
+  const tools = createCommunityTools(
+    client,
+    new ProtectedCommunitySigner(client, current.delegate.toString()),
+  );
+  const prepared = PreparedInstructionSchema.parse(
+    await tools.call('prepare_proposal', {
+      ballotId: '932500',
+      title: 'Owned MCP custom poll',
+      description: 'Public fixture question',
+      options: ['Garden', 'Workshop', 'Later'],
+    }),
+  );
+  expect(prepared.request.action).toBe('openpoll');
+  expect(SubmissionResultSchema.parse(await tools.call('submit_prepared', prepared)).state).toBe(
+    'submitted',
+  );
+  const state = await current.dao.state();
+  expect(
+    state.ballotDefinitions.some((row) => row.ballot_id === '932500' && row.version === 1),
+  ).toBe(true);
+  await expect(tools.call('prepare_vote', { pollId: '932500', optionId: '0' })).rejects.toThrow(
+    'MCP_SCOPE_REQUIRED',
+  );
+}, 60000);
 it.each([0, 1, 2] as const)(
   'connects participant mode %s with protected preparation/signing and native revocation',
   async (mode) => {

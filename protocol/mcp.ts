@@ -4,6 +4,12 @@ import { EncryptionPublicKeySchema, SigningPublicKeySchema } from './crypto.js';
 import { RuntimeActionSchemas } from '../sdk/generated/schemas.js';
 
 export const McpScopeSchema = z.enum(['proposal', 'activity', 'vote', 'review']);
+export const MCP_SCOPE_ACTIONS = {
+  proposal: ['open', 'openpoll'],
+  vote: ['vote', 'votecommit'],
+  review: ['review'],
+  activity: ['recordact'],
+} as const;
 export const McpConnectionSchema = z.strictObject({
   version: z.literal(1),
   api: ApiOriginSchema,
@@ -29,7 +35,10 @@ export const McpToolInputSchemas = {
     description: z.string().max(2000),
     options: z.array(z.string().min(1).max(80)).min(2).max(16),
   }),
-  prepare_vote: z.strictObject({ pollId: IdSchema, optionId: z.string().regex(/^(?:[0-9]|1[0-5])$/) }),
+  prepare_vote: z.strictObject({
+    pollId: IdSchema,
+    optionId: z.string().regex(/^(?:[0-9]|1[0-5])$/),
+  }),
   prepare_review: z.strictObject({
     milestoneId: IdSchema,
     approve: z.boolean(),
@@ -195,7 +204,7 @@ export const McpPairingRoutes = {
           }),
         )
         .min(1)
-        .max(4),
+        .max(Object.values(MCP_SCOPE_ACTIONS).flat().length),
       grantExpires: z.int().positive().max(4294967295),
     }),
     helpTopic: 'agents',

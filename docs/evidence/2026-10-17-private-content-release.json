@@ -1,0 +1,319 @@
+{
+  "date": "2026-10-17",
+  "status": "qualified candidate; not deployed; testnet RAM spending authorization pending",
+  "scope": "Maximum content privacy, final immutable release candidate",
+  "cohort": {
+    "core": "0.15.0-alpha.46",
+    "modules": "0.10.0-alpha.57",
+    "nativeModules": "0.10.0-alpha.10",
+    "frontend": "0.15.0-alpha.65",
+    "communityMcp": "0.1.0-alpha.23"
+  },
+  "compiler": "CDT 4.1.1 -O=s; runtime keeps pinned wasm-opt 108 MVP -Oz",
+  "artifacts": {
+    "runtime": {
+      "bytes": 868276,
+      "sha256": "2a2ff848e460f516df9a7a834bb7d79daf03d7d56f5f9855141170913d8022ee"
+    },
+    "hub": {
+      "bytes": 56610,
+      "sha256": "81ffd1545d365d94068bacc2665915abb1c9c74e8880b4a5d5d410d194883bc6"
+    },
+    "appjoin": {
+      "bytes": 113443,
+      "sha256": "c39829d8b2ee61bbc842584df16ca1a0c6b08dcb0f6ca96bae883350a40b4b58"
+    },
+    "quickauth": {
+      "bytes": 83595,
+      "sha256": "a67ce528c4eebaaa4ca4a411e2fca54499da214133944072306e5cbb4977f54e"
+    },
+    "names": {
+      "bytes": 91743,
+      "sha256": "29f3155cc67c86871aa862b0ae9168acfdbaadf899721d4f5ef9a7ccaff86a65"
+    },
+    "decide": {
+      "bytes": 454744,
+      "sha256": "e549cbd8ab46fa254e23a0616aa6d1ee2eef99a685a844fd51c2678c8bb2b853"
+    },
+    "works": {
+      "bytes": 173193,
+      "sha256": "34a808d913fa3a663815840917725505655e5fd5c757bb98ba115e198a107e26"
+    },
+    "payroll": {
+      "bytes": 129080,
+      "sha256": "c998bb71978e530bdb6a87c2c7cdd15ea82dba12b87931938a056a77f726192b"
+    },
+    "grants": {
+      "bytes": 143689,
+      "sha256": "feba5cefb95e672b08b64f3b9093ac7f989425916e7d9b9880665365c2497198"
+    },
+    "endorse": {
+      "bytes": 163504,
+      "sha256": "0c743db842736fc070bc68ccfeb993106869e93b35a9d3c5cd481a294f542791"
+    },
+    "activity": {
+      "bytes": 203982,
+      "sha256": "07489cf54a2520c829aa5b5e590c8936330befcfde264ce08b8d1828b69a721a"
+    },
+    "quickvote": {
+      "bytes": 271416,
+      "sha256": "ff91fc2b4e54b6d1a87f365f006af4acb9ee52b6d9094d8df4bf162ae1868ebc"
+    }
+  },
+  "measurements": {
+    "private-identity": {
+      "runtimeCodeHash": "2a2ff848e460f516df9a7a834bb7d79daf03d7d56f5f9855141170913d8022ee",
+      "compiler": "CDT 4.1.1 -O=s, existing MVP wasm-opt -Oz",
+      "operation": "legacy metadata -> private metadata with three fixed docref slots",
+      "nativeRamDeltaBytes": 1718,
+      "cpuUsageUs": 12319,
+      "newTables": 0,
+      "newSecondaryIndexes": 0,
+      "referenceSlots": 3,
+      "note": "Owned local Spring measurement; not a network CPU or price guarantee."
+    },
+    "private-ballot": {
+      "runtimeCodeHash": "2a2ff848e460f516df9a7a834bb7d79daf03d7d56f5f9855141170913d8022ee",
+      "decideCodeHash": "e549cbd8ab46fa254e23a0616aa6d1ee2eef99a685a844fd51c2678c8bb2b853",
+      "runtimeWasmBytes": 868276,
+      "decideWasmBytes": 454744,
+      "encryptedInlineDocuments": 2,
+      "encryptedDocumentPublicationRamBytes": 2097,
+      "privateOpeningRamBytes": 1179,
+      "privateOpeningCpuUs": 12587,
+      "newTables": 0,
+      "newSecondaryIndexes": 0,
+      "maximumDocumentSourceFamilies": 5,
+      "note": "Owned local Spring native permission/resource check; synthetic envelopes do not qualify decryption. Real cryptography is covered by browser/unit checks. Opening RAM includes document-source registration, retained reference and existing ballot bookkeeping. Not a network price/CPU guarantee."
+    },
+    "private-module": {
+      "runtimeCodeHash": "2a2ff848e460f516df9a7a834bb7d79daf03d7d56f5f9855141170913d8022ee",
+      "payrollCodeHash": "c998bb71978e530bdb6a87c2c7cdd15ea82dba12b87931938a056a77f726192b",
+      "runtimeWasmBytes": 868276,
+      "payrollWasmBytes": 129080,
+      "privateCommitRamBytes": 4542,
+      "privateCommitCpuUs": 5562,
+      "displayRenameRamBytes": 0,
+      "displayRenameCpuUs": 2656,
+      "agentDescriptionRamBytes": 486,
+      "agentDescriptionCpuUs": 1794,
+      "newTables": 0,
+      "newSecondaryIndexes": 0,
+      "note": "Owned local Spring authority/resource check with synthetic envelopes; actual encryption/decryption is tested in browsers. No network cost guarantee."
+    },
+    "private-archive": {
+      "runtimeCodeHash": "2a2ff848e460f516df9a7a834bb7d79daf03d7d56f5f9855141170913d8022ee",
+      "removedRamBytes": 492,
+      "pruneCpuUs": 3117,
+      "restoreCpuUs": 1791,
+      "note": "Owned native fixture; archive attestation uses owned verified bytes, not independent-provider qualification."
+    }
+  },
+  "verification": {
+    "coreFullUnit": {
+      "passed": 1141,
+      "files": 195
+    },
+    "supplementaryDeploymentUnit": {
+      "passed": 5,
+      "files": 2,
+      "note": "Separate run; two append-only ABI cases overlap the full run."
+    },
+    "modulesFullUnit": {
+      "passed": 309,
+      "files": 48
+    },
+    "frontendFullUnit": {
+      "passed": 463,
+      "files": 83
+    },
+    "communityMcpOwnUnit": {
+      "passed": 13,
+      "files": 7
+    },
+    "nativeQuick": {
+      "passed": 27,
+      "files": 1,
+      "authorizedLoadVotes": 5000,
+      "runtimeCodeHash": "2a2ff848e460f516df9a7a834bb7d79daf03d7d56f5f9855141170913d8022ee"
+    },
+    "nativePrivateAndMcp": {
+      "passedUnique": 8,
+      "files": 6,
+      "note": "Combined four private suites, focused private ballot, focused three MCP participant modes; subsequent runtime rollback and RAM charge assertions also passed. Subsequent native round-trip also installs/removes/reinstalls nine missing execution routes, preserving all keys, parents, thresholds and unrelated routes."
+    },
+    "postgresNativeMcp": {
+      "passedUnique": 7,
+      "note": "Six passed together; corrected proposal approval fixture then passed its focused rerun. Includes actual installed Codex app-server and Claude Code 2.1.302 OAuth; no inference."
+    },
+    "sourceOnlyBrowser": {
+      "passed": 10,
+      "projects": [
+        "desktop Chromium",
+        "mobile Chromium"
+      ],
+      "coverage": [
+        "signed migration and loss/recovery",
+        "rotation",
+        "all six record canaries",
+        "manual documentation-assistant payload",
+        "explicit decrypted supporting-file copy"
+      ]
+    },
+    "compiledBrowser": {
+      "passedUnique": 40,
+      "fullRun": {
+        "passed": 38,
+        "failed": 2
+      },
+      "followup": "Both full-run failures passed in the subsequent real-provider checks. The shared unlock helper now waits for its actual return URL; no product RPC retry was added for a transient owned-node failure. Twelve real-provider cases passed across the first nine and a focused final three.",
+      "candidate": "158 final-source files reproduce the compiled candidate byte-for-byte; owned TLS/CONNECT proxy maps testnet app/API origins to isolated native/SQL and rejects external browser destinations. Relative test API calls redirect to the API origin, without signature or cookie rewriting."
+    },
+    "realProvider": {
+      "status": "passed",
+      "firstRun": {
+        "passed": 9,
+        "failed": 3,
+        "reason": "The owned fixture hit its eight-file budget; the three remaining mobile cases passed in a fresh bounded fixture."
+      },
+      "cleanup": {
+        "verified": true,
+        "createdProviderFiles": 12,
+        "uploadedBytes": 55916,
+        "retrievedBytes": 178620
+      },
+      "note": "Real Pinata/Gateway with synthetic encrypted data, owned local native/SQL, actual original browser keys. No customer keys/data/database. Exact upload-UUID-verified files removed.",
+      "passedUnique": 12,
+      "secondRun": {
+        "passed": 3,
+        "failed": 0
+      }
+    },
+    "sourceReproduction": {
+      "files": 158,
+      "byteIdentical": true
+    },
+    "permissionAndDeploymentUnit": {
+      "passed": 24,
+      "files": 3
+    }
+  },
+  "resourceGate": {
+    "status": "additional testnet contract RAM required",
+    "requirements": [
+      {
+        "account": "daclifydecid",
+        "bytes": 98304,
+        "growthBytes": 94660
+      },
+      {
+        "account": "daclifyworks",
+        "bytes": 16384,
+        "growthBytes": 13990
+      },
+      {
+        "account": "daclifypayr1",
+        "bytes": 151552,
+        "growthBytes": 145846
+      },
+      {
+        "account": "daclifygrant",
+        "bytes": 12288,
+        "growthBytes": 9250
+      },
+      {
+        "account": "daclifyendor",
+        "bytes": 659456,
+        "growthBytes": 715750
+      }
+    ],
+    "quotedTestnetTlos": "53.8281",
+    "quoteAt": "2026-10-17T00:40:24.267Z",
+    "payer": "3boidanimus3",
+    "broadcast": false,
+    "note": "Read-only native RAM-purchase simulation. Not an approval or a completed purchase; refresh quote before any transaction."
+  },
+  "limits": [
+    "No live native writes, API/static cutover or customer content conversion has occurred.",
+    "TESTDAO-2 remains unchanged; original keys and signed preview are required.",
+    "Existing public chain history, memberships, ordinary vote choices, financial amounts and graphs remain public.",
+    "Real Pinata upload/gateway retrieval and exact owned-file cleanup were qualified with synthetic content; independent backups and a live Telos original-key recovery remain unrun.",
+    "The Telos EVM payment proposal remains separate and disabled.",
+    "Rollback is qualified before private writes; later writes require renewed compatibility review."
+  ],
+  "liveBaseline": {
+    "daclifycore1": {
+      "wasmBytes": 853321,
+      "codeHash": "afa80071de5578e915c5b4c37d02f294c612a713299fa264116e7f338d65ca2d",
+      "rawAbiHash": "3855a7b8e283d33744ad126b3e1762fa15bf7fe8b4c0534b4e8a8104f4d0c5b4"
+    },
+    "daclifyhubv1": {
+      "wasmBytes": 56610,
+      "codeHash": "81ffd1545d365d94068bacc2665915abb1c9c74e8880b4a5d5d410d194883bc6",
+      "rawAbiHash": "f4aeb966960d7df76df27fa5a3a182d038b2184223d282b17b979bb577de80b6"
+    },
+    "daclifydecid": {
+      "wasmBytes": 445278,
+      "codeHash": "1dbbd528e111c750e1b33eeef21db2252243de134fede3dea02ebb4341f1b95c",
+      "rawAbiHash": "2268cd779edfda686b5b5533ea1a9f8b771952b43c2628cdda28ac5e30e44511"
+    },
+    "daclifyworks": {
+      "wasmBytes": 171794,
+      "codeHash": "f280b45833356855b6744b91d1c8cadda93da5b62d04c1d3e301cc8d4212ee58",
+      "rawAbiHash": "4a2c595ff504b1305d32531432c78abe25fc1e3ee902ddff10d2d1c867082c88"
+    },
+    "daclifypayr1": {
+      "wasmBytes": 114563,
+      "codeHash": "c5b6aa9975709b6094c716df00b7a1c7134b1e9e9597c632090e54bbbb9184fc",
+      "rawAbiHash": "30859bbd6b3a4c18244dceed93cb9d49f941c55c0924c748f111b0589a5c7bcb"
+    },
+    "daclifygrant": {
+      "wasmBytes": 142764,
+      "codeHash": "9045f1dc001da77247ace6a2bc639790b9704b8303a605dbb397e9285b259e4d",
+      "rawAbiHash": "ed73e0b960db25be350ac54b800146e92e874d9200d121756fa7e8edcd17be31"
+    },
+    "daclifyendor": {
+      "wasmBytes": 91929,
+      "codeHash": "a45944ea48c13f9d94746641ca18c3709a48790f291532fb63495108cf829bfb",
+      "rawAbiHash": "2a74e6139a5a3713fe76a7f5c2bb2f8b6dd6277d77a55c341db9b1f988541c31"
+    },
+    "daclifyactiv": {
+      "wasmBytes": 202362,
+      "codeHash": "3c7cac382ba8e9a64eb192ddda7b1c4a68eba52d485ac55fdf6036c1ef778ead",
+      "rawAbiHash": "f7c8d87159fc12087ea0998d501f594bda7d6080e9c68af077c6801819f65476"
+    },
+    "daclifynames": {
+      "wasmBytes": 91743,
+      "codeHash": "29f3155cc67c86871aa862b0ae9168acfdbaadf899721d4f5ef9a7ccaff86a65",
+      "rawAbiHash": "1c57626378c943ec3c97c6bb8fe20b8c25b9c49cabd9b65634c10c11cca86b02"
+    },
+    "daclifyqauth": {
+      "wasmBytes": 83452,
+      "codeHash": "d2c7102b79cccb2ca020a071cf46c53da825f4ac86dde8b8264fab3a767db953",
+      "rawAbiHash": "d4c68ff4350f3f29445bb6dcd67199b596f34236587111885ef540f3abff854b"
+    },
+    "daclifyquick": {
+      "wasmBytes": 187992,
+      "codeHash": "7bf54521e224f33389a573df970c26074cb96ac72fbe60ba3b8ee80f34798f59",
+      "rawAbiHash": "f259cd6b5925a8467308fae2509457b45b8e77187360ea3d7a985edbd09f5ab5"
+    }
+  },
+  "rollout": {
+    "rawPermissionMetadataRequired": true,
+    "wildcardLinksAllowed": false,
+    "newContextActionLinks": [
+      "daclifycore1/recovergrant",
+      "daclifycore1/ackrecgrant",
+      "daclifycore1/setcontacts",
+      "daclifycore1/cancelrec",
+      "daclifycore1/setrecpolicy",
+      "daclifycore1/putrecpack",
+      "daclifycore1/setagentdesc",
+      "daclifypayr1/commitpriv",
+      "daclifypayr1/editpriv"
+    ],
+    "newPermission": "none; existing execctx only",
+    "keysParentsThresholdsPreserved": true,
+    "operatorContentConversion": false
+  }
+}

@@ -3,6 +3,7 @@ import { ApiRoutes } from '../protocol/routes.js';
 import { LoginMessageSchema, type UserMembership } from '../protocol/api.js';
 import { type GovernanceState } from '../protocol/dao.js';
 import {
+  MCP_SCOPE_ACTIONS,
   McpConnectionSchema,
   McpReadInputSchema,
   McpReadResultSchema,
@@ -344,15 +345,8 @@ export function prepareCommunityInstruction(
     session.credential_epoch !== (actor?.credential_epoch ?? '1')
   )
     throw new Error('MCP_SESSION_REVOKED');
-  const expectedAction =
-    scope === 'proposal'
-      ? 'open'
-      : scope === 'vote'
-        ? 'vote'
-        : scope === 'review'
-          ? 'review'
-          : 'recordact';
-  if (action.action !== expectedAction || action.target === connection.dao.contract)
+  const allowedActions: readonly string[] = MCP_SCOPE_ACTIONS[scope];
+  if (!allowedActions.includes(action.action) || action.target === connection.dao.contract)
     throw new Error('MCP_INTENT_ACTION');
   if (
     !session.permissions.some(

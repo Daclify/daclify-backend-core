@@ -1,5 +1,7 @@
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { ABI } from '@wharfkit/antelope';
 import { z } from 'zod';
 import { ModulePermissions } from '@daclify/modules';
 import {
@@ -11,10 +13,54 @@ import {
   PayrollTableSchemas,
 } from '@daclify/modules/sdk';
 import { encodeAction, RuntimeTableSchemas, RuntimeCodeHash } from '../../sdk/index.js';
-import { nativeContracts, type NativeContracts } from '../helpers/native-contracts.js';
+import {
+  nativeContracts,
+  nativeModules,
+  type NativeContracts,
+} from '../helpers/native-contracts.js';
+import { contractRamGrowth } from '../../tools/deploy/upgrade-journal.js';
+import {
+  permissionAuditAccount,
+  contextPermissionPlan,
+  contextLinkRepairActions,
+  assertContextLinkUpgrade,
+} from '../../tools/deploy/permissions.js';
+const context = contextPermissionPlan('daclifycore', nativeModules);
+const missingNames = new Set([
+  'daclifycore/recovergrant',
+  'daclifycore/ackrecgrant',
+  'daclifycore/setcontacts',
+  'daclifycore/cancelrec',
+  'daclifycore/setrecpolicy',
+  'daclifycore/putrecpack',
+  'daclifycore/setagentdesc',
+  'payroll/commitpriv',
+  'payroll/editpriv',
+]);
+const missingLinks = context.links.filter((link) =>
+  missingNames.has(link.account + '/' + link.action),
+);
 let fixture: NativeContracts | undefined;
 beforeAll(async () => {
-  fixture = await nativeContracts('pre-private-content', true);
+  const f = await nativeContracts('pre-private-content', true);
+  fixture = f;
+  const original = permissionAuditAccount(
+    await f.api.call({ path: '/v1/chain/get_account', params: { account_name: 'daclifycore' } }),
+  );
+  const initial = contextLinkRepairActions(context, original);
+  if (initial.length) await f.push(initial, [f.key('daclifycore')]);
+  expect(missingLinks).toHaveLength(9);
+  await f.push(
+    missingLinks.map((link) =>
+      f.system(
+        'unlinkauth',
+        { account: 'daclifycore', code: link.account, type: link.action },
+        'daclifycore',
+        'owner',
+      ),
+    ),
+    [f.key('daclifycore')],
+  );
 }, 90000);
 afterAll(async () => {
   await fixture?.stop();
@@ -73,7 +119,7 @@ it('preserves original keys, an open ballot and approved payroll through the exa
       quorum: 5000,
       approval: 5001,
       metadata: JSON.stringify({
-        schemaVersion: 1,
+        schemaVersion: 3,
         semantics: 'poll',
         title: 'Legacy public question',
         description: 'Historical wording stays visible',
@@ -122,12 +168,82 @@ it('preserves original keys, an open ballot and approved payroll through the exa
     definition = before.ballotDefinitions.find((row) => row.ballot_id === '77');
   if (!poll || !definition) throw Error('LEGACY_BALLOT_REQUIRED');
   expect(definition.version).toBe(1);
+  const primaryTables = new Set(
+    ABI.from(readFileSync('.artifacts/privacy-upgrade/runtime.abi', 'utf8')).tables.map((row) =>
+      String(row.name),
+    ),
+  );
+  const runtimeRows = async () => {
+    const scopes = await f.api.v1.chain.get_table_by_scope({ code: 'daclifycore', limit: 100 });
+    expect(scopes.more).toBe('');
+    const result = [];
+    for (const item of scopes.rows) {
+      if (!primaryTables.has(String(item.table))) continue;
+      const rows = await f.api.v1.chain.get_table_rows({
+        code: 'daclifycore',
+        scope: String(item.scope),
+        table: String(item.table),
+        json: false,
+        limit: 100,
+      });
+      expect(rows.more).toBe(false);
+      result.push({ scope: String(item.scope), table: String(item.table), rows: rows.rows });
+    }
+    return result;
+  };
+  const originalRows = await runtimeRows();
+  const nativeAccount = async () =>
+    permissionAuditAccount(
+      await f.api.call({ path: '/v1/chain/get_account', params: { account_name: 'daclifycore' } }),
+    );
+  const originalPermissions = await nativeAccount();
+  const repairs = contextLinkRepairActions(context, originalPermissions);
+  expect(repairs).toHaveLength(9);
+  const originalAccountRam = Number((await f.api.v1.chain.get_account('daclifycore')).ram_usage),
+    originalAbiBytes = (await f.api.v1.chain.get_raw_abi('daclifycore')).abi.array.length;
   // Installing code alone never rewrites per-DAO consent, frozen definitions or approved liabilities.
+  await f.deploy('daclifycore', '.artifacts/contracts/runtime');
+  expect(
+    Number((await f.api.v1.chain.get_account('daclifycore')).ram_usage) - originalAccountRam,
+  ).toBe(
+    contractRamGrowth(
+      readFileSync('.artifacts/contracts/runtime.wasm').length,
+      readFileSync('.artifacts/privacy-upgrade/runtime.wasm').length,
+      (await f.api.v1.chain.get_raw_abi('daclifycore')).abi.array.length,
+      originalAbiBytes,
+    ),
+  );
+  await f.call('daclifycore', 'rebindramobs', {
+    expected_old_hash: 'afa80071de5578e915c5b4c37d02f294c612a713299fa264116e7f338d65ca2d',
+    expected_new_hash: RuntimeCodeHash,
+  });
+  await f.push(repairs, [f.key('daclifycore')]);
+  assertContextLinkUpgrade(originalPermissions, await nativeAccount(), missingLinks);
+  // Rollback is qualified before any private writes; later application writes require a new review.
+  await f.push(
+    missingLinks.map((link) =>
+      f.system(
+        'unlinkauth',
+        { account: 'daclifycore', code: link.account, type: link.action },
+        'daclifycore',
+        'owner',
+      ),
+    ),
+    [f.key('daclifycore')],
+  );
+  await f.deploy('daclifycore', '.artifacts/privacy-upgrade/runtime');
+  await f.call('daclifycore', 'rebindramobs', {
+    expected_old_hash: RuntimeCodeHash,
+    expected_new_hash: 'afa80071de5578e915c5b4c37d02f294c612a713299fa264116e7f338d65ca2d',
+  });
+  expect(await runtimeRows()).toEqual(originalRows);
+  assertContextLinkUpgrade(originalPermissions, await nativeAccount());
   await f.deploy('daclifycore', '.artifacts/contracts/runtime');
   await f.call('daclifycore', 'rebindramobs', {
     expected_old_hash: 'afa80071de5578e915c5b4c37d02f294c612a713299fa264116e7f338d65ca2d',
     expected_new_hash: RuntimeCodeHash,
   });
+  await f.push(repairs, [f.key('daclifycore')]);
   for (const name of ['decide', 'payroll'] as const) {
     await f.deploy(name, '../daclify-backend-modules/.artifacts/contracts/' + name);
     await f.call('daclifycore', 'setramcode', { account: name, code_hash: ModuleCodeHashes[name] });

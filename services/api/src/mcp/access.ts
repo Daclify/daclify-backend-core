@@ -66,22 +66,31 @@ export class LocalCommunityAccess implements CommunityAccess {
       governance,
       request,
     });
-    return {
-      current,
-      prepared: prepareCommunityInstruction(input, {
-        connection: grant,
-        member,
-        governance,
-        credential: {
-          sessionId: grant.sessionId,
-          signingPublicKey: grant.delegatePublicKey,
-          ...(grant.app ? { appId: grant.app.appId } : {}),
-        },
-        action,
-        ...(account.signingKey ? { rootSigningKey: account.signingKey } : {}),
-      }),
-    };
+    try {
+      return {
+        current,
+        prepared: prepareCommunityInstruction(input, {
+          connection: grant,
+          member,
+          governance,
+          credential: {
+            sessionId: grant.sessionId,
+            signingPublicKey: grant.delegatePublicKey,
+            ...(grant.app ? { appId: grant.app.appId } : {}),
+          },
+          action,
+          ...(account.signingKey ? { rootSigningKey: account.signingKey } : {}),
+        }),
+      };
+    } catch (cause) {
+      if (cause instanceof Error && cause.message === 'MCP_SESSION_SCOPE')
+        throw new ApiError('MCP_APPROVAL_PENDING', 403);
+      if (cause instanceof Error && cause.message === 'MCP_SCOPE_REQUIRED')
+        throw new ApiError('MCP_SCOPE_REQUIRED', 403);
+      throw cause;
+    }
   }
+
   async read(input: McpReadInput) {
     const parsed = McpReadInputSchema.parse(input),
       current = await this.authorize();

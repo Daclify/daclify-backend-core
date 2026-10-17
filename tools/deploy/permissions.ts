@@ -5,6 +5,50 @@ import { ABI, Action, Authority, API } from '@wharfkit/antelope';
 import { deploymentAccounts, type DeployEnvironment } from './environment.js';
 import { SYSTEM_ABI } from '../../sdk/system-abi.js';
 import { nativeOwnershipAccount } from '../../sdk/executives.js';
+import assert from 'node:assert/strict';
+
+export function assertContextLinkUpgrade(
+  before: API.v1.AccountObject,
+  after: API.v1.AccountObject,
+  additions: ReadonlyArray<ReturnType<typeof contextPermissionPlan>['links'][number]> = [],
+) {
+  assert.ok(before.account_name.equals(after.account_name), 'PERMISSION_ACCOUNT_MISMATCH');
+  assert.ok(
+    !additions.length || before.permissions.some((row) => row.perm_name.equals('execctx')),
+    'EXECUTION_PERMISSION_REQUIRED',
+  );
+  assert.equal(after.permissions.length, before.permissions.length, 'PERMISSIONS_CHANGED');
+  for (const prior of before.permissions) {
+    const current = after.permissions.find((row) => row.perm_name.equals(prior.perm_name));
+    assert.ok(
+      current &&
+        current.parent.equals(prior.parent) &&
+        current.required_auth.equals(prior.required_auth),
+      'AUTHORITY_CHANGED',
+    );
+    assert.ok(prior.linked_actions && current.linked_actions, 'PERMISSION_LINKS_UNAVAILABLE');
+    const links = (rows: NonNullable<typeof prior.linked_actions>) =>
+      rows.map((row) => ({
+        account: String(row.account),
+        action: row.action ? String(row.action) : '*',
+      }));
+    const expected = [
+      ...links(prior.linked_actions),
+      ...(prior.perm_name.equals('execctx')
+        ? additions.map(({ account, action }) => ({ account, action }))
+        : []),
+    ];
+    const sorted = (rows: readonly { account: string; action: string }[]) =>
+      [...rows].sort((a, b) =>
+        (a.account + '/' + a.action).localeCompare(b.account + '/' + b.action),
+      );
+    assert.deepEqual(
+      sorted(links(current.linked_actions)),
+      sorted(expected),
+      'EXECUTION_LINK_CHANGED',
+    );
+  }
+}
 export function contextPermissionPlan(
   runtimeInput: string,
   modules: readonly { id: keyof typeof ModulePermissions; account: string }[],

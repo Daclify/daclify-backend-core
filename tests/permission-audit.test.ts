@@ -8,6 +8,7 @@ import {
   deploymentContextPermissionPlan,
   upgradePermissionLinks,
   permissionAuditAccount,
+  assertContextLinkUpgrade,
 } from '../tools/deploy/permissions.js';
 import { loadEnvironment } from '../tools/deploy/environment.js';
 import { CoreContextActions } from '../sdk/permissions.js';
@@ -44,6 +45,46 @@ function account(permissions = [permission('execctx', plan.links)], name = 'audi
     permissions,
   });
 }
+
+it('permits only reviewed execution links, preserving every key, threshold, parent and unrelated link', () => {
+  const added = [{ account: 'auditcore', action: 'setagentdesc' }] satisfies ReturnType<
+      typeof contextPermissionPlan
+    >['links'],
+    before = account(),
+    after = account([permission('execctx', [...plan.links, ...added])]);
+  expect(() => assertContextLinkUpgrade(before, after, added)).not.toThrow();
+  const observed = added.map((link) => ({ ...link, currentPermission: null }));
+  expect(() => assertContextLinkUpgrade(before, after, observed)).not.toThrow();
+  expect(() => assertContextLinkUpgrade(before, after)).toThrow('EXECUTION_LINK_CHANGED');
+  expect(() => assertContextLinkUpgrade(before, before, added)).toThrow('EXECUTION_LINK_CHANGED');
+  expect(() =>
+    assertContextLinkUpgrade(
+      before,
+      account([
+        permission(
+          'execctx',
+          [...plan.links, ...added],
+          Authority.from({ threshold: 1, keys: [{ key, weight: 1 }] }),
+        ),
+      ]),
+      added,
+    ),
+  ).toThrow('AUTHORITY_CHANGED');
+  expect(() =>
+    assertContextLinkUpgrade(
+      before,
+      account([permission('execctx', [...plan.links, ...added], undefined, 'owner')]),
+      added,
+    ),
+  ).toThrow('AUTHORITY_CHANGED');
+  expect(() =>
+    assertContextLinkUpgrade(
+      before,
+      account([permission('execctx', [...plan.links.slice(1), ...added])]),
+      added,
+    ),
+  ).toThrow('EXECUTION_LINK_CHANGED');
+});
 
 describe('deployment permission inspection', () => {
   it.each([undefined, null, 'unavailable'])(

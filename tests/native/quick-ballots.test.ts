@@ -732,6 +732,49 @@ describe('native encrypted Quick ballot state and proofs', () => {
     }
   });
 
+  it('preserves released core32 Quick ballots and verifies their real tally after the source and authority upgrade', async () => {
+    await call(runtime, 'appoint', { dao_id: '1', member_ids: ['1'], inactivity_seconds: 0, quorum_bps: 10000 }, ['alice']);
+    const currentAuthority = (await f.api.v1.chain.get_raw_abi(authority)).code_hash.toString();
+    const currentSource = sourceHash;
+    const install = async (legacy: boolean) => {
+      auth = await f.deploy(authority, legacy ? '.artifacts/privacy-upgrade/quickauth' : '.artifacts/contracts/quickauth');
+      vote = await f.deploy(source, legacy ? '.artifacts/privacy-upgrade/quickvote' : '../daclify-backend-modules/.artifacts/contracts/quickvote');
+      sourceHash = (await f.api.v1.chain.get_raw_abi(source)).code_hash.toString();
+      const authorityHash = (await f.api.v1.chain.get_raw_abi(authority)).code_hash.toString();
+      expect(sourceHash).toBe(legacy ? '7bf54521e224f33389a573df970c26074cb96ac72fbe60ba3b8ee80f34798f59' : currentSource);
+      expect(authorityHash).toBe(legacy ? 'd2c7102b79cccb2ca020a071cf46c53da825f4ac86dde8b8264fab3a767db953' : currentAuthority);
+      for (const [account, code_hash] of [[authority, authorityHash], [source, sourceHash]]) {
+        if (!account || !code_hash) throw Error('FIXTURE_PIN_REQUIRED');
+        await call(runtime, 'setramcode', {account, code_hash}, [runtime]);
+      }
+      await call(runtime, 'listmod', {account:source,publisher:'alice',party:0,accepts_fee_rule:1,price:'0.0000 TLOS',code_hash:sourceHash,title:'Quick ballot fixture'},[runtime]);
+      await call(runtime, 'setmodule', {dao_id:'1',account:source,version:1,actions:['open','close'],grants:[],code_hash:sourceHash},['alice']);
+      await call(authority, 'qconfig', {runtime,source,code_hash:sourceHash,gateway:{actor:'gateway',permission:'active'},maximum:5000}, [runtime,authority]);
+      await call(source, 'init', {runtime,authority,authority_hash:authorityHash}, [runtime,source]);
+    };
+    await install(true);
+    const b = await open('18001');
+    await respond('bob', b, 1);
+    const cfg = QuickBallotTableSchemas.qclock.parse((await rows(source,'qclock'))[0]);
+    const bob = accounts.get('bob');
+    if (!bob) throw Error('ORIGINAL_ACCOUNT_REQUIRED');
+    const raw = async (account: string,table: string,id: string) => z.array(z.string()).length(1).parse((await f.api.v1.chain.get_table_rows({code:account,scope:runtime,table,json:false,lower_bound:UInt64.from(id),limit:1})).rows);
+    const responseId = String(BigInt(cfg.next_response_id)-1n);
+    const before = { ballot: await raw(source,'qballots',b.id),response:await raw(source,'qresponses',responseId),account:await raw(authority,'qaccounts',bob.id) };
+    await install(false);
+    expect(await raw(source,'qballots',b.id)).toEqual(before.ballot);
+    expect(await raw(source,'qresponses',responseId)).toEqual(before.response);
+    expect(await raw(authority,'qaccounts',bob.id)).toEqual(before.account);
+    await respond('bob', b, 0, '1');
+    await close(b.id);
+    await prepare(b.id);
+    const frozen = await ballot(b.id);
+    const transcript = context('tally',b.id,b.definitionHash,[Checksum256.from(frozen.response_root).array,packed(UInt64.from(frozen.count)),Bytes.from(frozen.aggregate).array]);
+    const proof = proveBallotTally(transcript,b.secret,frozen.aggregate,1n,0n);
+    await call(source,'finalize',{runtime,ballot_id:b.id,up:0,proof},['bob']);
+    expect(await ballot(b.id)).toMatchObject({count:1,up:0,verified:true,final_proof:proof});
+  }, 120000);
+
   it('binds a private question to one DAO and its real proof context while preserving fixed vote readers', async () => {
     await createDao('777', 2);
     await executive('commitepoch', { epoch: '1', commitment: 'ac'.repeat(32), self_grant: '{}' }, undefined, '777', runtime);
@@ -764,7 +807,7 @@ describe('native encrypted Quick ballot state and proofs', () => {
     await call(source, 'finalize', { runtime, ballot_id: b.id, up: 1, proof: finalProof }, ['bob']);
     expect((await ballot(b.id)).definition_hash).toBe(b.definitionHash);
     expect((await ballot(b.id)).verified).toBe(true);
-    expect(await rows(source, 'qresponses')).toHaveLength(0);
+    expect(z.array(QuickBallotTableSchemas.qresponses).parse(await rows(source, 'qresponses')).filter(row=>row.ballot_id===b.id)).toHaveLength(0);
   }, 45000);
 
   it('allows a registered nonmember to vote on an all-account ballot without disclosing its choice', async () => {
@@ -776,7 +819,7 @@ describe('native encrypted Quick ballot state and proofs', () => {
       aggregate: encrypted.ciphertext,
       up: 0,
     });
-    const responses = await rows(source, 'qresponses');
+    const responses = z.array(QuickBallotTableSchemas.qresponses).parse(await rows(source, 'qresponses')).filter(row=>row.ballot_id===b.id);
     expect(responses).toHaveLength(1);
     expect(responses[0]).not.toHaveProperty('choice');
     expect(responses[0]).not.toHaveProperty('up');
@@ -1687,4 +1730,6 @@ describe('native encrypted Quick ballot state and proofs', () => {
     expect(snapshot.definition.readers.map((reader) => reader.member_id)).toEqual(['1']);
     await expect(open('111')).rejects.toThrow('EXECUTIVE_REQUIRED');
   });
+
+
 });

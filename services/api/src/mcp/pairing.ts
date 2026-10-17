@@ -4,6 +4,8 @@ import type { Pool } from 'pg';
 import { z } from 'zod';
 import type { Account } from '../../../../protocol/api.js';
 import {
+  MCP_SCOPE_ACTIONS,
+  McpPairingRoutes,
   McpPairingInputSchema,
   McpPairingSchema,
   McpPairingApprovalSchema,
@@ -101,28 +103,29 @@ export class McpPairings {
     if (actor?.revoked) throw invalid();
     if (pairing.scopes.includes('review') && !member.reviewer)
       throw new ApiError('MCP_REVIEWER_REQUIRED', 403);
-    const permissions = pairing.scopes.map((scope) => {
-      const moduleId = scope === 'review' ? 'works' : scope === 'activity' ? 'activity' : 'decide';
-      const module = state.modules.find((value) => value.deployment.id === moduleId);
-      const action =
-        scope === 'review'
-          ? 'review'
-          : scope === 'activity'
-            ? 'recordact'
-            : scope === 'vote'
-              ? 'vote'
-              : 'open';
-      if (
-        !module?.installed ||
-        !module.enabled ||
-        !module.compatible ||
-        !module.codeVerified ||
-        module.deployment.codeHash !== ModuleCodeHashes[moduleId] ||
-        !module.actions.includes(action)
-      )
-        throw new ApiError('MCP_MODULE_PIN', 403);
-      return { target: module.deployment.account, action, code_hash: module.deployment.codeHash };
-    });
+    const permissions: z.infer<typeof McpPairingRoutes.mcpConsent.response>['permissions'] =
+      pairing.scopes.flatMap((scope) => {
+        const moduleId =
+          scope === 'review' ? 'works' : scope === 'activity' ? 'activity' : 'decide';
+        const module = state.modules.find((value) => value.deployment.id === moduleId);
+        const actions = MCP_SCOPE_ACTIONS[scope].filter((action) =>
+          module?.actions.includes(action),
+        );
+        if (
+          !module?.installed ||
+          !module.enabled ||
+          !module.compatible ||
+          !module.codeVerified ||
+          module.deployment.codeHash !== ModuleCodeHashes[moduleId] ||
+          actions.length === 0
+        )
+          throw new ApiError('MCP_MODULE_PIN', 403);
+        return actions.map((action) => ({
+          target: module.deployment.account,
+          action,
+          code_hash: module.deployment.codeHash,
+        }));
+      });
     if (pairing.app) {
       if (!this.apps) throw invalid();
       const current = (await this.apps.list(account, pairing.dao.daoId)).find(

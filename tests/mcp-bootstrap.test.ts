@@ -37,11 +37,11 @@ it('restores an independent MCP cohort in source-only backend checkouts without 
       readFileSync(join(source, 'package.json')),
     );
     const archives = checkoutMcpArchives(core, modules);
-    expect(archives.coreVersion).toBe('0.15.0-alpha.30');
-    expect(archives.modulesVersion).toBe('0.10.0-alpha.40');
+    expect(archives.coreVersion).toBe('0.15.0-alpha.46');
+    expect(archives.modulesVersion).toBe('0.10.0-alpha.57');
     mkdirSync(join(core, '.artifacts/community-mcp'), { recursive: true });
     cpSync(
-      '.artifacts/community-mcp/daclify-community-mcp-0.1.0-alpha.20.tgz',
+      '.artifacts/community-mcp/daclify-community-mcp-0.1.0-alpha.23.tgz',
       archives.mcpArchive,
     );
     const release = await buildMcpRelease(
@@ -51,7 +51,7 @@ it('restores an independent MCP cohort in source-only backend checkouts without 
       join(root, 'releases'),
     );
     expect(release.manifest.releaseId).toBe(
-      'ad170b5f2dd3c79da54c50bc9bac17f1786ac6bc59ec121b0197d813468a5d81',
+      '6bdef9964e07b2f092219ddfbc6209315e77e083fff1edf4366759dcdf5f9e34',
     );
     for (const name of ['dist', 'README.md'])
       cpSync(join(source, name), join(companion, name), { recursive: true });
@@ -84,7 +84,7 @@ it('restores an independent MCP cohort in source-only backend checkouts without 
       .object({ peerDependencies: z.record(z.string(), z.string()) })
       .passthrough()
       .parse(JSON.parse(readFileSync(join(companion, 'package.json'), 'utf8')));
-    malformed.peerDependencies['@daclify/core-protocol'] = '^0.15.0-alpha.30';
+    malformed.peerDependencies['@daclify/core-protocol'] = '^0.15.0-alpha.46';
     writeFileSync(join(companion, 'package.json'), JSON.stringify(malformed));
     expect(
       spawnSync(process.execPath, [resolve('tools/bootstrap/mcp.ts'), core, modules]).status,

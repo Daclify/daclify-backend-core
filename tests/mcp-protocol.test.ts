@@ -55,3 +55,22 @@ it('accepts bounded model intents without arbitrary targets, payout fields or pr
     }),
   ).toThrow();
 });
+
+it('carries both verified proposal/vote methods in one bounded consent without accepting an oversized grant', async () => {
+  const { McpPairingRoutes } = await import('../protocol/mcp.js');
+  const permissions = ['open', 'openpoll', 'vote', 'votecommit', 'review'].map((action) => ({
+    target: 'daclifydecid',
+    action,
+    code_hash: 'ab'.repeat(32),
+  }));
+  expect(McpPairingRoutes.mcpConsent.response.shape.permissions.parse(permissions)).toEqual(
+    permissions,
+  );
+  expect(() =>
+    McpPairingRoutes.mcpConsent.response.shape.permissions.parse([
+      ...permissions,
+      permissions[0],
+      permissions[1],
+    ]),
+  ).toThrow();
+});

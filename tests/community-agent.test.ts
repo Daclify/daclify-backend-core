@@ -347,3 +347,53 @@ it('keeps app-scoped activity and reviewer authority separate from general routi
     }),
   ).rejects.toThrow('MCP_REVIEWER_REQUIRED');
 });
+
+it.each(['openpoll', 'votecommit'])(
+  'permits the verified %s path only in its routine scope and exact session grant',
+  async (action) => {
+    const f = await fixture(),
+      session = f.governance.sessions[0];
+    if (!session) throw Error('MISSING_FIXTURE_SESSION');
+    const { prepareCommunityInstruction } = await import('../sdk/community-agent.js');
+    const intent =
+      action === 'openpoll'
+        ? f.intent
+        : McpPrepareInputSchema.parse({
+            tool: 'prepare_vote',
+            input: { pollId: '1', optionId: '0' },
+          });
+    const scope: 'proposal' | 'vote' = action === 'openpoll' ? 'proposal' : 'vote';
+    const context = {
+      connection: { dao: f.member.dao, memberId: '1', scopes: [scope] },
+      member: f.member,
+      governance: f.governance,
+      credential: { sessionId: session.id, signingPublicKey: f.delegate.toPublic().toString() },
+      action: {
+        target: 'daclifydecid',
+        action,
+        codeHash: '00'.repeat(32),
+        data: new Uint8Array([1]),
+      },
+    };
+    session.permissions.push({
+      target: 'daclifydecid',
+      action,
+      code_hash: context.action.codeHash,
+    });
+    expect(prepareCommunityInstruction(intent, context).request.action).toBe(action);
+    expect(() =>
+      prepareCommunityInstruction(intent, {
+        ...context,
+        action: { ...context.action, action: action === 'openpoll' ? 'votecommit' : 'openpoll' },
+      }),
+    ).toThrow('MCP_INTENT_ACTION');
+    expect(() =>
+      prepareCommunityInstruction(intent, {
+        ...context,
+        action: { ...context.action, codeHash: 'ab'.repeat(32) },
+      }),
+    ).toThrow('MCP_SESSION_SCOPE');
+    session.permissions = [];
+    expect(() => prepareCommunityInstruction(intent, context)).toThrow('MCP_SESSION_SCOPE');
+  },
+);

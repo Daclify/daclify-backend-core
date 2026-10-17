@@ -3,6 +3,7 @@ import { CreationService } from '../../services/api/src/creation.js';
 import { QuickBallots } from '../../services/api/src/quick-ballots/service.js';
 import { ContentService } from '../../services/api/src/content/service.js';
 import { LocalContentFixture } from '../../tools/native/content-fixture.js';
+import { ownedPinata } from './owned-pinata.js';
 import { DirectoryService } from '../../services/api/src/mini-apps/directory.js';
 import { governedDirectoryModeration } from '../../services/api/src/mini-apps/directory-moderation.js';
 import { MiniAppOriginProofSchema } from '../../protocol/mini-apps.js';
@@ -48,7 +49,37 @@ const name = 'daclify_browser_' + randomBytes(6).toString('hex') + '_test',
 database.pathname = '/' + name;
 const owner = new Pool({ connectionString: source }),
   pool = new Pool({ connectionString: database.toString() });
+const compiledTestnet =
+  z.enum(['0', '1']).parse(process.env.DACLIFY_TEST_COMPILED_TESTNET ?? '0') === '1';
+const realProvider = process.env.DACLIFY_TEST_PINATA === '1' ? ownedPinata() : undefined;
 const f = await nativeContracts();
+if (process.env.DACLIFY_TEST_RPC_DIAGNOSTICS === '1') {
+  const nativeFetch = globalThis.fetch;
+  globalThis.fetch = async (input, init) => {
+    const url = input instanceof Request ? input.url : String(input);
+    try {
+      const response = await nativeFetch(input, init);
+      if (url.startsWith(f.url + '/') && !response.ok) {
+        const error = z
+          .object({ error: z.object({ name: z.string().regex(/^[a-z_]+$/) }) })
+          .safeParse(await response.clone().json());
+        console.error({
+          fixtureRpc: new URL(url).pathname,
+          status: response.status,
+          error: error.success ? error.data.error.name : 'UNPARSED_RPC_ERROR',
+        });
+      }
+      return response;
+    } catch (cause) {
+      if (url.startsWith(f.url + '/'))
+        console.error({
+          fixtureRpc: new URL(url).pathname,
+          error: cause instanceof Error ? cause.name : 'RPC_TRANSPORT_ERROR',
+        });
+      throw cause;
+    }
+  };
+}
 let server: Awaited<ReturnType<typeof createServer>> | undefined;
 const profileDirectory = await mkdtemp(join(tmpdir(), 'daclify-browser-profile-exclusions-'));
 const contentDirectory = await mkdtemp(join(tmpdir(), 'daclify-browser-documents-'));
@@ -61,24 +92,114 @@ try {
   const bls = f.featureDigests.get('BLS_PRIMITIVES2');
   if (!bls) throw Error('FIXTURE_BLS_REQUIRED');
   await f.activate(bls);
-  await f.push(testnetMissingLinks.map((action) => f.system('linkauth', { account: 'daclifycore', code: 'daclifycore', type: action, requirement: 'execctx' }, 'daclifycore', 'owner')), [f.key('daclifycore')]);
+  await f.push(
+    testnetMissingLinks.map((action) =>
+      f.system(
+        'linkauth',
+        { account: 'daclifycore', code: 'daclifycore', type: action, requirement: 'execctx' },
+        'daclifycore',
+        'owner',
+      ),
+    ),
+    [f.key('daclifycore')],
+  );
   const quickAbis = new Map<string, ABI>();
   for (const account of ['quickauth', 'quickvote']) {
     await f.create(account);
-    quickAbis.set(account, await f.deploy(account, account === 'quickauth' ? '.artifacts/contracts/quickauth' : '../daclify-backend-modules/.artifacts/contracts/quickvote'));
-    await f.update(account, 'active', 'owner', Authority.from({ threshold: 1, keys: [{ key: f.key(account).toPublic(), weight: 1 }], accounts: [{ permission: { actor: account, permission: 'eosio.code' }, weight: 1 }], waits: [] }));
+    quickAbis.set(
+      account,
+      await f.deploy(
+        account,
+        account === 'quickauth'
+          ? '.artifacts/contracts/quickauth'
+          : '../daclify-backend-modules/.artifacts/contracts/quickvote',
+      ),
+    );
+    await f.update(
+      account,
+      'active',
+      'owner',
+      Authority.from({
+        threshold: 1,
+        keys: [{ key: f.key(account).toPublic(), weight: 1 }],
+        accounts: [{ permission: { actor: account, permission: 'eosio.code' }, weight: 1 }],
+        waits: [],
+      }),
+    );
   }
   const quickCall = async (account: string, action: string, data: object, actors: string[]) => {
     const abi = quickAbis.get(account);
     if (!abi) throw Error('FIXTURE_QUICK_ABI');
-    await f.push([f.action(account, action, data, actors.map((actor) => ({ actor, permission: 'active' })), abi)], actors.map((actor) => f.key(actor)));
+    await f.push(
+      [
+        f.action(
+          account,
+          action,
+          data,
+          actors.map((actor) => ({ actor, permission: 'active' })),
+          abi,
+        ),
+      ],
+      actors.map((actor) => f.key(actor)),
+    );
   };
-  await f.update('quickauth', 'execctx', 'active', Authority.from({ threshold: 1, keys: [], accounts: [{ permission: { actor: 'quickauth', permission: 'eosio.code' }, weight: 1 }], waits: [] }));
-  for (const [actor, actions] of [['daclifycore', ['open', 'close']], ['quickauth', ['respond', 'remove']]] as const)
-    await f.push(actions.map((action) => f.system('linkauth', { account: actor, code: 'quickvote', type: action, requirement: 'execctx' }, actor, 'owner')), [f.key(actor)]);
-  await quickCall('quickauth', 'qconfig', { runtime: 'daclifycore', source: 'quickvote', code_hash: ModuleCodeHashes['quick-ballots'], gateway: { actor: 'relay', permission: 'active' }, maximum: 5000 }, ['daclifycore', 'quickauth']);
-  await quickCall('quickvote', 'init', { runtime: 'daclifycore', authority: 'quickauth', authority_hash: (await f.api.v1.chain.get_raw_abi('quickauth')).code_hash.toString() }, ['daclifycore', 'quickvote']);
-  await f.call('daclifycore', 'listmod', { account: 'quickvote', publisher: 'alice', party: 0, accepts_fee_rule: 1, price: '0.0000 TLOS', code_hash: ModuleCodeHashes['quick-ballots'], title: 'Owned Quick ballot fixture' });
+  await f.update(
+    'quickauth',
+    'execctx',
+    'active',
+    Authority.from({
+      threshold: 1,
+      keys: [],
+      accounts: [{ permission: { actor: 'quickauth', permission: 'eosio.code' }, weight: 1 }],
+      waits: [],
+    }),
+  );
+  for (const [actor, actions] of [
+    ['daclifycore', ['open', 'close']],
+    ['quickauth', ['respond', 'remove']],
+  ] as const)
+    await f.push(
+      actions.map((action) =>
+        f.system(
+          'linkauth',
+          { account: actor, code: 'quickvote', type: action, requirement: 'execctx' },
+          actor,
+          'owner',
+        ),
+      ),
+      [f.key(actor)],
+    );
+  await quickCall(
+    'quickauth',
+    'qconfig',
+    {
+      runtime: 'daclifycore',
+      source: 'quickvote',
+      code_hash: ModuleCodeHashes['quick-ballots'],
+      gateway: { actor: 'relay', permission: 'active' },
+      maximum: 5000,
+    },
+    ['daclifycore', 'quickauth'],
+  );
+  await quickCall(
+    'quickvote',
+    'init',
+    {
+      runtime: 'daclifycore',
+      authority: 'quickauth',
+      authority_hash: (await f.api.v1.chain.get_raw_abi('quickauth')).code_hash.toString(),
+    },
+    ['daclifycore', 'quickvote'],
+  );
+  await f.call('daclifycore', 'listmod', {
+    account: 'quickvote',
+    publisher: 'alice',
+    party: 0,
+    accepts_fee_rule: 1,
+    price: '0.0000 TLOS',
+    code_hash: ModuleCodeHashes['quick-ballots'],
+    title: 'Owned Quick ballot fixture',
+  });
   await f.create('activity');
   const activityAbi: ABI = await f.deploy(
     'activity',
@@ -151,12 +272,16 @@ try {
       chainId: f.chainId,
       runtime: 'daclifycore',
       hub: 'daclifyhub',
-      environment: 'local',
+      environment: compiledTestnet ? 'testnet' : 'local',
       relayActor: 'relay',
       relayKey: f.key('relay'),
       quickAuthority: 'quickauth',
       bootstrap: { owner: 'alice', key: f.key('alice') },
-      modules: [...nativeModules, { id: 'activity', account: 'activity' }, { id: 'quick-ballots', account: 'quickvote' }],
+      modules: [
+        ...nativeModules,
+        { id: 'activity', account: 'activity' },
+        { id: 'quick-ballots', account: 'quickvote' },
+      ],
     },
     pool,
   );
@@ -172,7 +297,9 @@ try {
       .min(1024)
       .max(65535)
       .parse(process.env.DACLIFY_TEST_API_PORT ?? 3008),
-    origin = `http://${z.enum(['127.0.0.1', 'localhost']).parse(process.env.DACLIFY_TEST_UI_HOST ?? '127.0.0.1')}:${uiPort}`,
+    origin = compiledTestnet
+      ? 'https://testnet.app.daclify.com'
+      : `http://${z.enum(['127.0.0.1', 'localhost']).parse(process.env.DACLIFY_TEST_UI_HOST ?? '127.0.0.1')}:${uiPort}`,
     issuer = 'https://mini-app-api.example';
   const apps = await ConnectedApps.create(pool, gateway.connectedApps, {
     issuer,
@@ -199,7 +326,13 @@ try {
     lookup: async () => [{ address: '8.8.8.8', family: 4 }],
     request: async () => ({ status: 200, bytes: Buffer.from(JSON.stringify(directoryProof)) }),
   });
-  const mcpPairings = new McpPairings(pool, gateway, 'http://127.0.0.1:' + apiPort, origin, apps);
+  const mcpPairings = new McpPairings(
+    pool,
+    gateway,
+    compiledTestnet ? 'https://testnet.api.daclify.com' : 'http://127.0.0.1:' + apiPort,
+    origin,
+    apps,
+  );
   const deliveredEmailCodes = new Map<string, string>();
   const creation = new CreationService(pool, gateway);
   if (!gateway.quickBallots) throw Error('FIXTURE_QUICK_REQUIRED');
@@ -208,7 +341,7 @@ try {
     content: new ContentService(
       pool,
       gateway,
-      new LocalContentFixture(contentDirectory),
+      realProvider?.provider ?? new LocalContentFixture(contentDirectory),
       100_000_000n,
       'local-fixture',
     ),
@@ -232,7 +365,7 @@ try {
     connectedApps: apps,
     miniApps: new MiniAppConnections(apps, artifacts),
     profileKeys,
-    apiOrigin: origin,
+    apiOrigin: compiledTestnet ? 'https://testnet.api.daclify.com' : origin,
     trustedProxyIps: [],
     sharedProxyIps: ['127.0.0.1'],
   });
@@ -242,6 +375,16 @@ try {
   server.addHook('onRequest', async (request, reply) => {
     if (request.url.startsWith('/fixture/') && request.headers['x-fixture-token'] !== token)
       await reply.code(403).send({ code: 'FIXTURE_OWNER_REQUIRED' });
+  });
+  server.get('/fixture/private-projections', async () => {
+    const orders = await pool.query(
+      'SELECT request FROM creation_orders ORDER BY created_at DESC LIMIT 50',
+    );
+    const claims = await pool.query(
+      'SELECT request FROM dao_claim_links ORDER BY expires_at DESC LIMIT 50',
+    );
+    const rows = z.array(z.object({ request: z.unknown() }));
+    return { orders: rows.parse(orders.rows), claims: rows.parse(claims.rows) };
   });
   server.get('/fixture/native-check', async () => {
     // An actual signed native transaction proves this fixture still controls its disposable signers.
@@ -460,4 +603,5 @@ try {
   await owner.end();
   await rm('.artifacts/native/browser-owner.json', { force: true });
   await rm('.artifacts/native/network.json', { force: true });
+  await realProvider?.close();
 }

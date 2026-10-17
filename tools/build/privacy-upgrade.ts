@@ -18,6 +18,8 @@ const root = resolve('.'),
 const core = '38514071e531bc8cbc1d77f641ea1018917529aa',
   modules = '491e9dbed0fd0895bc54c75bbfe4198aec132a9c';
 const pins = {
+  quickauth: 'd2c7102b79cccb2ca020a071cf46c53da825f4ac86dde8b8264fab3a767db953',
+  quickvote: '7bf54521e224f33389a573df970c26074cb96ac72fbe60ba3b8ee80f34798f59',
   runtime: 'afa80071de5578e915c5b4c37d02f294c612a713299fa264116e7f338d65ca2d',
   decide: '1dbbd528e111c750e1b33eeef21db2252243de134fede3dea02ebb4341f1b95c',
   payroll: 'c5b6aa9975709b6094c716df00b7a1c7134b1e9e9597c632090e54bbbb9184fc',
@@ -59,14 +61,17 @@ try {
   for (const [contract, pin] of Object.entries(pins)) {
     const output = destination + '/' + contract;
     if (!existsSync(output + '.wasm') || !existsSync(output + '.abi')) {
-      const source = resolve(scratch, contract === 'runtime' ? 'core' : 'modules');
+      const source = resolve(
+        scratch,
+        ['runtime', 'quickauth'].includes(contract) ? 'core' : 'modules',
+      );
       execFileSync(
         compiler,
         [
           'contracts/' + contract + '/' + contract + '.cpp',
           '-O=s',
           '-I',
-          contract === 'runtime'
+          ['runtime', 'quickauth'].includes(contract)
             ? 'contracts/common'
             : 'node_modules/@daclify/core-protocol/contracts/common',
           '-I',

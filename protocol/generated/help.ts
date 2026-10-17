@@ -2,7 +2,7 @@
 import type {HelpBundle} from '../docs.js';
 export const CoreHelpBundle:HelpBundle={
   "producer": "core",
-  "packageVersion": "0.15.0-alpha.44",
+  "packageVersion": "0.15.0-alpha.46",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -23023,7 +23023,7 @@ export const CoreHelpBundle:HelpBundle={
           },
           "permissions": {
             "minItems": 1,
-            "maxItems": 4,
+            "maxItems": 6,
             "type": "array",
             "items": {
               "type": "object",

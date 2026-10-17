@@ -567,7 +567,7 @@ public:
       const auto& permission=permissions[i];
       for(size_t j=0;j<i;j++)check(permission.target!=permissions[j].target||permission.action!=permissions[j].action,"SESSION_SCOPE");
       if(permission.target==get_self()){check((permission.action=="putjson"_n||permission.action=="putdoc"_n)&&permission.code_hash==checksum256(),"SESSION_SCOPE");}
-      else{check(permission.action=="open"_n||permission.action=="vote"_n||permission.action=="openwork"_n||permission.action=="propose"_n||permission.action=="submitwork"_n||permission.action=="review"_n,"SESSION_SCOPE");modules installed(get_self(),dao_id);const auto& grant=installed.get(permission.target.value,"MODULE_DISABLED");check_pinned(grant,permission.target);check(permission.code_hash==grant.code_hash&&std::find(grant.actions.begin(),grant.actions.end(),permission.action)!=grant.actions.end(),"SESSION_SCOPE");}
+      else{check(permission.action=="open"_n||permission.action=="openpoll"_n||permission.action=="vote"_n||permission.action=="votecommit"_n||permission.action=="openwork"_n||permission.action=="propose"_n||permission.action=="submitwork"_n||permission.action=="review"_n,"SESSION_SCOPE");modules installed(get_self(),dao_id);const auto& grant=installed.get(permission.target.value,"MODULE_DISABLED");check_pinned(grant,permission.target);check(permission.code_hash==grant.code_hash&&std::find(grant.actions.begin(),grant.actions.end(),permission.action)!=grant.actions.end(),"SESSION_SCOPE");}
     }
     rows.emplace(get_self(),[&](auto& r){r.id=session_id;r.member_id=member_id;r.signing_key=signing_key;r.expires=expires;r.credential_epoch=credential_epoch(get_self(),dao_id,member_id);r.permissions=permissions;});
   }

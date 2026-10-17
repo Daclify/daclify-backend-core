@@ -36,7 +36,9 @@ it.each([0, 1, 2] as const)(
         session_id: '101',
         signing_key: delegate.toPublic().toString(),
         expires: Math.floor(Date.now() / 1000) + 600,
-        permissions: [{ target: 'decide', action: 'vote', code_hash: ModuleCodeHashes.decide }],
+        permissions: [
+          { target: 'decide', action: 'votecommit', code_hash: ModuleCodeHashes.decide },
+        ],
       }),
     );
     await dao.act(
@@ -53,10 +55,19 @@ it.each([0, 1, 2] as const)(
         metadata: '{}',
       }),
     );
+    const definition = (await dao.state()).ballotDefinitions.find(
+      (row) => row.ballot_id === '91100' + mode,
+    );
+    if (!definition) throw Error('FROZEN_DEFINITION_REQUIRED');
     const request = await dao.request(
       'decide',
-      'vote',
-      encodeDecide('vote', { ...dao.actor(), ballot_id: '91100' + mode, choice: 1 }),
+      'votecommit',
+      encodeDecide('votecommit', {
+        ...dao.actor(),
+        ballot_id: '91100' + mode,
+        choice: 1,
+        expected: definition.commitment,
+      }),
     );
     await native.call(
       'daclifycore',
@@ -80,6 +91,25 @@ it.each([0, 1, 2] as const)(
         .parse(votes.rows)
         .some((value) => value.member === '1' && value.ballot === '91100' + mode),
     ).toBe(true);
+    const nextId = '91200' + mode;
+    await dao.act(
+      'decide',
+      'open',
+      encodeDecide('open', {
+        ...dao.actor(),
+        ballot_id: nextId,
+        kind: 0,
+        choices: 2,
+        duration: 60,
+        quorum: 5000,
+        approval: 5001,
+        metadata: '{}',
+      }),
+    );
+    const nextDefinition = (await dao.state()).ballotDefinitions.find(
+      (row) => row.ballot_id === nextId,
+    );
+    if (!nextDefinition) throw Error('FROZEN_DEFINITION_REQUIRED');
     await native.call(
       'daclifycore',
       'guardpause',
@@ -88,20 +118,25 @@ it.each([0, 1, 2] as const)(
     );
     const next = await dao.request(
       'decide',
-      'vote',
-      encodeDecide('vote', { ...dao.actor(), ballot_id: '91100' + mode, choice: 0 }),
+      'votecommit',
+      encodeDecide('votecommit', {
+        ...dao.actor(),
+        ballot_id: nextId,
+        choice: 0,
+        expected: nextDefinition.commitment,
+      }),
     );
-    await expect(
-      native.call(
-        'daclifycore',
-        'submitsess',
-        {
-          request: next,
-          session_id: '101',
-          sig: delegate.signDigest(instructionDigest(next)).toString(),
-        },
-        'relay',
-      ),
-    ).rejects.toThrow();
+    const pausedVote = native.call(
+      'daclifycore',
+      'submitsess',
+      {
+        request: next,
+        session_id: '101',
+        sig: delegate.signDigest(instructionDigest(next)).toString(),
+      },
+      'relay',
+    );
+    if (mode === 0) await pausedVote;
+    else await expect(pausedVote).rejects.toThrow('DAO_PAUSED');
   },
 );

@@ -1,6 +1,6 @@
 # Daclify core reference
 
-Package 0.15.0-alpha.44 · interface 1.
+Package 0.15.0-alpha.46 · interface 1.
 
 Generated from compiled ABI and canonical API schemas. Field layout does not describe all contract business rules; read the matching explanatory guides.
 
@@ -19218,7 +19218,7 @@ Response:
     },
     "permissions": {
       "minItems": 1,
-      "maxItems": 4,
+      "maxItems": 6,
       "type": "array",
       "items": {
         "type": "object",

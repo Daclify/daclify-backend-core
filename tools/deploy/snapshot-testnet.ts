@@ -4,12 +4,13 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, writeFileSync, statSync } from 'node:fs';
 import { ABI, APIClient, Name, Serializer } from '@wharfkit/antelope';
 import { z } from 'zod';
+import { nativeOwnershipAccount } from '../../sdk/executives.js';
 const root = '/data/daclify-upgrades/testnet';
 const directory = z
   .string()
   .regex(/^\/data\/daclify-upgrades\/testnet\/snapshot-[a-z0-9-]+$/)
   .parse(process.argv[2]);
-assert.equal(process.argv.length, 3);
+assert.deepEqual(process.argv.slice(3), process.argv.includes('--privacy') ? ['--privacy'] : []);
 mkdirSync(directory, { recursive: true, mode: 0o700 });
 assert.equal(statSync(directory).mode & 0o077, 0, 'PRIVATE_SNAPSHOT_REQUIRED');
 const api = new APIClient({ url: 'https://testnet.telos.net' });
@@ -25,6 +26,7 @@ const names = [
   'daclifyendor',
   'daclifyactiv',
   'daclifynames',
+  ...(process.argv.includes('--privacy') ? ['daclifyqauth', 'daclifyquick'] : []),
 ];
 const save = (path: string, value: unknown) =>
   writeFileSync(path, JSON.stringify(value, null, 2) + '\n', { mode: 0o600 });
@@ -52,7 +54,12 @@ for (const account of names) {
   );
   writeFileSync(path + '/contract.wasm', wasm, { mode: 0o600 });
   writeFileSync(path + '/contract.abi.bin', raw.abi.array, { mode: 0o600 });
-  save(path + '/account.json', Serializer.objectify(await api.v1.chain.get_account(account)));
+  const accountState = await api.call({
+    path: '/v1/chain/get_account',
+    params: { account_name: account },
+  });
+  nativeOwnershipAccount(accountState);
+  save(path + '/account.json', accountState);
   const tables: { table: string; scope: string; rows: string[] }[] = [];
   let lower = '';
   for (let page = 0; page < 100; page++) {

@@ -55,20 +55,33 @@ export async function mcpFixture() {
     const diagnostic = z.object({ code: z.string().optional() }).safeParse(error);
     console.error({
       fixtureErrorType: error.name,
+      fixtureErrorMessage: /^[A-Z_]{1,80}$/.test(error.message) ? error.message : undefined,
+      fixtureErrorStack: error.stack
+        ?.split('\n')
+        .filter((line) => line.startsWith('    at '))
+        .slice(0, 4),
       fixtureErrorCode: diagnostic.success ? diagnostic.data.code : undefined,
     });
   });
   await server.listen({ host: '127.0.0.1', port: 35819 });
-  async function paired(mode: 0 | 1 | 2 = 0, recipientKeys: readonly string[] = []) {
+  async function paired(
+    mode: 0 | 1 | 2 = 0,
+    recipientKeys: readonly string[] = [],
+    privacy: 0 | 1 | 2 = 0,
+    scopes: ('proposal' | 'vote' | 'review')[] = ['vote'],
+  ) {
     const pair = generateKeyPairSync('ec', { namedCurve: 'prime256v1' }),
       encryptionKey = EncryptionPublicKeySchema.parse(pair.publicKey.export({ format: 'jwk' })),
       encryptionPrivateKey = EncryptionPrivateKeySchema.parse(
         pair.privateKey.export({ format: 'jwk' }),
       ),
-      dao = await native.dummyDao('alice', false, mode, [
-        JSON.stringify(encryptionKey),
-        ...recipientKeys,
-      ]),
+      dao = await native.dummyDao(
+        'alice',
+        false,
+        mode,
+        [JSON.stringify(encryptionKey), ...recipientKeys],
+        privacy,
+      ),
       firstKey = dao.keys[0];
     if (!firstKey) throw Error('Root fixture absent');
     const root = firstKey;
@@ -101,7 +114,7 @@ export async function mcpFixture() {
       request = await pairings.begin({
         dao: dao.reference,
         memberId: '1',
-        scopes: ['vote'],
+        scopes,
         delegatePublicKey: delegate.toPublic().toString(),
         codeChallenge: createHash('sha256').update(verifier).digest('base64url'),
       }),
@@ -150,7 +163,7 @@ export async function mcpFixture() {
       id: request.id,
       dao: dao.reference,
       memberId: '1',
-      scopes: ['vote'],
+      scopes,
       sessionId: '701',
       mode: 'autonomous',
     });

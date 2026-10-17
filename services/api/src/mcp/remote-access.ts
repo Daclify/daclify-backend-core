@@ -1,4 +1,5 @@
 import {
+  MCP_SCOPE_ACTIONS,
   McpReadInputSchema,
   McpReadResultSchema,
   McpPrepareInputSchema,
@@ -98,7 +99,7 @@ export class RemoteCommunityAccess implements CommunityAccess {
     if (
       !current.governance.policy ||
       action.target === dao.contract ||
-      !(scope === 'proposal' ? ['open','openpoll'] : scope === 'vote' ? ['vote','votecommit'] : ['review']).includes(action.action)
+      !MCP_SCOPE_ACTIONS[scope].some((value) => value === action.action)
     )
       throw new ApiError('MCP_SCOPE_REQUIRED', 403);
     const expires = Math.floor(Date.now() / 1000) + 300,
