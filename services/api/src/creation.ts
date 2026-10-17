@@ -27,7 +27,7 @@ type Chain = Pick<
   | 'attestCreation'
   | 'createDao'
 > &
-  Partial<Pick<NativeChainGateway, 'governance'>>;
+  Partial<Pick<NativeChainGateway, 'governance' | 'accountRecoveryIdentity'>>;
 const RowSchema = z.object({
   id: z.uuid(),
   account_id: z.uuid(),
@@ -45,6 +45,19 @@ export class CreationService {
     private readonly pool: Pool,
     readonly chain: Chain,
   ) {}
+  async currentCreator(
+    creator: string,
+    network: Pick<ChainPlatform['network'], 'chainId' | 'runtime'>,
+  ) {
+    const recovery = await this.chain.accountRecoveryIdentity?.(creator);
+    if (!recovery) return creator;
+    if (
+      recovery.network.chainId !== network.chainId ||
+      recovery.network.runtime !== network.runtime
+    )
+      throw new ApiError('CREATION_OWNER', 403);
+    return recovery.identity.signing_key;
+  }
   private async checkFounderPolicy(
     account: Account,
     input: CreationRequest,
@@ -180,7 +193,10 @@ export class CreationService {
             daoClaimReference(status.network.chainId, status.network.runtime, input.requestId),
           )
         : null;
-      if (nativeClaim && nativeClaim.creator !== account.signingKey)
+      if (
+        nativeClaim &&
+        (await this.currentCreator(nativeClaim.creator, status.network)) !== account.signingKey
+      )
         throw new ApiError('CREATION_OWNER', 403);
       await client.query(
         'INSERT INTO creation_orders(id,account_id,reference,dao_id,chain_id,runtime,request) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(id) DO NOTHING',
@@ -197,7 +213,7 @@ export class CreationService {
         ],
       );
     });
-    return this.lock(account.id, input.requestId, async (row) => {
+    return this.lock(account.id, input.requestId, async (row, client) => {
       if (!isDeepStrictEqual(row.request, input))
         throw new ApiError('CREATION_ORDER_CONFLICT', 409);
       if (
@@ -207,18 +223,18 @@ export class CreationService {
       )
         throw new ApiError('DAO_REFERENCE', 409);
       if (!(await this.chain.creationOrder(row.reference))) {
-        await this.preflight(account, input, status);
+        await this.preflight(account, input, status, client);
         await this.chain.orderCreation(row.reference, account.signingKey, input.method);
       }
-      return this.view(row);
+      return this.view(row, client);
     });
   }
   async status(accountId: string, id: string) {
-    return this.lock(accountId, id, (row) => this.view(row));
+    return this.lock(accountId, id, (row, client) => this.view(row, client));
   }
   async checkout(accountId: string, id: string, billing: StripeBilling) {
     return this.lock(accountId, id, async (row, client) => {
-      const view = await this.view(row);
+      const view = await this.view(row, client);
       if (
         row.request.method !== 'card' ||
         view.state !== 'awaiting-payment' ||
@@ -249,8 +265,8 @@ export class CreationService {
     usdCents: number;
     paidAt: number;
   }) {
-    await this.lock(input.accountId, input.orderId, async (row) => {
-      const view = await this.view(row);
+    await this.lock(input.accountId, input.orderId, async (row, client) => {
+      const view = await this.view(row, client);
       if (
         row.checkout_id !== input.checkoutId ||
         row.request.method !== 'card' ||
@@ -268,18 +284,25 @@ export class CreationService {
   async fulfill(account: Account, id: string): Promise<CreationOrderView> {
     return this.lock(account.id, id, async (row, client) => {
       await client.query('SELECT id FROM accounts WHERE id=$1 FOR UPDATE', [account.id]);
-      if (!(await readAccount(client, account.id))) throw new ApiError('CREATION_OWNER', 403);
-      await this.view(row);
+      if ((await readAccount(client, account.id))?.signingKey !== account.signingKey)
+        throw new ApiError('CREATION_OWNER', 403);
+      await this.view(row, client);
       const order = await this.chain.creationOrder(row.reference);
       if (!order?.paid) throw new ApiError('CREATION_PAYMENT_REQUIRED', 409);
-      if (order.creator !== account.signingKey) throw new ApiError('CREATION_OWNER', 403);
+      if (
+        (await this.currentCreator(order.creator, {
+          chainId: row.chain_id,
+          runtime: row.runtime,
+        })) !== account.signingKey
+      )
+        throw new ApiError('CREATION_OWNER', 403);
       const claim = await client.query(
         'SELECT completed_at FROM dao_claim_links WHERE id=$1 AND account_owns($2,claimant_account_id)',
         [id, account.id],
       );
       if (!order.used)
         await this.chain.createDao(
-          AccountSchema.parse({ id: account.id, ...(await this.creator(account.id)) }),
+          AccountSchema.parse({ id: account.id, ...(await this.creator(account.id, client)) }),
           row.request.request,
           {
             reference: row.reference,
@@ -289,17 +312,19 @@ export class CreationService {
         );
       if (claim.rowCount && !claim.rows[0]?.completed_at) {
         const state = await this.chain.governance?.(row.dao_id);
+        // A lost response can precede recovery; verify the original founder without rotating that DAO's keys.
+        const founder = state?.executiveMembers.find(
+          (member) => member.id === '1' && member.active && member.admin,
+        );
         if (
           !state ||
           state.executives.length !== 1 ||
           state.executives[0]?.member_id !== '1' ||
-          !state.executiveMembers.some(
-            (member) =>
-              member.id === '1' &&
-              member.active &&
-              member.admin &&
-              member.signing_key === account.signingKey,
-          )
+          !founder ||
+          (await this.currentCreator(founder.signing_key, {
+            chainId: row.chain_id,
+            runtime: row.runtime,
+          })) !== account.signingKey
         )
           throw new ApiError('DAO_CLAIM_PENDING', 503);
         await client.query(
@@ -307,11 +332,11 @@ export class CreationService {
           [id],
         );
       }
-      const view = await this.view(row);
+      const view = await this.view(row, client);
       return claim.rowCount ? { ...view, state: 'created', founderExecutive: true } : view;
     });
   }
-  private async view(row: Row): Promise<CreationOrderView> {
+  private async view(row: Row, db: PoolClient): Promise<CreationOrderView> {
     const status = await this.chain.platform();
     if (
       !status.chainMatches ||
@@ -321,9 +346,7 @@ export class CreationService {
       throw new ApiError('DAO_REFERENCE', 409);
     const order = await this.chain.creationOrder(row.reference);
     if (!order) throw new ApiError('CREATION_ORDER_PENDING', 503);
-    const claim = await this.pool.query('SELECT completed_at FROM dao_claim_links WHERE id=$1', [
-      row.id,
-    ]);
+    const claim = await db.query('SELECT completed_at FROM dao_claim_links WHERE id=$1', [row.id]);
     return CreationOrderViewSchema.parse({
       ...(claim.rowCount ? { founderExecutive: claim.rows[0]?.completed_at !== null } : {}),
       network: status.network,
@@ -335,7 +358,7 @@ export class CreationService {
               encryptionKey: row.request.request.foundingAgent.encryptionKey,
               custody: 'user-controlled',
             }
-          : await this.creator(row.account_id),
+          : await this.creator(row.account_id, db),
       requestId: row.id,
       deployment: row.request.deployment,
       method: row.request.method,
@@ -360,8 +383,8 @@ export class CreationService {
       checkoutUrl: row.checkout_url,
     });
   }
-  private async creator(accountId: string) {
-    const result = await this.pool.query<{
+  private async creator(accountId: string, db: PoolClient) {
+    const result = await db.query<{
       signing_key: string;
       encryption_key: unknown;
       custody: string;

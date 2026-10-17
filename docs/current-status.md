@@ -1,12 +1,14 @@
 # Daclify status and availability
 
-Audience: community members, DAO administrators, mini-app builders and operators. This is a dated development checkpoint, reviewed 16 October 2026. Source implementation, an enabled service capability and production qualification are different facts. Daclify mainnet is not qualified by these records.
+Audience: community members, DAO administrators, mini-app builders and operators. This is a dated development checkpoint, reviewed 17 October 2026. Source implementation, an enabled service capability and production qualification are different facts. Daclify mainnet is not qualified by these records.
+
+The 17 October review repairs are implemented in development cohort core/SDK `0.15.0-alpha.50`, modules `0.10.0-alpha.62` and portal `0.15.0-alpha.69`. They preserve recovered Quick identities and paid receipts, remove nested connection borrowing and reject newly changed stale private-content references. This cohort has **not been deployed**. See the [repair evidence](evidence/2026-10-17-review-remediation.md) for verification and rollout requirements.
 
 ## Check the service you are using
 
 The shared dev app is [testnet.app.daclify.com](https://testnet.app.daclify.com/); its [handbook](https://testnet.app.daclify.com/docs) displays the installed SDK/help versions. The public [network response](https://testnet.api.daclify.com/v1/network) identifies the API, chain, runtime and advertised capabilities. A capability name or package version alone does not verify a provider, client wallet or deployed contract hash.
 
-The shared testnet runs core/SDK `0.15.0-alpha.32`, modules SDK/help `0.10.0-alpha.42` and frontend `0.15.0-alpha.43`. The independently pinned MCP package remains `0.1.0-alpha.20`. Contract interface remains 1. The [documentation/review deployment record](evidence/2026-10-16-docs-and-review-testnet.md) identifies the current API/frontend cohort; native bytecode and permissions retain the [trusted-contact deployment](evidence/2026-10-15-trusted-contact-recovery-testnet.md). Previous download cohorts remain available. Consult the live API before relying on this dated checkpoint.
+The shared testnet currently runs core/SDK `0.15.0-alpha.46`, modules SDK/help `0.10.0-alpha.57`, portal `0.15.0-alpha.65` and the independently pinned MCP package `0.1.0-alpha.23`. Contract interface remains 1. The [private-content release record](evidence/2026-10-17-private-content-release.md) identifies this live cohort and its qualification limits. Previous download cohorts remain available. Consult the live API before relying on this dated checkpoint.
 
 ## Availability
 

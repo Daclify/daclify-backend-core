@@ -5,7 +5,7 @@ import { PrivateKey } from '@wharfkit/antelope';
 import { migrate } from '../../services/api/src/store.js';
 import { QuickBallots, type QuickGateway } from '../../services/api/src/quick-ballots/service.js';
 import { quickAccountCandidate } from '../../services/api/src/quick-ballots/accounts.js';
-import { QuickAuthCodeHash } from '../../sdk/quick-accounts.js';
+import { QuickAuthCodeHash, quickAccountIdentity } from '../../sdk/quick-accounts.js';
 import type { ExitSubmission } from '../../protocol/account-exit.js';
 import { QuickSubmissionRejection } from '../../services/api/src/quick-ballots/rejections.js';
 
@@ -127,6 +127,75 @@ it('persists one exact signed packet before broadcast and reconciles it after a 
     state: 'confirmed',
   });
   expect(f.counts()).toEqual({ signed: 1, sent: 1 });
+});
+it('preserves a frozen identity through recovery and prepares approvals for the current key', async () => {
+  const f = await fixture();
+  await f.service.prepare(f.owner, f.token, {
+    expectedIdentity: f.candidate.identity,
+    intent: { operation: 'register' },
+  });
+  const next = PrivateKey.generate('K1').toPublic().toString();
+  await pool.query('UPDATE accounts SET signing_key=$2 WHERE id=$1', [f.owner, next]);
+  Object.assign(f.gateway, {
+    recoveryIdentity: async () => ({
+      id: '1',
+      dao_id: '7',
+      origin_key: f.key.toPublic().toString(),
+      signing_key: next,
+    }),
+  });
+  const status = await f.service.status(f.owner);
+  expect(status.context).toMatchObject({
+    identity: f.candidate.identity,
+    anchor: f.candidate.anchor,
+    approvalKey: next,
+  });
+  const prepared = await f.service.prepare(f.owner, f.token, {
+    expectedIdentity: f.candidate.identity,
+    intent: { operation: 'register' },
+  });
+  expect(prepared.context.approvalKey).toBe(next);
+  expect(prepared.context.identity).toBe(f.candidate.identity);
+});
+it('uses the original key family for a first Quick registration after recovery', async () => {
+  const f = await fixture(),
+    original = PrivateKey.generate('K1').toPublic().toString();
+  Object.assign(f.gateway, {
+    recoveryIdentity: async () => ({
+      id: '1',
+      dao_id: '7',
+      origin_key: original,
+      signing_key: f.key.toPublic().toString(),
+    }),
+  });
+  const anchor = { kind: 'key' as const, publicKey: original };
+  const identity = quickAccountIdentity(config.chainId, config.runtime, anchor);
+  expect((await f.service.status(f.owner)).context).toMatchObject({
+    anchor,
+    identity,
+    approvalKey: f.key.toPublic().toString(),
+  });
+  const prepared = await f.service.prepare(f.owner, f.token, {
+    expectedIdentity: identity,
+    intent: { operation: 'register' },
+  });
+  expect(prepared.context).toMatchObject({ anchor, identity, frozen: true });
+  expect(identity).not.toBe(f.candidate.identity);
+});
+it('refuses a restored account projection whose key has already been retired by a later recovery', async () => {
+  const f = await fixture();
+  Object.assign(f.gateway, {
+    recoveryIdentity: async () => ({
+      id: '1',
+      dao_id: '7',
+      origin_key: f.key.toPublic().toString(),
+      signing_key: PrivateKey.generate('K1').toPublic().toString(),
+    }),
+  });
+  await expect(f.service.status(f.owner)).rejects.toMatchObject({
+    code: 'ACCOUNT_KEY_RETIRED',
+    statusCode: 401,
+  });
 });
 it('reports a known native rejection while retaining the exact packet until inclusion is reconciled', async () => {
   const f = await fixture();

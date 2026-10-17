@@ -7,6 +7,9 @@ import {
 import { quickAccountIdentity } from '../../../../sdk/quick-accounts.js';
 import { uniqueViolation, withTransaction } from '../auth/account-session.js';
 import { ApiError } from '../errors.js';
+type RecoveryResolver = (
+  key: string,
+) => Promise<import('../../../../protocol/contact-recovery.js').ContactRecoveryState['identity']>;
 
 const BindingSchema = z.object({
   anchor: QuickAccountAnchorSchema,
@@ -23,6 +26,7 @@ async function resolveQuickAccount(
     binding: { anchor: z.infer<typeof QuickAccountAnchorSchema>; identity: string },
     db: import('pg').PoolClient,
   ) => Promise<void>,
+  recovery?: RecoveryResolver,
 ) {
   const domain = QuickAccountDomainSchema.parse(reference),
     id = z.uuid().parse(accountId);
@@ -33,6 +37,16 @@ async function resolveQuickAccount(
         [id],
       );
       if (!owner.rows[0]) throw new ApiError('AUTH_REQUIRED', 401);
+      const signingKey = owner.rows[0].signing_key;
+      const root = signingKey ? await recovery?.(signingKey) : null;
+      if (root && root.signing_key !== signingKey) throw new ApiError('ACCOUNT_KEY_RETIRED', 401);
+      async function approval(anchor: z.infer<typeof QuickAccountAnchorSchema>) {
+        if (anchor.kind !== 'key' || anchor.publicKey === signingKey) return {};
+        const identity = await recovery?.(anchor.publicKey);
+        if (!signingKey || identity?.signing_key !== signingKey)
+          throw new ApiError('QUICK_ACCOUNT_CHANGED', 409);
+        return { approvalKey: signingKey };
+      }
       const current = await db.query<Record<string, unknown>>(
         'SELECT anchor,identity FROM quick_account_anchors WHERE account_id=$1 AND chain_id=$2 AND runtime=$3',
         [id, domain.chainId, domain.runtime],
@@ -42,13 +56,18 @@ async function resolveQuickAccount(
         const identity = quickAccountIdentity(domain.chainId, domain.runtime, binding.anchor);
         if (Buffer.from(binding.identity).toString('hex') !== identity)
           throw new ApiError('QUICK_ACCOUNT_IDENTITY', 503);
-        return { anchor: binding.anchor, identity, frozen: true };
+        return {
+          anchor: binding.anchor,
+          identity,
+          frozen: true,
+          ...(await approval(binding.anchor)),
+        };
       }
       let anchor: z.infer<typeof QuickAccountAnchorSchema>;
       if (owner.rows[0].signing_key)
         anchor = QuickAccountAnchorSchema.parse({
           kind: 'key',
-          publicKey: owner.rows[0].signing_key,
+          publicKey: root?.origin_key ?? owner.rows[0].signing_key,
         });
       else {
         const native = await db.query<{ native_account: string; permission: string }>(
@@ -75,13 +94,14 @@ async function resolveQuickAccount(
         }
       }
       const identity = quickAccountIdentity(domain.chainId, domain.runtime, anchor);
-      if (!freeze) return { anchor, identity, frozen: false };
+      const authority = await approval(anchor);
+      if (!freeze) return { anchor, identity, frozen: false, ...authority };
       await check?.({ anchor, identity }, db);
       await db.query(
         'INSERT INTO quick_account_anchors(account_id,chain_id,runtime,anchor,identity) VALUES($1,$2,$3,$4,$5)',
         [id, domain.chainId, domain.runtime, anchor, Buffer.from(identity, 'hex')],
       );
-      return { anchor, identity, frozen: true };
+      return { anchor, identity, frozen: true, ...authority };
     });
   } catch (error) {
     if (uniqueViolation(error)) throw new ApiError('QUICK_ACCOUNT_CONFLICT', 409);
@@ -94,8 +114,9 @@ export function quickAccountCandidate(
   accountId: string,
   reference: unknown,
   evmChainId: 40 | 41,
+  recovery?: RecoveryResolver,
 ) {
-  return resolveQuickAccount(pool, accountId, reference, evmChainId, false);
+  return resolveQuickAccount(pool, accountId, reference, evmChainId, false, undefined, recovery);
 }
 export function freezeQuickAccount(
   pool: Pool,
@@ -103,9 +124,10 @@ export function freezeQuickAccount(
   reference: unknown,
   evmChainId: 40 | 41,
   check?: Parameters<typeof resolveQuickAccount>[5],
+  recovery?: RecoveryResolver,
 ) {
-  return resolveQuickAccount(pool, accountId, reference, evmChainId, true, check).then(
-    ({ anchor, identity }) => ({ anchor, identity }),
+  return resolveQuickAccount(pool, accountId, reference, evmChainId, true, check, recovery).then(
+    ({ frozen: _frozen, ...binding }) => binding,
   );
 }
 

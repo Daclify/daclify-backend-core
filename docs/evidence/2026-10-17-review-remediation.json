@@ -1,0 +1,302 @@
+{
+  "scope": [
+    "daclify-backend-core",
+    "daclify-backend-modules",
+    "daclify-frontend"
+  ],
+  "excluded": [
+    "Almaiso",
+    "Unchanged www-landing-page",
+    "Independent community MCP source"
+  ],
+  "status": "verified-development-repair",
+  "deployed": false,
+  "cohort": {
+    "core": "0.15.0-alpha.50",
+    "modules": "0.10.0-alpha.62",
+    "frontend": "0.15.0-alpha.69",
+    "moduleContracts": "0.10.0-alpha.10",
+    "communityMcp": "0.1.0-alpha.23"
+  },
+  "findings": [
+    {
+      "id": "DACLIFY-20261017-01",
+      "status": "fixed-and-verified-in-development",
+      "summary": "Reuse caller-owned database connections for orders, archives and connected-app transactions."
+    },
+    {
+      "id": "DACLIFY-20261017-02",
+      "status": "fixed-and-verified-in-development",
+      "summary": "Resolve native recovery authority without changing Quick identity, nonces, epochs or votes."
+    },
+    {
+      "id": "DACLIFY-20261017-03",
+      "status": "fixed-and-verified-in-development",
+      "summary": "Consume original paid receipt once under verified current recovery authority; reconcile prior committed creation."
+    },
+    {
+      "id": "DACLIFY-20261017-04",
+      "status": "fixed-and-verified-in-development",
+      "summary": "Check current encryption epoch on changed private references, preserving retained history and reprepare paths."
+    }
+  ],
+  "artifacts": {
+    "runtime": {
+      "sha256": "66e73bdd368217f658d153adb587bfc9dae6a2b083eec43b1c9c6a0ca4c80332",
+      "bytes": 869523
+    },
+    "quickauth": {
+      "sha256": "fd86a0af6ec8e85a3210ecc95ec4bd33a616d371a452e7216c5d670bd73c6700",
+      "bytes": 89669
+    },
+    "corePackage": {
+      "sha256": "0419e4cd480977874da2e69e84a1c029e61c071e8adbbee5e1afc4fe3eae316f",
+      "bytes": 737618
+    },
+    "modulesPackage": {
+      "sha256": "5c8d3f641b7b827341d263b06f907e90fcd6986eacc661be0a1a31fb0d16cdce",
+      "bytes": 307813
+    }
+  },
+  "nativeMeasurements": {
+    "contactRecovery": {
+      "init_cpu_us": 499,
+      "createdao_cpu_us": 672,
+      "enroll_cpu_us": 960,
+      "setfees_cpu_us": 365,
+      "setcreate_cpu_us": 411,
+      "sethosted_cpu_us": 400,
+      "orderfree_cpu_us": 627,
+      "submit_cpu_us": 4966,
+      "acceptcont_cpu_us": 1352,
+      "packet_ram_bytes": 2852,
+      "ackrecpack_cpu_us": 1545,
+      "startrecover_cpu_us": 2785,
+      "approverec_cpu_us": 1246,
+      "appoint_cpu_us": 624,
+      "finishrec_cpu_us": 6409,
+      "createpaid_cpu_us": 2068,
+      "receipt_creation_ram_bytes": 2235,
+      "recovery_ram_bytes": 9729,
+      "runtime_wasm_bytes": 869523
+    },
+    "quickAccounts": {
+      "compiler": "CDT 4.1.1 -O=s",
+      "runtime": "Spring 1.2.2",
+      "artifacts": {
+        "runtime": {
+          "bytes": 869523,
+          "sha256": "66e73bdd368217f658d153adb587bfc9dae6a2b083eec43b1c9c6a0ca4c80332"
+        },
+        "quickauth": {
+          "bytes": 89669,
+          "sha256": "fd86a0af6ec8e85a3210ecc95ec4bd33a616d371a452e7216c5d670bd73c6700"
+        },
+        "quickprobe": {
+          "bytes": 6016,
+          "sha256": "7b6730dd037f179ed3dfb3841d715ce02ed5554f53e00976aee38ea05b44e922"
+        }
+      },
+      "measurements": [
+        {
+          "action": "init",
+          "cpuMicroseconds": 376,
+          "ramDeltaBytes": "0"
+        },
+        {
+          "action": "qconfig",
+          "cpuMicroseconds": 385,
+          "ramDeltaBytes": "536"
+        },
+        {
+          "action": "qregister",
+          "cpuMicroseconds": 1152,
+          "ramDeltaBytes": "447"
+        },
+        {
+          "action": "qregister",
+          "cpuMicroseconds": 884,
+          "ramDeltaBytes": "335"
+        },
+        {
+          "action": "qdefault",
+          "cpuMicroseconds": 1489,
+          "ramDeltaBytes": "16"
+        },
+        {
+          "action": "qregister",
+          "cpuMicroseconds": 1660,
+          "ramDeltaBytes": "335"
+        },
+        {
+          "action": "qsubmit",
+          "cpuMicroseconds": 1353,
+          "ramDeltaBytes": "0"
+        },
+        {
+          "action": "qsubmit",
+          "cpuMicroseconds": 1078,
+          "ramDeltaBytes": "0"
+        },
+        {
+          "action": "qdefault",
+          "cpuMicroseconds": 1469,
+          "ramDeltaBytes": "12"
+        },
+        {
+          "action": "qsubmit",
+          "cpuMicroseconds": 1416,
+          "ramDeltaBytes": "0"
+        },
+        {
+          "action": "qdeactivate",
+          "cpuMicroseconds": 1276,
+          "ramDeltaBytes": "-28"
+        },
+        {
+          "action": "qregister",
+          "cpuMicroseconds": 963,
+          "ramDeltaBytes": "0"
+        }
+      ]
+    },
+    "privateIdentity": {
+      "runtimeCodeHash": "66e73bdd368217f658d153adb587bfc9dae6a2b083eec43b1c9c6a0ca4c80332",
+      "compiler": "CDT 4.1.1 -O=s, existing MVP wasm-opt -Oz",
+      "operation": "legacy metadata -> private metadata with three fixed docref slots",
+      "nativeRamDeltaBytes": 1718,
+      "cpuUsageUs": 3349,
+      "newTables": 0,
+      "newSecondaryIndexes": 0,
+      "referenceSlots": 3,
+      "note": "Owned local Spring measurement; not a network CPU or price guarantee."
+    }
+  },
+  "nativeStorageChanges": {
+    "newTables": 0,
+    "newStoredFields": 0,
+    "newSecondaryIndexes": 0,
+    "actionOrTableLayoutsChanged": false
+  },
+  "passedChecks": {
+    "postgres": {
+      "files": 8,
+      "tests": 104,
+      "log": "fix-integration-qualified.log"
+    },
+    "native": {
+      "files": 5,
+      "tests": 21,
+      "log": "fix-native-final.log"
+    },
+    "wasmRecoveryAndIdentity": {
+      "files": 2,
+      "tests": 19,
+      "log": "fix-legacy-epoch-green.log"
+    },
+    "privateImageRetry": {
+      "files": 1,
+      "tests": 27,
+      "log": "fix-private-image-green.log"
+    },
+    "core": {
+      "files": 197,
+      "tests": 1158,
+      "log": "fix-core-tests62.log"
+    },
+    "frontend": {
+      "files": 83,
+      "tests": 467,
+      "log": "fix-frontend-tests62.log"
+    },
+    "independentMcp": {
+      "files": 7,
+      "tests": 13,
+      "log": "fix-mcp-tests-final.log"
+    },
+    "modules": {
+      "files": 48,
+      "tests": 309,
+      "log": "fix-modules-tests62.log"
+    }
+  },
+  "miniAppReleaseId": "06f2864288cd42fe0b3c87eb892e092e3d46cb6bb08bd3f7878dc5a25a97441f",
+  "limits": [
+    "No deployment, authority change or asset movement.",
+    "No new real-wallet/browser/provider ceremony or independent-host recovery qualification.",
+    "Production dependency audits report zero; VERT retains four dev-only upstream advisories with no registry fix.",
+    "Original decryption keys and historical grants remain required; contact recovery does not manufacture old private-content access."
+  ],
+  "verificationEvidence": {
+    "fix-core-tests62.log": {
+      "sha256": "1fbb9b44bb573c523c61fb214674707536a0aac6c573458c13fc9db41dbe77b0",
+      "bytes": 546
+    },
+    "fix-frontend-tests62.log": {
+      "sha256": "da4638bc52d96574b629998815eb24c27feed43b8063f34b8fec8fc07ab8a190",
+      "bytes": 2762
+    },
+    "fix-integration-qualified.log": {
+      "sha256": "b19e71e9bc85acdea15c51b15f23e372cc120571ac61e18abefc2862d7a6f201",
+      "bytes": 181
+    },
+    "fix-native-final.log": {
+      "sha256": "6b3c965f17072ceafe28c4b7cda36f91fba1349fa18231742006220b6068a080",
+      "bytes": 177
+    },
+    "fix-core-build62.log": {
+      "sha256": "7dd9fe2040b6ee093b8688d2105c2c35308eb0358a78fc1845225feb9258e89f",
+      "bytes": 54
+    },
+    "fix-frontend-build62.log": {
+      "sha256": "cb2e682e8239ef2be41274f589ca6a4e8dbc95d5c967e8957202eea44ff153b7",
+      "bytes": 13892
+    },
+    "fix-modules-build62.log": {
+      "sha256": "07aa42c01b2148e1ba7e3d1af69df4106dc61aef9ae696d05c33fbc15c7ceaf9",
+      "bytes": 49
+    },
+    "fix-core-lint62.log": {
+      "sha256": "6f9195360013e34033c0594adfbe127ce479c6003d3f46a5be8bd2caa92ba99e",
+      "bytes": 75
+    },
+    "fix-modules-lint62.log": {
+      "sha256": "0e22216c8a42eef9ce911099320a7864bc7446788a0442ce040617d55fcee710",
+      "bytes": 62
+    },
+    "fix-frontend-lint62.log": {
+      "sha256": "6a2208070b64748cee28c4c894c00f0d882faa11cc40ce49e00023dbe8fcf9b4",
+      "bytes": 258
+    },
+    "fix-docs-last.log": {
+      "sha256": "0a1c4d92bd094015a47efffc317f0c169bbf0c379e9eded04d8f520cba549419",
+      "bytes": 133
+    },
+    "fix-modules-docs-last.log": {
+      "sha256": "f7f9655d76e797587850130a49d265f257c49296132584800c1e099f34fea0da",
+      "bytes": 130
+    },
+    "fix-mini-app62.log": {
+      "sha256": "e4a6431fe2c8708a3ae5b56ad132f56e34f29b3addbef6c722f823610b84a417",
+      "bytes": 270
+    },
+    "fix-pg-stop.log": {
+      "sha256": "ca19178a35ab4153b75b494963b66ce8243e1b94c173107c87b44d09db23652d",
+      "bytes": 56
+    },
+    "fix-modules-tests62.log": {
+      "sha256": "4554b60e22c0835a628c41bcb53d35bc42ae11327c40085e862fa5043f1e515f",
+      "bytes": 226
+    }
+  },
+  "negativeRegressionEvidence": [
+    "fix-pool-red.log",
+    "fix-app-membership-pool-red.log",
+    "fix-manifest-retry-red.log",
+    "fix-legacy-epoch-red.log",
+    "fix-private-image-red.log",
+    "fix-claim-lost-response-red.log",
+    "fix-recovery-api-red.log"
+  ],
+  "verifiedAt": "2026-10-17T10:54:34.451036+00:00"
+}

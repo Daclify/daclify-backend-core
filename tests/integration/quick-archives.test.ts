@@ -10,6 +10,7 @@ import {
   QuickBallotArchiveInputSchema,
   quickArchivePruneBatch,
   recoverQuickBallotHistory,
+  decodeArchiveManifest,
 } from '@daclify/modules/archive';
 import { ABI, Serializer } from '@wharfkit/antelope';
 import { RuntimeTableSchemas } from '../../sdk/index.js';
@@ -28,7 +29,8 @@ if (
   !new URL(url).pathname.endsWith('_test')
 )
   throw Error('Owned local *_test database required');
-const pool = new Pool({ connectionString: url });
+// Discovery and export must not borrow another connection while holding their transaction/lock.
+const pool = new Pool({ connectionString: url, max: 1, connectionTimeoutMillis: 1000 });
 beforeAll(() => migrate(pool));
 afterAll(() => pool.end());
 
@@ -77,6 +79,7 @@ it('reserves origin storage, reconciles a lost pin response, and requires both v
     bytesByCid = new Map<string, Uint8Array>();
   let uploads = 0,
     loseReply = true,
+    loseManifestReply = true,
     providerDown = false,
     backupDown = false,
     prunes = 0;
@@ -94,6 +97,17 @@ it('reserves origin storage, reconciles a lost pin response, and requires both v
       if (loseReply) {
         loseReply = false;
         throw Error('LOST_PIN_RESPONSE');
+      }
+      let manifest = false;
+      try {
+        decodeArchiveManifest(bytes, hash.toString('hex'));
+        manifest = true;
+      } catch {
+        /* Chunks use a different encoding. */
+      }
+      if (loseManifestReply && manifest) {
+        loseManifestReply = false;
+        throw Error('LOST_MANIFEST_RESPONSE');
       }
       return pin;
     },
@@ -182,7 +196,16 @@ it('reserves origin storage, reconciles a lost pin response, and requires both v
     await service.exportStep(ids[0] ?? '');
     expect(uploads).toBe(uploaded);
     for (const id of ids)
-      for (let n = 0; n < 4; n++) if ((await service.exportStep(id)) === 'complete') break;
+      for (let n = 0; n < 4; n++) {
+        try {
+          if ((await service.exportStep(id)) === 'complete') break;
+        } catch (cause) {
+          expect(cause).toMatchObject({ message: 'LOST_MANIFEST_RESPONSE' });
+          const uploaded = uploads;
+          await service.exportStep(id);
+          expect(uploads).toBe(uploaded);
+        }
+      }
     expect(prunes).toBe(0);
     providerDown = true;
     await expect(service.pruneStep(snapshot.ballot.id)).rejects.toThrow();

@@ -350,7 +350,7 @@ public:
   ACTION createpaid(uint64_t dao_id,name owner,std::string metadata,uint8_t privacy,name token_contract,symbol token_symbol,checksum256 reference,public_key creator,eosio::binary_extension<claim_founder> founder) {
     auto cfg=creation_settings(get_self(),get_self().value).get();require_auth(cfg.settler);
     creation_orders orders(get_self(),get_self().value);auto index=orders.get_index<"byref"_n>();const auto& order=index.get(reference,"CREATION_UNKNOWN");
-    check(order.creator==creator&&order.deployment==0,"CREATION_OWNER");check(order.paid,"CREATION_UNPAID");check(!order.used,"CREATION_USED");
+    check(contact_current_key(get_self(),order.creator)==creator&&order.deployment==0,"CREATION_OWNER");check(order.paid,"CREATION_UNPAID");check(!order.used,"CREATION_USED");
     create_dao(dao_id,owner,metadata,privacy,token_contract,token_symbol);
     index.modify(order,same_payer,[&](auto& r){r.used=true;r.dao_id=dao_id;});
     if(founder.has_value()){
@@ -735,7 +735,8 @@ public:
     authorized_actor(runtime,dao_id,member_id,true); validate_dao_metadata(metadata);
     const auto& d=dao_rows.get(dao_id);
     const auto before=nlohmann::json::parse(d.metadata);const auto after=nlohmann::json::parse(metadata);
-    if(before.is_object()&&before.contains("schemaVersion")&&before["schemaVersion"]==4)check(after.is_object()&&after.contains("schemaVersion")&&after["schemaVersion"]==4,"PRIVATE_METADATA_DOWNGRADE");
+    const bool was_private=before.is_object()&&before.contains("schemaVersion")&&before["schemaVersion"]==4;
+    if(was_private)check(after.is_object()&&after.contains("schemaVersion")&&after["schemaVersion"]==4,"PRIVATE_METADATA_DOWNGRADE");
     if(before.is_object()&&before.contains("schemaVersion")&&(before["schemaVersion"]==2||before["schemaVersion"]==3||before["schemaVersion"]==4)&&before.contains("setup")){
       check(after.is_object()&&after.contains("schemaVersion")&&(after["schemaVersion"]==2||after["schemaVersion"]==3||after["schemaVersion"]==4)&&after.contains("setup")&&after["setup"]==before["setup"]&&after.contains("purpose")&&before.contains("purpose")&&after["purpose"]==before["purpose"],"PRESET_IDENTITY_IMMUTABLE");
       if(before["schemaVersion"]==3)check(after["schemaVersion"]==3||after["schemaVersion"]==4,"METADATA_VERSION");
@@ -745,8 +746,12 @@ public:
     if(after.is_object()&&after.contains("schemaVersion")&&after["schemaVersion"]==4){
       check(d.privacy>0,"PRIVATE_DAO_REQUIRED");
       check(expected.has_value()&&expected.value()==sha256(d.metadata.data(),d.metadata.size()),"PRIVATE_METADATA_CHANGED");
-      retain_private_reference(dao_id,0,after["privateIdentity"]);
-      for(uint8_t i=0;i<2;i++)retain_private_reference(dao_id,i+1,after.contains("privateAssets")&&i<after["privateAssets"].size()?after["privateAssets"][i]:nlohmann::json());
+      retain_private_reference(dao_id,0,after["privateIdentity"],!was_private||before["privateIdentity"]!=after["privateIdentity"]);
+      for(uint8_t i=0;i<2;i++){
+        const auto ref=after.contains("privateAssets")&&i<after["privateAssets"].size()?after["privateAssets"][i]:nlohmann::json();
+        bool changed=true;if(was_private&&before.contains("privateAssets"))for(const auto& old:before["privateAssets"])if(old==ref)changed=false;
+        retain_private_reference(dao_id,i+1,ref,changed);
+      }
     }
     dao_rows.modify(d,same_payer,[&](auto& r){r.metadata=metadata;});
   }
@@ -1476,9 +1481,10 @@ private:
     check(ref.is_object()&&ref.size()==4&&ref.contains("documentId")&&ref["documentId"].is_string()&&ref.contains("keyEpoch")&&ref["keyEpoch"].is_string()&&ref.contains("version")&&ref["version"].is_number_unsigned()&&ref["version"].get<uint64_t>()>0&&ref["version"].get<uint64_t>()<=std::numeric_limits<uint32_t>::max()&&ref.contains("commitment")&&ref["commitment"].is_string(),"PRIVATE_IDENTITY_REFERENCE");
     parse_id(ref["documentId"].get<std::string>());parse_id(ref["keyEpoch"].get<std::string>());const auto hash=ref["commitment"].get<std::string>();check(hash.size()==64,"PRIVATE_IDENTITY_REFERENCE");for(auto c:hash)check((c>='0'&&c<='9')||(c>='a'&&c<='f'),"PRIVATE_IDENTITY_REFERENCE");
   }
-  void retain_private_reference(uint64_t dao_id,uint8_t slot,const nlohmann::json& ref){
+  void retain_private_reference(uint64_t dao_id,uint8_t slot,const nlohmann::json& ref,bool current_epoch){
     if(ref.is_null()){protect_document(dao_id,dao_id,slot,0,0,"daos"_n);return;}
     const auto document_id=parse_id(ref["documentId"].get<std::string>()),epoch=parse_id(ref["keyEpoch"].get<std::string>());const auto version=ref["version"].get<uint32_t>();
+    if(current_epoch)check(epoch==dao_rows.get(dao_id).key_epoch,"PRIVATE_EPOCH_CHANGED");
     documents docs(get_self(),dao_id);auto versions=docs.get_index<"byversion"_n>();const auto& document=versions.get((uint128_t(document_id)<<32)|version,"DOCUMENT_UNKNOWN");
     const auto raw=document.commitment.extract_as_byte_array();std::string commitment;const char* hex="0123456789abcdef";for(auto byte:raw){commitment+=hex[byte>>4];commitment+=hex[byte&15];}
     check(document.envelope_version==1&&document.key_epoch==epoch&&ref["commitment"]==commitment,"PRIVATE_IDENTITY_REFERENCE");protect_document(dao_id,dao_id,slot,document_id,version,"daos"_n);

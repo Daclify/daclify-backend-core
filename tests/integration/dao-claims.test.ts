@@ -17,6 +17,11 @@ import { CreationService } from '../../services/api/src/creation.js';
 import { migrate } from '../../services/api/src/store.js';
 import { assertErasureInventory } from '../../services/api/src/account-exit/inventory.js';
 import { PrivateFounderSetupSchema } from '../../protocol/private-records.js';
+let recoveredIdentity: Awaited<
+  ReturnType<
+    import('../../services/api/src/native-chain.js').NativeChainGateway['accountRecoveryIdentity']
+  >
+> = null;
 const url = process.env.DATABASE_URL;
 if (
   !url ||
@@ -147,7 +152,9 @@ let authorized = true,
   failResponse = false,
   creations = 0;
 const orders = new Map<string, ReturnType<typeof RuntimeTableSchemas.createords.parse>>();
+const createdKeys = new Map<string, string | null>();
 const chain = {
+  accountRecoveryIdentity: async (_key: string) => recoveredIdentity,
   platform: async () => {
     platform.headTime = new Date().toISOString();
     return platform;
@@ -161,7 +168,9 @@ const chain = {
           executiveMembers: [
             member(
               '1',
-              [...orders.values()].find((o) => o.dao_id === id)?.creator ?? first.signingKey,
+              createdKeys.get(id) ??
+                [...orders.values()].find((o) => o.dao_id === id)?.creator ??
+                first.signingKey,
             ),
           ],
         }),
@@ -219,6 +228,7 @@ const chain = {
       if (!paid?.founderExecutive) throw Error('Missing founder authority');
       const order = orders.get(paid.reference);
       if (!order || order.used) throw Error('Duplicate native creation');
+      createdKeys.set(paid.daoId, _account.signingKey);
       order.used = true;
       order.dao_id = paid.daoId;
       creations++;
@@ -267,6 +277,7 @@ beforeAll(async () => {
     );
 });
 beforeEach(() => {
+  recoveredIdentity = null;
   platform.network.capabilities = ['shared-dao-create'];
   authorized = true;
   platform.sharedAvailable = true;
@@ -274,6 +285,64 @@ beforeEach(() => {
   chain.validateCreation.mockReset();
   chain.validateCreation.mockResolvedValue();
 });
+it.each([
+  { restored: false, committed: false },
+  { restored: true, committed: false },
+  { restored: true, committed: true },
+])(
+  'resumes a paid claimant receipt after recovery, including a restored ownership snapshot ($restored, committed=$committed)',
+  async ({ restored, committed }) => {
+    if (platform.creation) platform.creation.shared_usd = 2000;
+    const link = await issue(),
+      before = creations,
+      originalKey = first.signingKey;
+    const order = await links.claim(first, { token: link.token, method: 'card' });
+    const receipt = orders.get(order.memo.slice('create:'.length));
+    if (!receipt || !originalKey) throw Error('Claim fixture');
+    receipt.paid = true;
+    if (committed) {
+      failResponse = true;
+      await expect(links.claim(first, { token: link.token, method: 'card' })).rejects.toThrow(
+        'Lost response',
+      );
+    }
+    first.signingKey = PrivateKey.generate('K1').toPublic().toString();
+    recoveredIdentity = {
+      network,
+      identity: { id: '1', dao_id: '1', origin_key: originalKey, signing_key: first.signingKey },
+    };
+    await pool.query('UPDATE accounts SET signing_key=$2 WHERE id=$1', [
+      first.id,
+      first.signingKey,
+    ]);
+    try {
+      if (restored) {
+        await pool.query('DELETE FROM creation_orders WHERE id=$1', [link.claim.id]);
+        await pool.query(
+          'UPDATE dao_claim_links SET claimant_account_id=NULL,method=NULL,completed_at=NULL WHERE id=$1',
+          [link.claim.id],
+        );
+      }
+      await expect(
+        links.claim(second, { token: link.token, method: 'card' }),
+      ).rejects.toMatchObject({ code: 'DAO_CLAIM_RESERVED' });
+      const resumed = await links.claim(first, { token: link.token, method: 'card' });
+      expect(resumed).toMatchObject({ state: 'created', founderExecutive: true });
+      expect((await links.claim(first, { token: link.token, method: 'card' })).dao).toEqual(
+        resumed.dao,
+      );
+      expect(creations - before).toBe(1);
+      expect(receipt.creator).toBe(originalKey);
+      expect(chain.createDao.mock.lastCall?.[0].signingKey).toBe(
+        committed ? originalKey : first.signingKey,
+      );
+    } finally {
+      first.signingKey = originalKey;
+      recoveredIdentity = null;
+      await pool.query('UPDATE accounts SET signing_key=$2 WHERE id=$1', [first.id, originalKey]);
+    }
+  },
+);
 it('reserves sealed private setup for the sole claimant without persisting private prose or accepting a later key replacement', async () => {
   const setup = defaultDaoSetup('custom');
   const envelope = {

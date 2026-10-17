@@ -1,6 +1,6 @@
 {
   "producer": "core",
-  "packageVersion": "0.15.0-alpha.46",
+  "packageVersion": "0.15.0-alpha.50",
   "interfaceVersion": 1,
   "topics": [
     {
@@ -54,7 +54,7 @@
         "The Users directory includes public DAO membership records, even without a profile. Encrypted profiles expose only their public alias; personal fields are decrypted locally only in an authorized profile view. Legacy plaintext profiles retain their public details. Matching public native accounts or signing identities connect memberships within one chain/runtime; distinct native accounts sharing a key remain separate. Private service pairings never establish public identity. Profiles retain their full original native DAO/member context.",
         "The directory automatically loads up to 20 pages per batch, each containing at most 50 members from one DAO. Small directories load all communities automatically; larger directories expose Load more users and label partial search. Each community badge opens its DAO. User details show all loaded proven memberships and per-membership profile links. A failed later page retains earlier results and Retry continues from its cursor. Independent operators remain limited to their configured DAO.",
         "Last active means the latest successful authenticated member instruction in any connected DAO, including installed module actions. Failed actions and replays do not advance it. Sign-ins, enrollment and direct administration do not count. Older members need bounded governance-authorized activity-row initialization; absent or zero timestamps show DAO activity not recorded. Initialization never invents historical dates, changes permissions or spends tokens. Legacy profile contacts and avatar CIDs remain public in chain history. The new encrypted-profile runtime refuses plaintext updates; public member and alias metadata remains visible.",
-        "Open your own user card, choose Edit profile & account, then Profile. Unlock the original account vault. The encrypted editor shares only with you by default; select verified active recipients explicitly for each new version. A fresh revision/key removes future access from omitted recipients; earlier readers may retain copies. Image references are excluded unless you acknowledge the separate asset policy: encrypting a publicly uploaded image CID does not hide its original. Publish stages sealed keys before signing only ciphertext. Current removal first excludes service-held keys, then removes the native row, and displays unavailable or backup-expiry-pending status. The existing account kit recovers a profile only while its authorized envelope survives. Old ciphertext alone cannot reconstruct a removed random key. Public aliases, membership metadata and prior plaintext history remain public. Use a deployment advertising matching encrypted-profile and key-service capabilities. The shared testnet implementation does not qualify every provider, privacy lifecycle or production deployment."
+        "Open your own user card, choose Edit profile & account, then Profile. Unlock the original account vault. The encrypted editor shares only with you by default; select verified active recipients explicitly for each new version. A fresh revision/key removes future access from omitted recipients; earlier readers may retain copies. Image references are excluded unless you acknowledge the separate asset policy: encrypting a publicly uploaded image CID does not hide its original. Publish stages sealed keys before signing only ciphertext. Current removal first excludes service-held keys, then removes the native row, and displays unavailable or backup-expiry-pending status. The existing account kit recovers a profile only while its authorized envelope survives. Old ciphertext alone cannot reconstruct a removed random key. Public aliases, membership metadata and prior plaintext history remain public. Use a deployment advertising matching encrypted-profile and key-service capabilities. The shared testnet implementation does not qualify every provider, privacy lifecycle or production deployment. Trusted-contact recovery preserves your Quick ballot identity and previous votes. After completing the native recovery and claiming your account, unlock the replacement vault to approve Quick ballots, replace an approval wallet or deactivate your original voting identity. The retired signing key cannot approve these actions. Any separately approved Quick ballot wallet remains a separate approval method until you change or clear that default."
       ]
     },
     {
@@ -197,7 +197,7 @@
         "Small JSON documents are stored directly in contract tables. Larger files use immutable IPFS CIDs and a separate SHA-256 commitment of retrieved bytes. Document IDs have contiguous, permanent version histories.",
         "The 4096-byte inline limit includes the complete stored JSON. For private content it includes the encrypted envelope, so the available plaintext space is smaller. Members can create documents; only their author or an administrator can publish later versions.",
         "Hosted file uploads have a 5 MiB stored-byte limit and use a bounded backend path with an explicit storage allowance. Private filenames and file contents are encrypted before upload; encoding reduces the maximum original size. Upload and verify the file, then sign its permanent contract record. Keep the request ID to resume after a reload or lost response. The backend retrieves the stored bytes and checks their separate SHA-256 commitment; a matching CID or on-chain record alone does not establish byte verification.",
-        "Private documents use a committed key for each DAO epoch. Initialization stores the commitment and the creator’s encrypted grant atomically. An administrator can grant that epoch to admitted members. Different recipients, DAO deployments and document versions have distinct encryption domains.",
+        "Private documents use a committed key for each DAO epoch. Initialization stores the commitment and the creator’s encrypted grant atomically. An administrator can grant that epoch to admitted members. Different recipients, DAO deployments and document versions have distinct encryption domains. After a DAO key rotation, new identity or branding references must use the current encryption epoch. Previously retained references remain valid. If an unfinished edit reports that the keys changed, use Reprepare encrypted edit, review it and save again. Keep the original grants until the replacement is confirmed; the service cannot decrypt or re-encrypt your content for you.",
         "Private data access reads the DAO’s actual full-history or from-join policy. Prepare private access for members initializes the current epoch when needed and prepares up to 20 missing encrypted grants per explicit approval for active, custody-eligible members. An administrator can prepare only epochs for which they hold a valid grant. Missing original keys remain pending; opening the page submits no transaction. Completed grants survive an interrupted batch, so refresh and retry only the missing work.",
         "Verify my private access decrypts your permitted grants locally and checks each epoch commitment, up to 20 epochs per click. The status describes verification on this device. No private key, epoch key or decrypted document is sent to the API. Test the original account recovery on another device before relying on it for continuity.",
         "Changing membership or rotating an epoch protects future content after the next key is initialized. Old grants and disclosed plaintext remain accessible to anyone who kept the old key. A client checks content integrity and the epoch commitment before decryption.",
@@ -297,7 +297,8 @@
         "Existing subscriptions retain the accepted price schedule and included allowance. Daclify DAO can govern rates for new agreements. Accepting current pricing is a separate explicit administrator action. Blockchain, storage and AI allowances remain separate.",
         "Independent deployment options show Contact for pricing; they have no public setup price or self-service deployment checkout. Shared setup promo codes were superseded by free creation.",
         "Previously captured card or TLOS creation orders retain their immutable quoted price and once-only fulfillment. Their original TLOS quote may include the agreed 20% conversion premium. Creating a new free DAO does not refund or cancel an earlier paid order.",
-        "At the default published pricing, total approved capacity of 10 costs $0 per month; 11 costs $1; 50 costs $40; 51 costs $40.50; 250 costs $140; 251 costs $140.20; and 1,000 costs $290. These are capacity examples, not live quotations for a particular DAO. Existing subscriptions retain their accepted schedule; consult the app hosting screen for the actual current or accepted price and an exact quote before approving a change."
+        "At the default published pricing, total approved capacity of 10 costs $0 per month; 11 costs $1; 50 costs $40; 51 costs $40.50; 250 costs $140; 251 costs $140.20; and 1,000 costs $290. These are capacity examples, not live quotations for a particular DAO. Existing subscriptions retain their accepted schedule; consult the app hosting screen for the actual current or accepted price and an exact quote before approving a change.",
+        "A paid setup reserved before trusted-contact recovery remains usable by the recovered account. The original payment receipt stays unchanged and can create only one DAO. Reopen the saved setup or claim link using your current replacement account. Claim links still initialize only the claimant as executive. Encrypted setup content still requires its original decryption grants and surviving bytes."
       ]
     },
     {
@@ -10173,6 +10174,10 @@
                       }
                     ]
                   },
+                  "approvalKey": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
                   "identity": {
                     "type": "string",
                     "pattern": "^[0-9a-f]{64}$"
@@ -10637,6 +10642,10 @@
                       }
                     ]
                   },
+                  "approvalKey": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
                   "identity": {
                     "type": "string",
                     "pattern": "^[0-9a-f]{64}$"
@@ -10978,6 +10987,10 @@
                         "additionalProperties": false
                       }
                     ]
+                  },
+                  "approvalKey": {
+                    "type": "string",
+                    "maxLength": 128
                   },
                   "identity": {
                     "type": "string",
@@ -11321,6 +11334,10 @@
                       }
                     ]
                   },
+                  "approvalKey": {
+                    "type": "string",
+                    "maxLength": 128
+                  },
                   "identity": {
                     "type": "string",
                     "pattern": "^[0-9a-f]{64}$"
@@ -11632,6 +11649,10 @@
                         "additionalProperties": false
                       }
                     ]
+                  },
+                  "approvalKey": {
+                    "type": "string",
+                    "maxLength": 128
                   },
                   "identity": {
                     "type": "string",

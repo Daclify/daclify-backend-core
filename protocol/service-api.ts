@@ -445,14 +445,19 @@ export const ServiceResponseRoutes = [
 }[];
 
 export const ContractFailureMessages = {
-  PRIVATE_QUICK_REQUIRED: 'Encrypt this DAO question or explicitly review public publication with a compatible client.',
-  PRIVATE_QUICK_UNSUPPORTED: 'Private Quick questions are not enabled on this deployment. No public fallback was sent.',
+  PRIVATE_QUICK_REQUIRED:
+    'Encrypt this DAO question or explicitly review public publication with a compatible client.',
+  PRIVATE_QUICK_UNSUPPORTED:
+    'Private Quick questions are not enabled on this deployment. No public fallback was sent.',
   QUICK_QUESTION_REFERENCE: 'The encrypted question reference is invalid or unavailable.',
   QUICK_QUESTION_PARENT: 'The encrypted question belongs to a different ballot.',
-  QUICK_QUESTION_AUDIENCE: 'Private questions currently support only the originating DAO. Use explicit public publication for a wider audience.',
+  QUICK_QUESTION_AUDIENCE:
+    'Private questions currently support only the originating DAO. Use explicit public publication for a wider audience.',
   QUICK_QUESTION_UNREAD: 'Read and verify the encrypted question before voting.',
-  PRIVATE_AGENT_REQUIRED: 'Use Agent as the public participant label. Keep operating details in encrypted content.',
-  PRIVATE_PAYROLL_REQUIRED: 'Encrypt payroll names with a compatible client. Existing payments and pause controls remain available.',
+  PRIVATE_AGENT_REQUIRED:
+    'Use Agent as the public participant label. Keep operating details in encrypted content.',
+  PRIVATE_PAYROLL_REQUIRED:
+    'Encrypt payroll names with a compatible client. Existing payments and pause controls remain available.',
   PRIVATE_PAYROLL_PARENT: 'The encrypted agreed name belongs to a different payroll schedule.',
   PRIVATE_BALLOT_REVIEW_REQUIRED: 'Read and verify the encrypted ballot wording before voting.',
   PRIVATE_BALLOT_CONTEXT:
@@ -477,6 +482,8 @@ export const ContractFailureMessages = {
     'Use the selected founder’s original account keys to prepare this private DAO.',
   PRIVATE_METADATA_CHANGED:
     'The private DAO settings changed. Reload and review them before signing again.',
+  PRIVATE_EPOCH_CHANGED:
+    'The DAO’s encryption keys changed. Review the original grants and use Reprepare encrypted edit before publishing.',
   PRIVATE_SETUP_CHANGED:
     'The sealed invitation no longer matches its reviewed setup. Reopen the original invitation or request a new one.',
   PRIVATE_METADATA_DOWNGRADE:

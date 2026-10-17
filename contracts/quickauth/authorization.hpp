@@ -1,9 +1,10 @@
 #pragma once
 #include "quick_accounts.hpp"
+#include "contact_recovery.hpp"
 namespace daclify {
 inline void quick_require_proof(name runtime,const quick_anchor& method,const checksum256& digest,const std::vector<char>& proof){
  quick_anchor_valid(method);
- if(method.kind==0){check(proof.size()==66&&proof[0]==0,"QUICK_SIGNATURE");assert_recover_key(digest,unpack<signature>(proof),unpack<public_key>(method.credential));return;}
+ if(method.kind==0){check(proof.size()==66&&proof[0]==0,"QUICK_SIGNATURE");assert_recover_key(digest,unpack<signature>(proof),contact_current_key(runtime,unpack<public_key>(method.credential)));return;}
  if(method.kind==1){check(proof.empty(),"QUICK_SIGNATURE");require_auth(unpack<permission_level>(method.credential));return;}
  const auto wallet=unpack<std::tuple<uint64_t,checksum160>>(method.credential);
  const auto body=evm_hash_words({evm_text("QuickAccount(bytes32 operation)"),digest.extract_as_byte_array()});
@@ -36,7 +37,7 @@ inline void register_quick_account(name authority,name runtime,const quick_regis
  auto cfg=quick_gateway(authority,runtime);quick_domain(authority,runtime,request.version,request.chain_id,request.runtime,request.authority,request.expires);
  const auto identity=quick_identity(request.chain_id,runtime,request.anchor);quick_accounts rows(authority,runtime.value);auto identities=rows.get_index<"byidentity"_n>();auto found=identities.find(identity);
  if(found!=identities.end())check(request.account_id==found->id&&!found->active&&request.epoch==found->epoch,"QUICK_ACCOUNT_EXISTS");
- else check(!request.account_id&&!request.epoch,"QUICK_ACCOUNT_UNKNOWN");
+ else{check(!request.account_id&&!request.epoch,"QUICK_ACCOUNT_UNKNOWN");if(request.anchor.kind==0){const auto key=unpack<public_key>(request.anchor.credential);const auto root=contact_identity(runtime,key);check(!root||root->origin_key==key,"QUICK_ORIGINAL_ACCOUNT_REQUIRED");}}
  quick_require_proof(runtime,request.anchor,quick_digest("qregister",request),proof);
  if(found!=identities.end())rows.modify(rows.get(found->id),same_payer,[](auto& value){value.active=true;value.deactivated_at=0;value.epoch=add64(value.epoch,1);value.approval=quick_anchor{};});
  else{
@@ -49,8 +50,8 @@ inline quick_account quick_controlled_account(name authority,name runtime,const 
  const auto value=quick_accounts(authority,runtime.value).get(request.account_id,"QUICK_ACCOUNT_UNKNOWN");check(value.active,"QUICK_ACCOUNT_INACTIVE");
  check(value.identity==quick_identity(request.chain_id,runtime,request.anchor),"QUICK_IDENTITY");check(value.epoch==request.epoch,"QUICK_EPOCH");check(value.nonce==request.nonce,"QUICK_NONCE");return value;
 }
-inline quick_anchor quick_credential(const quick_account& account,const quick_control& request){
- auto method=request.use_default?account.approval:request.anchor;quick_anchor_valid(method);return method;
+inline quick_anchor quick_credential(name runtime,const quick_account& account,const quick_control& request){
+ auto method=request.use_default?account.approval:request.anchor;quick_anchor_valid(method);if(method.kind==0)method.credential=pack(contact_current_key(runtime,unpack<public_key>(method.credential)));return method;
 }
 inline void set_quick_default(name authority,name runtime,const quick_default& request,const std::vector<char>& proof,const std::vector<char>& incoming){
  const auto account=quick_controlled_account(authority,runtime,request.control);check(!request.control.use_default,"QUICK_ROOT_REQUIRED");
@@ -62,14 +63,14 @@ inline void set_quick_default(name authority,name runtime,const quick_default& r
 inline void submit_quick(name authority,name runtime,const quick_instruction& request,const std::vector<char>& proof){
  const auto account=quick_controlled_account(authority,runtime,request.control);const auto cfg=quick_settings(authority,runtime.value).get(0,"QUICK_NOT_CONFIGURED");
  check(request.target==cfg.source,"QUICK_TARGET");check(request.action=="respond"_n||request.action=="remove"_n,"QUICK_ACTION");check(request.code_hash==cfg.code_hash,"QUICK_CODE");
- check(request.data.size()>=26&&request.data.size()<=16384,"QUICK_PAYLOAD");const auto context=unpack<quick_actor_context>(request.data);const auto method=quick_credential(account,request.control);
+ check(request.data.size()>=26&&request.data.size()<=16384,"QUICK_PAYLOAD");const auto context=unpack<quick_actor_context>(request.data);const auto method=quick_credential(runtime,account,request.control);
  check(context.runtime==runtime&&context.authority==authority&&context.account_id==account.id&&quick_same_anchor(context.credential,method),"QUICK_CONTEXT");
  quick_require_proof(runtime,method,quick_digest("qsubmit",request),proof);
  quick_accounts rows(authority,runtime.value);rows.modify(rows.get(account.id),same_payer,[](auto& value){value.nonce=add64(value.nonce,1);});
  action outgoing;outgoing.account=request.target;outgoing.name=request.action;outgoing.authorization={{authority,"execctx"_n}};outgoing.data=request.data;outgoing.send();
 }
 inline void deactivate_quick(name authority,name runtime,const quick_control& request,const std::vector<char>& proof){
- const auto account=quick_controlled_account(authority,runtime,request);quick_require_proof(runtime,quick_credential(account,request),quick_digest("qdeactivate",request),proof);
+ const auto account=quick_controlled_account(authority,runtime,request);quick_require_proof(runtime,quick_credential(runtime,account,request),quick_digest("qdeactivate",request),proof);
  quick_accounts rows(authority,runtime.value);rows.modify(rows.get(account.id),same_payer,[](auto& value){value.active=false;value.deactivated_at=current_time_point().sec_since_epoch();value.approval=quick_anchor{};value.epoch=add64(value.epoch,1);value.nonce=add64(value.nonce,1);});
 }
 inline void prune_quick_accounts(name authority,name runtime,const std::vector<uint64_t>& ids){

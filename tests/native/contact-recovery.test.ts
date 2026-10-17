@@ -18,6 +18,12 @@ import { nativeProcess, type NativeProcess } from '../helpers/native-process.js'
 import { contextPermissionPlan } from '../../tools/deploy/permissions.js';
 import { NativeChainGateway } from '../../services/api/src/native-chain.js';
 import {
+  encodeQuickAnchor,
+  quickAccountDigest,
+  quickAccountIdentity,
+  QuickAuthTableSchemas,
+} from '../../sdk/quick-accounts.js';
+import {
   contactRecoveryDigest,
   contactRequestCommitment,
   makeInstruction,
@@ -25,7 +31,9 @@ import {
   RuntimeTableSchemas,
   nativeOwnershipSetupActions,
   nativeHandoverActions,
+  governanceSettings,
 } from '../../sdk/index.js';
+import { defaultDaoSetup } from '../../protocol/dao.js';
 let f: NativeProcess, abi: ABI, gateway: NativeChainGateway;
 const old = PrivateKey.generate('K1'),
   replacement = PrivateKey.generate('K1'),
@@ -105,7 +113,7 @@ async function own(name: string, data: object, signer = old, consent?: string) {
 beforeAll(async () => {
   const library =
     process.env.DACLIFY_NATIVE_CLOCK_LIBRARY ??
-    '/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1';
+    '/usr/lib/x86_64-linux-gnu/faketime/libfaketimeMT.so.1';
   f = await nativeProcess(library);
   for (const name of ['daclifycore', 'alice', 'bob', 'charlie', 'recovery', 'relay', 'eosio.token'])
     await f.create(name);
@@ -211,6 +219,70 @@ afterAll(async () => {
   if (f) await f.stop();
 });
 it('runs real native permissions, exact proof packing, two contacts and a full 48-hour clock boundary', async () => {
+  for (const name of ['quickauth', 'quickprobe']) await f.create(name);
+  const quickAbi = await f.deploy('quickauth', '.artifacts/contracts/quickauth');
+  await f.deploy('quickprobe', '.artifacts/contracts/quickprobe');
+  const quick = (action: string, data: object, actors = ['relay']) =>
+    f.push(
+      [
+        f.action(
+          'quickauth',
+          action,
+          data,
+          actors.map((actor) => ({ actor, permission: 'active' })),
+          quickAbi,
+        ),
+      ],
+      actors.map((actor) => f.key(actor)),
+    );
+  await quick(
+    'qconfig',
+    {
+      runtime: 'daclifycore',
+      source: 'quickprobe',
+      code_hash: (await f.api.v1.chain.get_raw_abi('quickprobe')).code_hash.toString(),
+      gateway: { actor: 'relay', permission: 'active' },
+      maximum: 5000,
+    },
+    ['daclifycore', 'quickauth'],
+  );
+  const quickAnchor = { kind: 'key' as const, publicKey: old.toPublic().toString() };
+  const registration = {
+    version: 1,
+    chain_id: f.chainId,
+    runtime: 'daclifycore',
+    authority: 'quickauth',
+    anchor: encodeQuickAnchor(quickAnchor),
+    account_id: '0',
+    epoch: '0',
+    expires: f.now() + 300,
+  };
+  await quick('qregister', {
+    request: registration,
+    proof: Serializer.encode({
+      object: old.signDigest(quickAccountDigest('qregister', registration)),
+    }).hexString,
+  });
+  await call(
+    'setfees',
+    {
+      third_party_bps: 500,
+      first_party_bps: 10000,
+      treasury: 'alice',
+      token_contract: 'eosio.token',
+      token_symbol: '4,TLOS',
+      names: '',
+    },
+    'daclifycore',
+  );
+  await call(
+    'setcreate',
+    { shared_usd: 0, independent_usd: 5000, premium_bps: 2000, settler: 'relay' },
+    'daclifycore',
+  );
+  await call('sethosted', { free_members: 10, settler: 'relay' }, 'daclifycore');
+  const receiptReference = 'ce'.repeat(32);
+  await call('orderfree', { reference: receiptReference, creator: old.toPublic().toString() });
   const initial = await member(),
     before = Number((await f.api.v1.chain.get_account('daclifycore')).ram_usage);
   const coordinate = publicEncryption(1).x,
@@ -537,6 +609,129 @@ it('runs real native permissions, exact proof packing, two contacts and a full 4
   ).toBe(old.toPublic().toString());
   expect(await gateway.accountKeyRetired(old.toPublic().toString())).toBe(true);
   expect(await gateway.accountKeyRetired(replacement.toPublic().toString())).toBe(false);
+  expect(
+    (await gateway.accountRecoveryIdentity(old.toPublic().toString()))?.identity.signing_key,
+  ).toBe(replacement.toPublic().toString());
+  const quickRow = QuickAuthTableSchemas.qaccounts.parse(
+    (
+      await f.api.v1.chain.get_table_rows({
+        code: 'quickauth',
+        scope: 'daclifycore',
+        table: 'qaccounts',
+        limit: 1,
+      })
+    ).rows[0],
+  );
+  expect(quickRow.identity).toBe(quickAccountIdentity(f.chainId, 'daclifycore', quickAnchor));
+  const control = {
+    ...registration,
+    account_id: quickRow.id,
+    epoch: quickRow.epoch,
+    nonce: quickRow.nonce,
+    expires: f.now() + 300,
+    use_default: false,
+  };
+  const defaultRequest = {
+    control,
+    method: encodeQuickAnchor({ kind: 'native', account: 'bob', permission: 'active' }),
+  };
+  const defaultProof = (signer: PrivateKey) =>
+    Serializer.encode({ object: signer.signDigest(quickAccountDigest('qdefault', defaultRequest)) })
+      .hexString;
+  await expect(
+    quick('qdefault', { request: defaultRequest, proof: defaultProof(old), incoming: '' }, [
+      'relay',
+      'bob',
+    ]),
+  ).rejects.toThrow();
+  await quick(
+    'qdefault',
+    { request: defaultRequest, proof: defaultProof(replacement), incoming: '' },
+    ['relay', 'bob'],
+  );
+  const deactivate = {
+    ...control,
+    epoch: String(BigInt(control.epoch) + 1n),
+    nonce: String(BigInt(control.nonce) + 1n),
+  };
+  await quick('qdeactivate', {
+    request: deactivate,
+    proof: Serializer.encode({
+      object: replacement.signDigest(quickAccountDigest('qdeactivate', deactivate)),
+    }).hexString,
+  });
+  const retiredQuick = QuickAuthTableSchemas.qaccounts.parse(
+    (
+      await f.api.v1.chain.get_table_rows({
+        code: 'quickauth',
+        scope: 'daclifycore',
+        table: 'qaccounts',
+        limit: 1,
+      })
+    ).rows[0],
+  );
+  expect(retiredQuick).toMatchObject({
+    identity: quickRow.identity,
+    active: false,
+    nonce: String(BigInt(quickRow.nonce) + 2n),
+  });
+  const receiptRamBefore = Number((await f.api.v1.chain.get_account('daclifycore')).ram_usage);
+  const create = {
+    dao_id: '3',
+    owner: 'alice',
+    metadata: '{}',
+    privacy: 0,
+    token_contract: 'eosio.token',
+    token_symbol: '4,TLOS',
+    reference: receiptReference,
+    creator: replacement.toPublic().toString(),
+    founder: {
+      encryption_key: encryption(4),
+      custody: 0,
+      settings: governanceSettings(defaultDaoSetup('custom'), 'charlie'),
+    },
+  };
+  await expect(
+    call('createpaid', { ...create, creator: old.toPublic().toString() }, 'relay', 'alice'),
+  ).rejects.toThrow('CREATION_OWNER');
+  await call('createpaid', create, 'relay', 'alice');
+  await expect(call('createpaid', { ...create, dao_id: '4' }, 'relay', 'alice')).rejects.toThrow(
+    'CREATION_USED',
+  );
+  const createdFounder = RuntimeTableSchemas.members.parse(
+    (
+      await f.api.v1.chain.get_table_rows({
+        code: 'daclifycore',
+        scope: '3',
+        table: 'members',
+        limit: 1,
+      })
+    ).rows[0],
+  );
+  expect(createdFounder).toMatchObject({
+    id: '1',
+    signing_key: replacement.toPublic().toString(),
+    active: true,
+    admin: true,
+  });
+  const paidReceipt = RuntimeTableSchemas.createords.parse(
+    (
+      await f.api.v1.chain.get_table_rows({
+        code: 'daclifycore',
+        scope: 'daclifycore',
+        table: 'createords',
+        limit: 1,
+      })
+    ).rows[0],
+  );
+  expect(paidReceipt).toMatchObject({
+    creator: old.toPublic().toString(),
+    paid: true,
+    used: true,
+    dao_id: '3',
+  });
+  metrics.receipt_creation_ram_bytes =
+    Number((await f.api.v1.chain.get_account('daclifycore')).ram_usage) - receiptRamBefore;
   const lastAck = await proof('ackrecpack', 2, '1', await contactPacketCommitment(packet));
   const ackSignature = contact(2).signDigest(contactRecoveryDigest(lastAck)).toString();
   await expect(
@@ -554,7 +749,9 @@ it('runs real native permissions, exact proof packing, two contacts and a full 4
   });
   expect((await gateway.contactRecovery(target)).packets[0]?.acknowledged).toBe(7);
   metrics.recovery_ram_bytes =
-    Number((await f.api.v1.chain.get_account('daclifycore')).ram_usage) - before;
+    Number((await f.api.v1.chain.get_account('daclifycore')).ram_usage) -
+    before -
+    (metrics.receipt_creation_ram_bytes ?? 0);
   metrics.runtime_wasm_bytes = statSync('.artifacts/contracts/runtime.wasm').size;
   writeFileSync(
     '.artifacts/contact-recovery-native-metrics.json',

@@ -261,6 +261,7 @@ export function registerConnectedAppsRoutes(
       const current = await service.access(
         bearer(request.headers.authorization),
         request.headers.origin,
+        db,
       );
       if (current.claims.nonce !== instruction.nonce) throw new ApiError('APP_NONCE_CHANGED', 409);
       const result = await service.chain.relay(
@@ -269,6 +270,7 @@ export function registerConnectedAppsRoutes(
         input.signature,
         access.claims.sessionId,
         access.claims.appId,
+        db,
       );
       await db.query('COMMIT');
       return result;

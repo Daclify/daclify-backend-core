@@ -215,7 +215,10 @@ export class DaoClaimLinks {
       // A pre-reservation backup may have lost SQL ownership. Never change the native receipt's creator.
       if (
         native &&
-        (native.creator !== current.signingKey ||
+        ((await this.creation.currentCreator(native.creator, {
+          chainId: draft.chain_id,
+          runtime: draft.runtime,
+        })) !== current.signingKey ||
           native.method !== (method === 'free' ? 2 : method === 'card' ? 1 : 0))
       )
         throw new ApiError('DAO_CLAIM_RESERVED', 409);
@@ -301,7 +304,12 @@ export class DaoClaimLinks {
           else {
             const owner = await db.query(
               "SELECT id FROM accounts WHERE signing_key=$1 AND merged_into IS NULL AND erasure_state='none'",
-              [native.creator],
+              [
+                await this.creation.currentCreator(native.creator, {
+                  chainId: row.chain_id,
+                  runtime: row.runtime,
+                }),
+              ],
             );
             if (owner.rowCount)
               await db.query(

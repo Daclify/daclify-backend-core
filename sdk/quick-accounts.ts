@@ -140,6 +140,11 @@ export function decodeQuickAnchor(value: { kind: number; credential: string }) {
   return anchor;
 }
 
+export function quickAccountRoot(context: QuickAccountContext) {
+  return context.anchor.kind === 'key' && context.approvalKey
+    ? { ...context.anchor, publicKey: context.approvalKey }
+    : context.anchor;
+}
 function checkedContext(value: unknown): QuickAccountContext {
   const context = QuickAccountContextSchema.parse(value);
   if (context.authorityCodeHash !== QuickAuthCodeHash) throw new Error('QUICK_AUTH_CODE');

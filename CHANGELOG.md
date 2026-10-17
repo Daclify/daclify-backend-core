@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+Core50/modules62/frontend69 development cohort: reuse the checked-out database connection for DAO orders, Quick archives and connected-app transactions. Resolve current Quick approval and paid setup ownership from native trusted-contact continuity while retaining the original voting identity and payment receipt. Reject newly changed stale-epoch private identity/assets and report a resumable Reprepare error. No new native table, stored field, secondary index or action/table ABI layout. Existing member keys and historic grants are preserved; deployment requires matched runtime/Quick authorization hashes.
+
 Private ballot development checkpoint: keep encrypted descriptive wording behind exact DAO document references, frozen ordered choices, on-demand verified reading and original-key access. Extend the native source-family bound to five for retained ballot bodies, without a new table or index. Browser technical checkpoints reconcile interrupted openings and fresh membership nonces; public wording requires explicit disclosure. Remaining privacy tasks and live qualification are still required.
 
 Core protocol/SDK37, modules46 and frontend57 development cohort: add opaque metadata4, retained encrypted identity/image references, optimistic signed updates, and browser-sealed creation/claim setup bound to the exact public operational context. Private invitations use a fragment-only content key and fresh claimant-owned DAO keys. Preserve strict legacy summaries, self-custody and existing order/claim ownership. Deployment and remaining content surfaces require the complete privacy-plan qualification; this entry does not claim live activation.

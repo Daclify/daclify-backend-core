@@ -65,6 +65,7 @@ export const QuickAccountContextSchema = QuickAccountDomainSchema.extend({
   sourceCodeHash: ChainIdSchema,
   gateway: z.strictObject({ actor: CanonicalAccount, permission: CanonicalAccount }),
   anchor: QuickAccountAnchorSchema,
+  approvalKey: SigningPublicKeySchema.optional(),
   identity: ChainIdSchema,
   frozen: z.boolean(),
   record: QuickauthTableSchemas.qaccounts.nullable(),

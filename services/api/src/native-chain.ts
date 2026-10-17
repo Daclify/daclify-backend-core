@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import { NativeQuickBallots } from './quick-ballots/chain.js';
+import { readContactIdentity } from './contact-identity.js';
 import {
   ContactRecoveryTargetSchema,
   ContactRecoveryStateSchema,
@@ -480,13 +481,13 @@ export class NativeChainGateway implements ChainGateway {
       await this.reviewedRuntime(this.config.runtime);
       return this.table('appregs', IdSchema.parse(daoId), '0', 64);
     },
-    membership: async (account, daoId) => {
+    membership: async (account, daoId, db = this.pool) => {
       await this.reviewedRuntime(this.config.runtime);
       const dao = await this.dao(daoId),
-        wallets = await this.linkedWallets(account.id);
+        wallets = await this.linkedWallets(account.id, db);
       if (wallets.length) await this.checkWalletChain();
       const rows = await this.table('members', daoId, '0', 5000),
-        id = await this.memberIdentity(account, daoId, rows, wallets),
+        id = await this.memberIdentity(account, daoId, rows, wallets, db),
         member = rows.find((row) => row.id === id);
       if (!member?.active) return null;
       const actor = (await this.table('actors', daoId, member.id, 1))[0];
@@ -540,8 +541,8 @@ export class NativeChainGateway implements ChainGateway {
       if (String(deployed.code_hash) !== installed.code_hash) return null;
       return { credential, scope };
     },
-    relay: async (account, request, signature, sessionId, appId) => {
-      const member = await this.connectedApps.membership(account, request.dao_id),
+    relay: async (account, request, signature, sessionId, appId, db = this.pool) => {
+      const member = await this.connectedApps.membership(account, request.dao_id, db),
         session = await this.connectedApps.session(request.dao_id, sessionId);
       if (
         !member ||
@@ -877,23 +878,8 @@ export class NativeChainGateway implements ChainGateway {
   async accountRecoveryIdentity(signingKey: string) {
     const network = await this.network();
     if (!network.capabilities.includes('trusted-contact-recovery-v1')) return null;
-    const key = Checksum256.hash(
-      Serializer.encode({ type: 'public_key', object: PublicKey.from(signingKey) }).array,
-    ).toString();
-    const rows = await this.moduleRows(
-      this.config.runtime,
-      'recroots',
-      RuntimeTableSchemas.recroots,
-      key,
-      key,
-      2,
-      'sha256',
-      1,
-      this.config.runtime,
-    );
-    const identity = rows.rows[0];
+    const identity = await readContactIdentity(this.api, this.config.runtime, signingKey);
     if (!identity) return null;
-    if (identity.signing_key !== signingKey) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
     return { network: { chainId: network.chainId, runtime: network.runtime }, identity };
   }
   async accountKeyRetired(signingKey: string): Promise<boolean> {
@@ -1000,50 +986,9 @@ export class NativeChainGateway implements ChainGateway {
     )
       throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
     const member = people.find((row) => row.id === memberId) ?? null;
-    let identity: z.infer<typeof RuntimeTableSchemas.recroots> | null = null;
-    if (member) {
-      const packed = Serializer.encode({
-        type: 'public_key',
-        object: PublicKey.from(member.signing_key),
-      }).array;
-      const key = Checksum256.hash(packed).toString();
-      const history = await this.moduleRows(
-        this.config.runtime,
-        'recretired',
-        RuntimeTableSchemas.recretired,
-        key,
-        key,
-        2,
-        'sha256',
-        1,
-        this.config.runtime,
-      );
-      const retired = history.rows[0];
-      if (retired) {
-        if (retired.signing_key !== member.signing_key)
-          throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
-        identity =
-          (await this.table('recroots', this.config.runtime, retired.identity_id, 1)).find(
-            (row) => row.id === retired.identity_id,
-          ) ?? null;
-        if (!identity) throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
-      } else {
-        const current = await this.moduleRows(
-          this.config.runtime,
-          'recroots',
-          RuntimeTableSchemas.recroots,
-          key,
-          key,
-          2,
-          'sha256',
-          1,
-          this.config.runtime,
-        );
-        identity = current.rows[0] ?? null;
-        if (identity && identity.signing_key !== member.signing_key)
-          throw new ApiError('CHAIN_RESPONSE_INVALID', 503);
-      }
-    }
+    const identity = member
+      ? await readContactIdentity(this.api, this.config.runtime, member.signing_key)
+      : null;
     const config = configs.find((row) => row.dao_id === daoId);
     return ContactRecoveryStateSchema.parse({
       target,

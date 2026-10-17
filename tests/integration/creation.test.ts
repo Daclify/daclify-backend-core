@@ -73,6 +73,15 @@ const platform = ChainPlatformSchema.parse({
 const orders = new Map<string, ReturnType<typeof RuntimeTableSchemas.createords.parse>>();
 let creations = 0;
 const chain = {
+  accountRecoveryIdentity: async (
+    _key: string,
+  ): Promise<
+    Awaited<
+      ReturnType<
+        import('../../services/api/src/native-chain.js').NativeChainGateway['accountRecoveryIdentity']
+      >
+    >
+  > => null,
   validateCreation: vi.fn(async (_input: ReturnType<typeof CreateDaoSchema.parse>) => {}),
   platform: async () => platform,
   creationOrder: async (reference: string) => orders.get(reference) ?? null,
@@ -162,6 +171,79 @@ const request = CreateDaoSchema.parse({
   metadata: { schemaVersion: 1, title: 'PG order fixture', description: '' },
   privacy: 'public',
   token: { chainId: network.chainId, contract: 'eosio.token', symbol: 'TLOS', precision: 4 },
+});
+it('finishes concurrent setup retries and leaves authentication responsive with one database connection', async () => {
+  const small = new Pool({ connectionString: url, max: 1, connectionTimeoutMillis: 1000 });
+  const concurrent = new CreationService(small, chain);
+  const input = { requestId: randomUUID(), deployment: 'shared', method: 'tlos', request } as const;
+  try {
+    const prepared = await Promise.all(
+      Array.from({ length: 4 }, () => concurrent.prepare(account, input)),
+    );
+    expect(prepared.every((view) => view.requestId === input.requestId)).toBe(true);
+    const first = prepared[0];
+    if (!first) throw Error('Fixture order view');
+    const order = orders.get(first.memo.slice('create:'.length));
+    if (!order) throw Error('Fixture order');
+    order.paid = true;
+    const before = creations;
+    const results = await Promise.all([
+      concurrent.status(account.id, input.requestId),
+      concurrent.fulfill(account, input.requestId),
+      concurrent.fulfill(account, input.requestId),
+      small.query('SELECT id FROM accounts WHERE id=$1', [account.id]),
+    ]);
+    expect(results[1].state).toBe('created');
+    expect(results[2].dao).toEqual(results[1].dao);
+    expect(results[3].rowCount).toBe(1);
+    expect(creations - before).toBe(1);
+    expect(small.waitingCount).toBe(0);
+  } finally {
+    await small.end();
+  }
+});
+it('fulfills a recovered account’s paid setup once without changing the original receipt', async () => {
+  const prepared = await service.prepare(account, {
+    requestId: randomUUID(),
+    deployment: 'shared',
+    method: 'tlos',
+    request,
+  });
+  const original = orders.get(prepared.memo.slice('create:'.length));
+  if (!original) throw Error('Fixture order');
+  original.paid = true;
+  const next = AccountSchema.parse({
+    ...account,
+    signingKey: PrivateKey.generate('K1').toPublic().toString(),
+  });
+  if (!next.signingKey) throw Error('Recovered fixture key');
+  const recovery = vi.spyOn(chain, 'accountRecoveryIdentity').mockResolvedValue({
+    network,
+    identity: {
+      id: '1',
+      dao_id: '7',
+      origin_key: account.signingKey ?? '',
+      signing_key: next.signingKey,
+    },
+  });
+  await pool.query('UPDATE accounts SET signing_key=$2 WHERE id=$1', [account.id, next.signingKey]);
+  try {
+    const before = creations;
+    const results = await Promise.all([
+      service.fulfill(next, prepared.requestId),
+      service.fulfill(next, prepared.requestId),
+    ]);
+    expect(results[0]?.state).toBe('created');
+    expect(results[0]?.dao).toEqual(results[1]?.dao);
+    expect(creations - before).toBe(1);
+    expect(original.creator).toBe(account.signingKey);
+  } finally {
+    recovery.mockRestore();
+    await pool.query('UPDATE accounts SET signing_key=$2 WHERE id=$1', [
+      account.id,
+      account.signingKey,
+    ]);
+  }
 });
 it('blocks strict-private creation after assisted authority was enabled and reports honest custody for public creation', async () => {
   await pool.query(

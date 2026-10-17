@@ -132,3 +132,43 @@ it('enforces original signer authority, exact ciphertext retention and optimisti
   });
   expect(RuntimeTableSchemas.members.parse(await dao.member()).active).toBe(true);
 });
+it('rejects a newly attached old-epoch identity after rotation while retaining the unchanged original reference', async () => {
+  const snapshot = await f().gateway.privateIdentity(dao.daoId);
+  if (!snapshot.reference) throw Error('Native identity fixture');
+  const envelope = JSON.stringify({
+    version: 1,
+    algorithm: 'AES-256-GCM',
+    iv: btoa('i'.repeat(12)),
+    ciphertext: btoa('c'.repeat(32)),
+  });
+  await dao.act(
+    'daclifycore',
+    'putjson',
+    encodeAction('putjson', {
+      ...dao.actor(),
+      document_id: '41',
+      version: 2,
+      value: envelope,
+      envelope_version: 1,
+      key_epoch: '1',
+    }),
+  );
+  await dao.act('daclifycore', 'rotateepoch', encodeAction('rotateepoch', dao.actor()));
+  const update = {
+    ...dao.actor(),
+    expected: snapshot.metadataCommitment,
+    metadata: JSON.stringify({
+      ...snapshot.metadata,
+      privateIdentity: { ...snapshot.reference, version: 2 },
+    }),
+  };
+  await expect(dao.act('daclifycore', 'setmeta', encodeAction('setmeta', update))).rejects.toThrow(
+    'PRIVATE_EPOCH_CHANGED',
+  );
+  await dao.act(
+    'daclifycore',
+    'setmeta',
+    encodeAction('setmeta', { ...update, metadata: JSON.stringify(snapshot.metadata) }),
+  );
+  expect((await f().gateway.privateIdentity(dao.daoId)).reference).toEqual(snapshot.reference);
+});

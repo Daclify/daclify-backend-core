@@ -73,6 +73,16 @@ struct [[eosio::table("recroots"),eosio::contract("runtime")]] contact_root {
 };
 using contact_roots=ram_table<"recroots"_n,contact_root,indexed_by<"bykey"_n,const_mem_fun<contact_root,checksum256,&contact_root::by_key>>>;
 inline bool contact_key_retired(name runtime,const public_key& key){retired_contact_keys rows(runtime,runtime.value);auto index=rows.get_index<"bykey"_n>();auto bytes=pack(key);return index.find(sha256(bytes.data(),bytes.size()))!=index.end();}
+// Resolve permanent key-family evidence directly, including more than one completed recovery.
+inline std::optional<contact_root> contact_identity(name runtime,const public_key& key){
+ const auto bytes=pack(key);const auto hash=sha256(bytes.data(),bytes.size());
+ retired_contact_keys retired(runtime,runtime.value);auto history=retired.get_index<"bykey"_n>();auto previous=history.find(hash);
+ contact_roots roots(runtime,runtime.value);
+ if(previous!=history.end())return roots.get(previous->identity_id,"RECOVERY_IDENTITY_CHANGED");
+ auto current=roots.get_index<"bykey"_n>();auto found=current.find(hash);if(found!=current.end())return *found;
+ return std::nullopt;
+}
+inline public_key contact_current_key(name runtime,const public_key& key){const auto root=contact_identity(runtime,key);return root?root->signing_key:key;}
 inline bool contact_documents_allowed(name runtime,uint64_t dao_id){contact_document_policies rows(runtime,runtime.value);auto p=rows.find(dao_id);return p!=rows.end()&&p->allowed;}
 inline bool contact_grant_allowed(name runtime,uint64_t dao_id,uint64_t member_id,uint64_t epoch){
  contact_results rows(runtime,dao_id);auto r=rows.find(member_id);if(r==rows.end())return true;

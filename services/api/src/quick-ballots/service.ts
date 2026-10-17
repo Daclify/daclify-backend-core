@@ -35,7 +35,8 @@ export type QuickGateway = Pick<
   | 'needsAdvance'
   | 'validatePreparation'
   | 'pruneInactiveAccounts'
->;
+> &
+  Partial<Pick<NativeQuickBallots, 'recoveryIdentity'>>;
 const digest = (value: string) => createHash('sha256').update(value).digest();
 const savedSchema = z.object({
   prepared: QuickAccountPreparedSchema,
@@ -96,7 +97,13 @@ export class QuickBallots {
   async status(accountId: string) {
     const config = await this.chain.configuration(),
       domain = { chainId: config.chainId, runtime: config.runtime },
-      binding = await quickAccountCandidate(this.pool, accountId, domain, this.evmChainId);
+      binding = await quickAccountCandidate(
+        this.pool,
+        accountId,
+        domain,
+        this.evmChainId,
+        this.chain.recoveryIdentity?.bind(this.chain),
+      );
     return QuickAccountRoutes.quickAccountStatus.response.parse({
       available: true,
       context: { ...config, ...binding, record: await this.chain.account(binding.identity) },
@@ -166,6 +173,7 @@ export class QuickBallots {
           throw new ApiError('QUICK_IDENTITY_CHANGED', 409);
         await this.guardWallets(db, accountId, context.chainId, candidate.identity);
       },
+      this.chain.recoveryIdentity?.bind(this.chain),
     );
     if (binding.identity !== input.expectedIdentity)
       throw new ApiError('QUICK_IDENTITY_CHANGED', 409);

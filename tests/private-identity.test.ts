@@ -20,6 +20,102 @@ const metadata = {
   setup: defaultDaoSetup(),
   privateIdentity: null,
 };
+it.each(['identity', 'asset'])(
+  'does not treat a legacy JSON %s field as an already retained private reference',
+  async (kind) => {
+    const chain = new Blockchain();
+    chain.createAccounts('alice', 'relay');
+    const runtime = loadContract(chain, 'daclifycore', '.artifacts/contracts/runtime');
+    const key = PrivateKey.generate('K1');
+    const envelope = JSON.stringify({
+      version: 1,
+      algorithm: 'AES-256-GCM',
+      iv: btoa('i'.repeat(12)),
+      ciphertext: btoa('t'.repeat(16)),
+    });
+    const reference = {
+      documentId: '41',
+      version: 1,
+      commitment: createHash('sha256').update(envelope).digest('hex'),
+      keyEpoch: '1',
+    };
+    const legacy = {
+      schemaVersion: 1,
+      title: 'Legacy',
+      description: '',
+      privateIdentity: reference,
+      privateAssets: [reference],
+    };
+    await send(runtime, 'init', ['ab'.repeat(32)], 'daclifycore@active');
+    await send(
+      runtime,
+      'createdao',
+      [7, 'alice', JSON.stringify(legacy), 1, 'eosio.token', '4,TLOS'],
+      'alice@active',
+    );
+    await send(
+      runtime,
+      'enroll',
+      [7, 1, '', key.toPublic().toString(), 'fixture', 0],
+      'alice@active',
+    );
+    let nonce = 0;
+    const actor = { runtime: 'daclifycore', dao_id: '7', member_id: '1' };
+    async function act(
+      action: 'commitepoch' | 'putjson' | 'rotateepoch' | 'setmeta',
+      data: unknown,
+    ) {
+      const request = makeInstruction(
+        { chainId: 'ab'.repeat(32), contract: 'daclifycore', daoId: '7', interfaceVersion: 1 },
+        '1',
+        String(nonce),
+        chain.timestamp.toMilliseconds() / 1000 + 300,
+        'daclifycore',
+        action,
+        encodeAction(action, RuntimeActionSchemas[action].parse(data)),
+      );
+      await send(
+        runtime,
+        'submit',
+        { request, sig: key.signDigest(instructionDigest(request)).toString() },
+        'relay@active',
+      );
+      nonce++;
+    }
+    await act('commitepoch', {
+      ...actor,
+      epoch: '1',
+      commitment: 'aa'.repeat(32),
+      self_grant: '{}',
+    });
+    await act('putjson', {
+      ...actor,
+      document_id: '41',
+      version: 1,
+      value: envelope,
+      envelope_version: 1,
+      key_epoch: '1',
+    });
+    await act('rotateepoch', actor);
+    await expect(
+      act('setmeta', {
+        ...actor,
+        expected: createHash('sha256').update(JSON.stringify(legacy)).digest('hex'),
+        metadata: JSON.stringify({
+          ...metadata,
+          purpose: 'custom',
+          setup: null,
+          privateIdentity: kind === 'identity' ? reference : null,
+          ...(kind === 'asset' ? { privateAssets: [reference] } : {}),
+        }),
+      }),
+    ).rejects.toThrow('PRIVATE_EPOCH_CHANGED');
+    expect(row(runtime, 'daos', runtime.toBigInt(), 7n)).toHaveProperty(
+      'metadata',
+      JSON.stringify(legacy),
+    );
+  },
+);
 it('keeps private DAO metadata opaque and retains a versioned identity reference', () => {
   expect(MetadataSchema.parse(metadata)).toEqual(metadata);
   const reference = { documentId: '41', version: 1, commitment: '11'.repeat(32), keyEpoch: '1' };
@@ -86,7 +182,7 @@ it('preserves preset identity, rejects downgrade and retains only the exact encr
     'alice@active',
   );
   let nonce = 0;
-  async function act(action: 'setmeta' | 'commitepoch' | 'putjson', data: unknown) {
+  async function act(action: 'setmeta' | 'commitepoch' | 'rotateepoch' | 'putjson', data: unknown) {
     if (action === 'setmeta') {
       const prior = z
         .object({ metadata: z.string() })
@@ -198,4 +294,49 @@ it('preserves preset identity, rejects downgrade and retains only the exact encr
     metadata: JSON.stringify({ ...metadata, privateIdentity: reference }),
   });
   expect(row(runtime, 'docrefs', 7n, 2n)).toMatchObject({ document_id: 0, version: 0 });
+  const saved = { ...metadata, privateIdentity: reference, privateAssets: [asset] };
+  await act('setmeta', { ...actor, metadata: JSON.stringify(saved) });
+  await act('putjson', {
+    ...actor,
+    document_id: '41',
+    version: 2,
+    value: envelope,
+    envelope_version: 1,
+    key_epoch: '1',
+  });
+  await act('rotateepoch', actor);
+  await act('commitepoch', { ...actor, epoch: '2', commitment: 'bb'.repeat(32), self_grant: '{}' });
+  // Existing identity and branding remain usable; only newly attached content must use the current epoch.
+  await act('setmeta', {
+    ...actor,
+    metadata: JSON.stringify({
+      ...saved,
+      publicIdentity: { title: 'Public alias', description: '' },
+    }),
+  });
+  await expect(
+    act('setmeta', {
+      ...actor,
+      metadata: JSON.stringify({ ...saved, privateIdentity: { ...reference, version: 2 } }),
+    }),
+  ).rejects.toThrow('PRIVATE_EPOCH_CHANGED');
+  await act('setmeta', { ...actor, metadata: JSON.stringify({ ...saved, privateAssets: [] }) });
+  await expect(act('setmeta', { ...actor, metadata: JSON.stringify(saved) })).rejects.toThrow(
+    'PRIVATE_EPOCH_CHANGED',
+  );
+  await act('putjson', {
+    ...actor,
+    document_id: '41',
+    version: 3,
+    value: envelope,
+    envelope_version: 1,
+    key_epoch: '2',
+  });
+  await act('setmeta', {
+    ...actor,
+    metadata: JSON.stringify({
+      ...metadata,
+      privateIdentity: { ...reference, version: 3, keyEpoch: '2' },
+    }),
+  });
 });

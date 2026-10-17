@@ -39,7 +39,7 @@ if (
   !['127.0.0.1', 'localhost'].includes(new URL(url).hostname)
 )
   throw new Error('Local isolated test database required');
-const pool = new Pool({ connectionString: url });
+const pool = new Pool({ connectionString: url, max: 1, connectionTimeoutMillis: 1000 });
 const issuer = 'https://api.daclify.example',
   frontend = 'https://daclify.example';
 const dao = DaoRefSchema.parse({
@@ -131,7 +131,10 @@ beforeEach(async () => {
     }),
     network: async () => network,
     registry: async () => registry,
-    membership: async (account) => members.get(account.id) ?? null,
+    membership: async (account, _dao, db = pool) => {
+      await db.query('SELECT id FROM accounts WHERE id=$1', [account.id]);
+      return members.get(account.id) ?? null;
+    },
     session: async (_dao, id) => sessions.get(id) ?? null,
     activity: async () => ({ receipts: [], next: null }),
     relay: async () => ({ transactionId: 'cc'.repeat(32) }),
@@ -680,6 +683,7 @@ it.each(['recordact', 'askreview'] as const)(
       accepted.signature,
       '101',
       '1',
+      expect.anything(),
     );
     const denied = await submit('2');
     expect(denied.response.statusCode).toBe(403);

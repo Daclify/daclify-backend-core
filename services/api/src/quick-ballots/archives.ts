@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
-import type { Pool } from 'pg';
+import type { Pool, PoolClient } from 'pg';
 import { z } from 'zod';
 import {
   OrdinaryPollArchivePlanSchema,
@@ -37,6 +37,7 @@ import {
 } from '../content/ledger.js';
 import { fundedStorage } from '../content/capacity.js';
 import { withTransaction } from '../auth/account-session.js';
+import { rollbackTransaction } from '../transaction.js';
 import { ApiError } from '../errors.js';
 import { planQuickArchive } from './archive-worker.js';
 
@@ -112,7 +113,7 @@ export class QuickBallotArchives {
     );
     return result.rows.map((row) => CatalogSchema.parse(row));
   }
-  private async remember(dao: DaoRef, source: string, anchor: Anchor) {
+  private async remember(dao: DaoRef, source: string, anchor: Anchor, db: PoolClient) {
     const family = anchor.manifest.families[0];
     if (
       anchor.revoked ||
@@ -122,7 +123,7 @@ export class QuickBallotArchives {
       !['quick-ballot-responses', 'quick-ballot-grants'].includes(family.kind)
     )
       return;
-    await this.pool.query(
+    await db.query(
       'INSERT INTO quick_ballot_archive_catalog(dao_key,source,ballot_id,kind,manifest_commitment) VALUES($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING',
       [contentDaoKey(dao), source, family.parent_id, family.kind, anchor.manifest_commitment],
     );
@@ -136,7 +137,7 @@ export class QuickBallotArchives {
       : '0';
     const page = await this.chain.archiveHistory({ dao, cursor });
     await withTransaction(this.pool, async (db) => {
-      for (const anchor of page.anchors) await this.remember(dao, source, anchor);
+      for (const anchor of page.anchors) await this.remember(dao, source, anchor, db);
       const last = page.anchors.at(-1),
         after = page.next ?? (last ? String(BigInt(last.id) + 1n) : cursor);
       await db.query(
@@ -218,17 +219,17 @@ export class QuickBallotArchives {
       return ids;
     });
   }
-  private async row(id: string) {
-    const result = await this.pool.query('SELECT * FROM quick_ballot_archive_exports WHERE id=$1', [
+  private async row(id: string, db: PoolClient) {
+    const result = await db.query('SELECT * FROM quick_ballot_archive_exports WHERE id=$1', [
       z.uuid().parse(id),
     ]);
     const row = RowSchema.parse(result.rows[0]);
     if (row.provider_scope !== this.scope) throw new ApiError('STORAGE_OWNERSHIP_REVIEW', 409);
     return row;
   }
-  private async files(id: string) {
+  private async files(id: string, db: PoolClient) {
     return (
-      await this.pool.query(
+      await db.query(
         'SELECT * FROM quick_ballot_archive_files WHERE export_id=$1 ORDER BY ordinal',
         [id],
       )
@@ -238,6 +239,7 @@ export class QuickBallotArchives {
     row: z.infer<typeof RowSchema>,
     file: z.infer<typeof FileSchema>,
     bytes: Uint8Array,
+    db: PoolClient,
   ) {
     if (bytes.length !== file.expected_bytes || hash(bytes) !== file.commitment)
       throw new ApiError('ARCHIVE_CONTENT_COMMITMENT', 409);
@@ -251,33 +253,36 @@ export class QuickBallotArchives {
       hash(retrieved) !== file.commitment
     )
       throw new ApiError('ARCHIVE_CONTENT_COMMITMENT', 409);
-    await withTransaction(this.pool, async (db) => {
-      await db.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`upload-dao:${row.dao_key}`]);
-      const saved = (
-        await db.query(
-          'SELECT * FROM quick_ballot_archive_files WHERE export_id=$1 AND ordinal=$2 FOR UPDATE',
-          [row.id, file.ordinal],
-        )
-      ).rows[0];
-      const current = FileSchema.parse(saved);
-      if (current.cid) return;
-      const objectId = await recordVerifiedPin(
-        db,
-        this.scope,
-        { kind: 'archive', referenceKey: `quick:${row.id}:${file.ordinal}` },
-        { dao: row.dao, cid: pin.cid, bytes: pin.size, commitment: file.commitment },
-        pin,
-      );
-      const charged = await db.query(
-        'UPDATE quick_ballot_archive_exports SET remaining_bytes=remaining_bytes-$2 WHERE id=$1 AND remaining_bytes>=$2 RETURNING id',
-        [row.id, file.expected_bytes],
-      );
-      if (charged.rowCount !== 1) throw new ApiError('STORAGE_QUOTA', 403);
+    await db.query('BEGIN');
+    await db.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`upload-dao:${row.dao_key}`]);
+    const saved = (
       await db.query(
-        'UPDATE quick_ballot_archive_files SET cid=$3,storage_object_id=$4 WHERE export_id=$1 AND ordinal=$2',
-        [row.id, file.ordinal, pin.cid, objectId],
-      );
-    });
+        'SELECT * FROM quick_ballot_archive_files WHERE export_id=$1 AND ordinal=$2 FOR UPDATE',
+        [row.id, file.ordinal],
+      )
+    ).rows[0];
+    const current = FileSchema.parse(saved);
+    if (current.cid) {
+      await db.query('COMMIT');
+      return;
+    }
+    const objectId = await recordVerifiedPin(
+      db,
+      this.scope,
+      { kind: 'archive', referenceKey: `quick:${row.id}:${file.ordinal}` },
+      { dao: row.dao, cid: pin.cid, bytes: pin.size, commitment: file.commitment },
+      pin,
+    );
+    const charged = await db.query(
+      'UPDATE quick_ballot_archive_exports SET remaining_bytes=remaining_bytes-$2 WHERE id=$1 AND remaining_bytes>=$2 RETURNING id',
+      [row.id, file.expected_bytes],
+    );
+    if (charged.rowCount !== 1) throw new ApiError('STORAGE_QUOTA', 403);
+    await db.query(
+      'UPDATE quick_ballot_archive_files SET cid=$3,storage_object_id=$4 WHERE export_id=$1 AND ordinal=$2',
+      [row.id, file.ordinal, pin.cid, objectId],
+    );
+    await db.query('COMMIT');
   }
   private async bundle(anchor: Anchor, allowBackup: boolean) {
     try {
@@ -321,28 +326,28 @@ export class QuickBallotArchives {
     }
   }
   async exportStep(id: string): Promise<'progress' | 'complete'> {
-    const lock = await this.pool.connect(),
-      key = `quick-archive-export:${z.uuid().parse(id)}`;
+    const key = `quick-archive-export:${z.uuid().parse(id)}`;
+    const db = await this.pool.connect();
     let locked = false,
       discard = false;
     try {
       locked = z
         .boolean()
         .parse(
-          (await lock.query('SELECT pg_try_advisory_lock(hashtext($1)) AS locked', [key])).rows[0]
+          (await db.query('SELECT pg_try_advisory_lock(hashtext($1)) AS locked', [key])).rows[0]
             ?.locked,
         );
       if (!locked) return 'progress';
-      const row = await this.row(id);
+      const row = await this.row(id, db);
       if (row.completed) return 'complete';
       const plan = row.plan;
       if (!plan) throw new ApiError('ARCHIVE_CONTENTS_INCOMPLETE', 409);
-      const files = await this.files(id),
+      const files = await this.files(id, db),
         next = files.find((file) => file.ordinal < 32 && !file.cid);
       if (next) {
         const chunk = plan.families.flatMap((family) => family.chunks)[next.ordinal];
         if (!chunk) throw new ApiError('ARCHIVE_CONTENTS_INCOMPLETE', 409);
-        await this.pin(row, next, encodeArchiveChunk(chunk.domain, chunk.rows));
+        await this.pin(row, next, encodeArchiveChunk(chunk.domain, chunk.rows), db);
         return 'progress';
       }
       const receipts = files
@@ -355,14 +360,14 @@ export class QuickBallotArchives {
       const manifest = archiveManifestForPlan(plan, receipts),
         bytes = encodeArchiveManifest(manifest),
         commitment = hash(bytes);
-      await this.pool.query(
+      await db.query(
         'INSERT INTO quick_ballot_archive_files(export_id,ordinal,expected_bytes,commitment) VALUES($1,32,$2,$3) ON CONFLICT DO NOTHING',
         [id, bytes.length, commitment],
       );
-      const manifestFile = (await this.files(id)).find((file) => file.ordinal === 32);
+      const manifestFile = (await this.files(id, db)).find((file) => file.ordinal === 32);
       if (!manifestFile) throw new ApiError('ARCHIVE_CONTENTS_INCOMPLETE', 409);
       if (!manifestFile.cid) {
-        await this.pin(row, manifestFile, bytes);
+        await this.pin(row, manifestFile, bytes, db);
         return 'progress';
       }
       const chunks = [];
@@ -392,26 +397,29 @@ export class QuickBallotArchives {
       await this.backup.read(bundle.id, commitment, backup.commitment);
       const anchor = await this.chain.attestArchive(archiveAttestation(bundle, backup, 90 * 86400));
       verifyAnchoredArchive(bundle, anchor);
-      await this.remember(row.dao, row.source, anchor);
-      await withTransaction(this.pool, async (db) => {
-        const members = (await this.files(id)).map((file) =>
-          z.uuid().parse(file.storage_object_id),
-        );
-        await recordArchiveGroup(db, this.scope, row.dao, `quick:${id}`, members);
-        await db.query(
-          'UPDATE quick_ballot_archive_exports SET completed=true,plan=NULL,remaining_bytes=0 WHERE id=$1',
-          [id],
-        );
-      });
+      await this.remember(row.dao, row.source, anchor, db);
+      await db.query('BEGIN');
+      const members = (await this.files(id, db)).map((file) =>
+        z.uuid().parse(file.storage_object_id),
+      );
+      await recordArchiveGroup(db, this.scope, row.dao, `quick:${id}`, members);
+      await db.query(
+        'UPDATE quick_ballot_archive_exports SET completed=true,plan=NULL,remaining_bytes=0 WHERE id=$1',
+        [id],
+      );
+      await db.query('COMMIT');
       return 'complete';
+    } catch (cause) {
+      discard = await rollbackTransaction(db);
+      throw cause;
     } finally {
       if (locked)
         try {
-          await lock.query('SELECT pg_advisory_unlock(hashtext($1))', [key]);
+          await db.query('SELECT pg_advisory_unlock(hashtext($1))', [key]);
         } catch {
           discard = true;
         }
-      lock.release(discard);
+      db.release(discard);
     }
   }
   async pruneStep(ballotId: string): Promise<'progress' | 'complete'> {

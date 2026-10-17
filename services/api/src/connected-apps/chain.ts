@@ -2,6 +2,7 @@ import type { z } from 'zod';
 import type { Account, Network, UserMembership } from '../../../../protocol/api.js';
 import type { RuntimeTableSchemas } from '../../../../sdk/generated/schemas.js';
 import type { instruction } from '../../../../sdk/index.js';
+import type { PoolClient } from 'pg';
 export interface ConnectedAppsChain {
   admission?: {
     source(): string | null;
@@ -23,7 +24,11 @@ export interface ConnectedAppsChain {
   >;
   network(): Promise<Network>;
   registry(daoId: string): Promise<z.infer<typeof RuntimeTableSchemas.appregs>[]>;
-  membership(account: Account, daoId: string): Promise<UserMembership | null>;
+  membership(
+    account: Account,
+    daoId: string,
+    db?: Pick<PoolClient, 'query'>,
+  ): Promise<UserMembership | null>;
   session(
     daoId: string,
     id: string,
@@ -37,5 +42,6 @@ export interface ConnectedAppsChain {
     signature: string,
     sessionId: string,
     appId: string,
+    db?: Pick<PoolClient, 'query'>,
   ): Promise<{ transactionId: string }>;
 }

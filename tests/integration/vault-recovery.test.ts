@@ -806,6 +806,7 @@ describe('full access through explicitly selected paired methods', () => {
     recovery.assistedQualified = true;
     const boundedPool = new Pool({ connectionString: url, options: '-c lock_timeout=500ms' });
     try {
+      const daoId = String(BigInt('0x' + randomBytes(6).toString('hex')) + 1n);
       const user = await owner(),
         email = `${crypto.randomUUID()}@example.test`;
       await pool.query('INSERT INTO credentials(provider_key,account_id) VALUES($1,$2)', [
@@ -872,7 +873,7 @@ describe('full access through explicitly selected paired methods', () => {
       expect(session.account).toEqual(user.session.account);
       await pool.query('DELETE FROM evm_links WHERE account_id=$1', [session.account.id]);
       const dao = DaoSummarySchema.parse({
-        reference: { chainId, contract: 'daclifycore', daoId: '7', interfaceVersion: 1 },
+        reference: { chainId, contract: 'daclifycore', daoId, interfaceVersion: 1 },
         title: 'New membership',
         description: '',
         privacy: 'public',
@@ -949,8 +950,8 @@ describe('full access through explicitly selected paired methods', () => {
       expect(
         (
           await pool.query(
-            'SELECT member_id::text FROM memberships WHERE account_id=$1 AND dao_id=7',
-            [session.account.id],
+            'SELECT member_id::text FROM memberships WHERE account_id=$1 AND dao_id=$2',
+            [session.account.id, daoId],
           )
         ).rows,
       ).toEqual([{ member_id: '1' }]);

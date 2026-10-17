@@ -142,8 +142,8 @@ export class ConnectedApps {
       encryptionKey: row.encryption_key,
     });
   }
-  private async member(account: Account, daoId: string) {
-    const member = await this.chain.membership(account, daoId);
+  private async member(account: Account, daoId: string, db: Pool | PoolClient = this.pool) {
+    const member = await this.chain.membership(account, daoId, db);
     if (!member?.active) throw new ApiError('MEMBERSHIP_REQUIRED', 403);
     return member;
   }
@@ -224,9 +224,8 @@ export class ConnectedApps {
       db.release(discard);
     }
   }
-  async client(id: string, enabled = true) {
-    const result = (await this.pool.query('SELECT * FROM connected_apps WHERE id=$1', [id]))
-      .rows[0];
+  async client(id: string, enabled = true, db: Pool | PoolClient = this.pool) {
+    const result = (await db.query('SELECT * FROM connected_apps WHERE id=$1', [id])).rows[0];
     if (!result) throw new ApiError('APP_UNKNOWN', 404);
     const app = AppRow.parse(result),
       network = await this.chain.network();
@@ -238,7 +237,7 @@ export class ConnectedApps {
       .object({ config: ConnectedAppConfigSchema, config_hash: z.string() })
       .safeParse(
         (
-          await this.pool.query(
+          await db.query(
             'SELECT config,config_hash FROM connected_app_configs WHERE client_id=$1 AND revision=$2 AND config_hash=$3',
             [id, native.revision, native.config_hash],
           )
@@ -329,9 +328,9 @@ export class ConnectedApps {
     sessionExpires: number | null,
     db: Pool | PoolClient = this.pool,
   ) {
-    const app = await this.client(clientId);
+    const app = await this.client(clientId, true, db);
     if (app.config.revision !== revision) throw new ApiError('APP_REVISED', 403);
-    const member = await this.member(account, app.config.dao.daoId);
+    const member = await this.member(account, app.config.dao.daoId, db);
     if (sessionId) {
       const session = await this.chain.session(app.config.dao.daoId, sessionId);
       if (
@@ -415,9 +414,9 @@ export class ConnectedApps {
     try {
       await db.query('BEGIN');
       const row = await this.request(id, db, true),
-        app = await this.client(row.client_id);
+        app = await this.client(row.client_id, true, db);
       if (app.config.revision !== row.revision) throw new ApiError('APP_REVISED', 409);
-      const member = await this.member(account, app.config.dao.daoId);
+      const member = await this.member(account, app.config.dao.daoId, db);
       if (!!row.request.signing_key !== !!sessionId) throw new ApiError('APP_GRANT_REQUIRED', 409);
       if (sessionId) {
         const session = await this.chain.session(app.config.dao.daoId, sessionId);
@@ -635,26 +634,27 @@ export class ConnectedApps {
       db.release(discard);
     }
   }
-  async access(token: string, origin?: string) {
+  async access(token: string, origin?: string, db: Pool | PoolClient = this.pool) {
     if (!/^[A-Za-z0-9_-]{43}$/.test(token)) throw new ApiError('APP_TOKEN_REQUIRED', 401);
     const row = AccessRow.safeParse(
       (
-        await this.pool.query(
+        await db.query(
           'SELECT t.* FROM connected_app_tokens t LEFT JOIN connected_app_refresh_families f ON f.id=t.refresh_family_id WHERE t.token_hash=$1 AND t.revoked_at IS NULL AND t.expires_at>now() AND (f.id IS NULL OR(f.revoked_at IS NULL AND f.expires_at>now()))',
           [hash(token)],
         )
       ).rows[0],
     );
     if (!row.success) throw new ApiError('APP_TOKEN_REQUIRED', 401);
-    const app = await this.client(row.data.client_id);
+    const app = await this.client(row.data.client_id, true, db);
     if (origin && !app.config.origins.includes(origin)) throw new ApiError('APP_ORIGIN', 403);
-    const account = await this.account(row.data.account_id),
+    const account = await this.account(row.data.account_id, db),
       claims = await this.claims(
         account,
         row.data.client_id,
         row.data.revision,
         row.data.session_id,
         row.data.session_expires,
+        db,
       );
     return { account, app, claims };
   }

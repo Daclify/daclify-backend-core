@@ -27,6 +27,7 @@ import {
   quickAuthAbi,
   quickAccountAction,
   encodeQuickAnchor,
+  quickAccountRoot,
   decodeQuickAnchor,
   encodeQuickAuth,
 } from '../../../../sdk/quick-accounts.js';
@@ -42,6 +43,7 @@ import {
 } from '@daclify/modules/sdk';
 import { createRpcClient } from '../rpc.js';
 import { ApiError } from '../errors.js';
+import { readContactIdentity } from '../contact-identity.js';
 import { validEncryptionKey } from '../auth.js';
 import { NativeProofSchema } from '../../../../protocol/sign-in.js';
 import { ExitSubmissionSchema, type ExitSubmission } from '../../../../protocol/account-exit.js';
@@ -52,6 +54,7 @@ import { quickSubmissionRejection } from './rejections.js';
 const maxId = '18446744073709551615';
 const ConfigurationSchema = QuickAccountContextSchema.omit({
   anchor: true,
+  approvalKey: true,
   identity: true,
   frozen: true,
   record: true,
@@ -293,7 +296,7 @@ export class NativeQuickBallots {
     }
     const credential = request.control.use_default
       ? context.record?.approval
-      : encodeQuickAnchor(context.anchor);
+      : encodeQuickAnchor(quickAccountRoot(context));
     if (
       !credential ||
       payload.actor.runtime !== context.runtime ||
@@ -389,6 +392,9 @@ export class NativeQuickBallots {
       1,
     );
     return people.rows[0]?.active ?? false;
+  }
+  async recoveryIdentity(signingKey: string) {
+    return readContactIdentity(this.api, this.config.runtime, signingKey);
   }
   async configuration() {
     const config = this.config;

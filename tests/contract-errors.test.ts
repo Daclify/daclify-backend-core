@@ -23,6 +23,7 @@ it('returns only allowlisted contract codes and redacts all other chain details'
     'DAO_PAUSED',
     'SELF_REVIEW',
     'MODULE_ACTION',
+    'PRIVATE_EPOCH_CHANGED',
   ])
     expect(contractError(rejection('assertion failure with message: ' + code)).code).toBe(code);
   expect(contractError(rejection('secret=fixture-private-value')).code).toBe(
