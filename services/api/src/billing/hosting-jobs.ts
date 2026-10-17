@@ -16,7 +16,10 @@ export async function processHostingJob(
   });
   if (!job) return 'idle';
   const payload = z
-    .strictObject({ invoiceId: z.string().regex(/^in_[A-Za-z0-9]+$/) })
+    .strictObject({
+      invoiceId: z.string().regex(/^in_[A-Za-z0-9]+$/),
+      generation: z.int().positive().optional(),
+    })
     .safeParse(job.payload);
   let state = 'failed',
     error: string | null = 'HOSTING_JOB_PAYLOAD_INVALID';
@@ -31,8 +34,11 @@ export async function processHostingJob(
     }
   }
   const result = await pool.query(
-    "UPDATE jobs SET state=$1,lease_owner=NULL,lease_until=NULL,last_error_code=$2,due_at=now()+($3::int*interval '1 second')WHERE id=$4 AND state='running'AND lease_owner=$5 AND lease_until>now()",
-    [state, error, Math.min(3600, 30 * 2 ** Math.min(job.attempts, 7)), job.id, owner],
+    `UPDATE jobs SET state=CASE WHEN payload=$6::jsonb THEN $1 ELSE 'pending' END,
+     lease_owner=NULL,lease_until=NULL,last_error_code=CASE WHEN payload=$6::jsonb THEN $2 ELSE NULL END,
+     due_at=CASE WHEN payload=$6::jsonb THEN now()+($3::int*interval '1 second') ELSE now() END
+     WHERE id=$4 AND state='running' AND lease_owner=$5 AND lease_until>now()`,
+    [state, error, Math.min(3600, 30 * 2 ** Math.min(job.attempts, 7)), job.id, owner, job.payload],
   );
   return result.rowCount === 1 ? state : 'lost';
 }

@@ -6,13 +6,13 @@ Start with what you want to do. The [shared testnet handbook](https://testnet.ap
 
 | Task | Guide |
 | --- | --- |
-| First visit, account, joining and approvals | [Start here](https://testnet.app.daclify.com/docs/start-here), [Accounts](https://testnet.app.daclify.com/docs/accounts), [Approval setup](../../daclify-frontend/docs/approval-setup.md) |
+| First visit, account, joining and approvals | [Start here](https://testnet.app.daclify.com/docs/start-here), [Accounts](https://testnet.app.daclify.com/docs/accounts), [Approval setup](https://github.com/Daclify/daclify-frontend/blob/dev/docs/approval-setup.md) |
 | Admit members and understand permissions | [Members](https://testnet.app.daclify.com/docs/members), [Governance](https://testnet.app.daclify.com/docs/dao-governance) |
-| Vote, arrange work or manage money | [Decide](../../daclify-frontend/docs/users/decide.md), [Works](../../daclify-frontend/docs/users/works.md), [Treasury](https://testnet.app.daclify.com/docs/treasury) |
+| Vote, arrange work or manage money | [Decide](https://github.com/Daclify/daclify-frontend/blob/dev/docs/users/decide.md), [Works](https://github.com/Daclify/daclify-frontend/blob/dev/docs/users/works.md), [Treasury](https://testnet.app.daclify.com/docs/treasury) |
 | Publish or recover private documents | [Documents](https://testnet.app.daclify.com/docs/documents), [Recovery](disaster-recovery.md) |
 | Run encrypted up/down consultations | [Quick ballots](quick-ballots.md): audience, readers, proof and 30-day archive policy |
 | Create a DAO from an invitation | [DAO claim links](dao-claim-links.md) |
-| Draft legal documents from templates | [Documents handbook](https://testnet.app.daclify.com/docs/documents), [template source and maintenance](../../daclify-frontend/docs/legal-templates/README.md) |
+| Draft legal documents from templates | [Documents handbook](https://testnet.app.daclify.com/docs/documents), [template source and maintenance](https://github.com/Daclify/daclify-frontend/blob/dev/docs/legal-templates/README.md) |
 | Connect or register a mini app | [Connected apps](connected-community-apps.md), [Mini-app handbook](https://testnet.app.daclify.com/docs/connected-apps) |
 | Understand costs and storage | [Pricing](https://testnet.app.daclify.com/pricing), [DAO pricing](operations/dao-pricing.md), [Resources](https://testnet.app.daclify.com/docs/resources-and-retention) |
 
@@ -32,12 +32,12 @@ A directory listing is separate from native app registration. Each app owns its 
 | Task | Source |
 | --- | --- |
 | Install/build/test sibling repositories | [Development](development.md) |
-| Configure services or publish the dev app | [Operations](operations.md), [workspace publication](../../daclify-frontend/docs/workspace-testnet.md), [historical Hetzner checkpoints](../ops/hetzner/README.md) |
+| Configure services or publish the dev app | [Operations](operations.md), [workspace publication](https://github.com/Daclify/daclify-frontend/blob/dev/docs/workspace-testnet.md), [historical Hetzner checkpoints](../ops/hetzner/README.md) |
 | Configure payments or hosting | [Connected payments](operations/connected-payments.md) |
 | Diagnose paid creation or Names | [Paid creation incidents](operations/paid-creation-incidents.md), [Names updater](operations/names-oracle.md) |
 | Restore service/key data | [Disaster recovery](disaster-recovery.md), [recovery setup](../ops/recovery/README.md) |
 | Fund gateway access or renew IPFS services | [Gateway allowance](operations/gateway-allowance.md), [testnet IPFS](operations/testnet-ipfs.md) |
-| Inspect exact schemas/actions | [Generated core reference](generated/reference.md), [module reference](../../daclify-backend-modules/docs/generated/reference.md) |
+| Inspect exact schemas/actions | [Generated core reference](generated/reference.md), [module reference](https://github.com/Daclify/daclify-backend-modules/blob/dev/docs/generated/reference.md) |
 | Qualify an immutable release | [Release qualification](operations/release-qualification.md) |
 
 Historical upgrades remain version-specific: [0.5](operations/upgrade-0.5.md), [0.6](operations/upgrade-0.6.md), [0.7](operations/upgrade-0.7.md), [0.8](operations/upgrade-0.8.md), [0.9](operations/upgrade-0.9.md). Use their recorded prerequisites when upgrading those releases, rather than treating their versions as today's deployment.
@@ -56,7 +56,8 @@ Use [current status](current-status.md) for the latest dated checkpoint; [audit 
 
 ## Evidence and unresolved qualification
 
-- [Maximum content privacy design](superpowers/specs/2026-10-16-maximum-content-privacy-design.md) and [implementation plan](superpowers/plans/2026-10-16-maximum-content-privacy.md): approved confidential identity, setup/invitations, ballot content and module labels. The [shared record format](guides/private-record-format.md) is implemented in the development branch; surface writers and deployment activation remain pending. The [separate Telos EVM privacy proposal](proposals/2026-10-16-telos-evm-privacy.md) investigates shielded payments and their public entry/exit limits.
+- [17 October documentation corrections](evidence/2026-10-17-documentation-remediation.md): matched starter setup, privacy/access guidance, current availability, standalone repository navigation and the seven-group browser check. Contract bytes and the live deployment remain unchanged.
+- [Maximum content privacy design](superpowers/specs/2026-10-16-maximum-content-privacy-design.md) and [implementation plan](superpowers/plans/2026-10-16-maximum-content-privacy.md): confidential identity, setup/invitations, ballot content and module labels use the [shared record format](guides/private-record-format.md). See [current status](current-status.md) and the [17 October private-content release](evidence/2026-10-17-private-content-release.md) for the implemented writers, live cohort and remaining qualification. Existing DAO descriptions require an owner's signed migration; activation does not remove old public history. The [separate Telos EVM privacy proposal](proposals/2026-10-16-telos-evm-privacy.md) investigates shielded payments and their public entry/exit limits.
 - [Three-repository security audit](evidence/2026-10-11-security-audit.md): four reproduced API resource-limit bypasses repaired, local/native verification and remaining development-dependency/provider qualification limits.
 - [Native RAM and history simulation](evidence/2026-10-08-ram-history-simulation.md): measured 200 shared DAOs/40,000 active memberships, growth projections and proposed archive-before-prune safeguards.
 - [Recovery documentation checks](evidence/2026-10-07-recovery-documentation.md): regenerated handbook, README/runbook consistency and the current documentation verification.

@@ -107,7 +107,7 @@ For optional account-service billing, set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_S
 
 The [workspace testnet server setup](docs/evidence/2026-10-10-workspace-testnet-server.md) records the continuing `/data` development server on API port 9090 and frontend port 9091, including its external HAProxy routing and actual verification results.
 
-Secrets stay in the gitignored environment files. Use `.env.testnet` for the testnet API and `.env.deploy.testnet` only for the deployment key; the API refuses a deployer key. Do not print secrets or commit `.artifacts/deploy/*-keys.json`. The [operations guide](docs/operations.md) covers network profiles, providers and hosted services; the [workspace publication guide](../daclify-frontend/docs/workspace-testnet.md) describes the current dev server; source availability does not establish a deployed service.
+Secrets stay in the gitignored environment files. Use `.env.testnet` for the testnet API and `.env.deploy.testnet` only for the deployment key; the API refuses a deployer key. Do not print secrets or commit `.artifacts/deploy/*-keys.json`. The [operations guide](docs/operations.md) covers network profiles, providers and hosted services; the [workspace publication guide](https://github.com/Daclify/daclify-frontend/blob/dev/docs/workspace-testnet.md) describes the current dev server; source availability does not establish a deployed service.
 
 ## Resource development branch
 

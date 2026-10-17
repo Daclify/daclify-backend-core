@@ -1,6 +1,6 @@
 # Encrypted profile format and native compatibility
 
-This development candidate supplies a versioned cipher format and native write/removal actions. Profile-key custody, single-kit recovery and the audience editor are described in the companion key-lifecycle guide. Final provider/privacy qualification remains required. It is not a deployed private-profile experience.
+The encrypted profile format, native write/removal actions, key-envelope service and audience editor are implemented on the shared testnet. Use [current status](../current-status.md) and the [17 October private-content release evidence](../evidence/2026-10-17-private-content-release.md) for the deployed cohort and its limits; a newer source checkout is not automatically deployed. Profile-key custody and original-kit recovery are described in the [key-lifecycle guide](profile-key-lifecycle.md). Independent production recovery and provider/privacy qualification remain required.
 
 Personal fields are encrypted in the trusted client before signing. Format 2 uses AES-256-GCM with a fresh 12-byte IV and an independent random 32-byte profile key. Its authenticated context includes the native chain, runtime, full DAO/member identifiers and a new profile revision UUID. Plaintext is limited to 4,096 bytes; the stored JSON envelope is limited to 8,192 bytes. The ciphertext includes its authentication tag. The public SDK exposes `encryptProfile`, `decryptProfile` and explicit encrypted/legacy readers through `@daclify/core-protocol/profiles`.
 

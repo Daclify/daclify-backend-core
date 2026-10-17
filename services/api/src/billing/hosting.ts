@@ -599,10 +599,16 @@ export class HostedSubscriptions {
     await this.queue(invoice.id, db);
   }
   private async queue(invoiceId: string, db: Pool | PoolClient = this.pool) {
-    await db.query(
-      "INSERT INTO jobs(module_id,kind,job_key,payload,due_at)VALUES('core-hosting','attest',$1,$2,now())ON CONFLICT(job_key)DO UPDATE SET state='pending',due_at=now(),last_error_code=NULL WHERE jobs.state<>'running'",
-      ['hosting:' + invoiceId, { invoiceId }],
+    const result = await db.query(
+      `INSERT INTO jobs(module_id,kind,job_key,payload,due_at)VALUES('core-hosting','attest',$1,$2,now())ON CONFLICT(job_key)DO UPDATE SET
+       payload=jsonb_build_object('invoiceId',$3::text,'generation',COALESCE((jobs.payload->>'generation')::bigint,0)+1),
+       state=CASE WHEN jobs.state='running' THEN 'running' ELSE 'pending' END,due_at=now(),last_error_code=NULL,
+       lease_owner=CASE WHEN jobs.state='running' THEN jobs.lease_owner ELSE NULL END,
+       lease_until=CASE WHEN jobs.state='running' THEN jobs.lease_until ELSE NULL END
+       WHERE jobs.module_id='core-hosting' AND jobs.kind='attest' RETURNING id`,
+      ['hosting:' + invoiceId, { invoiceId, generation: 1 }, invoiceId],
     );
+    if (result.rowCount !== 1) throw new ApiError('HOSTING_REQUEST_CONFLICT', 409);
   }
   async attest(invoiceId: string) {
     const found = await this.pool.query<Record<string, unknown>>(

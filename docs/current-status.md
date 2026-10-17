@@ -2,7 +2,7 @@
 
 Audience: community members, DAO administrators, mini-app builders and operators. This is a dated development checkpoint, reviewed 17 October 2026. Source implementation, an enabled service capability and production qualification are different facts. Daclify mainnet is not qualified by these records.
 
-The 17 October review repairs are implemented in development cohort core/SDK `0.15.0-alpha.50`, modules `0.10.0-alpha.62` and portal `0.15.0-alpha.69`. They preserve recovered Quick identities and paid receipts, remove nested connection borrowing and reject newly changed stale private-content references. This cohort has **not been deployed**. See the [repair evidence](evidence/2026-10-17-review-remediation.md) for verification and rollout requirements.
+The current development source cohort is core/SDK `0.15.0-alpha.50`, modules `0.10.0-alpha.63` and portal `0.15.0-alpha.70`. It includes the 17 October review repairs: preserving recovered Quick identities and paid receipts, removing nested connection borrowing and rejecting newly changed stale private-content references. The subsequent documentation corrections use a new module archive with the same core peer and contract bytes. This cohort has **not been deployed**. See the [repair evidence](evidence/2026-10-17-review-remediation.md) and [documentation correction evidence](evidence/2026-10-17-documentation-remediation.md) for verification and rollout requirements.
 
 ## Check the service you are using
 

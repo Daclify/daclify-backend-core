@@ -2,14 +2,14 @@
 
 This runnable example keeps garden tasks in SQLite and uses Daclify for member identity and selected, member-signed completion receipts. Run a second copy for equipment using another app ID/client ID/database; both copies can belong to the same seven-member DAO. Managers and ordinary members keep their existing DAO roles.
 
-The current starter build consumes public core `0.14.0-alpha.9` and modules `0.10.0-alpha.7` development archives (frontend candidate `0.14.0-alpha.10`). It persists a full binding and checks the verified client context returned by the new API. This is local development work; the older testnet core `0.14.0-alpha.4` does not supply that context and the starter fails closed against it. PostgreSQL has passed the shared local recipe checks. Connection-bundle/distribution tooling is implemented locally; public deployment remains a separate release step. Node `>=24.21 <25` is required for the pinned SQLite recipe.
+Use the exact public core and module packages supplied with the connected service's starter, rather than combining this checkout with older SDK archives. The starter persists a full binding and checks the API's verified client context; missing or mismatched context refuses access. See [current status](../../docs/current-status.md) for shared-testnet availability and qualification limits. Node `>=24.21 <25` and npm `>=11.19 <12` are required for the pinned recipe.
 
 Read the [database contract](../../docs/guides/mini-app-database-contract.md) and use one matched API/SDK set. The account root, pairwise subject and full native membership are distinct. The file is permanently bound to chain/runtime/DAO/app/issuer/client; changing any field refuses access rather than reusing another community's records.
 
 ## Setup
 
 1. Create your DAO, enrol its members, and enable Community Activity from DAO modules.
-2. Register the app in **Connected apps** with its HTTPS origin, exact `/callback` URI, and the same origin as its optional source API base. Copy its client ID and app ID.
+2. Open **Mini apps → Connect an app**, choose the DAO and register the app with its HTTPS origin, exact `/callback` URI, and the same origin as its optional source API base. Copy its client ID and app ID.
 3. Set these values in a private environment file and provide a TLS certificate/key for the mini app’s own HTTPS origin:
 
 ```dotenv
@@ -42,7 +42,18 @@ npx tsx examples/community-mini-app/build.ts
 node --env-file=/absolute/private/path/mini-app.env --import tsx examples/community-mini-app/server.ts
 ```
 
-Outside this workspace, use the candidate archives from the implementation checkout or its versioned frontend vendor directory. Their SHA-256 values are core `d6e9b1ac9a382f0ff3acfba5af5dc249a2c83df3fec75a1417ef089b189c9d04` and modules `a70a21f43ce60f79cc24926f612447ce429ef328d9daedfe52ce7c2892a593b7`; a private repository still needs authorized access. Install those files with `npm install ./daclify-core-protocol-0.14.0-alpha.9.tgz ./daclify-modules-0.10.0-alpha.7.tgz tsx@4.23.15 esbuild@0.28.2 zod@4.6.5 pg@8.23.1`, and copy the example files. The candidate API supplies an immutable starter/download route when its reviewed release directory is configured. It has not been deployed by this execution. The `build.ts` script uses the local esbuild binary. Never ship the environment file, SQLite database, TLS private key or provider credential in static assets.
+Outside this workspace, open **Mini apps → Connect an app** in the connected portal, select your registered app and choose **Get connection configuration**, then **Download configuration**. Save that JSON as `connection.json`. Use its `releaseId` to retrieve `GET /v1/mini-apps/releases/:releaseId` from the trusted issuer, and its `starterUrl` to download the matching starter. Verify the manifest's SHA-256 against the connection's `manifestHash`, then verify the starter's length and SHA-256 against its manifest entry before extracting executable code. Do not copy files from a different checkout into that starter or select older vendor archives by hand.
+
+Extract into a new application directory and follow its included README:
+
+```sh
+npm ci --ignore-scripts
+node configure.mjs connection.json
+npm run build
+node --env-file=/absolute/private/path/mini-app.env --import tsx examples/community-mini-app/server.ts
+```
+
+The configurator validates the installed release and writes public connection settings; set the private HTTPS, database and cleanup configuration in the environment file separately. Downloads require the service's configured release directory; unavailable downloads are not a reason to substitute an unrelated SDK. See the [packaged starter instructions](../../tools/release/mini-app-starter/README.md) and [connection guide](../../docs/connected-community-apps.md). The `build.ts` script uses the local esbuild binary. Never ship the environment file, SQLite database, TLS private key or provider credential in static assets.
 
 ## PostgreSQL and database qualification
 

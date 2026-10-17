@@ -5,6 +5,8 @@ import { randomUUID, generateKeyPairSync } from 'node:crypto';
 import { PrivateKey } from '@wharfkit/antelope';
 import { z } from 'zod';
 import { HostedSubscriptions } from '../../services/api/src/billing/hosting.js';
+import { processHostingJob } from '../../services/api/src/billing/hosting-jobs.js';
+import { ApiError } from '../../services/api/src/errors.js';
 import { migrate } from '../../services/api/src/store.js';
 import { STRIPE_API_VERSION } from '../../services/api/src/billing/stripe.js';
 import { AccountSchema, NetworkSchema, UserMembershipSchema } from '../../protocol/api.js';
@@ -398,7 +400,8 @@ beforeAll(async () => {
     [account.id, account.signingKey, account.encryptionKey],
   );
 });
-beforeEach(() => {
+beforeEach(async () => {
+  await pool.query("DELETE FROM jobs WHERE module_id='core-hosting'");
   dao = { ...dao, daoId: BigInt('0x' + randomUUID().replaceAll('-', '').slice(0, 12)).toString() };
   capacity = 10;
   expires = null;
@@ -574,4 +577,122 @@ it('restores the same verified paid-period entitlements when an opened dispute i
   expect(capacity).toBe(20);
   await service.attest(second);
   expect(capacity).toBe(30);
+});
+
+async function paymentWebhook(type: string, invoiceId: string) {
+  const raw = Buffer.from(
+    JSON.stringify({
+      id: 'evt_' + randomUUID().replaceAll('-', ''),
+      object: 'event',
+      type,
+      livemode: false,
+      data: { object: { id: 'ch_fixture', payment_intent: 'pi_' + invoiceId } },
+    }),
+  );
+  const signature = stripe.webhooks.generateTestHeaderString({
+    payload: raw.toString(),
+    secret: config.webhookSecret,
+  });
+  await service.webhook(raw, signature);
+  await service.webhook(raw, signature); // A provider retry must not duplicate the queued update.
+}
+it.each(['completed', 'pending', 'failed'] as const)(
+  'rechecks a refund acknowledged during an older capacity grant ending %s',
+  async (outcome) => {
+    await service.change(account, input());
+    await paidWebhook();
+    const invoiceId = String(invoice.id),
+      owner = randomUUID(),
+      original = chain.attestCapacity;
+    if (!original) throw new Error('Missing fixture attestation');
+    chain.attestCapacity = async (...args) => {
+      refunds.set(invoiceId, Number(invoice.amount_paid));
+      await paymentWebhook('charge.refunded', invoiceId);
+      expect(await processHostingJob(pool, service, randomUUID())).toBe('idle');
+      expect(
+        (
+          await pool.query('SELECT lease_owner FROM jobs WHERE job_key=$1', [
+            'hosting:' + invoiceId,
+          ])
+        ).rows[0]?.lease_owner,
+      ).toBe(owner);
+      await original(...args);
+      if (outcome === 'pending') throw new Error('Lost chain response');
+      if (outcome === 'failed') throw new ApiError('HOSTING_RECEIPT_INVALID', 409);
+    };
+    try {
+      expect(await processHostingJob(pool, service, owner)).toBe(outcome);
+    } finally {
+      chain.attestCapacity = original;
+    }
+    expect(capacity).toBe(20);
+    expect(await processHostingJob(pool, service, randomUUID())).toBe('completed');
+    expect(capacity).toBe(10);
+    expect(await processHostingJob(pool, service, randomUUID())).toBe('idle');
+    expect(attestations).toBe(1);
+  },
+);
+it('restores paid capacity when a dispute is won during an older revocation', async () => {
+  await service.change(account, input());
+  await paidWebhook();
+  const invoiceId = String(invoice.id);
+  expect(await processHostingJob(pool, service, randomUUID())).toBe('completed');
+  expect(capacity).toBe(20);
+  disputes.set(invoiceId, 'under_review');
+  await paymentWebhook('charge.dispute.created', invoiceId);
+  const original = chain.revokeCapacity;
+  if (!original) throw new Error('Missing fixture revocation');
+  chain.revokeCapacity = async (...args) => {
+    disputes.set(invoiceId, 'won');
+    await paymentWebhook('charge.dispute.closed', invoiceId);
+    await original(...args);
+  };
+  try {
+    expect(await processHostingJob(pool, service, randomUUID())).toBe('completed');
+  } finally {
+    chain.revokeCapacity = original;
+  }
+  expect(capacity).toBe(10);
+  expect(await processHostingJob(pool, service, randomUUID())).toBe('completed');
+  expect(capacity).toBe(20);
+  expect(await processHostingJob(pool, service, randomUUID())).toBe('idle');
+  expect(attestations).toBe(1);
+});
+it('completes an invoice job persisted before generations were introduced', async () => {
+  await service.change(account, input());
+  await paidWebhook();
+  await pool.query('UPDATE jobs SET payload=$1 WHERE job_key=$2', [
+    { invoiceId: String(invoice.id) },
+    'hosting:' + invoice.id,
+  ]);
+  expect(await processHostingJob(pool, service, randomUUID())).toBe('completed');
+  expect(capacity).toBe(20);
+  expect(await processHostingJob(pool, service, randomUUID())).toBe('idle');
+});
+it.each(['owner', 'expiry'])('cannot complete an invoice after losing lease %s', async (lost) => {
+  await service.change(account, input());
+  await paidWebhook();
+  const jobKey = 'hosting:' + invoice.id,
+    replacement = randomUUID();
+  const worker = {
+    attest: async (id: string) => {
+      const outcome = await service.attest(id);
+      if (lost === 'owner')
+        await pool.query('UPDATE jobs SET lease_owner=$1 WHERE job_key=$2', [replacement, jobKey]);
+      else
+        await pool.query("UPDATE jobs SET lease_until=now()-interval '1 second' WHERE job_key=$1", [
+          jobKey,
+        ]);
+      return outcome;
+    },
+  };
+  expect(await processHostingJob(pool, worker, randomUUID())).toBe('lost');
+  expect(
+    (await pool.query('SELECT state FROM jobs WHERE job_key=$1', [jobKey])).rows[0]?.state,
+  ).toBe('running');
+  await pool.query("UPDATE jobs SET lease_until=now()-interval '1 second' WHERE job_key=$1", [
+    jobKey,
+  ]);
+  expect(await processHostingJob(pool, service, randomUUID())).toBe('completed');
+  expect(capacity).toBe(20);
 });

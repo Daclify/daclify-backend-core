@@ -61,7 +61,7 @@
   },
   "dependencies": {
     "@daclify/core-protocol": "file:.artifacts/daclify-core-protocol-0.15.0-alpha.50.tgz",
-    "@daclify/modules": "file:../daclify-backend-modules/.artifacts/daclify-modules-0.10.0-alpha.62.tgz",
+    "@daclify/modules": "file:../daclify-backend-modules/.artifacts/daclify-modules-0.10.0-alpha.63.tgz",
     "@fastify/cookie": "11.1.2",
     "@fastify/cors": "11.3.0",
     "@noble/curves": "2.4.0",
