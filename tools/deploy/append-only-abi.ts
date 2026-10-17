@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { ABI, Serializer, type ABISerializable } from '@wharfkit/antelope';
+import { ABI, ABIDecoder, Bytes, Serializer } from '@wharfkit/antelope';
 
 // Historical rows can omit nullable binary extensions; re-encoding them with the new ABI adds tags.
 export function reviewAppendOnlyAbi(previous: ABI, candidate: ABI) {
@@ -33,9 +33,11 @@ export function reviewHistoricalRow(previous: ABI, candidate: ABI, table: string
   const before = previous.tables.find((item) => String(item.name) === table)?.type;
   const after = candidate.tables.find((item) => String(item.name) === table)?.type;
   assert.ok(before && after === before, 'ABI_TABLE_CHANGED');
-  const value: ABISerializable = Serializer.decode({ abi: candidate, type: after, data: row });
-  assert.ok(
-    Serializer.encode({ abi: previous, type: before, object: value }).hexString === row,
-    'HISTORICAL_ROW_CHANGED',
-  );
+  reviewAppendOnlyAbi(previous, candidate);
+  // Encoding an absent nullable extension adds a tag; verify the untouched bytes by decoding both.
+  for (const abi of [previous, candidate]) {
+    const decoder = new ABIDecoder(Bytes.from(row).array);
+    Serializer.decode({ abi, type: before, data: decoder });
+    assert.ok(!decoder.canRead(), 'HISTORICAL_ROW_CHANGED');
+  }
 }
