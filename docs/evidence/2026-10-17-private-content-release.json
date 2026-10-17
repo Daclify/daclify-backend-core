@@ -1,6 +1,6 @@
 {
   "date": "2026-10-17",
-  "status": "qualified candidate; not deployed; testnet RAM spending authorization pending",
+  "status": "deployed and verified on shared testnet",
   "scope": "Maximum content privacy, final immutable release candidate",
   "cohort": {
     "core": "0.15.0-alpha.46",
@@ -196,10 +196,99 @@
     "permissionAndDeploymentUnit": {
       "passed": 24,
       "files": 3
+    },
+    "liveSharedTestnet": {
+      "public": {
+        "status": "passed",
+        "network": "testnet",
+        "coreVersion": "0.15.0-alpha.46",
+        "privateCapabilities": [
+          "private-records-v1",
+          "private-dao-identity-v1",
+          "private-ballot-content-v1",
+          "private-payroll-labels-v1",
+          "private-quick-question-v1",
+          "private-claim-content-v1"
+        ],
+        "publicPortalRoutes": 4,
+        "exactCompiledIndexAndScript": true,
+        "previousImmutableScriptRetained": true,
+        "anonymousSessionAndCors": true,
+        "mcpDiscoveryAndUnauthenticatedChallenge": true,
+        "at": "2026-10-17T09:23:28.209Z"
+      },
+      "originalKeyRecovery": {
+        "status": "passed",
+        "realTestnet": true,
+        "originalKeyRecovery": true,
+        "apiRestartQualified": true,
+        "identityAndBallotDecryption": true,
+        "sameSigningAndEncryptionKeys": true,
+        "anonymousCannotDecrypt": true,
+        "lockClearsContent": true,
+        "noBrowserCanaryLeak": true,
+        "daoId": "13100898742116318079",
+        "at": "2026-10-17T09:21:57.285Z"
+      },
+      "backupRestore": {
+        "status": "passed",
+        "actualCutoverBackupRestored": true,
+        "isolatedLocalCluster": true,
+        "customerDatabaseModified": false,
+        "originalTablesPreserved": 99,
+        "originalRowColumnsAndCountsPreserved": true,
+        "candidateMigrations": [
+          {
+            "namespace": "archive",
+            "count": "5"
+          },
+          {
+            "namespace": "core",
+            "count": "58"
+          }
+        ],
+        "at": "2026-10-17T09:09:32.947Z"
+      },
+      "customerDaoPreservation": {
+        "status": "passed",
+        "daoId": "1551563545746804138",
+        "originalRowsChecked": 9,
+        "technicalModulePins": 2,
+        "contentKeysPolicyRolesGrantsAndEpochsPreserved": true,
+        "noCustomerMigration": true,
+        "at": "2026-10-17T09:16:44.145Z"
+      },
+      "leakScan": {
+        "status": "passed",
+        "publicDatabaseTablesScanned": 99,
+        "apiJournalScanned": true,
+        "noCanaryPlaintext": true,
+        "custodyTablesScanned": false,
+        "reason": "Self-custody fixture; no custody key access requested.",
+        "at": "2026-10-17T09:21:00.647Z"
+      },
+      "publicBrowser": {
+        "passed": 2,
+        "desktop": true,
+        "mobile": true,
+        "scriptErrors": 0
+      },
+      "ownedBrowser": {
+        "passedPhases": 2,
+        "originalAccountAndDaoReused": true,
+        "initialCreationPollTimedOutDuringPrivateSave": true,
+        "fixtureCorrections": [
+          "Use SPA navigation after key recovery; a full reload intentionally locks keys.",
+          "Use the canonical structured encryption-key schema.",
+          "MCP public initialize/tools/list are anonymous discovery; tools/call still requires OAuth."
+        ]
+      },
+      "rollback": "Exact owned native round-trip plus reviewed forward/reverse live simulations, including a separate reverse check after permission links exist. No blind downgrade or SQL restore after application writes.",
+      "recovery": "Fresh disposable TLS/OpenBao 2.7.1 Raft source-removal restore passed at core 46, original key recovered, four least-privilege denials verified; live key service/keys/policies unchanged. Explicit testnet-single-host scope; not independent-host qualification."
     }
   },
   "resourceGate": {
-    "status": "additional testnet contract RAM required",
+    "status": "funded; exact native release deployed",
     "requirements": [
       {
         "account": "daclifydecid",
@@ -228,18 +317,24 @@
       }
     ],
     "quotedTestnetTlos": "53.8281",
-    "quoteAt": "2026-10-17T00:40:24.267Z",
+    "quoteAt": "2026-10-17T09:02:30.470Z",
     "payer": "3boidanimus3",
-    "broadcast": false,
-    "note": "Read-only native RAM-purchase simulation. Not an approval or a completed purchase; refresh quote before any transaction."
+    "broadcast": true,
+    "note": "Native buyrambytes rounds down 2–4 bytes per recipient. Actual quotas all exceed code/ABI growth plus the 64 KiB reserve; no repeat purchase was sent.",
+    "actualTestnetTlos": "53.8281",
+    "authorizedCapTestnetTlos": "60.0000",
+    "transactionId": "2c7b7053df2eef90d9b111a2a8d24e079c3abecaebd97d9b8fbb9460cf55e9c9",
+    "irreversible": true,
+    "requestedBytes": 937984,
+    "receivedBytes": 937969
   },
   "limits": [
-    "No live native writes, API/static cutover or customer content conversion has occurred.",
-    "TESTDAO-2 remains unchanged; original keys and signed preview are required.",
-    "Existing public chain history, memberships, ordinary vote choices, financial amounts and graphs remain public.",
-    "Real Pinata upload/gateway retrieval and exact owned-file cleanup were qualified with synthetic content; independent backups and a live Telos original-key recovery remain unrun.",
+    "Shared testnet only; mainnet remains undeployed.",
+    "TESTDAO-2 content, keys, epochs, grants, policy and roles are preserved; two existing technical module pins follow the shared release. Content conversion still requires its owner’s original keys and signed preview.",
+    "Existing public chain history, memberships, ordinary vote choices, financial amounts and transaction graphs remain public.",
+    "Real Pinata and live Telos original-key recovery are verified; independent backup availability/independent-host recovery remain unqualified.",
     "The Telos EVM payment proposal remains separate and disabled.",
-    "Rollback is qualified before private writes; later writes require renewed compatibility review."
+    "Application writes now exist on the new release; any rollback requires a new compatibility review."
   ],
   "liveBaseline": {
     "daclifycore1": {
@@ -315,5 +410,83 @@
     "newPermission": "none; existing execctx only",
     "keysParentsThresholdsPreserved": true,
     "operatorContentConversion": false
+  },
+  "activatedAt": "2026-10-17T09:22:17.166Z",
+  "activation": {
+    "network": "testnet",
+    "release": "20261017-private-content",
+    "commits": {
+      "daclify-backend-core": "c9b656f7ebca4b3ca8d05db17a825c7d3bd96df8",
+      "daclify-backend-modules": "a918281fd8a62e3db1821d415829d2720acb1344",
+      "daclify-frontend": "3ce8644496b8c91bc6148e8404c9dcb0c3a1ff9e"
+    },
+    "versions": {
+      "core": "0.15.0-alpha.46",
+      "modules": "0.10.0-alpha.57",
+      "frontend": "0.15.0-alpha.65",
+      "communityMcp": "0.1.0-alpha.23"
+    },
+    "at": "2026-10-17T09:22:17.166Z",
+    "allStagesIrreversible": true,
+    "sourceVersionedRecoveryQualification": true,
+    "customerContentMigration": false,
+    "appjoinDeployed": false,
+    "transactions": [
+      {
+        "stage": 0,
+        "transactionId": "7f628e7ca3fb574bd39a46e0712f47905f73f26d59d9b0a0c54f75240c776444",
+        "blockNum": 450649212
+      },
+      {
+        "stage": 1,
+        "transactionId": "37f20d4270856e028018893721f88183ded0eafd0efb13d8e8df7558e5d2197b",
+        "blockNum": 450649242
+      },
+      {
+        "stage": 2,
+        "transactionId": "21242c275c94aea8598f41b59511d598c8bfccd56a22d3808e9b5cb23d012887",
+        "blockNum": 450649269
+      },
+      {
+        "stage": 3,
+        "transactionId": "e1de55e30f303c4015f2b3d78ba96698e14cbbd99ae198c21def159a9101af24",
+        "blockNum": 450649304
+      },
+      {
+        "stage": 4,
+        "transactionId": "f2be8ba193e5d6e5ea7682328a8a4f3fc992eb2e746502c5609ea7911e98e542",
+        "blockNum": 450649340
+      },
+      {
+        "stage": 5,
+        "transactionId": "a1f45ff128f676a7f0309489a5cd049480e9af5f581f0365f3d514f2e8f3f469",
+        "blockNum": 450649363
+      },
+      {
+        "stage": 6,
+        "transactionId": "a207e6321099c7838c3baa56f31f1ab9b475197f02d1c4f943b6372e26eb0d87",
+        "blockNum": 450649405
+      },
+      {
+        "stage": 7,
+        "transactionId": "4e948872f4e76fce9e78a808c0ff9e050bbf705dcb9604e294f53cbd033ca6a3",
+        "blockNum": 450649429
+      },
+      {
+        "stage": 8,
+        "transactionId": "16f91327c91ccddd9f1ba484f055aae9ed97c1b108be9975a72fc582be8d39f5",
+        "blockNum": 450649491
+      },
+      {
+        "stage": 9,
+        "transactionId": "663693148657f4efbfd7dcb131946c779d632bc5c3a09205e71873f7747d2e53",
+        "blockNum": 450649528
+      },
+      {
+        "stage": 10,
+        "transactionId": "1ad7f57254adc55817a504570090be4a3c71aa98c77979096e7ce1d17eae3259",
+        "blockNum": 450649557
+      }
+    ]
   }
 }

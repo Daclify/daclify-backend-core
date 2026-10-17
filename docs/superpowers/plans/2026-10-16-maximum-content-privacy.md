@@ -8,7 +8,7 @@
 
 **Tech Stack:** Existing Antelope C++/pinned CDT `-O=s`, strict TypeScript/Zod, PostgreSQL, Vue 3, current browser cryptography, generated public SDKs, VERT/native and Playwright tests. No new cryptographic dependency in this plan.
 
-**Spec:** [Maximum practical privacy design](../specs/2026-10-16-maximum-content-privacy-design.md). **Status:** approved on 2026-10-16; implementation and live activation remain incomplete.
+**Spec:** [Maximum practical privacy design](../specs/2026-10-16-maximum-content-privacy-design.md). **Status:** all seven packages implemented and activated on shared testnet on 2026-10-17; existing DAO content conversion remains a signed owner opt-in.
 
 ## Global constraints
 
@@ -110,8 +110,8 @@ Do not assume every listed file needs editing. Before each task, trace all calle
 - [x] Run narrow regressions red, remove any leaked duplicated fields and give unsupported readers generic placeholders. Test deliberate local plaintext downloads as a separately acknowledged disclosure.
 - [x] Generate schemas/ABIs/help and allocate unused immutable public SDK/module/frontend releases through the existing tooling. Run core/modules/frontend `npm test`, typecheck/build/lint and `npm run docs:check`; run the affected PostgreSQL, actual compiled/native, upgrade and browser suites. Record passed/failed/skipped/unrun explicitly.
 - [x] Compile current contracts with pinned `-O=s`; record before/after WASM size, row/secondary-index RAM, representative CPU and cleanup. Reject a release with stale pins, incompatible archives, unbounded state or an unsupported-source downgrade path.
-- [ ] Stage an immutable testnet candidate and exercise synthetic self-custody users before live capability activation. Verify the complete browser → ciphertext → API/chain → authorized browser-decryption flow, plus restart/recovery. Public entry checks cannot stand in for a real qualified wallet/private-key recovery test.
-- [ ] Review the complete diff inline, commit/push the authorized `dev` changes and prepare the release evidence. Preserve the previously verified service/cohort; activate only the reviewed candidate and perform live health/rollback checks. No mainnet or customer-account migration is implied by this plan.
+- [x] Stage an immutable testnet candidate and exercise synthetic self-custody users before live capability activation. Verify the complete browser → ciphertext → API/chain → authorized browser-decryption flow, plus restart/recovery. Public entry checks cannot stand in for a real qualified wallet/private-key recovery test.
+- [x] Review the complete diff inline, commit/push the authorized `dev` changes and prepare the release evidence. Preserve the previously verified service/cohort; activate only the reviewed candidate and perform live health/rollback checks. No mainnet or customer-account migration is implied by this plan.
 
 ## Completion definition
 
