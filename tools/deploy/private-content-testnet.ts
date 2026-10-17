@@ -770,7 +770,9 @@ if (mode === '--prepare') {
     const actions =
       stage.label === 'directory'
         ? [...runtimeCode.forward, ...stage.forward]
-        : [...stage.forward, ...stage.reverse];
+        : stage.label === 'context-links'
+          ? stage.forward // Native authorization checks unlinkauth before linkauth can execute.
+          : [...stage.forward, ...stage.reverse];
     const candidate = await packet(actions);
     const result = await api.v1.chain.compute_transaction(candidate.packed);
     executedChainResult(result, String(candidate.transaction.id));
@@ -867,6 +869,13 @@ if (mode === '--prepare') {
       async () => Number((await api.v1.chain.get_info()).last_irreversible_block_num),
       result.blockNum,
     );
+    if (mode === '--apply' && stage.label === 'context-links') {
+      const reverse = await packet(stage.reverse);
+      const rehearsal = await api.v1.chain.compute_transaction(reverse.packed);
+      executedChainResult(rehearsal, String(reverse.transaction.id));
+      assertNoAssetTransfer(rehearsal);
+      save('privacy-context-links-reverse-rehearsal.json', rehearsal);
+    }
     console.log(JSON.stringify({ stage: stage.label, mode, ...result, irreversible: true }));
   }
   await verify(mode === '--apply' ? stages.length : 0);

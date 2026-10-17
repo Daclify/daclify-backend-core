@@ -199,6 +199,23 @@ it('preserves original keys, an open ballot and approved payroll through the exa
   const originalPermissions = await nativeAccount();
   const repairs = contextLinkRepairActions(context, originalPermissions);
   expect(repairs).toHaveLength(9);
+  await expect(
+    f.push(
+      [
+        ...repairs,
+        ...missingLinks.map((link) =>
+          f.system(
+            'unlinkauth',
+            { account: 'daclifycore', code: link.account, type: link.action },
+            'daclifycore',
+            'owner',
+          ),
+        ),
+      ],
+      [f.key('daclifycore')],
+    ),
+  ).rejects.toThrow('NATIVE_REJECTED:transaction_exception');
+  assertContextLinkUpgrade(originalPermissions, await nativeAccount());
   const originalAccountRam = Number((await f.api.v1.chain.get_account('daclifycore')).ram_usage),
     originalAbiBytes = (await f.api.v1.chain.get_raw_abi('daclifycore')).abi.array.length;
   // Installing code alone never rewrites per-DAO consent, frozen definitions or approved liabilities.
